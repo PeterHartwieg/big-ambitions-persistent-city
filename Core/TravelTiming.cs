@@ -4,8 +4,6 @@ using System.Globalization;
 
 namespace PersistentCity.Core
 {
-    /// <summary>Retimes persisted travel before constructing a simulator. A saved physically controlled vehicle (older
-    /// development cities only) keeps its exact progress here; constructing the simulator releases it.</summary>
     public static class TravelTiming
     {
         private const double MaxMinute = 1000000000;
@@ -51,17 +49,6 @@ namespace PersistentCity.Core
             }
         }
 
-        /// <summary>
-        /// Clock rate is game minutes per real second. Version zero used compressed moving routes;
-        /// migrate their remaining geometry to native pace. Version one rescales only remaining movement
-        /// when the clock rate changes; stationary waits retain game minutes. Completed time and
-        /// the departure anchor remain untouched.
-        /// The caller must call PrepareForSave first (bodies hold no logical state since F2d), then reconstruct its simulator
-        /// after a true result. Invalid conversion does not mutate the supplied snapshot or its owner.
-        /// A 512-leg route inside native car movement cannot add the provenance-preserving split and
-        /// is rejected atomically, including before traffic admission. Other occupied partial movement
-        /// is also rejected rather than changing its queue position or pace inconsistently.
-        /// </summary>
         public static bool Apply(CityState state, double nativeWalkMetresPerSecond, double clockRate)
         {
             if (state == null) throw new ArgumentNullException(nameof(state));
@@ -110,17 +97,12 @@ namespace PersistentCity.Core
                 bool trafficOwned = false;
                 if (savedTraffic != null && savedTraffic.TryGetVehicle(citizen.Identity.Id, out var ownedTraffic))
                 {
-                    // Traffic's measured coordinate is the journey authority. Subtracting the
-                    // persisted departure from a city clock can round on either side of it;
-                    // splitting there would retain future old-pace geometry or amplify that gap.
                     if (Math.Abs(ownedTraffic.NominalMinutes - rawElapsed) > 1e-7)
                         throw new ArgumentException("Traffic and journey progress disagree.", nameof(state));
                     elapsed = ownedTraffic.NominalMinutes;
                     trafficOwned = true;
                 }
                 double arrivalDifference = Math.Abs(citizen.NextEventMinute - (citizen.DepartureMinute + route.Minutes));
-                // Only an explicitly queued completed arrival may inherit subtraction/readdition
-                // roundoff at a large city clock. Ordinary future events keep the strict contract.
                 double arrivalTolerance = citizen.NextEventMinute == state.Minute && clockElapsed == route.Minutes
                     ? Math.Max(1e-7, CitySimulator.JourneyClockTolerance(state.Minute, route.Minutes)) : 1e-7;
                 if (elapsed > route.Minutes || arrivalDifference > arrivalTolerance)
@@ -130,9 +112,6 @@ namespace PersistentCity.Core
                 var replacement = Retime(route, elapsed, legacy, nativeWalkMetresPerSecond, clockRate, ratio, out var map);
                 maps.Add(citizen.Identity.Id, map);
                 ValidateCommittedRoute(replacement, origin.Position, destination.Position, citizen);
-                // Unowned trips resume from the unchanged departure clock, not the traffic
-                // map's folded coordinate. Owned trips are checked against their actual detached
-                // kernel permission below, after rescaling has produced that coordinate.
                 if (!trafficOwned)
                     ValidateSampledPose(citizen, replacement, elapsed,
                         CitySimulator.NormalizeJourneyElapsed(rawElapsed, replacement.Minutes, state.Minute));
@@ -190,15 +169,8 @@ namespace PersistentCity.Core
                     ? mapping.Map(value) : throw new ArgumentException("Missing traffic geometry map.", nameof(state)));
                 traffic = rescaled.Capture();
                 TrafficKernel.ValidateState(traffic);
-                // RescaleTime keeps its movement affine; a collapsed native tail may remove
-                // a few old nominal ulps instead. Reuse binding's exact duration gate on the
-                // detached result before publishing any route or kernel changes. Waiting sources
-                // have future spans too; completed historical timing remains exempt.
                 foreach (var vehicle in traffic.Vehicles)
                 {
-                    // SaveCodec compares the actual detached snapshot coordinate with the raw
-                    // departure subtraction. A bounded old lead can grow beyond that unchanged
-                    // persistence contract when nominal coordinates are rescaled.
                     double expected = rescaled.GetPermission(vehicle.VehicleId).NominalMinutes;
                     var change = trafficChanges[vehicle.VehicleId];
                     ValidateSampledPose(change.Citizen, change.Route!, change.Elapsed, expected);
@@ -220,9 +192,6 @@ namespace PersistentCity.Core
                         arrivals.Add(change.Citizen.Identity.Id, change.EventMinute);
                 foreach (var meal in state.Food.Residents)
                 {
-                    // Represented excursions retain their committed abstract game-minute quotes.
-                    // They validate the same return geometry/access before completing; only the
-                    // physical anchor follows native walking pace retiming.
                     if (meal.HostSlot > 0) continue;
                     if (meal.Status != MealStatus.Travelling && meal.Status != MealStatus.Serving) continue;
                     double back = meal.ReturnMinutes * ratio;
@@ -233,7 +202,6 @@ namespace PersistentCity.Core
                     meals.Add((meal, back, due));
                 }
             }
-            // Nothing above mutates the snapshot: any invalid route/rate leaves all citizens intact.
             foreach (var change in changes)
             {
                 if (change.Route != null) change.Citizen.Journey = change.Route.Commit();
@@ -251,8 +219,6 @@ namespace PersistentCity.Core
 
         private static void ValidateSampledPose(CitizenState citizen, Route replacement, double oldElapsed, double resumedElapsed)
         {
-            // Reuse the exact physical sampler, including its existing boundary normalization.
-            // Compare the coordinates the resumed owner will actually use before publication.
             var oldSample = CitySimulator.SampleRoute(citizen.Journey!, oldElapsed, citizen.Car?.ParkedPosition);
             var newSample = CitySimulator.SampleRoute(replacement, resumedElapsed, citizen.Car?.ParkedPosition);
             if (!oldSample.Position.Equals(newSample.Position) || !Nullable.Equals(oldSample.CarPosition, newSample.CarPosition)
@@ -312,8 +278,6 @@ namespace PersistentCity.Core
             {
                 double start = newOffset;
                 Add(leg, from, to, minutes, service, oldMinutes, oldEnd);
-                // Captured traffic-span overlap proves native ownership later, including older
-                // untagged fragments. Ordinary curb connectors outside those spans stay exempt.
                 if (leg.Mode == TravelMode.Car && Position.Distance(leg.From, leg.To) > 0)
                     mapping.UnscaledCarPrefixes.Add((start, newOffset));
             }
@@ -332,8 +296,6 @@ namespace PersistentCity.Core
                 if (!Position.Finite(leg.Minutes) || leg.Minutes <= 0 || leg.Minutes > MaxLegMinutes)
                     throw new ArgumentException("Invalid input leg duration.");
                 double oldLegEnd = oldOffset + leg.Minutes;
-                // Committed traffic spans use cumulative route boundaries. Repeated sampler
-                // subtraction can leave a phantom residue after an exact such boundary.
                 if (!reachedPresent && elapsed >= oldLegEnd)
                 {
                     AddUnscaledCarPrefix(leg, leg.From, leg.To, leg.Minutes, leg.ServiceId, leg.Minutes);
@@ -349,10 +311,6 @@ namespace PersistentCity.Core
                             && measuredSample.LegFraction == 1);
                     if (sampledStart)
                     {
-                        // Folded offsets can put elapsed just beyond a boundary while the
-                        // unchanged sampler still reports the next leg at its exact start.
-                        // Anchor that old accounting residue to the measured start, without a
-                        // zero/tiny phantom prefix; retain the whole future leg (including waits).
                         mapping.Segments.Add((oldOffset, elapsed, newOffset, newOffset));
                         oldOffset = elapsed;
                         double duration = Duration(leg, leg.From, leg.To, leg.Minutes, legacy, walkSpeed, rate, ratio);
@@ -364,9 +322,6 @@ namespace PersistentCity.Core
                         throw new ArgumentException("A partial route cannot preserve its measured timing interval.");
                     if (original.Legs.Count == MaxLegs || (sampledEndpoint && RetainsFixedMinutes(leg)))
                     {
-                        // Preserve fixed wait minutes as one unchanged leg when the sampler
-                        // already exposes its next mode. The existing 512-leg fallback likewise
-                        // retains this one leg; later movement still receives native timing.
                         AddUnscaledCarPrefix(leg, leg.From, leg.To, leg.Minutes, leg.ServiceId, leg.Minutes);
                     }
                     else
@@ -374,25 +329,13 @@ namespace PersistentCity.Core
                         string splitService = SplitService(leg);
                         bool nativeTail = leg.Mode == TravelMode.Car && Position.Distance(leg.From, leg.To) > 0
                             && splitService.StartsWith("native:road:fragment1:", StringComparison.Ordinal);
-                        // Reuse the existing sampler's endpoint decision. A raw fractional
-                        // point can remain representable after the measured body pose has
-                        // already normalized to the next corner; keeping that tail moves it back.
                         var point = sampledEndpoint ? leg.To : Position.Lerp(leg.From, leg.To, remainingElapsed / leg.Minutes);
-                        // Iterative subtraction preserves the sampler's exact split pose, but
-                        // recombining its duration with preceding legs need not recover elapsed.
-                        // Anchor the old domain at the authoritative coordinate; its new endpoint
-                        // is the actual cumulative prefix duration, even when that differs by an ulp.
                         AddUnscaledCarPrefix(leg, leg.From, point, remainingElapsed, splitService, remainingElapsed, elapsed);
                         double oldTail = leg.Minutes - remainingElapsed;
                         if (sampledEndpoint || (nativeTail && point.Equals(leg.To)))
                         {
                             if (!sampledEndpoint && oldTail > CitySimulator.JourneyClockTolerance(elapsed, leg.Minutes))
                                 throw new ArgumentException("A material native road tail lost its representable geometry.");
-                            // The measured point already equals the endpoint, either in double
-                            // precision or by the unchanged physical sampler's boundary rule.
-                            // Keep its exact observed prefix and accounting coordinate. Collapse
-                            // only this sampled-complete residual's map; no zero-length moving
-                            // leg or extra old-time progress is submitted to the traffic kernel.
                             mapping.Segments.Add((oldOffset, oldLegEnd, newOffset, newOffset));
                             oldOffset = oldLegEnd;
                         }
@@ -419,18 +362,11 @@ namespace PersistentCity.Core
         {
             if (leg.ServiceId.StartsWith("native:road:v1:", StringComparison.Ordinal))
             {
-                // Mirror the native mapper's projection on a whole tagged edge. Distinct
-                // components alone do not prove a distinct directed coordinate on a slope.
                 double x = leg.To.X - leg.From.X, y = leg.To.Y - leg.From.Y, z = leg.To.Z - leg.From.Z;
                 double square = x * x + y * y + z * z;
                 double projected = ((point.X - leg.From.X) * x + (point.Y - leg.From.Y) * y + (point.Z - leg.From.Z) * z) / square;
                 if (!Position.Finite(square) || square <= 1e-12 || !Position.Finite(projected) || projected >= 1) return false;
             }
-            // A pre-existing fragment does not carry its original whole-edge origin. Refuse
-            // ambiguous near-end residues rather than snapping the measured pose. Native edges
-            // are at most 60 metres, so that lower scale also covers a missing origin near zero.
-            // Sixteen double epsilons cover endpoint interpolation and dot-product rounding;
-            // this is a refusal threshold, never a movement/progress allowance.
             double coordinate = Math.Max(60, Math.Max(Math.Max(Math.Abs(leg.From.X), Math.Abs(leg.To.X)),
                 Math.Max(Math.Max(Math.Abs(leg.From.Y), Math.Abs(leg.To.Y)), Math.Max(Math.Abs(leg.From.Z), Math.Abs(leg.To.Z)))));
             double resolution = 16 * 2.2204460492503131e-16 * coordinate;
@@ -448,8 +384,6 @@ namespace PersistentCity.Core
         private static double Duration(RouteLeg leg, Position from, Position to, double oldDuration, bool legacy, double walkSpeed, double rate, double ratio)
         {
             double distance = Position.Distance(from, to);
-            // Preparation, parking and station waits are policy in game minutes. Clock
-            // changes retime spatial movement, never the remaining portion of these waits.
             double value = RetainsFixedMinutes(leg) ? oldDuration
                 : !legacy ? oldDuration * ratio
                 : leg.Mode == TravelMode.Walk ? distance / walkSpeed * rate
@@ -467,8 +401,6 @@ namespace PersistentCity.Core
                 int.TryParse(parts[4], NumberStyles.None, CultureInfo.InvariantCulture, out int from) &&
                 int.TryParse(parts[5], NumberStyles.None, CultureInfo.InvariantCulture, out int to) && from != to)
                 return parts[2] == "fragment1" ? leg.ServiceId : "native:road:fragment1:" + parts[3] + ":" + parts[4] + ":" + parts[5];
-            // Preserve the old migration behavior for unrecognized native-looking metadata;
-            // malformed IDs never become trusted fragment provenance.
             return "";
         }
 

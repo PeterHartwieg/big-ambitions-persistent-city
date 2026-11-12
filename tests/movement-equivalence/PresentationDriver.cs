@@ -5,41 +5,21 @@ using PersistentCity.Core;
 
 namespace PersistentCity.MovementEquivalence;
 
-/// <summary>Native body lag. Ideal bodies move at nominal pace; Native adds a seeded walker pace of
-/// 0.8-1.0x and recurring blocking episodes; SlowHeadCar adds every fourth car body at 0.5x.</summary>
 public enum LagModel { Ideal, Native, SlowHeadCar }
 
-/// <summary>GR-9: which car body drives. Borrowed is the native Gley car (its own pace, capped by CommandLimit); Own is
-/// the mod's own kinematic car (Core OwnCarMotion: acceleration, cruise and braking to the same limit, real seconds).</summary>
 public enum CarBodies { Borrowed, Own }
 
 public sealed class DriverSettings
 {
     public int Pedestrians = 48, Vehicles = 24;
     public double RadiusMetres = 120;
-    /// <summary>Share of body acquisitions that fail after the lease was taken (native pool exhausted).</summary>
     public int AcquisitionFailurePercent;
     public LagModel Lag = LagModel.Native;
     public int Seed;
-    /// <summary>P-C comparison: walkers aim with the F2c rule (the logical pose on its own leg, re-aimed every
-    /// WalkerFollow.RetargetMetres) instead of one path per leg.</summary>
     public bool PoseAim;
     public CarBodies Cars = CarBodies.Borrowed;
 }
 
-/// <summary>Presentation driver double. It follows the rules that Runtime/PhysicalPopulation.cs uses for
-/// travelling persons: 0.25 s selection over the active-journey index with the same filters and priority
-/// order, at most four attempts per tick, a two-second retry, traffic admission before a car body. Nothing is
-/// leased. F2c walkers follow the logical pose with WalkerFollow (catch-up pace, never ahead), are moved to the
-/// logical pose beyond 8 m (the double has no camera, so every body is off screen), hand over at a mode boundary
-/// without the retry cooldown, and walk a 10 s arrival tail. F2d cars follow the kernel with CarFollow: the
-/// command (CommandLimit) caps them at the kernel's coordinate, a road corner is passed with Gley-style reached
-/// evidence and the corner handoff holds the turn, beyond 30 m they are released off screen and re-acquired at the
-/// logical pose, and at the parking point they hand over to a walker. Then the 1.4x release radius, release before
-/// hidden travel and the observe-before-save pass. Bodies are a position on the committed geometry that moves at a
-/// lag-model pace toward its native target; nothing here reads Unity.
-/// Not modelled (F2b's write paths): door queues, optional stops and their departure tail, outdoor scenes,
-/// ambient/RLO reservations and the interior view.</summary>
 public sealed class PresentationDriver
 {
     private sealed class Body
@@ -48,12 +28,10 @@ public sealed class PresentationDriver
         public Position Position;
         public double Pace = 1;
         public double BlockPhase;
-        // The native car's reached-waypoint marker (Gley): set when it reaches its target, consumed by Observe.
         public bool HasReached;
         public Position Reached;
         public Position Target;
         public bool HasTarget;
-        // GR-9 own car: its speed along the road, metres per second.
         public double Speed;
     }
     private sealed class Binding
@@ -63,11 +41,9 @@ public sealed class PresentationDriver
         public int ReachedCarLeg = -1;
         public Position ReachedCarMarker;
         public readonly PhysicalCornerHandoff CornerHandoff = new();
-        // F2c walker and F2d car follow.
         public Route? Journey;
         public double BodyMinutes, PaceFactor, TailUntil, LagMetres;
         public bool Tail, Handoff;
-        // Runtime Binding's walker destination: the leg it was aimed on, whether at the pose, and the point.
         public int TargetLeg = -1;
         public bool TargetIsPose;
         public Position TargetPoint;
@@ -82,7 +58,6 @@ public sealed class PresentationDriver
         public double LastAttempt { get; }
         public double Distance { get; }
         public int RosterIndex { get; }
-        // Runtime SelectionCandidate.ByPriority: least recently attempted, nearest, ordinal id, roster order.
         public static int Compare(Candidate a, Candidate b)
         {
             int order = a.LastAttempt.CompareTo(b.LastAttempt);
@@ -102,11 +77,8 @@ public sealed class PresentationDriver
 
     public long Acquired, Released, FailedAcquisitions, Observations;
     public long BodyFrames, WalkerFrames, CarFrames, ArrivalTails, HiddenFrames, HiddenReleases;
-    /// <summary>F2c walker and F2d car lag, corrections and handoffs, as Runtime's pc movement status reports them.</summary>
     public readonly WalkerMovementTelemetry Walking = new();
     public int MaxWalkers, MaxCars;
-    /// <summary>F5i: visitor bodies acquired, frames with a visitor body, the most bound at once, and every visitor
-    /// that ever had a body (ordinal set).</summary>
     public long VisitorAcquired, VisitorFrames;
     public int MaxVisitorBodies;
     public readonly SortedSet<string> AcquiredVisitors = new(StringComparer.Ordinal);
@@ -130,8 +102,6 @@ public sealed class PresentationDriver
     }
     private static double Unit(uint hash) => (hash >> 8) / 16777216.0;
 
-    /// <summary>Native movement for this frame, before the simulation advances, under the limits the
-    /// previous frame's observations left (Runtime: Gley and NavMesh move, CommandLimit gates cars).</summary>
     public void MoveBodies(double realSeconds, double gameMinutes)
     {
         realTime += realSeconds;
@@ -141,13 +111,9 @@ public sealed class PresentationDriver
             if (!body.Car)
             {
                 if (binding.Journey == null || !body.HasTarget || Blocked(body)) continue;
-                // Runtime WalkerFollow.CommandSpeed and BoundWalkers: never more than the lag in one frame. Clamped here
-                // directly, so walkers.aheadFrames is 0 by construction (it checks the accounting, not native movement).
                 Step(body, body.Target, Math.Min(binding.LagMetres, GridPlanner.WalkMetresPerMinute * body.Pace * binding.PaceFactor * gameMinutes));
                 continue;
             }
-            // CommandLimit: never past the kernel's coordinate on the car's own leg; a reported corner is driven through on
-            // the next leg's limit, and the corner handoff holds the turn while the kernel is short of it.
             if (!CarCommand(binding, out var own, out double cap) || own.Stationary || binding.CornerHandoff.MustHold(own, cap)) continue;
             var leg = own;
             if (binding.ReachedCarLeg != own.LegIndex && body.HasReached && Position.Distance(body.Reached, own.To) < 1e-9)
@@ -160,7 +126,6 @@ public sealed class PresentationDriver
             double metres;
             if (settings.Cars == CarBodies.Own)
             {
-                // Runtime PhysicalVehicles.Drive: the own car's step on its segment to the leg's corner, under the same limit.
                 var step = OwnCarMotion.Step(0, Position.Distance(body.Position, leg.To), body.Speed,
                     new PhysicalTrafficCommandLimit(leg.Direction, limit), realSeconds * body.Pace);
                 body.Speed = step.Speed; metres = step.Moved;
@@ -170,7 +135,6 @@ public sealed class PresentationDriver
         }
     }
 
-    // Runtime CarCommand: the car's own leg and its cap (the kernel's coordinate, never past its own car legs).
     private bool CarCommand(Binding binding, out PhysicalJourneySample own, out double cap)
     {
         own = default; cap = 0;
@@ -185,10 +149,8 @@ public sealed class PresentationDriver
         => simulation.TryGetTrafficPermission(c.Identity.Id, out var p) && p.LinkId.HasValue && !p.IsCompleted
             ? p.MaximumNominalMinutes : simulation.SampleJourney(c).ElapsedMinutes;
 
-    // Recurring blocking: 3 s of every 20 s of real time, at a seeded phase per body.
     private bool Blocked(Body body) => settings.Lag != LagModel.Ideal && (realTime + body.BlockPhase) % 20 < 3;
 
-    // True when the body stands on its target: Gley raises its reached marker for a car there.
     private static bool Step(Body body, Position target, double metres)
     {
         double distance = Position.Distance(body.Position, target);
@@ -201,7 +163,6 @@ public sealed class PresentationDriver
     }
     public const double ReachedMetres = 1e-6;
 
-    /// <summary>Runtime PhysicalPopulation.Update after AdvancePopulation.</summary>
     public void Update(Position focus, bool hiddenTravel)
     {
         frame++;
@@ -244,12 +205,10 @@ public sealed class PresentationDriver
             attempted[citizen.Identity.Id] = realTime;
             if (car && (!simulation.TryGetTrafficPermission(citizen.Identity.Id, out var admission)
                 || !admission.LinkId.HasValue || admission.IsCompleted)) continue;
-            // Nothing is leased: walkers and cars follow their journey from the logical pose.
             var binding = new Binding { Citizen = citizen, Journey = citizen.Journey, BodyMinutes = sample.ElapsedMinutes };
             if (settings.AcquisitionFailurePercent > 0
                 && Hash(citizen.Identity.Id, (uint)(settings.Seed * 7919 + ++acquisitionDraws)) % 100 < (uint)settings.AcquisitionFailurePercent)
             { FailedAcquisitions++; continue; }
-            // Runtime: a car spawns at the road sample of its journey pose, a walker at the selected position.
             binding.Body = NewBody(citizen, car, car ? sample.Position : candidate.Position);
             bindings.Add(citizen.Identity.Id, binding); Acquired++;
             if (citizen.IsVisitor) { VisitorAcquired++; AcquiredVisitors.Add(citizen.Identity.Id); }
@@ -282,8 +241,6 @@ public sealed class PresentationDriver
         BodyFrames += Walkers + Cars; WalkerFrames += Walkers; CarFrames += Cars;
     }
 
-    /// <summary>Runtime ObserveWalker for travelling persons: follow the logical pose, correct beyond 8 m or on a
-    /// mode change (always off screen here), hand over at a mode boundary, then the arrival tail.</summary>
     private bool ObserveWalker(Binding binding)
     {
         var citizen = binding.Citizen; var route = binding.Journey!; var body = binding.Body;
@@ -327,8 +284,6 @@ public sealed class PresentationDriver
         return true;
     }
 
-    // Runtime WalkLeg: one path per leg to the leg's corner (WalkerFollow.NeedsPath; every corner path succeeds here),
-    // counted as a path request. PoseAim: the F2c rule, the pose on its own leg re-aimed every RetargetMetres.
     private void Aim(Binding binding, PhysicalJourneySample own, double lag, PhysicalJourneySample logical)
     {
         binding.PaceFactor = own.Stationary || own.AtEnd ? 0 : WalkerFollow.PaceFactor(lag);
@@ -359,15 +314,11 @@ public sealed class PresentationDriver
         return binding.Journey != null && ObserveCar(binding);
     }
 
-    /// <summary>Runtime ObserveCar: advance the car's own progress (a corner only with reached evidence), take the lag,
-    /// hand over at the parking point, and correct beyond 30 m or once the kernel completed the traffic leg (always off
-    /// screen here: released and re-acquired at the logical pose).</summary>
     private bool ObserveCar(Binding binding)
     {
         var c = binding.Citizen; var route = binding.Journey!; var body = binding.Body;
         if (c.Phase != CitizenPhase.Travelling || !ReferenceEquals(c.Journey, route))
         {
-            // The journey ended while the car still drove: off screen it is released.
             Walking.Record(frame, c.Identity.Id, WalkerCorrectionKind.LagRelease, body.Position, route.Legs[route.Legs.Count - 1].To, false, car: true);
             return false;
         }
@@ -389,8 +340,6 @@ public sealed class PresentationDriver
             binding.LagFrame = frame; Walking.RecordCarLag(lag);
             if (lag > CarFollow.CatchUpMetres) Walking.CarCatchUpFrames++;
         }
-        // Runtime: the parking point is the end of the native road legs; the kerb connector and the parking pause after it
-        // are still the car's run, so a logical pose there is followed without a correction.
         if (after.AtEnd || !CarFollow.IsRoad(after)) { binding.Handoff = true; Walking.Handoffs++; Walking.CarHandoffs++; return false; }
         if (!CarFollow.NeedsCorrection(lag, CarFollow.SameCarRun(route, binding.BodyMinutes, logical.ElapsedMinutes))) return true;
         binding.Handoff = true;
@@ -399,7 +348,6 @@ public sealed class PresentationDriver
         return false;
     }
 
-    /// <summary>F5i: IDs of the visitors bound now, in ordinal order.</summary>
     public List<string> BoundVisitors()
     {
         var ids = bindings.Values.Where(b => b.Citizen.IsVisitor).Select(b => b.Citizen.Identity.Id).ToList();
@@ -407,7 +355,6 @@ public sealed class PresentationDriver
         return ids;
     }
 
-    /// <summary>F2e player double: the bodies following their journey this frame, in ordinal person order.</summary>
     public void Followed(List<(CitizenState Citizen, bool Car)> into)
     {
         foreach (var b in bindings.Values)
@@ -416,14 +363,11 @@ public sealed class PresentationDriver
         into.Sort((x, y) => StringComparer.Ordinal.Compare(x.Citizen.Identity.Id, y.Citizen.Identity.Id));
     }
 
-    /// <summary>Runtime ObserveForSave: observe every body and release those whose follow ended.</summary>
     public void BeforeSave()
     {
         foreach (var binding in bindings.Values.ToArray()) if (!Observe(binding)) Release(binding);
     }
 
-    /// <summary>Runtime BeforeAdvance during hidden travel (SuspendBeforeNativeFastForward): observe every
-    /// body for save, then release them all, before the simulation advances the hidden slice.</summary>
     public void SuspendBeforeHiddenAdvance()
     {
         HiddenReleases += bindings.Count;

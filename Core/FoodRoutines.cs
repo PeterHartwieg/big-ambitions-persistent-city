@@ -33,11 +33,6 @@ namespace PersistentCity.Core
         public List<FoodDistrictBudgetMix> HomeDistrictMixes { get; set; } = new List<FoodDistrictBudgetMix>();
     }
 
-    /// <summary>
-    /// Records completed presence intervals from the real population event engine. Travel,
-    /// opening waits and failed attendance supply no presence. Does not schedule or move anyone.
-    /// Use for an explicitly bounded diagnostic run; disposal unsubscribes without changing state.
-    /// </summary>
     public sealed class FoodRoutineRecorder : IDisposable
     {
         private readonly CitySimulator simulation;
@@ -77,7 +72,6 @@ namespace PersistentCity.Core
             { truncated = true; open.Clear(); return; }
             observedUntil = minute;
             Close(priorId, minute);
-            // Replacement residents do not inherit a departed resident's needs or identity.
             if (cohort.Contains(person.Identity.Id) && person.Phase == CitizenPhase.AtPlace && person.PlaceId.Length > 0)
                 open[person.Identity.Id] = new FoodActivitySpan { ConsumerId = person.Identity.Id, PlaceId = person.PlaceId,
                     Activity = person.Activity, From = minute };
@@ -128,9 +122,6 @@ namespace PersistentCity.Core
 
     public static class FoodRoutinePlanning
     {
-        /// <summary>Provisional break flexibility, not a native employment contract. Stable
-        /// per resident: 25% have 45 minutes, 60% an hour, 15% 75 minutes. The caller always
-        /// clips this allowance to actual presence and the next commitment.</summary>
         public static int BreakMinutes(string residentId, int seed, Activity activity)
         {
             if (activity != Activity.Work && activity != Activity.Study) return 75;
@@ -147,11 +138,6 @@ namespace PersistentCity.Core
             return Math.Max(day * 1440.0, Math.Min(day * 1440.0 + 1200, desired));
         }
 
-        /// <summary>
-        /// One purchased midday meal opportunity, not three invented restaurant meals or a nutrition model.
-        /// Wake-related appetite varies modestly by resident/day. Actual presence supplies origins and
-        /// departure deadlines. Work/study breaks are explicit provisional policy, not observed rosters.
-        /// </summary>
         public static FoodRoutinePlan Build(FoodRoutineCapture capture, int firstDay, int days, int? dailyAllowanceCents = null,
             bool allowOutsideOptions = true)
         {

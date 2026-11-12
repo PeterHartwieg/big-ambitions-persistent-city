@@ -109,7 +109,6 @@ public sealed class FoodDemandTests
     {
         var state = Scenario();
         state.Businesses.Single(b => b.Id == "far").Hours.ForEach(h => h.FromMinute = 750);
-        // 500 + 30*5 now costs more than 600 + 5*5.
         Assert.Equal("near", Finish(state).Intents.Single().BusinessId);
     }
 

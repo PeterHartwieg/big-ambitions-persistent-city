@@ -13,21 +13,17 @@ namespace PersistentCity.Core
         bool IsTrafficLinkClosed(int linkId);
     }
 
-    /// <summary>Optional validation scope for one synchronous closure refresh. Native state must not
-    /// change inside the scope; results must be discarded at End, including after an exception.</summary>
     public interface ITrafficClosureBatchPlanner
     {
         void BeginTrafficClosureBatch();
         void EndTrafficClosureBatch();
     }
 
-    /// <summary>Optional first-edge entry estimate for conservative interior curb admission.</summary>
     public interface ITrafficEntryRoutePlanner
     {
         void SetTrafficEntryForecast(Func<int, double, double, double, double>? forecast);
     }
 
-    /// <summary>Native-free structural snapshot. Boundary includes junctions, lane changes and access changes.</summary>
     public sealed class TrafficNetworkNode
     {
         public int Id { get; set; }
@@ -52,7 +48,6 @@ namespace PersistentCity.Core
         public double EndLinkFraction { get; }
     }
 
-    /// <summary>Finite directed sections. Storage/headway and periodic phases are declared policy, not measured native capacities.</summary>
     public sealed class TrafficNetwork
     {
         public const string PolicyId = "directed-sections-v1;max80m;storage6m;headway1.8s;native-periodic-groups";
@@ -117,12 +112,10 @@ namespace PersistentCity.Core
             bool Interior(int id)
             {
                 var node = nodes[id];
-                // A filtered/malformed branch is still a boundary; never infer an unbranched road from permission filtering.
                 return !node.Boundary && node.Signal == null && incoming[id] == 1 && rawIncoming[id] == 1 && outgoing[id].Count == 1
                     && node.Successors.Length == 1;
             }
             var visited = new HashSet<(int, int)>();
-            // Start at proven boundaries first. Remaining degree-one cycles break at their smallest native edge.
             foreach (var first in all.Where(e => !Interior(e.From)).Concat(all))
             {
                 if (visited.Contains((first.From, first.To))) continue;
@@ -182,21 +175,13 @@ namespace PersistentCity.Core
         public IReadOnlyList<int> NativeNodes(int linkId) => linkId >= 0 && linkId < linkNodes.Count
             ? linkNodes[linkId] : throw new ArgumentOutOfRangeException(nameof(linkId));
         public bool TryGetEdge(int from, int to, out TrafficNetworkEdge edge) => edges.TryGetValue((from, to), out edge);
-        /// <summary>A native node's position (GR-8 map edges).</summary>
         public Position NodePosition(int nodeId) => positions.TryGetValue(nodeId, out var at) ? at : throw new ArgumentOutOfRangeException(nameof(nodeId));
 
-        /// <summary>Offsets address the full committed route. Native fragments preserve directed edge provenance after retiming.</summary>
         public bool TryMap(Route route, out List<TrafficRouteLeg> mapped) => TryMapCore(route, 0, false, out mapped);
 
-        /// <summary>
-        /// Maps only uncompleted native road geometry, clipping the current whole edge or explicit
-        /// native fragment. Legacy untagged fragments and ordinary connectors remain outside traffic;
-        /// callers advance to the first returned StartNominalMinutes before admission.
-        /// </summary>
         public bool TryMapRemaining(Route route, double progress, out List<TrafficRouteLeg> mapped) =>
             TryMapCore(route, progress, true, out mapped);
 
-        /// <summary>One mapped traffic span, as TryMapRemaining would return it, without allocating a leg object.</summary>
         internal struct MappedSpan
         {
             public int LinkId;
@@ -205,7 +190,6 @@ namespace PersistentCity.Core
 
         [ThreadStatic] private static List<MappedSpan>? mappingScratch;
 
-        /// <summary>TryMapRemaining into a caller-owned buffer, cleared first and left empty on failure.</summary>
         internal bool TryMapRemainingSpans(Route route, double progress, List<MappedSpan> spans) =>
             TryMapSpans(route, progress, true, spans);
 
@@ -301,12 +285,6 @@ namespace PersistentCity.Core
             return startFraction < endFraction;
         }
 
-        /// <summary>
-        /// Read-only save binding check. Every claimed nominal span must follow the directed section
-        /// geometry, including its intermediate corners. Timing may change and a current native edge
-        /// may have been split into explicit native fragments; geometry and retained edge provenance must agree.
-        /// Legacy untagged fragments can still substantiate an individual geometric claim.
-        /// </summary>
         public void ValidateMapping(Route journey, IReadOnlyList<TrafficRouteLeg> traffic)
         {
             if (journey == null || journey.Legs == null || journey.Legs.Count == 0 || traffic == null || traffic.Count == 0)
@@ -369,11 +347,6 @@ namespace PersistentCity.Core
             }
         }
 
-        /// <summary>
-        /// Binding requires complete future native road ownership and committed section-uniform
-        /// travel duration, bounded by the reviewed native slowdown, in addition to valid individual geometry claims. Completed timing may belong to an older
-        /// clock rate. An ULP-scale nominal gap is tolerated only when its omitted road distance is also tiny.
-        /// </summary>
         public void ValidateRemainingMapping(Route journey, IReadOnlyList<TrafficRouteLeg> traffic, double progress)
         {
             ValidateMapping(journey, traffic);
@@ -391,8 +364,6 @@ namespace PersistentCity.Core
                 double end = offset + leg.Minutes;
                 if (end > progress && leg.ServiceId.StartsWith("native:road:", StringComparison.Ordinal))
                 {
-                    // Missing claims cannot hide malformed native tags or replace real edge length
-                    // with a forged tiny nominal duration when checking harmless clock roundoff.
                     if (!TryRoadLeg(leg, out _, out _, out _))
                         throw new ArgumentException("Invalid future native road geometry.");
                     double edgeMetres = Position.Distance(leg.From, leg.To);
@@ -418,8 +389,6 @@ namespace PersistentCity.Core
             }
         }
 
-        /// <summary>Shared exact binding gate for committed nominal duration, including only its
-        /// established relative and nominal-coordinate arithmetic allowance.</summary>
         internal static void ValidateCommittedSpanTiming(TrafficRouteLeg span)
         {
             double committed = span.EndNominalMinutes - span.StartNominalMinutes;
@@ -440,8 +409,6 @@ namespace PersistentCity.Core
             double clockNoise = 8 * doubleEpsilon * Math.Max(Math.Abs(span.StartNominalMinutes), Math.Abs(span.EndNominalMinutes));
             ValidateCommittedSpanTiming(span);
 
-            // Use the largest unfinished committed fragment as the density reference. A tiny
-            // cropped kernel residual must not amplify subtraction noise into a new road speed.
             var pieces = new List<(RouteLeg Leg, double Metres)>();
             RouteLeg? reference = null;
             double referenceMetres = 0, offset = 0;
@@ -463,8 +430,6 @@ namespace PersistentCity.Core
             double density = reference.Minutes / referenceMetres;
             foreach (var piece in pieces)
             {
-                // Retiming interpolates a fragment endpoint in double precision. Limit the
-                // numerical exception to that coordinate roundoff, never the geometry tolerance.
                 double coordinate = Math.Max(1, Math.Max(Math.Max(Math.Abs(piece.Leg.From.X), Math.Abs(piece.Leg.To.X)),
                     Math.Max(Math.Max(Math.Abs(piece.Leg.From.Y), Math.Abs(piece.Leg.To.Y)),
                         Math.Max(Math.Abs(piece.Leg.From.Z), Math.Abs(piece.Leg.To.Z)))));
@@ -515,8 +480,6 @@ namespace PersistentCity.Core
                     cursor = next;
                     return true;
                 }
-                // Every intervening native corner must lie on this directed committed segment.
-                // A chord through a turn or a collinear reversal cannot prove native road traversal.
                 if (!TryProjectSegment(end, from, to, out double along) || along < previousAlong) return false;
                 previousAlong = along;
                 cursor = segmentEnd;
@@ -535,8 +498,6 @@ namespace PersistentCity.Core
             return Position.Finite(projected) && Near(point, Position.Lerp(from, to, fraction));
         }
 
-        // The leg decoded its tag when ServiceId was set; only the topology is compared here, in place,
-        // so a tag from another network still fails and the caller falls back as before.
         private bool TryTag(RouteLeg leg, out int from, out int to, out bool fragment)
         {
             from = to = -1;
@@ -554,8 +515,6 @@ namespace PersistentCity.Core
         private static void WriteSignal(BinaryWriter writer, TrafficSignalSchedule? s, double clockRate)
         {
             writer.Write(s != null);
-            // Structural identity uses native seconds. Round sub-picosecond conversion noise away so a
-            // pure clock-rate retime does not look like a different road network.
             if (s != null) { writer.Write(Math.Round(s.CycleMinutes / clockRate, 12)); writer.Write(Math.Round(s.GreenStartMinutes / clockRate, 12)); writer.Write(Math.Round(s.GreenDurationMinutes / clockRate, 12)); writer.Write(Math.Round(s.PhaseOffsetMinutes / clockRate, 12)); }
         }
     }

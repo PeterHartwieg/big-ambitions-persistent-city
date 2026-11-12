@@ -10,23 +10,14 @@ using Xunit.Abstractions;
 
 namespace PersistentCity.Tests.Acceptance
 {
-    /// <summary>Faults the loop oracles must catch: each makes the run throw <see cref="CityViolation"/>.</summary>
     public enum LoopFault { None,
-        /// <summary>The native books lose a paid order at commit, so the resident paid for nothing.</summary>
         LostBooking,
-        /// <summary>A refused purchase moves one cent from the wallet to discretionary spending (the wallet stays conserved).</summary>
         DebitOnRefusal }
 
-    /// <summary>The mid-loop states the loop reload arm saves and loads at.</summary>
     internal enum LoopReload {
-        /// <summary>A resident who has earned wages travels to the goods shop for a planned need visit.</summary>
         NeedTrip,
-        /// <summary>Right after the first paid receipt.</summary>
         AfterPaid }
 
-    /// <summary>GR-4 (J1): the purchase market on an F9c arm. Two shops outside every food scope join the city as player
-    /// businesses the market serves (the fixture's own shops are food scopes in city-m): a self-service clothing store whose optional basket trims to the ceiling, and a jewellery store
-    /// whose one mandatory line is above every wallet tier's band, so each visit there is refused at the ceiling.</summary>
     internal sealed record CityLoop(LoopFault Fault = LoopFault.None)
     {
         public const string Goods = "shop:loop-goods", Jewellery = "shop:loop-jewellery";
@@ -38,17 +29,13 @@ namespace PersistentCity.Tests.Acceptance
             new("ba:itemname_socks", Money.FromCents(600), false),
             new("ba:itemname_jeans", Money.FromCents(4000), false),
         };
-        /// <summary>Above the upper tier's band ($160): never inside a ceiling.</summary>
         public static readonly PurchaseLine[] JewelleryBasket = { new("ba:itemname_ring", Money.FromCents(45000), true) };
     }
 
     internal sealed partial record CityArm
     {
-        /// <summary>The purchase market on this arm; null: the F9c arm without one.</summary>
         public CityLoop? Loop { get; init; }
 
-        /// <summary>The loop arms: the synchronously drained loop reference, two cadences (30/32/4 and 120/128/2) and the
-        /// reload arm, which saves and loads at every F9c in-flight state and at each <see cref="LoopReload"/> state.</summary>
         public static IEnumerable<CityArm> LoopArms() => new[]
         {
             ReferenceArm with { Name = "loop-reference", Loop = new CityLoop() },
@@ -58,17 +45,13 @@ namespace PersistentCity.Tests.Acceptance
         };
     }
 
-    /// <summary>One request the market opened, as the simulator finished it.</summary>
     internal sealed record LoopPurchase(long Minute, string Resident, string Venue, PurchaseRefusal Refusal, long TotalCents, int NativeCalls);
 
-    /// <summary>What the loop did over one arm.</summary>
     internal sealed class CityLoopStats
     {
         public readonly List<LoopPurchase> Purchases = new();
-        /// <summary>Residents seen setting off for a served venue, with the first minute.</summary>
         public readonly Dictionary<string, double> Travelled = new(StringComparer.Ordinal);
         public readonly List<(LoopReload State, double Minute, string Resident)> Reloads = new();
-        /// <summary>The need trip reload's resident: wages earned before it, and the plan item it travelled for.</summary>
         public long TripEmploymentUnits;
         public PlanItem? TripItem;
         public long BookedOrders;
@@ -82,14 +65,11 @@ namespace PersistentCity.Tests.Acceptance
         public CityLoopStats? Loop;
     }
 
-    /// <summary>The native side of the purchase market: the venues' baskets and capacity, the saved receipt store and the
-    /// native books. It lives outside the saved city; a reload copies the receipts as the native save carries them.</summary>
     internal sealed class CityLoopMarket : IPurchaseMarket
     {
         private static readonly string[] Served = { CityLoop.Goods, CityLoop.Jewellery };
         public readonly CityLoop Spec;
         public Dictionary<string, string> Store = new(StringComparer.Ordinal);
-        /// <summary>Booked native orders: key, resident, venue and the total in cents.</summary>
         public readonly List<(string Key, string Resident, string Venue, long Cents)> Books = new();
         public CityLoopMarket(CityLoop spec) { Spec = spec; }
 
@@ -97,7 +77,6 @@ namespace PersistentCity.Tests.Acceptance
         public IReadOnlyList<string> Venues => Served;
         public IDictionary<string, string> Receipts => Store;
 
-        /// <summary>The open request of the running unit, read back when the simulator observes the person.</summary>
         public Opened? Current;
         public Opened? Finished;
         internal sealed class Opened
@@ -138,7 +117,6 @@ namespace PersistentCity.Tests.Acceptance
 
         private void ServedInHour(PurchaseRequest request, out int served)
         {
-            // From the saved receipts, as Runtime counts it, so the hourly count survives a reload.
             PurchaseContract.ServedInHour(Store, request.Minute / 60).TryGetValue(PurchaseContract.Building(request.VenueId), out served);
         }
 
@@ -195,7 +173,6 @@ namespace PersistentCity.Tests.Acceptance
         partial void LoopPrepare(CityState state)
         {
             if (arm.Loop == null) return;
-            // The same shops on every loop arm, next to the fixture's shops; after a load they are already saved.
             void Add(string id, string name, string type, Position at)
             {
                 if (state.Places.Any(p => p.Id == id)) return;
@@ -214,13 +191,11 @@ namespace PersistentCity.Tests.Acceptance
         partial void LoopAttach()
         {
             if (arm.Loop == null) return;
-            // Every reload (F9c's and the loop's) passes here: no purchase may still wait for its check.
             if (loop != null) LoopAllVerified(arm.Name + " reload at " + CityOracles.M(clock));
             loop = loop == null ? new CityLoopMarket(arm.Loop) : loop.Loaded();
             var byId = city.State.Citizens.ToDictionary(c => c.Identity.Id, StringComparer.Ordinal);
             loop.WalletOf = id => byId.TryGetValue(id, out var c) ? c.Wallet : city.State.Citizens.FirstOrDefault(p => p.Identity.Id == id)?.Wallet;
             city.AttachPurchases(loop);
-            // The simulator observes the person at the end of the event that bought, after the contract returned.
             city.ActivityObserved += LoopObserved;
         }
 
@@ -242,9 +217,6 @@ namespace PersistentCity.Tests.Acceptance
                 + "|" + CityOracles.Wallet(done.Wallet) + "|" + (done.Wallet?.Ledger.Discretionary.Units ?? 0));
         }
 
-        /// <summary>One purchase as the oracles see it: a bought one moved exactly its paid total out of the wallet, into
-        /// discretionary spending and into one native order; a refused one moved nothing, wrote no receipt and booked nothing,
-        /// and a ceiling refusal never reached the native side.</summary>
         private void LoopVerify(CityLoopMarket.Opened done, PurchaseResult result)
         {
             string key = done.Request.Key, context = arm.Name + " purchase " + key;
@@ -265,7 +237,6 @@ namespace PersistentCity.Tests.Acceptance
             if (result.Refusal == PurchaseRefusal.Ceiling && done.Native.Calls != 0) throw new CityViolation(context + ": ceiling refusal reached the native side");
         }
 
-        /// <summary>Hourly: the paid receipts, the native books and every resident's discretionary spending hold the same money.</summary>
         partial void LoopCheckpoint(string context)
         {
             if (loop == null) return;
@@ -315,15 +286,12 @@ namespace PersistentCity.Tests.Acceptance
             if (loaded.Plan == null || !plan.SameAs(loaded.Plan)) throw new CityViolation(context + ": plan changed");
             if (CityOracles.Wallet(loaded.Wallet) + "|" + loaded.Wallet!.Ledger.Discretionary.Units != wallet) throw new CityViolation(context + ": wallet changed");
             if (loaded.Phase + "|" + loaded.DestinationId + "|" + loaded.PlaceId + "|" + CityOracles.M(loaded.NextEventMinute) != where) throw new CityViolation(context + ": journey changed");
-            // Modelled: the receipts live in the native save's mod data, which this harness carries as a dictionary copy
-            // (CityLoopMarket.Loaded), so this holds by construction; the in-game reload check covers the real store.
             if (!receipts.SequenceEqual(loop!.Store.OrderBy(p => p.Key, StringComparer.Ordinal))) throw new CityViolation(context + ": receipts changed");
             stats.Reloads.Add((state, city.View.Minute, id));
             pendingLoopReloads.Remove(state);
             reloaded = true;
         }
 
-        /// <summary>The first resident (by ID) who has earned wages and is travelling to the goods shop for a planned need item.</summary>
         private CitizenState? Traveller()
         {
             CitizenState? best = null;
@@ -345,7 +313,6 @@ namespace PersistentCity.Tests.Acceptance
             return null;
         }
 
-        /// <summary>Every opened purchase was read back and verified at its event's observation.</summary>
         private void LoopAllVerified(string context)
         {
             var open = loop!.Finished ?? loop.Current;
@@ -366,11 +333,6 @@ namespace PersistentCity.Tests.Acceptance
 
 namespace PersistentCity.Tests
 {
-    /// <summary>GR-4 (J1, plan next-tracks.md "GR-4"): one whole loop in the F9c city at today's population. A resident
-    /// earns wages, plans a need visit to a player goods shop, travels there, buys through the purchase contract, pays from
-    /// the wallet, and the city reloads mid-loop and continues. The loop arms equal their synchronously drained reference
-    /// on every F9c oracle (ledger with every purchase, day saves, native orders, final save); money is conserved across the
-    /// paid receipts, the native books and the wallets; a ceiling refusal moves nothing.</summary>
     [Collection(StreetFoodHooks.Collection)]
     public sealed class J1WholeLoopTests : IClassFixture<J1WholeLoopTests.Runs>
     {
@@ -419,7 +381,6 @@ namespace PersistentCity.Tests
             var run = runs.Run(size, "loop-reference");
             var loop = run.Loop!;
             var bought = loop.Bought.ToList();
-            // Purchases happen at the goods shop, through the contract, and every one was verified as it finished.
             Assert.True(bought.Count >= minimumBought, "bought " + bought.Count);
             Assert.All(bought, p => Assert.Equal(CityLoop.Goods, p.Venue));
             Assert.All(bought, p => Assert.InRange(p.TotalCents, 1, 7100));
@@ -427,19 +388,14 @@ namespace PersistentCity.Tests
             Assert.Equal(loop.PaidUnits, loop.BookedUnits);
             Assert.Equal(loop.PaidUnits, loop.DiscretionaryUnits);
             Assert.True(loop.PaidUnits > 0);
-            // Food sales still run alongside.
             Assert.True(run.Orders.Count > minimumFoodOrders, "food orders " + run.Orders.Count);
-            // The ceiling: every jewellery visit (and a goods visit from a wallet below the cheapest line) is refused before the
-            // native side and moved nothing (checked per purchase).
             var ceiling = loop.Purchases.Where(p => p.Refusal == PurchaseRefusal.Ceiling).ToList();
             Assert.NotEmpty(ceiling);
             Assert.All(ceiling, p => Assert.Equal((0, 0L), (p.NativeCalls, p.TotalCents)));
             Assert.Contains(ceiling, p => p.Venue == CityLoop.Jewellery);
             Assert.DoesNotContain(loop.Purchases, p => p.Venue == CityLoop.Jewellery && p.Refusal == PurchaseRefusal.None);
-            // A refused need is deferred: the resident's jewellery need is due again the next day.
             var refused = run.State.Citizens.Where(c => c.Needs?.Find(CityLoop.Jewellery_Type)?.Deferrals > 0).ToList();
             Assert.NotEmpty(refused);
-            // Residents who bought carry the goods need with its last venue, due again after the interval.
             foreach (var p in bought)
             {
                 var need = run.State.Citizens.Single(c => c.Identity.Id == p.Resident).Needs!.Find(CityLoop.Clothing)!;
@@ -461,11 +417,9 @@ namespace PersistentCity.Tests
         {
             var run = runs.Run(size, "loop-reload");
             var loop = run.Loop!;
-            // Both loop states were saved and loaded (needs, plan, journey, wallet and receipts checked on the loaded city).
             Assert.Equal(new[] { LoopReload.NeedTrip, LoopReload.AfterPaid }, loop.Reloads.Select(r => r.State).OrderBy(s => s));
             foreach (CityReload state in Enum.GetValues(typeof(CityReload))) Assert.Contains(run.Reloads, r => r.State == state);
             var trip = loop.Reloads.Single(r => r.State == LoopReload.NeedTrip);
-            // The one resident: earned wages, planned the need visit, was on the way at the reload, then bought and paid.
             Assert.True(loop.TripEmploymentUnits > 0);
             Assert.NotNull(loop.TripItem);
             Assert.Equal((PlanItemKind.Need, CityLoop.Goods), (loop.TripItem!.Kind, loop.TripItem.VenueId));
@@ -486,7 +440,6 @@ namespace PersistentCity.Tests
             new object[] { LoopFault.DebitOnRefusal, "moved the wallet" },
         };
 
-        /// <summary>The loop oracles see a broken purchase: a lost native booking and a refusal that debits.</summary>
         [Theory, Trait("Size", "city-s"), MemberData(nameof(Faults))]
         public void TheLoopOraclesCatchABrokenPurchase(LoopFault fault, string message)
         {

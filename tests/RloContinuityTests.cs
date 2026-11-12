@@ -15,11 +15,6 @@ using Stopwatch = System.Diagnostics.Stopwatch;
 
 namespace PersistentCity.Tests
 {
-    /// <summary>F8d (docs/plans/f8-capability-boundaries.md D6 option B): after activation the saved donor catalogue is
-    /// authoritative. Transient RLO answers (Off, NotYet, Refreshing) continue and save; a different catalogue and Shared,
-    /// Failed or Incompatible stop as before. Through the stand-in CityApi (RloBridgeTests) and the reviewed reflection
-    /// contract's stand-in (RloCompatibilityTests). Red on the base code for the transient cases: there every non-Ready
-    /// read failed MatchesPopulation and stopped the running city.</summary>
     [Collection(RloCompatibilityTests.SharedFlareState)]
     public sealed class RloContinuityTests
     {
@@ -61,7 +56,6 @@ namespace PersistentCity.Tests
             return Convert.ToHexString(sha.ComputeHash(Encoding.UTF8.GetBytes(text.ToString())));
         }
 
-        /// <summary>The save step's gate (PersistentCityMod.CaptureSteps): continue or refuse, then the unchanged writer.</summary>
         private static string? SaveAfter(RloReadResult read, CityState state) => DonorReads.Continues(read.Continuity(state)) ? SaveCodec.Write(state) : null;
 
         [Theory]
@@ -80,10 +74,8 @@ namespace PersistentCity.Tests
             var read = adapter.Read(rlo);
             Assert.Equal(reason, read.Reason);
             Assert.Equal(continuity, read.Continuity(state));
-            // The four statuses and their messages are unchanged; only the class is new.
             Assert.Equal(status == 0 ? RloReadStatus.Ready : status == 5 ? RloReadStatus.Incompatible : RloReadStatus.NotReady, read.Status);
             if (status == 5) Assert.Equal("ContractException: RLO's CityApi reported a fault.", read.Message);
-            // Red on the base code: the base periodic check stopped on any read that does not match.
             if (continuity == DonorContinuity.Transient) { Assert.False(read.MatchesPopulation(state)); Assert.True(DonorReads.Continues(continuity)); }
             else Assert.Equal(continuity == DonorContinuity.Match, DonorReads.Continues(continuity));
         }
@@ -121,7 +113,6 @@ namespace PersistentCity.Tests
             Assert.Equal(DonorContinuity.Different, different.Continuity(state));
             Assert.Null(SaveAfter(different, state));
             Assert.Equal(kept, data[SaveStore.StateKey]);
-            // The next load refuses it too (activation stays strict).
             Assert.False(different.MatchesPopulation(SaveCodec.Read(kept).State!));
         }
 
@@ -141,8 +132,7 @@ namespace PersistentCity.Tests
                 CityApiHooks.CitizensStatus = status;
                 var read = adapter.Read(rlo);
                 Assert.Equal(DonorContinuity.Transient, read.Continuity(state));
-                Assert.Empty(read.Identities); // nothing from RLO enters the city during the window
-                // A save in the window equals a Ready save of the same state, byte for byte.
+                Assert.Empty(read.Identities);
                 Assert.Equal(readySave, SaveAfter(read, state));
                 Assert.Equal(digest, IdentityDigest(state));
                 Assert.Equal(residents, state.Citizens.Count);
@@ -151,7 +141,6 @@ namespace PersistentCity.Tests
             var back = adapter.Read(rlo);
             Assert.Equal(DonorContinuity.Match, back.Continuity(state));
 
-            // Reload with the matching RLO continues; with a different RLO world it refuses.
             var loaded = SaveCodec.Read(readySave);
             Assert.Equal(SaveReadStatus.Loaded, loaded.Status);
             Assert.True(back.MatchesPopulation(loaded.State!));
@@ -168,7 +157,6 @@ namespace PersistentCity.Tests
             var ready = adapter.Read(rlo);
             var guard = new RloPhysicalReservations(rlo, ready.Identities);
             Assert.True(guard.Ready, guard.LastError);
-            // Sol-r2-3: the guard records its own last result, which the report reads (no extra read).
             Assert.True(RloPhysicalReservations.Last!.Ready && RloPhysicalReservations.Last.Complete);
             CityApiHooks.ReservedStatus = CityApiHooks.BodiesStatus = 1;
             guard.Update();
@@ -183,7 +171,6 @@ namespace PersistentCity.Tests
                 var inputs = CapabilityReportTests.Healthy(); inputs.ReservationsComplete = false;
                 Assert.Equal(CapabilityState.Off, CapabilitySnapshot.Build(inputs).State(CapabilityId.RloReservations));
             }
-            // Bodies answer Failed while citizens are Ready: the guard stops; the donor read is untouched by it.
             CityApiHooks.ReservedStatus = 0; CityApiHooks.BodiesStatus = 5;
             guard.Update();
             var stopped = RloPhysicalReservations.Last!;
@@ -194,7 +181,6 @@ namespace PersistentCity.Tests
             var built = CapabilitySnapshot.Build(report);
             Assert.Equal(CapabilityState.Off, built.State(CapabilityId.RloReservations));
             Assert.Equal(CapabilityState.Active, built.State(CapabilityId.RloDonor));
-            // Road speeds: Off is "no slowdowns"; NotYet and Refreshing are refused (the recorded downstream effect).
             CityApiHooks.LanesStatus = 1;
             Assert.Empty(new RloRoadSpeedOverrides(rlo).Capture());
             foreach (int status in new[] { 2, 3 })
@@ -245,7 +231,6 @@ namespace PersistentCity.Tests
             Assert.Equal(CapabilityState.Active, registry.State(CapabilityId.RloReservations));
             Assert.Equal(CapabilityState.Active, registry.State(CapabilityId.RloRoadSpeeds));
 
-            // Astra-r1-2: a transient donor answer says nothing about the other reads; each reports its own result.
             inputs.RloReason = DonorReadReason.Refreshing;
             registry = CapabilitySnapshot.Build(inputs);
             Assert.Equal(CapabilityState.Active, registry.State(CapabilityId.RloReservations));
@@ -255,13 +240,11 @@ namespace PersistentCity.Tests
             Assert.Contains("Route preparation waits for a complete answer; the city keeps running and saving.", registry.Reason(CapabilityId.RloRoadSpeeds));
             Assert.True(registry.IsEnabled(CapabilityScope.MarketResearch));
             Assert.False(registry.IsEnabled(CapabilityScope.RouteTiming));
-            // A Ready donor read can coexist with a waiting road-speed read.
             inputs.RloReason = DonorReadReason.Ready;
             Assert.Equal(CapabilityState.Off, CapabilitySnapshot.Build(inputs).State(CapabilityId.RloRoadSpeeds));
             Assert.Equal(CapabilityState.Active, CapabilitySnapshot.Build(inputs).State(CapabilityId.RloDonor));
             inputs.RloReason = DonorReadReason.Refreshing; inputs.RoadSpeedWaiting = null;
 
-            // Before a city: a transient answer holds the start (TryStart waits); Shared stops it.
             inputs.CityActive = false;
             Assert.Equal("start waiting (rlo.donor transient)", CapabilitySnapshot.Context(inputs));
             Assert.Contains("Persistent City waits for RLO before it starts.", CapabilitySnapshot.Build(inputs).Reason(CapabilityId.RloDonor));
@@ -272,7 +255,6 @@ namespace PersistentCity.Tests
             Assert.Equal(CapabilityState.Absent, CapabilitySnapshot.Build(inputs).State(CapabilityId.RloRoadSpeeds));
         }
 
-        /// <summary>Plan section 6, F8d: classification cost per 30 s read (the read itself is RLO's and already logged).</summary>
         [Fact]
         public void ClassificationCostPerRead()
         {

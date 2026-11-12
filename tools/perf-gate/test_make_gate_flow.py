@@ -1,4 +1,3 @@
-"""F4d offline checks: python -m unittest discover -s tools/perf-gate -p test_*.py"""
 import copy
 import json
 import re
@@ -15,11 +14,10 @@ import make_gate_flow as gen  # noqa: E402
 
 FIXTURES, SCRIPTS, CONTRACT, DIGEST = gen.load_inputs()
 
-# Written out by hand from the plan, not read from the generator, so the tests do not check the generator against itself.
 LOADS = {'process.launch', 'ft.load', 'fixture.stress'}
 TIME_JUMPS = LOADS | {'ft.save', 'time_machine.skip', 'fixture.produce'}
-PROBE_LABEL = re.compile(r'^[A-Za-z0-9._-]{1,64}$')  # F4b StartMeasurement (Probe.cs)
-PLAN_PENDING = {  # docs/plans/f4-perf-gate.md section 7, the pending capabilities named per check
+PROBE_LABEL = re.compile(r'^[A-Za-z0-9._-]{1,64}$')
+PLAN_PENDING = {
     'G1': {'RIG-FOREGROUND', 'RIG-PRIORITY'},
     'G2': {'RIG-PERF-UNION'},
     'G3': {'RIG-PRESENT'},
@@ -34,7 +32,7 @@ PLAN_PENDING = {  # docs/plans/f4-perf-gate.md section 7, the pending capabiliti
     'G14': {'RIG-PERF-UNION'},
     'G15': {'RIG-PCFIX', 'RIG-PERF-UNION', 'RIG-PRESENT'},
 }
-OP_NEEDS = {  # op prefix or name -> the pending capability the plan says it needs
+OP_NEEDS = {
     'probe.': 'RIG-PERF-UNION', 'trace.': 'RIG-PRESENT', 'settings.': 'RIG-FOREGROUND', 'priority.': 'RIG-PRIORITY',
     'sampler.': 'RIG-PRIORITY', 'pcconfig.': 'RIG-PCCONFIG', 'fixture.shops': 'RIG-SHOPFIX',
     'fixture.stress': 'RIG-PCFIX', 'drive.': 'RIG-DRIVE', 'ui.': 'RIG-UI-SCRIPT', 'shop.edit_price': 'RIG-SHOPEDIT',
@@ -132,8 +130,6 @@ class WindowLengthTests(unittest.TestCase):
             terms = run['until']['all']
             self.assertTrue(all(len(t) == 1 for t in terms), 'stop terms are all-of, so none can end the window early')
             if w['matched']:
-                # Matched pairs stop at the game span only; it covers the floor even at the fast pace bound,
-                # and a window that still ends short is reported short.
                 self.assertEqual([list(t) for t in terms], [['game_minutes_since_start_at_least']], w['id'])
                 self.assertGreaterEqual(terms[0]['game_minutes_since_start_at_least'] * fast, floor, w['id'])
                 self.assertGreaterEqual(run['until']['short_if_clean_real_seconds_below'], floor, w['id'])
@@ -144,7 +140,6 @@ class WindowLengthTests(unittest.TestCase):
                 self.assertGreaterEqual(clean[0], floor, w['id'])
                 planned = clean[0]
             self.assertGreater(run['until']['abort_after_real_seconds'], planned)
-            # Warm-up: the last load before the window, then readiness, then >= 60 s discarded, then the start.
             start = index_of(first_start(w['id']))
             last_load = max(index_of(s) for s in STEPS[:start] if s['op'] in LOADS)
             between = STEPS[last_load:start]
@@ -215,7 +210,7 @@ class WindowLengthTests(unittest.TestCase):
             i = index_of(a)
             last_load = max((j for j in range(i) if STEPS[j]['op'] in LOADS and STEPS[j]['process'] == a['process']))
             if STEPS[last_load]['op'] == 'process.launch':
-                continue  # re-arm in the same scene (G2), no load in between
+                continue
             done = [j for j in range(last_load, i) if STEPS[j]['op'] == 'native.load_done']
             self.assertTrue(done, f"probe.arm {a['id']} before the native load finished")
 
@@ -470,8 +465,6 @@ class LifecycleTests(unittest.TestCase):
         self.assertEqual(index_of(releases[-1]), len(STEPS) - 1)
 
     def test_producer_schema_pin_forces_a_pending_producer(self):
-        # produce_fixture.py refuses a Ready save whose schema is not its pinned literal; the current writer differs,
-        # so the flow must not claim that tool as an existing capability.
         source = (HERE.parent / 'e5b-native-rig-proof' / 'produce_fixture.py').read_text(encoding='utf-8')
         pin = re.search(r"saved_schema'\)!=(\d+)", source)
         name_rule = re.search(r"startswith\('(FT E5b )'\)", source)

@@ -11,8 +11,6 @@ namespace PersistentCity.Tests;
 
 internal sealed record CorpusFixture(int Schema, string File, string Sha256, string Text);
 
-/// <summary>The writer's golden payloads. The schema is held at 1 until release (docs/decisions/2026-11-09-schema-one.md),
-/// so there is one folder, <c>schema-01</c>; older development payloads are not kept.</summary>
 internal static class ReaderCorpus
 {
     public const string Folder = "ReaderCorpus";
@@ -27,7 +25,6 @@ internal static class ReaderCorpus
 
     private static readonly UTF8Encoding StrictUtf8 = new(encoderShouldEmitUTF8Identifier: false, throwOnInvalidBytes: true);
 
-    /// <summary>Loads the writer's folder. A missing manifest, a missing file or a changed byte throws.</summary>
     public static IReadOnlyList<CorpusFixture> Load() => Load(Root);
 
     public static IReadOnlyList<CorpusFixture> Load(string root)

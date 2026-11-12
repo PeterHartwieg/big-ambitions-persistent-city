@@ -8,19 +8,15 @@ using PersistentCity.Core;
 
 namespace PersistentCity.Persistence
 {
-    // F5c-lite (city audit F5 #92): writer 26, the person shape. docs/save-format.md describes the wire.
-    // There is no migration: a city whose schema is not CityState.CurrentSchema is refused unchanged.
     public static partial class SaveCodec
     {
         public const string DevelopmentSchemaMessage = "This Persistent City save was created by an older development build; start a new city. The saved state is kept unchanged.";
 
-        // Named schema-26 bounds (plan section 5 Bounds), checked while streaming and before every write.
         public const int MaxPersons = PersonTable.MaximumPersons;
         public const int MaxResidents = PersonTable.MaximumResidents;
         public const int MaxVisitors = PersonTable.MaximumVisitors;
         public const int MaxPortals = PersonTable.MaximumPortals;
         public const int MaxPortalCharacters = 128;
-        /// <summary>Only residents own cars, so traffic vehicle lists keep the resident bound.</summary>
         public const int MaxTrafficVehicles = MaxResidents;
         public const int MaxResidentTuple = 32;
         public const int MaxVisitorTuple = 512;
@@ -33,13 +29,9 @@ namespace PersistentCity.Persistence
         private static readonly string EmploymentTail26 = "." + PersonTable.PersonaScheduleCode.ToString(CultureInfo.InvariantCulture)
             + "." + ((int)NativeEmployment.None).ToString(CultureInfo.InvariantCulture);
 
-        /// <summary>Header probe for the native authority bootstrap: the stored schema if a development build wrote it (any
-        /// number other than <see cref="CityState.CurrentSchema"/>, or the retired compact wire at schema 1). Reads only to the root Schema field; never allocates
-        /// the population graph.</summary>
         public static int? DevelopmentSchemaOf(string? source)
         {
             if (source == null || source.Length > MaxInputCharacters) return null;
-            // The retired F7d columnar wire carried schema 1 but is an older development city all the same.
             if (RetiredCompact(source) || PreWalletBody(source) || PrePlanBody(source) || PreNeedsBody(source)) return CityState.CurrentSchema;
             try
             {
@@ -58,14 +50,10 @@ namespace PersistentCity.Persistence
             return null;
         }
 
-        // ---- Resident person tuple: CitizenState field "P" ----
-        // "1R-" without an Employment, else "1RE<start day>.<schedule>.<native>". The workplace is the saved
-        // DayPlaceId and the kind follows persona (Study for students), so neither is stored twice.
 
         private static string ResidentTuple26(CitizenState person) => person.DayPlaceId.Length == 0 ? ResidentPrefix26 + NoField26
             : ResidentPrefix26 + "E" + person.EmploymentStartDay.ToString(CultureInfo.InvariantCulture) + EmploymentTail26;
 
-        /// <summary>Returns the start day, or -1 for "no Employment"; the reader reconciles it with DayPlaceId.</summary>
         private static int ParseResidentTuple26(string text)
         {
             Require(text.Length >= 2 && text[0] == '1', "Invalid person tuple version.");
@@ -103,11 +91,6 @@ namespace PersistentCity.Persistence
             ValueProvider = new ResidentTupleProvider(), Readable = true, Writable = true, Required = Required.Always
         };
 
-        // ---- Visitor person tuple: one string in CityState.Visitors ----
-        // "1V|<id>|<portal><pattern><presence>.<first day>.<next stay start binary64>|<employment>|<carried>|<arrival>"
-        // portal: "---" or a base-36 index into Portals; pattern C/D; presence A/D; next: 16 hex digits.
-        // employment: "-" or W/S + base-36 Places index + ".<start>.<schedule>.<native>"; carried: "-" or an
-        // income-source digit; arrival: "-" or the B0 visit token (version, binary64 minute, place, activity).
 
         private sealed class VisitorConverter26 : JsonConverter<VisitorPerson>
         {
@@ -151,8 +134,6 @@ namespace PersistentCity.Persistence
             return value;
         }
 
-        /// <summary>Structural parse only (plan section 3 Arrival evidence: reading and admission are separate).
-        /// Places and portals resolve by index; cross-record rules run in <see cref="ValidatePersons27"/>.</summary>
         private static VisitorPerson ParseVisitor26(string text, IReadOnlyList<string>? places, PlaceCells cells)
         {
             Require(text.Length <= MaxVisitorTuple, "Oversized visitor tuple.");
@@ -178,7 +159,6 @@ namespace PersistentCity.Persistence
             Require(stay[4] == 'A' || stay[4] == 'D', "Unknown visitor presence.");
             visitor.Stay = new VisitorStay
             {
-                // Resolved against the saved station table by DerivePersons27, whatever the root field order.
                 OriginPortalId = portalIndex < 0 ? "" : PortalIndexMark26 + portalIndex.ToString(CultureInfo.InvariantCulture),
                 Pattern = stay[3] == 'C' ? VisitorPattern.Commuter : VisitorPattern.DayVisit,
                 Presence = stay[4] == 'A' ? VisitorPresence.Active : VisitorPresence.Dormant,
@@ -210,7 +190,6 @@ namespace PersistentCity.Persistence
                 Require(arrival.Length == 21 && arrival[0] == '1', "Invalid arrival tuple length/version.");
                 double at = Minute26(arrival, 1, "Invalid arrival minute.");
                 Minute(at, "Arrival minute");
-                // E6c: the arrival place may be a vendor place ("v" and a vendor table row); the workplace never is.
                 string place = cells.Parse(arrival, 17, "Invalid arrival place index.");
                 Require(arrival[20] >= '0' && arrival[20] <= '0' + (int)Activity.Study, "Unknown arrival activity.");
                 visitor.LastArrival = new VisitRecord { AtMinute = at, PlaceId = places != null ? place : "", Activity = (Activity)(arrival[20] - '0') };
@@ -226,7 +205,6 @@ namespace PersistentCity.Persistence
             return index;
         }
 
-        /// <summary>Streaming check of one visitor tuple before deserialization: canonical ASCII, bounded, well formed.</summary>
         private static void CheckVisitor26(JsonReader reader, TokenText text, PlaceCells cells)
         {
             Require(reader.TokenType == JsonToken.String, "Invalid visitor tuple.");
@@ -255,7 +233,7 @@ namespace PersistentCity.Persistence
             string value = (string)reader.Value!;
             ParseResidentTuple26(value);
             Require(text.LiteralAsciiString((IJsonLineInfo)reader, value), "Invalid person tuple encoding.");
-            Charge(ref records); // one fixed tuple per resident person
+            Charge(ref records);
         }
     }
 }

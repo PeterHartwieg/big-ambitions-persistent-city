@@ -45,7 +45,6 @@ CAPABILITIES = {
     'RIG-F4-PRODUCER': (PENDING, 'current-writer adaptation of produce_fixture.py (that tool pins schema 25 and FT E5b names)'),
 }
 
-# The capabilities each op needs. A step's capability list is derived from this table only.
 OPS = {
     'rig.identity': ['rig flow run'], 'source.identity': ['rig flow run'], 'machine.read': ['rig flow run'],
     'game.build': ['rig flow run'], 'artifacts.hash': ['RIG-MODSET'], 'header.require': ['rig flow run'],
@@ -88,9 +87,8 @@ LOAD_OPS = {'process.launch', 'ft.load', 'fixture.stress'}
 START_OPS = {'trace.start', 'probe.measure_start'}
 SAVE_OPS = {'ft.save'}
 WINDOW_GROUP = 'gate-matrix'
-F2D_COMMIT = 'ece4878'  # F2d #169: cars follow the traffic kernel
+F2D_COMMIT = 'ece4878'
 I1_FIELDS = ['logical_population', 'business_load', 'calendar_pace', 'observed_body_load']
-# Header fields observed only while measuring; required when each export is assembled, not at preflight.
 OBSERVED_FIELDS = ['observed_body_load']
 
 
@@ -148,15 +146,12 @@ class Flow:
         self.min_clean = w['min_clean_real_seconds']
         self.warmup = w['warmup_real_seconds']
         planned = self.min_clean * (1 + fixtures['window_margin_fraction'])
-        # Game span chosen so even a build at fast_pace_fraction of the declared real seconds per game minute covers
-        # the planned real time; rounding guards float noise.
         self.fast_pace = pace['real_seconds_per_game_minute'] * fixtures['fast_pace_fraction']
         self.span = math.ceil(round(planned / self.fast_pace, 6))
         self.planned = round(self.span * pace['real_seconds_per_game_minute'], 3)
         self.abort_after = round(self.planned * fixtures['abort_after_planned_fraction'], 3)
         self.lead = fixtures['checkpoint_lead_game_minutes']
 
-    # -- steps -------------------------------------------------------------------------------------------------
     def add(self, op, checks, args=None, build=None, window=None, note=None, **extra):
         step = dict(id=f'{len(self.steps) + 1:04d}', op=op, checks=list(checks), process=self.process, build=build,
                     window=window, args=args or {}, capabilities=capabilities_of(op))
@@ -175,13 +170,11 @@ class Flow:
         minutes.update(minute_of(m) for m in spec['extra_checkpoints'])
         return sorted(minutes)
 
-    # -- process lifecycle -------------------------------------------------------------------------------------
     def launch(self, checks, build, fixture, settings='primary', pc_config=None):
         self.process_count += 1
         self.process = self.process_count
         self.window_in_process = 0
         self.armed = False
-        # Candidates always apply the complete declared config, so a profile left at other values cannot leak in.
         rows = dict(self.fixtures['pc_config_defaults'], **(pc_config or {})) if build == 'candidate' else 'n/a'
         self.process_info[self.process] = dict(build=build, fixture=fixture, settings=settings,
                                                pc_config=rows, checks=list(checks))
@@ -235,20 +228,16 @@ class Flow:
         else:
             self.add('native.readiness', checks, dict(expect='native load finished; pace shim reports active'), build)
 
-    # -- measurement -------------------------------------------------------------------------------------------
     @staticmethod
     def probe_label(wid):
-        """F4b accepts letters, digits, '-', '_' and '.', at most 64 characters."""
         label = wid.replace('@', '_')
         if len(label) > 64:
             raise FlowError(f'probe label too long: {label}')
         return label
 
     def _open(self, checks, wid, build, trace=True, probe=True):
-        """Receipts immediately before a window or segment starts, then its start steps."""
         self.add('autosave.verify_off', checks, dict(before='window'), build, wid)
         if build == 'candidate':
-            # SaveEpochDiagnostics is a Persistent City projection; the reference uses the probe's save counter.
             self.add('save_epoch.read', checks, dict(record='SaveEpochDiagnostics.sequence at start'), build, wid)
         self.add('sampler.read', checks, dict(expect='no task-owned or foreign dotnet build or test active'), build, wid)
         self.add('settings.readback', checks, dict(expect='High priority, focused, declared resolution, preset, cap, vsync'),
@@ -287,7 +276,6 @@ class Flow:
                              feeds='clean_real_seconds for the stop condition'))
         step = self.add('script.run', checks, dict(script=script, repeat_until_stop=True), build, wid,
                         loop=loop, samplers=samplers, until=until)
-        # script.run itself has no op capability; it needs what its loop and samplers need.
         for part in loop + samplers:
             for kind in (EXISTING, PENDING):
                 step['capabilities'][kind] = sorted(set(step['capabilities'][kind]) | set(part['capabilities'][kind]))
@@ -296,7 +284,6 @@ class Flow:
     def window(self, checks, condition, script, arm, repetition, fixture, start_minute, factor, group=WINDOW_GROUP,
                min_clean=None, game_span=None, native_speed=1, prime=False, kind='window', gate_start=True,
                matched=False):
-        """One measured window. With prime=True this is the discarded first window of the process."""
         build = self.process_info[self.process]['build']
         first = self.window_in_process == 0
         if first and not prime:
@@ -306,7 +293,6 @@ class Flow:
                f'{condition}.{script}.{arm}.{build}.r{repetition}')
         if any(w['id'] == wid for w in self.windows):
             raise FlowError(f'duplicate window id {wid}')
-        # The window's speed is set first, so warm-up and the start-minute gate run at the measured pace.
         self.add('ft.time', checks, dict(speed=native_speed), build, wid, phase='setup')
         for s in self._script_steps(script, 'setup', build):
             self.add(s['op'], checks, s.get('args'), build, wid, phase='setup')
@@ -324,7 +310,6 @@ class Flow:
         else:
             clean_floor = min_clean or self.min_clean
             if matched:
-                # Both builds of a matched pair stop at the same game minute (P4 needs spans within 1 minute).
                 until = dict(all=[dict(game_minutes_since_start_at_least=game_span)],
                              short_if_clean_real_seconds_below=clean_floor)
             else:
@@ -360,7 +345,6 @@ class Flow:
 
     def segment(self, checks, sid, group, until, probe=True, trace=True, script=None, native_speed=None, op_steps=(),
                 latency=False):
-        """A measurement segment that is not a gate window (G2 overhead, G3 alignment, G9 pace, G10 latency)."""
         build = self.process_info[self.process]['build']
         if native_speed is not None:
             self.add('ft.time', checks, dict(speed=native_speed), build, sid, phase='setup')
@@ -393,7 +377,6 @@ def preflight(f, movement_state):
 
 
 def preflight_profile(f):
-    """G1 steps that change the isolated profile or the rig: only under the flow lease, after production."""
     c = ['G1']
     f.add('autosave.record_disable', c, dict(record='original setting, once'))
     f.add('autosave.verify_off', c, dict(after='disable'))
@@ -404,7 +387,6 @@ def preflight_profile(f):
 
 
 def produce_fixtures(f):
-    """Producers that own their lifecycle run with no player running and no flow lease held."""
     for name, spec in f.fixtures['fixtures'].items():
         produce = spec.get('produce')
         if produce:
@@ -425,7 +407,6 @@ def prepare_fixtures(f):
                 f.add('autosave.verify_off', c, dict(after=s['op']), 'candidate')
         survey = spec.get('survey')
         if survey:
-            # Survey on a disposable copy, then reload the preparation save so checkpoints go forward in time.
             prep = f'{name}@prep'
             f.add('ft.save', c, dict(save=prep, at=PREP_AT, outside_windows=True), 'candidate')
             f.add('fixture.copy', c, dict(source=prep, disposable=True, never_save=True), 'candidate')
@@ -446,7 +427,6 @@ def prepare_fixtures(f):
 
 
 def warm(f, checks, speed=1):
-    """Warm-up after a reload outside window(): speed first, then readiness and 60 s discarded."""
     build = f.process_info[f.process]['build']
     f.add('ft.time', checks, dict(speed=speed), build)
     f.ready(checks)
@@ -487,8 +467,6 @@ def window_checks(window, script):
 
 def abab(f, condition, window_name, scripts, arm, repetitions, fixture, factor, settings='primary', pc_config=None,
          builds=('reference', 'candidate'), checks=None):
-    """ABAB per condition: repetition r runs every build in order, one process per build and repetition.
-    `checks` overrides the per-script check list for secondary arms."""
     start = minute_of(f.fixtures['windows'][window_name]['start'])
 
     def checks_of(script):
@@ -512,10 +490,8 @@ def matrix(f):
     factor = f.fixtures['declared_pace']['game_clock_factor']
     for name, w in f.fixtures['windows'].items():
         abab(f, name, name, w['scripts'], 'primary', w['repetitions'], 'FT-F4-Declared', factor)
-    # Decision 1 report-only arm: the evening window at the High preset.
     abab(f, 'W-evening@High', 'W-evening', ['S-path'], 'report-only', 2, 'FT-F4-Declared', factor,
          settings='report_only_high', checks=['G4'])
-    # Decision 3 presentation stress arm at caps 256/64, once, candidate only (G5).
     abab(f, 'W-evening@caps-256-64', 'W-evening', ['S-path'], 'report-only', 1, 'FT-F4-Declared', factor,
          pc_config=dict(MaximumPedestrians=256, MaximumVehicles=64), builds=('candidate',), checks=['G5'])
 
@@ -627,7 +603,6 @@ def g11(f):
 
 
 def cleanup(f):
-    """Cleanup runs at the end and also when the batch stops early (header.require, an abort or an error)."""
     c = ['cleanup']
     if f.process is not None:
         f.end_process(c)

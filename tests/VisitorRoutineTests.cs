@@ -12,20 +12,14 @@ using Xunit;
 
 namespace PersistentCity.Tests;
 
-/// <summary>F5d (#92): independent schedules. Fresh cities run every visitor on its own routine from the
-/// first day (portal arrival and departure, own stops, meal rhythm, income source); there is no switch-over day, no
-/// host or anchor read and no represented excursion. Older development cities are refused and kept unchanged.</summary>
 public sealed class VisitorRoutineTests
 {
-    // ---- Fixtures ----
 
     internal static readonly PortalStation[] Stations =
     {
         new("subway:north", new Position(120, 0, 60)), new("subway:south", new Position(-80, 0, -60)),
     };
 
-    /// <summary>A detached native food double: confirmed sales, optional lost acknowledgements (Uncertain) and receipt
-    /// evidence that can be withheld, so an uncertain checkout can stay unresolved across dormancy.</summary>
     internal sealed class Market : IFoodMarket, IFoodSaleEvidence
     {
         public FoodBusiness[] Shops = Array.Empty<FoodBusiness>();
@@ -109,15 +103,12 @@ public sealed class VisitorRoutineTests
         return totals;
     }
 
-    // ---- Golden ----
 
     private static IEnumerable<(string Name, Func<CityState> Build)> GoldenFixtures() => new (string, Func<CityState>)[]
     {
         ("fresh-visitors-factor2-30h", () => Running(2, 30).State),
     };
 
-    /// <summary>The writer's golden for the visitor city, re-pinned once by X3 at the held schema 1. A deliberate format
-    /// change re-pins it in place (docs/decisions/2026-11-09-schema-one.md).</summary>
     [Theory]
     [InlineData("fresh-visitors-factor2-30h", "16fa987d07813b76f560015d5d8c91c348e18573fd34fe4a6a8d57d4520d02b6", 14809)]
     public void GoldenVisitorCityBytesArePinned(string name, string sha256, int characters)
@@ -135,7 +126,6 @@ public sealed class VisitorRoutineTests
         foreach (var (_, build) in GoldenFixtures()) Assert.Equal(SaveCodec.Write(build()), SaveCodec.Write(build()));
     }
 
-    // ---- Fresh cities: independent persons from the first day ----
 
     [Theory]
     [InlineData(1)] [InlineData(2)] [InlineData(3)]
@@ -160,7 +150,6 @@ public sealed class VisitorRoutineTests
             Assert.Equal(VisitorSchedules.Dormant(routine) ? VisitorPresence.Dormant : VisitorPresence.Active, visitor.Stay.Presence);
             Assert.Equal(routine.DayPlaceId.Length == 0, visitor.Employment == null);
         }
-        // Rule 2: one own roster record per person, no host, routine stop or represented excursion.
         Assert.Equal(PersonTable.PersonCount(state), state.Food!.Residents.Count);
         Assert.All(state.Food.Residents, m => { Assert.Equal(m.ResidentId, m.HostId); Assert.Equal(0, m.HostSlot); Assert.Null(m.Excursion); });
         Assert.Empty(state.Food.RoutineStops);
@@ -172,7 +161,6 @@ public sealed class VisitorRoutineTests
         var read = SaveWire.Read(payload);
         Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
         Assert.Equal(payload, SaveWire.Text(read.State!));
-        // The reloaded city keeps running on the same routines.
         var again = Start(read.State!, new Market { Shops = ((Market)MarketOf(factor)).Shops });
         Advance(again, again.State.Minute + 180);
     }
@@ -191,7 +179,6 @@ public sealed class VisitorRoutineTests
             if (!arrivals.TryGetValue(id, out var list)) arrivals[id] = list = new();
             if (list.Count == 0 || list[^1].Place != person.PlaceId || list[^1].Activity != person.Activity) list.Add((at, person.PlaceId, person.Activity));
         };
-        // Day 1 (a weekday) through day 7: days 5-7 are the three-day weekend.
         for (int day = 1; day <= 7; day++)
         {
             Advance(city, day * 1440 + 1440 - 1);
@@ -203,19 +190,16 @@ public sealed class VisitorRoutineTests
         Assert.All(state.VisitorRoutines, r => Assert.True(r.CompletedJourneys > 0));
         foreach (var routine in state.VisitorRoutines.Where(r => r.DayPlaceId.Length != 0))
             Assert.Contains(arrivals[routine.Identity.Id], a => a.Place == routine.DayPlaceId);
-        // Every stay starts and ends at the visitor's own portal.
         Assert.All(arrivals, pair => Assert.All(pair.Value.Where(a => a.Activity == Activity.Home),
             a => Assert.Equal(state.Visitors.Single(v => v.Id == pair.Key).Stay.OriginPortalId, a.Place)));
         Assert.Contains(VisitorMeals(state), m => m.Purchases > 0);
         Assert.Equal(0, city.FoodAnchorReads);
-        // The read-only person diagnostic behind `pc population person <id>`.
         string line = VisitorSchedules.DescribePerson(state, state.Visitors[0].Id, city.FoodAnchorReads)!;
         Assert.Contains("kind=visitor", line); Assert.Contains("portal=" + state.Visitors[0].Stay.OriginPortalId, line); Assert.Contains("food_anchor_reads=0", line);
         Assert.Contains("kind=resident", VisitorSchedules.DescribePerson(state, state.Citizens[0].Identity.Id, 0)!);
         Assert.Null(VisitorSchedules.DescribePerson(state, "pv:999999", 0));
     }
 
-    // ---- No anchor read at all ----
 
     [Theory]
     [InlineData(2)] [InlineData(3)]
@@ -234,7 +218,6 @@ public sealed class VisitorRoutineTests
         Assert.Contains(VisitorMeals(state), m => m.Purchases > 0);
     }
 
-    // ---- Per-person schedule independence ----
 
     private static Dictionary<string, string> DayTraces(int seed)
     {
@@ -257,11 +240,10 @@ public sealed class VisitorRoutineTests
         foreach (int seed in new[] { 11, 4242, 90001 })
         {
             var traces = DayTraces(seed);
-            Assert.Equal(traces, DayTraces(seed)); // deterministic per seed
+            Assert.Equal(traces, DayTraces(seed));
             var visitors = traces.Where(p => p.Key.StartsWith(PersonIds.VisitorPrefix, StringComparison.Ordinal)).ToList();
             var residents = traces.Where(p => !p.Key.StartsWith(PersonIds.VisitorPrefix, StringComparison.Ordinal)).ToList();
             Assert.NotEmpty(visitors);
-            // No visitor follows a resident's day, and visitors do not share one day between them.
             Assert.All(visitors, v => Assert.DoesNotContain(residents, r => r.Value == v.Value));
             Assert.True(visitors.Select(v => v.Value).Distinct().Count() >= visitors.Count - 1, "visitor days collapse onto each other");
             bySeed.Add(traces);
@@ -269,7 +251,6 @@ public sealed class VisitorRoutineTests
         Assert.NotEqual(bySeed[0].Where(p => p.Key.StartsWith("pv:")).Select(p => p.Value), bySeed[1].Where(p => p.Key.StartsWith("pv:")).Select(p => p.Value));
     }
 
-    // ---- Cadence, budgets, skips and reload ----
 
     private static (string Save, string Orders) Day(int budget, Func<CitySimulator, bool>? reloadWhen = null, bool frameSlices = false)
     {
@@ -300,14 +281,11 @@ public sealed class VisitorRoutineTests
         Assert.Equal(reference, Day(1));
         Assert.Equal(reference, Day(7, frameSlices: true));
         Assert.Equal(reference, Day(64));
-        // Reload with an in-flight meal outing, an uncertain receipt and a held decision, each owned by a visitor.
         Assert.Equal(reference, Day(3, c => VisitorMeals(c.State).Any(m => m.Status == MealStatus.Travelling || m.Status == MealStatus.Serving
             || m.Status == MealStatus.Uncertain || m.Decision != null)));
         Assert.Equal(reference, Day(16, c => c.State.Minute % 37 < 1));
     }
 
-    /// <summary>The F1 accounting-backlog harness, persons variant (tools/accounting-backlog-regression): one visitor
-    /// per resident, the same logical day at 30/60/120 FPS, 1/16/128 units, a stall, hidden skip and reload.</summary>
     [Fact]
     public void AccountingHarnessPersonsVariantIsEqualAcrossArms()
     {
@@ -322,7 +300,6 @@ public sealed class VisitorRoutineTests
         Assert.Equal(reference.Snapshot, reloaded.Snapshot); Assert.Equal(2, reloaded.Reloads);
     }
 
-    // ---- Rival settlement owned by a visitor, across reload ----
 
     private static (CitySimulator City, RivalOutflowTests.Market Market) RivalCity()
     {
@@ -390,8 +367,6 @@ public sealed class VisitorRoutineTests
         throw new InvalidOperationException("No visitor travelled.");
     }
 
-    /// <summary>Review fix Sol-r1-1: a travelling visitor's route legs are charged by both counters, so the write-side
-    /// cap check sees every record the streaming reader charges.</summary>
     [Fact]
     public void TravellingVisitorRouteLegsAreChargedByBothCounters()
     {
@@ -404,7 +379,6 @@ public sealed class VisitorRoutineTests
         Assert.True(count.Semantic >= legs + PersonTable.PersonCount(state));
     }
 
-    /// <summary>Review fix Sol-r1-2: a visitor journey with a car leg is refused and preserved before any simulation.</summary>
     [Fact]
     public void VisitorJourneyWithACarLegIsRefusedAndPreserved()
     {
@@ -417,12 +391,10 @@ public sealed class VisitorRoutineTests
         var read = SaveWire.Read(bad);
         Assert.Equal(SaveReadStatus.Invalid, read.Status); Assert.Null(read.State); Assert.Contains("car leg", read.Error);
         RefusedAndPreserved(bad, Running(2, 1).State, SaveReadStatus.Invalid, "car leg");
-        // The writer refuses the same in-memory state before publication.
         RouteEdits.EditableJourney(state.VisitorRoutines[index]).Legs[0].Mode = TravelMode.Car;
         Assert.Contains("car leg", Assert.Throws<SaveValidationException>(() => SaveCodec.Write(state)).Message);
     }
 
-    // ---- Conservation from city creation ----
 
     [Fact]
     public void LedgerConservesEveryHourFromCityCreation()
@@ -439,7 +411,6 @@ public sealed class VisitorRoutineTests
             Assert.Equal(persons, PersonTable.PersonCount(state));
             int nowEmployed = state.Citizens.Count(c => c.DayPlaceId.Length != 0) + state.VisitorRoutines.Count(r => r.DayPlaceId.Length != 0);
             long nowChanges = state.Citizens.Sum(c => c.JobChanges) + state.VisitorRoutines.Sum(r => r.JobChanges);
-            // Employment changes only through logged lifecycle events (each one a job change).
             Assert.True(Math.Abs(nowEmployed - employed) <= nowChanges - changes);
             Advance(city, state.Minute + 60);
             if (hour % 31 == 0) { city = Reload(city, market); state = city.State; }
@@ -447,7 +418,6 @@ public sealed class VisitorRoutineTests
         Assert.All(state.Food!.Residents, m => Assert.True(m.Budget!.LastPostedDay >= 4));
     }
 
-    // ---- Unreachable portal ----
 
     private sealed class PortalBlocked : IRoutePlanner
     {
@@ -479,7 +449,6 @@ public sealed class VisitorRoutineTests
         Assert.All(state.Visitors, v => Assert.Null(v.LastArrival));
         foreach (var meal in VisitorMeals(state))
         {
-            // No demand from off-map persons, but their wallets keep posting.
             Assert.Equal(0, meal.Purchases); Assert.Null(meal.Decision); Assert.Equal("", meal.PlaceId);
             var person = state.VisitorRoutines.Single(r => r.Identity.Id == meal.ResidentId);
             if (meal.Budget!.IncomeSource == ResidentIncomeSource.ExternalEmployment && EmploymentWages.Eligible(person))
@@ -492,7 +461,6 @@ public sealed class VisitorRoutineTests
         Advance(reloaded, reloaded.State.Minute + 120);
     }
 
-    // ---- No visitor car or traffic record ----
 
     [Fact]
     public void VisitorsOwnNoCarOrTrafficRecordAndWalkAsBodies()
@@ -507,7 +475,6 @@ public sealed class VisitorRoutineTests
             {
                 Assert.Null(routine.Car); Assert.False(routine.Preferences.OwnsCar);
                 Assert.True(routine.Journey == null || routine.Journey.Legs.All(l => l.Mode != TravelMode.Car));
-                // F5i: a travelling visitor is a body candidate (a walker; it owns no car).
                 if (routine.Phase == CitizenPhase.Travelling)
                 { Assert.Contains(routine, city.ActiveJourneys.BodyCandidates); leaseTried = true; }
             }
@@ -515,12 +482,10 @@ public sealed class VisitorRoutineTests
         }
         Assert.True(leaseTried);
         Assert.True(state.Traffic == null || state.Traffic.Vehicles.All(v => !v.VehicleId.StartsWith("pv:", StringComparison.Ordinal)));
-        // A visitor with a car is refused before anything is written.
         state.VisitorRoutines[0].Car = new CarState { Id = state.VisitorRoutines[0].Identity.Id + ":car" };
         Assert.Contains("owns no car", Assert.Throws<SaveValidationException>(() => SaveCodec.Write(state)).Message);
     }
 
-    // ---- Arrival evidence: residents unchanged, visitors by LastArrival ----
 
     [Fact]
     public void ResidentGuardEqualsTheLatestArrivalOnRecordedResidentTraces()
@@ -601,13 +566,11 @@ public sealed class VisitorRoutineTests
             ? city.State.Food.Residents.Single(m => m.ResidentId == visitor.Id).Status : MealStatus.Missed);
     }
 
-    // ---- Income continuity ----
 
     [Fact]
     public void IncomeSourceIsPerPersonCarriedForUnseatedWorkersAndContinuousAcrossReload()
     {
         var (state, market) = Fresh(2);
-        // Leave no workplace vacancy for visitors, so working visitors keep an outside employer (carried income).
         foreach (var place in state.Places.Where(p => p.Kind == PlaceKind.Work || p.Kind == PlaceKind.Study))
             place.Capacity = state.Citizens.Count(c => c.DayPlaceId == place.Id);
         var city = Start(state, market);
@@ -639,14 +602,12 @@ public sealed class VisitorRoutineTests
         }
     }
 
-    // ---- Departure deferral and dormancy ----
 
     [Fact]
     public void DepartureWaitsForAnInProgressMealAndNoDormantVisitorHasActiveDemand()
     {
         var (city, market, meal, visitor) = AtShopDoor(false);
         var routine = visitor.Routine!;
-        // The visitor's stay now ends while its meal is in progress: the original activity is over.
         routine.MealOuting!.ResumeEvent = routine.MealOuting.ResumeUntil = city.State.Minute + 1;
         string intent = meal.IntentId;
         for (int step = 0; step < 20000 && !VisitorSchedules.Dormant(routine); step++)
@@ -657,7 +618,7 @@ public sealed class VisitorRoutineTests
         }
         Assert.True(VisitorSchedules.Dormant(routine));
         Assert.Equal(routine.HomeId, routine.PlaceId);
-        Assert.Contains(intent, market.Orders); // the meal finished before the visitor left
+        Assert.Contains(intent, market.Orders);
         Assert.Null(visitor.LastArrival);
         Assert.Equal(VisitorPresence.Dormant, visitor.Stay.Presence);
     }
@@ -695,7 +656,6 @@ public sealed class VisitorRoutineTests
         Assert.True(market.Orders.Count(o => o.Contains(routine.Identity.Id)) >= orders);
     }
 
-    // ---- Persons created later are enrolled (AppendResidents gap) ----
 
     [Fact]
     public void ResidentsAppendedAfterFoodInitializationGetMealsAndWallets()
@@ -719,7 +679,6 @@ public sealed class VisitorRoutineTests
         Advance(rebuilt, state.Minute + 120);
     }
 
-    // ---- Strict reader: persons and visitor routines ----
 
     private static string Root(string payload, Action<JObject> change)
     {
@@ -732,7 +691,6 @@ public sealed class VisitorRoutineTests
     [Fact]
     public void MalformedOrInconsistentPersonsAreRefusedAndPreserved()
     {
-        // 08:00 on day 2: early workers are on their way, everyone else is still off-map at a portal.
         var state = Running(2, 26).State;
         string payload = SaveCodec.Write(state);
         Assert.Equal(SaveReadStatus.Loaded, SaveWire.Read(payload).Status);
@@ -757,20 +715,16 @@ public sealed class VisitorRoutineTests
         Invalid(Tuple(payload, 0, p => { p[4] = p[4] + ".0"; return string.Join("|", p); }), "visitor next event");
         Invalid(Tuple(payload, 0, p => { p[1] = "9" + p[1].Substring(1); return string.Join("|", p); }), "visitor phase");
         Invalid(Tuple(payload, 0, p => { p[7] = "01"; return string.Join("|", p); }), "visitor journeys");
-        // Presence must follow the routine; a dormant visitor holds no arrival.
         Invalid(Root(payload, r => { var parts = ((string)r["Visitors"]![dormant]!).Split('|'); parts[2] = parts[2].Substring(0, 4) + "A" + parts[2].Substring(5); r["Visitors"]![dormant] = string.Join("|", parts); }));
         if (active >= 0)
             Invalid(Root(payload, r => { var parts = ((string)r["Visitors"]![active]!).Split('|'); parts[2] = parts[2].Substring(0, 4) + "D" + parts[2].Substring(5); r["Visitors"]![active] = string.Join("|", parts); }));
-        // Every visitor arrives through a portal; schema 27 has no represented consumers.
         Invalid(Root(payload, r => { var parts = ((string)r["Visitors"]![0]!).Split('|'); parts[2] = "---" + parts[2].Substring(3); r["Visitors"]![0] = string.Join("|", parts); }), "portal");
         Invalid(Root(payload, r => { var parts = ((string)r["Visitors"]![0]!).Split('|'); parts[1] = "consumer:c0:1"; r["Visitors"]![0] = string.Join("|", parts); }));
         Invalid(Root(payload, r => r["NextVisitorSequence"] = (int)r["NextVisitorSequence"]! + 1), "Visitor creation");
         Invalid(Root(payload, r => ((JArray)r["Portals"]!).Add("subway:ghost")));
-        // A carried source is only for a visitor without its own Employment.
         int employed = state.Visitors.FindIndex(v => v.Employment != null);
         if (employed >= 0)
             Invalid(Root(payload, r => { var parts = ((string)r["Visitors"]![employed]!).Split('|'); parts[4] = "0"; r["Visitors"]![employed] = string.Join("|", parts); }), "carried");
-        // Any other schema number (older development builds wrote 2 to 36).
         RefusedAndPreserved(Root(payload, r => r["Schema"] = 37), replacement, SaveReadStatus.DevelopmentSchema, "start a new city");
         RefusedAndPreserved(Root(payload, r => r["Schema"] = 27), replacement, SaveReadStatus.DevelopmentSchema, "start a new city");
         RefusedAndPreserved(Root(payload, r => r["Schema"] = 26), replacement, SaveReadStatus.DevelopmentSchema, "start a new city");

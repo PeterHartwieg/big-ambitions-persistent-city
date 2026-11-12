@@ -1,5 +1,3 @@
-// Offline checks for the F4b probe's Unity-free rules (ProbeLogic.cs, ScopeInventory.cs) and the
-// stub-loop overhead measurement recorded in docs/perf/f4b.md. Exit 0 only when every check passes.
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -72,11 +70,8 @@ internal static class Program
         }
     }
 
-    // A tick step: whether the population was ready and whether the delta was clipped at a minute boundary.
     private struct Step { public bool Held, Limited; public Step(bool held, bool limited) { Held = held; Limited = limited; } }
 
-    /// <summary>Drives HoldTracker like NativeCityClock.AccountingPrefix: a held tick increments a held counter
-    /// and withholds minutes; a ready clipped tick increments BoundaryClips.</summary>
     private sealed class FakeClock
     {
         public long Ordinary, Skip, Clips; public double Withheld;
@@ -107,7 +102,6 @@ internal static class Program
     {
         var ready = new Step(false, false); var held = new Step(true, true);
         var tracker = new HoldTracker(); var clock = new FakeClock(); int frame = 1;
-        // Before the window: a hold starts and is still open when the window begins.
         Drive(tracker, clock, new[] { ready, held, held }, ref frame);
         Check(tracker.Events.Count == 0, "no events before a window opens");
         tracker.BeginWindow(frame, frame * 100L);
@@ -127,15 +121,12 @@ internal static class Program
             Check(e[5].Kind == HoldEventKind.Resume && e[5].Ongoing && e[5].Frame == last && !e[5].CarriedIn, "open hold closes at the window's last frame, flagged ongoing");
         }
         Check(tracker.HeldTicks == 5 && tracker.Ticks == 8, "held ticks counted inside the window only");
-        // A window that starts released and ends released has no edge flags.
         var quiet = new HoldTracker(); var quietClock = new FakeClock(); frame = 1;
         quiet.BeginWindow(1, 100); Drive(quiet, quietClock, new[] { ready, held, ready }, ref frame); quiet.EndWindow(3, 300);
         Check(quiet.Events.Count == 2 && quiet.Events.All(x => !x.CarriedIn && !x.Ongoing), "released edges carry no flags");
-        // Economy-skip holds count as holds too.
         var skip = new HoldTracker(); var skipClock = new FakeClock { Skipping = true }; frame = 1;
         skip.BeginWindow(1, 100); var rows = Drive(skip, skipClock, new[] { held }, ref frame); skip.EndWindow(1, 100);
         Check(rows[0].Held && skip.Events.Count == 2 && skip.Events[1].Ongoing, "an economy-skip held tick is a hold");
-        // Reopening a window clears the previous events.
         skip.BeginWindow(5, 500);
         Check(skip.Events.Count == 1 && skip.Events[0].CarriedIn, "a new window starts with only its carried-in hold");
     }
@@ -151,7 +142,6 @@ internal static class Program
         Check(!rows[2].BoundaryClip && !rows[2].Held, "an unlimited ready tick is neither");
         Check(tracker.Events.Count == 0, "boundary clips create no hold or resume events");
         Check(tracker.BoundaryClipTicks == 2 && tracker.HeldTicks == 0, "boundary clips are counted apart from holds");
-        // Limited with no counter change at all (another cap ahead of PC) is also not a hold.
         var other = new HoldTracker(); other.BeginWindow(1, 1);
         var c = new ClockCounters(3, 0, 7, 1.5);
         var row = other.Observe(c, c, true, 1, 1, 0, 0);
@@ -170,8 +160,8 @@ internal static class Program
     {
         foreach (long frequency in new[] { 10_000_000L, 1_000_000_000L, 3_579_545L, 1_000L })
         {
-            long thirty = (30 * frequency + 999) / 1000;     // smallest tick count that is at least 30.0 ms
-            long below = 299 * frequency / 10_000;          // 29.9 ms
+            long thirty = (30 * frequency + 999) / 1000;
+            long below = 299 * frequency / 10_000;
             Check(AdvanceCallRule.Record(thirty, frequency), "30.0 ms call recorded at " + frequency + " Hz");
             Check(!AdvanceCallRule.Record(below, frequency), "29.9 ms call not recorded at " + frequency + " Hz");
             if (30 * frequency % 1000 != 0) Check(!AdvanceCallRule.Record(thirty - 1, frequency), "just below 30 ms not recorded at " + frequency + " Hz");
@@ -216,7 +206,6 @@ internal static class Program
     private static ObservedPatch Observed(ExpectedScope row, string target = null, string owner = null, string kind = null) => new ObservedPatch
     { Owner = owner ?? row.Owner, Kind = kind ?? row.Kind.ToString(), Type = row.Type, Method = row.Method, Target = target ?? row.Target, PcAssembly = true };
 
-    /// <summary>Sol-r1-1/Sol-r1-3: hooks installed after arming stay timed and complete; drift and duplicates fail closed.</summary>
     private static void CoverageLifecycle()
     {
         const string probe = "f4b.perf-union-probe";
@@ -225,14 +214,11 @@ internal static class Program
         var installedLater = patches.Where(p => p.Owner == "hart.persistentcity.physicalvehicles.v1" || p.Owner == "hart.persistentcity.ambientpedestrians.v1").ToArray();
         var early = patches.Where(p => !installedLater.Contains(p) && p.Method != "RidePrefix" && p.Method != "RidePostfix").ToArray();
 
-        // Arm inside a building: traffic and ambient hooks are not installed yet.
         var t = Armed();
         t.Observe(early.Select(p => Observed(p)));
         Check(t.Complete && !t.Installed(installedLater[0]), "arming before physical hooks exist is complete; they show as not installed");
-        // Exit the building: PhysicalPopulation installs its hooks after arming. They were bound at arm, so they are timed.
         t.Observe(early.Concat(installedLater).Select(p => Observed(p)));
         Check(t.Complete && installedLater.All(t.Installed) && t.UnexpectedAtLastScan == 0, "hooks installed after arming are expected and stay complete");
-        // And removed again (bodies released): still complete.
         t.Observe(early.Select(p => Observed(p)));
         Check(t.Complete, "hooks uninstalled after arming stay complete");
 
@@ -266,7 +252,6 @@ internal static class Program
         Check(transpilerOnly.Complete, "transpilers are never scopes, so they cannot be unbindable");
     }
 
-    /// <summary>Sol-r1-2: the planned windows fit, by buffer or by draining while measuring.</summary>
     private static void Capacity()
     {
         long Run(int capacity, long rows, int drainEvery, int page)
@@ -282,11 +267,11 @@ internal static class Program
             return ring.Dropped;
         }
         const int fps = 90;
-        long g13 = 20L * 60 * fps; // 20 real minutes at the declared 90 FPS cap
+        long g13 = 20L * 60 * fps;
         Check(g13 <= ProbeCapacity.Frames && Run(ProbeCapacity.Frames, g13, 0, 0) == 0, "a 20-minute G13 window at 90 FPS fits the frame buffer undrained");
         Check(Run(ProbeCapacity.Ticks, g13, 0, 0) == 0, "its ticks (one native tick per frame) fit undrained");
         Check(Run(ProbeCapacity.Diagnostics, 20 * 60, 0, 0) == 0, "its once-per-second diagnostics fit undrained");
-        long soak = 4L * 3600 * fps; // longer than G14's three game days at speed 3 (about 80 real minutes)
+        long soak = 4L * 3600 * fps;
         Check(Run(ProbeCapacity.Frames, soak, 0, 0) > 0, "an undrained 4-hour window reports dropped frames, never silent overwrite");
         Check(Run(ProbeCapacity.Frames, soak, 60 * fps, ProbeCapacity.FramePage) == 0, "a 4-hour window drained once per real minute loses no frame");
         Check(Run(ProbeCapacity.Ticks, soak, 60 * fps, ProbeCapacity.TickPage) == 0, "and no tick");
@@ -305,7 +290,6 @@ internal static class Program
     private static HarmonyLib.Patch NewPatch(string owner) => new HarmonyLib.Patch(PatchMethod, 0, owner, 400, Array.Empty<string>(), Array.Empty<string>(), false);
     private static HarmonyLib.Patches NewPatches(params HarmonyLib.Patch[][] lists) => new HarmonyLib.Patches(lists[0], lists[1], lists[2], lists[3], lists[4], lists[5]);
 
-    /// <summary>Sol-r2-1: HarmonyScan against the pinned Lib.Harmony 2.4.2, whose patch lists are fields, not properties.</summary>
     private static void HarmonyAdapter()
     {
         string path = typeof(HarmonyLib.Patches).Assembly.Location;
@@ -324,7 +308,6 @@ internal static class Program
         bool kindsMatch = HarmonyScan.PatchLists.All(field =>
             ((IEnumerable<HarmonyLib.Patch>)field.GetValue(info)).All(p => observed.Any(o => o.Owner == p.owner && o.Kind == HarmonyScan.Kind(field.Name))));
         Check(kindsMatch && observed.Count(o => o.Kind == "Prefix") == 1 && observed.Count(o => o.Kind == "InnerPrefixes") == 1, "each observation carries its list's kind");
-        // End to end: a PC-assembly patch in an inner list fails coverage; a foreign one in the same list is ignored.
         var tracker = new CoverageTracker(ScopeInventory.Patches, _ => true, "f4b.perf-union-probe");
         var inner = new List<ObservedPatch>();
         HarmonyScan.Observe(PatchMethod, NewPatches(new HarmonyLib.Patch[0], new HarmonyLib.Patch[0], new HarmonyLib.Patch[0], new HarmonyLib.Patch[0],
@@ -339,7 +322,6 @@ internal static class Program
         Check(foreign.Complete, "a foreign owner outside the PC assembly is ignored");
     }
 
-    /// <summary>Opus-r2-2: one rescan over synthetic patch infos, uncached field reflection (before) versus HarmonyScan (after).</summary>
     private static void ScanPerf(int infos)
     {
         var all = Enumerable.Range(0, infos).Select(i => NewPatches(new[] { NewPatch("a" + i), NewPatch("b" + i), NewPatch("c" + i) },
@@ -368,7 +350,6 @@ internal static class Program
         Console.WriteLine($"perf rescan infos={infos} patches={infos * 4} uncached_fields_us median={Median(before):F1} max={before.Max():F1} cached_HarmonyScan_us median={Median(after):F1} max={after.Max():F1}");
     }
 
-    // ---- Offline overhead on a stub loop (docs/perf/f4b.md) ----
 
     private struct State { public long Start; public int Frame, Index; public bool Timed; }
     private static bool measuring = true;
@@ -383,7 +364,6 @@ internal static class Program
 
     private static bool MainThread() { if (Thread.CurrentThread.ManagedThreadId == armThread) return true; offMain++; return false; }
 
-    // Same steps as ScopePatch.Before/After, with Time.frameCount replaced by a static field.
     [MethodImpl(MethodImplOptions.NoInlining)]
     private static void Before(object method, out State s)
     {
@@ -440,16 +420,14 @@ internal static class Program
         {
             index = comparer == null ? new Dictionary<object, int>() : new Dictionary<object, int>(comparer);
             for (int i = 0; i < methods.Length; i++) index[methods[i]] = i;
-            // "default": the default-comparer table alone (before); "reference": the probe's reference cache in front (after).
             fast = comparer == null ? new Dictionary<object, int>() : new Dictionary<object, int>(comparer);
             if (comparer == null) fast = index;
-            TimeLoop(n / 4, false); TimeLoop(n / 4, true); // warm-up
+            TimeLoop(n / 4, false); TimeLoop(n / 4, true);
             var overhead = Enumerable.Range(0, runs).Select(_ => TimeLoop(n, true) - TimeLoop(n, false)).ToArray();
             var lookups = Enumerable.Range(0, runs).Select(_ => LookupCost(index, methods, n)).ToArray();
             results[name] = Median(overhead);
             Console.WriteLine($"perf comparer={name} scope_overhead_ns_per_call median={Median(overhead):F1} min={overhead.Min():F1} max={overhead.Max():F1} lookup_ns={Median(lookups):F1}");
         }
-        // Per-frame observer work: one AccountingPrefix tick (four counter reads, Observe) and one advance call record.
         long held = 0, skip = 0, clips = 0; double withheld = 0;
         Func<long> readHeld = () => held, readSkip = () => skip, readClips = () => clips; Func<double> readWithheld = () => withheld;
         var tracker = new HoldTracker(); tracker.BeginWindow(0, 0);

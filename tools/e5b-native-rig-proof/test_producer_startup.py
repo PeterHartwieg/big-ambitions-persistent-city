@@ -1,4 +1,3 @@
-"""Offline startup gate invariants; no native commands or lease/profile access."""
 from copy import deepcopy
 import unittest
 from unittest.mock import Mock

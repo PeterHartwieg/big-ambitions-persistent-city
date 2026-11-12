@@ -1,8 +1,3 @@
-"""Print the F6a baseline tables (Markdown) from an EconomyInterventions output directory.
-
-Usage: python tests/economy-interventions/report.py build/f6a-baseline
-Reads baseline-summary.json, rival-curve.json and perf.json; writes nothing.
-"""
 import json
 import sys
 from pathlib import Path

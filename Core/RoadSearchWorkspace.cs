@@ -2,7 +2,6 @@ using System;
 
 namespace PersistentCity.Core
 {
-    /// <summary>Reusable scratch data, never a cached route or a cached permission decision.</summary>
     internal sealed class RoadSearchWorkspace
     {
         private struct NodeState
@@ -64,7 +63,6 @@ namespace PersistentCity.Core
 
         public void SetDistance(int node, double distance, int predecessor)
         {
-            // The IReadOnlyList may wrap a mutable list; a callback can add usable nodes.
             EnsureNodes(node + 1);
             ref var state = ref states[node];
             if (state.Generation != generation)
@@ -78,7 +76,7 @@ namespace PersistentCity.Core
 
         public void Add((double Estimate, double Cost, int Node) priority)
         {
-            if (Find(priority) >= 0) return; // Match SortedSet's full-tuple uniqueness.
+            if (Find(priority) >= 0) return;
             int slot;
             if (freeEntry >= 0)
             {
@@ -115,9 +113,6 @@ namespace PersistentCity.Core
 
         private int Find((double Estimate, double Cost, int Node) priority)
         {
-            // Usually one entry per node. If a callback changes positions, the original
-            // algorithm can fail to remove an old priority and retain multiple entries.
-            // Keep those entries too, rather than changing expansion/callback semantics.
             for (int slot = states[priority.Node].FirstEntry; slot >= 0; slot = entries[slot].Next)
                 if (Compare(entries[slot].Priority, priority) == 0) return slot;
             return -1;
@@ -144,8 +139,6 @@ namespace PersistentCity.Core
 
         private bool Less(int left, int right) => Compare(entries[heap[left]].Priority, entries[heap[right]].Priority) < 0;
 
-        // Double.CompareTo also preserves the default ValueTuple ordering for NaN,
-        // infinities and signed zero, not just ordinary finite route costs.
         private static int Compare((double Estimate, double Cost, int Node) left, (double Estimate, double Cost, int Node) right)
         {
             int order = left.Estimate.CompareTo(right.Estimate);

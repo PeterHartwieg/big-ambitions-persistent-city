@@ -5,9 +5,6 @@ using Newtonsoft.Json.Linq;
 
 namespace PersistentCity.PerfGateOffline;
 
-/// <summary>The F4e row's offline tests: same seed, same state hashes; frame-sliced runs equal an uninterrupted advance
-/// at every cadence and presentation (as the #128 replay does); F4a's analyzer accepts the export as source=offline and
-/// refuses it with any contract header field missing.</summary>
 internal static class SelfTest
 {
     private static int failures;
@@ -20,7 +17,6 @@ internal static class SelfTest
     public static int Run(int seed)
     {
         var shape = Fixture.Shape();
-        // 1. Same seed: two fixtures built from nothing are byte-identical, and the same window run on each ends in the same state.
         var a = Fixture.Aged(shape, seed);
         var b = Fixture.Aged(shape, seed);
         Check(a.Payload == b.Payload, "same seed builds the same aged fixture (" + a.Sha256[..16] + ")");
@@ -41,7 +37,6 @@ internal static class SelfTest
         Check(first.StateHash == second.StateHash, "same seed, same window: identical state hashes (" + first.StateHash[..16] + ")");
         Check(first.Orders > 0 && first.MedianBodies > 0, "the window did work: " + first.Orders + " orders, median " + first.MedianBodies + " bodies");
 
-        // 2. Sliced runs equal the uninterrupted advance: every frame rate with bodies, fast-forward with bodies released, and the skip.
         Check(first.StateHash == first.UninterruptedHash, "60 FPS with bodies equals the uninterrupted advance");
         var hashes = new List<string> { first.StateHash };
         foreach (int fps in new[] { 30, 120 })
@@ -55,12 +50,9 @@ internal static class SelfTest
         Check(fast.StateHash == fast.UninterruptedHash && fast.StateHash == first.StateHash, "fast-forward (speed 6, factor 1) equals the uninterrupted advance");
         var skip = Window(ca[from], 60, Presentation.TimeMachine, to, pace);
         Check(skip.StateHash == skip.UninterruptedHash && skip.StateHash == first.StateHash, "a time-machine skip equals the uninterrupted advance");
-        // Across an hour rollover with the journal observing: the window started at 19:00 reaches the same state as the one through it.
         var fromHour = Window(ca[3 * 1440 + 19 * 60.0], 60, Presentation.Bodies, to, pace);
         Check(fromHour.StateHash == fromHour.UninterruptedHash, "a window starting on an hour rollover equals the uninterrupted advance");
 
-        // 3. F4a's analyzer accepts the export as source=offline; a missing contract header field, a wrong contract version,
-        // a native window mixed in, or the offline n/a fields under source=native are refused by the same analyzer.
         string dir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "perf-gate-offline-self-test-" + Environment.ProcessId);
         var inputs = new Export.Inputs { Aged = a, Seed = seed, Windows = { first, fast, skip }, CommandLine = "--self-test" };
         for (int i = 0; i < first.FrameMinute.Count; i++) if (Math.Abs(first.FrameMinute[i] - (3 * 1440 + 19 * 60)) <= 1) inputs.Accounting.Add((first, i));
@@ -88,7 +80,6 @@ internal static class SelfTest
         Refuses("source=native with offline n/a fields", r => { r["source"] = "native"; foreach (var w in r["windows"]!) w["source"] = "native"; });
         Check(refused == mutations, refused + " of " + mutations + " mutated exports refused by F4a's analyzer");
 
-        // 4. Bodies move at the fixed real-time walking speed: also on held frames, and the same per frame at factor 1/3 and 1.
         var (_, perFrame) = WindowRunner.BodyMovement(60);
         Check(first.HeldFrames > 0 && Math.Abs(first.HeldBodyMoveMinutes - first.HeldFrames * perFrame) < 1e-9,
             "bodies keep moving on " + first.HeldFrames + " held frames");
@@ -96,7 +87,6 @@ internal static class SelfTest
         Check(Math.Abs(first.BodyMoveMinutes / first.Frames - perFrame) < 1e-12 && Math.Abs(fastBodies.BodyMoveMinutes / fastBodies.Frames - perFrame) < 1e-12,
             "body movement per frame is the same at factor 1/3 speed 1 and factor 1 speed 3");
 
-        // 5. Expectations through F4a's analyzer: per-window M1 follows the frames, and S5 needs G9's day window.
         WindowResult Synthetic(string condition, string arm, int speed, Presentation presentation, double ms)
         {
             var w = new WindowResult { Spec = new WindowSpec(condition, "S-stationary", arm, 0, 60, 60, Pace.At(Pace.FastestFactor, Math.Max(1, speed)), presentation, 1, speed),

@@ -33,7 +33,7 @@ frequency=status['stopwatch_frequency']
 for row in events:
     if not row['kind'].endswith(':after'):
         continue
-    key=(row['call'],row['kind']) # Same global callback is reported once per selected shop.
+    key=(row['call'],row['kind'])
     if key in seen:
         continue
     seen.add(key)

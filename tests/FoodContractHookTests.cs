@@ -11,8 +11,6 @@ using Xunit;
 
 namespace PersistentCity.Tests;
 
-/// <summary>E5b2 Decision 1: the pinned hook inventory, coalesced hints, catalogue revision and the loaded-name
-/// image, and install/uninstall generations. The router is process-wide, so every router test lives here.</summary>
 [Collection("FoodContractHooks")]
 public sealed class FoodContractHookTests
 {
@@ -28,7 +26,6 @@ public sealed class FoodContractHookTests
         public int GetHashCode(object o) => RuntimeHelpers.GetHashCode(o);
     }
 
-    /// <summary>The reader's sink contract over pure state: the same revision and dirty-queue types the reader uses.</summary>
     private sealed class Sink : IFoodContractHintSink
     {
         public readonly LoadedCatalogueRevision Revision = new LoadedCatalogueRevision();
@@ -97,7 +94,6 @@ public sealed class FoodContractHookTests
         return FoodContractHintRouter.Install(sink, patcher ?? new Patcher(), Environment.CurrentManagedThreadId);
     }
 
-    // Inventory ---------------------------------------------------------------------------------------------------
 
     private static readonly string[] PinnedSignatures =
     {
@@ -138,7 +134,6 @@ public sealed class FoodContractHookTests
 
     private static string Root([CallerFilePath] string path = "") => Path.GetDirectoryName(Path.GetDirectoryName(path)!)!;
 
-    // Coalescing ---------------------------------------------------------------------------------------------------
 
     [Fact]
     public void OneDirtyUnitPerShopUnderATenThousandCallStorm()
@@ -149,10 +144,10 @@ public sealed class FoodContractHookTests
         using var router = Install(sink);
         for (int i = 0; i < 10_000; i++)
         {
-            FoodContractHintRouter.Registration(5, shopA);       // AddItemInstanceToBuilding
-            FoodContractHintRouter.Registration(4, shopA);       // UpdateCachedAvailableProducts
-            FoodContractHintRouter.Holder(11, "Side Street", 9); // AddToCargo on a holder of B
-            FoodContractHintRouter.Holder(12, "Side Street", 9); // RemoveFromCargo
+            FoodContractHintRouter.Registration(5, shopA);
+            FoodContractHintRouter.Registration(4, shopA);
+            FoodContractHintRouter.Holder(11, "Side Street", 9);
+            FoodContractHintRouter.Holder(12, "Side Street", 9);
         }
         Assert.Equal(2, sink.Queue.Count);
         Assert.Equal(10_000, router.Calls(5));
@@ -160,10 +155,9 @@ public sealed class FoodContractHookTests
         Assert.Equal(19_999, router.CoalescedHints(5) + router.CoalescedHints(4));
         Assert.Equal(1, router.NewUnits(11) + router.NewUnits(12));
         Assert.Equal(new[] { "A", "B" }, sink.Drain());
-        // Once taken, the next write is new work again: hints coalesce, they do not get lost.
         FoodContractHintRouter.Registration(20, shopA);
         Assert.Equal(new[] { "A" }, sink.Drain());
-        Assert.Equal(0, sink.Revision.Bumps); // shop hints never touch the catalogue revision
+        Assert.Equal(0, sink.Revision.Bumps);
     }
 
     [Fact]
@@ -182,7 +176,7 @@ public sealed class FoodContractHookTests
         Assert.Equal(0, sink.Queue.Count);
         Assert.Equal(revision, sink.Revision.Revision);
         Assert.NotNull(sink.Revision.Names);
-        Assert.Equal(10_000, router.Calls(10)); // SubtractFromStock is counted, not a dirty source
+        Assert.Equal(10_000, router.Calls(10));
         Assert.Equal(0, router.TotalNewUnits);
         Assert.Equal(8, FoodContractHookTable.All.Count(h => h.Kind == FoodContractHookKind.Quantity));
     }
@@ -219,7 +213,6 @@ public sealed class FoodContractHookTests
         Assert.Equal(0, GC.GetAllocatedBytesForCurrentThread() - bytes);
     }
 
-    // Catalogue revision and the loaded-name image ---------------------------------------------------------------
 
     [Fact]
     public void CatalogueRevisionBumpsOnLoadRegisterUnregisterAndResetAndRepublishesTheNameImage()
@@ -234,10 +227,10 @@ public sealed class FoodContractHookTests
 
         var steps = new (int Hook, string[] Names)[]
         {
-            (0, vanilla),                                                        // OnItemsLoaded
-            (1, vanilla.Append("streetfood:itemname_dumplings").ToArray()),      // RegisterModItem
-            (2, vanilla),                                                        // UnregisterModItem
-            (3, new[] { "ba:itemname_burger" }),                                 // ResetStaticData
+            (0, vanilla),
+            (1, vanilla.Append("streetfood:itemname_dumplings").ToArray()),
+            (2, vanilla),
+            (3, new[] { "ba:itemname_burger" }),
         };
         foreach (var step in steps)
         {
@@ -245,12 +238,11 @@ public sealed class FoodContractHookTests
             var previous = sink.Revision.Names!;
             FoodContractHintRouter.Catalogue(step.Hook);
             Assert.Equal(before + 1, sink.Revision.Revision);
-            Assert.Null(sink.Revision.Names);              // no stale image is current
-            Assert.Equal(new[] { "A" }, sink.Drain());       // every shop image is invalidated
-            FoodContractHintRouter.Catalogue(step.Hook);    // repeated before the rebuild starts: coalesced
+            Assert.Null(sink.Revision.Names);
+            Assert.Equal(new[] { "A" }, sink.Drain());
+            FoodContractHintRouter.Catalogue(step.Hook);
             Assert.Equal(before + 1, sink.Revision.Revision);
 
-            // Half-built: never visible, the previous image is only the last published one.
             var building = sink.Revision.Begin();
             Assert.True(building.Add(FoodContractStampTests.Definition(step.Names[0])));
             Assert.Null(sink.Revision.Names);
@@ -262,7 +254,6 @@ public sealed class FoodContractHookTests
         }
         Assert.Equal(1, router.NewUnits(0)); Assert.Equal(1, router.CoalescedHints(0));
 
-        // A hint during a rebuild discards it.
         FoodContractHintRouter.Catalogue(1);
         sink.Revision.Begin().Add(FoodContractStampTests.Definition("ba:itemname_burger"));
         long mid = sink.Revision.Revision;
@@ -271,7 +262,6 @@ public sealed class FoodContractHookTests
         Assert.Null(sink.Revision.Building);
         Assert.Null(sink.Revision.Names);
 
-        // Reader reset at unload also bumps and drops the image.
         sink.Publish(vanilla);
         long published = sink.Revision.Revision;
         sink.Revision.Reset();
@@ -291,7 +281,6 @@ public sealed class FoodContractHookTests
         foreach (var n in image.Names) Assert.True(catalogue.TryGet(n, out var definition) && definition.Name == n);
     }
 
-    // Install, uninstall and generation --------------------------------------------------------------------------
 
     [Fact]
     public void ReloadAndUnloadLeaveNoHookOrSinkReference()
@@ -315,21 +304,18 @@ public sealed class FoodContractHookTests
         Assert.Equal(1, patcher.Unpatches);
         Assert.Equal(0, router.InstalledCount);
         Assert.Equal(g0 + 2, FoodContractHintRouter.Generation);
-        // A hook that survived a failed unpatch reaches nothing.
         FoodContractHintRouter.Registration(5, shop); FoodContractHintRouter.Catalogue(0); FoodContractHintRouter.Quantity(10);
         Assert.Equal(0, router.TotalCalls);
         Assert.Equal(0, first.Queue.Count);
         router.Dispose();
         Assert.Equal(1, patcher.Unpatches);
 
-        // Reload: a new city gets a new generation; the old sink stays unreachable.
         var second = new Sink(); object shop2 = new object(); second.Track("B", shop2, "Main Street", 5);
         using var reloaded = FoodContractHintRouter.Install(second, patcher, Environment.CurrentManagedThreadId);
         Assert.Equal(g0 + 3, reloaded.InstalledGeneration);
         FoodContractHintRouter.Holder(11, "Main Street", 5);
         Assert.Equal(0, first.Queue.Count);
         Assert.Equal(1, second.Queue.Count);
-        // Dirty-queue clear (reader reset) releases every queued unit.
         var unit = second.Units[0];
         second.Queue.Clear();
         Assert.False(unit.Queued);
@@ -366,18 +352,15 @@ public sealed class FoodContractHookTests
         Assert.Equal(0, router.TotalCalls);
         Assert.Equal(0, sink.Queue.Count);
         router.Drain();
-        // A shop hint requeues every shop and leaves the catalogue, and its name image, published.
         Assert.Equal(revision, sink.Revision.Revision);
         Assert.NotNull(sink.Revision.Names);
         Assert.Equal(1, sink.Queue.Count);
         router.Drain();
         Assert.Equal(1, sink.Queue.Count);
-        // Quantity-only off-thread calls leave nothing pending.
         var quantity = new Thread(() => FoodContractHintRouter.Quantity(10));
         quantity.Start(); quantity.Join();
         router.Drain();
         Assert.Equal(revision, sink.Revision.Revision);
-        // Only an off-thread W11 call rebuilds the catalogue.
         var catalogue = new Thread(() => FoodContractHintRouter.Catalogue(1));
         catalogue.Start(); catalogue.Join();
         router.Drain();
@@ -396,7 +379,6 @@ public sealed class FoodContractHookTests
         Assert.Contains("InvalidOperationException", router.LastFault);
     }
 
-    /// <summary>Not a gate: records the postfix body cost (router entry) only when PC_E5B2_MEASURE names a file.</summary>
     [Fact]
     public void MeasurePostfixCost()
     {

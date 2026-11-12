@@ -45,11 +45,8 @@ public sealed partial class FoodCommerceTests
         }
     }
 
-    // Logs planner calls; a scoped subclass brackets each shared-quote request. The same validity
-    // sequence goes to both, so a scope may change native work but never Core's calls or decisions.
     private class RecordingWalking : IRoutePlanner, IWalkingQuoteValidity
     {
-        // Sequence ignores scopes; Log marks them and anything called outside one.
         public readonly System.Collections.Generic.List<string> Sequence = new(), Log = new();
         public bool Open;
         public int Calls, Validations;
@@ -60,7 +57,6 @@ public sealed partial class FoodCommerceTests
         }
         public bool IsWalkingQuoteValid(Place from, Place to, Route route, TravelPreferences preferences)
         {
-            // Every fifth check refuses, exercising stale-quote replacement and refused replacements.
             bool valid = ++Validations % 5 != 3;
             Sequence.Add(valid ? "valid" : "invalid"); Log.Add(!Open ? "unscoped-validation" : valid ? "valid" : "invalid");
             return valid;

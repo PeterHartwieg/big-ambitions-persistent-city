@@ -7,20 +7,13 @@ namespace PersistentCity.Persistence
 {
     public enum FoodReceiptStatus { Missing, Pending, Paid, Conflict }
 
-    /// <summary>Native save-side idempotency markers. Kept with native orders/stock even if the
-    /// population's save callback stops. Pending and unresolved evidence never expires merely
-    /// because the clock advanced. No separate disk transaction or household ledger.</summary>
     public static class FoodSaleReceipts
     {
-        // Held at 1 until release (docs/decisions/2026-11-09-schema-one.md). Do not bump it or add per-feature schema constants; change the format in place.
         public const string Prefix = "persistentcity:food-sale-v1:";
         public static bool IsReceiptKey(string key) => key.StartsWith(Prefix, StringComparison.Ordinal);
         private static string Key(ResidentMeal m) => Prefix + m.IntentId;
-        // Exact canonical cents: the same text the earlier decimal-cents identity wrote for the same amount.
         private static string Identity(ResidentMeal m) => m.Price.ToCentsText()
             + "|" + Uri.EscapeDataString(m.BusinessId) + "|" + Uri.EscapeDataString(m.ProductId);
-        /// <summary>F6j: a ticket's extras follow the main identity as "|cents:product" fields, at most three. The
-        /// leading price is then the ticket total. A one-product receipt is unchanged.</summary>
         private static string Lines(IReadOnlyList<FoodTicketLine>? extras)
         {
             if (extras == null || extras.Count == 0) return "";
@@ -45,8 +38,6 @@ namespace PersistentCity.Persistence
             }
             return true;
         }
-        /// <summary>Missing is absence of evidence, never proof that a native purchase failed.
-        /// Only Paid confirms this exact intention, business, product and agreed price (the ticket total).</summary>
         public static FoodReceiptStatus ReadStatus(IDictionary<string, string> data, ResidentMeal meal)
         {
             if (meal.TargetKind != FoodAlternativeKind.Player) return FoodReceiptStatus.Missing;
@@ -63,9 +54,6 @@ namespace PersistentCity.Persistence
             if (status == FoodReceiptStatus.Paid) return true;
             throw new InvalidOperationException("Native food receipt is uncertain or conflicts with this intention; no retry.");
         }
-        /// <summary>F6j reconciliation without a checkout replay: a paid receipt for this intention, business and main
-        /// whose sold total is at most the meal's held Price (its planned total). Returns the sold total and the sold
-        /// extras, so the caller can return unsold funds and record every sold line. False for any other evidence.</summary>
         public static bool TryReadPaidTicket(IDictionary<string, string> data, ResidentMeal meal, out Money total, out IReadOnlyList<FoodTicketLine> extras)
         {
             total = Money.Zero; extras = Array.Empty<FoodTicketLine>();
@@ -87,22 +75,18 @@ namespace PersistentCity.Persistence
             if (paid > meal.Price || main <= Money.Zero) return false;
             total = paid; extras = lines; return true;
         }
-        /// <summary>F6j: true only for a paid receipt of exactly this planned ticket; any other evidence throws.</summary>
         public static bool AlreadyPaid(IDictionary<string, string> data, ResidentMeal meal, IReadOnlyList<FoodTicketLine> extras)
         {
             if (!AlreadyPaid(data, meal)) return false;
             if (data.TryGetValue(Key(meal), out var value) && value == "paid|" + Identity(meal) + Lines(extras)) return true;
             throw new InvalidOperationException("Native food receipt conflicts with this ticket; no retry.");
         }
-        /// <summary><paramref name="extras"/> are the planned ticket extras; meal.Price is then the planned total.</summary>
         public static void Begin(IDictionary<string, string> data, ResidentMeal meal, IReadOnlyList<FoodTicketLine>? extras = null)
         {
             if (meal.TargetKind != FoodAlternativeKind.Player) throw new InvalidOperationException("Modeled food has no native receipt.");
             if (ReadStatus(data, meal) != FoodReceiptStatus.Missing) throw new InvalidOperationException("Native food intention already has a receipt.");
             data.Add(Key(meal), "pending|" + Identity(meal) + Lines(extras));
         }
-        /// <summary>F6j: confirm the exact planned pending ticket as the lines that actually sold. The paid total is
-        /// the main price plus the sold extras; the caller books that total.</summary>
         public static void Confirm(IDictionary<string, string> data, ResidentMeal meal, Money mainPrice,
             IReadOnlyList<FoodTicketLine> planned, IReadOnlyList<FoodTicketLine> sold)
         {
@@ -121,7 +105,6 @@ namespace PersistentCity.Persistence
                 throw new InvalidOperationException("Native food receipt changed during checkout.");
             data[Key(meal)] = "paid|" + Identity(meal);
         }
-        /// <summary>Only a seller-confirmed refusal before effects can cancel this exact pending identity.</summary>
         public static void Cancel(IDictionary<string, string> data, ResidentMeal meal)
         {
             if (meal.TargetKind != FoodAlternativeKind.Player || ReadStatus(data, meal) != FoodReceiptStatus.Pending
@@ -129,9 +112,6 @@ namespace PersistentCity.Persistence
                 throw new InvalidOperationException("Native food receipt changed during cancellation; outcome is uncertain; do not retry.");
             data.Remove(Key(meal));
         }
-        /// <summary>Expire only known confirmed receipts outside the native checkout horizon.
-        /// The caller protects intention IDs whose population-side outcome is still unresolved,
-        /// including a paid native receipt whose matching held funds have not yet reconciled.</summary>
         public static void Prune(IDictionary<string, string> data, int nativeDay,
             IEnumerable<string>? unresolvedIntentIds = null)
         {
@@ -149,7 +129,6 @@ namespace PersistentCity.Persistence
         }
         private static bool ConfirmedValue(string value)
         {
-            // Unknown or damaged markers are evidence to investigate, not garbage to erase.
             if (value == null) return false;
             var parts = value.Split('|');
             if (parts.Length < 4 || parts[0] != "paid" || !PositiveCents(parts[1])) return false;

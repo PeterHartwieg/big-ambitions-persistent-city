@@ -113,14 +113,14 @@ public sealed class TrafficPersistenceTests
         Assert.NotSame(oldTraffic, state.Traffic);
         Assert.NotSame(oldRoute, state.Citizens[0].Journey);
         Assert.Equal(oldX, state.Citizens[0].Journey!.PositionAt(7).X);
-        Assert.Equal(2, state.Citizens[0].Journey!.Legs[1].Minutes); // Preparation remains in game minutes.
+        Assert.Equal(2, state.Citizens[0].Journey!.Legs[1].Minutes);
         Assert.Equal(new[] { "c0" }, state.Traffic!.Links[0].Vehicles);
         Assert.Equal(new[] { "c1" }, state.Traffic.Links[0].WaitingSources);
         Assert.Equal(20, state.Traffic.Definitions[0].FreeFlowMinutes);
         Assert.Equal(4, state.Traffic.Definitions[0].HeadwayMinutes);
         Assert.Equal(state.Minute, state.Traffic.Clock);
         Assert.Equal(SaveReadStatus.Loaded, DevelopmentChain.Read(DevelopmentChain.Write(state)).Status);
-        Assert.Equal(10, oldTraffic.Definitions[0].FreeFlowMinutes); // Detached source snapshot was untouched.
+        Assert.Equal(10, oldTraffic.Definitions[0].FreeFlowMinutes);
         Assert.Equal(18, oldRoute.Minutes);
     }
 

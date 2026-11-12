@@ -81,7 +81,6 @@ public sealed class FoodProductMetadataTests
         var originalWeights=originals.Select(p=>FoodChoicePolicy.Weight(Offer(p,meal),traits,Money.FromCents(1000),settings)).OrderBy(x=>x).ToArray();
         double actual=FoodChoicePolicy.Weight(Offer(Dumplings,meal),traits,Money.FromCents(1000),settings,metadata);
         Assert.Equal(originalWeights[1],actual,12);
-        // Compare each original, including full A3 floor/temperature/memory and rank ordering.
         foreach (string product in originals)
         {
             int fit=FoodProducts.Penalty(meal,product);
@@ -277,7 +276,6 @@ public sealed class FoodProductMetadataTests
             counts[taste]++;
             if(taste!=FoodProductMetadataResolver.DefaultTaste(957,id,"another:product")) differences++;
             products.Add(taste);
-            // Reconstructed resolver/settings/traits represent fresh loads; no persisted taste array.
             Assert.Equal(taste,Parse("{}").FoodProductOverrides.Resolver.Resolve(product,new ResidentTraits {Bands=Traits.Bands},957,id).TasteBand);
         }
         Assert.Equal(5,products.Count); Assert.InRange(differences,5000,8500);

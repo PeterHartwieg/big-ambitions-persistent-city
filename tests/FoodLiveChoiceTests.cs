@@ -16,7 +16,6 @@ public sealed class FoodLiveChoiceTests
         Assert.Equal(Weight(null,null),Weight(50,50));Assert.True(Weight(100,100)>Weight(null,null));
         settings.FoodChoiceHealthWeight=3;
         Assert.Equal(Weight(null,null),FoodChoicePolicy.Weight(Offer(null,null),new ResidentTraits {Bands="2222222042"},Money.FromCents(1000),settings));
-        // F6i anchored-price coefficient vector, independent of sampling (legacy meal fit is neutral).
         var vector=new EvaluatedFoodOffer("b",FoodProducts.Burger,Money.FromCents(300),5,0,20,90,null,null,MealKind.Legacy);
         Assert.Equal(2.1818181818181817,FoodChoicePolicy.Weight(vector,new ResidentTraits {Bands="2222222222"},Money.FromCents(1000),new FoodChoiceSettings()),12);
     }

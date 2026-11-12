@@ -57,8 +57,6 @@ public sealed class TrafficSignalPrecisionTests
             Assert.False(kernel.GetPermission("car").IsCompleted);
         }
         kernel.AdvanceTo(green, 100);
-        // An independently scaled event may be a few ulps early; its normal guard
-        // reschedules the canonical boundary without granting an early discharge.
         kernel.AdvanceTo(green + 1e-8, 100);
         Assert.True(kernel.GetPermission("car").IsCompleted);
     }

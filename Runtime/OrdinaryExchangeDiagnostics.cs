@@ -6,7 +6,6 @@ namespace PersistentCity.Runtime
     public sealed partial class PopulationRuntime
     {
         private OrdinaryOwnershipIndex? ordinaryOwnershipIndex;
-        // On-request managed facts only; no native reads, individual identities or rival figures.
         public object? OrdinaryExchangesDump()
         {
             if (failed || simulation == null || !ReferenceEquals(saveIdentity, SaveGameManager.Current)) return null;

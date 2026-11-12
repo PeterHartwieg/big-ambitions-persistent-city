@@ -31,8 +31,6 @@ public sealed class ResidentEmploymentTests
         }
     }
 
-    // Select reproducible seeds for a rare event; assertions below concern state,
-    // interrupted travel and accounting rather than repeating the chance calculation.
     private static int SeedFor(bool loss)
         => Enumerable.Range(0, 100000).First(seed =>
             (StableRandom.Hash("worker:employment:1", seed) + 1.0) / (uint.MaxValue + 2.0)

@@ -52,7 +52,6 @@ public sealed class WeightedFoodChoiceTests
         var market=new Market {Shops=state.Food.Shops.Select(s=>new FoodBusiness {Id=s.BusinessId,PlaceId=s.PlaceId,Name=s.PlaceId,MealsPerHour=60,
             Hours=Enumerable.Range(0,7).Select(d=>new OpeningWindow {Day=d,FromMinute=0,ToMinute=1440}).ToList(),
             Offers=new(){new FoodOffer {ProductId=FoodProducts.Croissant,Price=Money.FromCents(100),Units=100}}}).ToArray()};
-        // Visitors (K-1 per resident) are persons with their own routines; they arrive through a portal.
         if(representation>1) PortalPlaces.Add(state, new[] { new PortalStation("subway:test", new Position(3, 0, 1)) });
         var planner=new Planner(); var city=new CitySimulator(state,planner);city.AttachFoodMarket(market,LegacyFoodChoice.Settings());
         state.Food.ChoiceStartsDay=active?1:2;
@@ -102,7 +101,7 @@ public sealed class WeightedFoodChoiceTests
         Assert.Equal(DevelopmentChain.Write(control.State),DevelopmentChain.Write(changed.State));
         Assert.Equal(mc.Orders,mm.Orders);Assert.Single(mm.Orders);
         Assert.Equal(pc.Out,pm.Out);Assert.Equal(pc.Back,pm.Back);
-        Assert.Equal(8,pm.Out);Assert.InRange(pm.Back,0,9); // one later return revalidation is separate
+        Assert.Equal(8,pm.Out);Assert.InRange(pm.Back,0,9);
     }
     [Fact]
     public void CataloguePermutationAndMoreThanEightShopsDoNotChangeShortlistDrawOrResult()
@@ -147,7 +146,6 @@ public sealed class WeightedFoodChoiceTests
     {
         var settings=new FoodChoiceSettings();var neutral=new ResidentTraits {Bands="2222222222"};
         EvaluatedFoodOffer Offer(string id,string product,int price,double travel) => new(id,product,Money.FromCents(price),travel,0,travel+15,90,null,null,MealKind.Legacy);
-        // Native-scale baseline and a discount below the reward ceiling preserve all three signals.
         var baseline=new[]{Offer("b0",FoodProducts.Burger,924,5),Offer("b1",FoodProducts.Croissant,924,5)};
         var cheaper=new[]{Offer("b0",FoodProducts.Burger,650,5),baseline[1]};
         var nearer=new[]{Offer("b0",FoodProducts.Burger,924,1),baseline[1]};
@@ -221,7 +219,6 @@ public sealed class WeightedFoodChoiceTests
             city=new CitySimulator(city.State,planner);city.AttachFoodMarket(market);
             while(!city.AdvanceTo(city.State.Minute,1).CaughtUp) {}
             Assert.Equal(Math.Min(4,context),meal.ContextAttempts);Assert.Equal(MealStatus.Missed,meal.Status);
-            // Same logical stay, even observed again later, consumes neither an ordinal nor another draw.
             meal.Status=MealStatus.Pending;meal.DueAt=city.State.Minute;
             city=new CitySimulator(city.State,planner);city.AttachFoodMarket(market);
             while(!city.AdvanceTo(city.State.Minute,1).CaughtUp) {}

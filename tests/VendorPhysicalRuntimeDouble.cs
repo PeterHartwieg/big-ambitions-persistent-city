@@ -1,5 +1,3 @@
-// Native scene doubles only. E6e tests compile the complete production DwellSpots and PhysicalPopulation.
-// Movement advances only when a test explicitly moves an actor; path commands alone never prove arrival.
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -136,7 +134,6 @@ namespace PersistentCity.Runtime
     }
     internal sealed class MultimodalRoutes
     {
-        // F2d: car tests opt in to a road sample at the journey pose; every other test keeps cars without bodies.
         internal static bool CarSamples;
         internal bool ReadyForPopulation => true;
         internal object ResolveWaypoint(int _) => new();
@@ -144,9 +141,6 @@ namespace PersistentCity.Runtime
         { sample = new PhysicalRoadSample { Position = s.Position }; return CarSamples; }
     }
     internal struct PhysicalRoadSample { internal Position Position; }
-    // Native car pool double (F2d). A body moves only when a test drives it: Drive applies the production CommandLimit
-    // the way the native fixed step does, at a native speed the test chooses, and raises Gley's reached marker at a
-    // corner the test names.
     internal sealed class PhysicalVehicles : IDisposable
     {
         internal static PhysicalVehicles? Last;
@@ -162,7 +156,6 @@ namespace PersistentCity.Runtime
         internal string LastAdmissionStage => "";
         internal string LastAdmissionError => "";
         internal string OwnershipDiagnostics => "ownCars=" + Active.Count + ", parkedCars=" + Parked.Count;
-        // GR-9: the parked cars the population asked to show, by car ID, with their saved state.
         internal readonly Dictionary<string, (ParkedCar Car, CarState? State)> Parked = new();
         internal int ParkedRefreshes;
         internal void ShowParked(IReadOnlyList<ParkedCar> wanted, Func<string, CarState?> car)
@@ -188,9 +181,6 @@ namespace PersistentCity.Runtime
             if (body.Valid) body.SetFade(1);
             Active.Remove(body.CitizenId); body.Valid = false;
         }
-        /// <summary>One native fixed step for every car: move along the commanded direction by at most the command's
-        /// advance (nothing while held), at <paramref name="speed"/> metres per second; a car standing on a corner
-        /// <paramref name="corner"/> returns raises Gley's reached marker for it.</summary>
         internal static float LastStepSeconds = 1 / 60f;
         internal bool? NativeRed(PhysicalVehicleBody body) => body.NativeRed;
         internal void Drive(float seconds, double speed, Func<PhysicalVehicleBody, Position?>? corner = null)
@@ -217,7 +207,6 @@ namespace PersistentCity.Runtime
         internal string CitizenId { get; }
         internal string CarId = "";
         internal bool Valid = true;
-        // Native speed multiple a test can lower (a slow car), and the advance of the last Drive step.
         internal double Pace = 1, Moved;
         private readonly Queue<Position> reached = new();
         internal void Reach(Position corner) { if (reached.Count == 0 || Position.Distance(reached.Peek(), corner) > .01) reached.Enqueue(corner); }
@@ -228,15 +217,12 @@ namespace PersistentCity.Runtime
             marker = reached.Peek(); return true;
         }
         internal bool ConsumeReached(Position p) { if (!TryPeekReached(p, out _)) return false; reached.Dequeue(); return true; }
-        // F2d follower hooks: native speed (from the last Drive step), the test-controlled on-screen flag,
-        // whether the car's materials can fade, and the fade itself.
         internal double Speed => Moved / Math.Max(1e-6, PhysicalVehicles.LastStepSeconds);
         internal bool OnScreen;
         internal bool CanFade;
         internal float Alpha = 1;
         internal readonly List<float> Fades = new();
         internal void SetFade(float alpha) { Alpha = alpha; Fades.Add(alpha); }
-        // Gley's target waypoint light for this car: true red, false green, null unknown.
         internal bool? NativeRed;
     }
     internal sealed class Actor
@@ -255,12 +241,10 @@ namespace PersistentCity.Runtime
         internal bool Valid = true;
         internal Position Position => Point(Character.transform.position);
         internal Position Target, Facing;
-        // F2b: a test can make a target unreachable (no complete NavMesh path).
         internal static Func<Position, bool>? Unreachable;
         internal bool SetPathTarget(Position p, double _)
         { if (Unreachable?.Invoke(p) == true) return false; Target = p; Agent.hasPath = true; Agent.isPathStale = false; Agent.isStopped = false; return true; }
         internal bool SetTarget(Position p, double speed) { SetTargets++; return SetPathTarget(p, speed); }
-        // F2c: a pose is projected onto the walkable surface through the NavMesh.Sample hook; SetTarget counts its calls.
         internal int SetTargets;
         internal bool TryProjectPose(Position p, out Position projected)
         {
@@ -269,15 +253,12 @@ namespace PersistentCity.Runtime
             projected = Point(hit.position); return true;
         }
         internal void Stop(bool value) { Agent.isStopped = value; }
-        // P-C: the agent still holds the path SetTarget gave it (a warp drops it; a test may drop it too).
         internal bool HasPath => Valid && Agent.hasPath && !Agent.isPathStale;
-        // F2c follower hooks: the commanded pace, an off-screen move, and the test-controlled on-screen flag.
         internal double Speed;
         internal int Warps;
         internal bool OnScreen;
         internal void Pace(double v) { Speed = v > 0 ? v : 0; Agent.isStopped = !(v > 0); }
         internal float Alpha = 1;
-        // F2c: whether this body's materials can show a fade; tests decide (the production check is WalkerFollow.MaterialCanFade).
         internal bool CanFade = true;
         internal readonly List<float> Fades = new();
         internal void SetFade(float alpha) { Alpha = alpha; Fades.Add(alpha); }
@@ -287,7 +268,6 @@ namespace PersistentCity.Runtime
         internal static Vector3 Vector(Position p) => new((float)p.X, (float)p.Y, (float)p.Z);
         internal static Position Point(Vector3 p) => new(p.x, p.y, p.z);
     }
-    // Pool-contract double: a recycled actor gets a new immutable identity lease. Selection/dwell code is production.
     internal sealed class PhysicalPedestrians : IDisposable
     {
         internal static PhysicalPedestrians? Last;
@@ -298,11 +278,8 @@ namespace PersistentCity.Runtime
         private int actors;
         private long generation;
         internal PhysicalPedestrians(Transform _, int maximum) { this.maximum = maximum; Last = this; }
-        // F2c: whether a point is in the camera's view; tests decide. Unset means out of view.
         internal static Func<Position, bool>? VisiblePoint;
-        // GR-9: new bodies start on screen (a fade-in test); off by default.
         internal static bool AppearOnScreen;
-        // P-C: the production pool calls this right before each native navigation update; tests call it before moving bodies.
         internal Action? BeforeNavigation { get; set; }
         internal bool Visible(Position at) => VisiblePoint?.Invoke(at) == true;
         internal bool TryAcquire(CitizenIdentity identity, Position position, out PhysicalPedestrianBody? body)

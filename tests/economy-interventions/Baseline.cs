@@ -5,8 +5,6 @@ using PersistentCity.Core;
 
 namespace PersistentCity.EconomyInterventions;
 
-/// <summary>Seed-band summary, today's unlimited rival curve and tool cost. Section 3.5 metric
-/// definitions; thresholds are F6h work and are not set here.</summary>
 public static class Baseline
 {
     private const int Weeks = EconomyRun.Days / 7;
@@ -49,7 +47,6 @@ public static class Baseline
         profile ??= FixtureProfile.CapacityBound;
         var control = results["control/control"];
         int reverted = InterventionArms.FirstRevertedDay;
-        // Control seed band per day of the 3-day trailing mean own purchases (mean +/- 2 sd over seeds).
         var band = Enumerable.Range(1, EconomyRun.Days).ToDictionary(day => day, day =>
         {
             var values = control.Select(r => Trailing(r.Days, day, d => d.OwnPurchases)).ToArray();
@@ -101,8 +98,6 @@ public static class Baseline
                 double basePrice = profile.Base(priceInput.Product), changed = priceInput.Value;
                 double Arc(double qa, double qc) => (qa - qc) / ((qa + qc) / 2) / ((changed - basePrice) / ((changed + basePrice) / 2));
                 double Sum(RunResult r, Func<DayMetrics, double> q) => r.Days.Where(d => DayMetrics.Phase(d.Day) == "intervention").Sum(q);
-                // Served purchases are capped by the staffed ceiling; the demand-side quantities are
-                // chosen offers and the chosen share of feasible offers, before service capacity binds.
                 var measures = new (string Name, string Quantity, Func<RunResult, double> Q)[] {
                     ("arcElasticity", menu ? "own purchases" : "burger purchases",
                         r => Sum(r, d => menu ? d.OwnPurchases : d.ProductPurchases(InterventionArms.Product))),
@@ -135,8 +130,6 @@ public static class Baseline
     public static readonly int[] CurveResidents = { 32, 64, 128, 256, 512, 957, 1914 };
     public const int CurveDays = 3;
 
-    /// <summary>Same menu, price, hours, distance and service rating; one side listed at a time.
-    /// Served meals per day under rising demand. Today the rival has no ceiling.</summary>
     public static string RivalCurve()
     {
         var json = new Json();
@@ -163,7 +156,6 @@ public static class Baseline
         return json.ToString();
     }
 
-    /// <summary>Tool cost only (no gate): wall time and allocation per simulated week.</summary>
     public static string Perf(Dictionary<string, List<RunResult>> results)
     {
         var json = new Json();

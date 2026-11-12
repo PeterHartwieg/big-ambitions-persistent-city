@@ -13,7 +13,6 @@ namespace PersistentCity.Core
         public int Junction { get; }
     }
 
-    /// <summary>Read-only admission evidence; never supplies signal permission or occupancy.</summary>
     public static class PhysicalRoadAdmission
     {
         public static bool Allows(IReadOnlyList<RoadBoundary> boundaries, double progress, double vehicleLength, double margin = 1)
@@ -40,14 +39,10 @@ namespace PersistentCity.Core
                 {
                     if (inside != boundary.Junction)
                     {
-                        // A route may begin inside a native junction and record its exit
-                        // first. That explicit exit proves outside only after rear clearance.
-                        // No later unmatched exit can repair missing or ambiguous history.
                         if (index != 0) return false;
                         blocked = true;
                     }
                     inside = -1;
-                    // Reset only after the whole body has cleared this exit. Later entries can block again.
                     if (progress >= boundary.Distance + vehicleLength + margin) blocked = false;
                     else if (progress >= boundary.Distance) blocked = true;
                 }

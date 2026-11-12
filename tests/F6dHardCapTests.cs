@@ -38,7 +38,6 @@ public sealed class F6dHardCapTests
         state.MenuPolicy = FoodNameIdentity.Wire; state.Food!.Residents[0].Decision = null;
         state.PopulationKey = CurrentSchemaOnlyTests.City().PopulationKey;
         state.PrepareForSave();
-        // Freeze the fixture's coherent state: synthetic journeys below must not be replaced by a live scheduler.
         state.SnapshotSynchronizer = null;
         string baseline = SaveCodec.Write(state);
         var counts = SaveCodec.CountRecords(state, baseline);
@@ -66,7 +65,6 @@ public sealed class F6dHardCapTests
         WriteKept(state, atRecords);
         EconomicLedgerTests.Refused(Unchecked(state));
         last.Legs.RemoveAt(last.Legs.Count - 1); person.NextEventMinute--;
-        // Fill only existing scalar strings; embedded-record count stays exactly at the cap.
         int padding = SaveCodec.MaxInputCharacters - atRecords.Length;
         foreach (var (_, route) in routes)
             foreach (var leg in route.Legs)
@@ -74,7 +72,6 @@ public sealed class F6dHardCapTests
                 int n = Math.Min(256, padding); leg.ServiceId = new string('x', n); padding -= n;
                 if (padding == 0) break;
             }
-        // Spend any remaining space in owned-resident names, which never alias the imported source table.
         foreach (var p in state.Citizens.Where(p => p.Identity.Id.StartsWith("pc:", StringComparison.Ordinal)))
         {
             int n = Math.Min(512 - p.Identity.Name.Length, padding); p.Identity.Name += new string('x', n); padding -= n;
@@ -90,7 +87,6 @@ public sealed class F6dHardCapTests
         growName.Identity.Name += "x";
         Assert.Throws<SaveValidationException>(() => SaveCodec.Write(state)); WriteKept(state, atCharacters);
         EconomicLedgerTests.Refused(atCharacters + " ");
-        // Same character count but one more UTF-8 byte also refuses.
         growName.Identity.Name = growName.Identity.Name[..^1];
         var nonAscii = routes[0].Route.Legs[0]; nonAscii.ServiceId = "é" + nonAscii.ServiceId[1..];
         Assert.Throws<SaveValidationException>(() => SaveCodec.Write(state)); WriteKept(state, atCharacters);

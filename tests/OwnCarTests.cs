@@ -11,16 +11,11 @@ using Xunit;
 
 namespace PersistentCity.Tests;
 
-/// <summary>GR-9 (G6, G7): the mod's own kinematic cars, parked cars as objects and appearance from the person ID.
-/// Offline only; the in-game checks (fades without popping, parked cars across reload, no borrowed car, no hook) are
-/// batched for the rig.</summary>
 [Collection(StreetFoodHooks.Collection)]
 public sealed class OwnCarTests
 {
     private static PhysicalTrafficCommandLimit Limit(double advance, bool hold = false) => new(new Position(1, 0, 0), advance, hold);
 
-    /// <summary>The own car never moves past its command limit or its corner, stands while held, and reaches a reachable
-    /// corner exactly instead of creeping towards it.</summary>
     [Fact]
     public void OwnCarStaysWithinItsLimitAndLandsOnTheCorner()
     {
@@ -34,7 +29,6 @@ public sealed class OwnCarTests
         }
         Assert.Equal(cap, along, 9);
         Assert.Equal(0, speed);
-        // With room past the corner it stops on the corner and reports it.
         along = 35; speed = 5;
         OwnCarStep last = default;
         for (int frame = 0; frame < 600 && !last.AtCorner; frame++)
@@ -43,7 +37,6 @@ public sealed class OwnCarTests
             along = last.Along; speed = last.Speed;
         }
         Assert.True(last.AtCorner); Assert.Equal(40, along, 12);
-        // A hold stands at once; bad input never moves the car.
         var held = OwnCarMotion.Step(10, 40, 9, Limit(100, hold: true), 1 / 60.0);
         Assert.Equal((10.0, 0.0, 0.0), (held.Along, held.Speed, held.Moved));
         Assert.Equal(0, OwnCarMotion.Step(10, 40, 9, Limit(double.NaN), 1 / 60.0).Moved);
@@ -58,9 +51,6 @@ public sealed class OwnCarTests
         return options;
     }
 
-    /// <summary>Plan test 1: over a seeded day a journey gives the same legs, times and arrival with own cars as with
-    /// borrowed cars, and both equal the city without bodies, on every projection (save, sales, journeys, parked cars,
-    /// wallets, FIFO). Own cars did drive.</summary>
     [Fact]
     public void OwnCarsGiveTheSameJourneysAsBorrowedCarsOverASeededDay()
     {
@@ -76,9 +66,6 @@ public sealed class OwnCarTests
             Assert.Equal(borrowed.Metrics[key], own.Metrics[key]);
     }
 
-    /// <summary>Plan test 2 (harness): with own cars, person and car IDs and parked positions survive pool reuse (bodies
-    /// released and re-acquired as the camera sweeps away and back), a mid-journey reload and camera movement: the run
-    /// equals its bodies-off reference on every projection.</summary>
     [Fact]
     public void OwnCarIdsSurvivePoolReuseReloadAndCameraMovement()
     {
@@ -127,16 +114,13 @@ public sealed class OwnCarTests
         });
     }
 
-    /// <summary>Plan test 2 (runtime): parked cars stand at their owners' saved curb positions, nearest first within the
-    /// vehicle cap; moving the camera away and back and reloading the save shows the same cars at the same places, and
-    /// showing them writes nothing.</summary>
     [Fact]
     public void ParkedCarsStandAtTheSavedCurbAcrossCameraMovementAndReload()
     {
         var state = ParkedCity(6);
         string before = SaveCodec.Write(state);
         var first = ShowParked(state, Home);
-        Assert.Equal(4, first.Count); // the vehicle cap
+        Assert.Equal(4, first.Count);
         Assert.Equal(new[] { "p0:car", "p1:car", "p2:car", "p3:car" }, first.Keys.OrderBy(k => k, StringComparer.Ordinal));
         foreach (var (id, at) in first) Assert.Equal(state.Citizens.Single(c => c.Car!.Id == id).Car!.ParkedPosition, at);
         Assert.Empty(ShowParked(state, new Position(5000, 0, 0)));
@@ -146,8 +130,6 @@ public sealed class OwnCarTests
         Assert.Equal(before, SaveCodec.Write(restored));
     }
 
-    /// <summary>A car inside its owner's car block is driving or being parked, not standing; before it, it stands at the
-    /// saved curb, after it at the last car leg's end.</summary>
     [Fact]
     public void ACarIsParkedOutsideItsCarBlockOnly()
     {
@@ -165,8 +147,6 @@ public sealed class OwnCarTests
         Assert.False(ParkedCars.TryParked(person, 0.5, out _));
     }
 
-    /// <summary>Plan test 3: appearance is reproducible from the person ID: the same identity gives the same look after a
-    /// save round trip; two people sharing a donor seed get different looks; every wardrobe is worn.</summary>
     [Fact]
     public void AppearanceIsReproducibleFromThePersonId()
     {
@@ -175,7 +155,6 @@ public sealed class OwnCarTests
         var restored = SaveWire.Read(SaveCodec.Write(state)).State!;
         foreach (var c in restored.Citizens) Assert.Equal(looks[c.Identity.Id], PersonAppearance.For(c.Identity));
         Assert.Equal(looks["p3"], PersonAppearance.For(new CitizenIdentity { Id = "p3", AppearanceSeed = 7 }));
-        // All 400 share donor seed 7, yet their looks differ.
         Assert.True(looks.Values.Select(l => l.Seed).Distinct().Count() > 390);
         Assert.All(looks.Values, l => Assert.True(l.Seed > 0));
         var worn = looks.Values.GroupBy(l => l.Wardrobe).ToDictionary(g => g.Key, g => g.Count());
@@ -183,7 +162,6 @@ public sealed class OwnCarTests
         Assert.True(worn[Wardrobe.Casual] > worn[Wardrobe.Formal] && worn[Wardrobe.Formal] > worn[Wardrobe.Party]);
     }
 
-    /// <summary>Fade curves: fade-in rises from 0 to 1, a handoff fade-out falls from 1 to 0, both clamped.</summary>
     [Fact]
     public void FadesRiseAndFallWithinTheirDurations()
     {
@@ -195,8 +173,6 @@ public sealed class OwnCarTests
 
     private sealed class Copy { public string Model = ""; public bool Live = true; }
 
-    /// <summary>Review Sol-r1-4: cycling through more models than the pool holds never exhausts it. At capacity an idle copy
-    /// of another model is destroyed to make room; destroyed copies leave the count; new copies are budgeted per frame.</summary>
     [Fact]
     public void ThePoolEvictsIdleCopiesOfOtherModelsAndBudgetsCreation()
     {
@@ -210,10 +186,8 @@ public sealed class OwnCarTests
             pool.Return(model, copy);
         }
         Assert.Equal(new[] { "A", "B", "C" }, destroyed.Select(c => c.Model));
-        // The idle copy of the requested model is reused without creating.
         var again = pool.Take("A", ++frame, () => throw new InvalidOperationException("must reuse"));
         Assert.Equal("A", again!.Model);
-        // A copy destroyed outside the pool leaves the count; the budget allows one new copy this frame, not two.
         again.Live = false;
         Assert.Equal(0, pool.Count);
         var budget = new OwnCarPool<Copy>(8, c => c.Live, c => c.Live = false, createsPerFrame: 1);
@@ -221,14 +195,11 @@ public sealed class OwnCarTests
         Assert.Null(budget.Take("B", 7, () => new Copy()));
         Assert.NotNull(budget.Take("B", 8, () => new Copy()));
         Assert.Equal(2, budget.Count);
-        // At capacity with every copy in use nothing is evicted.
         var full = new OwnCarPool<Copy>(1, c => c.Live, c => c.Live = false);
         Assert.NotNull(full.Take("A", 1, () => new Copy()));
         Assert.Null(full.Take("B", 2, () => new Copy()));
     }
 
-    /// <summary>Review Sol-r1-3: a car held (a correction fade) right after a corner keeps its yaw, so its root, which pivots
-    /// on the front axle, stands still; only a moving car turns, at the turn rate.</summary>
     [Fact]
     public void AHeldCarAfterATurnKeepsItsPose()
     {
@@ -239,16 +210,12 @@ public sealed class OwnCarTests
         var before = Root(yaw);
         for (int frame = 0; frame < 60; frame++) yaw = OwnCarMotion.Yaw(yaw, target, 1 / 60.0, hold: true);
         Assert.Equal(before, Root(yaw));
-        // Moving, it turns at most TurnDegreesPerSecond a second, the short way round.
         Assert.Equal(3, OwnCarMotion.Yaw(0, 90, 1 / 60.0, hold: false), 9);
         Assert.Equal(-3, OwnCarMotion.Yaw(0, 270, 1 / 60.0, hold: false), 9);
         Assert.Equal(90, OwnCarMotion.Yaw(89, 90, 1 / 60.0, hold: false), 9);
-        // A held command step does not move the car either.
         Assert.Equal(0, OwnCarMotion.Step(4, 12, 6, Limit(8, hold: true), 1 / 60.0).Moved);
     }
 
-    /// <summary>Review Opus-r1-1: the own car's safety only shortens the kernel's limit: it stops a gap short of an obstacle
-    /// ahead and at its corner while the native light there is red.</summary>
     [Fact]
     public void ObstaclesAndRedLightsShortenTheLimit()
     {
@@ -259,7 +226,6 @@ public sealed class OwnCarTests
         Assert.Equal(2, OwnCarMotion.Safe(Limit(2), 30, true, 5).MaximumAdvance);
         Assert.True(OwnCarMotion.Safe(Limit(10, hold: true), 0, true, 0).HoldPosition);
         Assert.True(OwnCarMotion.LookAheadMetres(OwnCarMotion.CruiseMetresPerSecond) > 16);
-        // A car approaching an obstacle 20 m ahead at cruise stops a gap short of it, never reaching it.
         double along = 0, speed = OwnCarMotion.CruiseMetresPerSecond, obstacle = 20;
         for (int frame = 0; frame < 600; frame++)
         {
@@ -269,9 +235,6 @@ public sealed class OwnCarTests
         Assert.Equal(obstacle - OwnCarMotion.ObstacleGapMetres, along, 6);
     }
 
-    /// <summary>Review Sol-r2-1: the whole body counts, not the front axle. A 4 m by 1.8 m car with its front axle 2 m
-    /// ahead of its root, standing at a corner and turning right, swings its rear left: an obstacle just beside the rear is
-    /// clear at the current pose but overlaps after the first 3-degree step, so that move is refused.</summary>
     [Fact]
     public void AnObstacleBesideATurningCarBlocksTheTurn()
     {
@@ -282,16 +245,11 @@ public sealed class OwnCarTests
         double yaw = OwnCarMotion.Yaw(0, 90, 1 / 60.0, hold: false);
         Assert.Equal(3, yaw, 9);
         Assert.True(OwnCarFootprint.Overlaps(OwnCarFootprint.At(front, yaw, offset, 4, 1.8), obstacle));
-        // The front-axle slice alone misses it: a thin box at the axle, 3 degrees on, does not reach the rear.
         Assert.False(OwnCarFootprint.Overlaps(new CarRectangle(front, yaw, 0.25, 0.9), obstacle));
-        // A car driving straight past the same obstacle at 1 m clearance never touches it.
         var beside = new CarRectangle(new Position(-2.0, 0, -3.9), 0, 0.3, 0.1);
         for (double z = 0; z < 10; z += 0.2) Assert.False(OwnCarFootprint.Overlaps(OwnCarFootprint.At(new Position(0, 0, z), 0, offset, 4, 1.8), beside));
     }
 
-    /// <summary>Review Sol-r3-1: the reviewer's replay. At 10 m/s over a 100 ms frame the front axle moves 1.03 m east while
-    /// the yaw goes from 0 to 18 degrees. A 0.4 m obstacle at (-1.175, -3.825) clears both end poses but meets the rear
-    /// in between; the swept substeps find it. A move along a straight road with clear space beside stays clear.</summary>
     [Fact]
     public void ASweptTurnFindsAnObstacleBetweenTwoClearPoses()
     {
@@ -307,11 +265,9 @@ public sealed class OwnCarTests
         var sweep = OwnCarFootprint.Sweep(from, 0, to, 18, offset, 4, 1.8);
         Assert.InRange(sweep.Count, 2, OwnCarFootprint.MaximumSubsteps + 1);
         Assert.Contains(sweep, box => OwnCarFootprint.Overlaps(box, obstacle));
-        // The buffer overload gives the same boxes into a reused list, cleared first.
         var buffer = new List<CarRectangle> { obstacle };
         OwnCarFootprint.Sweep(from, 0, to, 18, offset, 4, 1.8, buffer);
         Assert.Equal(sweep, buffer);
-        // Straight on, 1 m of clear space beside the car stays clear over the sweep.
         var beside = new CarRectangle(new Position(-2.0, 0, -2), 0, 3, 0.1);
         Assert.DoesNotContain(OwnCarFootprint.Sweep(new Position(0, 0, 0), 0, new Position(0, 0, 1), 0, offset, 4, 1.8),
             box => OwnCarFootprint.Overlaps(box, beside));

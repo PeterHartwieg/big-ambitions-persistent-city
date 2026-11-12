@@ -4,21 +4,8 @@ using PersistentCity.Core;
 
 namespace PersistentCity.Persistence
 {
-    /// <summary>
-    /// Independent parts of one capture (F7c). Each copies its own part of the live graph and nothing else, so any
-    /// order produces the same snapshot and the same bytes. Visitors are one part because a visitor person and its
-    /// routine point at each other.
-    /// </summary>
     internal enum SnapshotSection { Header, Places, Residents, Visitors, Traffic, Food, Research, Vendors, Economy }
 
-    /// <summary>
-    /// One save epoch's detached, immutable projection of the state the wire carries (F7 plan section 3.2, slice F7c).
-    /// It is captured on the main thread inside the save callback, after the synchronize step, and then validated
-    /// and encoded. It holds no native object and no list or record the runtime can reach; committed journey routes
-    /// are frozen (<see cref="Route.Commit"/>) and shared by reference. The single-pass writer (P-A) serializes it with
-    /// the same wire DTO types as the live model, so the bytes are the ones the writer would produce from the live graph.
-    /// Never cached across saves: <see cref="SaveSession"/> publishes a snapshot at most once.
-    /// </summary>
     public sealed class SaveSnapshot
     {
         internal static readonly SnapshotSection[] DefaultOrder =
@@ -33,15 +20,11 @@ namespace PersistentCity.Persistence
             SharedRoutes = sharedRoutes; CopiedRoutes = copiedRoutes;
         }
 
-        /// <summary>The detached graph. Only validation and the encoder read it; it is never handed to the runtime.</summary>
         internal CityState Wire { get; }
         public double Minute { get; }
         public string PopulationKey { get; }
-        /// <summary>Committed journey routes shared by reference instead of copied.</summary>
         public int SharedRoutes { get; }
-        /// <summary>Uncommitted routes copied leg by leg: food quotes and journeys that entered by load or by direct construction.</summary>
         public int CopiedRoutes { get; }
-        /// <summary>Set once a session published this snapshot's payload.</summary>
         internal bool Published { get; set; }
 
         internal static SaveSnapshot Capture(CityState live, IReadOnlyList<SnapshotSection>? order = null)
@@ -56,18 +39,13 @@ namespace PersistentCity.Persistence
                 copier.Section(section, live, wire);
             }
             foreach (bool section in done) if (!section) throw new ArgumentException("A snapshot needs every section.");
-            // GR-1: the copied roster links to the copied persons' wallets, as the live roster links to the live ones.
             SaveCodec.LinkWallets(wire);
             return new SaveSnapshot(wire, copier.SharedRoutes, copier.CopiedRoutes);
         }
 
-        // Copies tolerate null records and lists and keep out-of-range values unchanged, so validation reports
-        // the same refusal it reported for the live graph.
         private sealed class Copier
         {
             public int SharedRoutes, CopiedRoutes;
-            // Language version 9 allocates a delegate for every method-group conversion and for every lambda that calls
-            // an instance member, so the per-record copies are bound once per capture.
             private static readonly Func<OpeningWindow, OpeningWindow> WindowCopy = Window;
             private static readonly Func<VisitRecord, VisitRecord> VisitCopy = Visit;
             private static readonly Func<CitizenIdentity, CitizenIdentity> IdentityCopy = Identity;
@@ -118,7 +96,6 @@ namespace PersistentCity.Persistence
             private static List<T>? Values<T>(List<T>? source) => source == null ? null : new List<T>(source);
             private static long[]? Values(long[]? source) => source == null ? null : (long[])source.Clone();
 
-            // ---- City ----
 
             private static Place Place(Place p) => new Place
             {
@@ -135,7 +112,7 @@ namespace PersistentCity.Persistence
 
             private T Citizen<T>(CitizenState c, T copy) where T : CitizenState
             {
-                copy.W = c.W; // immutable
+                copy.W = c.W;
                 copy.Identity = c.Identity == null ? null! : Identity(c.Identity);
                 copy.HomeId = c.HomeId; copy.DayPlaceId = c.DayPlaceId; copy.ShopId = c.ShopId; copy.LeisureId = c.LeisureId;
                 copy.Preferences = c.Preferences == null ? null! : new TravelPreferences { OwnsCar = c.Preferences.OwnsCar,
@@ -156,7 +133,7 @@ namespace PersistentCity.Persistence
                 copy.Car = c.Car == null ? null : new CarState { ModelId = c.Car.ModelId, PaintSeed = c.Car.PaintSeed, Id = c.Car.Id, ParkedPosition = c.Car.ParkedPosition };
                 copy.JoinedMinute = c.JoinedMinute; copy.LastEmploymentCheckDay = c.LastEmploymentCheckDay; copy.JobChanges = c.JobChanges;
                 copy.EmploymentStartDay = c.EmploymentStartDay; copy.Accrual = c.Accrual; copy.Wallet = Budget(c.Wallet);
-                copy.Plan = c.Plan?.Copy(); // shared immutable items, own states
+                copy.Plan = c.Plan?.Copy();
                 copy.Needs = c.Needs?.Copy();
                 copy.Phase = c.Phase; copy.Activity = c.Activity; copy.PlaceId = c.PlaceId; copy.DestinationId = c.DestinationId;
                 copy.DestinationActivity = c.DestinationActivity; copy.Journey = Route(c.Journey);
@@ -165,7 +142,6 @@ namespace PersistentCity.Persistence
                 copy.PlayerHoldMinutes = c.PlayerHoldMinutes;
                 copy.RecentVisits = List(c.RecentVisits, VisitCopy)!;
                 copy.Traits = Traits(c.Traits);
-                // Derived from the immutable identity and the seed; DailyRoutine rebuilds it when either differs.
                 copy.RoutineKeys = c.RoutineKeys;
                 copy.VisitorCarried = c.VisitorCarried;
                 return copy;
@@ -175,8 +151,6 @@ namespace PersistentCity.Persistence
 
             private static ResidentTraits? Traits(ResidentTraits? t) => t == null ? null : new ResidentTraits { Version = t.Version, Bands = t.Bands };
 
-            /// <summary>A committed journey is immutable (its leg list and legs refuse every edit) and shared; any other
-            /// route is copied leg by leg.</summary>
             private Route? Route(Route? route)
             {
                 if (route == null) return null;
@@ -219,12 +193,10 @@ namespace PersistentCity.Persistence
                     return copy;
                 })!;
                 wire.VisitorRoutines = List(live.VisitorRoutines, Routine)!;
-                // Relink each copied routine to its copied person, as the live graph links them.
                 foreach (var pair in routines)
                     pair.Value.Visitor = pair.Key.Visitor == null ? null : persons.TryGetValue(pair.Key.Visitor, out var person) ? person : null;
             }
 
-            // ---- Traffic ----
 
             private static TrafficKernelState Traffic(TrafficKernelState t) => new TrafficKernelState
             {
@@ -244,7 +216,6 @@ namespace PersistentCity.Persistence
                 Events = List(t.Events, e => new TrafficEventState { LinkId = e.LinkId, At = e.At, Order = e.Order })!,
             };
 
-            // ---- Food ----
 
             private FoodCommerceState Food(FoodCommerceState f) => new FoodCommerceState
             {
@@ -261,7 +232,7 @@ namespace PersistentCity.Persistence
                     MiddlePercent = d.MiddlePercent, UpperPercent = d.UpperPercent, Evidence = d.Evidence })!,
                 ChoicePolicyVersion = f.ChoicePolicyVersion, ChoiceStartsDay = f.ChoiceStartsDay, AwarenessStartsDay = f.AwarenessStartsDay,
                 RivalStartsDay = f.RivalStartsDay,
-                Campaigns = Values(f.Campaigns)!, // FoodCampaignImage is immutable
+                Campaigns = Values(f.Campaigns)!,
             };
 
             private static FoodScope Scope(FoodScope s)
@@ -302,7 +273,6 @@ namespace PersistentCity.Persistence
 
             private ResidentMeal Meal(ResidentMeal m)
             {
-                // A new record has no panel counters, so every setter below only stores its value.
                 var copy = new ResidentMeal
                 {
                     ResidentId = m.ResidentId, AnchorId = m.AnchorId, Slot = m.Slot, PreferredProductId = m.PreferredProductId,
@@ -358,7 +328,7 @@ namespace PersistentCity.Persistence
 
             private FoodDecisionState? Decision(FoodDecisionState? d) => d == null ? null : new FoodDecisionState
             {
-                Weather = d.Weather, WeatherTravelMultiplier = d.WeatherTravelMultiplier, Tuning = d.Tuning, // tuning is immutable
+                Weather = d.Weather, WeatherTravelMultiplier = d.WeatherTravelMultiplier, Tuning = d.Tuning,
                 Awareness = d.Awareness == null ? null : new FoodAwarenessImage { CatalogueRevision = d.Awareness.CatalogueRevision,
                     Union = List(d.Awareness.Union, c => new FoodAwarenessCandidate { AlternativeKind = c.AlternativeKind, BusinessId = c.BusinessId,
                         Sources = c.Sources, Eligible = c.Eligible })! },
@@ -375,7 +345,7 @@ namespace PersistentCity.Persistence
                 MealsPerHour = s.MealsPerHour, ServiceUnavailable = s.ServiceUnavailable, NextServiceAt = s.NextServiceAt,
                 Hours = List(s.Hours, WindowCopy)!, CustomerServicePercent = s.CustomerServicePercent, DistrictId = s.DistrictId,
                 Offers = List(s.Offers, o => new FoodDecisionOffer { Metadata = o.Metadata, ProductId = o.ProductId, Price = o.Price,
-                    Units = o.Units, DistrictDemandPercent = o.DistrictDemandPercent })!, // metadata is immutable
+                    Units = o.Units, DistrictDemandPercent = o.DistrictDemandPercent })!,
                 OutwardQuote = s.OutwardQuote, ReturnQuote = s.ReturnQuote, Outward = Route(s.Outward), Return = Route(s.Return),
             };
         }

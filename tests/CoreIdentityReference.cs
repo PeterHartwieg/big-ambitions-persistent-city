@@ -6,12 +6,6 @@ using PersistentCity.Core;
 
 namespace PersistentCity.Tests;
 
-/// <summary>
-/// The routine, opening-hours, destination-choice and road-tag helpers exactly as they were before the
-/// 28 October core identity change (string keys hashed per call, a sorted list per opening query, a
-/// Split per road tag). CoreIdentityTests compares the production helpers with these on realistic
-/// residents and places; any divergence is a behaviour change, not a refactor.
-/// </summary>
 internal static class CoreIdentityReference
 {
     public static RoutineSlot At(CitizenState person, int citySeed, double minute, IReadOnlyList<Place> places)
@@ -305,7 +299,6 @@ internal static class CoreIdentityReference
         return best;
     }
 
-    /// <summary>TrafficNetwork.TryTag before the change, for a network whose NativeTopologyId is topology.</summary>
     public static bool NetworkTag(string? service, string topology, out int from, out int to, out bool fragment)
     {
         from = to = -1;
@@ -320,7 +313,6 @@ internal static class CoreIdentityReference
         return true;
     }
 
-    /// <summary>The parse half of RoadRoutes.TryTag (v1 only) before the change.</summary>
     public static bool RoadRoutesTag(string? service, string topology, out int from, out int to)
     {
         from = to = -1;
@@ -331,7 +323,6 @@ internal static class CoreIdentityReference
             && int.TryParse(parts[5], NumberStyles.None, CultureInfo.InvariantCulture, out to);
     }
 
-    /// <summary>The parse half of RoadRoutes.KnownPhysicalFragment before the change.</summary>
     public static bool RoadRoutesFragment(string service, string topology, out int from, out int to)
     {
         from = to = -1;

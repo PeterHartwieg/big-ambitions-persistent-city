@@ -14,7 +14,6 @@ using Xunit.Abstractions;
 
 namespace PersistentCity.Tests;
 
-// Opt-in offline F6h batch. One filtered foreground testhost; component rows run sequentially.
 [Collection(StreetFoodHooks.Collection)]
 public sealed class F6hMeasurements
 {
@@ -60,8 +59,6 @@ public sealed class F6hMeasurements
                     run.Frames, economicMetricsSha256 = EconomyRun.Sha256(run.Json), saveSha256 = run.FinalSaveSha256,
                     run.ConservationChecks, run.EmploymentUnits, run.DiscretionaryUnits, run.Purchases, run.Seconds });
             }
-        // Same F1 integrated walking fixture, F2a's actual lease/lag driver, default 48 walkers/24 cars.
-        // This fixture has no car routes; body-cap equality is never an F2 contract pass.
         var off = EconomyRun.Run(new RunOptions { Integrated = true, FramesPerSecond = 60, BodyCap = 0 });
         var bodies = EconomyRun.Run(new RunOptions { Integrated = true, FramesPerSecond = 60, BodyCap = 48 });
         Assert.Equal(reference.Json, off.Json); Assert.Equal(reference.FinalSaveSha256, off.FinalSaveSha256);
@@ -104,7 +101,6 @@ public sealed class F6hMeasurements
         WithEnvironment("PC_F6E_MEASURE", Path.Combine(DirectoryPath, "wages.jsonl"), () => new F6eMeasure(output).AccrualPostingAndSaveLatency());
         WithEnvironment("PC_F6F_MEASURE", Path.Combine(DirectoryPath, "ordinary.jsonl"), () => new F6fMeasure(output).AdmissionLookupPublicationAndRequestedLine());
         new ChangeJournalTests(new TeeOutput(output, Path.Combine(DirectoryPath, "journal.txt"))).MeasurementAndHiddenPanel();
-        // Exact current writer at the complete E5d/F6d sizes; predecessor timing remains separately named.
         WithEnvironment("PC_F6D_MEASURE", Path.Combine(DirectoryPath, "saves.jsonl"), () => new F6dMeasure(output).MeasureAndCheckComposedSaveBudget());
     }
     static void WithEnvironment(string key, string value, Action action)
@@ -136,7 +132,6 @@ public sealed class F6hMeasurements
             for (int i = 0; i < 17; i++) { meals[i].PlaceId = "r0"; meals[i].External = "10"; meals[i].Status = MealStatus.Serving; meals[i].ServiceAt = 2141 + i; }
             var stateLoad = RivalServiceLoad.Reconstruct(meals, 2140);
             var sample = meals[16]; sample.External = "10"; sample.Status = MealStatus.Serving;
-            // Existing F3-size roster retained around the measured O(lanes) operation.
             for (int lanes = 2; lanes <= 8; lanes += 6)
             {
                 double sink = 0;
@@ -152,7 +147,7 @@ public sealed class F6hMeasurements
     {
         if (DirectoryPath == null) return;
         Directory.CreateDirectory(DirectoryPath);
-        _ = RetainedRivalSnapshot(); // Warm generic/static caches before the measured trials.
+        _ = RetainedRivalSnapshot();
         var samples = new (long baselineBytes, long loadedBytes, long bytes)[3];
         for (int i = 0; i < samples.Length; i++) samples[i] = RetainedRivalSnapshot();
         foreach (var sample in samples) Assert.True(sample.bytes > 0, "retained-load delta must be positive");
@@ -163,9 +158,6 @@ public sealed class F6hMeasurements
     [MethodImpl(MethodImplOptions.NoInlining)]
     static (long baselineBytes, long loadedBytes, long bytes) RetainedRivalSnapshot()
     {
-        // This separate scope cannot retain a preceding benchmark's large fixture. Both
-        // snapshots keep the identical source records and load wrapper alive; only the
-        // wrapper's populated dictionaries/lists are added between them.
         var meals = Enumerable.Range(0, 40000).Select(i => new ResidentMeal { PlaceId = "retained" + i / 2,
             Status = MealStatus.Serving, ServiceAt = 2141 + i % 2, External = "10" }).ToArray();
         var load = new RivalServiceLoad();

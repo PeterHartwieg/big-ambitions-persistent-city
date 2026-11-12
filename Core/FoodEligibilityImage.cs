@@ -3,8 +3,6 @@ using System.Collections.Generic;
 
 namespace PersistentCity.Core
 {
-    // Shared E5 DTOs: exact ordinal names, exact money, detached evidence only.
-    // No meal class, wire code, saved state, staffing or sale permission is implied.
     public sealed class FoodStockOfferImage
     {
         internal FoodStockOfferImage(string productId, Money price, int rawUnits)

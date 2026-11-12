@@ -10,12 +10,6 @@ using Xunit;
 
 namespace PersistentCity.Tests;
 
-/// <summary>
-/// F7c snapshot split (docs/perf/f7c.md), after F7c only, not a gate: runs when PC_F7C_SNAPSHOT_MEASURE names an output
-/// file. Times the three parts on their own, each after a warm-up: Capture (synchronize + copy), validation plus encode
-/// from that snapshot (Encode), and the copy alone (the section copy without synchronize). Also the allocation of each
-/// (the copy's allocation is the snapshot's own size) and how many routes it shared or copied.
-/// </summary>
 public sealed class F7cSnapshotMeasure
 {
     [Fact]

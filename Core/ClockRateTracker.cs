@@ -2,7 +2,6 @@ using System;
 
 namespace PersistentCity.Core
 {
-    /// <summary>Infer calendar pace from complete frames. A boundary-clipped tick is not a new travel policy.</summary>
     public sealed class ClockRateTracker
     {
         private int frame = -1;
@@ -28,14 +27,11 @@ namespace PersistentCity.Core
         }
         private void CompleteFrame()
         {
-            // A sustained overload/epoch cap is backpressure, never a travel-pace change.
             if (constrained) { candidate = null; return; }
             double rate = minutes / seconds;
             if (rate == 0) { candidate = null; return; }
             if (Rate.HasValue && Math.Abs(rate - Rate.Value) <= .000001)
             { candidate = null; Error = ""; return; }
-            // Two complete consecutive frames must agree. Preserve the last positive pace
-            // through pauses and a one-off capped tick; do not rebuild every resident's routes.
             if (!candidate.HasValue || Math.Abs(rate - candidate.Value) > .000001)
             { candidate = rate; return; }
             if (!Position.Finite(rate) || rate < .01 || rate > 1000)

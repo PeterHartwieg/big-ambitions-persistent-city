@@ -14,9 +14,6 @@ namespace PersistentCity.Runtime
             = new Dictionary<string, FoodCatalogueRefusal>();
     }
 
-    /// <summary>Main-thread read-only metadata and diagnostic reader; no native sale authority.
-    /// One instance per loaded city. Never retain this instance across save/reload.
-    /// Metadata refresh is bounded; detailed reads touch only the requested (at most eight) shops.</summary>
     public sealed class RivalFoodCatalogue : IDisposable
     {
         public const int MaximumPlaces = 20000;
@@ -74,7 +71,6 @@ namespace PersistentCity.Runtime
             pending = controllers.GetEnumerator();
         }
 
-        /// <returns>True only when the complete metadata image is ready. No partial publication.</returns>
         public bool ContinueRefresh(int reads = DefaultReadsPerUnit)
         {
             CheckCity();
@@ -95,7 +91,7 @@ namespace PersistentCity.Runtime
         private void Observe(CityBuildingController controller)
         {
             if (controller == null || controller.building == null) return;
-            var reg = controller.buildingRegistration; // Existing field only.
+            var reg = controller.buildingRegistration;
             if (reg == null || string.IsNullOrWhiteSpace(reg.StreetName)) return;
             var address = (reg.StreetName, reg.StreetNumber);
             if (!addresses.TryGetValue(address, out var entry))
@@ -109,7 +105,6 @@ namespace PersistentCity.Runtime
                     Prices = reg.retailPrices == null ? null : new WeakReference<object>(reg.retailPrices) };
                 if(!entry.Player) entry.Scope = new FoodScope { AlternativeKind=FoodAlternativeKind.Rival, BusinessId=entry.Id, PlaceId=place,
                     ProductId=FoodProducts.Croissant, AdditionalProductIds=new List<string> { FoodProducts.Burger, FoodProducts.HotDog } };
-                // Duplicate complete identities are quarantined rather than inherited.
                 if(byBusiness.TryGetValue(entry.Id,out var duplicate)) { duplicate.Ambiguous=true; entry.Ambiguous=true; }
                 else byBusiness.Add(entry.Id,entry);
                 MetadataRevision++;
@@ -117,10 +112,8 @@ namespace PersistentCity.Runtime
                 addresses.Add(address, entry);
             }
             else if (entry.Seen == epoch || entry.Seen != epoch - 1 || !Matches(entry, controller, reg))
-                { if(!entry.Ambiguous) MetadataRevision++; entry.Ambiguous = true; } // Quarantined for this city's diagnostic session; no identity transfer.
+                { if(!entry.Ambiguous) MetadataRevision++; entry.Ambiguous = true; }
             if ((!reg.HasEstablishedBusiness || reg.AvailableForRent) && !entry.Ambiguous) { entry.Ambiguous = true; MetadataRevision++; }
-            // Existing advertised fields only, once per bounded refresh unit. A non-food
-            // retailer must never occupy the common source/index or shortlist slots.
             bool food = false;
             if (reg.retailPrices != null) foreach (var price in reg.retailPrices)
                 if (price != null && price.itemName != null && FoodProducts.Known(price.itemName)) { food = true; break; }
@@ -141,8 +134,6 @@ namespace PersistentCity.Runtime
             && e.Type == r.businessTypeName && e.Owner == Owner(r) && e.Player == r.RentedByPlayer
             && (e.Prices == null ? r.retailPrices == null : e.Prices.TryGetTarget(out var prices) && ReferenceEquals(prices, r.retailPrices));
 
-        /// <summary>On-demand detached dump. At most eight detailed reads, ordered by native
-        /// business identity. No cachedAvailableProducts/supply/demand/finance/campaign access.</summary>
         public RivalFoodCatalogueRead ReadSelected(IReadOnlyCollection<string> places)
         {
             if (!ready || failed || pending != null) throw new InvalidOperationException("Complete a successful metadata refresh first.");

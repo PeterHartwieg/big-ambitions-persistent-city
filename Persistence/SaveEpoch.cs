@@ -7,7 +7,6 @@ namespace PersistentCity.Persistence
 {
     public enum SaveEpochMarkerKind { Success, Failed }
 
-    /// <summary>One strictly read <see cref="SaveEpochStore.Key"/> value.</summary>
     public sealed class SaveEpochMarker
     {
         internal SaveEpochMarker(SaveEpochMarkerKind kind, long sequence, int schema, double minute, string populationKey,
@@ -18,16 +17,9 @@ namespace PersistentCity.Persistence
         public int Schema { get; }
         public double Minute { get; }
         public string PopulationKey { get; }
-        /// <summary>Every PC payload key published in this epoch with its exact character length, ordinal key order.</summary>
         public IReadOnlyList<KeyValuePair<string, int>> Payloads { get; }
     }
 
-    /// <summary>
-    /// F7b save-epoch side key. Writer-25 population bytes are unchanged; this key only describes them.
-    /// Success value (newline separated, fixed order, no trailing newline):
-    /// <c>v1</c>, <c>sequence=N</c>, <c>schema=N</c>, <c>minute=R</c>, <c>population=KEY</c>, then one
-    /// <c>payload=CHARS KEY</c> line per published key in ordinal order. Failure value: <c>failed:N</c>.
-    /// </summary>
     public static class SaveEpochStore
     {
         public const string Key = "persistentcity:save-epoch_v1";
@@ -35,12 +27,6 @@ namespace PersistentCity.Persistence
         public const string FailedPrefix = "failed:";
         private const int MaxPayloadLines = 16;
         private const int MaxMarkerCharacters = 4096;
-        /// <summary>
-        /// PC-owned keys described by one epoch. Later PC state that must share the native epoch (for example
-        /// F5 person, wallet and employment tables if they ever leave the population payload) joins this list;
-        /// v1 readers verify every listed key generically, so no new marker key is needed.
-        /// Receipts and the authority manifest are native-side keys in the same modData and are not copied.
-        /// </summary>
         public static readonly IReadOnlyList<string> PublishedKeys = new[] { SaveStore.StateKey };
 
         public static string Failed(long sequence) => FailedPrefix + sequence.ToString(CultureInfo.InvariantCulture);
@@ -65,7 +51,6 @@ namespace PersistentCity.Persistence
             return text.ToString();
         }
 
-        /// <summary>Strict reader. Unknown versions and any non-canonical value are refused, never coerced.</summary>
         public static bool TryRead(string? text, out SaveEpochMarker? marker, out string error)
         {
             marker = null;
@@ -110,11 +95,6 @@ namespace PersistentCity.Persistence
             error = ""; return true;
         }
 
-        /// <summary>
-        /// Main-thread start check. Null means start may continue: either no marker (every save before F7b loads
-        /// under the existing rules) or a success marker whose listed payloads are present at their exact lengths.
-        /// The decoded state must still pass <see cref="DescribesState"/>.
-        /// </summary>
         public static string? CheckForStart(IDictionary<string, string> data, out SaveEpochMarker? marker)
         {
             marker = null;
@@ -129,7 +109,6 @@ namespace PersistentCity.Persistence
             return null;
         }
 
-        /// <summary>Off-thread check of the decoded payload against a success marker. Null when it matches.</summary>
         public static string? DescribesState(SaveEpochMarker? marker, int sourceSchema, CityState? state)
         {
             if (marker == null) return null;
@@ -161,21 +140,12 @@ namespace PersistentCity.Persistence
         private static bool IsFinite(double value) => !double.IsNaN(value) && !double.IsInfinity(value);
     }
 
-    /// <summary>
-    /// The save epoch of one attached session. Bound to one native GameInstance and its modData dictionary;
-    /// every save callback gets a sequence and publication refuses any other sequence or save object.
-    /// Main thread only. Once a failure marker is written the binding never publishes again.
-    /// </summary>
     public sealed class SaveEpochBinding
     {
         private readonly object instance;
         private readonly IDictionary<string, string> data;
         private bool poisoned;
 
-        /// <param name="initializing">Rule 5: bound when initialization starts. Until <see cref="CompleteInitialization"/>
-        /// an otherwise clean callback is deferred: it writes nothing, does not poison the epoch and does not stop
-        /// Persistent City (a new city's native creation save runs here). A detach before completion writes nothing
-        /// either, because the loaded payload/marker pair still describes the city and no PC state was attached.</param>
         public SaveEpochBinding(object instance, IDictionary<string, string> data, long lastSequence, bool initializing = false)
         {
             Initializing = initializing;
@@ -196,11 +166,6 @@ namespace PersistentCity.Persistence
 
         public bool BoundTo(object? current) => !Detached && ReferenceEquals(current, instance);
 
-        /// <summary>
-        /// Starts one callback. Null means the callback belongs to another save object and nothing may be written.
-        /// A re-entrant or poisoned callback is returned already refused, with both failure markers written.
-        /// A clean callback while initializing is returned deferred: no sequence, no marker, no snapshot.
-        /// </summary>
         public SaveEpochTicket? Begin(object? current, IDictionary<string, string>? currentData, bool unitOnStack)
         {
             if (!BoundTo(current)) return null;
@@ -224,10 +189,6 @@ namespace PersistentCity.Persistence
             return ticket;
         }
 
-        /// <summary>
-        /// Rule 3: a capture may be published only for its own open ticket, the latest sequence and the bound
-        /// GameInstance/modData. Checked immediately before the payload write and again before the marker.
-        /// </summary>
         public bool CanPublish(SaveEpochTicket ticket, object? current, IDictionary<string, string>? currentData) =>
             PublicationRefusal(ticket, current, currentData) == null;
 
@@ -239,7 +200,6 @@ namespace PersistentCity.Persistence
                 : poisoned ? "This save epoch already failed."
                 : null;
 
-        /// <summary>Writes the success marker for the payload now in modData, after verifying the binding.</summary>
         public bool Publish(SaveEpochTicket ticket, object? current, IDictionary<string, string>? currentData,
             int schema, double minute, string populationKey)
         {
@@ -262,8 +222,6 @@ namespace PersistentCity.Persistence
             ticket.Open = false; Saving = false;
         }
 
-        /// <summary>Writes the accounting stop first (honoured by every writer-25 build), then the failed epoch.
-        /// Nothing is written after detach; the previous payload is never removed.</summary>
         public void Fail(SaveEpochTicket ticket, string reason)
         {
             if (!ReferenceEquals(ticket.Owner, this)) return;
@@ -272,18 +230,12 @@ namespace PersistentCity.Persistence
             MarkFailed(AccountingStopStore.SaveEpochFailed);
         }
 
-        /// <summary>Initialization completed and the session is attached; publication is allowed from now on.</summary>
         public void CompleteInitialization()
         {
             if (Detached) throw new InvalidOperationException("A detached save epoch cannot complete initialization.");
             Initializing = false;
         }
 
-        /// <summary>
-        /// Rule 9: detach while the bound GameInstance is still current writes both markers, so a later native
-        /// save of the same object is refused on load. A verified replacement (another or no current object)
-        /// or a detach before initialization completed writes nothing. Returns whether markers were written.
-        /// </summary>
         public bool Detach(object? current)
         {
             if (Detached) return false;
@@ -307,17 +259,13 @@ namespace PersistentCity.Persistence
         internal SaveEpochBinding Owner { get; }
         internal bool Open { get; set; }
         public long Sequence { get; }
-        /// <summary>Non-null when the callback was refused at entry (re-entrancy, replaced data or poisoned epoch).</summary>
         public string? Refusal { get; internal set; }
-        /// <summary>Non-null when the callback arrived while initializing: nothing was written and the session goes on.</summary>
         public string? Deferral { get; internal set; }
-        /// <summary>The refusal happened while a unit or another callback was on the stack.</summary>
         public bool Reentrant { get; internal set; }
     }
 
     public enum SaveEpochResult { NotBound, Published, Refused, Reentrant, Deferred }
 
-    /// <summary>What the runtime observed and wrote inside one callback.</summary>
     public readonly struct SaveEpochCapture
     {
         private SaveEpochCapture(string? error, double minute, string populationKey) { Error = error; Minute = minute; PopulationKey = populationKey; }
@@ -328,10 +276,6 @@ namespace PersistentCity.Persistence
         public static SaveEpochCapture Refused(string error) => new SaveEpochCapture(error ?? "Save refused.", 0, "");
     }
 
-    /// <summary>
-    /// One native onSaveGame callback (a plain Action: an escaping exception would abort native Save).
-    /// Never throws. On every non-publication path both failure markers are written before the stop action runs.
-    /// </summary>
     public static class SaveEpochCallback
     {
         public static SaveEpochResult Run(SaveEpochBinding? binding, object? current, IDictionary<string, string>? currentData,
@@ -345,14 +289,11 @@ namespace PersistentCity.Persistence
                 if (ticket == null) return SaveEpochResult.NotBound;
                 if (ticket.Deferral != null)
                 {
-                    // Never opened: End and Fail below ignore it. The native save keeps whatever modData held.
                     Report(report, "Persistent City skipped the save during initialization; no Persistent City state was written: " + ticket.Deferral);
                     return SaveEpochResult.Deferred;
                 }
                 if (ticket.Refusal != null)
                 {
-                    // Both markers are already written. If a unit or an outer callback is still on the
-                    // stack, its owner stops after it returns instead of tearing it down mid-unit.
                     Report(report, "Persistent City save epoch refused: " + ticket.Refusal);
                     if (ticket.Reentrant) return SaveEpochResult.Reentrant;
                     Stop(stop, ticket.Refusal, report);

@@ -25,26 +25,15 @@ namespace PersistentCity.Core
         public static double NextHomeEvent(CitizenState person, double routineMinute, double now)
         {
             if (!IsWorker(person) || !IsSafelyHome(person)) return routineMinute;
-            // A dormant visitor waits for its next stay start; its employment check runs at its portal events.
             if (person.IsVisitor) return routineMinute;
-            // One overdue day per event. Requeue through the simulator's ordinary budget;
-            // never loop through months of missed days inside a resident update.
-            // Spread the small daily check through the first four hours. This adds
-            // no midnight pulse and does not change the resident/day chance.
             double nextDay = (person.LastEmploymentCheckDay + 1) * 1440.0
                 + 1 + RoutineKeys.EmploymentTimeFor(person) % 240;
             return Math.Min(routineMinute, nextDay <= now ? now + 1 : nextDay);
         }
 
-        /// <summary>The daily employment check up to its route probes. Returns the ordered workplace candidates
-        /// the caller must probe for reachability (assigning the first reachable one with AssignWorkplace), or
-        /// null when the day needs no probe: not due, no roll, or a job loss already applied here.</summary>
         internal static IReadOnlyList<Place>? BeginEmploymentCheck(CityState city, CitizenState person, double now)
             => BeginEmploymentCheck(city, person, now, null);
 
-        /// <summary>As above, resolving the home through the simulator's place index instead of a catalogue scan and, with
-        /// <paramref name="occupancy"/>, checking vacancies against the simulator's seated counts instead of recounting
-        /// every person (F5e). A person on the finding branch holds no workplace itself, so both give the same vacancies.</summary>
         internal static IReadOnlyList<Place>? BeginEmploymentCheck(CityState city, CitizenState person, double now,
             IReadOnlyDictionary<string, Place>? places, WorkplaceOccupancy? occupancy = null)
         {
@@ -55,8 +44,6 @@ namespace PersistentCity.Core
             double chance = (StableRandom.Hash(key, city.Seed) + 1.0) / (uint.MaxValue + 2.0);
             if (person.DayPlaceId == "" && person.VisitorCarried == ResidentIncomeSource.ExternalEmployment)
             {
-                // A visitor's outside employer (carried income) ends by the ordinary job-loss draw; the ordinary
-                // job-finding draw may seat it here instead (section 3 Resources). Either outcome is its own.
                 if (chance < CityBalance.DailyJobLossChance) { person.VisitorCarried = null; return null; }
             }
             else if (person.DayPlaceId != "")
@@ -69,7 +56,6 @@ namespace PersistentCity.Core
                 person.CommutePreparation = new CommutePreparation();
                 return null;
             }
-            // F5g: a day-visitor pool member never holds a city workplace (contract B2); its carried employer only ends.
             if (person.Visitor?.Stay.Pattern == VisitorPattern.DayVisit) return null;
             if (chance >= CityBalance.DailyJobFindingChance) return null;
             var home = places != null && places.TryGetValue(person.HomeId, out var indexed) ? indexed
@@ -86,7 +72,6 @@ namespace PersistentCity.Core
             person.DayPlaceId = candidate.Id;
             person.Accrual = default;
             person.VisitorCarried = null;
-            // The assignment follows the employment check of LastEmploymentCheckDay.
             person.EmploymentStartDay = person.LastEmploymentCheckDay;
             person.JobChanges = checked(person.JobChanges + 1);
             person.CommutePreparation = new CommutePreparation();
@@ -94,8 +79,6 @@ namespace PersistentCity.Core
 
         public static CitizenIdentity RemixIdentity(CityState city, int sequence) => CreateRemixer(city)(sequence);
 
-        // One immutable view per expansion avoids sorting the same donor bank and
-        // rebuilding identical age-compatible pools for every appended resident.
         internal static Func<int, CitizenIdentity> CreateRemixer(CityState city)
         {
             var sources = city.SourceIdentities.OrderBy(c => c.Id, StringComparer.Ordinal).ToArray();
@@ -109,8 +92,6 @@ namespace PersistentCity.Core
                 string id = "pc:" + sequence.ToString(CultureInfo.InvariantCulture);
                 var appearance = sources[StableRandom.Hash(id + ":appearance", city.Seed) % (uint)sources.Length];
                 var surname = sources[StableRandom.Hash(id + ":surname", city.Seed) % (uint)sources.Length];
-                // Keep RLO's appearance donor coherent with the new routine. Independent
-                // persona donors can add variety only within that donor's age band.
                 if (!compatibleByAge.TryGetValue(appearance.Age, out var compatible))
                 {
                     compatible = sources.Where(c => FitsAge(c.Persona, appearance.Age)).ToArray();

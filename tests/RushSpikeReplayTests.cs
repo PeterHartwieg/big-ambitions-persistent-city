@@ -6,8 +6,6 @@ namespace PersistentCity.Tests;
 [CollectionDefinition(nameof(RushSpikeReplayTests), DisableParallelization = true)]
 public sealed class RushSpikeReplaySerial { }
 
-/// <summary>Issue #128: the matched 957-resident evening rush, frame-sliced at 30 FPS. Timed alone:
-/// parallel tests share the process GC and CPU, which would land in this replay's intervals.</summary>
 [Collection(nameof(RushSpikeReplayTests))]
 public sealed class RushSpikeReplayTests
 {
@@ -19,12 +17,7 @@ public sealed class RushSpikeReplayTests
     [InlineData(true)]
     public void EveningRushHasNoAdvancementIntervalAtOrAbove30MsAndKeepsTheUninterruptedState(bool nativePrices)
     {
-        // Day 3 18:30-19:30 around the rig's 19:19 spike, warmed through two whole days first.
         const double from = 2 * 1440 + 1110, to = 2 * 1440 + 1170;
-        // X3: the replay builds its own city, so a missed wall-clock budget re-runs it (TimingBudget). The row and the
-        // spike details are written once, from the last attempt, also when the budget fails.
-        // Frame cadence never changes the city: every sliced replay attempt, retried or not, saves the same bytes as one
-        // uninterrupted advance. A mismatch fails that attempt at once and is never retried away.
         string uninterrupted = RushSpikeReplay.RunUninterrupted(from, to, nativePrices);
         RushSpikeReplay.Result? result = null;
         try

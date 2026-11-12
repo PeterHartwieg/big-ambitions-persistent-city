@@ -28,7 +28,7 @@ public sealed class CampaignPublicationTests
             source.ContinuePublication(budget); Assert.InRange(source.LastPublicationUnits,1,budget);
             Assert.True(source.Publications<3);
         }
-        source.CompletePublicationsForSave(); // production save hook does this before any state capture
+        source.CompletePublicationsForSave();
         Assert.False(source.HasPendingPublication);
         Assert.Equal(expected.BusinessReferences.Select(x=>(x.Slot,x.BusinessId,x.PlaceId)),actual.BusinessReferences.Select(x=>(x.Slot,x.BusinessId,x.PlaceId)));
         Assert.Equal(expected.Campaigns.Select(x=>x.Encode()),actual.Campaigns.Select(x=>x.Encode()));
@@ -47,7 +47,7 @@ public sealed class CampaignPublicationTests
         var source=new FoodCampaignSource(state.Food,23,new());
         int failures=0;source.PublicationFailed=error=> { Assert.IsType<ArgumentException>(error);failures++; };
         var city=new CitySimulator(state,new Routes());city.AttachFoodMarket(new EmptyMarket(),campaign:source);
-        source.EnqueuePublication(Snapshot(1,30),new Dictionary<string,string>()); // invalid business mapping
+        source.EnqueuePublication(Snapshot(1,30),new Dictionary<string,string>());
         source.EnqueuePublication(Snapshot(1,31),new Dictionary<string,string>{{"b:0","p:0"}});
         if(failDuringSave) source.CompletePublicationsForSave();
         else while(source.HasPendingPublication) city.AdvanceFrameSlice(state.Minute,1);
@@ -98,8 +98,6 @@ public sealed class CampaignPublicationTests
     [Fact]
     public void PendingPublicationHoldsTheClockWithoutCountingAsUnfinishedPreviousEpochWork()
     {
-        // F1/F3 merge rule: an hour-boundary publication is current-epoch work. It must hold native
-        // time (IsCaughtUpTo) but must not make the epoch-drain check refuse and stop accounting.
         var state=EconomyScenario.Create(1,23);state.Food=EconomyScenario.Food();
         var market=new EmptyMarket();var source=new FoodCampaignSource(state.Food,23,new());
         var city=new CitySimulator(state,new Routes());city.AttachFoodMarket(market,campaign:source);
@@ -116,7 +114,6 @@ public sealed class CampaignPublicationTests
         while(source.HasPendingPublication)
         {
             var result=city.AdvanceFrameSlice(minute,1); slices++;
-            // The publication unit runs before any food/citizen event and is not a citizen event.
             Assert.Equal(1,result.FoodContinuationEvents);Assert.Equal(0,result.CitizenEvents);Assert.Equal(0,market.Reads);
             Assert.True(city.IsAccountingEpochDrained(minute));
         }

@@ -8,15 +8,11 @@ using Xunit;
 
 namespace PersistentCity.Tests;
 
-// Batched midnight budget postings against the earlier one-posting-per-event stepping. The reference
-// runs the same code with BudgetPostingsPerEvent = 1, which is the earlier StepBudget exactly.
 public sealed class FoodBudgetBatchTests
 {
     internal const double Midnight = 2 * 1440.0;
 
 
-    // Records every native call the food layer makes, with the clock and how many budgets had
-    // posted for that day when the call happened.
     internal sealed class TracingMarket : IFoodMarket, IFoodSaleEvidence
     {
         public double EarliestMinute { get; set; }
@@ -51,8 +47,6 @@ public sealed class FoodBudgetBatchTests
         public bool Legacy;
     }
 
-    // Half the residents have a citizen event exactly at the second midnight, and one resident's checkout
-    // stays uncertain so its meal record is due again at that midnight as well.
     internal static Run Start(bool legacy, int count = 60)
     {
         var state = Population.Create(Enumerable.Range(0, count).Select(n => new CitizenIdentity {
@@ -132,10 +126,8 @@ public sealed class FoodBudgetBatchTests
         Assert.NotEmpty(batched.Market.Orders);
         Assert.All(batched.City.State.Food!.Residents, m => Assert.Equal(6, m.Budget!.LastPostedDay));
 
-        // Same native calls and citizen events, in the same order, each seeing the same postings.
         Assert.Equal(legacy.Trace, batched.Trace);
 
-        // Postings ran at the enabling minute and at five midnights, now in bounded units.
         int residents = batched.City.State.Food.Residents.Count;
         Assert.Equal(60, residents);
         Assert.True(legacy.Events > batched.Events);
@@ -175,7 +167,7 @@ public sealed class FoodBudgetBatchTests
             Assert.False(result.CaughtUp && !partial, "the per-budget reference never stopped part-way through midnight");
         }
         string written = SaveCodec.Write(legacy.City.State);
-        legacy.Legacy = false; Reload(legacy); // the batch now owns the rest of the postings
+        legacy.Legacy = false; Reload(legacy);
         Assert.Equal(written, SaveCodec.Write(legacy.City.State));
         legacy.Trace.Clear(); reference.Trace.Clear();
         Advance(legacy, 4 * 1440.0 + 700, 128); Advance(reference, 4 * 1440.0 + 700, 128);
@@ -187,7 +179,6 @@ public sealed class FoodBudgetBatchTests
     public void BudgetsDueAtDifferentMinutesPostAtTheirOwnMinutes()
     {
         var run = Start(legacy: false, count: 4);
-        // A resident enrolled later carries a fractional first posting minute; it must not join a batch.
         var budgets = run.City.State.Food!.Residents.Select(m => m.Budget!).ToArray();
         Advance(run, 1440.5, 128);
         Assert.All(budgets, b => Assert.Equal(1, b.LastPostedDay));
@@ -239,7 +230,6 @@ public sealed class FoodBudgetBatchTests
     [InlineData(1914)] [InlineData(10000)] [InlineData(100000)]
     public void SupportedAndStressSizesBoundEveryPostingCallAndKeepTheClockHeld(int consumers)
     {
-        // One own roster record per resident.
         var state = new CityState { Seed = 7, Minute = 1440, Food = new FoodCommerceState { RepresentationFactor = 1, HouseholdFinanceVersion = 1 } };
         state.Places.Add(new Place { Id = "home", Kind = PlaceKind.Home, Capacity = consumers });
         for (int i = 0; i < consumers; i++)

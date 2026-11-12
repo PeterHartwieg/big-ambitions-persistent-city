@@ -4,39 +4,28 @@ using System.Globalization;
 
 namespace PersistentCity.Core
 {
-    /// <summary>One business type's estimated service limits before the capacity percent is applied.
-    /// Mod-owned estimates only: never a claim about native rival stock, staff or finances.</summary>
     public sealed class RivalServiceProfile
     {
         public int Lanes { get; set; } = RivalServiceCalibration.DefaultLanes;
         public int MealPeriodUnits { get; set; } = RivalServiceCalibration.DefaultMealPeriodUnits;
     }
 
-    /// <summary>F6b calibration (plan section 3.2, Peter's Q2 default). The reference is the verified native
-    /// K1 player shop: two staffed counters serving 30 meals/hour (docs/checks/history-2026-10-development.md).
-    /// Two lanes at the default five-minute estimate give 24/hour, -20% of that reference, inside the ±25% band.</summary>
     public static class RivalServiceCalibration
     {
         public const int ReferencePlayerMealsPerHour = 30;
         public const int CalibrationBandPercent = 25;
-        // Q2 "how tight should rivals feel?": Moderate (about a comparable player shop) is the default.
-        // Peter's alternative, Generous (about 2x), is RivalCapacityPercent = GenerousCapacityPercent.
         public const int ModerateCapacityPercent = 100;
         public const int GenerousCapacityPercent = 200;
         public const int DefaultLanes = 2;
-        // Two rush hours at the reference staffed ceiling.
         public const int DefaultMealPeriodUnits = 2 * ReferencePlayerMealsPerHour;
         public const int MaximumLanes = 8;
         public const int MaximumMealPeriodUnits = 10000;
         public const int MaximumProfiles = 64;
-        // Clock meal periods: breakfast [00:00,11:00), lunch [11:00,16:00), dinner [16:00,24:00).
         public const int LunchStartsMinute = 660;
         public const int DinnerStartsMinute = 960;
         public const string Label = "estimated (modeled service limits)";
         public const string SellOutLabel = "modeled sell-out (estimated)";
 
-        /// <summary>Absolute meal-period number. Boundaries are whole minutes, so a fractional service
-        /// time and its whole-minute outcome record always fall in the same period.</summary>
         public static long Period(double minute)
         {
             long day = (long)Math.Floor(minute / 1440);
@@ -53,7 +42,6 @@ namespace PersistentCity.Core
         public int RivalCapacityPercent { get; set; } = RivalServiceCalibration.ModerateCapacityPercent;
         public int RivalServiceLanes { get; set; } = RivalServiceCalibration.DefaultLanes;
         public int RivalMealPeriodUnits { get; set; } = RivalServiceCalibration.DefaultMealPeriodUnits;
-        /// <summary>Optional per native business type overrides, for example "ba:businesstype_coffeeshop".</summary>
         public Dictionary<string, RivalServiceProfile> RivalServiceProfiles { get; set; } = new Dictionary<string, RivalServiceProfile>(StringComparer.Ordinal);
 
         public int Lanes(string businessType) => RivalServiceCalibration.Scale(Profile(businessType)?.Lanes ?? RivalServiceLanes,
@@ -86,8 +74,6 @@ namespace PersistentCity.Core
             + ", capacity=" + RivalCapacityPercent.ToString(CultureInfo.InvariantCulture) + "%, type profiles=" + RivalServiceProfiles.Count.ToString(CultureInfo.InvariantCulture);
     }
 
-    /// <summary>Transient F6b load of one rival place. Derived only from saved state: active Serving rival
-    /// meals (the lane schedule) plus paid rival outcome records of the current meal period. Never saved.</summary>
     internal sealed class RivalPlaceLoad
     {
         internal readonly List<ResidentMeal> Serving = new List<ResidentMeal>(4);
@@ -95,17 +81,12 @@ namespace PersistentCity.Core
         internal int PaidCount;
     }
 
-    /// <summary>Estimated lanes and meal-period sell-out for every rival, keyed by place. Each lane serves one
-    /// customer per estimated service time. A lane is busy while a Serving meal's ServiceAt is later than now,
-    /// so the earliest free lane is the lanes-th latest Serving finish. Arrival and completion are O(serving at
-    /// that rival, bounded by lanes x queue patience) with no allocation once the place entry exists.</summary>
     internal sealed class RivalServiceLoad
     {
         private readonly Dictionary<string, RivalPlaceLoad> places = new Dictionary<string, RivalPlaceLoad>(StringComparer.Ordinal);
         private readonly double[] latest = new double[RivalServiceCalibration.MaximumLanes];
         internal int Places => places.Count;
 
-        /// <summary>Attach-time reconstruction. One pass over consumers and at most three outcome records each.</summary>
         internal static RivalServiceLoad Reconstruct(IEnumerable<ResidentMeal> meals, double now)
         {
             var load = new RivalServiceLoad();
@@ -113,7 +94,6 @@ namespace PersistentCity.Core
             foreach (var meal in meals) load.Observe(meal, period);
             return load;
         }
-        /// <summary>One saved consumer's contribution, inside FoodCommerce's existing attach pass.</summary>
         internal void Observe(ResidentMeal meal, long period)
         {
             if (meal.Status == MealStatus.Serving && meal.TargetKind == FoodAlternativeKind.Rival) Place(meal.PlaceId).Serving.Add(meal);
@@ -135,7 +115,6 @@ namespace PersistentCity.Core
             return load;
         }
 
-        /// <summary>Earliest minute a lane can start a new customer at this rival.</summary>
         internal double NextFree(string place, double now, int lanes)
         {
             if (!places.TryGetValue(place, out var load)) return now;
@@ -144,7 +123,6 @@ namespace PersistentCity.Core
             {
                 double finish = meal.ServiceAt;
                 if (finish <= now) continue;
-                // Keep the lanes latest finishes in descending order; the last one frees first.
                 int at = Math.Min(busy, lanes - 1);
                 if (busy == lanes && finish <= latest[at]) continue;
                 while (at > 0 && latest[at - 1] < finish) { latest[at] = latest[at - 1]; at--; }
@@ -153,7 +131,6 @@ namespace PersistentCity.Core
             return busy < lanes ? now : latest[lanes - 1];
         }
 
-        /// <summary>Paid servings in the period plus committed Serving meals finishing in it.</summary>
         internal int Count(string place, long period)
         {
             if (!places.TryGetValue(place, out var load)) return 0;
@@ -167,7 +144,6 @@ namespace PersistentCity.Core
         {
             if (places.TryGetValue(meal.PlaceId, out var load)) load.Serving.Remove(meal);
         }
-        /// <summary>Settlement: ServiceAt is the checkout minute that the outcome record will carry.</summary>
         internal void Paid(ResidentMeal meal)
         {
             var load = Place(meal.PlaceId);
@@ -176,14 +152,12 @@ namespace PersistentCity.Core
             if (load.PaidPeriod != period) { load.PaidPeriod = period; load.PaidCount = 0; }
             load.PaidCount++;
         }
-        /// <summary>A consumer's lazy day rollover drops its outcome records; reconstruction no longer sees them.</summary>
         internal void Forget(MealOutcomeRecord record)
         {
             if (!PaidRival(record) || !places.TryGetValue(record.PlaceId, out var load)) return;
             if (load.PaidPeriod == RivalServiceCalibration.Period(record.CheckoutAt) && load.PaidCount > 0) load.PaidCount--;
         }
 
-        /// <summary>Order-independent canonical image for reload equivalence tests and rig diagnostics.</summary>
         internal string Image(double now)
         {
             long period = RivalServiceCalibration.Period(now);

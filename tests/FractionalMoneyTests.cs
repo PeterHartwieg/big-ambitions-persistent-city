@@ -19,19 +19,18 @@ public sealed class FractionalMoneyTests
     public void NativePriceRetainsItsBinary32Identity(float price)
     {
         var money = Money.FromNative(price);
-        // units < 2^53 and the divisor is 25 * 2^30: the double quotient is the binary32 value exactly.
         Assert.Equal(BitConverter.SingleToInt32Bits(price), BitConverter.SingleToInt32Bits((float)(money.Units / (double)Money.UnitsPerDollar)));
     }
 
     [Theory]
-    [InlineData(1092881272, "1025.279998779296875")] // 10.2528f; a 15-digit conversion stores 1025.279998779297
-    [InlineData(1008981770, "0.999999977648258209228515625")] // .01f
-    [InlineData(1036831949, "10.0000001490116119384765625")] // .1f
-    [InlineData(1089051034, "730.000019073486328125")] // 7.3f
-    [InlineData(1095227146, "1248.99997711181640625")] // 12.49f
-    [InlineData(1051372203, "33.33333432674407958984375")] // 1/3f
-    [InlineData(1176256511, "999999.90234375")] // 9999.999f
-    [InlineData(1176256512, "1000000")] // 10000f
+    [InlineData(1092881272, "1025.279998779296875")]
+    [InlineData(1008981770, "0.999999977648258209228515625")]
+    [InlineData(1036831949, "10.0000001490116119384765625")]
+    [InlineData(1089051034, "730.000019073486328125")]
+    [InlineData(1095227146, "1248.99997711181640625")]
+    [InlineData(1051372203, "33.33333432674407958984375")]
+    [InlineData(1176256511, "999999.90234375")]
+    [InlineData(1176256512, "1000000")]
     public void NativePriceBecomesExactlyItsBinaryValueInCents(int bits, string expected)
     {
         var money = Money.FromNative(BitConverter.Int32BitsToSingle(bits));
@@ -44,10 +43,6 @@ public sealed class FractionalMoneyTests
     [Fact]
     public void EveryBinary32PriceUpToTheCapConvertsExactlyAndOnlySubUnitPricesAreRefused()
     {
-        // Exhaustive over every positive normal binary32 value up to $10,000 (about 1.18 billion values).
-        // Independent oracle: f * 25 * 2^30 is exact in double (a 24-bit significand times 25 and a power
-        // of two), so it is the exact unit count; FromNative must equal it or refuse exactly when it is
-        // fractional. Every price of at least 2^-7 dollars, so every price of a cent or more, is a whole unit.
         int first = 0x00800000, last = BitConverter.SingleToInt32Bits(10000f);
         int floor = BitConverter.SingleToInt32Bits(1f / 128);
         long accepted = 0, refused = 0; int failures = 0, refusedAtOrAboveFloor = 0;
@@ -84,7 +79,6 @@ public sealed class FractionalMoneyTests
     [Fact]
     public void SumOfResidentPaymentsEqualsTheExactSumOfNativeOrderPrices()
     {
-        // Menu-scale native prices: the rig croissant (10.2528) and other fractional prices.
         int[] orders = new[] { 10.2528f, 7.3f, 12.49f, 3.99f, 10.2528f, 4.79f, 15.99f }.Select(BitConverter.SingleToInt32Bits).ToArray();
         var budget = new ResidentBudget { OpeningBalance = Money.FromCents(10000000), Balance = Money.FromCents(10000000) };
         var data = new Dictionary<string, string>();
@@ -111,7 +105,6 @@ public sealed class FractionalMoneyTests
     [Fact]
     public void MixedMagnitudeSumsEqualTheExactRationalSumOfNativePrices()
     {
-        // Sub-dollar, menu-scale and cap-scale prices interleaved with whole-cent postings.
         float[] prices = { .01f, .3f, 1.37f, 10.2528f, 9999.999f, .07f, 7.3f, .24f, 3333.333f };
         var nativeSum = BigInteger.Zero;
         var total = Money.FromCents(7920000);
@@ -126,11 +119,9 @@ public sealed class FractionalMoneyTests
         var cents = new BigInteger(Money.UnitsPerCent);
         Assert.Equal(nativeSum + 7920000 * cents + 20000 * 12345 * cents, total.Units);
         Assert.Equal(nativeSum + 8000000 * cents, history.Revenue.Units);
-        // The rational sum in cents: exact text of an integer count of 2^-28 cents.
         Assert.Equal(Money.CentsText(nativeSum + 8000000 * cents), history.Revenue.ToCentsText());
     }
 
-    // Exact units (2^-28 cents) of a binary32 dollar price: m * 2^(biased-150) * 25 * 2^30.
     private static BigInteger ExactUnits(int bits)
     {
         int biased = (bits >> 23) & 255;
@@ -171,7 +162,7 @@ public sealed class FractionalMoneyTests
         Assert.Equal(Money.Zero, budget.HeldPurchase);
         Assert.Equal("111755.519866943359375", receipts.ToCentsText());
         Assert.Equal(price * 109, receipts);
-        Assert.Equal("112780.79986572265625", (receipts + price).ToCentsText()); // 110 sales: $1127.8079986572265625
+        Assert.Equal("112780.79986572265625", (receipts + price).ToCentsText());
         Assert.True(Math.Abs(1025.0 * 109 / 100 - (double)native * 109) > .30);
         var before = budget.Balance;
         Assert.True(HouseholdFinance.HoldPurchase(budget, price));
@@ -183,7 +174,6 @@ public sealed class FractionalMoneyTests
     [InlineData("paid", FoodReceiptStatus.Paid)] [InlineData("pending", FoodReceiptStatus.Pending)]
     public void ExactDecimalReceiptsKeepTheirIdentityAfterTheUnitChange(string status, FoodReceiptStatus expected)
     {
-        // A marker in exact decimal cents for the rig croissant price.
         var meal = new ResidentMeal { ResidentId = "old", Day = 5, Kind = MealKind.Lunch,
             BusinessId = "shop", ProductId = FoodProducts.Croissant, Price = Money.FromNative(10.2528f) };
         string key = FoodSaleReceipts.Prefix + meal.IntentId;

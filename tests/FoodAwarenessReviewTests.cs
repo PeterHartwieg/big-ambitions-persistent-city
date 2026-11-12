@@ -20,7 +20,7 @@ public sealed class FoodAwarenessReviewTests
         person.NextEventMinute=person.ActivityUntilMinute=meal.DesiredAt+90;
         person.RecentVisits.Add(new VisitRecord {AtMinute=state.Minute,PlaceId=person.PlaceId,Activity=Activity.Shop});
         var city=new CitySimulator(state,planner);city.AttachFoodMarket(market,awarenessSettings:new FoodAwarenessSettings {DrawsPerAnchor=draws});
-        city.InspectFoodAwareness("r"); // explicit diagnostic preparation, outside the measured decision unit
+        city.InspectFoodAwareness("r");
         return (city,market,planner);
     }
     [Theory] [InlineData(0)] [InlineData(4)]
@@ -95,7 +95,7 @@ public sealed class FoodAwarenessReviewTests
             var work=b.AdvanceFrameSlice(at,1);Assert.Equal(1,work.FoodContinuationEvents);
             Assert.Equal(at,b.State.Minute);Assert.Null(b.State.Food.Residents[0].Decision);Assert.Equal(0,b.State.Food.Residents[0].ContextAttempts);
         }
-        b.InvalidateFoodAwareness();b.AdvanceFrameSlice(at,1); // discard partial private image
+        b.InvalidateFoodAwareness();b.AdvanceFrameSlice(at,1);
         var source=DevelopmentChain.Write(b.State);var loaded=DevelopmentChain.Read(source);Assert.True(loaded.Status==SaveReadStatus.Loaded,loaded.Error);
         b=new CitySimulator(loaded.State!,pb);b.AttachFoodMarket(mb);
         while(!a.AdvanceTo(at,128).CaughtUp) {}
@@ -117,7 +117,7 @@ public sealed class FoodAwarenessReviewTests
             person.RecentVisits.Add(new VisitRecord {AtMinute=state.Minute,PlaceId=person.PlaceId,Activity=Activity.Shop});
             var city=new CitySimulator(state,planner);city.AttachFoodMarket(market);
             if(inspect && inspection==1) city.InspectFoodAwareness("r");
-            food.Shops.Add(acquired); // authority acquired after attachment, on the migration/load day
+            food.Shops.Add(acquired);
             if(inspect && inspection==2) city.InspectFoodAwareness("r");
             return (city,market,planner);
         }
@@ -133,7 +133,7 @@ public sealed class FoodAwarenessReviewTests
             var meal=city.State.Food!.Residents[0];Assert.NotNull(meal.Decision);
             Assert.StartsWith("stop:",meal.Decision!.ContextKey);
             Assert.Equal("b1",Assert.Single(meal.Decision.Shops).BusinessId);
-            Assert.Null(meal.Decision.Awareness); // still the pre-activation policy
+            Assert.Null(meal.Decision.Awareness);
         }
         Assert.Equal(DevelopmentChain.Write(continuous.State),DevelopmentChain.Write(reloaded.State));
         Assert.Equal(DevelopmentChain.Write(continuous.State),DevelopmentChain.Write(inspected.State));

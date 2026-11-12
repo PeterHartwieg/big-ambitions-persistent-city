@@ -15,15 +15,9 @@ using Stopwatch = System.Diagnostics.Stopwatch;
 
 namespace PersistentCity.Tests;
 
-/// <summary>
-/// F2e (docs/plans/f2-movement.md Decision 4, row F2e): player holds as world events. Core applies a retroactive, bounded
-/// hold inside HoldForPlayer and keeps no hold state afterwards; TrafficKernel.HoldVehicle rebases a car's motion; the
-/// consumed minutes and the city-wide sequence are saved (schema 35); the stream replays bit for bit (E2).
-/// </summary>
 [Collection(StreetFoodHooks.Collection)]
 public sealed class PlayerHoldTests
 {
-    // ---- Fixtures: the F2a grid city without food (walkers and kernel cars), and small kernels ----
 
     private static CitySimulator City(int residents = 96)
     {
@@ -37,14 +31,12 @@ public sealed class PlayerHoldTests
         var read = SaveCodec.Read(payload);
         Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
         var city = new CitySimulator(read.State!, new GridPlanner());
-        city.AdvanceTo(city.State.Minute); // binds the road network, as the first frame after a load does
+        city.AdvanceTo(city.State.Minute);
         return city;
     }
 
     private static CitizenState Person(CitySimulator city, string id) => city.State.Citizens.Single(c => c.Identity.Id == id);
 
-    /// <summary>Advance in quarter minutes until a walker (not in traffic) on a walk leg satisfies the condition, given its
-    /// minutes into the current leg.</summary>
     private static CitizenState Walker(CitySimulator city, Func<CitizenState, double, bool> wanted, double until = MovementFixture.StartMinute + 12 * 60)
     {
         for (double t = city.State.Minute; t <= until; t += 0.25)
@@ -81,7 +73,6 @@ public sealed class PlayerHoldTests
     }
     private static void SameBits(double a, double b) => Assert.Equal(BitConverter.DoubleToInt64Bits(a), BitConverter.DoubleToInt64Bits(b));
 
-    // ---- Walk legs: retroactive, instant, bounded ----
 
     [Fact]
     public void AWalkHoldMovesTheJourneyLaterAtOnceAndArrivalFollowsWithoutHoldState()
@@ -98,10 +89,8 @@ public sealed class PlayerHoldTests
         Assert.Equal(0.25, result.Record.Input); Assert.Equal(0.25, result.Record.Charge, 12);
         Assert.Equal(departure + result.Record.Charge, w.DepartureMinute);
         Assert.Equal(arrival + result.Record.Charge, w.NextEventMinute);
-        // Progress is what it was at the start of the blocked interval.
         Assert.True(Position.Distance(back, city.PositionOf(w)) < 1e-6);
         Assert.Equal(result.Record.Charge, w.PlayerHoldMinutes);
-        // The arrival happens at the delayed minute, and the allowance belongs to that journey only.
         int completed = w.CompletedJourneys;
         city.AdvanceTo(arrival + 0.01);
         Assert.Equal(completed, Person(city, id).CompletedJourneys);
@@ -130,14 +119,11 @@ public sealed class PlayerHoldTests
     public void ArrivalTrafficHandoffAndUndrainedMinutesAreNeverHeld()
     {
         var city = City();
-        // Arrived (or not yet left): no journey to hold.
         var home = city.State.Citizens.First(c => c.Phase == CitizenPhase.AtPlace);
         Assert.Equal(PlayerHoldRefusal.NotTravelling, city.HoldForPlayer(home.Identity.Id, 0.1, PlayerHoldCause.PlayerFoot).Refusal);
         Assert.Equal(PlayerHoldRefusal.UnknownPerson, city.HoldForPlayer("nobody", 0.1, PlayerHoldCause.PlayerFoot).Refusal);
         foreach (double bad in new[] { 0, -0.1, 0.2500001, double.NaN, double.PositiveInfinity })
             Assert.Equal(PlayerHoldRefusal.InvalidInput, city.HoldForPlayer(home.Identity.Id, bad, PlayerHoldCause.PlayerFoot).Refusal);
-        // A car person after the kernel handed the journey back (kerb connector or parking pause): neither cause can hold it,
-        // so the handoff already made is never undone.
         CitizenState? parked = null;
         for (double t = city.State.Minute; parked == null && t <= MovementFixture.StartMinute + 12 * 60; t += 0.05)
         {
@@ -149,10 +135,8 @@ public sealed class PlayerHoldTests
         Assert.NotNull(parked);
         Assert.Equal(PlayerHoldRefusal.WrongLeg, city.HoldForPlayer(parked!.Identity.Id, 0.1, PlayerHoldCause.PlayerFoot).Refusal);
         Assert.Equal(PlayerHoldRefusal.WrongLeg, city.HoldForPlayer(parked.Identity.Id, 0.1, PlayerHoldCause.PlayerVehicle).Refusal);
-        // A walker cannot be held as a car, nor a car as a walker.
         var w = Walker(city, (c, inLeg) => inLeg > 0.1);
         Assert.Equal(PlayerHoldRefusal.WrongLeg, city.HoldForPlayer(w.Identity.Id, 0.1, PlayerHoldCause.PlayerVehicle).Refusal);
-        // A minute with work still due is refused, so a replay that stops on the same minute applies it to the same state.
         long sequence = city.State.PlayerHoldSequence;
         bool refusedUndrained = false;
         for (double t = city.State.Minute + 0.5; !refusedUndrained && t < city.State.Minute + 120; t += 0.5)
@@ -175,7 +159,6 @@ public sealed class PlayerHoldTests
         var city = City();
         var w = Walker(city, (c, inLeg) => inLeg >= 0.3 && c.NextEventMinute > city.State.Minute + 4);
         string id = w.Identity.Id;
-        // The player keeps standing in the way: a report every quarter minute.
         for (int i = 0; i < 2; i++)
         {
             Assert.True(city.HoldForPlayer(id, 0.25, PlayerHoldCause.PlayerFoot).Applied);
@@ -221,12 +204,10 @@ public sealed class PlayerHoldTests
         Assert.Equal(PlayerHoldRefusal.AllowanceSpent, reloaded.HoldForPlayer(id, 0.25, PlayerHoldCause.PlayerFoot).Refusal);
     }
 
-    // ---- Traffic legs: TrafficKernel.HoldVehicle ----
 
     [Fact]
     public void AMidLinkCarHoldMovesItBackAndWithholdsItsFollowerIncludingAnInteriorCurbExitWithReplayAndReloadEquality()
     {
-        // a crosses the whole link in 1 minute; b, twice as fast, leaves at a curb halfway along the link.
         var unheld = new TrafficKernel(new[] { Link(1, 4) });
         Enter(unheld, "a", 0, Leg(1));
         Enter(unheld, "b", 0.5, Leg(0.25, 0.5));
@@ -236,25 +217,21 @@ public sealed class PlayerHoldTests
         double followerBefore = held.GetPermission("b").NominalMinutes;
         var result = held.HoldVehicle("a", 0.25);
         Assert.True(result.Applied);
-        // Moved back to its follower's spacing (u 0.45), not to the motion floor (0.35); readiness 0.15 later.
         Assert.Equal(0.6, unheld.GetPermission("a").NominalMinutes, 12);
         Assert.Equal(0.45, held.GetPermission("a").NominalMinutes, 12);
         Assert.Equal(0.45, result.MotionStartFraction, 12); Assert.Equal(0.6, result.MotionStartedAt); Assert.Equal(1.15, result.ReadyAt, 12);
         Assert.Equal(0.15, result.Charge, 12);
         Assert.Equal(followerBefore, held.GetPermission("b").NominalMinutes);
-        // The follower gains no space and no curb-exit permission from the held car.
         unheld.AdvanceTo(0.7, 1000); held.AdvanceTo(0.7, 1000);
         Assert.True(held.GetPermission("b").MaximumNominalMinutes < unheld.GetPermission("b").MaximumNominalMinutes - 0.01);
         unheld.AdvanceTo(5, 1000); held.AdvanceTo(5, 1000);
         Assert.Equal(0.75, unheld.GetPermission("b").CompletedAt!.Value, 12);
         Assert.Equal(0.9, held.GetPermission("b").CompletedAt!.Value, 12);
         Assert.Equal(1.15, held.GetPermission("a").CompletedAt!.Value, 12);
-        // Replay: the same input on the same checkpoint reproduces the mutation and charge bit for bit.
         var replay = TrafficKernel.Restore(JsonSerializer.Deserialize<TrafficKernelState>(checkpoint)!);
         var again = replay.HoldVehicle("a", 0.25);
         SameBits(result.Charge, again.Charge); SameBits(result.MotionStartFraction, again.MotionStartFraction);
         SameBits(result.MotionStartedAt, again.MotionStartedAt); SameBits(result.ReadyAt, again.ReadyAt);
-        // Reload right after the hold continues exactly as the uninterrupted kernel.
         var reloaded = TrafficKernel.Restore(JsonSerializer.Deserialize<TrafficKernelState>(checkpoint)!);
         reloaded.HoldVehicle("a", 0.25);
         reloaded = Copy(reloaded);
@@ -270,16 +247,13 @@ public sealed class PlayerHoldTests
         Enter(kernel, "a", 0, Leg(1));
         kernel.Enqueue("waiting", Leg(1)); kernel.AdvanceTo(0, 1000);
         string before = Json(kernel);
-        // Just entered: a link transition already made is never undone.
         Assert.False(kernel.HoldVehicle("a", 0.25).Applied);
-        // A waiting source has no link; an unknown vehicle is nobody.
         Assert.False(kernel.HoldVehicle("waiting", 0.25).Applied);
         Assert.False(kernel.HoldVehicle("nobody", 0.25).Applied);
         Assert.Equal(before, Json(kernel));
         kernel.AdvanceTo(1, 1000);
         Assert.True(kernel.GetPermission("a").IsCompleted);
         Assert.False(kernel.HoldVehicle("a", 0.25).Applied);
-        // Standing at a red light for longer than the report: neither its motion nor its discharge moves.
         var red = new TrafficKernel(new[] { Link(1, 2, 0.5, 0, new TrafficSignalSchedule { CycleMinutes = 2, GreenStartMinutes = 0, GreenDurationMinutes = 1 }) });
         Enter(red, "c", 0.9, Leg(0.5));
         red.AdvanceTo(1.9, 1000);
@@ -291,7 +265,6 @@ public sealed class PlayerHoldTests
     [Fact]
     public void HeadwayAndSignalsAbsorbPartOfATrafficHoldAndTheChargeIsWhatReplays()
     {
-        // Headway: b reached the end at 1.1 and waits for a's 0.3 discharge headway (until 1.3).
         var kernel = new TrafficKernel(new[] { Link(1, 2, 1, 0.3) });
         Enter(kernel, "a", 0, Leg(1));
         Enter(kernel, "b", 0.1, Leg(1));
@@ -300,13 +273,12 @@ public sealed class PlayerHoldTests
         Assert.Equal(1, kernel.GetPermission("b").NominalMinutes);
         var held = kernel.HoldVehicle("b", 0.25);
         Assert.True(held.Applied);
-        Assert.Equal(0.85, kernel.GetPermission("b").NominalMinutes, 12); // sampled position moved back
-        Assert.Equal(0.05, held.Charge, 12); // input 0.25 > charge: the headway absorbed the rest
+        Assert.Equal(0.85, kernel.GetPermission("b").NominalMinutes, 12);
+        Assert.Equal(0.05, held.Charge, 12);
         var replay = TrafficKernel.Restore(JsonSerializer.Deserialize<TrafficKernelState>(checkpoint)!).HoldVehicle("b", 0.25);
         SameBits(held.Charge, replay.Charge); SameBits(held.ReadyAt, replay.ReadyAt); SameBits(held.MotionStartFraction, replay.MotionStartFraction);
         kernel.AdvanceTo(5, 1000);
         Assert.Equal(1.35, kernel.GetPermission("b").CompletedAt!.Value, 12);
-        // Signal: a car at the stop line before a green at 2.0 is moved back with a charge of 0, which is still applied.
         var red = new TrafficKernel(new[] { Link(1, 2, 0.5, 0, new TrafficSignalSchedule { CycleMinutes = 2, GreenStartMinutes = 0, GreenDurationMinutes = 1 }) });
         Enter(red, "c", 0.9, Leg(0.5));
         red.AdvanceTo(1.5, 1000);
@@ -321,7 +293,6 @@ public sealed class PlayerHoldTests
     [Fact]
     public void AHeldCarOnALegThatEndsPartwayAlongItsLinkKeepsItsFollowersPositionAndSpacing()
     {
-        // a leaves at a curb 60 % along the link; b, twice as fast, crosses the whole link behind it.
         var kernel = new TrafficKernel(new[] { Link(1, 4) });
         Enter(kernel, "a", 0, Leg(0.6, 0.6));
         Enter(kernel, "b", 0.35, Leg(0.5));
@@ -338,7 +309,6 @@ public sealed class PlayerHoldTests
     [Fact]
     public void FollowersQueueBehindAHeldCarInFifoOrder()
     {
-        // b and c drive twice as fast as a, so without the hold they still finish only behind it (headway 0.01).
         TrafficKernel Build()
         {
             var k = new TrafficKernel(new[] { Link(1, 6, 1, 0.01) });
@@ -371,12 +341,10 @@ public sealed class PlayerHoldTests
             {
                 double before = city.SampleJourney(c).ElapsedMinutes;
                 var hold = city.HoldForPlayer(c.Identity.Id, 0.2, PlayerHoldCause.PlayerVehicle);
-                if (!hold.Applied) continue; // refused: nothing changed
+                if (!hold.Applied) continue;
                 Assert.True(hold.Record.Vehicle);
-                // A car its queue already holds back keeps its sampled pose; look for one in free motion.
                 if (!(city.SampleJourney(c).ElapsedMinutes < before - 1e-6)) { city = Load(checkpoint); break; }
                 Assert.Equal(city.State.Minute - city.SampleJourney(c).ElapsedMinutes, c.DepartureMinute, 9);
-                // Replay from the checkpoint through the same call reproduces the record; a reload right after it continues equal.
                 var replay = Load(checkpoint);
                 var replayed = new PlayerHoldReplay(new[] { hold.Record }, 0, 1);
                 Assert.True(replayed.ApplyDue(replay), replayed.Failure); Assert.True(replayed.Done);
@@ -390,7 +358,6 @@ public sealed class PlayerHoldTests
         throw new Xunit.Sdk.XunitException("no car hold moved a sampled journey back");
     }
 
-    // ---- E2: the complete stream replays from a checkpoint (harness arm) ----
 
     private static readonly Lazy<MovementResult> Contact = new(() => MovementRun.Run(new MovementOptions
     {
@@ -413,12 +380,9 @@ public sealed class PlayerHoldTests
             var outcome = HoldReplay.Replay(from, end, HoldReplay.Segment(live.Holds, from, end));
             Assert.True(outcome.Equal, "from " + from.Minute + ": " + outcome.Failure);
         }
-        // Without the stream the bodies-off run from the same checkpoint to the same minute differs: the holds are real outcomes.
         var bare = HoldReplay.Replay(live.Checkpoints[0], end, Array.Empty<PlayerHoldRecord>(), withoutHolds: true);
         Assert.Equal("", bare.Failure);
         Assert.NotEqual(end.Payload, bare.Payload);
-        // Not only through the saved hold counters: inside the contact window the journeys themselves differ (review
-        // Opus-r2-1). By 11:00 every held journey has ended, so only the counters still show the holds there.
         var mid = live.Checkpoints.Single(c => c.Minute == MovementFixture.StartMinute + 9 * 60);
         var midBare = HoldReplay.Replay(live.Checkpoints[0], mid, Array.Empty<PlayerHoldRecord>(), withoutHolds: true);
         Assert.Equal("", midBare.Failure);
@@ -426,7 +390,6 @@ public sealed class PlayerHoldTests
             c.Identity.Id + ":" + c.Phase + ":" + c.PlaceId + ":" + c.DepartureMinute.ToString("R", CultureInfo.InvariantCulture)
             + ":" + c.NextEventMinute.ToString("R", CultureInfo.InvariantCulture) + ":" + c.CompletedJourneys));
         Assert.NotEqual(Journeys(mid.Payload), Journeys(midBare.Payload));
-        // A segment that starts and ends at one checkpoint is that checkpoint.
         Assert.True(HoldReplay.Replay(end, end, Array.Empty<PlayerHoldRecord>()).Equal);
     }
 
@@ -474,8 +437,6 @@ public sealed class PlayerHoldTests
     [Fact]
     public void ATrafficHoldThatWouldMissASignalWindowIsShortenedToTheRemainingAllowanceWithReplayAndReloadEquality()
     {
-        // Review Sol-r1-1: readiness at minute 1, green [0, 1.05) of a 3-minute cycle. Unbounded, a 0.1 hold at 0.95 pushes
-        // readiness to 1.10, past the green, and the discharge to 3.0 (charge 2). Bounded by a 0.1 allowance it is shortened.
         TrafficKernel Build()
         {
             var k = new TrafficKernel(new[] { Link(1, 2, 1, 0, new TrafficSignalSchedule { CycleMinutes = 3, GreenStartMinutes = 0, GreenDurationMinutes = 1.05 }) });
@@ -499,7 +460,6 @@ public sealed class PlayerHoldTests
         foreach (var k in new[] { kernel, replay, reloaded }) k.AdvanceTo(10, 1000);
         Assert.Equal(1 + held.Charge, kernel.GetPermission("a").CompletedAt!.Value, 12);
         Assert.Equal(Json(kernel), Json(replay)); Assert.Equal(Json(kernel), Json(reloaded));
-        // The bound is a journey's remaining allowance, so it is always positive.
         Assert.Throws<ArgumentOutOfRangeException>(() => Build().HoldVehicle("a", 0.1, maximumCharge: 0));
     }
 
@@ -514,7 +474,7 @@ public sealed class PlayerHoldTests
             foreach (var c in city.State.Citizens)
             {
                 if (!city.TryGetTrafficPermission(c.Identity.Id, out var p) || !p.LinkId.HasValue || p.IsCompleted) continue;
-                if (c.PlayerHoldMinutes == 0) c.PlayerHoldMinutes = 0.95; // as if 0.95 was already charged on this journey
+                if (c.PlayerHoldMinutes == 0) c.PlayerHoldMinutes = 0.95;
                 double used = c.PlayerHoldMinutes;
                 var hold = city.HoldForPlayer(c.Identity.Id, 0.25, PlayerHoldCause.PlayerVehicle);
                 if (!hold.Applied) continue;
@@ -528,7 +488,6 @@ public sealed class PlayerHoldTests
         Assert.Equal(SaveCodec.Write(city.State), SaveCodec.Write(reloaded.State));
     }
 
-    // ---- Replay file and readback ----
 
     private static string[] SegmentFile(IEnumerable<PlayerHoldRecord> records, long start, long end, bool header = true)
     {
@@ -544,7 +503,6 @@ public sealed class PlayerHoldTests
         var records = Enumerable.Range(1, 3).Select(i => new PlayerHoldRecord(i, 1000 + i, "r", PlayerHoldCause.PlayerFoot, 0.1, 0.1)).ToList();
         Assert.True(PlayerHolds.ReadSegment(SegmentFile(records, 0, 3), out var read, out long start, out long end, out string error), error);
         Assert.Equal(3, read.Count); Assert.Equal(0, start); Assert.Equal(3, end);
-        // Review Sol-r1-3: the end comes from the checkpoint, never from the last remaining record.
         Assert.False(PlayerHolds.ReadSegment(SegmentFile(records.Take(2), 0, 3), out _, out _, out _, out error));
         Assert.Contains("does not end", error);
         Assert.False(PlayerHolds.ReadSegment(SegmentFile(records, 0, 3, header: false), out _, out _, out _, out error));
@@ -562,7 +520,6 @@ public sealed class PlayerHoldTests
     [Fact]
     public void AHoldsReadbackInTheSameLogIsNeverReadAsAnOriginalHold()
     {
-        // Review Sol-r1-2: Player.log holds the original events and, after a checkpoint query, readback copies of them.
         var records = Enumerable.Range(1, 3).Select(i => new PlayerHoldRecord(i, 1000 + i, "r", PlayerHoldCause.PlayerFoot, 0.1, 0.1)).ToList();
         var log = SegmentFile(records, 0, 3).ToList();
         log.Add("[Persistent City] movement holds since 0 (read-only)");
@@ -571,7 +528,6 @@ public sealed class PlayerHoldTests
         Assert.All(records, r => Assert.False(PlayerHolds.TryParse(PlayerHolds.Format(r, PlayerHolds.ReadbackLinePrefix), out _)));
         Assert.True(PlayerHolds.ReadSegment(log, out var read, out _, out _, out string error), error);
         Assert.Equal(new long[] { 1, 2, 3 }, read.Select(r => r.Sequence));
-        // A true duplicate original line is still refused.
         log.Add(PlayerHolds.Format(records[2]));
         Assert.False(PlayerHolds.ReadSegment(log, out _, out _, out _, out error));
         Assert.Contains("duplicate", error);
@@ -581,25 +537,21 @@ public sealed class PlayerHoldTests
     [Fact]
     public void TheHoldReadbackBelongsToTheLoadedCityAcrossReloadsAndPresentationRebuilds()
     {
-        // Review Sol-r1-4: a city reloaded from an earlier checkpoint, or another city, never sees the discarded run's holds,
-        // even without a new contact; a rebuild over the same state keeps them.
         var played = CurrentSchemaOnlyTests.City(); var loaded = CurrentSchemaOnlyTests.City();
         for (long s = 1; s <= 10; s++) PlayerContact.Publish(new PlayerHoldRecord(s, s, "r", PlayerHoldCause.PlayerFoot, 0.1, 0.1), played);
         var list = new List<PlayerHoldRecord>();
         PlayerContact.Since(played, 0, list, out bool gap);
         Assert.Equal(10, list.Count); Assert.False(gap);
         list.Clear(); PlayerContact.Since(played, 0, list, out _);
-        Assert.Equal(10, list.Count); // same state: kept
+        Assert.Equal(10, list.Count);
         list.Clear(); PlayerContact.Since(loaded, 0, list, out gap);
         Assert.Empty(list); Assert.False(gap);
-        // A replayed hold is the loaded city's own hold and enters its ring.
         PlayerContact.Publish(new PlayerHoldRecord(1, 1, "r", PlayerHoldCause.PlayerFoot, 0.1, 0.1), loaded, replay: true);
         list.Clear(); PlayerContact.Since(loaded, 0, list, out _);
         Assert.Equal(new long[] { 1 }, list.Select(h => h.Sequence));
         Assert.StartsWith(PlayerHolds.ReplayLinePrefix, Debug.Lines().Last());
     }
 
-    // ---- Stream line and ring ----
 
     [Fact]
     public void TheStreamLineRoundTripsExactlyAndOnlyOriginalLinesParse()
@@ -638,12 +590,10 @@ public sealed class PlayerHoldTests
         ring.Since(0, list, out gap); Assert.True(gap); Assert.Equal(256, list.Count);
         list.Clear(); ring.Since(44, list, out gap); Assert.False(gap); Assert.Equal(256, list.Count);
         list.Clear(); ring.Since(298, list, out gap); Assert.False(gap); Assert.Equal(new long[] { 299, 300 }, list.Select(h => h.Sequence));
-        // A loaded city that starts at another sequence restarts the ring.
         ring.Add(new PlayerHoldRecord(12, 1, "r", PlayerHoldCause.PlayerFoot, 0.1, 0.1));
         Assert.Equal(1, ring.Count); Assert.Equal(12, ring.OldestSequence);
     }
 
-    // ---- Runtime: only the player causes a hold ----
 
     private static readonly Position Home = new(40, 0, 0), Work = new(100, 0, 0);
 
@@ -686,21 +636,17 @@ public sealed class PlayerHoldTests
             Assert.True(pool.Active.ContainsKey("w"));
             var walker = pool.Active["w"];
             Vector3 Ahead(double metres) => PhysicalPedestrianBody.Vector(new Position(walker.Position.X + metres, 0, 0));
-            // The walker stands still while its logical pose moves on (visibly blocked). A native pedestrian stands right in
-            // front of it, an RLO-reserved actor beside it, and the player is nowhere (no controller), then 30 m away.
             var native = new Actor(); native.transform.position = Ahead(0.5);
             AmbientPedestrians.Reserved.Add("rlo-actor");
             for (int i = 0; i < 20; i++) Frame();
             InstanceBehavior<GameManager>.Instance = game;
             game.playerController!.transform.position = Ahead(30);
             for (int i = 0; i < 20; i++) Frame();
-            // Driving: the player's own vehicle in front of a walker is not a foot contact either.
             GameManager.Driving = true; game.selectedVehicle!.transform.position = Ahead(0.5);
             for (int i = 0; i < 20; i++) Frame();
             Assert.Equal(0, city.State.PlayerHoldSequence);
             bodies.BeforeSave();
             Assert.Equal(SaveCodec.Write(plain.State), SaveCodec.Write(city.State));
-            // The player's avatar 0.5 m ahead along the leg: now the blocked walker is held, and each hold is a stream line.
             GameManager.Driving = false; game.playerController.transform.position = Ahead(0.5);
             double departure = city.State.Citizens[0].DepartureMinute;
             for (int i = 0; i < 12; i++) Frame();
@@ -714,7 +660,6 @@ public sealed class PlayerHoldTests
             var ring = new List<PlayerHoldRecord>();
             PlayerContact.Ring.Since(0, ring, out _);
             Assert.Equal(city.State.PlayerHoldSequence, ring.Last().Sequence);
-            // Bodies-off replay of exactly that stream gives the same city.
             var stream = ring.Where(h => h.Sequence >= 1 && h.Sequence <= city.State.PlayerHoldSequence).ToList();
             var replay = new CitySimulator(Walking(), new Walk());
             var replayer = new PlayerHoldReplay(stream, 0, city.State.PlayerHoldSequence);
@@ -735,9 +680,6 @@ public sealed class PlayerHoldTests
     }
 }
 
-// Opt-in offline measurements for docs/perf/f2e.md: set PC_F2E_MEASURE to an output file. The production PhysicalPopulation
-// on the native doubles with 48 walkers, without a player (the contact pass is skipped, as before F2e), with the player
-// far from every body, and with the player standing inside the crowd; then the contact rule alone per body.
 [Collection(StreetFoodHooks.Collection)]
 public sealed class PlayerHoldPerfTests
 {
@@ -832,7 +774,6 @@ public sealed class PlayerHoldPerfTests
         {
             lines.Add(Update("no player (contact pass skipped, as before F2e)", _ => null));
             lines.Add(Update("player 1 km away", _ => new Position(1100, 0, 0)));
-            // The player stands 0.5 m ahead of the first walker on its own leg every frame: the worst case, a held body.
             lines.Add(Update("player 0.5 m ahead of one walker", pool =>
             {
                 if (!pool.Active.TryGetValue("w00", out var w)) return new Position(100, 0, 0);
@@ -840,7 +781,6 @@ public sealed class PlayerHoldPerfTests
                 return n < 1e-6 ? w.Position : new Position(w.Position.X + d.X / n * 0.5, 0, w.Position.Z + d.Z / n * 0.5);
             }));
         }
-        // The contact rule alone: one leg sample and Observe per body, 72 bodies (48 walkers and 24 cars), 20,000 frames.
         var route = Legs(new Position(0, 0, 0), new Position(120, 0, 0));
         var contact = new PlayerContact();
         var far = new PlayerPose(new Position(1000, 0, 0), false); var near = new PlayerPose(new Position(30.5, 0, 0), false);
@@ -858,7 +798,6 @@ public sealed class PlayerHoldPerfTests
             double ns = (Stopwatch.GetTimestamp() - start) * 1e9 / Stopwatch.Frequency / (frames * (double)body);
             lines.Add(string.Format(CultureInfo.InvariantCulture, "Contact rule per body ({0}): {1:F1} ns; per frame at 72 bodies: {2:F4} ms", label, ns, ns * 72 / 1e6));
         }
-        // The pre-check PhysicalPopulation runs first (a body out of reach with no open track stops there).
         {
             const int frames = 20000, body = 72;
             var ids = Enumerable.Range(0, body).Select(b => "far" + b.ToString(CultureInfo.InvariantCulture)).ToArray();

@@ -1,15 +1,8 @@
-"""Parse Persistent City's 60-second Player.log summary lines (Runtime/PersistentCityMod.cs, the
-"Population: ... Advancement this observation: ..." line) and attach their fix-128 fields to spikes.
-
-Every segment is optional except the population and advancement blocks, because older builds print
-fewer segments. A field that a line does not carry is None, never a guessed value.
-"""
 import re
 
 NUM = r'(-?\d+(?:[.,]\d+)?(?:[eE][-+]?\d+)?)'
 INT = r'(-?\d+)'
 
-# Each segment: (name, regex, [(field, type)]). Types: f float, i int, s string.
 SEGMENTS = [
     ('population', r'Population: ' + INT + r' citizens; ' + INT + r' travelling, ' + INT + r' awaiting a route, ' + INT
      + r' awaiting opening; clock ' + NUM + r', lag ' + NUM + r' game minutes\.',
@@ -59,7 +52,6 @@ def _value(text, kind):
 
 
 def parse_physical(text):
-    """physical=True, pedestrians=3, ..., carAdmission=resident:stage:error (the last value may hold commas)."""
     result = {}
     head, sep, admission = text.partition(', carAdmission=')
     for part in head.split(', '):
@@ -79,7 +71,6 @@ def parse_physical(text):
 
 
 def parse_line(line):
-    """Return the parsed summary or None when the line is not a population summary."""
     if 'Population: ' not in line or 'Advancement this observation: ' not in line:
         return None
     summary = {}
@@ -113,15 +104,6 @@ UNKNOWN = 'unknown'
 
 
 def attach_fix128(spikes, observations, tolerance_ms):
-    """Attach each observation's slowest-advance fields to the one spike that matches its maximum.
-
-    spikes: dicts with 'frame', 'advance_ms' (None when no advancement time is known) and optional
-    'advance_source' ('unknown' when advancement timing is unbound, so absence is not established).
-    observations: dicts with 'summary' (parse_line output) and optional 'first_frame'/'last_frame'.
-    Every advancement spike, and every spike whose advancement is unknown, starts with unknown unit
-    fields; only a spike confirmed outside advancement gets none.
-    A maximum that matches no spike, or more than one, attaches to nothing.
-    """
     for spike in spikes:
         if spike.get('advance_ms') is None and spike.get('advance_source') != UNKNOWN:
             spike['advancement_unit'] = None

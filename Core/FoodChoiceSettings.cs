@@ -2,16 +2,14 @@ using System;
 
 namespace PersistentCity.Core
 {
-    /// <summary>Clamped once at configuration load. Absent keys retain defaults; no tunable enters a draw key.</summary>
     public sealed class FoodChoiceSettings
     {
-        public int FoodMenuMaximumOffersPerShop { get; set; }=FoodMenuPolicy.LiveMaximumOffers; // E5b5 Q1 default
+        public int FoodMenuMaximumOffersPerShop { get; set; }=FoodMenuPolicy.LiveMaximumOffers;
         public double FoodMenuNewTasteWeight { get; set; }=1;
         public double FoodMenuHealthWeight { get; set; }
         public double FoodChoiceTemperature { get; set; }=1;
         public double FoodChoiceWeightFloor { get; set; }=.02;
         public double FoodChoiceTasteWeight { get; set; }=1;
-        // Strength of the meal-reference price response; 0 disables the soft signal, never the wallet gate.
         public double FoodChoicePriceWeight { get; set; }=1.2;
         public double FoodChoiceDistanceWeight { get; set; }=1;
         public double FoodChoiceDistanceScaleMinutes { get; set; }=10;
@@ -19,7 +17,6 @@ namespace PersistentCity.Core
         public double FoodChoiceQualityWeight { get; set; }=.5;
         public double FoodChoiceTimePressureWeight { get; set; }=1;
         public double FoodChoiceHealthWeight { get; set; }
-        // Funded cooking preference at the $12.50 meal-reference equivalent; no extra charge is booked.
         public double FoodChoiceHouseholdWeight { get; set; }=1;
         public double FoodShortlistTemperature { get; set; }=1;
 

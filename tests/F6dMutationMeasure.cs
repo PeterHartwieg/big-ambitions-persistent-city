@@ -31,7 +31,7 @@ public sealed class F6dMutationMeasure
                 HouseholdFinance.ConfirmPurchase(b);
             }
         }
-        Unit(0); // JIT warm-up, outside the samples
+        Unit(0);
         var samples = new List<double>((budgets.Length - 32) / 32);
         long allocated = GC.GetAllocatedBytesForCurrentThread();
         for (int start = 32; start < budgets.Length; start += 32)

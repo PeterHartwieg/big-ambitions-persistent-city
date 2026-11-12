@@ -15,15 +15,11 @@ namespace PersistentCity.Compatibility
         public int EffectiveKilometresPerHour { get; }
     }
 
-    /// <summary>F8d: RLO's CityApi answered NotYet or Refreshing for its slowed lanes. Nothing is known about the lanes, so
-    /// the caller must neither read this as "no slowdowns" nor stop the city; route preparation waits for a complete answer.</summary>
     public sealed class RloRoadSpeedsNotReadyException : InvalidOperationException
     {
         public RloRoadSpeedsNotReadyException(string message) : base(message) { }
     }
 
-    /// <summary>Read-only contract for RLO's pothole speed overlay: RLO's CityApi when it has one, otherwise the reviewed
-    /// reflection read. Capture on the game's main thread.</summary>
     public sealed class RloRoadSpeedOverrides
     {
         private const BindingFlags Members = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly;
@@ -88,11 +84,10 @@ namespace PersistentCity.Compatibility
                             if (!(fault.Key is int) || fault.Value == null || fault.Value.GetType() != shownType)
                                 throw Invalid("unexpected entry in FaultWorld._shown");
                             object? point = lane.GetValue(fault.Value);
-                            if (point == null) continue; // Hide restores the native speed and clears Lane.
+                            if (point == null) continue;
                             if (point.GetType() != waypointType) throw Invalid("unexpected Shown.Lane instance type");
                             int original = (int)laneLimit.GetValue(fault.Value)!;
                             int observed = (int)maxSpeed.GetValue(point)!;
-                            // Reviewed FaultRules.SlowLimit is identical in both accepted releases.
                             int expected = original <= 20 ? original : Math.Max(20, original - 15);
                             if (original <= 0 || observed != expected)
                                 throw Invalid("lane speed does not match reviewed SlowLimit: original=" + original + ", observed=" + observed);
@@ -107,10 +102,6 @@ namespace PersistentCity.Compatibility
             { throw Invalid("could not capture the reviewed fault speed snapshot", error); }
         }
 
-        // RLO owns the slowdown rule here; Persistent City checks only that each lane is listed once with positive limits.
-        // NativeRoadSpeeds then checks each lane's live limit against the current one. Off means nothing is slowed. Any
-        // other answer but Ready is refused rather than read as no slowdowns: a slowed lane taken as unslowed would
-        // record its reduced limit as the road's own.
         private IReadOnlyDictionary<object, RloRoadSpeedOverride> CaptureThroughApi(RloBridge api)
         {
             try

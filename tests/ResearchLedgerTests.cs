@@ -52,7 +52,6 @@ public sealed class ResearchLedgerTests
         return order;
     }
 
-    // ---- Products ----
 
     [Fact]
     public void ProductTableHasTheAcceptedDefaultsWithExactMoneyAndBinary32Prices()
@@ -67,7 +66,6 @@ public sealed class ResearchLedgerTests
             Assert.Equal(product.PriceDollars * Money.UnitsPerDollar, product.Price.Units);
             Assert.Equal(Money.FromCents(product.PriceDollars * 100L), product.Price);
             Assert.True(product.Price.IsWholeCents());
-            // The binary32 value is the exact whole dollar: same bits as the integer converted, same value back.
             Assert.Equal(BitConverter.SingleToInt32Bits((float)product.PriceDollars), BitConverter.SingleToInt32Bits(product.NativePrice));
             Assert.Equal((double)product.PriceDollars, (double)product.NativePrice);
             Assert.Equal(product.PriceDollars, (int)product.NativePrice);
@@ -86,7 +84,6 @@ public sealed class ResearchLedgerTests
             Assert.False(ResearchProducts.TryGet(code, out _));
     }
 
-    // ---- Ordering ----
 
     [Fact]
     public void OrderStoresFixedPriceSequenceIdAndSurveyMinute()
@@ -104,7 +101,6 @@ public sealed class ResearchLedgerTests
         Assert.Equal("", a.ReportId); Assert.Null(a.Report);
         Assert.Equal(new[] { a, b }, ledger.Open);
 
-        // At the minute fence the target is the epoch's last double, not the native minute.
         double fence = 8 * 60 + 15 + (1 - 1.0 / 262144);
         Assert.Equal(ResearchOrderRefusal.None, ledger.TryOrder("basic-local", "biz-c", "agency-1", false, 500, fence, out var c));
         Assert.Equal(AccountingClock.Target(fence), c!.SurveyAtMinute);
@@ -128,7 +124,6 @@ public sealed class ResearchLedgerTests
         foreach (double minute in new[] { double.NaN, double.PositiveInfinity, -1, 2e9 })
             Assert.Equal(ResearchOrderRefusal.InvalidMinute, ledger.TryOrder("basic-local", "biz", "ag", false, 500, minute, out _));
         Assert.Empty(ledger.Open); Assert.Equal(1, ledger.NextSequence);
-        // City coverage ignores the catchment radius.
         Assert.Equal(ResearchOrderRefusal.None, ledger.TryOrder("detailed-city", "biz", "ag", false, 0, Minute, out var city));
         Assert.Equal(0, city!.RadiusMetres); Assert.Equal("pcr-1", city.Id);
     }
@@ -145,7 +140,6 @@ public sealed class ResearchLedgerTests
         Assert.Equal(ResearchOrderRefusal.CityOrderLimit, ledger.TryOrder("basic-local", "biz-8", "agency-1", false, 500, Minute, out var refused));
         Assert.Null(refused); Assert.Equal(9, ledger.NextSequence);
 
-        // A surveyed order is still open; only leaving Surveyed frees the business and the city slot.
         Assert.Equal(ResearchMoveRefusal.None, ledger.TrySeal(first.Id, ReportFor(first)));
         Assert.Equal(ResearchOrderRefusal.CityOrderLimit, ledger.TryOrder("basic-local", "biz-8", "agency-1", false, 500, Minute, out _));
         Assert.Equal(ResearchOrderRefusal.BusinessHasOpenOrder, ledger.TryOrder("basic-local", "biz-0", "agency-1", false, 500, Minute, out _));
@@ -156,7 +150,6 @@ public sealed class ResearchLedgerTests
         Assert.Equal(ResearchOrderRefusal.CityOrderLimit, ledger.TryOrder("basic-local", "biz-8", "agency-1", false, 500, Minute, out _));
     }
 
-    // ---- Moves ----
 
     private enum Move { Seal, Paid, DeclineFunds, DeclinePrecision, Cancel, Unknown }
 
@@ -241,7 +234,6 @@ public sealed class ResearchLedgerTests
         Assert.Equal(ResearchMoveRefusal.InvalidReport, ledger.TrySeal(city.Id, new MarketResearchReport("q", MarketResearchTier.Detailed, 3, "biz-b", 0, cell)));
         Assert.Equal(ResearchOrderState.Ordered, local.State);
         Assert.Equal(ResearchMoveRefusal.None, ledger.TrySeal(city.Id, new MarketResearchReport("q", MarketResearchTier.Detailed, 3, null, 0, cell)));
-        // Two orders never share a report identity.
         Assert.Equal(ResearchMoveRefusal.InvalidReport, ledger.TrySeal(local.Id, new MarketResearchReport("q", MarketResearchTier.Basic, 3, "biz-a", 500, cell)));
         Assert.Equal(ResearchMoveRefusal.None, ledger.TrySeal(local.Id, new MarketResearchReport("q2", MarketResearchTier.Basic, 3, "biz-a", 500, cell)));
         Assert.Equal(ResearchMoveRefusal.InvalidReason, ledger.TryDecline(local.Id, ResearchDeclineReason.None));
@@ -249,12 +241,9 @@ public sealed class ResearchLedgerTests
         Assert.Equal(ResearchOrderState.Surveyed, local.State);
     }
 
-    // ---- Billing boundaries ----
 
     private enum Outcome { Paid, InsufficientFunds, BalancePrecision, Ineligible, ThrowsAfterEntry, EvidenceMismatch }
 
-    /// <summary>The shape C5d follows: every Surveyed order gets one attempt per boundary, and the result
-    /// leaves Surveyed whatever happens. Counts native entries per order.</summary>
     private static void Boundary(ResearchLedger ledger, Func<ResearchOrder, Outcome> outcome, Dictionary<string, int> entries)
     {
         foreach (var order in ledger.Open.Where(o => o.State == ResearchOrderState.Surveyed).ToList())
@@ -297,10 +286,8 @@ public sealed class ResearchLedgerTests
         Assert.Equal(ResearchOrderState.Cancelled, ledger.Find("pcr-4")!.State);
         Assert.Equal(ResearchOrderState.PaymentUnknown, ledger.Find("pcr-5")!.State);
         Assert.Equal(ResearchOrderState.PaymentUnknown, ledger.Find("pcr-6")!.State);
-        // Only the order still waiting for its survey is open; nothing was retried or reset.
         Assert.Equal(new[] { waiting }, ledger.Open);
 
-        // Unknown blocks only itself: the same business orders again under a new ID, and that order bills normally.
         var retry = Surveyed(ledger, "biz-" + Outcome.ThrowsAfterEntry);
         Assert.Equal("pcr-8", retry.Id);
         Assert.Equal(ResearchMoveRefusal.None, ledger.TrySeal(waiting.Id, ReportFor(waiting)));
@@ -327,7 +314,6 @@ public sealed class ResearchLedgerTests
             Assert.False(ledger.TryGet(order.Id, out var grant)); Assert.Null(grant);
             Assert.False(report.TryRead(ledger, order.Id, out var numbers)); Assert.Null(numbers);
             Assert.Contains(order, ledger.Closed); Assert.DoesNotContain(order, ledger.Open);
-            // A new order for the same business is accepted.
             Assert.Equal(ResearchOrderRefusal.None, ledger.TryOrder("basic-local", order.BusinessAddress, "agency-1", false, 500, Minute, out var next));
             Assert.Equal(ResearchMoveRefusal.WrongState, ledger.TryCancel(next!.Id));
             Assert.Equal(ResearchMoveRefusal.None, ledger.TrySeal(next.Id, ReportFor(next)));
@@ -335,7 +321,6 @@ public sealed class ResearchLedgerTests
         }
     }
 
-    // ---- Entitlement ----
 
     [Fact]
     public void TryReadSucceedsOnlyForPaidAndFailsAfterReplaced()
@@ -366,18 +351,15 @@ public sealed class ResearchLedgerTests
         Assert.True(ledger.TryGet(paid.Id, out var grant));
         Assert.Equal(paid.Id, grant!.EntitlementId); Assert.Equal(paid.ReportId, grant.ReportId);
         Assert.True(grant.Paid && grant.Delivered && !grant.Replaced);
-        // The grant pairs one order with one report: another paid order's ID cannot open this report.
         var other = Surveyed(ledger, "probe-other");
         Assert.Equal(ResearchMoveRefusal.None, ledger.TryMarkPaid(other.Id));
         Assert.False(paid.Report!.TryRead(ledger, other.Id, out _));
         Assert.False(paid.Report.TryRead(ledger, "", out _));
         Assert.False(paid.Report.TryRead(NoPaymentPath.Instance, paid.Id, out _));
-        // Mutating a returned grant cannot change the next one.
         grant.Replaced = true; grant.ReportId = "forged";
         Assert.True(paid.Report.TryRead(ledger, paid.Id, out var paidNumbers));
         Assert.Equal(7, paidNumbers!.Single().Value);
 
-        // Retention: the 17th delivered report replaces the oldest.
         var held = paid.Report;
         for (int i = ledger.Kept.Count; i < ResearchLedger.MaximumKeptReports; i++)
             Assert.Equal(ResearchMoveRefusal.None, ledger.TryMarkPaid(Surveyed(ledger, "fill-" + i).Id));
@@ -415,7 +397,6 @@ public sealed class ResearchLedgerTests
             <= ResearchLedger.MaximumOpenOrders + ResearchLedger.MaximumKeptReports + ResearchLedger.MaximumClosedOrders);
     }
 
-    // ---- Restore seam (C5c) ----
 
     private static (long, List<ResearchOrderImage>, List<ResearchOrderImage>, List<ResearchOrderImage>) Images(ResearchLedger ledger)
         => (ledger.NextSequence, ledger.Open.Select(ResearchOrderImage.Of).ToList(),
@@ -493,7 +474,6 @@ public sealed class ResearchLedgerTests
         Assert.False(ResearchLedger.TryRestore(ok.Item1 - 1, ok.Item2, ok.Item3, ok.Item4, out _, out _));
     }
 
-    // ---- Perf (recorded in docs/perf/c5a.md) ----
 
     [Fact]
     public void OrderAndGrantCostsAreSmallAndFindDoesNotAllocate()
@@ -517,7 +497,6 @@ public sealed class ResearchLedgerTests
                 + $"max {values[^1] * 1000:0.00} us, {bytes / (double)samples:0} B/call";
         }
         string grantLine = "", orderLine = "";
-        // The ledger is shared across attempts: each sample orders, seals and cancels, so it stays at the same bounds.
         TimingBudget.Run(timing =>
         {
             var grant = new double[samples];

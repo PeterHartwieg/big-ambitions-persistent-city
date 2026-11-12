@@ -8,7 +8,6 @@ using PersistentCity.Core;
 
 namespace PersistentCity.Persistence
 {
-    /// <summary>Small early-load authority manifest. No identities, wallets or order contents.</summary>
     public static class FoodAuthorityStore
     {
         public const string Key = "persistentcity:food-authority-v1";

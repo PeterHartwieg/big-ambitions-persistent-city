@@ -4,13 +4,9 @@ using UnityEngine;
 
 namespace PersistentCity.Runtime
 {
-    /// <summary>C5f research report window (plan C5 section 3.7), opened from the Ctrl+F8 panel's "Research reports"
-    /// button or `pcresearch window open`. It lists the orders and their states; a Paid order's cells come from
-    /// MarketResearchReport.TryRead with the saved ledger. Closed, Draw returns before reading anything. Open, the
-    /// view is rebuilt at most once a second (ResearchWindowModel) and the draw only lays out cached strings.</summary>
     internal sealed class ResearchReportWindow
     {
-        private const int WindowId = 0x50435257; // "PCRW"
+        private const int WindowId = 0x50435257;
         private readonly ResearchWindowModel model = new ResearchWindowModel();
         private readonly GUI.WindowFunction drawContents;
         private Rect rect;
@@ -26,7 +22,6 @@ namespace PersistentCity.Runtime
         internal void Hide() { model.Hide(); view = null; }
         internal void Toggle() { model.Toggle(); if (!model.Open) view = null; }
 
-        /// <summary>Called from OnGUI.</summary>
         internal void Draw(ResearchLedger? ledger, Func<string, string> businessName)
         {
             if (!model.Open) return;

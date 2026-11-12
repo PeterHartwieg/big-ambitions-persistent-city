@@ -9,15 +9,9 @@ using Xunit;
 
 namespace PersistentCity.Tests
 {
-    /// <summary>RLO 1.0 overrule (Peter, 12 Nov 2026): Persistent City owns the overlap with RLO's Living population on, off
-    /// or toggled; an unreadable switch fails safe; contract-1 CityApi binding is unchanged; F8h sees RLO's non-Harmony
-    /// calculator replacement and does not refuse for it. Stand-in RLO assemblies are emitted; no RLO or game DLL is used.</summary>
     [Collection(RloCompatibilityTests.SharedFlareState)]
     public sealed class RloOverruleTests
     {
-        // One shop's hour as the native paths see it. The table is the game's static customer list, which RLO's loyalty and
-        // interiors code reads and extends directly (CustomerDraw.Entries reads the field, past CustomerEntriesHelper).
-        // Every native path asks the real owned-shop gate (RloOverrule.AdmitsNative), as NativeFoodOwnership's prefixes do.
         private sealed class Entry { public readonly List<string> Lines = new List<string>(); public bool Completed; }
 
         private sealed class ShopHour
@@ -27,44 +21,38 @@ namespace PersistentCity.Tests
             public bool Owned;
             public int Served;
 
-            // UpdateCustomerEntriesForPlayerBusiness: the native draw, where RLO's replaced calculator scales the count.
             public void Generate(int initialCustomers, double rloScale)
             {
                 if (!RloOverrule.AdmitsNative(NativeShopPath.Generation, Owned)) return;
                 for (int i = 0; i < (int)Math.Round(initialCustomers * rloScale); i++) { var e = new Entry(); e.Lines.Add("burger"); Table.Add(e); }
             }
 
-            // RLO LoyaltyGame.Basket / InteriorGame.Basket: one more line on native entries still to come.
             public void RloBasket(string product) { foreach (var e in Table) if (!e.Completed) e.Lines.Add(product); }
 
             public IReadOnlyList<Entry> Draw() => RloOverrule.AdmitsNative(NativeShopPath.Draw, Owned) ? Table : (IReadOnlyList<Entry>)Array.Empty<Entry>();
 
-            // ProcessAllCustomersFromThisHour.
             public void NativeBatch()
             {
                 if (!RloOverrule.AdmitsNative(NativeShopPath.Batch, Owned)) return;
                 foreach (var e in Table.ToArray()) if (!e.Completed) Process(e, own: false);
             }
 
-            // ProcessCustomer.
             public void Process(Entry e, bool own)
             {
                 if (!RloOverrule.AdmitsNative(NativeShopPath.Process, Owned, own)) return;
                 e.Completed = true; Served++; Sold.AddRange(e.Lines);
             }
 
-            // NativeFoodMarket.SellLine: one private one-product order per ticket line, never put in the table.
             public void PersistentCityTicket(params string[] lines)
             { foreach (var line in lines) { var e = new Entry(); e.Lines.Add(line); Process(e, own: true); } }
 
-            // A native entry still in the table at an owned shop is offered to ProcessCustomer directly (another caller).
             public void StrayNativeCalls() { foreach (var e in Table.ToArray()) Process(e, own: false); }
         }
 
         private static ShopHour OwnedHour(bool living)
         {
             var shop = new ShopHour();
-            shop.Generate(4, living ? 2.5 : 1.0); // entries drawn before the acquisition boundary stay in the table
+            shop.Generate(4, living ? 2.5 : 1.0);
             shop.Owned = true;
             shop.Generate(6, living ? 2.5 : 1.0);
             if (living) { shop.RloBasket("loyalty-extra"); shop.RloBasket("interiors-extra"); }
@@ -82,11 +70,9 @@ namespace PersistentCity.Tests
             Assert.Equal(3, shop.Served);
             Assert.Equal(new[] { "burger", "fries", "soda" }, shop.Sold);
             Assert.Empty(shop.Draw());
-            // The pre-acquisition entries RLO extended are never sold while owned.
             Assert.All(shop.Table, e => Assert.False(e.Completed));
             Assert.Null(RloOverrule.CheckoutRefusal(null, new RloLivingReading(RloLivingState.On)));
 
-            // A native-owned shop stays RLO's and the game's: the scaled draw and the basket lines sell there.
             var native = new ShopHour();
             native.Generate(4, 2.5); native.RloBasket("loyalty-extra"); native.NativeBatch();
             Assert.Equal(10, native.Served);
@@ -116,8 +102,8 @@ namespace PersistentCity.Tests
             Assert.Equal(RloLivingState.On, tracker.Current.State);
 
             Assert.False(tracker.Poll(0.0));
-            field.SetValue(null, false); // RLO's options toggle assigns the field during play
-            Assert.False(tracker.Poll(0.5)); // within the cadence: not read again
+            field.SetValue(null, false);
+            Assert.False(tracker.Poll(0.5));
             Assert.Equal(RloLivingState.On, tracker.Current.State);
             Assert.True(tracker.Poll(1.0));
             Assert.Equal(RloLivingState.Off, tracker.Current.State);
@@ -127,7 +113,6 @@ namespace PersistentCity.Tests
             Assert.Equal(2, tracker.Toggles);
             Assert.Equal(new[] { "Living population on -> Living population off", "Living population off -> Living population on" }, tracker.Changes);
 
-            // The owned shop is the same in every hour of the session, whatever the switch says.
             foreach (bool on in new[] { true, false, true })
             {
                 var shop = OwnedHour(on);
@@ -176,7 +161,7 @@ namespace PersistentCity.Tests
             Assert.True(tracker.Poll(0));
             Assert.Equal(RloLivingState.Unknown, tracker.Current.State);
             Assert.Contains("surface gone", tracker.Current.Reason);
-            Assert.False(tracker.Poll(5)); // a readable answer later does not lift Unknown this session
+            Assert.False(tracker.Poll(5));
             Assert.Equal(RloLivingState.Unknown, tracker.Current.State);
             Assert.Equal(0, tracker.Toggles);
             Assert.NotNull(RloOverrule.CheckoutRefusal(null, tracker.Current));
@@ -198,7 +183,6 @@ namespace PersistentCity.Tests
         private static HookPatchedMethod Method(string type, string method, string[] parameters, params (string Owner, HookPatchKind Kind)[] patches)
             => new HookPatchedMethod(type, method, parameters, patches.Select(p => new HookPatch(p.Owner, p.Kind)).ToArray());
 
-        // RLO 1.0's PopulationGame.InstallCalculators: five factory fields given its own subclasses.
         private static readonly HookReplacement[] RloCalculators = new[]
         {
             ("CustomerEntriesCalculator", "PlainCalculator"), ("CustomerEntriesCalculatorRetail", "RetailCalculator"),
@@ -246,7 +230,6 @@ namespace PersistentCity.Tests
             Assert.Equal(report.CheckoutRefusal, RloOverrule.CheckoutRefusal(report.CheckoutRefusal, new RloLivingReading(RloLivingState.On)));
             Assert.Equal(report.CheckoutRefusal, RloOverrule.CheckoutRefusal(report.CheckoutRefusal, new RloLivingReading(RloLivingState.Unknown, "x")));
             Assert.Contains("food.checkout.shop off: foreign prefix by other.mod", report.ActivationLine());
-            // A foreign observer stays an observer, with or without RLO's replacements.
             Assert.Null(HookConflictReport.Build(OwnHooks(("other.mod", HookPatchKind.Postfix)), Policy, RloCalculators).CheckoutRefusal);
         }
 
@@ -278,11 +261,10 @@ namespace PersistentCity.Tests
             leaving.Observe("sig-c", true, 10);
             Assert.True(leaving.Boundary(11, true, false, true, true));
 
-            Assert.True(tracker.Poll(20)); // the switch turns unreadable during play
+            Assert.True(tracker.Poll(20));
             bool hold = RloOverrule.HoldsAcquisitions(tracker.Current.State);
             Assert.True(hold);
 
-            // A shop becoming eligible now is not taken over at the next boundary, nor later this session.
             var fresh = new FoodAuthority { PlaceId = "place:b:shop" };
             fresh.Observe("sig-b", true, 21);
             Assert.Equal(FoodBoundaryStep.Acquire, fresh.Pending(22, true, false, true));
@@ -291,7 +273,6 @@ namespace PersistentCity.Tests
             Assert.False(fresh.Managed);
             Assert.True(fresh.Deferred);
 
-            // The shop owned before keeps its hours and its own checkout; a hand-back never waits.
             Assert.True(owned.OwnsHour(22));
             Assert.True(RloOverrule.AdmitsNative(NativeShopPath.Process, owned.OwnsHour(22), ownCheckout: true));
             Assert.False(RloOverrule.AdmitsNative(NativeShopPath.Generation, owned.OwnsHour(22)));
@@ -306,26 +287,26 @@ namespace PersistentCity.Tests
             var rlo = LivingShape("scenes");
             var settings = rlo.GetType("RealLifeOverhaul.Settings")!;
             var accidents = settings.GetField("TrafficAccidents")!; var reckless = settings.GetField("NaturalAccidents")!;
-            accidents.SetValue(null, true); reckless.SetValue(null, false); // the player has reckless drivers off
+            accidents.SetValue(null, true); reckless.SetValue(null, false);
             var scenes = RloTrafficScenes.Bind(rlo);
             Assert.Empty(scenes.Unbound);
 
             Assert.Equal(2, scenes.Hold());
             SceneHooks.Ended = 0;
-            Assert.True(scenes.EndActiveScene()); // an accident already under way when the hold starts is ended
+            Assert.True(scenes.EndActiveScene());
             Assert.Equal(1, SceneHooks.Ended);
             Assert.True(scenes.Holding);
-            Assert.False((bool)accidents.GetValue(null)!); // a staged accident under way gets no successor; a reckless drive ends
+            Assert.False((bool)accidents.GetValue(null)!);
             Assert.False((bool)reckless.GetValue(null)!);
 
-            reckless.SetValue(null, true); // the player switches reckless drivers on during the hold
-            scenes.Hold();                  // the next coarse poll
+            reckless.SetValue(null, true);
+            scenes.Hold();
             Assert.False((bool)reckless.GetValue(null)!);
 
             scenes.Release();
             Assert.False(scenes.Holding);
             Assert.True((bool)accidents.GetValue(null)!);
-            Assert.True((bool)reckless.GetValue(null)!); // the player's latest choice is the one given back
+            Assert.True((bool)reckless.GetValue(null)!);
 
             var partial = RloTrafficScenes.Bind(LivingShape("scenes without reckless"));
             Assert.Single(partial.Holds);
@@ -345,14 +326,12 @@ namespace PersistentCity.Tests
             scenes.Hold();
             Assert.False((bool)accidents.GetValue(null)!);
 
-            // The player saves accidents off during the hold: RLO's callback assigns false (already false) and stores 0.
             prefs["m:rlo:traffic_accidents"] = 0;
             scenes.Hold();
             scenes.Release();
-            Assert.False((bool)accidents.GetValue(null)!); // the stored choice wins over the value seen at the hold
+            Assert.False((bool)accidents.GetValue(null)!);
             Assert.True((bool)reckless.GetValue(null)!);
 
-            // Without a stored value the value recorded at the hold is given back.
             accidents.SetValue(null, true); prefs.Clear();
             scenes.Hold(); scenes.Release();
             Assert.True((bool)accidents.GetValue(null)!);
@@ -361,27 +340,22 @@ namespace PersistentCity.Tests
         [Fact]
         public void ACarLoadedPastTheHeldSharesIsRetiredOutOfViewAndRloSceneCarsStay()
         {
-            // RLO's rival pass-by: TrafficManager.LoadVehicle of an idle pool car, out of view, on a lane of a held group.
             Assert.True(RloOverrule.RetiresNativeCar(active: true, heldGroup: true, presetPath: false, ignored: false, ordinary: true, taxi: false, visible: false));
-            Assert.False(RloOverrule.RetiresNativeCar(true, true, false, false, true, false, visible: true));   // never popped in view
-            Assert.False(RloOverrule.RetiresNativeCar(true, true, presetPath: true, false, true, false, false)); // a staged accident's wreck or unit
-            Assert.False(RloOverrule.RetiresNativeCar(true, true, false, ignored: true, true, false, false));    // a car RLO holds out of traffic
-            Assert.False(RloOverrule.RetiresNativeCar(true, heldGroup: false, false, false, true, false, false)); // a group Persistent City does not replace
-            Assert.False(RloOverrule.RetiresNativeCar(true, true, false, false, ordinary: false, false, false)); // a modded or service car
+            Assert.False(RloOverrule.RetiresNativeCar(true, true, false, false, true, false, visible: true));
+            Assert.False(RloOverrule.RetiresNativeCar(true, true, presetPath: true, false, true, false, false));
+            Assert.False(RloOverrule.RetiresNativeCar(true, true, false, ignored: true, true, false, false));
+            Assert.False(RloOverrule.RetiresNativeCar(true, heldGroup: false, false, false, true, false, false));
+            Assert.False(RloOverrule.RetiresNativeCar(true, true, false, false, ordinary: false, false, false));
             Assert.False(RloOverrule.RetiresNativeCar(true, true, false, false, true, taxi: true, false));
             Assert.False(RloOverrule.RetiresNativeCar(active: false, true, false, false, true, false, false));
         }
 
-        // One native pool slot as PhysicalVehicles reads it.
         private sealed class PoolCar { public bool Active, Held = true, Preset, Ignored, Ordinary = true, Taxi, Visible; public int FramesDriven; public double X, Z; }
 
         private const double FrameSeconds = 1.0 / 60;
 
         private static bool ActiveHeld(PoolCar c) => c.Active && c.Held;
 
-        // The adapter in Unity's frame order. Update: other mods' Update, then ours (one slot a frame, the whole pool every 30
-        // frames, out of view only; a slot we retire is forgotten); then coroutines (RLO's SeenDirector.Tick); then LateUpdate
-        // (NativeLoadWatch: an active car of a held group that is no leftover is retired before it renders).
         private static void Frame(int frame, List<PoolCar> pool, NativeLoadWatch watch, ref int cursor,
             Action? otherUpdates = null, Action? coroutines = null)
         {
@@ -401,7 +375,7 @@ namespace PersistentCity.Tests
                 if (RloOverrule.RetiresNewNativeLoad(c.Held, c.Preset, c.Ignored, c.Ordinary, c.Taxi)) { c.Active = false; watch.Forget(i); }
                 else watch.Accept(i, c.X, c.Z);
             }
-            foreach (var c in pool) if (c.Active) { c.FramesDriven++; c.X += 30 * FrameSeconds; } // rendering and the next traffic step see only what is left; 30 m/s
+            foreach (var c in pool) if (c.Active) { c.FramesDriven++; c.X += 30 * FrameSeconds; }
         }
 
         private static NativeLoadWatch Hold(List<PoolCar> pool)
@@ -417,19 +391,15 @@ namespace PersistentCity.Tests
             var pool = Enumerable.Range(0, 40).Select(_ => new PoolCar()).ToList();
             var watch = Hold(pool);
             int cursor = 0;
-            for (int f = 1; f <= 30; f++) Frame(f, pool, watch, ref cursor); // frame 30 is a sweep
+            for (int f = 1; f <= 30; f++) Frame(f, pool, watch, ref cursor);
 
-            // Frame 31, right after the sweep and away from the cursor: the pass-by loads slot 37 and the camera turns to it.
             Frame(31, pool, watch, ref cursor, () => { pool[37].Active = true; pool[37].Visible = true; });
             Assert.False(pool[37].Active);
             Assert.Equal(0, pool[37].FramesDriven);
 
-            // The pool grows for a new car loaded straight into a held group: the new slot is caught too.
             Frame(32, pool, watch, ref cursor, () => pool.Add(new PoolCar { Active = true, Visible = true }));
             Assert.False(pool[40].Active);
 
-            // Loads that are not ours to refuse stay: an RLO scene car (preset path), a car RLO holds, a group we do not
-            // replace, a taxi.
             Frame(33, pool, watch, ref cursor, () =>
             {
                 pool[1].Active = pool[1].Preset = true; pool[2].Active = pool[2].Ignored = true;
@@ -443,20 +413,16 @@ namespace PersistentCity.Tests
         [Fact]
         public void ASlotRetiredAndReloadedBetweenTwoPassesIsStillCaught()
         {
-            // Slot 5 holds a leftover, active and out of view when the hold starts.
             var pool = Enumerable.Range(0, 40).Select(_ => new PoolCar()).ToList();
             pool[5].Active = true;
             var watch = Hold(pool);
             int cursor = 0;
-            for (int f = 1; f <= 29; f++) Frame(f, pool, watch, ref cursor, () => { if (cursor % 40 == 5) cursor++; }); // the cursor skips slot 5
-            Assert.True(pool[5].Active); // still a leftover; LateUpdate leaves it to the out-of-view step
+            for (int f = 1; f <= 29; f++) Frame(f, pool, watch, ref cursor, () => { if (cursor % 40 == 5) cursor++; });
+            Assert.True(pool[5].Active);
 
-            // Frame 30: our sweep retires slot 5, then RLO's coroutine reloads that idle slot and it comes into view.
-            // Both LateUpdate passes see slot 5 active; it is still a load.
             Frame(30, pool, watch, ref cursor, coroutines: () => { Assert.False(pool[5].Active); pool[5].Active = true; pool[5].Visible = true; });
             Assert.False(pool[5].Active);
 
-            // Without our retirement in between, native drops the leftover (seen inactive) and RLO reloads the slot later.
             pool[6].Active = true; var second = Hold(pool);
             Frame(31, pool, second, ref cursor, () => pool[6].Active = false);
             Frame(32, pool, second, ref cursor, () => { pool[6].Active = true; pool[6].Visible = true; });
@@ -466,23 +432,18 @@ namespace PersistentCity.Tests
         [Fact]
         public void NativeRemovalAndAReloadBetweenTheSameTwoPassesIsCaughtByTheJump()
         {
-            // Slot 5 holds a leftover driving at 30 m/s; nothing of ours retires it (the cursor skips it, it is in view).
             var pool = Enumerable.Range(0, 40).Select(_ => new PoolCar()).ToList();
             pool[5].Active = true; pool[5].Visible = true;
             var watch = Hold(pool);
             int cursor = 0;
             for (int f = 1; f <= 120; f++) Frame(f, pool, watch, ref cursor, () => { if (cursor % 40 == 5) cursor++; });
-            Assert.True(pool[5].Active); // a leftover that drives on is never taken for a load
+            Assert.True(pool[5].Active);
 
-            // Frame 121: native's traffic update removes it, then RLO's coroutine reloads the idle slot on a lane 90 m away,
-            // in view. Both passes see slot 5 active and nothing of ours retired it; the jump marks the reload.
             Frame(121, pool, watch, ref cursor,
                 otherUpdates: () => { if (cursor % 40 == 5) cursor++; pool[5].Active = false; },
                 coroutines: () => { pool[5].Active = true; pool[5].X += 90; pool[5].Visible = true; });
             Assert.False(pool[5].Active);
 
-            // A kept RLO scene car (preset path) is followed too: when RLO lets it go and the slot is reloaded far away, it
-            // is a load again.
             pool[7].Active = pool[7].Preset = true;
             Frame(122, pool, watch, ref cursor);
             Assert.True(pool[7].Active);
@@ -496,27 +457,22 @@ namespace PersistentCity.Tests
         [InlineData(5.0)]
         public void NativeRemovalAndANearbyReloadBetweenTheSameTwoPassesIsCaughtByTheAddEvent(double offset)
         {
-            // Slot 5 holds a leftover driving in view at 30 m/s; nothing of ours retires it.
             var pool = Enumerable.Range(0, 40).Select(_ => new PoolCar()).ToList();
             pool[5].Active = true; pool[5].Visible = true; pool[5].X = 100;
             var watch = Hold(pool);
             int cursor = 0;
             for (int f = 1; f <= 10; f++) Frame(f, pool, watch, ref cursor, () => { if (cursor % 40 == 5) cursor++; });
 
-            // Without the event the reload is not seen: same slot, within the drive limit, never inactive at a pass.
             var blind = Hold(pool);
             Frame(11, pool, blind, ref cursor, () => { if (cursor % 40 == 5) cursor++; },
                 () => { pool[5].X += offset; });
             Assert.True(pool[5].Active);
 
-            // Frame 12: native removes the car (DensityManager.RemoveVehicle) and RLO's coroutine reloads the slot at the
-            // same place or 5 m on; TrafficManager.LoadVehicle raises DensityEvents.onVehicleAdded for slot 5.
             Frame(12, pool, watch, ref cursor,
                 otherUpdates: () => { if (cursor % 40 == 5) cursor++; pool[5].Active = false; },
                 coroutines: () => { pool[5].Active = true; pool[5].X += offset; watch.Added(5); });
             Assert.False(pool[5].Active);
 
-            // An add before the hold, or for a slot the pool has not listed yet, is harmless.
             new NativeLoadWatch().Added(3);
             watch.Added(60);
             Frame(13, pool, watch, ref cursor);
@@ -526,22 +482,20 @@ namespace PersistentCity.Tests
         public void ACarLoadedInTheHoldsOwnFrameIsCaughtAtTheFirstLateUpdate()
         {
             var pool = Enumerable.Range(0, 10).Select(_ => new PoolCar()).ToList();
-            pool[0].Active = true; // a leftover
-            var watch = Hold(pool); // PhysicalVehicles.Activate, inside this frame's Update
+            pool[0].Active = true;
+            var watch = Hold(pool);
             int cursor = 1;
-            // Later in the same frame RLO's coroutine loads slot 3 in view; then the first LateUpdate.
             Frame(1, pool, watch, ref cursor, coroutines: () => { pool[3].Active = true; pool[3].Visible = true; });
             Assert.False(pool[3].Active);
-            Assert.True(pool[0].Active); // the leftover is left to the out-of-view step
+            Assert.True(pool[0].Active);
             Assert.Throws<InvalidOperationException>(() => new NativeLoadWatch().IsLoad(0, true, 0, 0, FrameSeconds));
         }
 
         [Fact]
         public void NeedPurchaseClaimsTheNativeSlotButSellsNoRloBasketLine()
         {
-            // A native entry at a native-owned shop: the game drew two lines, RLO's loyalty and interiors added two more.
             var claimed = new List<string> { "shampoo", "conditioner", "loyalty-extra", "interiors-extra" };
-            const string own = "shampoo"; // NativeSalePath's own basket: one unit of the first priced product
+            const string own = "shampoo";
             foreach (RloLivingState state in Enum.GetValues(typeof(RloLivingState)))
             {
                 var basket = RloOverrule.QuotesClaimedLines(state) ? claimed : new List<string> { own };
@@ -550,7 +504,6 @@ namespace PersistentCity.Tests
             }
         }
 
-        /// <summary>An assembly named RealLifeOverhaul whose Settings has one shape of the Living population switch.</summary>
         private static Assembly LivingShape(string shape)
         {
             var assembly = AssemblyBuilder.DefineDynamicAssembly(new AssemblyName("RealLifeOverhaul"), AssemblyBuilderAccess.Run);
@@ -568,14 +521,12 @@ namespace PersistentCity.Tests
                 settings.DefineField("LivingPopulation", typeof(bool), FieldAttributes.Public | FieldAttributes.Static);
                 settings.DefineField("TrafficAccidents", typeof(bool), FieldAttributes.Public | FieldAttributes.Static);
                 if (shape == "scenes") settings.DefineField("NaturalAccidents", typeof(bool), FieldAttributes.Public | FieldAttributes.Static);
-                // RLO's option ids and Settings.PrefsKey(id), "m:" + mod id + ":" + id.
                 foreach (var (name, id) in new[] { ("TrafficAccidentsId", "traffic_accidents"), ("NaturalAccidentsId", "natural_accidents") })
                     settings.DefineField(name, typeof(string), FieldAttributes.Public | FieldAttributes.Static | FieldAttributes.Literal | FieldAttributes.HasDefault).SetConstant(id);
                 var key = settings.DefineMethod("PrefsKey", MethodAttributes.Public | MethodAttributes.Static, typeof(string), new[] { typeof(string) });
                 var il = key.GetILGenerator();
                 il.Emit(OpCodes.Ldstr, "m:rlo:"); il.Emit(OpCodes.Ldarg_0);
                 il.Emit(OpCodes.Call, typeof(string).GetMethod(nameof(string.Concat), new[] { typeof(string), typeof(string) })!); il.Emit(OpCodes.Ret);
-                // TrafficAccidents.EndActive(): counted in SceneHooks.
                 var accidents = module.DefineType("RealLifeOverhaul.TrafficAccidents", TypeAttributes.Public | TypeAttributes.Sealed | TypeAttributes.Class);
                 var end = accidents.DefineMethod("EndActive", MethodAttributes.Public | MethodAttributes.Static, typeof(void), Type.EmptyTypes).GetILGenerator();
                 end.Emit(OpCodes.Call, typeof(SceneHooks).GetMethod(nameof(SceneHooks.EndActive))!); end.Emit(OpCodes.Ret);
@@ -587,7 +538,6 @@ namespace PersistentCity.Tests
         }
     }
 
-    /// <summary>What the emitted stand-in TrafficAccidents.EndActive reports to. Public so the emitted assembly can call it.</summary>
     public static class SceneHooks
     {
         public static int Ended;

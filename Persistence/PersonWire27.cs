@@ -9,9 +9,6 @@ using PersistentCity.Core;
 
 namespace PersistentCity.Persistence
 {
-    // F5d (city audit F5 #92): writer 27, independent schedules. Every visitor carries its own routine: the writer-26
-    // visitor tuple (portal, presence, Employment, carried income, LastArrival) plus one routine object in
-    // VisitorRoutines, aligned by index.
     public static partial class SaveCodec
     {
         public const int MaxRoutineTuple = 512;
@@ -19,19 +16,7 @@ namespace PersistentCity.Persistence
         private const int RoutineFields27 = 16;
         private const string NoPlace27 = "---";
 
-        // ---- Visitor routine object: {"J": journey or null, "T": "<routine tuple>"} ----
-        // Identity, traits and travel preferences are derived from (seed, PersonId); the home is the stay's portal;
-        // DayPlaceId/EmploymentStartDay, the carried source and the single arrival come from the visitor tuple. A
-        // visitor has no car, recent-visit list or optional stop, so none of those fields exist on the wire.
-        //
-        // Tuple: "1|<phase><activity><destination activity>|<place>|<destination>|<next>|<until>|<departure>|<completed>
-        //   |<missed>|<joined>|<last check day>|<job changes>|<shop><leisure>|<commute>|<outing>|<weather>"
-        // places: three base-36 digits of the ordinal Places index, "---" for none; minutes: invariant round-trip
-        // ("R") text, refused unless canonical; commute "-" or "<place>,<starts>,<ends>,<prepared>,<travel>";
-        // outing "-" or "<origin><activity>,<resume until>,<resume event>,<0|1 returning>"; weather "-" or
-        // "<boundary>,<commitment>".
 
-        /// <summary>The routine's scalar facts, carried between the property's value provider and the context converter.</summary>
         internal sealed class RoutineTuple27
         {
             public RoutineTuple27(VisitorRoutine routine) { Routine = routine; }
@@ -89,7 +74,6 @@ namespace PersistentCity.Persistence
 
         private static string RoutineTuple27Text(VisitorRoutine r, WireContext context)
         {
-            // E6c: a vendor place (a visitor at or walking to a stand) takes the "v" form; see PlaceCells.
             string Place(string id) => PlaceCell30(context, id) ?? throw new SaveValidationException("Visitor routine names an unknown place.");
             string Optional(string id) => id.Length == 0 ? NoPlace27 : Place(id);
             var text = new StringBuilder(160).Append('1').Append('|')
@@ -146,7 +130,6 @@ namespace PersistentCity.Persistence
         {
             Require(text.Length >= offset + 3, "Invalid " + label + ".");
             if (optional && string.CompareOrdinal(text, offset, NoPlace27, 0, 3) == 0) return "";
-            // The streaming check has no place table; it keeps a placeholder that is never published.
             return places.Parse(text, offset, "Invalid " + label + ".");
         }
 
@@ -156,7 +139,6 @@ namespace PersistentCity.Persistence
             return (T)(object)(c - '0');
         }
 
-        /// <summary>Structural parse (the streaming check passes no place table). Cross-record rules run in ValidatePersons27.</summary>
         private static VisitorRoutine ParseRoutine27(string text, PlaceCells places)
         {
             Require(text.Length <= MaxRoutineTuple, "Oversized visitor routine tuple.");
@@ -220,8 +202,6 @@ namespace PersistentCity.Persistence
             ParseRoutine27(value, cells);
         }
 
-        /// <summary>After a schema-27 decode and before validation: the writer-26 person derivations for residents and
-        /// portals, then each visitor routine is linked to its person and receives the facts its tuple carries.</summary>
         private static void DerivePersons27(CityState state)
         {
             Require(state.Citizens != null && state.Visitors != null && state.VisitorRoutines != null, "Missing person table.");
@@ -245,7 +225,6 @@ namespace PersistentCity.Persistence
                 Require(index < state.Portals!.Count, "Visitor portal index is outside the station table.");
                 visitor.Stay.OriginPortalId = state.Portals[index];
             }
-            // Identity, traits and preferences are derived in Core (contract B6), never decoded.
             try { VisitorSchedules.DeriveAll(state); }
             catch (InvalidOperationException e) { Fail(e.Message); }
             for (int i = 0; i < state.Visitors.Count; i++)
@@ -283,7 +262,6 @@ namespace PersistentCity.Persistence
                 "Visitor creation and active counts disagree: a skipped visitor sequence is not a student or retiree.");
         }
 
-        /// <summary>Writer-27 person rules, on every read and before every write. Returns records charged.</summary>
         private static int ValidatePersons27(CityState state, Dictionary<string, Place> places, Dictionary<string, int> assigned, ref int embeddedRecords)
         {
             Require(state.Visitors != null && state.Portals != null && state.VisitorRoutines != null, "Missing person table.");
@@ -320,7 +298,6 @@ namespace PersistentCity.Persistence
                 var routine = state.VisitorRoutines[i];
                 Require(visitor != null && visitor.Stay != null && routine != null, "Missing visitor stay or routine.");
                 Text(visitor.Id, "Visitor ID", 256);
-                // Schema 27 has no represented consumers: every visitor is a pv: person (contract B1).
                 Require(PersonIds.Classify(visitor.Id) == PersonIdFormat.Visitor, "Invalid visitor ID.");
                 Require(previous == null || string.CompareOrdinal(previous, visitor.Id) < 0, "Visitor persons are unordered or duplicated.");
                 previous = visitor.Id;
@@ -333,8 +310,6 @@ namespace PersistentCity.Persistence
                     && routine.Identity != null && routine.Identity.Id == visitor.Id, "Visitor routine is not its person's.");
                 var stay = visitor.Stay;
                 Known(stay.Pattern, "visitor stay pattern"); Known(stay.Presence, "visitor presence");
-                // F5g fills the day-visitor pool in the same tuple shape (pattern code 'D', already in the alphabet). A day
-                // visitor never holds an Employment or a city workplace.
                 Require(stay.Pattern == VisitorPattern.Commuter || visitor.Employment == null && routine.DayPlaceId.Length == 0,
                     "A day visitor holds no employment.");
                 Require(stay.OriginPortalId.Length != 0 && state.Portals.BinarySearch(stay.OriginPortalId, StringComparer.Ordinal) >= 0, "Visitor portal is missing from the station table.");
@@ -348,7 +323,6 @@ namespace PersistentCity.Persistence
                     Require(visitor.LastArrival == null && routine.RecentVisits.Count == 0, "A dormant visitor holds no arrival.");
                 }
                 else Require(BitConverter.DoubleToInt64Bits(stay.NextStayStart) == 0, "An active visitor has no next stay start.");
-                // A visitor owns no car or traffic record (section 9 Q1 default).
                 Require(routine.Car == null && !routine.Preferences.OwnsCar && routine.Preferences.AllowTransit, "A visitor owns no car.");
                 Require(routine.Journey?.Legs == null || routine.Journey.Legs.All(l => l == null || l.Mode != TravelMode.Car), "A visitor journey has no car leg.");
                 Require(routine.OptionalStop == null && routine.OptionalStopChoice == null, "A visitor takes no optional stop.");
@@ -407,12 +381,9 @@ namespace PersistentCity.Persistence
             Require(state.NextVisitorSequence >= 1 && state.NextVisitorSequence - 1 >= visitorSequences, "Visitor creation and active counts disagree.");
             ValidateSkippedSequences(state, sequenceNumbers);
             ValidateOwnership27(state);
-            // One record per person tuple (resident P and visitor) and per station entry, as the streaming check charges.
             return state.Citizens.Count + state.Visitors.Count + state.Portals.Count;
         }
 
-        /// <summary>The F5b ownership contract over the writer-27 person table. Resident IDs stay opaque (contract B1), so
-        /// a resident ID outside the c&lt;n&gt;/pc:&lt;n&gt; formats gives one tolerated violation; every visitor has a portal.</summary>
         private static void ValidateOwnership27(CityState state)
         {
             var food = state.Food;
@@ -443,7 +414,6 @@ namespace PersistentCity.Persistence
             if (food != null)
             {
                 input.Roster = food.Residents.Select(m => new RosterFacts(m.ResidentId, m.AnchorId, m.Slot)).ToList();
-                // GR-1: wallets are the persons' own, not the roster's.
                 input.Wallets = state.Citizens.Concat<CitizenState>(state.VisitorRoutines).Where(p => p.Wallet != null)
                     .Select(p => new WalletFacts(MoneyOwnerKind.Person, p.Identity.Id)).ToList();
                 input.Intents = food.Residents.Select(m => new DemandUnitFacts(m.IntentId, m.ResidentId)).ToList();

@@ -34,8 +34,6 @@ namespace PersistentCity.Core
         }
     }
 
-    /// <summary>Read-only, coherent metadata and bounded live detail reads. Never supplies sale authority.
-    /// Refresh is driven only by logical-event preparation, in the existing continuation budget.</summary>
     public interface IRivalFoodMarket
     {
         long RivalRevision { get; }
@@ -50,8 +48,6 @@ namespace PersistentCity.Core
 
     public static class RivalFoodTerms
     {
-        // A 112-bit SHA-256 prefix of the canonical advertised owner/hours (not an identity).
-        // Exact price is retained separately; no second schedule/receipt/route tree is saved.
         public static string Fingerprint(FoodAlternativeObservation observation)
         {
             var text = new StringBuilder().Append(observation.OwnerId.Length.ToString(CultureInfo.InvariantCulture)).Append(':').Append(observation.OwnerId);
@@ -69,7 +65,6 @@ namespace PersistentCity.Core
         {
             if (value == null || value.Length != 19) return false;
             foreach (char c in value) if (!(c >= '0' && c <= '9' || c >= 'A' && c <= 'Z' || c >= 'a' && c <= 'z' || c == '-' || c == '_')) return false;
-            // The last two bits encode zero padding, not extra noncanonical terms.
             const string alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
             return (alphabet.IndexOf(value[18]) & 3) == 0;
         }
@@ -88,8 +83,6 @@ namespace PersistentCity.Core
         }
     }
 
-    /// <summary>Pure own-ledger transaction. All arithmetic and constraints precede publication;
-    /// no callback, yield, receipt or native operation can interleave with these assignments.</summary>
     public static class ExternalFoodSettlement
     {
         public static bool CanPay(ResidentMeal meal, Money price)
@@ -129,15 +122,11 @@ namespace PersistentCity.Core
     {
         internal RivalFoodSettings RivalSettings { get; private set; } = new RivalFoodSettings();
         private long RivalChoices, RivalSettlements, RivalRefusals, RivalLaneRefusals, RivalSellOutRefusals, RivalSellOutExclusions;
-        // F6b: derived from saved Serving meals and current-period outcome records at attach; never saved.
         private RivalServiceLoad rivalLoad = new RivalServiceLoad();
         private bool SoldOut(string place, string businessType, double finish)
             => rivalLoad.Count(place, RivalServiceCalibration.Period(finish)) >= RivalSettings.MealPeriodUnits(businessType);
-        // Transient place -> native business type from observations already read; selects a per-type profile.
         private readonly Dictionary<string, string> rivalTypes = new Dictionary<string, string>(StringComparer.Ordinal);
-        // Rival shops of the latest decision evaluation whose eligible offers were refused only by the modeled sell-out.
         private readonly HashSet<FoodDecisionShop> rivalSoldOutShops = new HashSet<FoodDecisionShop>();
-        /// <summary>D4 Stockout for a customer already inside the rival, named explicitly: the meal holds no rival target yet.</summary>
         private void RivalStopStockout(ResidentMeal meal, CitizenState person, FoodDecisionShop shop, FoodDecisionState decision)
         {
             if (!city.State.Capabilities.Active || person.PlaceId != shop.PlaceId) return;
@@ -149,12 +138,10 @@ namespace PersistentCity.Core
         {
             if (RivalSettings.RivalServiceProfiles.Count == 0) return "";
             if (rivalTypes.TryGetValue(shop.PlaceId, out var type)) return type;
-            var observation = ObserveRival(shop.BusinessId); // only after a reload resumed a held decision
+            var observation = ObserveRival(shop.BusinessId);
             if (observation == null || observation.PlaceId != shop.PlaceId) return "";
             rivalTypes[shop.PlaceId] = observation.BusinessType; return observation.BusinessType;
         }
-        /// <summary>Choice-time queue knowledge: the derived earliest free estimated lane. Evaluated live at the
-        /// decision minute; the held image keeps its saved NextServiceAt == OriginAt contract unchanged.</summary>
         private double RivalNextService(FoodDecisionShop shop, double at)
             => Math.Max(at, rivalLoad.NextFree(shop.PlaceId, at, RivalSettings.Lanes(RivalType(shop))));
         private bool rivalResumeNeedsRefresh;
@@ -172,8 +159,6 @@ namespace PersistentCity.Core
             int visited = 0;
             foreach (var scope in AwarenessScopes())
             {
-                // Raw slots include up to 1,024 retired player-scope duplicates, yielded as
-                // empty slots. The builder still enforces 20,000 actual alternatives/places.
                 if (++visited > FoodAwarenessCatalogue.MaximumAlternatives + 1024) throw new InvalidOperationException("Oversized combined metadata source.");
                 var point = scope == null ? (Position?)null : city.FindPosition(scope.PlaceId);
                 yield return point.HasValue && point.Value.IsFinite ? new FoodAwarenessCatalogue.Entry(scope!,point.Value) : null!;
@@ -183,16 +168,13 @@ namespace PersistentCity.Core
         private FoodAlternativeObservation? ObserveRival(string id)
         {
             try { return (market as IRivalFoodMarket)?.ReadRival(id); }
-            catch (Exception) { return null; } // Unavailable read evidence cannot authorize an outside payment.
+            catch (Exception) { return null; }
         }
         private FoodBusiness? CaptureRival(string id, double minute, double deadline)
         {
             var observation = ObserveRival(id);
             if (!RivalFoodTerms.Eligible(observation)) return null;
             rivalTypes[observation!.PlaceId] = observation.BusinessType;
-            // Choice-time knowledge: a rival sold out for every meal period a service could finish in before the
-            // deadline is not an available offer. A service that can finish after the next period starts stays.
-            // The held image keeps its unknown-stock contract; nothing about the estimate is captured or saved.
             double earliest = minute + RivalSettings.RivalAssumedServiceMinutes;
             if (SoldOut(observation.PlaceId, observation.BusinessType, earliest)
                 && RivalServiceCalibration.Period(Math.Max(earliest, deadline)) == RivalServiceCalibration.Period(earliest))
@@ -201,8 +183,6 @@ namespace PersistentCity.Core
             business.NextServiceMinute = minute;
             return business;
         }
-        // Only this committed slot-zero outing defers admission to the live rival check.
-        // Ordinary routines and other residents retain the place's original saved hours.
         internal bool OwnsRivalMealVisit(CitizenState person, string place) => person.MealOuting != null
             && !person.MealOuting.Returning && records.TryGetValue(person.Identity.Id, out var meal)
             && meal.TargetKind == FoodAlternativeKind.Rival && meal.PlaceId == place;
@@ -213,8 +193,6 @@ namespace PersistentCity.Core
         {
             hours = null; failure = null; businessType = ""; matchedRival = null;
             var observation = ObserveRival(id);
-            // One existing detail read supplies both settlement validation and optional memory.
-            // Missing/foreign/changed-price evidence cannot name a bad visit.
             if (observation == null || observation.Kind != FoodAlternativeKind.Rival
                 || observation.Id != id || observation.PlaceId != place) return false;
             if (meal != null && !observation.Offers.Any(o => o.ProductId == meal.ProductId && o.Price == meal.Price)) return false;
@@ -226,7 +204,6 @@ namespace PersistentCity.Core
             businessType = observation.BusinessType; rivalTypes[place] = businessType;
             matchedRival = observation;
             if (!requireOpen) return true;
-            // Completion needs membership only; only arrival needs the union's next-close boundary.
             if (captureHours) hours = new Place { WeeklyHours = observation.Hours.Select(h => new OpeningWindow { Day = h.Day, FromMinute = h.FromMinute, ToMinute = h.ToMinute }).ToList(), OpenMinute = 0, CloseMinute = 0 };
             return true;
         }
@@ -243,7 +220,6 @@ namespace PersistentCity.Core
                     RivalExperience(meal, ShopExperience.Closed, now);
                 Finish(meal, MealStatus.Missed, "Service no longer fits shop opening hours"); return;
             }
-            // F6b estimated lanes: join the next free lane. All checks precede any stay change or debit.
             double start = rivalLoad.NextFree(meal.PlaceId, now, RivalSettings.Lanes(type)), finish = start + meal.ServiceMinutes;
             if (SoldOut(meal.PlaceId, type, finish))
             { RivalSellOutRefusals++; RivalExperience(meal, ShopExperience.Stockout, now); Finish(meal, MealStatus.Missed, "Service unavailable on arrival"); return; }
@@ -264,14 +240,12 @@ namespace PersistentCity.Core
         {
             if (!RivalMatches(meal.BusinessId, meal.PlaceId, meal.External.Substring(2), null, meal, now, out _, out var failure, out _))
             { RivalRefusals++; RivalExperience(meal, failure, now); Finish(meal, MealStatus.Missed, "Business no longer accepts this commitment"); return; }
-            // F6j: the modeled ticket adds extras from the advertised menu; the wallet check covers the total.
             var mainPrice = meal.Price;
             var limit = CurrentAllowance(meal);
             var ticket = RivalTicket(meal);
             if (ticket != null && ExternalFoodSettlement.CanPay(meal, ticket.Total)) meal.Price = ticket.Total;
             if (!ExternalFoodSettlement.TryPay(meal, state.Outflow, now))
             { meal.Price = mainPrice; Finish(meal, MealStatus.Missed, "Household funds no longer available at checkout"); return; }
-            // A settled ticket may exceed the limit saved at commitment when the wallet grew since (never lowered).
             if (meal.Price > mainPrice) meal.Allowance = Money.Max(meal.Allowance, limit);
             RivalSettlements++; meal.ServiceAt = now; rivalLoad.Paid(meal);
             RivalExperience(meal, ShopExperience.Served, now);
@@ -295,8 +269,6 @@ namespace PersistentCity.Core
     public sealed partial class CitySimulator
     {
         public object? DumpRivalFood() => food?.RivalDiagnostics();
-        /// <summary>Canonical transient rival load (place|paid this period|Serving finishes), and the same image
-        /// rebuilt from saved state alone. Equal after every event; diagnostics/tests only.</summary>
         internal string? RivalLoadImage() => food?.RivalLoadImage();
         internal string? ReconstructedRivalLoadImage() => food?.ReconstructedRivalLoadImage();
     }

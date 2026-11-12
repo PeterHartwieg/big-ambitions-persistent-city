@@ -10,12 +10,10 @@ import argparse
 import json
 from pathlib import Path
 
-# acceptance.py failedCriteria text for the household-threshold gate (acceptance.py `report`).
 HOUSEHOLD_FAILURE = "control household week-6 metrics outside the rerun thresholds"
 HOUSEHOLD_DEVIATION = "household thresholds measured at weight 1"
 PRICE_DECISION = "docs/decisions/2026-11-08-price-weight.md"
 
-# Every unmeasuredCriteria entry acceptance.py emits today, and where the adapter routes it.
 ROUTES = {
     "measured native wholesale costs": {
         "class": "native", "row": "native-wholesale-costs", "verdict": "incomplete",
@@ -31,7 +29,6 @@ ROUTES = {
         "class": "semantic", "stages": ["movement"]},
     "every gain has a measured cost / no Pareto dominant arm": {
         "class": "superseded", "link": PRICE_DECISION},
-    # Only present with an incomplete matrix, which already fails the stage.
     "remaining intervention arms": {
         "class": "semantic", "stages": ["economy"], "note": "completeInterventionMatrix is false"},
 }
@@ -44,9 +41,6 @@ def _worse(a, b):
 
 
 def assess(data, harness_exit=0, acceptance_exit=None, compiled_weight=1.2, declared_weight=None):
-    """Return {verdict, reason, routed, deviations, metrics} for one economy stage.
-
-    data is the parsed acceptance.json, or None when acceptance.py wrote none."""
     deviations = []
     reasons = []
     verdict = "pass"

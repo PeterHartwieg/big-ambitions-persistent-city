@@ -14,7 +14,6 @@ using UnityEngine.AI;
 
 namespace PersistentCity.Runtime
 {
-    /// <summary>Main-thread-only, exclusively owned native bodies. Never borrows native pedestrian leases.</summary>
     internal sealed class PhysicalPedestrians : IDisposable
     {
         private readonly Transform parent;
@@ -33,8 +32,6 @@ namespace PersistentCity.Runtime
             NavigationHook.Attach(this);
         }
 
-        /// <summary>P-C: runs immediately before each of Unity's navigation updates, with that frame's Time.deltaTime,
-        /// also in frames whose Update skipped the population. The follower bounds each walker's coming step there.</summary>
         public Action? BeforeNavigation { get; set; }
 
         public bool TryAcquire(CitizenIdentity identity, Position position, out PhysicalPedestrianBody? body)
@@ -53,7 +50,6 @@ namespace PersistentCity.Runtime
                 else
                 {
                     if (all.Count >= maximum) return false;
-                    // Instantiate beneath an inactive parent so prefab player flags cannot run Awake before review.
                     var staging = new GameObject("PersistentCity character staging");
                     staging.SetActive(false); staging.transform.SetParent(parent, false);
                     try
@@ -97,8 +93,6 @@ namespace PersistentCity.Runtime
                 int daysPerYear = SaveGameManager.Current?.gameVariables.daysPerYear ?? 60;
                 if (daysPerYear < 8) daysPerYear = 60;
                 appearance.data = new CharacterData { name = identity.Name, ageInDays = checked(Mathf.Clamp(identity.Age, 18, 85) * daysPerYear) };
-                // GR-9 (G6): skin from the donor seed, as RLO knows the person; hair, build and clothes from the look seed
-                // and wardrobe derived from the person ID. A wardrobe the game has no elements for falls back to casual.
                 var look = PersonAppearance.For(identity);
                 var gender = identity.Female ? Gender.Female : Gender.Male;
                 var skin = SkinColorHelper.GetRandom(identity.AppearanceSeed);
@@ -110,13 +104,10 @@ namespace PersistentCity.Runtime
                     appearance.RandomizeElements(gender, skin, new[] { AppearanceTag.Casual }, look.Seed);
                 }
                 appearance.data.fatness = Mathf.Min(appearance.data.fatness, 0.55f);
-                // An empty selection makes UpdateVisuals silently randomize. Refuse it before/after rendering.
                 if (appearance.data.elements == null || appearance.data.elements.Count == 0) throw new InvalidOperationException("Empty appearance");
                 string expectedAppearance = JsonConvert.SerializeObject(appearance.data);
                 appearance.UpdateVisuals();
                 if (JsonConvert.SerializeObject(appearance.data) != expectedAppearance || appearance.GetSelectedMeshRenderers().Count == 0) throw new InvalidOperationException("Appearance meshes unavailable");
-                // Native culling can leave an idle lease's renderers/animator disabled.
-                // Rebind visibility after the new mesh merge, even when the visible flag is stale.
                 character.ToggleVisibility(true, includePhysics: false);
                 character.OnVisibleChanged(true);
                 character.animator.enabled = true;
@@ -150,7 +141,7 @@ namespace PersistentCity.Runtime
             if (body == null || !active.TryGetValue(body.IdentityId, out var current) || !ReferenceEquals(current, body)) return;
             active.Remove(body.IdentityId);
             ThirdPersonCharacter character = body.Character;
-            body.SetFade(1); // a pooled actor never keeps an F2c fade
+            body.SetFade(1);
             body.Invalidate();
             if (character == null) return;
             var relay = character.capsuleCollider.gameObject.GetComponent<PhysicalPedestrianCrosswalk>();
@@ -166,7 +157,6 @@ namespace PersistentCity.Runtime
 
         private static void NotifyRemoved(ThirdPersonCharacter character)
         {
-            // Notification subscribers must not prevent cleanup of owned scene objects.
             try { if (character != null && character.capsuleCollider != null) GleyTrafficSystem.Manager.TriggerColliderRemovedEvent(character.capsuleCollider); }
             catch (Exception) { }
         }
@@ -181,8 +171,6 @@ namespace PersistentCity.Runtime
             }
         }
 
-        /// <summary>Whether a standing person at this point could be in the main camera's view (frustum only;
-        /// unknown counts as visible). F2c defers a faded person's reappearance while this is true.</summary>
         public bool Visible(Position at) => ScreenVisibility.ContainsPoint(at);
 
         public void Dispose()
@@ -205,8 +193,6 @@ namespace PersistentCity.Runtime
     {
         private bool valid = true;
         private bool stopped = true;
-        // Collider membership is separate from signal permission: overlapping volumes
-        // for the same crossing share one entry decision and cannot clear each other.
         private readonly Dictionary<Collider, Crossing> crossings = new Dictionary<Collider, Crossing>();
         private readonly List<Collider> departedCrossings = new List<Collider>();
         private sealed class Crossing
@@ -229,7 +215,6 @@ namespace PersistentCity.Runtime
             if (!Valid || !Fits(corner) || !PersistentCity.Core.Position.Finite(metresPerScaledSecond) || metresPerScaledSecond <= 0 || metresPerScaledSecond > 12) return false;
             var path = new NavMeshPath();
             if (!Agent.CalculatePath(Vector(corner), path) || path.status != NavMeshPathStatus.PathComplete) return false;
-            // Root hands over one authoritative straight corner segment. Reject native detours.
             var corners = path.corners;
             if (corners == null || corners.Length < 1 || PersistentCity.Core.Position.Distance(Point(corners[corners.Length - 1]), corner) > 0.05) return false;
             for (int i = 1; i + 1 < corners.Length; i++)
@@ -238,10 +223,6 @@ namespace PersistentCity.Runtime
             if (!Agent.SetPath(path)) return false;
             stopped = false; Tick(); return true;
         }
-        /// <summary>
-        /// Walk a short complete navmesh path, corners allowed. For queue moves beside a door, where
-        /// no journey corner is being followed and a doorway kink must not cancel the walk.
-        /// </summary>
         public bool SetPathTarget(Position target, double metresPerScaledSecond)
         {
             if (!Valid || !Fits(target) || !PersistentCity.Core.Position.Finite(metresPerScaledSecond) || metresPerScaledSecond <= 0 || metresPerScaledSecond > 12) return false;
@@ -254,12 +235,7 @@ namespace PersistentCity.Runtime
             stopped = false; Tick(); return true;
         }
         public void Stop(bool stop) { stopped = stop; Tick(); }
-        /// <summary>P-C: the agent still holds a current path to follow (one per leg; a warp or reset drops it, and a
-        /// NavMesh change that invalidates it makes it stale, autoRepath being off).</summary>
         public bool HasPath => Valid && Agent.hasPath && !Agent.isPathStale;
-        /// <summary>F2c follow pace along the current path; zero or less stands the body still. P-C: the destination is
-        /// the leg's corner, so the agent's own velocity is clamped to the pace at once; deceleration under its
-        /// acceleration limit would otherwise carry it past the logical pose.</summary>
         public void Pace(double metresPerScaledSecond)
         {
             if (!Valid) return;
@@ -269,10 +245,6 @@ namespace PersistentCity.Runtime
             if (velocity.sqrMagnitude > Agent.speed * Agent.speed) Agent.velocity = velocity.normalized * Agent.speed;
             stopped = false; Tick();
         }
-        /// <summary>F2c Q3 fade: whether every renderer of this body can show a base-colour alpha (a transparent-queue
-        /// material with a colour property, <see cref="WalkerFollow.MaterialCanFade"/>). Opaque characters cannot fade;
-        /// their correction waits until they are out of view.</summary>
-        /// Read once per body (a new body is made for every acquisition).
         public bool CanFade => canFade ??= ProbeFade();
         private bool? canFade;
         private bool ProbeFade()
@@ -286,7 +258,6 @@ namespace PersistentCity.Runtime
                 foreach (var material in renderer.sharedMaterials)
                 {
                     if (material == null || material.shader == null) { probe.Clear(); return false; }
-                    // Only the facts are read here; WalkerFollow.MaterialCanFade decides (verified shaders only).
                     var facts = new MaterialFadeFacts(material.shader.name, material.renderQueue,
                         material.HasProperty(BaseColorId), material.HasProperty(ColorId),
                         material.HasProperty(SrcBlendId) ? material.GetFloat(SrcBlendId) : (float?)null,
@@ -303,8 +274,6 @@ namespace PersistentCity.Runtime
         }
         private static readonly int SrcBlendId = Shader.PropertyToID("_SrcBlend"), DstBlendId = Shader.PropertyToID("_DstBlend"),
             SurfaceId = Shader.PropertyToID("_Surface");
-        /// <summary>F2c Q3 fade: scale the alpha of every renderer's base colour, starting from the colour the renderer
-        /// shows now (its property block's, else its material's). 1 restores the renderers.</summary>
         public void SetFade(float alpha)
         {
             if (Character == null) return;
@@ -346,8 +315,6 @@ namespace PersistentCity.Runtime
         private readonly List<Renderer> faded = new List<Renderer>(), probe = new List<Renderer>();
         private readonly List<(int Id, Color Colour)> originals = new List<(int, Color)>();
         private MaterialPropertyBlock? block;
-        /// <summary>F2c follow: the nearest walkable point to a logical pose between corners (within 0.5 m), so a leg
-        /// over a kerb or a crowned road does not fail the endpoint check of SetTarget. No path is calculated here.</summary>
         public bool TryProjectPose(Position pose, out Position projected)
         {
             projected = pose;
@@ -355,7 +322,6 @@ namespace PersistentCity.Runtime
             projected = Point(hit.position);
             return projected.IsFinite;
         }
-        /// <summary>F2c off-screen correction: place the body on the NavMesh at the logical pose, standing.</summary>
         public bool Warp(Position target)
         {
             if (!Valid || !Fits(target)) return false;
@@ -364,8 +330,6 @@ namespace PersistentCity.Runtime
             Agent.ResetPath(); stopped = true; Tick();
             return Valid;
         }
-        /// <summary>Inside the main camera's frustum with an enabled, visible renderer this frame. Unknown visibility
-        /// (no camera, no renderer) counts as on screen, so a correction never moves a body that might be seen.</summary>
         public bool OnScreen
         {
             get
@@ -376,7 +340,6 @@ namespace PersistentCity.Runtime
                 return ScreenVisibility.Contains(renderer);
             }
         }
-        /// <summary>Turn a standing body toward a point, level with the ground.</summary>
         public void Face(Position target)
         {
             if (!Valid || !Fits(target)) return;
@@ -395,8 +358,6 @@ namespace PersistentCity.Runtime
                 Crossing crossing = pair.Value;
                 if (!crossing.Permitted && crossing.Link.redTrafficLight != null && crossing.Link.redTrafficLight.gameObject.activeSelf)
                     crossing.Permitted = true;
-                // Once cars have red, let the walker clear this crossing even if the
-                // signal changes while they are still within its collider volumes.
                 if (!crossing.Permitted && crossing.Link.redTrafficLight != null) redForPedestrian = true;
             }
             foreach (var collider in departedCrossings) crossings.Remove(collider);
@@ -430,7 +391,6 @@ namespace PersistentCity.Runtime
         { Vector3 d = b-a; float t = d.sqrMagnitude > 0 ? Mathf.Clamp01(Vector3.Dot(p-a,d)/d.sqrMagnitude) : 0; return Vector3.Distance(p,a+d*t); }
     }
 
-    /// <summary>The main camera's frustum planes, computed at most once per frame for F2c on-screen checks.</summary>
     internal static class ScreenVisibility
     {
         private static readonly Plane[] planes = new Plane[6];
@@ -447,7 +407,6 @@ namespace PersistentCity.Runtime
             if (camera == null || renderer == null) return true;
             return renderer.enabled && renderer.isVisible && GeometryUtility.TestPlanesAABB(planes, renderer.bounds);
         }
-        /// <summary>A standing person's volume at this point is inside the frustum (no camera counts as visible).</summary>
         internal static bool ContainsPoint(Position at)
         {
             Contains(null);
@@ -457,9 +416,6 @@ namespace PersistentCity.Runtime
         }
     }
 
-    /// <summary>P-C: a player-loop system in front of PreUpdate.AIUpdate and PreLateUpdate.AIUpdatePostScript that calls
-    /// the current pool's <see cref="PhysicalPedestrians.BeforeNavigation"/>. Whichever of the two moves the agents, the
-    /// walker bound is applied right before it with the step's own duration. Main thread only.</summary>
     internal static class NavigationHook
     {
         private struct PersistentCityWalkerBound { }
@@ -494,7 +450,6 @@ namespace PersistentCity.Runtime
             try { hook(); }
             catch (Exception error)
             {
-                // A failing bound must not break the player loop; the Update speed cap still applies.
                 if (owner != null) owner.BeforeNavigation = null;
                 Debug.LogWarning("[Persistent City] walker navigation bound disabled: " + error.Message);
             }

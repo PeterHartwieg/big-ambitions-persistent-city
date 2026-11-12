@@ -11,19 +11,12 @@ using Xunit;
 
 namespace PersistentCity.Tests;
 
-/// <summary>F5e measurement harness (docs/perf/f5e.md), not a gate: it runs only when PC_F5E_MEASURE names an output
-/// file, e.g. <c>PC_F5E_MEASURE=out.jsonl dotnet test tests/PersistentCity.Tests.csproj -c Release --filter FullyQualifiedName~F5eMeasure</c>.
-/// The fixture is the F7a representative replay's people, homes, shops and portals (EconomyScenario) with its two
-/// 16-person-per-resident workplaces replaced by a business catalogue shaped like the reference city (383 work roles
-/// per 957 residents, every 30th a school, areas across all bands, 1 in 20 unknown, 1 in 50 player-owned). The banded
-/// arm seats them by <see cref="WorkplaceCapacityPolicy"/>; the base arm gives every business the old 16.</summary>
 public sealed class F5eMeasure
 {
     private static readonly double[] Areas = { 30, 60, 120, 250, 500, 900 };
 
     private static List<Place> Businesses(int residents, bool banded, double share)
     {
-        // Capped so the stress catalogue stays inside SaveCodec.MaxPlaces with homes, shops, schools and portals.
         int count = Math.Min(19000, Math.Max(8, (int)Math.Round(residents * 383.0 / 957 * share)));
         var places = new List<Place>(count + count / 30 + 1);
         for (int i = 0; i < count; i++)
@@ -42,7 +35,6 @@ public sealed class F5eMeasure
         return places;
     }
 
-    /// <param name="share">Fraction of the reference-shaped business count; 0.2 leaves most visitors without a vacancy.</param>
     internal static (CityState State, CitySimulator City) Build(int residents, int factor, bool banded, double share = 1)
     {
         int imported = residents <= 5000 ? residents : 1000;
@@ -88,10 +80,6 @@ public sealed class F5eMeasure
     private static string? Output() => PerfGate.Variable("PC_F5E_MEASURE");
     private static string[] Fixtures(string defaults) => (Environment.GetEnvironmentVariable("PC_F5E_FIXTURES") ?? defaults).Split(',');
 
-    /// <summary>The job-finding path of one successful daily roll: capacity bookkeeping (occupancy of every assigned
-    /// place) plus the two-probe shortlist. Seated workers are unseated so their next rolls run the finding branch;
-    /// each timed call is one that returned a shortlist (the roll succeeded). The two probes themselves are route requests
-    /// through F3 admission and are counted in the day gate, not here.</summary>
     [Fact]
     public void JobFindingShortlistCost()
     {
@@ -125,7 +113,6 @@ public sealed class F5eMeasure
                     if (candidates == null) continue;
                     times.Add(ms); bytes.Add(used);
                     if (candidates.Count == 0) empty++;
-                    // The same roll through the simulator's occupancy index (the check day is rewound for the replay).
                     person.LastEmploymentCheckDay = day - 1;
                     allocated = GC.GetAllocatedBytesForCurrentThread(); t = Stopwatch.GetTimestamp();
                     var indexed = ResidentLifecycle.BeginEmploymentCheck(state, person, now, null, index);
@@ -149,8 +136,6 @@ public sealed class F5eMeasure
         }
     }
 
-    /// <summary>One natural day (the F7a representative window) of each arm: per-slice mod-work proxy, seated workers,
-    /// carried visitors and job changes. Frame slices of 64 units, as F5d.</summary>
     [Fact]
     public void DayGateBandedAgainstBase()
     {
@@ -183,8 +168,6 @@ public sealed class F5eMeasure
         }
     }
 
-    /// <summary>Fresh-city save cost after one natural day, banded against base: characters, cap fraction, both record
-    /// counters, write and read latency (save timing, separate from ordinary play).</summary>
     [Fact]
     public void FreshCitySaveCost()
     {

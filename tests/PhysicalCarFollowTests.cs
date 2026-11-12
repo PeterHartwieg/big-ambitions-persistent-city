@@ -10,17 +10,12 @@ using Xunit;
 
 namespace PersistentCity.Tests;
 
-// F2d (docs/plans/f2-movement.md Decision 2): cars follow the traffic kernel and never write logical state. The
-// production PhysicalPopulation runs on the native doubles; a car moves only when a test drives it through the
-// production CommandLimit, so every lag here is one the test made. Each case runs a plain twin city without bodies and
-// compares save bytes (E1).
 [Collection(StreetFoodHooks.Collection)]
 public sealed class PhysicalCarFollowTests
 {
     private const string Native = "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee";
     private const int Sections = 12;
     private const double Now = 1440 + 600, GamePerSecond = 1 / 3.0, Section = 12;
-    // Kernel pace: 12 m per 1.2 game minutes, so 10 m per game minute, 3.33 m per real second here.
     private const double KernelMetresPerSecond = 10 * GamePerSecond;
     private static Position Node(int i) => new(40 + Section * i, 0, 0);
     private static Position Work => new(Node(Sections).X + 10, 0, 0);
@@ -36,8 +31,6 @@ public sealed class PhysicalCarFollowTests
         public Route? Plan(Place from, Place to, double minute, TravelPreferences preferences) => null;
     }
     private static Position Curb => new(Node(Sections).X + 6, 0, 0);
-    /// <summary>Road sections then the walk; with <paramref name="real"/> the Runtime shape (MultimodalRoutes,
-    /// RoadRoutes): a preparation pause, the road sections, a kerb connector off the road, a parking pause, the walk.</summary>
     private static Route Journey(bool real = false)
     {
         var route = new Route { Legs = new() };
@@ -94,11 +87,9 @@ public sealed class PhysicalCarFollowTests
         }
         internal CitizenState Person(string id) => City.State.Citizens.Single(c => c.Identity.Id == id);
         internal PhysicalVehicleBody? Car(string id) => Cars.Active.TryGetValue(id, out var body) ? body : null;
-        // The next committed road corner ahead of a car body: Gley raises its reached marker there.
         internal Position? Corner(PhysicalVehicleBody body)
         {
             Position? best = null; double nearest = double.PositiveInfinity;
-            // Every person drives the same committed road, also after the journey ended.
             foreach (var leg in Journey().Legs.Where(l => l.Mode == TravelMode.Car))
             {
                 double d = Position.Distance(body.Position, leg.To);
@@ -106,7 +97,6 @@ public sealed class PhysicalCarFollowTests
             }
             return best;
         }
-        /// <summary>One frame: native cars drive (CommandLimit), the city advances, then PhysicalPopulation.Update.</summary>
         internal void Frame(float seconds = 1 / 30f, double speed = KernelMetresPerSecond * 1.2)
         {
             Cars.Drive(seconds, speed, Corner);
@@ -135,9 +125,6 @@ public sealed class PhysicalCarFollowTests
         public void Dispose() { MultimodalRoutes.CarSamples = false; PhysicalPedestrians.VisiblePoint = null; Bodies.Dispose(); }
     }
 
-    /// <summary>A slow visible head car (0.3x the kernel's pace) neither holds itself nor its follower: the kernel
-    /// discharges both in FIFO order at the bodies-off minutes. Neither car is ever commanded past its kernel
-    /// coordinate, no vehicle is under physical control, and the save equals the bodies-off twin throughout.</summary>
     [Fact]
     public void SlowVisibleHeadCarNeverHoldsTheKernelOrItsFollower()
     {
@@ -157,16 +144,12 @@ public sealed class PhysicalCarFollowTests
         Assert.Equal(2, order.Count);
         Assert.Equal(plainOrder, order);
         Assert.StartsWith("c0@", order[0]);
-        // The slow head fell behind the kernel; it was hurried, not moved, while on screen.
         Assert.True(f.T.CarLagSamples > 0 && f.T.CarMaximumLagMetres > CarFollow.CatchUpMetres);
         Assert.DoesNotContain(f.Corrections(), c => c.OnScreen && c.Kind == WalkerCorrectionKind.Move);
         f.Until(() => f.Person("c0").CompletedJourneys == 1 && f.Person("c1").CompletedJourneys == 1);
         f.AssertSameAsBodiesOff();
     }
 
-    /// <summary>P5: an off-screen car syncs its own progress only every few frames. It keeps up with the kernel all
-    /// the same: shown again, it is within the follow distance of the logical pose, nothing was corrected, and the
-    /// journey ends as in the city without bodies.</summary>
     [Fact]
     public void InvisibleCarSyncsLessOftenAndResumesAtTheKernelPosition()
     {
@@ -183,9 +166,6 @@ public sealed class PhysicalCarFollowTests
         f.AssertSameAsBodiesOff();
     }
 
-    /// <summary>Off screen, a car more than 30 m behind its kernel coordinate is released (one LagRelease with the
-    /// before pose and the logical pose) and a car is re-acquired at the logical pose at the next selection, without the
-    /// retry cooldown. It never reappears in view.</summary>
     [Fact]
     public void OffScreenCarBeyondThirtyMetresIsReleasedAndReacquiredAtTheLogicalPose()
     {
@@ -199,16 +179,12 @@ public sealed class PhysicalCarFollowTests
         Assert.Equal("c0", release.PersonId); Assert.Equal(first.Position, release.Before);
         Assert.True(Position.Distance(release.Before, release.After) > CarFollow.CorrectionMetres);
         Assert.Contains("body=car", WalkerMovementTelemetry.Format(release));
-        // Re-acquired at the logical pose within a selection tick (no two-second cooldown).
         f.Until(() => f.Car("c0") != null, 30);
         Assert.InRange(f.Car("c0")!.Position.X, f.LogicalX("c0") - 1, f.LogicalX("c0") + 1e-6);
         f.Until(() => f.Person("c0").CompletedJourneys == 1);
         f.AssertSameAsBodiesOff();
     }
 
-    /// <summary>Q3 on screen: a car more than 30 m behind keeps catching up for 10 s, then stops at its next corner and
-    /// fades out over 1 s (one Fade, on screen, with its before and after poses); it is not moved on screen. While the
-    /// logical pose is in view the person gets no body; once it is out of view a car reappears at the logical pose.</summary>
     [Fact]
     public void VisibleCarBeyondThirtyMetresHurriesThenFadesAtTheNextCornerAndReappearsOutOfView()
     {
@@ -218,11 +194,9 @@ public sealed class PhysicalCarFollowTests
         body.OnScreen = true; body.CanFade = true; body.Pace = 0;
         PhysicalPedestrians.VisiblePoint = _ => true;
         double behind = 0; f.Until(() => (behind = f.LogicalX("c0") - body.Position.X) > CarFollow.CorrectionMetres, 4000);
-        // Ten seconds of hurrying standing mid-leg: no fade, no correction.
         for (int i = 0; i < 300; i++) f.Frame();
         Assert.Same(body, f.Car("c0")); Assert.Equal(1f, body.Alpha);
         Assert.Empty(f.Corrections());
-        // It reaches its corner: it stands and fades out there.
         body.Pace = 1; f.Until(() => body.Alpha < 1, 2000);
         var at = body.Position;
         Assert.InRange(Enumerable.Range(0, Sections + 1).Min(i => Position.Distance(at, Node(i))), 0, CarFollow.CornerMetres);
@@ -232,7 +206,6 @@ public sealed class PhysicalCarFollowTests
         var fade = Assert.Single(f.Corrections());
         Assert.Equal(WalkerCorrectionKind.Fade, fade.Kind); Assert.True(fade.Car); Assert.True(fade.OnScreen); Assert.Equal(at, fade.Before);
         Assert.Equal(f.City.SampleJourney(f.Person("c0")).Position.X, fade.After.X, 1);
-        // No body while the logical pose is in view; one at the logical pose once it is not.
         for (int i = 0; i < 90; i++) f.Frame();
         Assert.False(f.HasBody("c0"));
         PhysicalPedestrians.VisiblePoint = null;
@@ -242,8 +215,6 @@ public sealed class PhysicalCarFollowTests
         f.AssertSameAsBodiesOff();
     }
 
-    /// <summary>Q3 with opaque materials: a visible car past the hurry bound at a corner is not faded; it keeps following
-    /// until it is off screen, and is then released off screen.</summary>
     [Fact]
     public void OpaqueVisibleCarIsNotFadedButKeptUntilItIsOutOfView()
     {
@@ -263,8 +234,6 @@ public sealed class PhysicalCarFollowTests
         f.AssertSameAsBodiesOff();
     }
 
-    /// <summary>A mode boundary is never a hold: the car reaches its parking point (the end of its car legs), hands over
-    /// (no correction), and a walker is acquired at the logical pose at the next selection.</summary>
     [Fact]
     public void ParkingHandsOverToAWalkerAtTheLogicalPose()
     {
@@ -280,8 +249,6 @@ public sealed class PhysicalCarFollowTests
         f.AssertSameAsBodiesOff();
     }
 
-    /// <summary>Q3 at the journey's end: the person arrives (traffic completed, egress walked) while an opaque car still
-    /// lags on screen. The car is not removed in view: it drives on to its parking point and hands over there.</summary>
     [Fact]
     public void ArrivalWhileAVisibleCarLagsKeepsItUntilItParks()
     {
@@ -300,10 +267,6 @@ public sealed class PhysicalCarFollowTests
         f.AssertSameAsBodiesOff();
     }
 
-    /// <summary>The real car route shape: the kernel completes the vehicle at the end of the road sections while the
-    /// person is still on the kerb connector and the parking pause (car-mode legs a native car does not drive). The car,
-    /// slightly behind or at the kernel, follows to the end of the road and hands over there: no correction, no car left
-    /// standing in the lane, and no car re-acquired while the person parks; a walker appears once the person walks.</summary>
     [Theory]
     [InlineData(true, 1.2)] [InlineData(false, 1.2)] [InlineData(true, 0.75)] [InlineData(false, 0.75)]
     public void RealCarRouteHandsOverAtTheRoadEndWithoutACorrection(bool onScreen, double pace)
@@ -316,7 +279,6 @@ public sealed class PhysicalCarFollowTests
         Assert.Equal(Node(Sections).X, body.Position.X, 6);
         Assert.Equal(f.Handoffs + 1, f.T.CarHandoffs);
         Assert.Empty(f.Corrections());
-        // While the person is on the connector and the parking pause no car (or walker) is given back.
         f.Until(() => f.City.SampleJourney(f.Person("c0")).Mode == TravelMode.Walk, 6000);
         Assert.Null(f.Car("c0"));
         f.Until(() => f.Walkers.Active.ContainsKey("c0"), 30);
@@ -324,9 +286,6 @@ public sealed class PhysicalCarFollowTests
         f.AssertSameAsBodiesOff();
     }
 
-    /// <summary>Q3 after arrival: a visible car fades after its person has logically arrived and stands on an optional
-    /// stop at the destination. The restriction belongs to the arrival place: no walker appears there while it is in
-    /// view, and one does once it is not.</summary>
     [Fact]
     public void ACarFadingAfterArrivalKeepsTheArrivalPlaceRestriction()
     {
@@ -357,18 +316,14 @@ public sealed class PhysicalCarFollowTests
         f.AssertSameAsBodiesOff();
     }
 
-    /// <summary>Decision 6: a lagging car stopped at its native red while the kernel signal of its own section is also red
-    /// now is no mismatch, even though the kernel car crossed that junction earlier during a green.</summary>
     [Fact]
     public void ALaggingCarAtARedThatIsAlsoRedInTheKernelIsNoPhaseMismatch()
     {
-        // Green at the third section's end from 2043 to 2045 in every 12-minute cycle.
         var signal = new TrafficSignalSchedule { CycleMinutes = 12, GreenStartMinutes = 3, GreenDurationMinutes = 2 };
         using var f = new Fixture(signal: signal);
         f.Until(() => f.Car("c0") != null, 600);
         var body = f.Car("c0")!;
         body.OnScreen = true; body.CanFade = false;
-        // It stops short of that junction; the kernel car crosses it during the green.
         f.Until(() => body.Position.X >= Node(2).X + 2, 2000);
         body.Pace = 0;
         f.Until(() => f.LogicalX("c0") > Node(3).X + 1 && f.Minute > 2045.2, 4000);
@@ -380,12 +335,9 @@ public sealed class PhysicalCarFollowTests
         f.AssertSameAsBodiesOff();
     }
 
-    /// <summary>Decision 6, measured: a standing visible car held by the kernel at its red while Gley's target light is
-    /// green counts one KernelHeldAtNativeGreen episode, with seconds. The signal phase is not changed.</summary>
     [Fact]
     public void KernelHeldAtANativeGreenIsCountedAsAPhaseMismatch()
     {
-        // Red at the third section's end from 2001 to 3000.
         var signal = new TrafficSignalSchedule { CycleMinutes = 1000, GreenStartMinutes = 0, GreenDurationMinutes = 1 };
         using var f = new Fixture(signal: signal);
         f.Until(() => f.Car("c0") != null, 600);
@@ -401,8 +353,6 @@ public sealed class PhysicalCarFollowTests
         f.AssertSameAsBodiesOff();
     }
 
-    /// <summary>Decision 6, measured: a visible car stopped by its native red while the kernel has driven past that
-    /// junction counts one NativeStopAtKernelGreen episode; the kernel does not wait for it.</summary>
     [Fact]
     public void NativeStopAtAKernelGreenIsCountedAsAPhaseMismatch()
     {
@@ -411,7 +361,6 @@ public sealed class PhysicalCarFollowTests
         var body = f.Car("c0")!;
         body.OnScreen = true;
         for (int i = 0; i < 30; i++) f.Frame();
-        // Gley holds it at its stop line: it stands while the kernel moves on past that junction.
         body.Pace = 0; body.NativeRed = true;
         double kernelAt = f.LogicalX("c0");
         for (int i = 0; i < 240; i++) f.Frame();
@@ -423,8 +372,6 @@ public sealed class PhysicalCarFollowTests
         f.AssertSameAsBodiesOff();
     }
 
-    /// <summary>Reload with a visible car mid-leg equals bodies-off: the save is the logical state (no body offset, no
-    /// physical control), and the reloaded city continues to equal bytes.</summary>
     [Fact]
     public void ReloadWithAVisibleCarMidLegEqualsBodiesOff()
     {

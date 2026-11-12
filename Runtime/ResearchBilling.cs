@@ -9,10 +9,6 @@ using UnityEngine;
 
 namespace PersistentCity.Runtime
 {
-    /// <summary>C5d research billing (plan C5 sections 3.5 and 3.6). A postfix on native MarketingHelper.RunDaily
-    /// bills each Surveyed order with its own ChangeMoneySafe call, before native CreateFinancialSummary(Day - 1).
-    /// Never touches native campaigns. C5e wires Install and Attach; C5f sends the agency message after the bill.
-    /// Main thread only.</summary>
     internal static class ResearchBilling
     {
         internal const string PatchId = "persistentcity.research-billing";
@@ -23,15 +19,11 @@ namespace PersistentCity.Runtime
         private static readonly ResearchNoticeTracker notices = new ResearchNoticeTracker();
         private static bool installed;
 
-        /// <summary>Empty when the contract check passed and the postfix is installed.</summary>
         internal static string Status { get; private set; } = "Research billing is not installed.";
         internal static bool Installed => installed;
-        /// <summary>A ledger is attached and no foreign patch turned billing off since.</summary>
         internal static bool Attached => session != null;
         internal static ResearchChargeTally LastBoundary => session?.LastBoundary ?? default;
 
-        /// <summary>Checks the native billing contract and installs the postfix. A mismatch leaves research billing off
-        /// for the session with a status line and Persistent City running; nothing substitutes a fee path.</summary>
         internal static bool Install()
         {
             if (installed) return true;
@@ -60,9 +52,6 @@ namespace PersistentCity.Runtime
             Status = "Research billing is not installed.";
         }
 
-        /// <param name="active">False once Persistent City is stopped, failed or detached.</param>
-        /// <param name="eligible">The research eligibility rule (player-rented food business PC owns).</param>
-        /// <param name="guardedUnit">PopulationRuntime.RunSaveEpochUnit of the attached runtime.</param>
         internal static void Attach(ResearchLedger ledger, Func<bool> active, Func<BuildingRegistration, bool> eligible, Action<Action> guardedUnit)
         {
             if (!installed) throw new InvalidOperationException(Status);
@@ -72,15 +61,12 @@ namespace PersistentCity.Runtime
 
         internal static void Detach() { session = null; sessionActive = null; }
 
-        // Native RunDaily calls this after every player business's campaign bill. Idle (no attached city or no
-        // Surveyed order) reads one field and the open-order count.
         private static void RunDailyPostfix()
         {
             var current = session;
             if (current == null || !current.HasWork) return;
             try
             {
-                // A foreign prefix added after install could skip native RunDaily; refuse instead of billing.
                 string? foreign = ResearchBillingContract.ForeignPatch(runDaily!);
                 if (foreign != null) { Status = "Research billing off: " + foreign; session = null; Debug.LogWarning("[Persistent City] " + Status); return; }
                 notices.Before(current.Ledger);
@@ -92,21 +78,16 @@ namespace PersistentCity.Runtime
                 }
                 finally
                 {
-                    // C5f: one agency message per order moved to Paid or Declined. A runtime stopped during the boundary
-                    // (for example by a refused save) publishes no later payload with the move, so it sends nothing.
                     if (sessionActive?.Invoke() == true) notices.After(ResearchMessages.Send); else notices.Forget();
                 }
             }
             catch (Exception error)
             {
-                // Native RunDaily must continue; any order not yet moved stays Surveyed or was blocked by its own unit.
                 Debug.LogWarning("[Persistent City] Research billing was contained: " + error);
             }
         }
     }
 
-    /// <summary>The native members research billing uses, with exact signatures, read by reflection before any code
-    /// that touches them runs.</summary>
     internal static class ResearchBillingContract
     {
         private const BindingFlags Instance = BindingFlags.Public | BindingFlags.Instance;
@@ -115,7 +96,7 @@ namespace PersistentCity.Runtime
         internal static string? Check(out MethodInfo? runDaily)
         {
 #if PC_FAULT_POINTS
-            if (FaultPoints.Research() is string fault) { runDaily = null; return fault; } // F8c test build only (rig check 7)
+            if (FaultPoints.Research() is string fault) { runDaily = null; return fault; }
 #endif
             runDaily = typeof(MarketingHelper).GetMethod("RunDaily", Static, null, Type.EmptyTypes, null);
             if (runDaily == null || runDaily.ReturnType != typeof(void)) return "MarketingHelper.RunDaily() changed.";
@@ -144,7 +125,6 @@ namespace PersistentCity.Runtime
             return ForeignPatch(runDaily);
         }
 
-        /// <summary>A prefix, transpiler or finalizer of another owner can skip or change the native bill.</summary>
         internal static string? ForeignPatch(MethodBase method)
         {
             var info = Harmony.GetPatchInfo(method);
@@ -161,7 +141,6 @@ namespace PersistentCity.Runtime
             return field != null && field.FieldType == fieldType ? null : type.Name + "." + name + " changed.";
         }
 
-        // The native Transaction constructor copies TransactionInfo.Data. A record object is built but never queued.
         private static bool TagStoredByConstructor()
         {
             var data = new Dictionary<string, string> { { ResearchCharge.BusinessNameKey, "contract" }, { ResearchCharge.TagKey, "pcr-0" } };
@@ -170,7 +149,6 @@ namespace PersistentCity.Runtime
         }
     }
 
-    /// <summary>IResearchChargePort over native GameManager.ChangeMoneySafe and the native transaction queue.</summary>
     internal sealed class NativeResearchChargePort : IResearchChargePort
     {
         private readonly Func<BuildingRegistration, bool> eligible;
@@ -180,7 +158,6 @@ namespace PersistentCity.Runtime
         internal NativeResearchChargePort(Func<BuildingRegistration, bool> eligible)
         { this.eligible = eligible ?? throw new ArgumentNullException(nameof(eligible)); }
 
-        // Checked by ResearchBillingContract before the postfix was installed.
         public bool TagStored => true;
         public float Balance => SaveGameManager.Current.Money;
         public int BilledDay => SaveGameManager.Current.Day - 1;
@@ -217,7 +194,6 @@ namespace PersistentCity.Runtime
 
         public void CollectTaggedAfter(object? tail, List<ResearchChargeRecord> into)
         {
-            // If the tail was dropped from the front, every record still queued was appended after it.
             scratch.Clear(); positions.Clear();
             int index = 0, tailIndex = -1;
             foreach (var transaction in SaveGameManager.Current.Transactions)

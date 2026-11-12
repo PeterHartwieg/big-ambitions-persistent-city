@@ -11,7 +11,6 @@ using UnityEngine.AI;
 
 namespace PersistentCity.Runtime
 {
-    /// <summary>Read-only discovery of native outdoor happiness volumes; no native queue, trigger or economic calls.</summary>
     internal static class OutdoorPlaces
     {
         private const int MaximumAreas = 64;
@@ -19,12 +18,10 @@ namespace PersistentCity.Runtime
         private const int MaximumAnchors = 4;
         private const int MaximumSamples = 1024;
         private const int MaximumPaths = 128;
-        private const int ParkAllocation = 64; // Simulation allocation, not native park capacity.
-        private const int BeachAllocation = 96; // Simulation allocation, not a native attendance measurement.
+        private const int ParkAllocation = 64;
+        private const int BeachAllocation = 96;
         private const string Hamptons = "ba:neighborhood_thehamptons";
         private const string VerifiedPartyPierSource = "Buildings/Pier[0]/SM_Harbor%20Import%2002_Building_Pier4_Exterior[8]/HappinessTrigger[6]";
-        // Exact native scene identities captured read-only on the isolated 1.0 test rig.
-        // A new/unrecognized beach volume remains unavailable until its public context is reviewed.
         private static readonly HashSet<string> VerifiedBeachSources = new HashSet<string>(StringComparer.Ordinal)
         {
             "TheHamptons/TheHamptons[0]/Roads[1]/SM_HamptonsTerrain[16]/Beach[4]/BigBeach[0]/BeachHappinessTrigger[10]",
@@ -73,12 +70,10 @@ namespace PersistentCity.Runtime
                     bool pier = type == "ba:happinessmodifier_partying_at_the_pier" && trigger.gameObject.scene.name == "Buildings"
                         && key == VerifiedPartyPierSource;
                     if (!skate && !beach && !pier && type != "ba:happinessmodifier_walking_in_the_park") { unsupported++; continue; }
-                    // Keep existing park identities unchanged when expanding the catalogue.
                     sources.Add((trigger, (pier ? "scene-party-pier:" : beach ? "scene-beach:" : "scene-park:") + key, skate, beach, pier));
                 }
                 catch (Exception) { failed++; }
             }
-            // Preserve park discovery priority within the shared bounded budget.
             sources.Sort((a, b) => a.Pier != b.Pier ? a.Pier.CompareTo(b.Pier)
                 : a.Beach != b.Beach ? a.Beach.CompareTo(b.Beach) : StringComparer.Ordinal.Compare(a.Id, b.Id));
             var ids = new HashSet<string>(StringComparer.Ordinal);
@@ -90,8 +85,6 @@ namespace PersistentCity.Runtime
                     if (!ids.Add(source.Id)) { failed++; continue; }
                     var trigger = source.Trigger;
                     var parentBuilding = trigger.GetComponentInParent<CityBuildingController>();
-                    // The reviewed native source is a separate outdoor mesh/volume. A
-                    // future building/boat parent invalidates that public-walking context.
                     if (source.Pier && (parentBuilding != null || trigger.GetComponentInParent<CasinoBoatManager>() != null)) { inaccessible++; continue; }
                     if (parentBuilding != null && !GamePlaces.BuildingAccessible(parentBuilding)) { inaccessible++; continue; }
                     if (DlcHidden(trigger.transform)) { inaccessible++; continue; }
@@ -106,8 +99,6 @@ namespace PersistentCity.Runtime
                         Id = source.Id, Name = source.Pier ? "Outdoor Party Pier" : source.Beach ? (source.Id.IndexOf("/BigBeach[", StringComparison.Ordinal) >= 0 ? "Hamptons Big Beach" : "Hamptons Small Beach")
                             : source.Skate ? "Native skate park" : "Native park", District = district,
                         Kind = PlaceKind.Leisure, Position = position, Capacity = source.Beach ? BeachAllocation : ParkAllocation,
-                        // The volume has no native opening hours. All-day outdoor access is
-                        // an explicit simulation policy; it never asserts a native schedule.
                         OpenMinute = 0, CloseMinute = 1440, AttractionWeight = source.Pier ? 3 : source.Beach ? 4 : source.Skate ? 1.5 : 2.5,
                         NativeTrafficIndex = -1,
                         EvidenceSource = (source.Pier ? "native-party-pier-volume;verified-scene-source;walking-only;casino-boarding-unmodeled;"
@@ -136,18 +127,9 @@ namespace PersistentCity.Runtime
             {
                 Bounds bounds = collider.bounds;
                 if (!Finite(bounds.center) || !Finite(bounds.size) || bounds.size.x < 1 || bounds.size.z < 1) continue;
-                // A deterministic 5 x 5 grid, centre first, bounds inset at every edge.
-                // A high trigger's geometric centre is not the ground. Sample near its bottom.
-                // Preserve the original park sampling order and ground points. Beaches have
-                // volumes extending below terrain: try native transform height, nearby levels
-                // and the volume centre rather than assume its bottom is pedestrian ground.
                 var levels = beach ? new[] { nativeHeight, nativeHeight - 2, nativeHeight + 2, bounds.center.y,
                     bounds.min.y + Math.Min(0.25f, bounds.size.y * 0.5f) }
                     : new[] { bounds.min.y + Math.Min(0.25f, bounds.size.y * 0.5f) };
-                // A rotated, narrow beach may have its only NPC-walkable shoreline near
-                // the boundary, outside the inset bounds grid. Use measured native public
-                // entrances projected onto the actual volume as additional beach candidates.
-                // These still require a dry sample inside the volume and a complete route.
                 var projected = beach ? anchors.Where(a => a.District == Hamptons)
                     .OrderBy(a => Distance(a.Position, bounds.center)).ThenBy(a => a.Id, StringComparer.Ordinal)
                     .Take(12).Select(a => collider.ClosestPoint(ToVector(a.Position))).ToArray() : Array.Empty<Vector3>();
@@ -164,8 +146,6 @@ namespace PersistentCity.Runtime
                     Vector3 candidate = sample < gridSamples ? new Vector3(bounds.min.x + bounds.size.x * x, y, bounds.min.z + bounds.size.z * z) : projected[sample - gridSamples];
                     if (!NavMesh.SamplePosition(candidate, out NavMeshHit hit, 2.5f, dryFilter)
                         || !Finite(hit.position) || Math.Abs(hit.position.y - candidate.y) > 2.5f) continue;
-                    // ClosestPoint rejects holes and points outside the actual volume. Concave
-                    // meshes were excluded because their closest-point test is unsupported.
                     if ((collider.ClosestPoint(hit.position) - hit.position).sqrMagnitude > 0.0625f) continue;
                     if (NearPrivateGate(hit.position, gates)) continue;
                     string inferredDistrict = NearestBuildingDistrict(hit.position);
@@ -175,8 +155,6 @@ namespace PersistentCity.Runtime
                         .Take(MaximumAnchors);
                     foreach (var anchor in nearest)
                     {
-                        // District inference is for classification, never an assertion of a
-                        // surveyed boundary. Only reviewed native beach sources enable Hamptons.
                         if (paths >= MaximumPaths) return false;
                         paths++;
                         var path = new NavMeshPath();
@@ -239,7 +217,6 @@ namespace PersistentCity.Runtime
             return length <= 1500;
         }
 
-        /// <summary>A game reason, not player distance: the object sits under a DLC toggle whose DLC state hides it.</summary>
         internal static bool DlcHidden(Transform transform)
             => transform.GetComponentsInParent<ToggleObjectDLC>(true).Any(t => t.showWhenOwned != t.dlc.DlcIsOwned());
 
@@ -261,8 +238,6 @@ namespace PersistentCity.Runtime
             for (var parent = transform; parent != null; parent = parent.parent)
                 segments.Add(Uri.EscapeDataString(parent.name) + "[" + parent.GetSiblingIndex().ToString(CultureInfo.InvariantCulture) + "]");
             segments.Reverse();
-            // Scene hierarchy identities are deterministic for this game build, not native
-            // persistent save IDs. Native map changes require catalogue reconciliation.
             return Uri.EscapeDataString(transform.gameObject.scene.name) + "/" + string.Join("/", segments);
         }
 

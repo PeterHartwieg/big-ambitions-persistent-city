@@ -7,16 +7,12 @@ namespace PersistentCity.EconomyInterventions;
 
 public sealed record Arm(string Family, string Name, string Description, IReadOnlyList<InterventionInput> Inputs);
 
-/// <summary>The F6 plan section 3.5 intervention families. Weeks 1-2 baseline, weeks 3-4
-/// intervention, weeks 5-6 reverted. Every input is a whole-minute boundary; reverting inputs
-/// restore the fixture's base terms.</summary>
 public static class InterventionArms
 {
     public const int FirstInterventionDay = EconomyRun.BaselineDays + 1;
     public const int FirstRevertedDay = FirstInterventionDay + EconomyRun.InterventionDays;
     public const string Product = FoodProducts.Burger;
     public const int LunchFrom = 11 * 60, LunchTo = 14 * 60;
-    // Percentage of F6b's default lane profile; no change to meal-period units.
     public const int RivalLanesHalvedPercent = 50, RivalLanesDefaultPercent = 100;
 
     private static double At(int day, int minuteOfDay = 0) => day * 1440.0 + minuteOfDay;
@@ -28,7 +24,6 @@ public static class InterventionArms
         => apply(At(FirstInterventionDay)).Concat(revert(At(FirstRevertedDay)));
     private static InterventionInput Price(double at, string product, int cents) => new(at, InputKind.ProductPrice, EconomyFixture.Shop, product, cents);
 
-    /// <summary>The three price arms, scaled from the profile's own menu.</summary>
     public static IReadOnlyList<Arm> Price(FixtureProfile profile) => new List<Arm>
     {
         new("price", "product-minus-25", "Burger price -25 %", Window(

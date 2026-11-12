@@ -12,7 +12,7 @@ namespace PersistentCity.Persistence
             if(image==null)
             {
                 Require(meal.Day<food.AwarenessStartsDay,"Missing post-activation awareness image.");
-                return 0; // only pre-activation/migrated held contexts retain the original shortlist
+                return 0;
             }
             Require(image.CatalogueRevision!=null && image.CatalogueRevision.Length==44,"Invalid awareness catalogue revision.");
             byte[] hash=Convert.FromBase64String(image.CatalogueRevision);

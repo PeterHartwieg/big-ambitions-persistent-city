@@ -27,7 +27,7 @@ UNKNOWN = summary_lines.UNKNOWN
 
 
 class Refused(Exception):
-    """The input cannot produce a report; nothing is written."""
+    pass
 
 
 def load_contract(path=DEFAULT_CONTRACT):
@@ -38,14 +38,12 @@ def load_contract(path=DEFAULT_CONTRACT):
     return contract
 
 
-# ---------------------------------------------------------------- statistics
 
 def nearest_rank(sorted_values, p):
-    """Nearest-rank percentile of an ascending list: the value at 1-based rank ceil(p/100*n)."""
     n = len(sorted_values)
     if n == 0:
         return None
-    rank = max(1, -(-n * p // 100))  # exact integer ceil for integer p
+    rank = max(1, -(-n * p // 100))
     return sorted_values[int(rank) - 1]
 
 
@@ -67,7 +65,6 @@ def result(verdict, value=None, reason=''):
     return dict(verdict=verdict, value=value, reason=reason)
 
 
-# ---------------------------------------------------------------- header and sources
 
 def _missing(value):
     return value is None or value == '' or value == [] or value == {}
@@ -119,14 +116,12 @@ def collect_sources(exports):
     return sources.pop()
 
 
-# ---------------------------------------------------------------- ingestion
 
 CAMEL = ('modWorkMs', 'wholeFrameMs', 'observerMs', 'gcCollections')
 SNAKE = ('mod_work_ms', 'whole_frame_ms', 'observer_ms', 'gc')
 
 
 def _frames(rows):
-    """Normalise probe frame rows: camelCase probe export or snake_case, one naming per window."""
     if not rows:
         return []
     mod, whole, observer, gc = CAMEL if 'modWorkMs' in rows[0] else SNAKE
@@ -139,7 +134,6 @@ def _frames(rows):
 
 
 def ingest_probe(window):
-    """Frames from window['probe'] (status, frames[]) or window['frames']; probe status flags become receipts."""
     receipts = dict(window.get('receipts') or {})
     probe = window.get('probe')
     if probe is None:
@@ -174,7 +168,6 @@ def observations_of(window):
     return result_list
 
 
-# ---------------------------------------------------------------- one window
 
 def validity(window, receipts, flags, clean, contract):
     reasons = []
@@ -292,7 +285,6 @@ def s3(window, accounting, row):
 
 
 def s4(window, accounting, row, stalls):
-    """Recovery to <= 0.1 game minute within 5 real s after each hold; fail only when samples prove it took longer."""
     holds = accounting.get('holds')
     samples = sorted(accounting.get('lag_samples') or [])
     if holds is None or not samples:
@@ -333,14 +325,12 @@ def spikes_of(window, clean, contract, valid):
     threshold = contract['_rows']['M2']['threshold']
     calls = {c['frame']: c for c in window.get('advance_calls') or []}
     spikes = []
-    # Absence of advancement is confirmed only when the AdvancePopulation sub-scope is bound in this window.
     bound = ADVANCE_COMPONENT in (window.get('bound_components') or ()) or any(ADVANCE_COMPONENT in f['components'] for f in clean)
     for f in clean:
         if f['mod_work_ms'] < threshold:
             continue
         components = f['components']
         call = calls.get(f['frame'])
-        # Advancement evidence: the component sub-scope, else the probe's per-call record (component-unbound).
         advance_ms, advance_source = components.get(ADVANCE_COMPONENT), 'component'
         if advance_ms is None and call is not None:
             advance_ms, advance_source = call.get('duration_ms'), 'per-call record'
@@ -362,7 +352,6 @@ def stalls_of(window, clean, contract):
     for i, v in enumerate(window.get('presented_ms') or []):
         if v >= limit:
             out.append(dict(window=window['id'], kind='presented', index=i, interval_ms=v, classes=classes.get(str(i), ['unclassified (F4c)'])))
-    # F4c hook: attribute.py writes whole-frame classes keyed by probe frame number.
     whole_classes = window.get('whole_frame_stall_classes') or {}
     for f in clean:
         if f['whole_frame_ms'] >= limit:
@@ -392,7 +381,6 @@ def analyze_window(window, contract):
     return entry, clean, spikes_of(window, clean, contract, valid), stalls_of(window, clean, contract)
 
 
-# ---------------------------------------------------------------- pairing and pooling
 
 def matched(candidate, reference, contract):
     spec = contract['matching']
@@ -409,7 +397,6 @@ def matched(candidate, reference, contract):
 
 
 def pair_windows(entries, contract):
-    """P4 per candidate: the reference with the same condition, script, arm and repetition, if it matches."""
     row = contract['_rows']['P4']
     references, valid_keys = {}, set()
     for e in entries:
@@ -419,7 +406,7 @@ def pair_windows(entries, contract):
                 raise Refused(f"two valid {e['build']} windows share condition, script, arm and repetition {key}")
             valid_keys.add((e['build'],) + key)
         if e['build'] == 'reference' and (key not in references or (e['valid'] and not references[key]['valid'])):
-            references[key] = e  # a valid rerun replaces an invalid reference with the same label
+            references[key] = e
     pairs = []
     for c in entries:
         if c['build'] != 'candidate':
@@ -452,7 +439,6 @@ def pair_windows(entries, contract):
 
 
 def pooled(entries, clean_by_id, presented_by_id):
-    """Pool raw clean frames of valid windows per condition, script, build and arm; percentiles of the pool."""
     groups = {}
     for e in entries:
         if not e['valid']:
@@ -467,7 +453,6 @@ def pooled(entries, clean_by_id, presented_by_id):
             for k, g in sorted(groups.items(), key=lambda kv: tuple(str(x) for x in kv[0]))]
 
 
-# ---------------------------------------------------------------- measurement rows
 
 def measurement_rows(measurements, contract):
     rows = contract['_rows']
@@ -519,7 +504,6 @@ def measurement_rows(measurements, contract):
     return out
 
 
-# ---------------------------------------------------------------- verdicts
 
 def aggregate(entries, contract, arm_filter):
     verdicts = {}
@@ -549,7 +533,6 @@ def m2(spikes, arm_filter):
 
 
 def dense_street(entries, contract):
-    """I4's dense-traffic part: only a valid primary candidate window on a dense script that met both thresholds establishes it."""
     scripts = contract['density']['scripts']
     windows = [e for e in entries if e['valid'] and e['build'] == 'candidate' and e['arm'] == 'primary' and e['script'] in scripts]
     dense = [e['id'] for e in windows if e['density']['dense'] is True]

@@ -43,7 +43,6 @@ public sealed class TravelTimingCollapsedNativeTailTests
         var simulation = new CitySimulator(state, new Planner(sectionBoundary: sectionBoundary, rise: sloped ? .5 : 0)); simulation.AdvanceTo(0);
         double raw = minutes - gap;
         if (gap == 0) for (int i = 0; i < ulps; i++) raw = Math.BitDecrement(raw);
-        // A saved progress floor inside the section (TrafficFloorFixture).
         Assert.Equal(raw, TrafficFloorFixture.Write(state, simulation, "car", raw, raw));
         Assert.Equal(raw, state.Traffic!.Vehicles.Single().NominalMinutes);
         return (state, citizen, raw);
@@ -77,7 +76,6 @@ public sealed class TravelTimingCollapsedNativeTailTests
         state.Places.Single(place => place.Id == "b").Position = route.Legs[^1].To;
         var planner = new ShortContinuationPlanner(continuation); var simulation = new CitySimulator(state, planner); simulation.AdvanceTo(0);
         double raw = 6 - 4 * 2.2204460492503131e-16 * 6;
-        // A saved progress floor inside the section (TrafficFloorFixture).
         Assert.Equal(raw, TrafficFloorFixture.Write(state, simulation, "car", raw, raw));
         planner.TrafficNetwork.ValidateRemainingMapping(route, state.Traffic!.Vehicles.Single().Route, raw);
         Assert.Equal(P(1060), route.PositionAt(raw));
@@ -177,7 +175,7 @@ public sealed class TravelTimingCollapsedNativeTailTests
         citizen.NextEventMinute = 2;
         Assert.True(TravelTiming.Apply(state, 2, 2));
         Assert.Equal(2, citizen.Journey!.Legs.Count);
-        Assert.Equal(1, citizen.Journey.Legs[0].Minutes); // The whole fixed wait, including its unconsumed time, remains unchanged.
+        Assert.Equal(1, citizen.Journey.Legs[0].Minutes);
         Assert.Equal(P(220), citizen.Journey.Legs[0].From); Assert.Equal(P(220), citizen.Journey.Legs[0].To);
         Assert.Equal(2, citizen.Journey.Legs[1].Minutes);
     }
@@ -245,7 +243,6 @@ public sealed class TravelTimingCollapsedNativeTailTests
         var simulation = new CitySimulator(state, planner);
         double endpoint = citizen.Journey!.Legs[0].Minutes + citizen.Journey.Legs[1].Minutes;
         double raw = Math.BitDecrement(endpoint);
-        // A saved progress floor inside the section (TrafficFloorFixture).
         Assert.Equal(raw, TrafficFloorFixture.Write(state, simulation, "car", raw, raw));
         Assert.StartsWith("native:road:fragment1:", citizen.Journey.Legs[1].ServiceId);
         planner.TrafficNetwork.ValidateRemainingMapping(citizen.Journey, state.Traffic!.Vehicles[0].Route, raw);
@@ -306,7 +303,6 @@ public sealed class TravelTimingCollapsedNativeTailTests
         var (original, _, _) = Captured(sectionBoundary: true);
         var state = SaveWire.Read(SaveCodec.Write(original)).State!; var citizen = state.Citizens[0];
         var simulation = new CitySimulator(state, new Planner(sectionBoundary: true));
-        // A saved progress floor in the second section (TrafficFloorFixture).
         Assert.Equal(1.5, TrafficFloorFixture.Write(state, simulation, "car", 1.5, 1.5));
         Assert.Equal(1, state.Traffic!.Vehicles.Single().RouteIndex);
         Assert.True(TravelTiming.Apply(state, 2, 2));
@@ -325,7 +321,7 @@ public sealed class TravelTimingCollapsedNativeTailTests
         var state = SaveWire.Read(SaveCodec.Write(captured)).State!; var citizen = state.Citizens[0];
         var network = new ShortContinuationPlanner(.0001).TrafficNetwork;
         Assert.True(network.TryMap(citizen.Journey!, out var mapped));
-        mapped[0].FreeFlowMinutes += .01; // Structurally valid kernel data with a forged future traversal duration.
+        mapped[0].FreeFlowMinutes += .01;
         var kernel = new TrafficKernel(network.Links, state.Minute); kernel.SetLinkClosed(0, true);
         kernel.Enqueue("car", mapped); state.Traffic = kernel.Capture();
         citizen.DepartureMinute = state.Minute; citizen.NextEventMinute = state.Minute + citizen.Journey!.Minutes;
@@ -347,7 +343,6 @@ public sealed class TravelTimingCollapsedNativeTailTests
         state.Traffic = null; state.TrafficTopologyId = ""; state.Minute = clock;
         citizen.DepartureMinute = clock; citizen.NextEventMinute = clock + 7;
         var simulation = new CitySimulator(state, new ShortContinuationPlanner(10)); simulation.AdvanceTo(clock);
-        // A saved progress floor inside the section (TrafficFloorFixture).
         Assert.Equal(nominal, TrafficFloorFixture.Write(state, simulation, "car", clock + 10, nominal));
         double elapsed = state.Minute - citizen.DepartureMinute;
         string json = SaveCodec.Write(state); var decoded = SaveWire.Read(json); Assert.Equal(SaveReadStatus.Loaded, decoded.Status);
@@ -360,8 +355,6 @@ public sealed class TravelTimingCollapsedNativeTailTests
     {
         var (original, _, raw) = CapturedShortContinuation(10);
         var state = SaveWire.Read(SaveCodec.Write(original)).State!;
-        // Exercise the accepted legacy clock/traffic agreement at this exact collapsed
-        // endpoint. The real large-clock captures above establish the naturally arising case.
         var vehicle = state.Traffic!.Vehicles.Single();
         double nominal = vehicle.NominalMinutes - 1e-8;
         vehicle.NominalMinutes = nominal; vehicle.MotionStartFraction = nominal / 7;
@@ -428,7 +421,6 @@ public sealed class TravelTimingCollapsedNativeTailTests
         citizen.Car!.ParkedPosition = P(x[0]); state.Places.Single(place => place.Id == "a").Position = P(x[0]);
         state.Places.Single(place => place.Id == "b").Position = P(x[^1]);
         var simulation = new CitySimulator(state, new PolylinePlanner(x, boundary: boundary, closedDownstream: closedDownstream)); simulation.AdvanceTo(state.Minute);
-        // A saved progress floor inside the section (TrafficFloorFixture).
         Assert.Equal(nominal, TrafficFloorFixture.Write(state, simulation, "car", state.Minute + 10, nominal));
         string json = SaveCodec.Write(state); Assert.Equal(SaveReadStatus.Loaded, SaveWire.Read(json).Status);
         _ = new CitySimulator(SaveWire.Read(json).State!, new PolylinePlanner(x, boundary: boundary, closedDownstream: closedDownstream));
@@ -686,8 +678,6 @@ public sealed class TravelTimingCollapsedNativeTailTests
         double elapsed = nearZero ? 49.100000099999995 : 8.200000999999999;
         var state = UnownedCanonicalWalkingRoute(x, elapsed); var citizen = state.Citizens[0]; var route = citizen.Journey!;
         var simulation = new CitySimulator(state, new UnmappedPlanner()); var before = simulation.SampleJourney(citizen);
-        // Prove the former check's coordinate differs from the unchanged departure-clock
-        // coordinate, even though the actual resumed physical sample preserves the body.
         var retime = typeof(TravelTiming).GetMethod("Retime", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic)!;
         object?[] arguments = { route, elapsed, false, 2d, 1d, .5d, null };
         var replacement = (Route)retime.Invoke(null, arguments)!; var map = arguments[^1]!;

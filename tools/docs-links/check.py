@@ -1,13 +1,3 @@
-"""Fail on broken relative links in the repository's Markdown files.
-
-Usage: python tools/docs-links/check.py [repo-root]
-
-Checks inline links and images, [text](target), whose target is a relative path.
-External URLs (scheme://, mailto:) and pure #anchors are skipped. Fenced code blocks
-and inline code are ignored. Anchors are not checked; only the target file or folder.
-A trailing source line reference (File.cs:55 or File.cs:55-60) is ignored. Links that
-leave the repository (to a sibling checkout) cannot be checked here and are skipped.
-"""
 import os
 import re
 import sys

@@ -89,8 +89,6 @@ public sealed class TrafficMappingValidationTests
     public void LegacyUntaggedSplitFragmentsCanValidateIndividualGeometryClaims()
     {
         TrafficNetwork network = Straight();
-        // Original edge 0->1 was split at x=3. Its completed prefix keeps .3 min,
-        // its remaining movement doubles, and the next original native edge doubles.
         Route retimed = Journey(Leg(P(0), P(3), 0.3), Leg(P(3), P(10), 1.4), Leg(P(10), P(20), 2, Tag(1, 2)));
         network.ValidateMapping(retimed, new[] { Span(0, 0.3, 3.7, 0.15, 1) });
         network.ValidateMapping(retimed, new[] { Span(0, 0, 3.7) });
@@ -184,7 +182,7 @@ public sealed class TrafficMappingValidationTests
         Assert.Equal(4, retimed.Legs.Count);
         Assert.Equal(Fragment(1, 2), retimed.Legs[1].ServiceId);
         Assert.Equal(Fragment(1, 2), retimed.Legs[2].ServiceId);
-        Assert.True(network.TryMap(retimed, out _)); // Explicit fragments remain contiguous native road geometry.
+        Assert.True(network.TryMap(retimed, out _));
         network.ValidateMapping(retimed, state.Traffic!.Vehicles[0].Route);
         var retimedNetwork = new TrafficNetwork(NativeId, new[]
         { Node(0, P(0), 1), Node(1, P(10), 2), Node(2, P(20), 3), Node(3, P(30)) }, 2);
@@ -194,7 +192,7 @@ public sealed class TrafficMappingValidationTests
         Assert.Equal(1.5, future.StartNominalMinutes);
         Assert.Equal(0.5, future.StartLinkFraction, 8);
         Assert.Equal(15, retimed.PositionAt(future.StartNominalMinutes).X);
-        Assert.Equal(15, retimed.PositionAt(1.5).X); // Current native fragment retains road ownership.
+        Assert.Equal(15, retimed.PositionAt(1.5).X);
         network.ValidateMapping(retimed, remaining);
         Assert.True(TravelTiming.Apply(state, 2, 0.5));
         var twiceRetimedNetwork = new TrafficNetwork(NativeId, new[]
@@ -224,7 +222,7 @@ public sealed class TrafficMappingValidationTests
         Assert.True(network.TryMap(route, out var mapped));
         network.ValidateRemainingMapping(route, mapped, 0);
         mapped.RemoveAt(omitted);
-        network.ValidateMapping(route, mapped); // Individual claims are valid; future ownership is incomplete.
+        network.ValidateMapping(route, mapped);
         Assert.Throws<ArgumentException>(() => network.ValidateRemainingMapping(route, mapped, 0));
     }
 
@@ -273,7 +271,6 @@ public sealed class TrafficMappingValidationTests
         Route route = Journey(Leg(P(0), P(10), 1, Tag(0, 1)), Leg(P(10), P(20), 1, Tag(1, 2)));
         var partial = Span(0, 0.5, 1.5, 0.25, 0.75);
         partial.FreeFlowMinutes = 1;
-        // At the last claimed point, the remaining native tail still needs ownership.
         Assert.Throws<ArgumentException>(() => network.ValidateRemainingMapping(route, new[] { partial }, 0.5));
         var remaining = Span(0, 0.5, 2, 0.25, 1);
         remaining.FreeFlowMinutes = Math.BitIncrement(1.5);
@@ -306,7 +303,7 @@ public sealed class TrafficMappingValidationTests
         Route route = ThreeSectionJourney(2);
         route.Legs[2].Minutes = 2;
         Assert.True(network.TryMap(route, out var mapped));
-        Assert.Equal(1, mapped[0].FreeFlowMinutes); // Completed section keeps its earlier clock rate.
+        Assert.Equal(1, mapped[0].FreeFlowMinutes);
         network.ValidateRemainingMapping(route, mapped, 1);
         Assert.Throws<ArgumentException>(() => network.ValidateRemainingMapping(route, mapped, 0.5));
     }
@@ -412,7 +409,7 @@ public sealed class TrafficMappingValidationTests
         shortened.EndNominalMinutes = (shortened.StartNominalMinutes + shortened.EndNominalMinutes) / 2;
         shortened.EndLinkFraction = (shortened.StartLinkFraction + shortened.EndLinkFraction) / 2;
         shortened.FreeFlowMinutes /= 2;
-        newNetwork.ValidateMapping(citizen.Journey, saved.Route); // The shortened claim alone is geometrically valid.
+        newNetwork.ValidateMapping(citizen.Journey, saved.Route);
         Assert.Throws<ArgumentException>(() => newNetwork.ValidateRemainingMapping(citizen.Journey, saved.Route, progress));
     }
 

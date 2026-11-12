@@ -8,12 +8,6 @@ using Xunit;
 
 namespace PersistentCity.Tests;
 
-/// <summary>
-/// F7b exact save-epoch contract (plan F7 section 3.3 rules 1-10 and the section 3.8 rows owned by F7b).
-/// Native Save, GameInstance and the runtime lifecycle are doubles that call the actual Persistence
-/// binding, callback, marker reader and save session; <see cref="RuntimeWiringKeepsCaptureOrderAndDetachMarkersFirst"/>
-/// pins the real Runtime wiring to the same order. Offline only; no native evidence.
-/// </summary>
 public sealed class SaveEpochTests
 {
     private const double Minute = 600;
@@ -22,10 +16,8 @@ public sealed class SaveEpochTests
 
     private static CityState City(string key = "source") => TestCity.Minimal(key, "0.40.4", Minute, "resident");
 
-    /// <summary>A native GameInstance double: one object owning one modData dictionary.</summary>
     private sealed class GameInstance { public readonly Dictionary<string, string> modData = new(StringComparer.Ordinal); }
 
-    /// <summary>Mirrors PopulationRuntime's F7b wiring (SaveEpochRuntime.cs, AccountingRecovery.StopAccounting, Detach).</summary>
     private sealed class Runtime
     {
         public GameInstance? Current;
@@ -38,7 +30,6 @@ public sealed class SaveEpochTests
         public Func<string?>? BeforeWrite;
         public Action? InsideCapture;
 
-        /// <summary>Mirrors TryStart (bind and subscribe while initializing) and CompleteInitialization.</summary>
         public void Attach(GameInstance save, long sequence = 0, bool initializing = false)
         {
             Current = save;
@@ -60,7 +51,7 @@ public sealed class SaveEpochTests
         {
             Captures++;
             InsideCapture?.Invoke();
-            if (CaptureThrowsThroughStop) StopAccounting(); // BeginAccountingObservations failing inside the callback
+            if (CaptureThrowsThroughStop) StopAccounting();
             string? refusal = BeforeWrite?.Invoke();
             if (refusal != null) return SaveEpochCapture.Refused(refusal);
             if (Epoch?.CanPublish(ticket, Current, Current?.modData) != true) return SaveEpochCapture.Refused("stale");
@@ -89,10 +80,9 @@ public sealed class SaveEpochTests
         public void Unit(Action inside) { Units++; try { inside(); } finally { Units--; if (StopPending && Units == 0) { StopPending = false; StopAfterFailure("deferred"); } } }
     }
 
-    /// <summary>Native SaveGameManager.Save double: runs onSaveGame, then serializes modData (the "file").</summary>
     private static Dictionary<string, string> NativeSave(GameInstance save, Runtime? subscriber)
     {
-        subscriber?.Save(); // A plain Action: any exception here would abort native Save.
+        subscriber?.Save();
         return new Dictionary<string, string>(save.modData, StringComparer.Ordinal);
     }
 
@@ -103,7 +93,6 @@ public sealed class SaveEpochTests
         return save;
     }
 
-    /// <summary>F7b start decision, composed of the functions TryStart, the worker and CompleteInitialization call.</summary>
     private static string? F7bStart(IDictionary<string, string> data, string populationKey, double nativeMinute)
     {
         if (AccountingStopStore.IsStopped(data)) return "accounting stop";
@@ -116,8 +105,6 @@ public sealed class SaveEpochTests
         return read.State != null && !AccountingClock.Compatible(read.State.Minute, nativeMinute) ? "clock" : null;
     }
 
-    /// <summary>Frozen copy of the base (writer-25, pre-F7b) startup refusal: stop key presence, strict read, minute check.
-    /// The base ignores persistentcity:save-epoch_v1.</summary>
     private static string? BaseWriter25Start(IDictionary<string, string> data, string populationKey, double nativeMinute)
     {
         if (data.ContainsKey("persistentcity:accounting-stop_v1")) return "accounting stop";
@@ -148,10 +135,9 @@ public sealed class SaveEpochTests
         var before = new Dictionary<string, string>(file);
         Assert.NotNull(F7bStart(file, populationKey, Minute + .5));
         Assert.NotNull(BaseWriter25Start(file, populationKey, Minute + .5));
-        Assert.Equal(before, file); // Refusal preserves every key.
+        Assert.Equal(before, file);
     }
 
-    // Rules 1 and 2: capture inside the callback after the observations; payload first, marker after it.
     [Fact]
     public void NormalSavePublishesPayloadThenMarkerDescribingIt()
     {
@@ -167,13 +153,11 @@ public sealed class SaveEpochTests
         Assert.Equal(new KeyValuePair<string, int>(SaveStore.StateKey, file[SaveStore.StateKey].Length), Assert.Single(marker.Payloads));
         Assert.False(file.ContainsKey(AccountingStopStore.Key));
         Assert.Null(F7bStart(file, runtime.State.PopulationKey, Minute + .5));
-        Assert.Null(BaseWriter25Start(file, runtime.State.PopulationKey, Minute + .5)); // Cross-build: success loads in base.
-        // Rule 8: receipts and manifest are untouched and not copied into the payload or marker.
+        Assert.Null(BaseWriter25Start(file, runtime.State.PopulationKey, Minute + .5));
         Assert.Equal("Confirmed", file[Receipt]); Assert.Equal("manifest", file[Authority]);
         Assert.DoesNotContain("intent-1", file[SaveStore.StateKey]); Assert.DoesNotContain("intent-1", file[SaveEpochStore.Key]);
     }
 
-    // Writer-25 bytes unchanged: the epoch path publishes exactly the base SaveSession/SaveCodec string.
     [Fact]
     public void Writer25PayloadBytesAreUnchangedByTheEpochPath()
     {
@@ -187,13 +171,12 @@ public sealed class SaveEpochTests
         Assert.Equal(CityState.CurrentSchema, ReadPopulation(file, runtime.State.PopulationKey).SourceSchema);
     }
 
-    // Rule 7 / plan row: same-minute double save.
     [Fact]
     public void SameMinuteDoubleSaveKeepsEachFileCoherentAndMinuteCheckAloneCannotSeeStalePairing()
     {
         var (save, runtime) = Attached();
         var first = NativeSave(save, runtime);
-        save.modData[Receipt] = "Confirmed-after-second-sale"; // Native progress inside the same minute.
+        save.modData[Receipt] = "Confirmed-after-second-sale";
         runtime.State.Citizens[0].CompletedJourneys = 3;
         var second = NativeSave(save, runtime);
         Assert.True(SaveEpochStore.TryRead(first[SaveEpochStore.Key], out var one, out _));
@@ -203,11 +186,9 @@ public sealed class SaveEpochTests
         Assert.Null(F7bStart(first, runtime.State.PopulationKey, Minute + .5));
         Assert.Null(F7bStart(second, runtime.State.PopulationKey, Minute + .5));
         Assert.Equal(3, ReadPopulation(second, runtime.State.PopulationKey).State!.Citizens[0].CompletedJourneys);
-        // The measured gap: the minute-granular check alone accepts a stale same-minute payload.
         Assert.True(AccountingClock.Compatible(ReadPopulation(first, runtime.State.PopulationKey).State!.Minute, Minute + .5));
     }
 
-    // Rule 6 / section 3.8: failed write followed by native progress; refused on load in F7b and in the base build.
     [Fact]
     public void FailedWriteThenNativeProgressIsRefusedByEveryBuildAndKeepsThePreviousPayload()
     {
@@ -217,17 +198,16 @@ public sealed class SaveEpochTests
         runtime.BeforeWrite = () => "encode failed";
         var failedFile = NativeSave(save, runtime);
         Assert.True(runtime.Failed); Assert.Null(runtime.Epoch); Assert.Equal(1, runtime.Stops);
-        Assert.Same(previous, failedFile[SaveStore.StateKey]); // Never deleted or replaced.
+        Assert.Same(previous, failedFile[SaveStore.StateKey]);
         Assert.Equal(AccountingStopStore.SaveEpochFailed, failedFile[AccountingStopStore.Key]);
         Assert.Equal(SaveEpochStore.Failed(2), failedFile[SaveEpochStore.Key]);
         save.modData[Receipt] = "Confirmed-later"; save.modData["native-money"] = "1234";
-        var later = NativeSave(save, null); // PC is detached; native saves continue.
+        var later = NativeSave(save, null);
         Assert.Equal(SaveEpochStore.Failed(2), later[SaveEpochStore.Key]);
         AssertRefusedByEveryBuild(later, runtime.State.PopulationKey);
-        Assert.Null(F7bStart(good, runtime.State.PopulationKey, Minute + .5)); // Recovery: the earlier unmarked save.
+        Assert.Null(F7bStart(good, runtime.State.PopulationKey, Minute + .5));
     }
 
-    // Rule 9 / section 3.8: runtime Fail outside a save, then a same-minute native save.
     [Fact]
     public void RuntimeFailOutsideSaveThenSameMinuteNativeSaveIsRefused()
     {
@@ -236,35 +216,32 @@ public sealed class SaveEpochTests
         runtime.Fail();
         Assert.Equal(AccountingStopStore.DetachedAfterSave, save.modData[AccountingStopStore.Key]);
         save.modData[Receipt] = "Confirmed-after-failure";
-        var file = NativeSave(save, runtime); // Unsubscribed in the runtime; the double proves nothing is published.
+        var file = NativeSave(save, runtime);
         Assert.Equal(SaveEpochStore.Failed(1), file[SaveEpochStore.Key]);
         AssertRefusedByEveryBuild(file, runtime.State.PopulationKey);
     }
 
-    // Rule 9 / section 3.8: Shutdown (mod unload, component destroy, onGameUnloaded) while the same GameInstance stays current.
     [Fact]
     public void ShutdownWithSameGameInstanceThenSameMinuteSaveIsRefused()
     {
         var (save, runtime) = Attached();
-        runtime.Detach(); // Shutdown -> Detach with SaveGameManager.Current unchanged.
+        runtime.Detach();
         var file = NativeSave(save, runtime);
         Assert.Equal(SaveEpochStore.Failed(0), file[SaveEpochStore.Key]);
         AssertRefusedByEveryBuild(file, runtime.State.PopulationKey);
     }
 
-    // Rule 9: a normal save, then quit to menu (onGameUnloaded), then reload of that save loads normally.
     [Fact]
     public void NormalSaveUnloadReloadLoadsNormallyWithoutStopMarker()
     {
         var (save, runtime) = Attached();
         var file = NativeSave(save, runtime);
-        runtime.Detach(); // onGameUnloaded -> Shutdown writes into the in-memory modData only.
+        runtime.Detach();
         Assert.True(AccountingStopStore.IsStopped(save.modData));
         Assert.False(file.ContainsKey(AccountingStopStore.Key));
         var reloaded = Load(file);
         Assert.Null(F7bStart(reloaded.modData, runtime.State.PopulationKey, Minute + .5));
         Assert.Null(BaseWriter25Start(reloaded.modData, runtime.State.PopulationKey, Minute + .5));
-        // The reloaded session continues the sequence from the marker.
         Assert.Null(SaveEpochStore.CheckForStart(reloaded.modData, out var marker));
         var next = new Runtime(); next.Attach(reloaded, marker!.Sequence);
         var after = NativeSave(reloaded, next);
@@ -272,7 +249,6 @@ public sealed class SaveEpochTests
         Assert.Equal(2, continued!.Sequence);
     }
 
-    // Rule 9 exemption: detach after a verified save-object replacement writes nothing to either object.
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
@@ -286,13 +262,11 @@ public sealed class SaveEpochTests
         runtime.Detach();
         Assert.Equal(oldBefore, save.modData);
         Assert.Equal(new Dictionary<string, string> { ["other"] = "city" }, replacement.modData);
-        // Nothing is written after detach, even if a stale subscriber is invoked.
         runtime.Current = save;
         Assert.Equal(SaveEpochResult.NotBound, runtime.Save());
         Assert.Equal(oldBefore, save.modData);
     }
 
-    // Section 3.3 rule 6: ownership release throwing inside the save callback.
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
@@ -300,11 +274,11 @@ public sealed class SaveEpochTests
     {
         var (save, runtime) = Attached();
         runtime.ReleaseThrows = true;
-        if (throughObservation) runtime.CaptureThrowsThroughStop = true; // StopAccounting from BeginAccountingObservations
-        else runtime.BeforeWrite = () => "validation failed";            // StopAccounting from the epoch failure path
+        if (throughObservation) runtime.CaptureThrowsThroughStop = true;
+        else runtime.BeforeWrite = () => "validation failed";
         Dictionary<string, string>? file = null;
         var error = Record.Exception(() => file = NativeSave(save, runtime));
-        Assert.Null(error); // Native Save completes.
+        Assert.Null(error);
         Assert.NotNull(file);
         Assert.True(runtime.Failed); Assert.Null(runtime.Epoch);
         Assert.True(AccountingStopStore.IsStopped(file!));
@@ -313,7 +287,6 @@ public sealed class SaveEpochTests
         AssertRefusedByEveryBuild(file, runtime.State.PopulationKey);
     }
 
-    // Rule 5: re-entrant callback while a PC unit (event, checkout, initialization) is on the stack.
     [Fact]
     public void ReentrantCallbackDuringUnitRefusesAndStopsAfterTheUnit()
     {
@@ -322,16 +295,14 @@ public sealed class SaveEpochTests
         runtime.Unit(() =>
         {
             file = NativeSave(save, runtime);
-            Assert.False(runtime.Failed); // Not torn down mid-unit.
-            Assert.Equal(0, runtime.Captures); // No mid-unit snapshot.
+            Assert.False(runtime.Failed);
+            Assert.Equal(0, runtime.Captures);
         });
         Assert.True(runtime.Failed); Assert.Equal(1, runtime.Stops);
         Assert.Equal(AccountingStopStore.SaveEpochFailed, file![AccountingStopStore.Key]);
         AssertRefusedByEveryBuild(file, runtime.State.PopulationKey);
     }
 
-    // Rule 5: a native save while initialization steps are on the stack (a PC unit) still refuses with both
-    // markers, takes no snapshot and returns normally.
     [Fact]
     public void SaveDuringInitializationOnTheStackRefusesWithBothMarkersAndKeepsPayload()
     {
@@ -343,8 +314,8 @@ public sealed class SaveEpochTests
         Dictionary<string, string>? file = null;
         Exception? error = null;
         runtime.Unit(() => error = Record.Exception(() => file = NativeSave(save, runtime)));
-        Assert.Null(error); // Native Save completes normally.
-        Assert.Equal(0, runtime.Captures); // No snapshot of a half-initialized city.
+        Assert.Null(error);
+        Assert.Equal(0, runtime.Captures);
         Assert.Same(previous, file![SaveStore.StateKey]);
         Assert.Equal(AccountingStopStore.SaveEpochFailed, file[AccountingStopStore.Key]);
         Assert.Equal(SaveEpochStore.Failed(1), file[SaveEpochStore.Key]);
@@ -353,9 +324,6 @@ public sealed class SaveEpochTests
         AssertRefusedByEveryBuild(file, runtime.State.PopulationKey);
     }
 
-    // Rig mac-creation-1 (10 Nov 2026): a new city's native creation save arrives while the initialization
-    // worker is running. It is deferred: no key is written or removed, the epoch is not poisoned, nothing stops,
-    // the sequence the worker read still matches, and the next ordinary save publishes the normal payload.
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
@@ -371,13 +339,13 @@ public sealed class SaveEpochTests
         Dictionary<string, string>? file = null;
         var error = Record.Exception(() => file = NativeSave(save, runtime));
         Assert.Null(error);
-        Assert.Equal(before, file); // Creation save carries no PC state, partial or otherwise.
+        Assert.Equal(before, file);
         Assert.Equal(before, save.modData);
         Assert.Equal(0, runtime.Captures);
         Assert.False(runtime.Failed); Assert.Equal(0, runtime.Stops); Assert.False(runtime.StopPending);
         Assert.NotNull(runtime.Epoch);
         Assert.Equal(1, runtime.Epoch!.Deferred); Assert.Equal(0, runtime.Epoch.Refused);
-        Assert.Equal(workerSequence, runtime.Epoch.Sequence); // CompleteInitialization's epoch check still passes.
+        Assert.Equal(workerSequence, runtime.Epoch.Sequence);
         Assert.False(runtime.Epoch.Saving);
         Assert.Contains(runtime.Reports, r => r.StartsWith("Persistent City skipped the save during initialization", StringComparison.Ordinal));
 
@@ -392,7 +360,6 @@ public sealed class SaveEpochTests
         Assert.Equal(runtime.State.PopulationKey, loaded.State!.PopulationKey);
     }
 
-    // The other entry refusals keep refusing while initializing: replaced dictionary and an earlier failure.
     [Fact]
     public void OtherRefusalsStillRefuseWhileInitializing()
     {
@@ -404,7 +371,7 @@ public sealed class SaveEpochTests
 
         var save2 = new GameInstance();
         var nested = new SaveEpochBinding(save2, save2.modData, 0, initializing: true);
-        var unit = nested.Begin(save2, save2.modData, unitOnStack: true)!; // poisons the epoch
+        var unit = nested.Begin(save2, save2.modData, unitOnStack: true)!;
         Assert.Equal("A Persistent City unit was executing when the native save started.", unit.Refusal);
         var later = nested.Begin(save2, save2.modData, unitOnStack: false)!;
         Assert.Equal("An earlier save epoch of this session failed.", later.Refusal);
@@ -412,8 +379,6 @@ public sealed class SaveEpochTests
         Assert.StartsWith(SaveEpochStore.FailedPrefix, save2.modData[SaveEpochStore.Key]);
     }
 
-    // Rules 5 and 9: an initialization that fails or is abandoned writes nothing (load refusals preserve
-    // every key); after completion the same session publishes normally.
     [Fact]
     public void InitializingBindingDetachWritesNothingAndCompletionAllowsPublication()
     {
@@ -429,7 +394,6 @@ public sealed class SaveEpochTests
         Assert.False(live.modData.ContainsKey(AccountingStopStore.Key));
     }
 
-    // Rules 3 and 5: a nested save inside a callback refuses, and the outer stale-sequence snapshot is never published.
     [Fact]
     public void NestedCallbackRefusesAndOuterStaleSequenceIsNotPublished()
     {
@@ -442,11 +406,10 @@ public sealed class SaveEpochTests
         Assert.Equal(SaveEpochResult.Refused, outer);
         Assert.Equal(1, runtime.Stops);
         Assert.StartsWith(SaveEpochStore.FailedPrefix, save.modData[SaveEpochStore.Key]);
-        Assert.Same(previous, save.modData[SaveStore.StateKey]); // The stale outer capture never replaced the payload.
+        Assert.Same(previous, save.modData[SaveStore.StateKey]);
         AssertRefusedByEveryBuild(new Dictionary<string, string>(save.modData), runtime.State.PopulationKey);
     }
 
-    // Rule 3: GameInstance binding and dictionary binding.
     [Fact]
     public void PublicationRefusesAnotherGameInstanceOrReplacedDictionary()
     {
@@ -459,7 +422,6 @@ public sealed class SaveEpochTests
         Assert.False(binding.Publish(ticket, new GameInstance(), save.modData, 25, Minute, "source"));
         Assert.Equal(SaveEpochStore.Failed(5), save.modData[SaveEpochStore.Key]);
         binding.End(ticket);
-        // Poisoned: a later callback never publishes a success marker over the failure.
         var later = binding.Begin(save, save.modData, false)!;
         Assert.NotNull(later.Refusal); Assert.False(later.Reentrant);
         Assert.StartsWith(SaveEpochStore.FailedPrefix, save.modData[SaveEpochStore.Key]);
@@ -472,7 +434,6 @@ public sealed class SaveEpochTests
         Assert.True(AccountingStopStore.IsStopped(other.modData));
     }
 
-    // Rule 4: no concurrent traversal; the capture runs synchronously on the callback thread.
     [Fact]
     public void CaptureRunsSynchronouslyOnTheCallbackThread()
     {
@@ -483,7 +444,6 @@ public sealed class SaveEpochTests
         Assert.Equal(thread, seen);
     }
 
-    // Rule 6: marker/payload mismatch refuses and preserves.
     [Theory]
     [InlineData("chars")]
     [InlineData("minute")]
@@ -513,7 +473,6 @@ public sealed class SaveEpochTests
         Assert.Equal(before, file);
     }
 
-    // Rule 6 strict reader: unknown versions and non-canonical values refuse.
     [Theory]
     [InlineData("v2\nsequence=1", "Unsupported")]
     [InlineData("v10", "Unsupported")]
@@ -564,7 +523,6 @@ public sealed class SaveEpochTests
         Assert.False(SaveEpochStore.TryRead(bad, out _, out _));
     }
 
-    // Rule 6: a payload with no marker (every save before F7b) loads under today's rules, including the minute check.
     [Fact]
     public void LegacyNoMarkerPayloadLoadsUnderExistingRules()
     {
@@ -573,25 +531,23 @@ public sealed class SaveEpochTests
         Assert.Null(SaveEpochStore.CheckForStart(data, out var marker));
         Assert.Null(marker);
         Assert.Null(F7bStart(data, city.PopulationKey, Minute + .5));
-        Assert.Equal("clock", F7bStart(data, city.PopulationKey, Minute + 61)); // Existing Compatible refusal kept.
-        Assert.Null(F7bStart(new Dictionary<string, string>(), city.PopulationKey, Minute)); // Fresh city.
+        Assert.Equal("clock", F7bStart(data, city.PopulationKey, Minute + 61));
+        Assert.Null(F7bStart(new Dictionary<string, string>(), city.PopulationKey, Minute));
         var orphan = new Dictionary<string, string> { [SaveEpochStore.Key] = SaveEpochStore.Success(1, 25, Minute, "source",
             new Dictionary<string, string> { [SaveStore.StateKey] = "x" }) };
-        Assert.NotNull(F7bStart(orphan, city.PopulationKey, Minute)); // Marker without its payload.
+        Assert.NotNull(F7bStart(orphan, city.PopulationKey, Minute));
     }
 
-    // Rule 10: the native relocation path copies modData without onSaveGame; the pair stays coherent.
     [Fact]
     public void RelocationCopyCarriesTheMatchingPair()
     {
         var (save, runtime) = Attached();
         NativeSave(save, runtime);
-        var copy = Load(new Dictionary<string, string>(save.modData)); // CreateSaveSnapshot(Current), no callback.
+        var copy = Load(new Dictionary<string, string>(save.modData));
         Assert.Equal(save.modData[SaveEpochStore.Key], copy.modData[SaveEpochStore.Key]);
         Assert.Null(F7bStart(copy.modData, runtime.State.PopulationKey, Minute + .5));
     }
 
-    // Section 3.8 receipt row: Pending/Conflict receipts are never retried, cleared or rewritten by any epoch path.
     [Theory]
     [InlineData("Pending")]
     [InlineData("Conflict")]

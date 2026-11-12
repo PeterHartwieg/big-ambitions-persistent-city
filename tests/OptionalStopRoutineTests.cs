@@ -7,20 +7,15 @@ using Xunit;
 using Xunit.Abstractions;
 
 namespace PersistentCity.Tests;
-// The realised share under real daily routines, where every resident makes repeated eligible visits for weeks
-// (review ob2). The single-visit share fixtures cannot lose a chance to a repeated visit; these can.
 public sealed class OptionalStopRoutineTests(ITestOutputHelper output)
 {
-    // Tolerance: +/- 3 percentage points of min(setting, feasible share), as in OptionalStopShareTests.
     private const double Tolerance = 0.03;
-    // Walks of `minutes`, or of at least three minutes at 80 m a minute.
     private sealed class Walking(double minutes = 0) : IRoutePlanner
     {
         public Route Plan(Place from, Place to, double at, TravelPreferences p) => new()
         { Legs = { new RouteLeg { From = from.Position, To = to.Position, Mode = TravelMode.Walk,
             Minutes = minutes > 0 ? minutes : Math.Max(3, Position.Distance(from.Position, to.Position) / 80) } } };
     }
-    // Feasible venues offer `individual` break or window-shopping spots and four conversation spots.
     private sealed class Geometry(int individual) : IOptionalStopEnvironment
     {
         public HashSet<string> Feasible = new(StringComparer.Ordinal);
@@ -34,8 +29,6 @@ public sealed class OptionalStopRoutineTests(ITestOutputHelper output)
         }
         public OptionalStopAvailability Available(OptionalStopState stop) => Feasible.Contains(stop.PlaceId) ? OptionalStopAvailability.Ready : OptionalStopAvailability.Unavailable;
     }
-    // Counted independently of the scheduler: eligible admissions by citizen/place/minute, draws from each visit's
-    // key, and stop recipients by member and visit minute, including the waiting member of a new conversation.
     private sealed class Observer
     {
         public int Eligible, Drawn; public readonly HashSet<string> Stops = new(StringComparer.Ordinal);
@@ -66,7 +59,6 @@ public sealed class OptionalStopRoutineTests(ITestOutputHelper output)
         Assert.True(loaded.OptionalStopIndexesMatchState());
         return loaded;
     }
-    // The audit with its denominator in the same struct, against the independent counts.
     private static void AssertAudit(CitySimulator sim, Observer o, int pendingAtAttach)
     {
         var t = sim.OptionalStopChances;
@@ -75,9 +67,6 @@ public sealed class OptionalStopRoutineTests(ITestOutputHelper output)
         Assert.True(sim.OptionalStopIndexesMatchState());
     }
 
-    // 1,500 commuters keep the workplace and shops Population.Create gave them for 112 days. Only every fourth
-    // shop has window-shopping geometry and no workplace has any, so the feasible share (what 100 realises) is
-    // only just above 25%: almost every feasible visit must take a chance drawn at an infeasible one.
     private static (CitySimulator Sim, Observer Observed) Commuters(int rate, bool allShops = false)
     {
         const int count = 1500;
@@ -95,7 +84,6 @@ public sealed class OptionalStopRoutineTests(ITestOutputHelper output)
         return (sim, Watch(sim, rate));
     }
 
-    // d438cc6: 21.07% at 25 over 112 days (8,110 chances dropped) against a feasible share of 25.30%.
     [Fact]
     public void RepeatedDailyRoutinesRealiseTheSettingWithoutLosingChances()
     {
@@ -109,7 +97,6 @@ public sealed class OptionalStopRoutineTests(ITestOutputHelper output)
         var (sim, share) = Commuters(25); Until(sim, 29 * 1440);
         int earlyEligible = share.Eligible, earlyStops = share.Stops.Count; double early = share.Share;
         Until(sim, 113 * 1440);
-        // Days 29-112 alone: a startup backlog would have cleared, a permanent loss would remain.
         double late = (double)(share.Stops.Count - earlyStops) / (share.Eligible - earlyEligible);
         var t = sim.OptionalStopChances;
         output.WriteLine($"feasible {all.Share:P2} ({all.Stops.Count}/{all.Eligible}); 25: days 1-28 {early:P2}, days 29-112 {late:P2}, "
@@ -119,15 +106,12 @@ public sealed class OptionalStopRoutineTests(ITestOutputHelper output)
         Assert.InRange(share.Share, target - Tolerance, target + Tolerance);
         Assert.InRange(late, target - Tolerance, target + Tolerance);
         Assert.InRange(early, target - Tolerance, target + Tolerance);
-        // Repeated visits pass their second chance on, and the bound holds the backlog: nothing is lost.
         Assert.Equal(0, t.Dropped);
         Assert.True(t.PassedOn > 1000, "expected repeated holders to be drawn again: " + t.PassedOn);
         AssertAudit(sim, share, 0);
         Assert.True(SaveWire.Read(SaveCodec.Write(sim.State)).Status == SaveReadStatus.Loaded);
     }
 
-    // 600 residents of every persona with homes, workplaces, schools, shops and leisure venues; about a third of the
-    // venues ("narrow") or most of them ("wide") have geometry. Conversations count both members.
     private static (CitySimulator Sim, Geometry Env) Mixed(int rate, bool wide, bool mid = false)
     {
         var personas = (Persona[])Enum.GetValues(typeof(Persona));
@@ -150,8 +134,6 @@ public sealed class OptionalStopRoutineTests(ITestOutputHelper output)
         return (sim, env);
     }
 
-    // P5: over a seeded day the active-stop index, which refresh and occupancy read instead of every citizen,
-    // equals a full scan after every event, and stops are active during that day.
     [Fact]
     public void ActiveStopIndexEqualsAFullScanOverASeededDay()
     {
@@ -167,7 +149,6 @@ public sealed class OptionalStopRoutineTests(ITestOutputHelper output)
         Assert.True(sim.OptionalStopIndexesMatchState());
     }
 
-    // Ten days of mixed routines with conversations. The indexes stay exact after every event.
     [Theory]
     [InlineData(false)] [InlineData(true)]
     public void MixedRoutinesWithConversationsTrackTheSetting(bool wide)
@@ -189,8 +170,6 @@ public sealed class OptionalStopRoutineTests(ITestOutputHelper output)
         }
     }
 
-    // Lowering the setting after days at 100 (d438cc6: 44.3% on the first day at 25 against 25.6% for a city
-    // that ran at 25 throughout). At 100 nothing is banked, so the old setting leaves no stock to release.
     [Fact]
     public void LoweringFromHundredReleasesNoStockBankedAtTheHigherSetting()
     {
@@ -198,7 +177,6 @@ public sealed class OptionalStopRoutineTests(ITestOutputHelper output)
         int inherited = Pending(high);
         var (fresh, _) = Mixed(25, wide: true); Until(fresh, 1440 * 6);
         var lowered = Reload(high, env, 25);
-        // 100 -> 0 -> 25: a day at 0 neither spends nor trims the saved chances.
         var paused = Reload(high, env, 0);
         var before = paused.State.Citizens.Where(c => c.OptionalStopChoice == true && c.OptionalStop == null).Select(c => c.Identity.Id).ToArray();
         var none = Watch(paused, 0); Until(paused, 1440 * 7);
@@ -217,8 +195,6 @@ public sealed class OptionalStopRoutineTests(ITestOutputHelper output)
         Assert.True(inherited <= high.State.Citizens.Count / 10, "pending after 100: " + inherited);
     }
 
-    // Accepted schema-16 boundary, not a target for the setting: loss remains at 50 even with feasibility > 50.
-    // The matched default arm also guards the empirical 4x bound under a second full-routine geometry.
     [Fact]
     public void HighSettingDeficitIsReconciledWhileTheDefaultTracksInAnotherGeometry()
     {
@@ -240,14 +216,12 @@ public sealed class OptionalStopRoutineTests(ITestOutputHelper output)
             }
             else
             {
-                // Pin awareness of the reviewed deficit (>3 points), without promising min(setting, feasibility).
                 Assert.InRange(o.Share, 0.46, 0.47);
                 Assert.True(sim.OptionalStopChances.Dropped > 0);
             }
         }
     }
 
-    // A decrease within 25-99 cannot distinguish inherited stock from an ordinary backlog without saved state.
     [Fact]
     public void LoweringFromFiftyRetainsInBoundStockAndCanSpendItOverSeveralDays()
     {

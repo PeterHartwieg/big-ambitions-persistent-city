@@ -9,12 +9,6 @@ using Xunit.Abstractions;
 
 namespace PersistentCity.Tests;
 
-/// <summary>E6b offline cost (docs/perf/e6b.md): revision poll, image copy at 8 and 64 vehicles, stand publish, the
-/// vendor reference scan and the awareness rebuild after one and many stand moves. Shares the stand-in's collection,
-/// so no other vendor test runs at the same time. Measurement only, not a gate: it runs when PC_E6B_MEASURE is set, e.g.
-/// <c>PC_E6B_MEASURE=1 dotnet test tests/PersistentCity.Tests.csproj --filter FullyQualifiedName~E6bVendorMeasure --logger "console;verbosity=detailed"</c>.
-/// The numbers are printed; the asserts are the gate-level bounds. The zero-allocation poll is also a normal test
-/// (StreetFoodVendorTests.UnchangedRevisionReadsNothingAndAllocatesNothing).</summary>
 [Collection(StreetFoodHooks.Collection)]
 public sealed class E6bVendorMeasure
 {
@@ -37,8 +31,7 @@ public sealed class E6bVendorMeasure
     [Fact]
     public void RevisionPollImageCopyStandPublishReferencesAndAwarenessRebuild()
     {
-        if (string.IsNullOrEmpty(PerfGate.Variable("PC_E6B_MEASURE"))) return; // measurement only on request
-        // Revision poll with an unchanged revision, 64 live rows.
+        if (string.IsNullOrEmpty(PerfGate.Variable("PC_E6B_MEASURE"))) return;
         var polls = new List<double>(1000); long pollBytes = 0;
         TimingBudget.Run(timing =>
         {
@@ -48,7 +41,7 @@ public sealed class E6bVendorMeasure
             pollRig.Run(2 * 1440 + 480);
             Assert.Equal(64, pollRig.Table.Live);
             long minute = 2 * 1440 + 481;
-            for (int i = 0; i < 2000; i++) pollRig.Vendors.Poll(minute); // warm-up past tiered JIT
+            for (int i = 0; i < 2000; i++) pollRig.Vendors.Poll(minute);
             polls = new List<double>(1000);
             long bytes = GC.GetAllocatedBytesForCurrentThread();
             for (int i = 0; i < 1000; i++) { var t = timing.Start(); for (int j = 0; j < 100; j++) pollRig.Vendors.Poll(minute); polls.Add(timing.Stop(t, "revision poll p95") / 100); }
@@ -58,7 +51,6 @@ public sealed class E6bVendorMeasure
         });
         Report("revision poll, unchanged, 64 rows", polls, pollBytes, 100000);
 
-        // Image copy on a changed revision: Poll (Street Food's Read) plus copy units of at most 16 vehicles.
         foreach (int count in new[] { 8, 64 })
         {
             var whole = new List<double>(); var units = new List<double>(); long allocated = 0;
@@ -87,7 +79,6 @@ public sealed class E6bVendorMeasure
             Report($"image copy, {count} vehicles, per unit (Read or 16 vehicles)", units, -1, units.Count);
         }
 
-        // Stand publish: all 64 vehicles open at a new stand in one applied image (one unit), then one move.
         StreetFoodVendorTests.Rig rig = null!;
         var applies = new List<double>(); var single = new List<double>(); long applyBytes = 0;
         TimingBudget.Run(timing =>
@@ -99,7 +90,7 @@ public sealed class E6bVendorMeasure
             applies = new List<double>(); applyBytes = 0;
             for (int round = 0; round < 60; round++)
             {
-                rig.RunTo(now + 60, 15); now = rig.Now; // keeps the lease; every round opens in a later native hour
+                rig.RunTo(now + 60, 15); now = rig.Now;
                 foreach (var v in StreetFoodHooks.Vehicles) { StreetFoodHooks.Close(v.Id); StreetFoodHooks.Open(v.Id, 40, x: v.X + 7); }
                 long before = GC.GetAllocatedBytesForCurrentThread();
                 rig.Vendors.Poll(now);
@@ -121,13 +112,11 @@ public sealed class E6bVendorMeasure
         }
         Report("PublishVendorPlace, one stand", single, -1, single.Count);
 
-        // Reference scan (stand-move and release guard), 20,000 meals of which 64 name vendor places.
         var food = rig.City.State.Food!;
         for (int i = 0; i < 20000; i++)
             food.Residents.Add(new ResidentMeal { ResidentId = "m" + i, AnchorId = "m" + i, Status = i % 3 == 0 ? MealStatus.Travelling : MealStatus.Paid,
                 PlaceId = i < 64 ? rig.Table.Rows[i].PlaceId : "s0" });
         var references = new VendorReferences(); var scans = new List<double>();
-        // The scan only reads the city, so a retry repeats it on the same state.
         TimingBudget.Run(timing =>
         {
             scans = new List<double>();
@@ -136,7 +125,6 @@ public sealed class E6bVendorMeasure
         });
         Report("CollectVendorReferences, 20,000 meals", scans, -1, scans.Count);
 
-        // Awareness rebuild after one move and after 64 moves: both are one full staged rebuild of the catalogue.
         var (city, _, _) = WeightedFoodChoiceTests.Ready(3, shops: 1000);
         var table = new VendorTable();
         for (int i = 0; i < 64; i++)
@@ -149,7 +137,6 @@ public sealed class E6bVendorMeasure
         foreach (int moves in new[] { 1, 64 })
         {
             var whole = new List<double>(); var units = new List<double>(); int unitCount = 0;
-            // The 1,000-shop city is shared, so a retry keeps moving the same stands.
             TimingBudget.Run(timing =>
             {
                 whole = new List<double>(); units = new List<double>();
@@ -162,7 +149,7 @@ public sealed class E6bVendorMeasure
                     using (builder)
                         while (true) { var t = timing.Start(); bool done = builder.Continue(); var unit = timing.End(t); total += unit.Ms; unitCount++; if (sample >= 10) units.Add(timing.Keep("awareness rebuild per unit p95", unit)); if (done) break; }
                     if (sample >= 10) whole.Add(total);
-                    city.InspectFoodAwareness("r"); // publish the simulator's own image again
+                    city.InspectFoodAwareness("r");
                 }
                 timing.Under("awareness rebuild per unit p95", Stats(units).p95, 5);
             });
@@ -170,7 +157,6 @@ public sealed class E6bVendorMeasure
             Report($"awareness rebuild after {moves} move(s), per unit", units, -1, units.Count);
         }
 
-        // Lease renewal (once per 15 native minutes while vehicles are owned).
         StreetFoodHooks.Reset(); StreetFoodHooks.Add("A");
         rig = new StreetFoodVendorTests.Rig(); rig.Run(2 * 1440 + 480);
         var renewals = new List<double>(); long renewBytes = 0;

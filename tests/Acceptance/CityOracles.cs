@@ -10,15 +10,10 @@ using PersistentCity.EconomyInterventions;
 
 namespace PersistentCity.Tests.Acceptance;
 
-/// <summary>Decision 3's oracles. Each failure throws <see cref="CityViolation"/>, so a scenario never ends with a broken
-/// invariant: identity at every drained hour, conservation of every wallet, the city ledger and the native receipts,
-/// research charges backed by delivered reports, vendor sales inside the lease, and every scheduled input published once at
-/// its minute. <see cref="Equal"/> compares an arm with the reference: event ledger, saves at day boundaries, native orders.</summary>
 internal static class CityOracles
 {
     public static string M(double minute) => minute.ToString("R", CultureInfo.InvariantCulture);
 
-    /// <summary>Every ID seen in the run and the entity it named, so a reused ID for another entity is caught.</summary>
     internal sealed class Identity
     {
         public readonly Dictionary<string, string> Seen = new(StringComparer.Ordinal);
@@ -31,9 +26,6 @@ internal static class CityOracles
         }
     }
 
-    /// <summary>The ID sets at a drained hour as one ledger row (their digest and counts), after checking no ID changed entity.
-    /// Households are homes with their residents; vendor rows are the business identity of each generation. Persons, places,
-    /// vendor rows and research orders are read through the city view (F9e); visitor stays and wallets are not in the view.</summary>
     public static string Checkpoint(CitySimulator city, Identity seen, long epoch, string context)
     {
         var view = city.View; var s = city.State;
@@ -64,9 +56,6 @@ internal static class CityOracles
             + "|" + research.Count + "|" + Sha(text.ToString()) + "|" + income + "|" + essentials + "|" + home + "|" + prepared + "|" + discretionary;
     }
 
-    /// <summary>Per wallet CashConserved and the BigInteger city ledger (F5g), extended to native money: PC's confirmed
-    /// prepared-food spending plus the confirmed price of every still-uncertain meal equals what the shop double and the
-    /// Street Food stand-in booked. No duplicate native order and no historical checkout.</summary>
     public static void Conserved(CityState s, CityNative native, string context)
     {
         BigInteger sources = 0, uses = 0, prepared = 0, uncertain = 0;
@@ -82,7 +71,6 @@ internal static class CityOracles
             if (meal.Status == MealStatus.Uncertain && native.Markets!.IsConfirmedPaid(meal)) uncertain += meal.Price.Units;
         }
         if (sources != uses) throw new CityViolation(context + ": city ledger " + sources + " != " + uses);
-        // Data-level: no intent appears twice among the booked native orders.
         var intents = new HashSet<string>(StringComparer.Ordinal);
         foreach (var order in native.Shops.Orders)
             if (!intents.Add(order.Split('|')[2])) throw new CityViolation(context + ": duplicate native order " + order.Split('|')[2]);
@@ -94,8 +82,6 @@ internal static class CityOracles
             throw new CityViolation(context + ": PC confirmed receipts " + (prepared + uncertain) + " != native sales " + booked);
     }
 
-    /// <summary>Every tagged agency charge belongs to exactly one Paid order with its report, every Paid order has exactly one
-    /// charge at its product's price, and native money moved by exactly the charges.</summary>
     public static void Research(IResearchView ledger, CityResearchPort port, string context)
     {
         var charged = new Dictionary<string, int>(StringComparer.Ordinal);
@@ -114,7 +100,6 @@ internal static class CityOracles
         if (port.Money != CityResearchPort.OpeningMoney + total) throw new CityViolation(context + ": native money moved by more than the research charges");
     }
 
-    /// <summary>Every Street Food sale was made while the stand-in's lease was valid and the vehicle was PC's, and sequences are unique.</summary>
     public static void Vendor(CityVendorApi api, string context)
     {
         var sequences = new HashSet<long>();
@@ -126,7 +111,6 @@ internal static class CityOracles
         }
     }
 
-    /// <summary>Every input stamped before <paramref name="through"/> was published exactly once, at its own minute.</summary>
     public static void Schedule(InputSchedule schedule, IReadOnlyList<(long Epoch, InterventionInput Input)> published, long through, string context)
     {
         var due = schedule.Inputs.Where(i => i.Minute < through).ToList();
@@ -139,8 +123,6 @@ internal static class CityOracles
         }
     }
 
-    /// <summary>The arm equals the reference: the same event ledger in the same order, the same save bytes at every drained
-    /// day boundary, the same native orders and vendor sales, and the same final save.</summary>
     public static void Equal(CityRun reference, CityRun arm)
     {
         int common = Math.Min(reference.Ledger.Count, arm.Ledger.Count);
@@ -159,15 +141,11 @@ internal static class CityOracles
         if (reference.Final != arm.Final) throw new CityViolation(arm.Arm + ": final save differs");
     }
 
-    /// <summary>A sale without the stand-in's lease end: a reload arm renews the transient lease at other minutes.</summary>
     private static string Sale(CityVendorApi.Sale s) => s.Minute + "|" + s.Vehicle + "|" + s.Opening + "|" + s.Item + "|" + s.Cents + "|" + s.Sequence + "|" + s.Owner;
 
-    /// <summary>The wallet fields a sale reads, as checkout found them.</summary>
     public static string Wallet(ResidentBudget? b) => b == null ? "-" : b.Balance.Units + "/" + b.IncomeReceived.Units + "/" + b.Ledger.EmploymentIncome.Units
         + "/" + b.EssentialsPaid.Units + "/" + b.HomeFoodPaid.Units + "/" + b.Arrears.Units + "/" + b.LastPostedDay;
 
-    /// <summary>The fields only a daily or shift posting moves (income, wages, essentials, home food, arrears and the posting
-    /// schedule). A sale moves none of them.</summary>
     public static string Posting(ResidentBudget b) => b.IncomeReceived.Units + "/" + b.Ledger.EmploymentIncome.Units + "/" + b.EssentialsPaid.Units
         + "/" + b.HomeFoodPaid.Units + "/" + b.Arrears.Units + "/" + b.LastPostedDay + "/" + M(b.NextPostingMinute);
 

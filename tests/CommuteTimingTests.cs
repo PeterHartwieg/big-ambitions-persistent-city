@@ -65,7 +65,6 @@ public sealed class CommuteTimingTests
     public void ClosedWorkplaceReceivesCommuteBeforeOpeningAndWaitsAtItsEntrance()
     {
         var state = City(); var c = state.Citizens[0]; var shift = DailyRoutine.WorkOnDay(c, state.Seed, state.Minute)!.Value;
-        // 470 open minutes: GR-2 cannot fit the whole shift, so the template stands and the commuter waits at the door.
         state.Places[1].OpenMinute = (int)(shift.StartsAt - 1440 + 30); state.Places[1].CloseMinute = (int)(shift.StartsAt - 1440 + 500);
         var engine = new CitySimulator(state, new NativePacePlanner()); engine.AdvanceTo(shift.StartsAt);
         Assert.Equal("work", c.PlaceId); Assert.Equal(CitizenPhase.WaitingForOpening, c.Phase);
@@ -80,7 +79,6 @@ public sealed class CommuteTimingTests
     {
         var state = City(); var c = state.Citizens[0]; var shift = DailyRoutine.WorkOnDay(c, state.Seed, state.Minute)!.Value;
         var engine = new CitySimulator(state, new NativePacePlanner()); engine.AdvanceTo(shift.StartsAt - 120);
-        // F2c: a body cannot bring an arrival forward. An early arrival is a completed journey at this minute.
         engine.AdvanceTo(state.Minute + 1);
         c.DepartureMinute = state.Minute - c.Journey!.Minutes; c.NextEventMinute = state.Minute;
         engine = new CitySimulator(state, new NativePacePlanner()); engine.AdvanceTo(state.Minute);
@@ -97,7 +95,6 @@ public sealed class CommuteTimingTests
     {
         var state = City(); var engine = new CitySimulator(state, new NativePacePlanner()); Prepare(engine);
         double early = state.Citizens[0].NextEventMinute;
-        // A bounded snapshot may have the next citizen event due exactly at its current clock.
         state.Minute = early;
         var read = SaveWire.Read(SaveCodec.Write(state)); Assert.Equal(SaveReadStatus.Loaded, read.Status);
         var resumed = new CitySimulator(read.State!, new NativePacePlanner());
@@ -135,7 +132,6 @@ public sealed class CommuteTimingTests
         var planner = new NativePacePlanner();
         var engine = new CitySimulator(state, planner); Prepare(engine);
         double departure = c.NextEventMinute;
-        // Rebuild from a saved resting event to insert a lifecycle event after preparation.
         c.LastEmploymentCheckDay--;
         c.NextEventMinute = engine.State.Minute + 1;
         engine = new CitySimulator(state, planner);
@@ -232,7 +228,7 @@ public sealed class CommuteTimingTests
         Assert.Equal("home", c.PlaceId); Assert.Equal(CitizenPhase.AtPlace, c.Phase);
         Assert.Equal(1, c.MissedActivities); Assert.Equal(2, c.CompletedJourneys);
         Assert.Equal(shiftEnd, c.ActivityUntilMinute);
-        Assert.Equal(3, planner.Calls); // Estimate, fresh outbound route, return home.
+        Assert.Equal(3, planner.Calls);
         var read = SaveWire.Read(SaveCodec.Write(state)); Assert.Equal(SaveReadStatus.Loaded, read.Status);
         engine = new CitySimulator(read.State!, planner); engine.AdvanceTo(shiftEnd - 1);
         c = engine.State.Citizens[0];
@@ -271,7 +267,7 @@ public sealed class CommuteTimingTests
             engine.AdvanceTo(shift.EndsAt + 120);
         }
         var outbound = planner.Queries.Where(query => query.From == "home").ToArray();
-        Assert.Equal(6, outbound.Length); // One first estimate plus five fresh departures.
+        Assert.Equal(6, outbound.Length);
         Assert.Equal(shifts.Select(shift => shift.StartsAt - 120), outbound.Skip(1).Select(query => query.At));
         Assert.Equal(5, planner.Queries.Count(query => query.To == "home"));
         Assert.Equal(10, person.CompletedJourneys); Assert.Equal(0, person.MissedActivities);

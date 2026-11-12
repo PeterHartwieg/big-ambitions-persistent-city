@@ -5,22 +5,16 @@ namespace PersistentCity.Core
 {
     public enum ResidentIncomeSource { ExternalEmployment, ExternalPension, ExternalSupport }
 
-    /// <summary>GR-1: the drawn daily essentials (<see cref="ResidentBudget.DailyEssentialsCents"/>) cut into categories.
-    /// The draw and its total are unchanged; a category that has become a need (<see cref="EssentialNeeds"/>) is bought
-    /// through the wallet by its own spender and is no longer deducted at the daily posting, so it is never paid twice.</summary>
     public static class HouseholdEssentials
     {
         public const string Utilities = "utilities", HouseholdGoods = "household-goods", Clothing = "clothing", PersonalCare = "personal-care";
-        // Whole percent of the daily essentials; the last row takes the rounding remainder, so the shares sum exactly.
         private static readonly (string Category, int Percent)[] Shares =
             { (Utilities, 40), (HouseholdGoods, 25), (Clothing, 20), (PersonalCare, 15) };
         private static readonly string[] Names = { Utilities, HouseholdGoods, Clothing, PersonalCare };
         public static IReadOnlyList<string> Categories => Names;
         public static bool Known(string category) => Array.IndexOf(Names, category) >= 0;
-        /// <summary>Utilities are billed, never bought at a business, so they cannot become a need.</summary>
         public static bool CanBecomeNeed(string category) => Known(category) && category != Utilities;
 
-        /// <summary>This category's whole cents of the daily essentials.</summary>
         public static int Share(int dailyEssentialsCents, string category)
         {
             if (dailyEssentialsCents < 0) throw new ArgumentOutOfRangeException(nameof(dailyEssentialsCents));
@@ -34,7 +28,6 @@ namespace PersistentCity.Core
             throw new ArgumentException("Unknown essential category: " + category, nameof(category));
         }
 
-        /// <summary>The part of the daily essentials the posting still deducts.</summary>
         public static int Payable(int dailyEssentialsCents, EssentialNeeds? needs)
         {
             if (needs == null || needs.Count == 0) return dailyEssentialsCents;
@@ -44,8 +37,6 @@ namespace PersistentCity.Core
         }
     }
 
-    /// <summary>GR-1: the essential categories that are needs, bought by their own spender from the person's wallet.
-    /// Empty until the need model (GR-3) names one.</summary>
     public sealed class EssentialNeeds
     {
         private readonly List<string> categories = new List<string>();
@@ -65,15 +56,8 @@ namespace PersistentCity.Core
         }
     }
 
-    /// <summary>A person's wallet (GR-1: owned by <see cref="CitizenState.Wallet"/>; food is one spender of it).
-    /// Individual budget unit, not an inferred family. Policy rates are whole cents;
-    /// ledger amounts are exact <see cref="Money"/>.
-    /// Income and essentials cross an explicit outside-economy boundary. Native business
-    /// payroll is not credited a second time and native retail remains the sale authority.</summary>
     public sealed class ResidentBudget
     {
-        // F6c: transient city totals for the read-only food panel; never saved. Each setter reports the exact
-        // change so the panel needs no consumer scan. Unattached budgets (tests, codecs, copies) pay one null check.
         internal FoodMoneyCounters? counters;
         private bool visitorEndowment;
         internal bool VisitorEndowment
@@ -139,7 +123,6 @@ namespace PersistentCity.Core
                 DailyHousingCents = housing, DailyEssentialsCents = Draw(id, "essentials", seed, 1500, 2500),
                 DailyHomeFoodCents = Draw(id, "home-food", seed, 900, 1500),
                 OpeningBalance = Money.FromCents(income) * 7, Balance = Money.FromCents(income) * 7, NextPostingMinute = minute };
-            // Opening savings are an explicit endowment, not a first earned wage.
             return budget;
         }
 
@@ -156,38 +139,26 @@ namespace PersistentCity.Core
                 CheckCash(budget);
                 budget.VisitorEndowment = true;
                 budget.LastPostedDay = day; budget.NextPostingMinute = (day + 1) * 1440.0;
-                return; // endowment pays purchases; no city housing, essentials or daily outside allowance
+                return;
             }
-            // Refresh only the next unposted wage. Earlier postings, savings and holds
-            // retain their exact amounts through job transitions and reloads.
             var source = person != null ? IncomeSource(person) : budget.IncomeSource;
             int dailyIncome = person != null ? IncomeAmount(budget.BaseIncomeCents, source) : budget.DailyIncomeCents;
-            // Compute every change, including the wage refresh, before assigning any: an overflow
-            // leaves the budget unchanged.
-            // A visitor's carried outside employer has no logical city shift to accrue. Keep that
-            // existing daily income until an employment outcome replaces it; city jobs earn only shifts.
             bool carriedOutsideEmployment = person?.Visitor != null
                 && person.VisitorCarried == ResidentIncomeSource.ExternalEmployment && !EmploymentWages.Eligible(person);
             var income = source == ResidentIncomeSource.ExternalEmployment && !carriedOutsideEmployment
                 ? Money.Zero : Money.FromCents(dailyIncome);
             var balance = budget.Balance + income;
             var received = budget.IncomeReceived + income;
-            // Fund a real-cost subsistence basket before discretionary spending. A failed
-            // payment does not provision food and never turns a declined shop visit into a meal.
             var homeFood = Money.FromCents(budget.DailyHomeFoodCents);
             bool fed = balance >= homeFood;
             var homeFoodPaid = fed ? budget.HomeFoodPaid + homeFood : budget.HomeFoodPaid;
             if (fed) balance -= homeFood;
             int unfed = fed ? budget.DaysWithoutHomeFood : checked(budget.DaysWithoutHomeFood + 1);
-            // Essentials that are needs are paid by their own spender, not here (GR-1 re-cut).
             var required = budget.Arrears + Money.FromCents(budget.DailyHousingCents)
                 + Money.FromCents(HouseholdEssentials.Payable(budget.DailyEssentialsCents, needs));
             var paid = Money.Min(balance, required);
             var essentials = budget.EssentialsPaid + paid;
             balance -= paid;
-            // The save contract also sums the conservation totals (CashConserved), which can overflow
-            // when every amount fits. Posting adds the income to both sides of a conserved ledger, so
-            // the funded total bounds the accounted one.
             _ = budget.OpeningBalance + budget.Ledger.EmploymentIncome + received;
             CheckCash(budget);
             budget.IncomeSource = source; budget.DailyIncomeCents = dailyIncome;
@@ -199,19 +170,12 @@ namespace PersistentCity.Core
             CheckCash(budget);
         }
 
-        /// <summary>The save contract's cash conservation: opening savings plus income received equals
-        /// cash plus every payment and hold. Both totals are checked, so a total beyond one amount's
-        /// range throws <see cref="OverflowException"/> even when every component fits. Holds,
-        /// confirmations and refunds move money between accounted amounts and leave both totals unchanged.</summary>
         public static bool CashConserved(ResidentBudget b)
             => b.OpeningBalance + b.Ledger.EmploymentIncome + b.IncomeReceived == b.Balance + b.EssentialsPaid + b.HomeFoodPaid + b.PreparedFoodSpent + b.ExternalFoodSpent + b.Ledger.Discretionary + b.HeldPurchase;
 
         internal static void CheckCash(ResidentBudget budget)
         { if (!CashConserved(budget)) throw new InvalidOperationException("Household cash is not conserved."); }
 
-        // A schema-27 visitor's source is its own (F5b PersonIncome.Select over its Employment and carried outside
-        // employer), never an anchor's. F5e: a resident's comes from its own Employment (built from DayPlaceId) through
-        // the same rule, which equals today's resident rule; a Study enrolment never gives employment income.
         private static ResidentIncomeSource IncomeSource(CitizenState person)
             => person.Visitor != null ? PersonIncome.Select(person.Identity.Persona, person.Identity.Age, person.Visitor.Employment, person.VisitorCarried)
             : PersonIncome.ForDayPlace(person.Identity.Persona, person.Identity.Age, person.DayPlaceId);
@@ -226,8 +190,6 @@ namespace PersistentCity.Core
         public static Money SpendingLimit(ResidentBudget budget)
         {
             if (budget.HeldPurchase != Money.Zero || budget.Arrears != Money.Zero) return Money.Zero;
-            // Keep the next day's basic bill available. Savings can fund a considered purchase,
-            // but replenishing a daily allowance never creates spendable money.
             var reserve = SpendingReserve(budget);
             return Money.Min(Money.FromCents(1000000), Money.Max(Money.Zero, budget.Balance - reserve));
         }
@@ -242,8 +204,6 @@ namespace PersistentCity.Core
                 + (20 + intent.EatingMinutes) * consumer.ValueOfTimeCentsPerMinute * intent.TimeCostMultiplier));
         }
 
-        /// <summary>Hold funds only if the hold and its later confirmation both fit the money unit,
-        /// so neither can fail after native checkout. A refused hold changes nothing.</summary>
         public static bool HoldPurchase(ResidentBudget budget, Money price)
         {
             if (price <= Money.Zero || price > SpendingLimit(budget)
@@ -251,7 +211,6 @@ namespace PersistentCity.Core
             CheckCash(budget);
             budget.Balance -= price; budget.HeldPurchase = price; CheckCash(budget); return true;
         }
-        /// <summary>F6j: return the unsold part of a held ticket before confirming the rest.</summary>
         public static void ReleasePart(ResidentBudget budget, Money amount)
         {
             if (amount == Money.Zero) return;

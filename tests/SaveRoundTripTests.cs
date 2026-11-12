@@ -9,12 +9,6 @@ using Xunit.Abstractions;
 
 namespace PersistentCity.Tests;
 
-/// <summary>
-/// P-A single-pass save: one writer straight from the snapshot inside the save callback, one strict reader straight from
-/// the save string. Round trips at the representative 957-resident city (1,914 persons) and at 3,000 persons; corrupt,
-/// truncated, other-schema and retired compact payloads are refused through every entry point and never overwritten;
-/// the wallets the payload carries and the native receipts beside it come from one capture.
-/// </summary>
 public sealed class SaveRoundTripTests
 {
     private readonly ITestOutputHelper output;
@@ -22,12 +16,8 @@ public sealed class SaveRoundTripTests
 
     private const string ReceiptKey = "persistentcity:food-sale-v1:round-trip";
 
-    /// <summary>The 1-resident city (<see cref="CurrentSchemaOnlyTests.City"/>) as the F7d columnar writer stored it before
-    /// P-A (the reader corpus's old <c>minimal.json</c>). Development builds wrote this format at schema 1; it is refused as
-    /// an older development city.</summary>
     private static string RetiredCompactMinimal() => File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "ReaderCorpus", "retired-pcc-c-minimal.json"));
 
-    // ---- Round trip ----
 
     [Theory]
     [InlineData("representative-957x2", 1914)]
@@ -51,15 +41,12 @@ public sealed class SaveRoundTripTests
         Assert.Equal(state.Citizens.Select(c => c.Identity.Id), loaded.Citizens.Select(c => c.Identity.Id));
         Assert.Equal(state.Visitors.Select(v => v.Id), loaded.Visitors.Select(v => v.Id));
         Assert.Equal(Wallets(state), Wallets(loaded));
-        // Read then write is byte-identical, through the direct writer and through a snapshot of the loaded city.
         Assert.Equal(payload, SaveCodec.Write(loaded));
         Assert.Equal(payload, SaveCodec.Encode(SaveCodec.Capture(loaded)));
-        // The strict read interns every string value once per distinct text.
         var homes = new HashSet<string>(ReferenceEqualityComparer.Instance);
         foreach (var c in loaded.Citizens) homes.Add(c.HomeId);
         Assert.Equal(loaded.Citizens.Select(c => c.HomeId).Distinct(StringComparer.Ordinal).Count(), homes.Count);
 
-        // Capture, validation and encoding are timed separately; the phases account for the whole write.
         foreach (var phase in new[] { SaveCostPhase.Synchronize, SaveCostPhase.Capture, SaveCostPhase.Validate, SaveCostPhase.Encode })
             Assert.True(cost.Covered(phase), phase + " not timed");
         Assert.Equal(cost.TotalTicks, Enum.GetValues<SaveCostPhase>().Sum(p => cost.PhaseTicks(p)));
@@ -83,7 +70,6 @@ public sealed class SaveRoundTripTests
         Assert.Equal("kept", data["other"]);
     }
 
-    // ---- Refusal without overwrite ----
 
     public static IEnumerable<object[]> Corruptions() => new[]
     {
@@ -128,7 +114,6 @@ public sealed class SaveRoundTripTests
     {
         string payload = RetiredCompactMinimal();
         Assert.StartsWith("{\"Schema\":1,\"f\":\"pcc-c\",", payload);
-        // The native authority bootstrap treats it as an older development city, so it takes no food ownership.
         Assert.Equal(CityState.CurrentSchema, SaveCodec.DevelopmentSchemaOf(payload));
         var read = RefusedAndKept(payload, SaveReadStatus.DevelopmentSchema);
         Assert.Contains("start a new city", read.Error);
@@ -144,14 +129,7 @@ public sealed class SaveRoundTripTests
         Assert.Contains("input size limit", read.Error);
     }
 
-    // ---- One capture ----
 
-    /// <summary>
-    /// Inside the save callback the city is captured once and encoded from that capture on the same thread. A sale that
-    /// paid before the callback is in both the wallet the payload carries and the native receipt beside it; a sale after
-    /// the callback returned is in neither: the published payload never changes and its wallet still matches the receipts
-    /// the callback published with it.
-    /// </summary>
     [Fact]
     public void WalletsAndNativeReceiptsComeFromOneCapture()
     {
@@ -178,7 +156,6 @@ public sealed class SaveRoundTripTests
         Assert.Equal(spent, saved.PreparedFoodSpent);
         Assert.Equal(wallet.Balance + price, saved.Balance);
 
-        // The same holds for an explicit snapshot: encoding reads the capture, never the live wallet.
         var snapshot = SaveCodec.Capture(state);
         Money captured = wallet.Balance;
         Sale(data, customer.ResidentId, 3, wallet, price);
@@ -186,7 +163,6 @@ public sealed class SaveRoundTripTests
         Assert.Equal(wallet.Balance + price, captured);
     }
 
-    /// <summary>One paid native sale: the receipt is confirmed in the native save data and the wallet pays the price.</summary>
     private static ResidentMeal Sale(IDictionary<string, string> data, string resident, int day, ResidentBudget wallet, Money price)
     {
         var meal = new ResidentMeal
@@ -217,8 +193,6 @@ public sealed class SaveRoundTripTests
         return text.Substring(0, at) + replace + text.Substring(at + find.Length);
     }
 
-    /// <summary>The product refuses <paramref name="payload"/> through the codec, the store and the session, and keeps the
-    /// payload and every other key unchanged.</summary>
     private static SaveReadResult RefusedAndKept(string payload, SaveReadStatus status)
     {
         var replacement = CurrentSchemaOnlyTests.City();

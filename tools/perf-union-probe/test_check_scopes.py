@@ -1,4 +1,3 @@
-"""Offline tests for the F4b union probe tooling: check_scopes.py, the expected list and build_probe.py."""
 import json
 import os
 from pathlib import Path
@@ -14,7 +13,6 @@ REPO = MODULE.parents[1]
 sys.path.insert(0, str(MODULE))
 import check_scopes  # noqa: E402
 
-# The F4 plan's section 2 inventory ("Native hooks PC installs", docs/plans/f4-perf-gate.md), as patch class and method.
 SECTION_2 = {
     ('NativeCityClock', 'TickPrefix'), ('NativeCityClock', 'AccountingPrefix'), ('NativeCityClock', 'RidePrefix'), ('NativeCityClock', 'RidePostfix'),
     ('NativeTravelPace', 'ObserveTickPostfix'),
@@ -27,7 +25,6 @@ SECTION_2 = {
     ('ResidentInspector', 'UiRaycastPrefix'),
     ('ResearchBilling', 'RunDailyPostfix'), ('ResearchAgencyDialog', 'CampaignSettingsPostfix'),
 }
-# Section 2 entry points other than patches, and Decision 5's component list (plus F2e's two hold call sites).
 SECTION_2_MESSAGES = {('PopulationRuntime', 'Update'), ('PopulationRuntime', 'OnGUI'),
                       ('PhysicalPedestrianCrosswalk', 'OnTriggerEnter'), ('PhysicalPedestrianCrosswalk', 'OnTriggerExit')}
 DECISION_5_COMPONENTS = {'AdvancePopulation', 'Prepare', 'RefreshOptionalStops', 'RefreshTrafficClosures', 'Update', 'UpdateInspector',
@@ -36,7 +33,6 @@ F2E_COMPONENTS = {'ApplyHoldReplay', 'ObservePlayerContact'}
 
 
 class SourceCopy:
-    """A temporary copy of the scanned source folders, edited per test."""
 
     def __enter__(self):
         self.root = Path(tempfile.mkdtemp(prefix='f4b-scopes-'))
@@ -63,8 +59,6 @@ class SourceCopy:
         return check_scopes.check(self.root)
 
 
-# GR-9: the transpiler-reference cases were removed with the borrowed-car transpilers; Persistent City installs no
-# transpiler, so TranspilerHelpers is empty and no transpiler body is pinned.
 class CheckScopesTests(unittest.TestCase):
     def test_passes_on_base(self):
         self.assertEqual(check_scopes.check(REPO), [])
@@ -90,7 +84,6 @@ class CheckScopesTests(unittest.TestCase):
         self.assertTrue(any('ExtraPostfix' in p and 'not in ScopeInventory' in p for p in problems), problems)
 
     def test_fails_when_a_callback_is_reused_on_another_target(self):
-        # Sol-r1-3: same owner, kind and callback, different native target.
         with SourceCopy() as src:
             src.edit('Runtime/StationaryCrowds.cs', 'harmony.Patch(spawn, prefix: new HarmonyMethod(typeof(StationaryCrowds), nameof(SpawnPrefix)));',
                      'harmony.Patch(spawn, prefix: new HarmonyMethod(typeof(StationaryCrowds), nameof(SpawnPrefix)));\n'
@@ -110,10 +103,10 @@ class CheckScopesTests(unittest.TestCase):
     def test_fails_when_an_existing_target_changes(self):
         cases = [
             ('Runtime/StationaryCrowds.cs', 'AccessTools.Method(typeof(StationaryAiSpawner), "Spawn"',
-             'AccessTools.Method(typeof(StationaryAiSpawner), "SpawnAll"', 'StationaryAiSpawner.SpawnAll'),  # field-initialised variable
+             'AccessTools.Method(typeof(StationaryAiSpawner), "SpawnAll"', 'StationaryAiSpawner.SpawnAll'),
             ('Runtime/NativeFoodOwnership.cs', 'Patch(typeof(BuildingRegistration), "Reset", nameof(ResetRegistration));',
-             'Patch(typeof(BuildingRegistration), "Clear", nameof(ResetRegistration));', 'BuildingRegistration.Clear'),  # helper call
-            ('Runtime/ResearchBilling.cs', 'GetMethod("RunDaily"', 'GetMethod("RunWeekly"', 'MarketingHelper.RunWeekly'),  # out parameter
+             'Patch(typeof(BuildingRegistration), "Clear", nameof(ResetRegistration));', 'BuildingRegistration.Clear'),
+            ('Runtime/ResearchBilling.cs', 'GetMethod("RunDaily"', 'GetMethod("RunWeekly"', 'MarketingHelper.RunWeekly'),
         ]
         for rel, old, new, expected in cases:
             with self.subTest(expected=expected), SourceCopy() as src:
@@ -128,7 +121,6 @@ class CheckScopesTests(unittest.TestCase):
         self.assertTrue(any('cannot resolve the native target' in p for p in problems), problems)
 
     def test_fails_when_the_dynamic_target_is_not_the_table_binding(self):
-        # Sol-r2-2: the food-contract postfixes take their targets from the table only through Bind(hook, ...).
         cases = [
             ('harmony.Patch(method, postfix:', 'harmony.Patch(AccessTools.Method(typeof(GameManager), "RunMainGameTick"), postfix:'),
             ('var method = Bind(hook, out var failure);', 'var method = Bind(hook, out var failure); var other = method;\n                method = other;'),
@@ -142,7 +134,6 @@ class CheckScopesTests(unittest.TestCase):
                 self.assertTrue(any('does not register exactly the table binding' in p for p in problems), problems)
 
     def test_fails_on_a_conditional_dynamic_target(self):
-        # Sol-r3-1: the initializer must be exactly one Bind(hook, ...) call, with nothing after it.
         with SourceCopy() as src:
             src.edit('Runtime/LoadedCatalogueLifecycleMembers.cs', 'var method = Bind(hook, out var failure);',
                      'var method = Bind(hook, out var failure) == null ? null : AccessTools.Method(typeof(GameManager), "RunMainGameTick");')
@@ -150,7 +141,6 @@ class CheckScopesTests(unittest.TestCase):
         self.assertTrue(any('does not register exactly the table binding' in p for p in problems), problems)
 
     def test_fails_on_a_second_registration_inside_a_helper(self):
-        # Sol-r2-2: a helper whose body registers twice would be recorded once per call site.
         with SourceCopy() as src:
             src.edit('Runtime/NativeFoodOwnership.cs',
                      'private static void Patch(Type type, string method, string prefix) => patches.Patch(AccessTools.Method(type, method),',
@@ -327,7 +317,7 @@ class BuildManifestTests(unittest.TestCase):
         self.assertEqual(first['output']['sha256'], second['output']['sha256'])
         self.assertEqual(first['expected_scope_hash'], check_scopes.inventory_hash())
         self.assertFalse(first['packaged'])
-        self.assertNotIn(str(REPO), first_text)  # names and hashes only, no machine paths
+        self.assertNotIn(str(REPO), first_text)
         a = (REPO / 'build/perf-union-probe-test/a/PerfUnionProbe.dll').read_bytes()
         b = (REPO / 'build/perf-union-probe-test/b/PerfUnionProbe.dll').read_bytes()
         self.assertEqual(a, b)

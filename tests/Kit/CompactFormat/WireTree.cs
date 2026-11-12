@@ -5,14 +5,12 @@ using System.Text;
 
 namespace PersistentCity.Tools.CompactFormat
 {
-    /// <summary>A JSON number kept as its exact token text, so no double or integer is ever reformatted.</summary>
     public sealed class WireNumber
     {
         public WireNumber(string text) { Text = text; }
         public string Text { get; }
     }
 
-    /// <summary>A JSON object with its exact key order. Keys may be a shared array; values are never shared with Keys.</summary>
     public sealed class WireObject
     {
         public WireObject(string[] keys, object?[] values) { Keys = keys; Values = values; }
@@ -20,17 +18,11 @@ namespace PersistentCity.Tools.CompactFormat
         public object?[] Values { get; }
     }
 
-    /// <summary>
-    /// F7p stand-in for the F7c save snapshot: a detached, exact tree of the writer-25 payload. Values are
-    /// null, a boxed bool, <see cref="WireNumber"/>, string, <see cref="WireObject"/> or object?[] (array).
-    /// Offline prototype only; nothing here is wired into Core, Persistence or Runtime.
-    /// </summary>
     public static class WireTree
     {
         public static readonly object True = true, False = false;
         public const int MaxDepth = 64;
 
-        /// <summary>Parse strict JSON. With <paramref name="internKeys"/> every property name is one shared instance.</summary>
         public static object? Parse(string json, bool internKeys = true)
         {
             var parser = new Parser(json, internKeys);
@@ -41,7 +33,6 @@ namespace PersistentCity.Tools.CompactFormat
             return value;
         }
 
-        /// <summary>Detached deep copy: every object and array is new; immutable leaves and key arrays are shared.</summary>
         public static object? Clone(object? value)
         {
             switch (value)
@@ -58,7 +49,6 @@ namespace PersistentCity.Tools.CompactFormat
             }
         }
 
-        /// <summary>Writer-25 spelling: no whitespace, Newtonsoft default string escaping, number text unchanged.</summary>
         public static string Write(object? root, int capacity = 1024)
         {
             var builder = new StringBuilder(capacity);
@@ -92,7 +82,6 @@ namespace PersistentCity.Tools.CompactFormat
             }
         }
 
-        /// <summary>Newtonsoft StringEscapeHandling.Default for double-quoted strings (checked against JsonConvert by test).</summary>
         public static void WriteString(StringBuilder output, string value)
         {
             output.Append('"');
@@ -117,7 +106,6 @@ namespace PersistentCity.Tools.CompactFormat
 
         private static char Hex(int n) => (char)(n <= 9 ? '0' + n : 'a' + n - 10);
 
-        /// <summary>Field-by-field equality: kinds, key order, exact number text, exact strings, element order.</summary>
         public static bool DeepEqual(object? a, object? b, out string difference)
         {
             var trail = new List<string>();
@@ -127,7 +115,6 @@ namespace PersistentCity.Tools.CompactFormat
             return false;
         }
 
-        // The failing path is built only while unwinding from a difference, so equal trees allocate nothing per field.
         private static bool Equal(object? a, object? b, List<string> trail)
         {
             switch (a)
@@ -165,7 +152,6 @@ namespace PersistentCity.Tools.CompactFormat
             WireObject o => "object(" + o.Keys.Length + ")", object?[] a => "array(" + a.Length + ")", _ => v.GetType().Name,
         };
 
-        /// <summary>Counts of leaves compared by <see cref="DeepEqual"/>, reported with every round-trip.</summary>
         public sealed class LeafCounts
         {
             public long Objects, Arrays, Strings, Numbers, Bools, Nulls;

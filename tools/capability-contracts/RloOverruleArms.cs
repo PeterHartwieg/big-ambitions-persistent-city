@@ -5,8 +5,6 @@ using AI.Customers.CustomerEntries;
 using PersistentCity.Core;
 using PersistentCity.Runtime;
 
-// RLO 1.0 overrule (review Sol-r1-4): the real HookConflicts calculator scan on the stub factory, and the checkout
-// decision of one city load with the Living population switch readable and unreadable.
 internal sealed class RloRetailCalculator : CustomerEntriesCalculatorRetail { }
 
 internal static partial class Program
@@ -18,7 +16,7 @@ internal static partial class Program
         try
         {
             Check(HookConflicts.CalculatorReplacements().Count == 0, "native calculators: no replacement");
-            retail.SetValue(null, new RloRetailCalculator()); // as RLO's PopulationGame.InstallCalculators assigns its subclass
+            retail.SetValue(null, new RloRetailCalculator());
             var found = HookConflicts.CalculatorReplacements();
             Check(found.Count == 1 && found[0].Target == "CustomerEntriesCalculatorFactory.CustomerEntriesCalculatorRetail"
                 && found[0].NativeType == "CustomerEntriesCalculatorRetail" && found[0].ReplacementType == typeof(RloRetailCalculator).FullName,

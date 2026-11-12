@@ -24,8 +24,6 @@ namespace PersistentCity.Runtime
         public string TopologyId { get; }
     }
 
-    /// <summary>One native car model the mod can copy: its prefab, the root-to-front-axle offset and its size, read from a
-    /// member of the native pool without activating, moving or keeping it.</summary>
     internal sealed class OwnCarModel
     {
         internal OwnCarModel(string name, GameObject prefab, Vector3 markerOffset, float length, float width, float height)
@@ -37,9 +35,6 @@ namespace PersistentCity.Runtime
         internal bool Refused;
     }
 
-    /// <summary>A copy of a native car prefab with every script removed except the paint component. Its rigidbody is
-    /// kinematic and its colliders are obstacles to native traffic and the player. Owned by the mod alone and reused
-    /// through its own pool; no native pool slot, traffic index or vehicle save entry is involved.</summary>
     internal sealed class OwnCarInstance
     {
         internal OwnCarInstance(OwnCarModel model, GameObject root)
@@ -54,7 +49,6 @@ namespace PersistentCity.Runtime
         internal readonly CarFeatures[] Features;
         internal bool Live => Root != null;
 
-        /// <summary>F2d Q3 fade: whether every renderer can show a base-colour alpha (<see cref="WalkerFollow.MaterialCanFade"/>).</summary>
         internal bool CanFade => canFade ??= ProbeFade();
         private bool? canFade;
         private bool ProbeFade()
@@ -100,8 +94,6 @@ namespace PersistentCity.Runtime
         private int onScreenFrame = -1;
         private bool onScreen;
 
-        /// <summary>Scale the alpha of every renderer's base colour, starting from the colour it shows now (its property
-        /// block's, else its material's). 1 puts each starting colour back, so the paint set at acquisition is kept.</summary>
         internal void SetFade(float alpha)
         {
             alpha = Mathf.Clamp01(alpha);
@@ -152,7 +144,6 @@ namespace PersistentCity.Runtime
         private readonly List<(int Id, Color Colour)> originals = new List<(int, Color)>();
         private MaterialPropertyBlock? block;
 
-        /// <summary>Put the root so the front axle stands on <paramref name="front"/>, facing <paramref name="rotation"/>.</summary>
         internal void Place(Position front, Quaternion rotation)
         {
             var forward = rotation * Vector3.forward;
@@ -161,9 +152,6 @@ namespace PersistentCity.Runtime
         }
     }
 
-    /// <summary>GR-9 (G7): a resident's car on the road, an own kinematic car. It drives the committed road nodes one
-    /// segment at a time under the follower's command limit and reports each corner it reaches, as the borrowed native
-    /// car's reached marker did.</summary>
     internal sealed class PhysicalVehicleBody
     {
         internal PhysicalVehicleBody(string id, string citizenId, long generation, OwnCarInstance instance, string topology, List<int> path,
@@ -174,7 +162,6 @@ namespace PersistentCity.Runtime
         }
         internal readonly OwnCarInstance Instance;
         internal readonly string Topology;
-        /// <summary>The committed road nodes still ahead; Path[0] is the corner at the end of the current segment.</summary>
         internal readonly List<int> Path;
         internal Position From, To;
         internal double Length, Along, SpeedValue;
@@ -204,17 +191,14 @@ namespace PersistentCity.Runtime
         public string CitizenId { get; }
         public long Generation { get; }
         public bool Valid => !Released && Instance.Live && Instance.Root.activeInHierarchy;
-        /// <summary>The front axle, on the current segment.</summary>
         public Position Position => Length <= 1e-9 ? To : Position.Lerp(From, To, Math.Min(1, Along / Length));
         public bool RouteFinished { get; internal set; }
-        /// <summary>F2d: speed along the road in metres per second; 0 when not valid.</summary>
         public double Speed => Valid ? SpeedValue : 0;
         public bool OnScreen => Valid && Instance.OnScreen;
         public bool CanFade => Valid && Instance.CanFade;
         public void SetFade(float alpha) { if (Instance.Live) Instance.SetFade(alpha); }
     }
 
-    /// <summary>A parked car shown as an object at its saved curb position.</summary>
     internal sealed class ParkedCarBody
     {
         internal ParkedCarBody(string carId, OwnCarInstance instance, Position at) { CarId = carId; Instance = instance; At = at; }
@@ -224,13 +208,6 @@ namespace PersistentCity.Runtime
         internal double FadeIn, FadeOut = double.NaN;
     }
 
-    /// <summary>
-    /// GR-9 (G7): the mod's own cars. Nearby residents drive own kinematic copies of native car models; their parked cars
-    /// stand as objects. No native car is borrowed and no Harmony patch is installed. Ordinary native random traffic is
-    /// held back with Gley's public group-share call (groups made only of ordinary cars get no share; groups with taxis or
-    /// service cars keep theirs) and leftover ordinary cars of those groups are removed off screen; everything is put
-    /// back on disable.
-    /// </summary>
     internal sealed class PhysicalVehicles : IDisposable
     {
         private readonly Func<string, int, Waypoint?> resolve;
@@ -245,7 +222,6 @@ namespace PersistentCity.Runtime
         private string recoveryError = "";
         private bool active, disposed;
         private int retireCursor;
-        // Native ambient hold-back: what native set, what this adapter applied, and the native density when we had to lower it.
         private int[]? nativeShares, appliedShares;
         private int? nativeDensity;
         private readonly HashSet<VehicleGroupType> heldGroups = new HashSet<VehicleGroupType>();
@@ -260,10 +236,8 @@ namespace PersistentCity.Runtime
         public PhysicalVehicles(Func<string, int, Waypoint?> resolveNode, int max = 24)
         {
             resolve = resolveNode; maximum = Math.Max(1, Math.Min(64, max));
-            // Moving plus parked cars; at most two new copies a frame (Instantiate and script removal are not cheap).
             pool = new OwnCarPool<OwnCarInstance>(maximum * 2, i => i.Live, i => UnityEngine.Object.Destroy(i.Root));
         }
-        /// <summary>The own-car holder: colliders under it are the mod's own cars, which the route planner ignores.</summary>
         internal static Transform? OwnHolder { get; private set; }
         internal static bool IsOwnCar(Collider? collider) => collider != null && OwnHolder != null && collider.transform.IsChildOf(OwnHolder);
 
@@ -300,15 +274,13 @@ namespace PersistentCity.Runtime
             UnityEngine.Object.DontDestroyOnLoad(holder);
             OwnHolder = holder.transform;
             HoldNativeAmbient(pool);
-            PrimeLoads(pool); // review Sol-r4-1: the leftovers are fixed now, so a load later in this frame is caught at LateUpdate
-            // Review Sol-r6-1: every native add (LoadVehicle raises it after activation) marks its slot a load; dropped on release.
+            PrimeLoads(pool);
             if (onAdded == null) { onAdded = OnNativeVehicleAdded; DensityEvents.onVehicleAdded += onAdded; }
             RloOverrules.TrafficHeld = heldGroups.Count != 0 || nativeDensity.HasValue;
             active = true; return true;
         }
         private static bool Size(float value) => !float.IsNaN(value) && !float.IsInfinity(value) && value > 0;
 
-        // Groups whose every pool member is an ordinary car get share 0; a group with a taxi, service or foreign car keeps its share.
         private void HoldNativeAmbient(List<VehicleComponent> pool)
         {
             var manager = TrafficManager.Instance;
@@ -335,7 +307,6 @@ namespace PersistentCity.Runtime
             }
             else
             {
-                // Every group is ordinary: an empty group pool would leave native nothing to draw. Lower the density instead.
                 appliedShares = null;
                 if (DensityManagerField!.GetValue(manager) is DensityManager density)
                 { nativeDensity = (int)DensityField!.GetValue(density)!; Manager.SetTrafficDensity(0); }
@@ -347,7 +318,6 @@ namespace PersistentCity.Runtime
             if (appliedShares == null || Time.frameCount % 60 != 0) return;
             var traffic = TrafficVehiclesField!.GetValue(TrafficManager.Instance) as TrafficVehicles;
             if (traffic == null || !(SharesField!.GetValue(traffic) is int[] current) || current.SequenceEqual(appliedShares)) return;
-            // Native set new shares (a time of day or settings change): keep them as native's, hold the ordinary groups again.
             nativeShares = (int[])current.Clone();
             var applied = (int[])current.Clone();
             foreach (var group in heldGroups) if ((int)group < applied.Length) applied[(int)group] = 0;
@@ -373,7 +343,6 @@ namespace PersistentCity.Runtime
         internal static bool RandomAmbient(VehicleComponent vehicle)
         {
             if (vehicle == null || vehicle.prefab == null) return false;
-            // Component ownership, not model names: a service or taxi model is never copied or held back.
             return vehicle.GetComponentInChildren<TaxiController>(true) == null
                 && vehicle.GetComponentInChildren<PrivateDriverVehicle>(true) == null
                 && vehicle.GetComponentInChildren<VehicleController>(true) == null
@@ -422,7 +391,6 @@ namespace PersistentCity.Runtime
             float fraction = Vector3.Dot(offset, segment) / segment.sqrMagnitude;
             if (fraction < -0.001f || fraction > 1.001f || (offset - segment * fraction).sqrMagnitude > 0.25f) return false;
             LastAdmissionStage = "model catalogue";
-            // F2d: derived from the stable car ID (or a saved assignment) and never written back (E1).
             if (!CarAppearance.TryModel(citizen.Car, () => modelNames, out string modelId) || !models.TryGetValue(modelId, out var model) || model.Refused) return false;
             LastAdmissionStage = "junction rear clearance";
             if (!PhysicalRoadAdmission.Allows(sample.AdmissionBoundaries, sample.RouteProgress, model.Length)) return false;
@@ -436,8 +404,6 @@ namespace PersistentCity.Runtime
                 Math.Max(0.3f, model.Height / 2f - 0.15f), Math.Max(1f, model.Length + Math.Abs(markerOffset.z)));
             int mask = LayerMask.GetMask("Vehicles", "AiVehicles", "PlayerVehicles", "Obstacles", "Default");
             LastAdmissionStage = "spawn obstruction";
-            // The resident's own parked car is not an obstruction: it is out of the check, and it leaves (fading where
-            // seen) only once the driving car stands on the road.
             parked.TryGetValue(citizen.Car.Id, out var standing);
             bool blocked;
             if (standing != null) standing.Instance.Root.SetActive(false);
@@ -473,8 +439,6 @@ namespace PersistentCity.Runtime
             }
         }
 
-        /// <summary>F2d Decision 6: whether the native waypoint at the car's next corner is a stop point now (its light is
-        /// red); null when unknown. Read-only; no signal phase is changed.</summary>
         internal bool? NativeRed(PhysicalVehicleBody body)
         {
             if (!Active || body == null || !body.Valid || body.Path.Count == 0) return null;
@@ -496,8 +460,6 @@ namespace PersistentCity.Runtime
             Return(car.Instance);
         }
 
-        // Own pool (OwnCarPool): an idle copy of the model, else a new copy within capacity and this frame's budget,
-        // evicting another model's idle copy at capacity.
         private OwnCarInstance? Take(OwnCarModel model, int paintSeed)
         {
             if (holder == null) return null;
@@ -524,7 +486,6 @@ namespace PersistentCity.Runtime
 
         private OwnCarInstance? Create(OwnCarModel model)
         {
-            // Copy beneath an inactive parent so no prefab script runs Awake before it is removed.
             var staging = new GameObject("PersistentCity car staging");
             staging.SetActive(false); staging.transform.SetParent(holder!.transform, false);
             GameObject? root = null;
@@ -545,9 +506,6 @@ namespace PersistentCity.Runtime
             finally { UnityEngine.Object.Destroy(staging); }
         }
 
-        /// <summary>Remove every script but the paint component; make bodies kinematic, triggers off, engine sound and
-        /// NavMesh carving off; colliders move to the obstacle layer so native cars brake for them without looking up a
-        /// traffic index. False when a script could not be removed (the model is then never copied again).</summary>
         private static bool Strip(GameObject root)
         {
             for (int pass = 0; pass < 4; pass++)
@@ -568,7 +526,6 @@ namespace PersistentCity.Runtime
             foreach (var obstacle in root.GetComponentsInChildren<UnityEngine.AI.NavMeshObstacle>(true)) obstacle.enabled = false;
             foreach (var behaviour in root.GetComponentsInChildren<Behaviour>(true))
                 if (behaviour != null && behaviour.GetType().Name == "AudioSource") behaviour.enabled = false;
-            // Only collider objects change layer; renderers keep the prefab's layers, so culling and lighting stay native.
             int layer = LayerMask.NameToLayer("Obstacles");
             if (layer >= 0) foreach (var collider in root.GetComponentsInChildren<Collider>(true)) collider.gameObject.layer = layer;
             return true;
@@ -579,8 +536,6 @@ namespace PersistentCity.Runtime
             if (recoveryError.Length != 0) throw new InvalidOperationException("Own car adapter failed: " + LastError);
         }
 
-        /// <summary>Drive every own car one frame under its command limit, fade parked cars, keep native ambient traffic
-        /// held back and retire one leftover ordinary native car off screen.</summary>
         public void Update()
         {
             if (!Active) return;
@@ -601,24 +556,18 @@ namespace PersistentCity.Runtime
             KeepNativeAmbientHeld();
             if (heldGroups.Count == 0 && !nativeDensity.HasValue) return;
             var pool = Manager.GetVehicleList(); if (pool.Count == 0) return;
-            // Review Sol-r2-1: every 30 frames the whole pool is swept, so a car loaded past the shares (RLO's rival pass-by
-            // calls TrafficManager.LoadVehicle directly, out of view) goes before it comes into view; otherwise one car a frame.
             if (Time.frameCount % 30 == 0) { for (int i = 0; i < pool.Count; i++) TryRetire(i, pool[i]); }
             else { int i = retireCursor++ % pool.Count; TryRetire(i, pool[i]); }
         }
 
         private readonly NativeLoadWatch loads = new NativeLoadWatch();
 
-        /// <summary>Reviews Sol-r3-1 and Sol-r4-1, called from LateUpdate: a car of a held group that is not a leftover of
-        /// the hold (NativeLoadWatch) was loaded directly (RLO's rival pass-by) and is retired before it renders. One
-        /// activeInHierarchy and one group read per pool slot a frame, a position read per active car of a held group; the
-        /// preset, ignore-list and script reads only for a car not seen before or a reloaded slot (review Sol-r5-1).</summary>
         public void CatchNewLoads()
         {
             if (!Active || heldGroups.Count == 0 && !nativeDensity.HasValue || !TrafficManager.IsInitialized || !TrafficManager.HasInstance) { loads.Reset(); return; }
             var pool = Manager.GetVehicleList();
             if (!loads.Primed) { PrimeLoads(pool); return; }
-            float seconds = Time.deltaTime; // game time since the last LateUpdate: how far a car can have driven
+            float seconds = Time.deltaTime;
             for (int i = 0; i < pool.Count; i++)
             {
                 var vehicle = pool[i];
@@ -638,7 +587,6 @@ namespace PersistentCity.Runtime
         {
             if (!loads.Primed || !TrafficManager.IsInitialized || !TrafficManager.HasInstance) return;
             var pool = Manager.GetVehicleList();
-            // The event names Gley's vehicle index; the pool lists vehicles by that index, checked before use.
             if (vehicleIndex >= 0 && vehicleIndex < pool.Count && pool[vehicleIndex] != null && pool[vehicleIndex].GetIndex() == vehicleIndex)
             { loads.Added(vehicleIndex); return; }
             for (int i = 0; i < pool.Count; i++) if (pool[i] != null && pool[i].GetIndex() == vehicleIndex) { loads.Added(i); return; }
@@ -657,37 +605,29 @@ namespace PersistentCity.Runtime
         private bool ActiveHeld(VehicleComponent? vehicle) => vehicle != null && vehicle.gameObject.activeInHierarchy
             && (nativeDensity.HasValue || heldGroups.Contains(vehicle.vehicleGroupType));
 
-        // RLO 1.0 overrule (RloOverrule.RetiresNativeCar): a car RLO holds for a scene (an accident, a reckless driver, a
-        // response unit) carries a preset path or is on native's ignore list; it is RLO's and never retired. The cheap
-        // checks run first; the script and renderer reads only for an active car of a held group.
         private void TryRetire(int slot, VehicleComponent? vehicle)
         {
             if (vehicle == null || !vehicle.gameObject.activeInHierarchy || vehicle.presetPath != null
                 || !(nativeDensity.HasValue || heldGroups.Contains(vehicle.vehicleGroupType))) return;
             if (RloOverrule.RetiresNativeCar(true, true, false, TrafficManager.Instance.IsVehicleIgnored(vehicle.GetIndex()), Ordinary(vehicle), IsTaxi(vehicle),
                 vehicle.GetComponentsInChildren<Renderer>().Any(r => r.isVisible)))
-            { Manager.RemoveVehicle(vehicle.GetIndex()); retired++; loads.Forget(slot); } // review Sol-r4-1: a reload of the slot is a load
+            { Manager.RemoveVehicle(vehicle.GetIndex()); retired++; loads.Forget(slot); }
         }
 
         private void Drive(PhysicalVehicleBody body, float seconds)
         {
             if (CommandLimit == null || body.RouteFinished) return;
             var command = CommandLimit(body);
-            // The own car's own safety on top of the kernel's limit: an obstacle ahead, a native red at its corner.
             var corner = body.Path.Count > 0 ? resolve(body.Topology, body.Path[0]) : null;
             bool red = corner != null && corner.stop;
             var limit = OwnCarMotion.Safe(command, command.HoldPosition ? null : ObstacleAhead(body), red, body.Length - body.Along);
             var step = OwnCarMotion.Step(body.Along, body.Length, body.SpeedValue, limit, seconds);
-            // A standing car keeps its pose: the root pivots on the front axle, so turning in place would move it.
             if (step.Moved > 1e-9)
             {
                 double yaw = body.Yaw;
                 var heading = Vector(body.To) - Vector(body.From); heading.y = 0;
                 if (heading.sqrMagnitude > 0.0001f)
                     yaw = OwnCarMotion.Yaw(body.Yaw, Quaternion.LookRotation(heading.normalized, Vector3.up).eulerAngles.y, seconds, hold: false);
-                // The whole body over the whole move must overlap nothing: the turn swings the rear and sides around the
-                // front axle, also between the two poses. Otherwise the car stands this frame with its pose unchanged,
-                // and only lags.
                 var model = body.Instance.Model;
                 var front = body.Length <= 1e-9 ? body.To : Position.Lerp(body.From, body.To, Math.Min(1, step.Along / body.Length));
                 var rotation = Quaternion.Euler(0, (float)yaw, 0);
@@ -712,7 +652,6 @@ namespace PersistentCity.Runtime
                         if (next == null) { body.RouteFinished = true; }
                         else
                         {
-                            // The front axle stays on the corner: the next segment starts where this one ended.
                             body.From = body.To; body.To = Point(next.position);
                             body.Length = Position.Distance(body.From, body.To); body.Along = 0;
                         }
@@ -723,12 +662,8 @@ namespace PersistentCity.Runtime
         }
 
         private readonly Collider[] overlaps = new Collider[16];
-        // Reused per drive step (OwnCarFootprint.Sweep fills it), so moving cars allocate nothing per frame.
         private readonly List<CarRectangle> sweep = new List<CarRectangle>(OwnCarFootprint.MaximumSubsteps + 1);
         private static int occupancyMask = -1, movingLayers = -1;
-        /// <summary>Whether a vehicle, the player, a walker or another own car stands in this body rectangle. Static
-        /// Obstacles-layer geometry (bollards, lamp posts) does not count; the layer is in the mask only for own cars.
-        /// Colliders under <paramref name="ignore"/> (the car itself) never count.</summary>
         private bool Occupied(CarRectangle box, float height, Transform? ignore)
         {
             if (occupancyMask < 0)
@@ -751,14 +686,11 @@ namespace PersistentCity.Runtime
 
         private readonly RaycastHit[] hits = new RaycastHit[16];
         private static int obstacleMask = -1;
-        /// <summary>Distance from the front axle to the nearest vehicle, player or walker ahead within the braking
-        /// distance, ignoring the car's own colliders; null when clear.</summary>
         private double? ObstacleAhead(PhysicalVehicleBody body)
         {
             if (obstacleMask < 0) obstacleMask = LayerMask.GetMask("Vehicles", "AiVehicles", "PlayerVehicles", "Player", "Obstacles", "Pedestrians", "Pedestrian", "Characters");
             if (obstacleMask == 0) return null;
             var model = body.Instance.Model;
-            // Along the road segment the car actually moves on, not its visual heading (which lags in a turn).
             var forward = Vector(body.To) - Vector(body.From); forward.y = 0;
             forward = forward.sqrMagnitude > 0.0001f ? forward.normalized : body.Rotation * Vector3.forward;
             var half = new Vector3(Math.Max(0.4f, model.Width / 2f), Math.Max(0.3f, model.Height / 2f - 0.15f), 0.25f);
@@ -775,8 +707,6 @@ namespace PersistentCity.Runtime
             return nearest;
         }
 
-        /// <summary>GR-9: show these parked cars (nearest first, at most the vehicle cap). A car no longer wanted fades
-        /// out and returns to the pool; a new one fades in. A car that drives is never shown parked as well.</summary>
         internal void ShowParked(IReadOnlyList<ParkedCar> wanted, Func<string, CarState?> car)
         {
             if (!Active || models == null) return;
@@ -796,12 +726,9 @@ namespace PersistentCity.Runtime
                 if (state == null || !SceneReady || !CarAppearance.TryModel(state, () => modelNames, out string modelId)
                     || !models.TryGetValue(modelId, out var model) || model.Refused) continue;
                 var rotation = Quaternion.Euler(0, ParkedYaw(entry), 0);
-                // A curb point is not a reserved space: another car (parked, driving, the player's) may already stand
-                // there. This car stays hidden until the space is free; its saved position is unchanged.
                 if (!ParkedClear(model, entry.At, rotation)) continue;
                 var instance = Take(model, CarAppearance.Paint(state));
                 if (instance == null) continue;
-                // The model's root, not its front axle, stands on the curb point.
                 instance.Root.transform.SetPositionAndRotation(Vector(entry.At), rotation);
                 var body = new ParkedCarBody(entry.CarId, instance, entry.At);
                 if (instance.CanFade) instance.SetFade(0); else body.FadeIn = BodyFade.FadeInSeconds;
@@ -818,13 +745,10 @@ namespace PersistentCity.Runtime
 
         private bool ParkedClear(OwnCarModel model, Position at, Quaternion rotation)
         {
-            // The root stands on the curb point; a margin keeps neighbouring parked cars apart. Static Obstacles-layer
-            // geometry beside a curb is not occupancy, so it never hides a parked car for good.
             var box = new CarRectangle(at, rotation.eulerAngles.y, model.Length / 2 + 0.3, model.Width / 2 + 0.2);
             return !Occupied(box, model.Height, null);
         }
 
-        /// <summary>A parked car whose owner now drives: it fades out where seen, else returns to the pool at once.</summary>
         private void LeaveParked(ParkedCarBody car)
         {
             if (car.Instance.Live && car.Instance.CanFade && car.Instance.OnScreen) { if (double.IsNaN(car.FadeOut)) car.FadeOut = 0; }
@@ -833,7 +757,6 @@ namespace PersistentCity.Runtime
 
         private static float ParkedYaw(ParkedCar car)
         {
-            // Along the nearest road where native knows one; else a stable angle from the car ID.
             try
             {
                 if (TrafficManager.IsInitialized && TrafficManager.HasInstance

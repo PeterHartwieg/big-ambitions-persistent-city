@@ -8,12 +8,6 @@ using Xunit;
 
 namespace PersistentCity.Tests;
 
-/// <summary>
-/// The 28 October core identity change replaced per-call string keys with cached hash states, cached
-/// opening windows per place and decoded road tags once per leg. Nothing a resident does may change:
-/// these tests compare the production helpers with the pre-change copies in CoreIdentityReference on a
-/// simulated city, and compare whole runs with and without the transient caches.
-/// </summary>
 public sealed class CoreIdentityTests
 {
     private const int Seed = 20261028;
@@ -40,11 +34,9 @@ public sealed class CoreIdentityTests
                 nodes.Add(new TrafficNetworkNode { Id = NodeId(x, z), Position = Node(x, z), KilometresPerHour = 36, AllowsCar = true,
                     Boundary = true, StructuralContract = "road", Successors = next.ToArray() });
             }
-        // 36 km/h at one game minute per real minute, so a 50 m section takes 1/12 minute like the planned legs.
         return new TrafficNetwork(topology, nodes, 1.0 / 60);
     }
 
-    /// <summary>Grid driving with native tags for car owners, walking otherwise, one refusal in thirteen; pure in the request.</summary>
     private sealed class Planner : ICitizenRoutePlanner, ICommuteTimingPlanner, ITrafficRoutePlanner
     {
         public TrafficNetwork? TrafficNetwork { get; } = Grid();
@@ -148,7 +140,6 @@ public sealed class CoreIdentityTests
             Female = i % 2 == 0, District = i % 3 == 0 ? "a" : "b", Persona = (Persona)(i % 8), AppearanceSeed = i + 1
         });
         var city = Population.Create(identities, Places(), "core-identity-test", "0.40.4", Seed, 1440);
-        // Some residents start unemployed so the daily employment check probes workplaces.
         for (int i = 0; i < city.Citizens.Count; i += 6) city.Citizens[i].DayPlaceId = "";
         return city;
     }
@@ -167,9 +158,6 @@ public sealed class CoreIdentityTests
     {
         int seed = state.Seed;
         places.TryGetValue(person.HomeId, out var home);
-        // GR-2: the reference is the F5 persona routine before day plans. A saved plan freezes its day (the leisure venue
-        // chosen at drawing, the shift fitted to the workplace's hours), so the comparison runs on an unplanned copy; the
-        // draw path without the simulator's place index is exactly the reference.
         person = CitySimulator.CloneForEvent(person);
         person.Plan = null;
         var minutes = new List<double> { now, now + 17, now + 333 };
@@ -233,7 +221,6 @@ public sealed class CoreIdentityTests
         {
             if (person.Activity == Activity.Leisure || person.DestinationActivity == Activity.Leisure) leisure++;
             if (person.Activity == Activity.Shop || person.DestinationActivity == Activity.Shop) shop++;
-            // Every few events also run on a resident without its cache, so both paths meet the reference.
             if (checks % 3 == 0) person.RoutineKeys = null;
             AssertRoutineMatchesReference(city.State, person, minute, places);
             checks++;
@@ -250,9 +237,6 @@ public sealed class CoreIdentityTests
     [Fact]
     public void WholeRunsAgreeWithAndWithoutTransientCachesAndAcrossCadence()
     {
-        // A: one event per frame, caches warm. B: three events per frame with every transient cache dropped
-        // before each frame, so each value is recomputed from the strings. C: AdvanceTo per day. The routine
-        // helpers equal the reference (above), so equal runs mean the caches changed nothing.
         var a = new CitySimulator(City(), new Planner()); var b = new CitySimulator(City(), new Planner()); var c = new CitySimulator(City(), new Planner());
         var ea = new List<string>(); var eb = new List<string>(); var ec = new List<string>();
         a.ActivityObserved += (id, p, m) => ea.Add(Observation(id, p, m));
@@ -271,7 +255,6 @@ public sealed class CoreIdentityTests
             Assert.Equal(expected, SaveCodec.Write(b.State));
             if (day == 2)
             {
-                // Reload: transient fields are rebuilt from the loaded strings with the same results.
                 var read = SaveWire.Read(expected);
                 Assert.Equal(SaveReadStatus.Loaded, read.Status);
                 b = new CitySimulator(read.State!, new Planner());
@@ -313,7 +296,6 @@ public sealed class CoreIdentityTests
             {
                 Assert.Equal(CoreIdentityReference.NextClose(place, minute), DailyRoutine.NextClose(place, minute));
                 Assert.Equal(CoreIdentityReference.NextOpen(place, minute, minute + 900), DailyRoutine.NextOpen(place, minute, minute + 900));
-                // Alternate between two days, then return, which the two-day cache must answer correctly.
                 Assert.Equal(CoreIdentityReference.NextClose(place, minute + 1440), DailyRoutine.NextClose(place, minute + 1440));
             }
         }
@@ -409,7 +391,6 @@ public sealed class CoreIdentityTests
             }
         }
         Assert.True(network.TryMap(route, out var full)); Assert.Equal(12, full.Count);
-        // A route planned on another snapshot does not map here, and maps again once its tags are rewritten.
         var foreign = Drive(Native.Replace('c', 'd'), 12);
         Assert.False(network.TryMap(foreign, out var none)); Assert.Empty(none);
         Assert.False(network.TryMapRemainingSpans(foreign, 0, spans)); Assert.Empty(spans);
@@ -418,7 +399,6 @@ public sealed class CoreIdentityTests
             leg.ServiceId = leg.ServiceId.Replace(Native.Replace('c', 'd'), Native);
         Assert.True(network.TryMap(foreign, out var rewritten));
         Assert.Equal(full.Select(l => l.LinkId), rewritten.Select(l => l.LinkId));
-        // A malformed tag still fails the whole mapping, as before.
         foreign.Legs[3].ServiceId = "native:road:v1:" + Native + ":x:1";
         Assert.False(network.TryMap(foreign, out _));
     }
@@ -444,7 +424,6 @@ public sealed class CoreIdentityTests
         CitySimulator.CommitEvent(person0, working);
         Assert.Same(working.RoutineKeys, person0.RoutineKeys);
 
-        // A different identity or seed is never answered from the cache.
         var other = new CitizenState { Identity = new CitizenIdentity { Id = person0.Identity.Id, Persona = person0.Identity.Persona },
             DayPlaceId = "work-001", ShopId = "shop-001", LeisureId = "leisure-001", HomeId = person0.HomeId };
         for (int n = 0; n < 4; n++)
@@ -481,8 +460,7 @@ public sealed class CoreIdentityTests
                 { DailyRoutine.NextClose(place, minute); DailyRoutine.NextOpen(place, minute, minute + 600); }
             for (int i = 0; i < 50; i++) network.TryMapRemainingSpans(route, route.Minutes * i / 50, spans);
         }
-        Queries(3); // Builds each resident's keys, each place's opening windows and the span buffer.
-        // A query allocation shows in every round; runtime work during one round (tiering, other test threads) does not.
+        Queries(3);
         long allocated = long.MaxValue;
         for (int round = 0; round < 5; round++)
         {

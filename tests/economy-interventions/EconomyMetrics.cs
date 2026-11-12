@@ -7,8 +7,6 @@ using PersistentCity.Core;
 
 namespace PersistentCity.EconomyInterventions;
 
-/// <summary>Deterministic JSON text. Integers and money units only, plus fixed six-decimal ratios,
-/// so equal inputs give byte-identical output on every runtime.</summary>
 public sealed class Json
 {
     private readonly StringBuilder text = new();
@@ -36,32 +34,22 @@ public sealed class Json
         : Math.Round(value, 6, MidpointRounding.AwayFromZero).ToString("0.######", CultureInfo.InvariantCulture);
 }
 
-/// <summary>One simulated day of one arm. Fields are cumulative-independent so a day is fully
-/// determined by the city and native double at its two sample boundaries.</summary>
 public sealed class DayMetrics
 {
     public int Day;
-    // Household boundary (midnight that ends the day).
     public long Owners, ArrearsOwners, UnfedDays, MedianBalanceUnits, P10BalanceUnits, IncomeReceivedUnits,
         ScheduledEmploymentUnits, Employed, JobLosses, JobFinds, MissedActivities;
-    // Accounting boundary.
     public long ConservationChecks, NativeOrders, NativeRevenueUnits, ConfirmedPreparedUnits, UncertainConfirmedUnits,
         DuplicateOrders, HistoricalClockMisses, OutsideLedgerUnits, WatermarkedOutflowUnits, WatermarkedOutflowWindowUnits, EpochReadViolations;
     public bool OrdinaryVisits;
     public long OrdinaryDiscretionaryUnits, OrdinaryWindowUnits;
-    // Outcome sample (03:00 the next day).
     public long Resolved, OwnMeals, RivalMeals, HomeMeals, Skipped, Unconfirmed;
     public readonly long[] OutcomeMeals = new long[4];
     public readonly long[] RivalHours = new long[24];
-    // F6j: shop-day purchases count items (main + extras); own meals (visits) by checkout hour per business
-    // come from outcomes, so capacity (meals/hour) is compared with meals, not items.
     public readonly SortedDictionary<string, long[]> OwnMealHours = new(StringComparer.Ordinal);
-    // Sold player tickets per (business, main dish): meals, sold extras and extras planned within the wallet.
     public readonly SortedDictionary<(string Business, string Main), (long Meals, long Extras, long Planned)> Tickets = new();
     public readonly SortedDictionary<string, ShopRow> Shops = new(StringComparer.Ordinal);
-    // Section 3.5 catchment: meal opportunities whose decision evaluated the own business.
     public readonly SortedDictionary<string, CatchmentRow> Catchments = new(StringComparer.Ordinal);
-    // Demand-side offer evidence per "business|product" from the decision observer.
     public readonly SortedDictionary<string, OfferRow> Offers = new(StringComparer.Ordinal);
 
     public sealed class CatchmentRow { public long Resolved, ThisShop, OtherOwn, Rival, Home, Skipped, Unconfirmed; }
@@ -104,7 +92,6 @@ public sealed class DayMetrics
         }
         json.CloseArray().Close();
         json.Open("rival").Field("meals", RivalMeals).Values("byCheckoutHour", RivalHours).Field("estimatedLimits", "estimated (modeled service limits)").Close();
-        // Diagnostic/experiment metric (F6 Q3 default): never free player UI.
         json.Open("share").Field("diagnosticOnly", EconomyRun.MarketShareDiagnosticOnly)
             .Open("city").Field("resolved", Resolved).Field("own", OwnMeals).Field("rival", RivalMeals).Field("home", HomeMeals)
             .Field("skipped", Skipped).Field("unconfirmed", Unconfirmed).Values("resolvedByMeal", OutcomeMeals).Close()
@@ -123,7 +110,6 @@ public sealed class DayMetrics
             .Field("unfedDays", UnfedDays).Field("medianBalanceUnits", MedianBalanceUnits).Field("p10BalanceUnits", P10BalanceUnits)
             .Field("incomeReceivedUnits", IncomeReceivedUnits).Field("scheduledEmploymentUnits", ScheduledEmploymentUnits)
             .Field("employed", Employed).Field("jobLosses", JobLosses).Field("jobFinds", JobFinds).Field("missedActivities", MissedActivities).Close();
-        // Per-kind lines. Only today's kind exists; F5 commuter/day-visitor lines join this object later.
         json.Open("kinds").Open(OrdinaryVisits ? "allPersons" : "resident").Field("consumers", Owners).Field("own", OwnMeals).Field("rival", RivalMeals)
             .Field("home", HomeMeals).Field("skipped", Skipped).Close().Close();
         json.Open("accounting").Field("conservationChecks", ConservationChecks).Field("conserved", true)
@@ -141,8 +127,6 @@ public sealed class DayMetrics
         : day <= EconomyRun.BaselineDays + EconomyRun.InterventionDays ? "intervention" : "reverted";
 }
 
-/// <summary>Harness-side subscriber to Core's opt-in decision trace. It copies only ids and counts;
-/// the trace has no saved effect. It survives a city reload because it lives in the runner.</summary>
 public sealed class DecisionObserver
 {
     private readonly SortedDictionary<int, Dictionary<string, SortedSet<string>>> considered = new();

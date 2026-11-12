@@ -1,7 +1,5 @@
 namespace PersistentCity.Runtime
 {
-    /// <summary>Cumulative main-thread diagnostics for one route planner. Compare snapshot deltas;
-    /// counters reset when the planner is rebuilt. Timings are measured work, not performance claims.</summary>
     internal sealed class NativeRouteMetrics
     {
         public long WalkingRequests { get; internal set; }
@@ -18,7 +16,6 @@ namespace PersistentCity.Runtime
         public double MaximumWalkingCalculationMilliseconds { get; internal set; }
         public long NavMeshSampleQueries { get; internal set; }
         public long NavMeshPathQueries { get; internal set; }
-        // Repeated calculations answered inside one shared-quote request; not counted as path queries.
         public long NavMeshPathReuses { get; internal set; }
         public double NavMeshPathMilliseconds { get; internal set; }
         public double MaximumNavMeshPathMilliseconds { get; internal set; }

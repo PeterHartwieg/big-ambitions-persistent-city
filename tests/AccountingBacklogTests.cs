@@ -38,7 +38,6 @@ public sealed partial class FoodCommerceTests
         var meal = city.State.Food!.Residents.Single();
         Advance(city, meal.DesiredAt + 6); Assert.Equal(MealStatus.Serving, meal.Status);
         double boundary = (Math.Floor(meal.ServiceAt / 60) + 1) * 60;
-        // Move this legacy fixture's reserved service into the otherwise unobservable gap.
         meal.DueAt = meal.ServiceAt = boundary - 1e-10; meal.Deadline = boundary + 20;
         city.State.Food.Shops.Single().NextServiceAt = meal.ServiceAt;
         city.ExtendMealStay(city.State.Citizens.Single(), boundary + 15);
@@ -65,15 +64,14 @@ public sealed partial class FoodCommerceTests
         city.State.Food.Shops.Single().NextServiceAt = predecessor;
         city.ExtendMealStay(city.State.Citizens.Single(), boundary + 15);
         city.State.Minute = predecessor;
-        // A bypassing native writer or old snapshot can have equal minutes but unfinished work.
         var detached = new CitySimulator(city.State, routes);
         Assert.True(AccountingClock.Compatible(predecessor, boundary));
-        Assert.False(detached.IsAccountingEpochDrained(boundary)); // Before market attachment: saved timestamps.
+        Assert.False(detached.IsAccountingEpochDrained(boundary));
         Assert.False(detached.BeginAccountingObservations(boundary));
         detached.AttachFoodMarket(market);
-        Assert.False(detached.IsAccountingEpochDrained(boundary)); // After attachment: scheduler roots.
+        Assert.False(detached.IsAccountingEpochDrained(boundary));
         meal.DueAt = meal.ServiceAt = boundary;
-        Assert.True(detached.IsAccountingEpochDrained(boundary)); // Work in the new epoch is allowed.
+        Assert.True(detached.IsAccountingEpochDrained(boundary));
         Assert.False(detached.IsCaughtUpTo(boundary));
         Assert.Empty(market.Orders);
     }
@@ -85,7 +83,6 @@ public sealed class AccountingBacklogTests
     public void Writer25ResumesTheRoundingGapWithoutPersistedReadinessFlags()
     {
         var state = EconomyScenario.Create(1, 7); state.Food = EconomyScenario.Food();
-        // The shared scenario starts at 05:00; use its real codec-valid city and no new meals.
         var routes = new NoRoutes(); var market = new EmptyMarket();
         var city = new CitySimulator(state, routes); city.AttachFoodMarket(market); city.EnableHouseholdFinances();
         double native = state.Minute + AccountingClock.Limit(true, state.Minute, 1);

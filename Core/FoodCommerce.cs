@@ -5,8 +5,6 @@ using System.Linq;
 
 namespace PersistentCity.Core
 {
-    /// <summary>Opt-in diagnostic of one decision. Not retained by the simulation or saved.
-    /// Subscribers must copy anything they retain and must not change these decision inputs.</summary>
     public sealed class FoodDecisionTrace
     {
         public FoodConsumer Consumer { get; set; } = null!;
@@ -28,11 +26,7 @@ namespace PersistentCity.Core
         public int RouteCalls { get; set; }
         public double ElapsedMilliseconds { get; set; }
         public FoodDecisionState? Decision { get; set; }
-        /// <summary>F6j: each feasible candidate main with the extras the same policy would add from its captured
-        /// menu: the ticket whose total the choice compared as that shop's expense.</summary>
         public IReadOnlyList<FoodMealTicket> Tickets { get; set; } = Array.Empty<FoodMealTicket>();
-        /// <summary>Shortlist/hash/traits/sampling work only, excluding supply capture, feasibility and routes.
-        /// Null if this diagnostic did not observe the initial capture (for example after reload).</summary>
         public double? ChoiceMilliseconds { get; set; }
     }
     public enum MealStatus { Pending, Travelling, Serving, Paid, Declined, Missed, Uncertain }
@@ -48,7 +42,6 @@ namespace PersistentCity.Core
     {
         public FoodAlternativeKind AlternativeKind { get; set; }
         public string PlaceId { get; set; } = "";
-        // Keep the original product identity for existing scopes and pending receipts.
         public string ProductId { get; set; } = "";
         public List<string> AdditionalProductIds { get; set; } = new List<string>();
         public bool ContainsProduct(string id) => ProductId == id || AdditionalProductIds.Contains(id);
@@ -63,7 +56,6 @@ namespace PersistentCity.Core
             if (channel != FoodScopeChannel.Shop && channel != FoodScopeChannel.Vehicle) throw new ArgumentOutOfRangeException(nameof(channel));
             Channel = channel;
         }
-        // F9e: the read-only view (getters only; no field, wire or save change).
         string IFoodScopeView.PlaceId => PlaceId;
         string IFoodScopeView.BusinessId => BusinessId;
         string IFoodScopeView.ProductId => ProductId;
@@ -72,25 +64,18 @@ namespace PersistentCity.Core
         FoodAlternativeKind IFoodScopeView.AlternativeKind => AlternativeKind;
         double IFoodScopeView.NextServiceAt => NextServiceAt;
     }
-    /// <summary>Shop scopes are served by the native shop market, Vehicle scopes by the Street Food vehicle market.</summary>
     public enum FoodScopeChannel { Shop = 0, Vehicle = 1 }
     public sealed class ResidentMeal
     {
-        // F6c: transient panel counters (never saved); see ResidentBudget.counters.
         internal FoodMoneyCounters? counters;
         private MealStatus status;
         private MealExcursion? excursion;
         private ResidentBudget? budget;
         public string ResidentId { get; set; } = "";
-        /// <summary>Roster owner. From schema 26 every record is its own person's (AnchorId == ResidentId, Slot 0);
-        /// schemas up to 25 stored the represented consumer's host here.</summary>
         public string AnchorId { get; set; } = "";
         public int Slot { get; set; }
         private string? hostId;
         private int? hostSlot;
-        /// <summary>Scheduling adapter, never persisted: the resident whose day a represented consumer eats on, and its
-        /// slot (0 for the resident's own meals). Today's excursion schedule reads only these; ownership stays the
-        /// person's own. Without an assignment it falls back to the stored AnchorId/Slot (pre-26 form).</summary>
         public string HostId => hostId ?? AnchorId;
         public int HostSlot => hostSlot ?? Slot;
         public void AssignHost(string anchorId, int slot)
@@ -98,7 +83,6 @@ namespace PersistentCity.Core
             if (string.IsNullOrEmpty(anchorId) || slot < 0) throw new ArgumentException("Invalid roster host.");
             hostId = anchorId; hostSlot = slot;
         }
-        /// <summary>Save snapshot capture (F7c): copy the transient host assignment exactly, including "none".</summary>
         internal void CopyHostTo(ResidentMeal target) { target.hostId = hostId; target.hostSlot = hostSlot; }
         public string PreferredProductId { get; set; } = "";
         public int PreferenceBonusCents { get; set; }
@@ -126,19 +110,12 @@ namespace PersistentCity.Core
         public long ExistingStopPurchases { get; set; }
         public long Purchases { get; set; }
         public Money Spent { get; set; }
-        /// <summary>Traits of a represented consumer (slot above zero), keyed by its stable consumer ID.
-        /// Null for slot zero, whose traits are its anchor resident's.</summary>
         public ResidentTraits? RepresentedTraits { get; set; }
-        /// <summary>Current-day outcomes; null until this consumer's first recorded outcome.</summary>
         public ResidentFoodToday? Today { get; set; }
-        /// <summary>The version-1 policy's in-progress decision for this meal; null under the legacy choice.</summary>
         public FoodDecisionState? Decision { get; set; }
-        /// <summary>Retry latch for the current meal: the last processed decision context and how many distinct
-        /// contexts this meal has used (at most FoodChoicePolicy.MaximumContextsPerMeal). Same-context polling reuses it.</summary>
         public string LastContextKey { get; set; } = "";
         public int ContextAttempts { get; set; }
         public ConsumerMemory Memory { get; set; } = new ConsumerMemory();
-        // Empty is player authority. Rival revision/status plus exact advertised-hours fingerprint.
         public string External { get; set; } = "";
         public Money LegacyExternalFoodSpent { get; set; }
         public FoodAlternativeKind TargetKind => External.Length == 0 ? FoodAlternativeKind.Player : FoodAlternativeKind.Rival;
@@ -157,8 +134,6 @@ namespace PersistentCity.Core
         public List<FoodScope> Shops { get; set; } = new List<FoodScope>();
         public List<ResidentMeal> Residents { get; set; } = new List<ResidentMeal>();
         public List<FoodDistrictBudgetMix> Districts { get; set; } = new List<FoodDistrictBudgetMix>();
-        /// <summary>Food choice policy header. New scopes and migrated cities activate on the next in-game day.
-        /// No runtime setting changes either value; committed legacy meals retain their own terms.</summary>
         public int ChoicePolicyVersion { get; set; } = FoodChoicePolicy.Version;
         public int ChoiceStartsDay { get; set; }
         public int AwarenessStartsDay { get; set; }
@@ -170,55 +145,39 @@ namespace PersistentCity.Core
         public FoodSale(bool paid, string reason, ShopExperience? failure = null, IReadOnlyList<FoodTicketLine>? soldExtras = null,
             bool priceChanged = false)
         { Paid = paid; Reason = reason; Failure = failure; this.soldExtras = soldExtras; PriceChanged = priceChanged && !paid; }
-        /// <summary>E5b5 Q2: a definite refusal before any receipt or native order because a menu price changed to another
-        /// valid price. The seller kept ownership; the resident may decide again at the counter.</summary>
         public bool PriceChanged { get; }
         private readonly IReadOnlyList<FoodTicketLine>? soldExtras;
-        /// <summary>F6j: the ticket's extras the seller actually sold, in ticket order. Empty for a main-only sale.</summary>
         public IReadOnlyList<FoodTicketLine> SoldExtras => soldExtras ?? Array.Empty<FoodTicketLine>();
         public ShopExperience? Failure { get; }
         public bool Paid { get; }
         public string Reason { get; }
     }
-    /// <summary>E5b5: a market whose saved businesses can be briefly unvalidated after a load (contract images warming).
-    /// Core neither checks out nor drops a commitment to such a business; it waits a minute and asks again.</summary>
     public interface IFoodStartupValidation
     {
         bool AwaitingValidation(string businessId);
     }
-    /// <summary>One main-thread sale call must finish before saving the native world plus CityState.
-    /// Exceptions leave a persisted Uncertain decision which is never retried automatically.</summary>
     public interface IFoodMarket
     {
         double EarliestMinute { get; }
         IReadOnlyList<FoodBusiness> Read(double minute);
         FoodSale Buy(ResidentMeal meal, double minute);
     }
-    /// <summary>Bound expensive native supply reads before materializing offers. Discovery
-    /// and business authority remain separate from this local decision shortlist.</summary>
     public interface ILocalFoodMarket
     {
         IReadOnlyList<FoodBusiness> ReadLocal(Place origin, double minute, double walkingToleranceMetres, int maximumCandidates);
         FoodBusiness? ReadBusiness(string businessId, double minute);
     }
-    /// <summary>Metadata only; the scope catalogue and cached entrances are ranked before any supply read.</summary>
     public interface IFoodCandidateMarket
     {
-        /// <summary>Refresh metadata before ranking, then share it across this atomic capture. No yield or checkout.</summary>
         IDisposable BeginCapture(double minute);
         bool IsCandidate(FoodScope scope);
         FoodBusiness? CaptureBusiness(string businessId, double minute);
     }
-    /// <summary>F6j: a seller whose own checkout can sell same-visit extras after the main dish, under the meal's one
-    /// receipt. Paid means the main sold; SoldExtras lists the extras that also sold. A seller without this
-    /// interface, or returning false, sells the main dish only, so no extra is ever booked without a sale.</summary>
     public interface IFoodTicketMarket
     {
         bool SellsExtras(string businessId);
         FoodSale BuyTicket(ResidentMeal meal, FoodMealTicket ticket, double minute);
     }
-    /// <summary>F6j: the seller's confirmed receipt for an uncertain meal, read without a checkout replay. Total is
-    /// what actually sold (at most the held planned total); extras are the sold extra lines.</summary>
     public interface IFoodTicketEvidence
     {
         bool TryConfirmedTicket(ResidentMeal meal, out Money total, out IReadOnlyList<FoodTicketLine> extras);
@@ -227,15 +186,11 @@ namespace PersistentCity.Core
     {
         bool CanServe(string businessId);
     }
-    /// <summary>Read-only proof of the original checkout. Absence is never proof of refusal.</summary>
     public interface IFoodSaleEvidence
     {
         bool IsConfirmedPaid(ResidentMeal meal);
     }
 
-    /// <summary>Sequential meal opportunities, each paid from its own consumer's budget (with household
-    /// finances on, one ResidentBudget per roster record, seeded by consumer ID; no shared or household
-    /// wallet). No nutrition or closed-city payroll claim. Events share the population clock and its bounded frame budget.</summary>
     public sealed partial class FoodCommerce
     {
         private sealed class Order : IComparer<ResidentMeal>
@@ -260,8 +215,6 @@ namespace PersistentCity.Core
         internal IFoodMarket Market => market;
         public long HistoricalClockMisses { get; private set; }
         internal ResidentMeal? FindMeal(string consumerId) => records.TryGetValue(consumerId, out var meal) ? meal : null;
-        /// <summary>Diagnostic (never saved): food or finance lookups of a person other than the meal's own owner, the
-        /// pre-27 represented-consumer anchor. Schema 27 keeps it at zero (F5d: no anchor read at all).</summary>
         public long AnchorReads { get; private set; }
         internal int QueuedMeals => due.Count;
         internal int DueMealsAtOrBefore(double minute)
@@ -270,7 +223,6 @@ namespace PersistentCity.Core
             foreach (var meal in due) { if (meal.DueAt > minute) break; count++; }
             return count;
         }
-        // The person whose schedule, wallet inputs and traits a meal reads. From schema 27 that is always its owner.
         private CitizenState? Owner(ResidentMeal meal)
         {
             if (!string.Equals(meal.HostId, meal.ResidentId, StringComparison.Ordinal)) AnchorReads++;
@@ -288,12 +240,10 @@ namespace PersistentCity.Core
             state = city.State.Food ?? throw new InvalidOperationException("No food state.");
             state.Outflow ??= RivalOutflowHistory.Begin(state, city.State.Minute);
             MemorySettings = memorySettings ?? new FoodMemorySettings(); MemorySettings.Clamp();
-            // Share the campaign publisher's current generation index.
             memoryStore = (campaign as FoodCampaignSource)?.ReferencesFor(state) ?? new FoodMemoryStore(state);
             if(state.Residents.Count==0) { state.ChoiceStartsDay=(int)Math.Floor(city.State.Minute/1440)+1; state.AwarenessStartsDay=state.ChoiceStartsDay; state.RivalStartsDay=state.ChoiceStartsDay; }
             records = state.Residents.ToDictionary(r => r.ResidentId, StringComparer.Ordinal);
             storedMemoryProvider = new StoredMemoryAwareness(this);
-            // A loaded roster reads no wallet of its own: link each record to its person's before anything spends.
             AdoptRecordWallets();
             InitializeRepresentation();
             long rivalPeriod = RivalServiceCalibration.Period(city.State.Minute);
@@ -332,10 +282,8 @@ namespace PersistentCity.Core
             string id = FoodRepresentation.ConsumerId(person.Identity.Id, slot);
             if (records.TryGetValue(id, out var existing)) return existing;
             var resident = Resident(person);
-            // The record is the person's own; the host only schedules today's represented excursion.
             var meal = new ResidentMeal { ResidentId = id, AnchorId = id, Slot = 0 };
             meal.AssignHost(person.Identity.Id, slot);
-            // Schema 27: a visitor is its own person with its own routine; its tastes are drawn by its own ID.
             if (person.IsVisitor) meal.RepresentedTraits = person.Traits;
             if (slot > 0 || person.IsVisitor)
             {
@@ -351,7 +299,6 @@ namespace PersistentCity.Core
             if (state.HouseholdFinanceVersion != 0) CreateBudget(meal, person);
             StartMeal(meal, person, (int)(city.State.Minute / 1440), state.MealRhythmVersion == 0 ? MealKind.Legacy : MealKind.Breakfast);
             records.Add(meal.ResidentId, meal); state.Residents.Add(meal); Feedback?.Add(meal);
-            // Schema 26: every roster record is one person; a represented slot is a visitor person (no behaviour reads it).
             if (slot > 0) PersonTable.AddRepresentedVisitor(city.State, id);
             return meal;
         }
@@ -389,22 +336,16 @@ namespace PersistentCity.Core
             double now = city.State.Minute;
             if (meal.Status == MealStatus.Uncertain && meal.Excursion != null)
             {
-                // A blocked walking return does not prevent independently proving the
-                // original transaction. Movement remains unresolved after proof settles cash.
                 try
                 {
                     if (ConfirmedEvidence(meal, out var paid, out var extras))
                         SettleConfirmed(meal, paid, extras, "Original native receipt confirmed; no checkout replay");
                 }
-                catch (Exception) { /* Missing proof preserves held funds and the original receipt. */ }
+                catch (Exception) { }
             }
             if (StepExcursion(meal, person)) { return; }
-            // A dormant visitor is off-map: no new demand until its next stay (section 3 Visitor lifecycle). Unresolved
-            // obligations (an uncertain receipt above, a held purchase) stay with the same person and wallet.
             if (person.IsVisitor && VisitorSchedules.Dormant(person) && !Active(meal) && meal.Status != MealStatus.Uncertain)
             { SkipDormantMeals(meal, person, now); return; }
-            // E5b5: a saved commitment to a business still being validated after a load waits; it is neither bought nor
-            // dropped. Deadlines and every other check apply unchanged once validation ends.
             if (Active(meal) && meal.TargetKind == FoodAlternativeKind.Player && market is IFoodStartupValidation startup
                 && startup.AwaitingValidation(meal.BusinessId))
             { meal.DueAt = Math.Max(meal.DueAt, now + 1); return; }
@@ -416,17 +357,15 @@ namespace PersistentCity.Core
                 { Finish(meal, MealStatus.Missed, "Business no longer accepts this commitment"); return; }
                 if (meal.Status == MealStatus.Serving)
                 { Finish(meal, MealStatus.Missed, "Service no longer fits shop opening hours"); return; }
-                // Keep the captured trip to the old stand. Only reaching it supplies a Closed visit.
             }
             if (!Active(meal) && meal.Status != MealStatus.Pending)
             {
-                // Retain the exact unresolved receipt and any held money across later meals.
                 if (meal.Status == MealStatus.Uncertain)
                 {
                     bool confirmed = false;
                     Money paid = Money.Zero; IReadOnlyList<FoodTicketLine> extras = Array.Empty<FoodTicketLine>();
                     try { confirmed = ConfirmedEvidence(meal, out paid, out extras); }
-                    catch (Exception) { /* Unavailable evidence cannot authorize spending or a refund. */ }
+                    catch (Exception) { }
                     if (confirmed)
                     {
                         SettleConfirmed(meal, paid, extras, "Original native receipt confirmed; no checkout replay");
@@ -444,7 +383,6 @@ namespace PersistentCity.Core
             if (now < meal.DesiredAt) meal.DueAt = meal.DesiredAt;
             else if (now < market.EarliestMinute)
             {
-                // Native inventory is current, never replay sales into a historical day/hour.
                 if (Active(meal)) { HistoricalClockMisses++; Finish(meal, MealStatus.Missed, "Native clock passed the purchase window"); }
                 meal.DueAt = Math.Max(meal.DueAt, market.EarliestMinute);
             }
@@ -465,7 +403,6 @@ namespace PersistentCity.Core
                     : person.MealOuting != null && !person.MealOuting.Returning
                     && person.Phase == CitizenPhase.AtPlace && person.PlaceId == meal.PlaceId
                     && (meal.TargetKind == FoodAlternativeKind.Rival
-                        // Visitors keep one LastArrival tuple instead of RecentVisits; residents keep this check unchanged.
                         || (person.Visitor != null ? VisitorSchedules.ArrivedForMeal(person.Visitor, meal.PlaceId, meal.DesiredAt)
                             : person.RecentVisits.Any(v => v.PlaceId == meal.PlaceId && v.Activity == Activity.Shop && v.AtMinute >= meal.DesiredAt)));
                 if (admitted)
@@ -508,8 +445,6 @@ namespace PersistentCity.Core
                         Finish(meal, MealStatus.Missed, "Service no longer fits shop opening hours");
                     else if (meal.ServiceAt + MealRhythm.EatingMinutes(meal.Kind) + meal.ReturnMinutes > meal.Deadline)
                     {
-                        // Preserve the existing refusal and accounts. Attribute queue disappointment
-                        // only when removing the observed wait would have made this break fit.
                         if (scope.NextServiceAt > now && now + meal.ServiceMinutes + MealRhythm.EatingMinutes(meal.Kind) + meal.ReturnMinutes <= meal.Deadline)
                             Experience(meal, ShopExperience.Queue, now);
                         Finish(meal, MealStatus.Missed, "Arrival or queue no longer fits the break");
@@ -536,30 +471,23 @@ namespace PersistentCity.Core
                 else
                 {
                     if (meal.TargetKind == FoodAlternativeKind.Rival) { CompleteRival(meal, now); return; }
-                    // Every later addition must fit before funds move or native checkout starts.
                     if (!CanSettle(meal))
                     { Finish(meal, MealStatus.Missed, "Purchase would exceed the exact money range"); return; }
                     if (meal.Budget == null && meal.Price > AvailableForMeal(meal))
                     { Finish(meal, MealStatus.Missed, "Household funds no longer available at checkout"); return; }
-                    // F6j: extras are planned from live terms; the wallet check and hold cover the whole ticket.
                     var mainPrice = meal.Price;
                     var limit = CurrentAllowance(meal);
                     var ticket = CheckoutTicket(meal, now);
                     if (ticket != null) { meal.Price = ticket.Total; if (!CanSettle(meal)) { meal.Price = mainPrice; ticket = null; } }
                     if (meal.Budget != null && !HouseholdFinance.HoldPurchase(meal.Budget, meal.Price))
                     { meal.Price = mainPrice; Finish(meal, MealStatus.Missed, "Household funds no longer available at checkout"); return; }
-                    // A held ticket may exceed the limit saved at commitment when the wallet grew since; record the
-                    // limit it was planned and held within. Never lowered, so a refusal keeps its saved terms.
                     if (ticket != null) meal.Allowance = Money.Max(meal.Allowance, limit);
                     if (meal.Budget == null) meal.DayAllowanceUsed += meal.Price;
-                    // Persist uncertainty before entering native code. No exception can trigger a replay.
-                    // An uncertain ticket keeps its planned total as Price and as the held amount.
                     meal.ServiceAt = now;
                     Finish(meal, MealStatus.Uncertain, "Native purchase did not confirm completion");
                     try
                     {
                         var result = ticket != null ? ((IFoodTicketMarket)market).BuyTicket(meal, ticket, now) : market.Buy(meal, now);
-                        // E5b5 Q2: after a price-only refusal the resident decides once more at the counter, on the live price.
                         if (!result.Paid && result.PriceChanged && result.SoldExtras.Count == 0 && CounterRedecision(meal, now, ref mainPrice))
                         { ticket = null; result = market.Buy(meal, now); }
                         var sold = SoldExtras(ticket, result);
@@ -581,16 +509,10 @@ namespace PersistentCity.Core
                         }
                         if (meal.HostSlot > 0 && meal.Excursion != null) ScheduleReturn(meal);
                     }
-                    catch (Exception) { /* Retain uncertain ownership; never issue a second order. */ }
+                    catch (Exception) { }
                 }
             }
         }
-        /// <summary>E5b5 Q2: the seller refused before any receipt because a menu price changed (the selected product's or
-        /// another one's). The resident decides again at the counter from the shop's live menu: the selected product if it
-        /// is still stocked and affordable at its live price, otherwise the stocked, affordable scoped product it likes best
-        /// (taste band, then lower price, then ordinal name; no random draw). Main only. The refused attempt's hold is
-        /// released first; when nothing fits, it is restored and the refusal stands. Called at most once per checkout, so
-        /// a price that keeps moving ends as an ordinary refusal.</summary>
         private bool CounterRedecision(ResidentMeal meal, double now, ref Money mainPrice)
         {
             var business = ReadBusiness(meal.BusinessId, now);
@@ -605,7 +527,6 @@ namespace PersistentCity.Core
             var candidates = new List<(FoodOffer Offer, int Taste)>(business.Offers.Count);
             foreach (var offer in business.Offers)
             {
-                // This meal's own reservation was released when it became uncertain; others' units stay held.
                 reservations.TryGetValue(ReservationKey(meal.PlaceId, offer.ProductId), out int reserved);
                 if (!(offer.Units - reserved > 0) || offer.Price > limit || !scope.ContainsProduct(offer.ProductId)
                     || !policy.Executable(offer.ProductId)) continue;
@@ -624,8 +545,6 @@ namespace PersistentCity.Core
                 if (meal.Budget == null) meal.DayAllowanceUsed += meal.Price;
                 meal.Allowance = Money.Max(meal.Allowance, limit);
                 mainPrice = meal.Price;
-                // The unconfirmed outcome must name the product and terms now held, before native code runs again:
-                // if the second checkout throws, it is what the save keeps (factors of the purchase are retained).
                 RecordOutcome(meal, city.State.Minute, true);
                 return true;
             }
@@ -642,7 +561,6 @@ namespace PersistentCity.Core
             meal.Status = MealStatus.Paid; meal.Reason = reason;
             RecordOutcome(meal, city.State.Minute, true);
         }
-        // The only outcome writer. A lazy day rollover drops earlier records, so the derived rival load drops them too.
         private void RecordOutcome(ResidentMeal meal, double minute, bool checkout, FoodOutsideOption outside = FoodOutsideOption.None)
         {
             if (meal.Today != null && meal.Day > meal.Today.Day && MealOutcomes.StatusFor(meal.Status).HasValue)
@@ -669,8 +587,6 @@ namespace PersistentCity.Core
             meal.DueAt = Math.Max(city.State.Minute + .001, MealRhythm.DesiredAt(person, city.State.Seed, day, kind));
             if (meal.HostSlot > 0 && meal.Excursion != null) ScheduleReturn(meal);
         }
-        /// <summary>A dormant visitor's meal opportunities before its next stay end without an intent or outcome; the
-        /// first meal still open at the stay start waits for it. Bounded: a stay is at most a few days ahead.</summary>
         private void SkipDormantMeals(ResidentMeal meal, CitizenState person, double now)
         {
             double stay = Math.Max(now, person.NextEventMinute);
@@ -739,8 +655,6 @@ namespace PersistentCity.Core
                 var origin = city.FindPlace(stop.PlaceId); var shop = city.FindPlace(b.PlaceId);
                 if (Position.Distance(origin.Position, shop.Position) > preferences.WalkingToleranceMetres)
                 { refusals[b.Id] = "Beyond walking tolerance"; if (trace != null) trace.RouteChecks[b.Id] = refusals[b.Id]; continue; }
-                // A safe geometric bound saves native path searches for distant shops. It is
-                // not a route quote: feasible candidates still need complete outward/return paths.
                 if (routes is IWalkingTimeBound bound && b.MealsPerHour > 0
                     && now + bound.MinimumWalkingMinutes(origin, shop) + bound.MinimumWalkingMinutes(shop, origin)
                         + 60.0 / b.MealsPerHour.Value + intent.EatingMinutes > intent.Deadline)

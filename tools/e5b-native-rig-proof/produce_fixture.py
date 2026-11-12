@@ -21,8 +21,6 @@ def startup_phase(health,scene='menu'):
     identity=health.get('agent_instance') or {}
     pointer=identity.get('rig_input') or {}; ops=health.get('rig_ops') or identity.get('rig_ops') or {}
     pointer_state=pointer.get('status'); ops_state=ops.get('status'); reason=ops.get('reason')
-    # Only exact documented startup states are transient. Hash/error/disabled reasons
-    # remain terminal; a later healthy snapshot cannot erase such a refusal.
     if pointer_state not in {'not started','ready'}: raise StartupRefusal('Required rig input refused/absent/error: '+str(pointer_state))
     ops_starting=ops_state=='disabled' and reason=='not started'
     if not ops_starting and (ops_state!='ready' or reason not in {None,''}):
@@ -33,8 +31,6 @@ def startup_phase(health,scene='menu'):
     coverage=mouse.get('legacy_coverage') or {}
     if coverage.get('queue_dropped')!=0 or coverage.get('scan_problems'):
         raise StartupRefusal('Native startup coverage dropped work or reported scan problems')
-    # Service.Install starts its documented asynchronous assembly scan before publishing
-    # ready. Waiting on its explicit pending flag does not retry/suppress a selfcheck.
     if coverage.get('pending') is True: return 'documented startup scan pending'
     if coverage.get('pending') is not False: raise StartupRefusal('Native coverage readiness shape unavailable')
     return 'ready'
@@ -44,7 +40,7 @@ def wait_startup_ready(fetch,alive,sleep=time.sleep,observe=None,scene='menu'):
         health=fetch(); phase=startup_phase(health,scene)
         if observe is not None: observe(phase)
         if phase=='ready': return health
-        sleep(.25) # Poll/yield only; no execution deadline and no changing command.
+        sleep(.25)
 
 class ExistingSaves:
     def __init__(self,directory,guard):
@@ -76,8 +72,6 @@ class ExistingSaves:
     def verify(self):
         if self.manifest is None: return
         with self.guard():
-            # Preserve every old character/save. Unexpected old-file writes are restored exactly
-            # from hash-verified private backups and still make producer acceptance fail.
             changed=[]; verified=[]
             for row in self.manifest['files']:
                 path=self.root/row['relative']; backup=self.directory/'originals'/row['relative']
@@ -120,7 +114,6 @@ def main():
     if not evidence.is_relative_to(own.resolve()) or evidence.exists(): parser.error('Use a new assigned ignored evidence directory')
     document=dict(mods=json.loads(args.mods.read_text(encoding='utf-8-sig')))
     validate_inputs(document); read_receipt(ROOT,PROFILE)
-    # Names must be genuinely new across all isolated characters. Never reuse newest/ambiguous.
     for path in (PROFILE/'SaveGames').glob('*/*/*'):
         if path.is_file() and path.suffix.lower() in {'.hsg','.json'} and path.stem in {args.name,ready_name}:
             parser.error('Requested new native name already exists')
@@ -176,8 +169,6 @@ def main():
             return value
         checked_selfcheck('selfcheck_before_new_game')
         bridge.autosave_off()
-        # This producer owns character creation explicitly. It does not pass a forbidden
-        # scenario step through rig_flows or expose new_game through the custom RigOps API.
         report['native_new_game']=bridge.record({'producer_lifecycle':'native_new_game','args':{'name':args.name}},
             lambda:rig.bridge.call('new_game',{'name':args.name}))
         while True:
@@ -205,7 +196,7 @@ def main():
             signature=json.dumps(actual,sort_keys=True)
             if signature!=previous: print(json.dumps(dict(runtime=actual),indent=2),flush=True); previous=signature
             if not rig.probe()['agent_running']: raise flows.Infra('Owned player exited during native runtime initialization')
-            time.sleep(.5) # Poll/yield interval only, no imposed execution deadline.
+            time.sleep(.5)
         bridge.call('time',{'pause':True}); bridge.autosave_off()
         report['native_ready_save']=bridge.record({'producer_lifecycle':'native_save_ready','args':{'name':ready_name}},
             lambda:rig.bridge.call('save',{'name':ready_name}))

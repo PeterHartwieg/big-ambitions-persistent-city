@@ -3,23 +3,19 @@ using System.Collections.Generic;
 
 namespace PersistentCity.Core
 {
-    /// <summary>Optional logical closure evidence, shared by offline inputs and native adapters.</summary>
     public interface IWorkplaceAvailability
     {
         bool WorkplaceOpen(string placeId, double minute);
     }
 
-    /// <summary>Person-owned shift accounting. No native payroll, clock, body or household pooling dependency.</summary>
     public static class EmploymentWages
     {
-        // F5's persona schedule: four 480-minute shifts (Friday–Sunday are the weekend).
         public const int ScheduledWeeklyMinutes = 4 * 480;
         internal const int Working = 1, Closed = 2, Settled = 3, ClosureDay = 4, AfterMidnight = 5, AfterMidnightAttended = 6;
         public static bool Eligible(CitizenState person) => person.DayPlaceId.Length != 0
             && person.Identity.Age >= 18 && ResidentLifecycle.IsWorker(person);
 
         internal static bool Active(EmploymentAccrual a) => a.Shift == Working || a.Shift == Closed || AfterMidnightStage(a);
-        // Derived from the saved employment tuple and F5 schedule, never saved as a second cursor.
         internal static double NextPosting(CitizenState person, int seed, double now, out WorkWindow selected,
             IReadOnlyDictionary<string, Place>? places = null)
         {
@@ -48,13 +44,9 @@ namespace PersistentCity.Core
         internal static WorkWindow? ActiveWindow(CitizenState person, int seed, IReadOnlyDictionary<string, Place>? places = null)
         {
             var prepared = person.CommutePreparation;
-            // F5 already saves the committed work window. Retain it across reload, including an
-            // overnight window; a later routine lookup must not shorten an in-progress shift.
             if (prepared.PlaceId == person.DayPlaceId && (int)(prepared.WorkStartsAt / 1440) == person.Accrual.Day
                 && prepared.WorkEndsAt - prepared.WorkStartsAt == 480)
                 return new WorkWindow(person.DayPlaceId, Activity.Work, prepared.WorkStartsAt, prepared.WorkEndsAt);
-            // GR-2: otherwise the saved plan's shift for the accrual day (its work item or its saved next shift), which is
-            // also the window the wage queue began the shift with: a newly drawn plan schedules the entry again before Begin.
             return DailyRoutine.WorkOnDay(person, seed, person.Accrual.Day * 1440.0, places);
         }
 
@@ -75,7 +67,6 @@ namespace PersistentCity.Core
 
         internal static bool Attending(CitizenState p) => p.Phase == CitizenPhase.AtPlace
             && p.Activity == Activity.Work && p.PlaceId == p.DayPlaceId && p.MealOuting == null;
-        // Arrival evidence is persisted already by F5. Retained events do not add attendance twice.
         internal static int CurrentMinutes(CitizenState p, WorkWindow window, double now)
         {
             if (!Attending(p)) return 0;
@@ -86,7 +77,6 @@ namespace PersistentCity.Core
             if (visit.Activity != Activity.Work || visit.PlaceId != window.PlaceId) return 0;
             from = Math.Max(from, visit.AtMinute);
             double until = Math.Min(now, Math.Min(window.EndsAt, p.ActivityUntilMinute));
-            // The tuple stores whole attended minutes. Never pay a minute that was only partly attended.
             return Math.Max(0, (int)Math.Floor(until - from));
         }
         internal static void Leave(CitizenState live, CitizenState working, WorkWindow window, double now, bool force = false)
@@ -98,9 +88,6 @@ namespace PersistentCity.Core
             working.Accrual = a;
         }
 
-        /// <summary>One posting, including a midnight portion of an overnight shift. The watermark is published
-        /// with the conserved credit. UnpostedWage holds the nonnegative division remainder in exact numerator
-        /// units, biased by half a denominator: cumulative rounding to nearest unit without losing fractions.</summary>
         internal static void Settle(CitizenState person, ResidentBudget budget, WorkWindow window, double now)
         {
             var a = person.Accrual;

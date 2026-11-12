@@ -19,7 +19,7 @@ REPO = MODULE.parents[1]
 sys.path.insert(0, str(MODULE))
 import check_scopes  # noqa: E402
 
-HARMONY_SHA256 = '7b9e756306fa3d7620e02a857c8927a6ab04973f9bd8a77d3866700a6deac55c'  # Lib.Harmony 2.4.2, as tools/build.py
+HARMONY_SHA256 = '7b9e756306fa3d7620e02a857c8927a6ab04973f9bd8a77d3866700a6deac55c'
 REFERENCES = ['mscorlib', 'System', 'System.Core', 'netstandard', 'BigAmbitions', 'BigAmbitions.ModAPI',
               'HGExtensions', 'HGPlugins', 'UnityEngine.CoreModule', 'Newtonsoft.Json']
 SOURCES = ['HarmonyScan.cs', 'Probe.cs', 'ProbeLogic.cs', 'ScopeInventory.cs']
@@ -71,7 +71,6 @@ def build(managed, harmony, output):
                  '-warn:4', '-warnaserror+', '-deterministic+', '-debug-', '-pathmap:' + str(MODULE) + '=/PerfUnionProbe',
                  '-out:' + str(artifact)]
     arguments += ['-reference:' + str(p) for p in references] + [str(p) for p in sources]
-    # A response file avoids Windows command-line limits and shell interpolation.
     rsp = output / 'compile.rsp'
     rsp.write_text('\n'.join('"' + a.replace('"', '\\"') + '"' for a in arguments) + '\n', encoding='utf-8')
     subprocess.run([dotnet, str(compiler), '-noconfig', '@' + str(rsp)], check=True)

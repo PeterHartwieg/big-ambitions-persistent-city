@@ -14,7 +14,7 @@ public sealed class TrafficNetworkTests
     {
         var network = Network(Chain(7, 20));
         Assert.Equal(2, network.Links.Count);
-        Assert.Equal(13, network.Links[0].Capacity); // Declared 80 m / 6 m policy.
+        Assert.Equal(13, network.Links[0].Capacity);
         Assert.Equal(1.8, network.Links[0].HeadwayMinutes);
         var route = new Route();
         route.Legs.Add(new RouteLeg { Mode = TravelMode.Walk, Minutes = 2 });
@@ -30,8 +30,8 @@ public sealed class TrafficNetworkTests
     public void ForksMergesJunctionsAndAccessContractsRemainSectionBoundaries()
     {
         var nodes = Chain(7, 10);
-        nodes[1].Successors = new[] { 2, 4 }; // Fork.
-        nodes[3].Boundary = true; // Native junction/entry/exit or lane-change metadata.
+        nodes[1].Successors = new[] { 2, 4 };
+        nodes[3].Boundary = true;
         nodes[4].StructuralContract = "different-car-access";
         var network = Network(nodes);
         Assert.True(network.TryGetEdge(0, 1, out var beforeFork));

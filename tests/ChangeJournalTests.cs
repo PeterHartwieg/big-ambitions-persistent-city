@@ -36,8 +36,6 @@ public sealed class ChangeJournalTests
             StockoutObserved = true, PeriodCauses = new MealPeriodCauses { Counts = Enumerable.Range(0,16).ToArray() } });
         return state;
     }
-    /// <summary>The writer's golden for this fixture. The schema is held at
-    /// 1 until release, so a deliberate format change re-pins it in place (docs/decisions/2026-11-09-schema-one.md).</summary>
     [Theory]
     [InlineData(5150, Corpus, 0)]
     [InlineData(9217, "ff9900deb714b1799db3f281df35a8ad565581ac12520c64a3e20212e986487a", 235691)]
@@ -61,7 +59,6 @@ public sealed class ChangeJournalTests
         string actual = EconomicLedgerTests.Sha(payload) + " " + payload.Length;
         Assert.True(pin + " " + characters == actual, "golden " + seed + ": " + actual);
     }
-    /// <summary>Seed 5150 is the reader corpus's <c>full.json</c>, pinned there once.</summary>
     private const string Corpus = "corpus";
     [Fact]
     public void OnlyObservedShopChangesAtObservationMinuteAndReloadContinuesExactImage()
@@ -72,7 +69,6 @@ public sealed class ChangeJournalTests
         foreach (var shop in new[] { a, b }) journal.ObserveSupply(shop.BusinessId, shop.PlaceId, 1800, Offers(), 1, 2);
         journal.ObserveSupply(a.BusinessId, a.PlaceId, 1801, Offers(), 1, 2);
         Assert.All(state.Economy.Shops, row => Assert.Empty(row.Changes));
-        // A fixture edit of the quiet shop exists outside the observer until the next read.
         var edited = Offers(300, 0);
         journal.ObserveSupply(a.BusinessId, a.PlaceId, 1811, Offers(275, 0), 1, 1);
         Assert.Empty(state.Economy.Shops[1].Changes);
@@ -97,7 +93,6 @@ public sealed class ChangeJournalTests
         journal.ObserveHours(shop.BusinessId, shop.PlaceId, 1900, hours);
         Assert.Empty(state.Economy.Shops[0].Changes); Assert.Equal(baseline, state.Economy.Shops[0].Fingerprint);
         EconomicLedgerTests.AssertRoundTrip(state);
-        // The base Place contract permits repeated windows; the journal must preserve that contract.
         hours.Add(new OpeningWindow { Day = 0, FromMinute = 360, ToMinute = 1320 });
         journal.ObserveHours(shop.BusinessId, shop.PlaceId, 1901, hours);
         EconomicLedgerTests.AssertRoundTrip(state);
@@ -111,17 +106,15 @@ public sealed class ChangeJournalTests
         journal.ObserveHours(scope.BusinessId, scope.PlaceId, 1800, weekly);
         JArray Image() => (JArray)SaveWire.Parse(SaveCodec.Write(state))["Economy"]!["Shops"]![0]!;
         var image = Image(); Assert.Equal(56, ((string)image[4]!).Length);
-        // State, supply, hours plus their three separators; excludes the already-frozen header/journal.
         int Extension(JArray row) => row.Skip(2).Sum(cell => cell.ToString(Newtonsoft.Json.Formatting.None).Length) + 3;
         Assert.Equal(109, Extension(image));
         EconomicLedgerTests.AssertRoundTrip(state);
         var full = Enumerable.Range(0, 64).Select(i => new OpeningWindow { Day = 0, FromMinute = i * 20, ToMinute = i * 20 + 10 }).ToList();
         journal.ObserveHours(scope.BusinessId, scope.PlaceId, 1900, full);
         image = Image(); Assert.Equal(398, ((string)image[4]!).Length);
-        Assert.Equal(626, Extension(image) + 7 * 25); // Seven more fixed-width offer cells.
+        Assert.Equal(626, Extension(image) + 7 * 25);
         EconomicLedgerTests.AssertRoundTrip(state);
         string sparse = (string)image[4]!;
-        // Swap the first two windows: the sparse reader must still enforce canonical ordering.
         image[4] = sparse[..14] + sparse[20..26] + sparse[14..20] + sparse[26..];
         var root = SaveWire.Parse(SaveCodec.Write(state)); root["Economy"]!["Shops"]![0] = image;
         EconomicLedgerTests.Refused(root.ToString(Newtonsoft.Json.Formatting.None));
@@ -219,7 +212,7 @@ public sealed class ChangeJournalTests
         var cachedA = new DecisionSupplyImage<ShopObservedOffer[]>(Offers(stock: 40));
         journal.ObserveSupply(scope.BusinessId, scope.PlaceId, 1900, cachedA.Value, 1, 2);
         var liveB = Offers(stock: 0);
-        cachedA.ObserveLive(liveB); // same production seam used by ReadSelected's live capture
+        cachedA.ObserveLive(liveB);
         journal.ObserveSupply(scope.BusinessId, scope.PlaceId, 1900, liveB, 1, 2);
         journal.ObserveSupply(scope.BusinessId, scope.PlaceId, 1900, cachedA.Value, 1, 2);
         Assert.Same(liveB, cachedA.Value);

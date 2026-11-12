@@ -2,7 +2,6 @@ using System;
 
 namespace PersistentCity.Core
 {
-    /// <summary>Places a root so its native front marker retains the committed XZ route position.</summary>
     public static class PhysicalVehicleReference
     {
         public static Position Root(Position marker, Position localOffset, Position forward)

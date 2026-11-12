@@ -4,12 +4,9 @@ using System.Text;
 
 namespace PersistentCity.Core
 {
-    /// <summary>Immutable effective A3 tuning image. Wire revision 1 is twelve exact binary64
-    /// values in fixed order, never part of a logical draw key. No revision history is retained.</summary>
     public sealed class FoodDecisionTuning
     {
         public const int WireLength = 193;
-        /// <summary>The implicit offers limit of a revision-1 wire, frozen at its historical value.</summary>
         public const int RevisionOneOffers = 4;
         internal FoodChoiceSettings Settings { get; }
         private FoodDecisionTuning(FoodChoiceSettings settings) { Settings = settings; }
@@ -20,8 +17,6 @@ namespace PersistentCity.Core
         }
         public string ToWire()
         {
-            // Revision 1 omits the menu fields and always means the E4 values 4/1/0. E5b5's eight-offer default (Q1) is
-            // written explicitly as revision 2, so every held image keeps its exact meaning.
             bool extended=Settings.FoodMenuMaximumOffersPerShop!=RevisionOneOffers || Settings.FoodMenuNewTasteWeight!=1 || Settings.FoodMenuHealthWeight!=0;
             var text = new StringBuilder(extended ? 241 : WireLength); text.Append(extended ? '2' : '1');
             void Add(double value) => text.Append(BitConverter.DoubleToInt64Bits(value).ToString("X16", CultureInfo.InvariantCulture));
@@ -60,27 +55,26 @@ namespace PersistentCity.Core
                 FoodChoiceHouseholdWeight = Read(),
                 FoodShortlistTemperature = Read() };
             if(wire![0]=='2') { settings.FoodMenuMaximumOffersPerShop=(int)Read(); settings.FoodMenuNewTasteWeight=Read(); settings.FoodMenuHealthWeight=Read(); }
-            else settings.FoodMenuMaximumOffersPerShop=RevisionOneOffers; // the settings default moved to 8 in E5b5
+            else settings.FoodMenuMaximumOffersPerShop=RevisionOneOffers;
             tuning = new FoodDecisionTuning(settings); return true;
         }
-        /// <summary>Allocation-free streaming shape precheck; no image is created until the full graph passes.</summary>
         public static bool IsCanonicalWire(string? wire)
         {
             if (wire == null || !(wire.Length == WireLength && wire[0] == '1' || wire.Length == 241 && wire[0] == '2')) return false;
             for (int i = 1; i < wire.Length; i++)
                 if (!(wire[i] >= '0' && wire[i] <= '9' || wire[i] >= 'A' && wire[i] <= 'F')) return false;
-            if (!In(ReadWord(wire, 1), 0.25, 4)) return false; // FoodChoiceTemperature
-            if (!In(ReadWord(wire, 17), 0.001, 0.25)) return false; // FoodChoiceWeightFloor
-            if (!In(ReadWord(wire, 33), 0, 3)) return false; // FoodChoiceTasteWeight
-            if (!In(ReadWord(wire, 49), 0, 3)) return false; // FoodChoicePriceWeight
-            if (!In(ReadWord(wire, 65), 0, 3)) return false; // FoodChoiceDistanceWeight
-            if (!In(ReadWord(wire, 81), 2, 60)) return false; // FoodChoiceDistanceScaleMinutes
-            if (!In(ReadWord(wire, 97), 0, 3)) return false; // FoodChoiceQueueWeight
-            if (!In(ReadWord(wire, 113), 0, 3)) return false; // FoodChoiceQualityWeight
-            if (!In(ReadWord(wire, 129), 0, 3)) return false; // FoodChoiceTimePressureWeight
-            if (!In(ReadWord(wire, 145), 0, 3)) return false; // FoodChoiceHealthWeight
-            if (!In(ReadWord(wire, 161), 0.1, 5)) return false; // FoodChoiceHouseholdWeight
-            if (!In(ReadWord(wire, 177), 0.25, 4)) return false; // FoodShortlistTemperature
+            if (!In(ReadWord(wire, 1), 0.25, 4)) return false;
+            if (!In(ReadWord(wire, 17), 0.001, 0.25)) return false;
+            if (!In(ReadWord(wire, 33), 0, 3)) return false;
+            if (!In(ReadWord(wire, 49), 0, 3)) return false;
+            if (!In(ReadWord(wire, 65), 0, 3)) return false;
+            if (!In(ReadWord(wire, 81), 2, 60)) return false;
+            if (!In(ReadWord(wire, 97), 0, 3)) return false;
+            if (!In(ReadWord(wire, 113), 0, 3)) return false;
+            if (!In(ReadWord(wire, 129), 0, 3)) return false;
+            if (!In(ReadWord(wire, 145), 0, 3)) return false;
+            if (!In(ReadWord(wire, 161), 0.1, 5)) return false;
+            if (!In(ReadWord(wire, 177), 0.25, 4)) return false;
             if(wire[0]=='2' && (!In(ReadWord(wire,193),1,8) || ReadWord(wire,193)!=Math.Truncate(ReadWord(wire,193))
                 || !In(ReadWord(wire,209),0,2) || !In(ReadWord(wire,225),0,2))) return false;
             if(wire[0]=='2' && ReadWord(wire,193)==4 && ReadWord(wire,209)==1 && ReadWord(wire,225)==0) return false;

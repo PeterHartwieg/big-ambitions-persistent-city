@@ -115,7 +115,6 @@ namespace PersistentCity.Tests
         [InlineData(true)] [InlineData(false)]
         public void ChangedNativeEnumOrEnabledFieldCannotBecomeObserved(bool changeEnum)
         {
-            // A separate assembly can expose the same native full names with an incompatible contract.
             var module = AssemblyBuilder.DefineDynamicAssembly(new AssemblyName("ChangedCampaign" + changeEnum), AssemblyBuilderAccess.Run)
                 .DefineDynamicModule("main");
             var enumBuilder = module.DefineEnum("Entities.MarketingTypeName", TypeAttributes.Public, typeof(int));
@@ -225,7 +224,6 @@ namespace PersistentCity.Tests
                 refresh.Step(1, 0, 0);
                 Assert.NotNull(refresh.Snapshot);
                 Assert.Equal(CampaignReadStatus.Unknown, refresh.Snapshot!.Businesses[0].Status);
-                // Empty lists still need known promotion to establish an entirely Observed business.
             }
             var final = reader.Begin(new[] { new CampaignBusinessSource("b", new Registration()) }, 0, 0);
             final.Step(1, 0, 0);

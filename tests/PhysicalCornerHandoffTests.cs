@@ -3,8 +3,6 @@ using Xunit;
 
 namespace PersistentCity.Tests;
 
-// F2d: the corner handoff only shapes the visible turn. A car Gley reports past a corner holds its pose and yaw while
-// the kernel's coordinate is short of the marker's projection onto the next leg; it never credits progress.
 public sealed class PhysicalCornerHandoffTests
 {
 
@@ -33,15 +31,13 @@ public sealed class PhysicalCornerHandoffTests
         Assert.True(PhysicalProgress.TryProject(previous, marker, true, out double corner));
         Assert.Equal(10, corner);
         Assert.True(PhysicalProgress.TryProject(next, marker, false, out double reprojected));
-        Assert.True(reprojected > 10.1); // The marker already projects ahead onto the next leg.
+        Assert.True(reprojected > 10.1);
         var handoff = new PhysicalCornerHandoff(); handoff.Begin(previous, next, marker);
         for (int frame = 0; frame < 100; frame++)
         {
-            // No elapsed frames, queue advance or extra capacity lets the car turn ahead of the kernel.
             Assert.True(handoff.MustHold(next, 10.1));
             Assert.Equal(0, PhysicalTrafficMotion.MaximumAdvance(next, marker, 10.1));
         }
-        // Once the kernel's coordinate passes the projection the hold ends for good.
         Assert.False(handoff.MustHold(next, reprojected + 1e-6));
         Assert.False(handoff.MustHold(next, 10.1));
     }

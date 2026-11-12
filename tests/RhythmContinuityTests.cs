@@ -67,7 +67,7 @@ public sealed class RhythmContinuityTests
             Assert.True(eventTimes.Count <= 336 + 12 * 8, "Routine work plus at most one employment check per resident/day must remain bounded.");
         }
         engine.AdvanceTo(end);
-        Assert.Equal(72, routes.Queries.Count(query => query.From == "home")); // Twelve estimates plus sixty departures.
+        Assert.Equal(72, routes.Queries.Count(query => query.From == "home"));
         Assert.Equal(60, routes.Queries.Count(query => query.From == "work"));
         Assert.Equal(120, city.Citizens.Sum(person => person.CompletedJourneys));
         Assert.Equal(0, city.Citizens.Sum(person => person.MissedActivities));

@@ -12,13 +12,8 @@ using Xunit;
 
 namespace PersistentCity.Tests;
 
-/// <summary>F5i (docs/plans/f5-population.md, F5i row): visitors receive bodies through the F5f active-journey index under
-/// unchanged caps, now that F2's movement contract makes a body follow the logical pose. Proven with F2's movement
-/// harness (tests/movement-equivalence, visitor arms): every visitor arm equals its bodies-off run, visitor projection
-/// included. Bodies are not saved; the writer and its golden hash are unchanged.</summary>
 public sealed class VisitorBodyTests
 {
-    // 300 residents and 300 visitors for one day: the smallest fixture here in which visitors buy at the own shop.
     private const int Residents = 300;
     private static MovementOptions Visitors(Action<MovementOptions>? change = null)
     {
@@ -36,7 +31,6 @@ public sealed class VisitorBodyTests
     {
         var comparison = Equivalence.Compare(arm, reference);
         Assert.True(comparison.Identical, name + ": " + string.Join(" ", comparison.Equal.Where(e => !e.Value).Select(e => e.Key)));
-        // The visitor outcomes the plan names, explicitly: journeys and arrival minutes, purchases, wallet debits.
         Assert.Equal(reference.Boundaries.Select(b => b.VisitorsSha256), arm.Boundaries.Select(b => b.VisitorsSha256));
         foreach (var key in new[] { "visitors.arrivals", "visitors.purchases", "visitors.ownSales", "visitors.walletUnits", "visitors.foodSpentUnits" })
             Assert.True(arm.Metrics[key] == reference.Metrics[key], name + ": " + key);
@@ -71,14 +65,11 @@ public sealed class VisitorBodyTests
             };
         }));
         Assert.Equal(1, run.Reloads);
-        Assert.NotSame(first, last); // the checks also ran on the reloaded city's rebuilt index
+        Assert.NotSame(first, last);
         Assert.True(travellingVisitors > 0 && boundVisitors > 0);
-        // A pedestrian body needs a non-zero appearance seed (Runtime PhysicalPedestrians.TryAcquire).
         Assert.All(last!.State.VisitorRoutines, r => Assert.NotEqual(0, r.Identity.AppearanceSeed));
     }
 
-    /// <summary>The F2 E1 contract for visitors: camera/body on vs off. Focus paths, caps, native lag, acquisition
-    /// failures, hidden travel and a slower cadence, each against its bodies-off run at the same cadence.</summary>
     [Fact]
     public void VisitorBodyArmsEqualBodiesOff()
     {
@@ -111,18 +102,14 @@ public sealed class VisitorBodyTests
         Assert.Equal((48, 24, 120.0), (driver.Pedestrians, driver.Vehicles, driver.RadiusMetres));
         var stationary = BodiesRun.Value.Metrics;
         Assert.True(stationary["bodies.maxWalkers"] <= 48 && stationary["bodies.maxCars"] <= 24);
-        // Visitors walk, so they share the pedestrian cap with residents and never add a car.
         Assert.True(stationary["bodies.maxVisitorBodies"] > 0 && stationary["bodies.maxVisitorBodies"] <= stationary["bodies.maxWalkers"]);
         var one = MovementRun.Run(Visitors(o => { o.Bodies.Pedestrians = 1; o.Bodies.Vehicles = 1; })).Metrics;
         Assert.True(one["bodies.maxWalkers"] <= 1 && one["bodies.maxCars"] <= 1 && one["bodies.maxVisitorBodies"] <= 1);
-        // The declared load at K = 3: 957 residents and 1,914 visitors (2,871 persons) under the default caps.
         var dense = MovementRun.Run(Visitors(o => { o.Residents = MovementFixture.Residents; o.RepresentationFactor = 3; })).Metrics;
         Assert.Equal(2 * MovementFixture.Residents, dense["visitors.count"]);
         Assert.True(dense["bodies.maxWalkers"] <= 48 && dense["bodies.maxCars"] <= 24 && dense["bodies.visitorAcquired"] > 0);
     }
 
-    /// <summary>Acquire and release around a save and reload: the bound visitor's journey continues from its saved
-    /// state, the new driver gives it a body again, and the run equals the uninterrupted bodies-off run.</summary>
     [Fact]
     public void VisitorBodyContinuesAcrossReload()
     {
@@ -136,19 +123,14 @@ public sealed class VisitorBodyTests
         Equal(MovementRun.Run(Plain(o => o.ReloadMidJourney = true)), PlainRun.Value, "bodies-off reload");
     }
 
-    /// <summary>Residents keep today's bodies: a resident-only city is the F2 harness result recorded before F5i (pinned
-    /// below), and in a city with visitors the residents' journeys, sales, wallets, parked cars and link order are the same
-    /// with and without bodies (<see cref="VisitorBodyArmsEqualBodiesOff"/> compares every projection).</summary>
     [Fact]
     public void ResidentsAreUnchanged()
     {
         var residents = MovementRun.Run(SelfChecks.Small("residents"));
         Assert.Equal(0, residents.Metrics["visitors.count"]);
         Assert.Equal(0, residents.Metrics["bodies.visitorAcquired"]);
-        // Recorded at b8feb06 (VisitorsReceiveBodies = false) with this harness.
         Assert.Equal(ResidentPin, (residents.JourneysSha256, residents.SalesSha256, residents.Metrics["bodies.acquired"],
             residents.Metrics["bodies.walkerFrames"], residents.Metrics["bodies.carFrames"]));
-        // Every indexed resident is a body candidate, as before.
         int indexed = 0;
         var plain = SelfChecks.Small("residents-index"); plain.Driver = false;
         plain.AfterFrame = (city, _) =>
@@ -178,12 +160,6 @@ public sealed class VisitorBodyTests
     }
 }
 
-/// <summary>F5i measurement (docs/perf/f5i.md), not a gate: it runs only when PC_F5I_MEASURE names an output file, e.g.
-/// <c>PC_F5I_MEASURE=out.jsonl dotnet test tests/PersistentCity.Tests.csproj -c Release --filter FullyQualifiedName~VisitorBodyMeasure</c>.
-/// Persons are the movement fixture's 957 residents plus K−1 visitors each (K = 2: 1,914 persons; K = 3: 2,871). A of them
-/// walk a two-leg route on the 288 m grid, picked at an even stride so the active mix matches the resident/visitor mix;
-/// the focus is the shop at the centre with the 120 m radius. Before/after is the same code with
-/// ActiveJourneyIndex.VisitorsReceiveBodies false/true. 100 warm-up calls, then 300 timed single calls per row.</summary>
 public sealed class VisitorBodyMeasure
 {
     private static string? Output => PerfGate.Variable("PC_F5I_MEASURE") is { Length: > 0 } path ? path : null;
@@ -204,7 +180,6 @@ public sealed class VisitorBodyMeasure
             ["max"] = Math.Round(times[299], 4), ["bytesPerCall"] = Math.Round(bytes / 300.0, 1), ["atLeast30Ms"] = times.Count(t => t >= 30) };
     }
 
-    /// <summary>The fixture city with <paramref name="active"/> persons walking. Returns the city and the travellers.</summary>
     internal static CitySimulator City(int factor, int active, out List<CitizenState> travellers)
     {
         var state = MovementFixture.Build(7, MovementFixture.Residents, carOwners: false, representationFactor: factor, visitors: true);
@@ -245,9 +220,6 @@ public sealed class VisitorBodyMeasure
                 var nearby = new List<IPersonView>();
                 var candidates = new List<(CitizenState Citizen, double Distance, int Roster)>();
                 double minute = city.State.Minute;
-                // Runtime selection's roster and stateful filters (PhysicalPopulation.Update): grid cells near the focus,
-                // a future event, a moving journey, the sampled pose within the radius, then ByPriority (no attempt yet:
-                // distance, ordinal ID, roster order) and up to four journey samples.
                 int Select()
                 {
                     candidates.Clear();
@@ -269,7 +241,6 @@ public sealed class VisitorBodyMeasure
                     return candidates.Count;
                 }
                 int inRadius = Select();
-                // Selection plus acquisition: a fresh F2 driver double binds up to four bodies and observes them once.
                 var drivers = new Queue<PresentationDriver>();
                 void Refill() { while (drivers.Count < 400) drivers.Enqueue(new PresentationDriver(city, new DriverSettings())); }
                 Refill();

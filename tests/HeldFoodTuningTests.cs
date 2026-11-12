@@ -43,7 +43,6 @@ public sealed class HeldFoodTuningTests
         resident.Traits = new ResidentTraits { Bands = "4022222222" };
         state.Food = new FoodCommerceState { RepresentationFactor = representation, Shops = new() { new FoodScope { PlaceId = "shop", BusinessId = "generation:1",
             ProductId = FoodProducts.Croissant, AdditionalProductIds = new() { FoodProducts.Burger } } } };
-        // Visitors (K-1 per resident) are persons with their own routines; they arrive through a portal.
         if (representation > 1) PortalPlaces.Add(state, new[] { new PortalStation("subway:test", new Position(3, 0, 1)) });
         var paths = new Paths(); var market = new Market(); var city = new CitySimulator(state, paths);
         var settings = new FoodChoiceSettings { FoodChoiceTasteWeight = 0 }; city.AttachFoodMarket(market, settings);
@@ -104,7 +103,6 @@ public sealed class HeldFoodTuningTests
         Assert.Equal(FoodProducts.Burger, meal.ProductId);
         Assert.Equal(FoodProducts.Burger, Resume(uncaptured, 0, 1).product);
         Assert.Equal(FoodProducts.Croissant, Resume(uncaptured, 3, 128).product);
-        // Same logical stay/seed/attempt has the same key under either tuning image.
         var read = DevelopmentChain.Read(uncaptured); var fresh = new CitySimulator(read.State!, new Paths());
         fresh.AttachFoodMarket(new Market(), settings); fresh.AdvanceFrameSlice(meal.DesiredAt, 1);
         var next = fresh.State.Food!.Residents.Single().Decision!;
@@ -154,7 +152,7 @@ public sealed class HeldFoodTuningTests
         string valid = (string)d["Tuning"]!;
         switch (corruption) {
             case 0: d["Tuning"] = valid + "0"; break;
-            case 1: d["Tuning"] = (valid[0] == '2' ? "1" : "2") + valid.Substring(1); break; // the other revision digit
+            case 1: d["Tuning"] = (valid[0] == '2' ? "1" : "2") + valid.Substring(1); break;
             case 2: d["Tuning"] = valid.ToLowerInvariant(); break;
             case 3: d["Tuning"] = "1" + "7FF8000000000000" + valid.Substring(17); break;
             case 4: d["Tuning"] = "1" + "7FF0000000000000" + valid.Substring(17); break;
@@ -203,7 +201,7 @@ public sealed class HeldFoodTuningTests
         string before = root.ToString(Formatting.None);
         Assert.Equal(405, wire.Length - before.Length);
         Assert.Equal(405, System.Text.Encoding.UTF8.GetByteCount(wire) - System.Text.Encoding.UTF8.GetByteCount(before));
-        Assert.InRange(wire.Length - before.Length, 1, 65536); // aggregate policy/held-tuning envelope
+        Assert.InRange(wire.Length - before.Length, 1, 65536);
         var old = DevelopmentChain.Read(before); Assert.Equal(SaveReadStatus.Loaded, old.Status);
         Assert.Equal(SaveCodec.CountRecords(city.State, wire), SaveCodec.CountRecords(old.State!, before));
     }
@@ -211,7 +209,7 @@ public sealed class HeldFoodTuningTests
     [Fact]
     public void ImageStoresAllTwelveExactCoefficientsAndClampsOnlyCapture()
     {
-        var settings = LegacyFoodChoice.Settings(); // revision 1: the four-offer menu fields (E5b5 made eight the default)
+        var settings = LegacyFoodChoice.Settings();
         var properties = typeof(FoodChoiceSettings).GetProperties().Where(p=>!p.Name.StartsWith("FoodMenu",StringComparison.Ordinal)).ToArray(); Assert.Equal(12, properties.Length);
         foreach (var property in properties) {
             var changed = LegacyFoodChoice.Settings(); property.SetValue(changed, .37); changed.Clamp();

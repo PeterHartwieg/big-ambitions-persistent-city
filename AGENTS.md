@@ -23,6 +23,7 @@ Read this file, your plan row and the sections your task lists. Then read the co
 - In-game checks are batched for the next rig run and do not gate merge. List them in the PR description under "In-game checks", each numbered with setup, steps and expected result. The coordinator copies them into `docs/rig-checklist.md` after merge.
 - The save schema is held at 1 until release. Never bump it, add a per-feature schema constant, or plan a writer number; change the format in place. This overrides older plan text. A test enforces it. [decision](docs/decisions/2026-11-09-schema-one.md)
 - Slices write no docs unless the task names the file. Evidence, perf numbers and in-game checks go in the PR description. The coordinator updates the roadmap and the rig checklist after merge. Plans are frozen and leave the tree once their slices have merged; later owner decisions go in `docs/decisions/`. [decision](docs/decisions/2026-11-10-lean-docs.md)
+- No code comments. Fix the problem or open an issue instead of leaving an excuse in the code. The only exceptions are tooling directives and the lines in `comment-excuses.txt`; `CommentBanTests` enforces this.
 - Use "Refs #N", not "Fixes #N".
 - Do not change RLO or publish anything upstream. Do not ask about release or Workshop.
 - Implementers do not use the game, the rig, ModsLocal or the bridge.

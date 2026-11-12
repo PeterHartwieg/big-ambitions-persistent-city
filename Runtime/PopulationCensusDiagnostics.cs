@@ -11,14 +11,6 @@ using Stopwatch = System.Diagnostics.Stopwatch;
 
 namespace PersistentCity.Runtime
 {
-    /// <summary>F5a read-only world census behind the debug console line `pc population census`
-    /// (optionally followed by `workplaces`). It runs only when requested: no frame, event, save or
-    /// BusinessAllocation work. Its inputs are the place catalogue and business facts from the
-    /// load-time GamePlaces read (not the persisted catalogue, which can predate businesses
-    /// established since), the residents' saved assignments joined by place ID, and the stations
-    /// already discovered by RouteObjectDiscovery. A request copies those managed facts on the main
-    /// thread, reduces them on a detached worker, and prints the latest result finished for this
-    /// save. No native member is called or written.</summary>
     public sealed partial class PopulationRuntime
     {
         private List<Place> censusPlaces = new List<Place>();
@@ -59,7 +51,6 @@ namespace PersistentCity.Runtime
             catch (Exception error) { log?.Warn("Population census console command not removed: " + error.Message); }
         }
 
-        /// <summary>Called by TryStart with the fresh load-time catalogue of the save being started.</summary>
         private void CaptureCensusCatalogue(List<Place> places, List<CensusWorkplace> workplaces)
         {
             ResetCensus();
@@ -69,7 +60,6 @@ namespace PersistentCity.Runtime
 
         private void ResetCensus()
         {
-            // A worker that finishes after a save change is observed and dropped, never published.
             censusTask?.ContinueWith(task => { _ = task.Exception; }, TaskContinuationOptions.OnlyOnFaulted);
             censusTask = null; lastCensus = null;
             censusPlaces = new List<Place>(); censusWorkplaces = new List<CensusWorkplace>();
@@ -81,12 +71,9 @@ namespace PersistentCity.Runtime
         private void RunCensusCommand(string area, string action, string detail)
         {
             if (area == "ordinary" && action == "status") { OrdinaryExchangeStatus(); return; }
-            // F8b: `pc capability status | show <id>` prints the read-only capability report.
             if (area == "capability") { CapabilityCommand(action, detail); return; }
-            // F5d: `pc population person <id>` prints one person's stored routine, presence, meal and wallet facts.
             if (string.Equals(area, "population", StringComparison.OrdinalIgnoreCase) && string.Equals(action, "person", StringComparison.OrdinalIgnoreCase))
             { PersonCommand(detail); return; }
-            // F5g: `pc population manifest` prints persisted persons per pattern and presence, and the latched fill targets.
             if (string.Equals(area, "population", StringComparison.OrdinalIgnoreCase) && string.Equals(action, "manifest", StringComparison.OrdinalIgnoreCase))
             { ManifestCommand(); return; }
             bool details = string.Equals(detail, "workplaces", StringComparison.OrdinalIgnoreCase);
@@ -145,7 +132,6 @@ namespace PersistentCity.Runtime
             else Debug.Log("[Persistent City] population person (read-only)\n" + line);
         }
 
-        // Main thread: copy only managed facts, then reduce them detached from the frame.
         private void StartCensus(CitySimulator current, object save)
         {
             long started = Stopwatch.GetTimestamp();
@@ -168,10 +154,6 @@ namespace PersistentCity.Runtime
             });
         }
 
-        // Null until a complete discovery sweep exists; the census then reports stations as pending.
-        // Same activity and DLC visibility filter as MultimodalRoutes.EnsureStations. The planner
-        // also drops stations without a finite navmesh entrance or near a gate, so its usable
-        // portal count can be smaller than this discovered count.
         private List<string>? DiscoveredStationIds()
         {
             var discovery = routeObjects;

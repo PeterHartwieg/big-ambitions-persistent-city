@@ -11,7 +11,6 @@ namespace PersistentCity.Runtime
         internal const string PreparingAccountingText = "Preparing Persistent City. Calendar held until population and routes are ready.";
         internal const string BoundaryAccountingText = "Calendar boundary caps apply. Ctrl+F8: pacing details.";
         internal const string AccountingRecoveryText = "Load a synchronized pre-failure checkpoint or another city to restart Persistent City. This stopped save stays refused; native time continues.";
-        /// <summary>On-demand rig projection; normal tick paths construct no diagnostic objects/strings.</summary>
         public object AccountingDiagnostics => new {
             policy = "minute-epoch-drain-v1", configuredCalendarFactor = NativeCityClock.Factor,
             nativeMinute = SaveGameManager.Current == null ? 0 : Now(), logicalMinute = simulation?.View.Minute,

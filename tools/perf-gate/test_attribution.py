@@ -1,4 +1,3 @@
-"""F4c offline checks: python -m unittest discover -s tools/perf-gate -p test_*.py"""
 import copy
 import importlib.util
 import json
@@ -81,7 +80,6 @@ class TraceParsingTests(unittest.TestCase):
         self.assertEqual(present.bound_of(present.Present(0.0, gpu_busy_ms=15.0), 16.7), 'gpu')
 
     def test_presentmon_2_display_stall_survives_ingestion(self):
-        # The sample is upstream 2.x output (CPUStartQPC, FrameTime, DisplayedTime); frame 6 took 100 ms.
         trace = present.read_trace(PRESENT_DIR / 'presentmon2-sample.csv', FREQ)
         self.assertEqual((trace.schema, trace.display_source), ('2.x', 'DisplayedTime'))
         intervals = [present.displayed_interval(trace, p) for p in range(len(trace.presents))]
@@ -90,15 +88,13 @@ class TraceParsingTests(unittest.TestCase):
         self.assertTrue(all(abs(v - 16.667) < 1.5 for i, v in enumerate(intervals) if i not in (0, 6)), intervals)
 
     def test_presentmon_2_displayed_time_is_the_interval_after_its_frame(self):
-        # CPU starts every 16 ms but frame 1 stayed on screen 100 ms: the interval ending at frame 2's display is 100 ms.
         header = ['Application', 'ProcessID', 'CPUStartTime', 'FrameTime', 'CPUBusy', 'CPUWait', 'GPUBusy', 'DisplayedTime']
         body = [['g', '1', str(16.0 * i), '16.0', '10.0', '6.0', '5.0', '100.0' if i == 1 else '16.0'] for i in range(5)]
         trace = present.parse_rows([header] + body)
         self.assertEqual(trace.clock, 'trace-start')
-        self.assertEqual([p.t_ms for p in trace.presents], [16.0, 32.0, 48.0, 64.0, 80.0])  # ms, closing at CPUStart + FrameTime
+        self.assertEqual([p.t_ms for p in trace.presents], [16.0, 32.0, 48.0, 64.0, 80.0])
         self.assertEqual([present.displayed_interval(trace, p) for p in range(5)], [None, 16.0, 100.0, 16.0, 16.0])
         self.assertEqual((trace.presents[2].cpu_busy_ms, trace.presents[2].cpu_wait_ms, trace.presents[2].gpu_busy_ms), (10.0, 6.0, 5.0))
-        # DisplayedTime NA: not shown, and the next shown frame's interval runs from the last shown frame.
         body[2][-1] = 'NA'
         trace = present.parse_rows([header] + body)
         self.assertFalse(trace.presents[2].displayed)
@@ -112,7 +108,6 @@ class TraceParsingTests(unittest.TestCase):
         self.assertTrue(all(present.displayed_interval(trace, p) is None for p in range(5)))
 
     def test_cpu_start_rows_own_their_frame_evidence(self):
-        # Varying frame lengths and a distinct GPU busy per frame: frame i must join row i, not row i + 1.
         stalls = {i: 20.0 + (i * 7) % 40 for i in range(0, 300, 3)}
         gpu = {i: 1.0 + i * 0.01 for i in range(300)}
         rows, presents = st.session(300, stalls=stalls, gpu_busy=gpu)
@@ -130,9 +125,9 @@ class TraceParsingTests(unittest.TestCase):
         self.assertEqual(trace.clock, 'trace-start')
         self.assertFalse(trace.has('gpu_busy'))
         self.assertTrue(all(present.bound_of(p, 16.7) == present.UNKNOWN for p in trace.presents))
-        self.assertFalse(trace.presents[5].displayed)  # Dropped=1
+        self.assertFalse(trace.presents[5].displayed)
         self.assertIsNone(present.displayed_interval(trace, 5))
-        self.assertIsNone(trace.presents[0].display_ms)  # PresentMon 1.x writes 0 for the first displayed frame
+        self.assertIsNone(trace.presents[0].display_ms)
 
     def test_qpc_trace_needs_a_frequency_and_a_time_column(self):
         rows = st.trace_rows(st.session(5)[1])
@@ -169,7 +164,7 @@ class JoinTests(unittest.TestCase):
                 self.assertEqual(source, 'estimated')
                 if version == 2:
                     self.assertAlmostEqual(offset, -offset_true, delta=1.0)
-                else:  # seconds from an origin 1234.5 ms on the probe clock
+                else:
                     self.assertAlmostEqual(offset, 1234.5, delta=1.0)
                 joined = present.join(frames, trace, offset)
                 self.assertEqual(joined, list(range(len(rows))), 'each frame joins its own present')
@@ -187,15 +182,14 @@ class JoinTests(unittest.TestCase):
                 self.assertIsNone(joined[i])
             else:
                 self.assertEqual(joined[i], kept.index(i), f'frame {i}')
-        # A dropped present stays joined but has no presented interval; the next shown one spans the gap.
         series = attribute.presented_series(probe, joined, trace)
-        self.assertEqual(len(series), len(rows) - len(missing) - len(dropped) - 1)  # the first shown present has no interval
+        self.assertEqual(len(series), len(rows) - len(missing) - len(dropped) - 1)
         after_drop = next(s for s in series if any(f['frame'] == 1031 for f in s['frames']))
         self.assertEqual([f['frame'] for f in after_drop['frames']], [1030, 1031, 1032])
         self.assertAlmostEqual(after_drop['interval_ms'], sum(r['whole_frame_ms'] for r in rows[30:33]), delta=0.5)
 
     def test_window_block_reports_join_fraction_and_unknown_gpu(self):
-        missing = set(range(0, 600, 50))  # 12 of 600 = 2 %
+        missing = set(range(0, 600, 50))
         rows, presents, trace, probe = joined_session(missing=missing, version=2, stalls=self.STALLS)
         _, block, _ = attribute.join_window(probe, trace, 0.0, 'hint')
         self.assertEqual(block['joined'], 588)
@@ -204,11 +198,10 @@ class JoinTests(unittest.TestCase):
         trace_ok = trace_of(st.trace_rows(presents_ok, 2, gpu=False))
         _, block, _ = attribute.join_window(probe, trace_ok, 0.0, 'hint')
         self.assertTrue(block['established'])
-        self.assertEqual((block['gpu_busy'], block['cpu_wait']), ('unknown', 'reported'))  # --no_track_gpu keeps CPUBusy/CPUWait
+        self.assertEqual((block['gpu_busy'], block['cpu_wait']), ('unknown', 'reported'))
         self.assertEqual(block['bound']['unknown'], block['presented_intervals'])
 
     def test_flat_cadence_keeps_the_supplied_offset(self):
-        # 18,000 frames of exactly 16 ms on the same QPC clock: every whole-frame shift agrees equally well.
         starts = [5000.0 + 16.0 * i for i in range(18000)]
         frames = present.Frames(starts, [16.0] * 18000)
         trace = present.Trace([present.Present(s + 16.0) for s in starts], 'qpc', {}, display_source='DisplayedTime')
@@ -217,7 +210,6 @@ class JoinTests(unittest.TestCase):
         self.assertEqual(present.join(frames, trace, offset), list(range(18000)))
 
     def test_flat_prefix_keeps_the_anchored_offset(self):
-        # Three distinctive long frames after frame 10,000 fix the offset; the flat prefix must not move it.
         wholes = [16.0] * 18000
         for i in (10500, 12000, 15000):
             wholes[i] = 120.0 + i / 1000.0
@@ -232,8 +224,6 @@ class JoinTests(unittest.TestCase):
         self.assertAlmostEqual(offset, -30.0, delta=0.5)
 
     def test_near_flat_prefix_keeps_anchor_ownership(self):
-        # Alternating 15/17 ms frames with a +/-1 ms present phase over the first 10,000 frames favour another phase
-        # there; the three long frames after it still fix the offset, and each frame must join its own present.
         n = 18000
         wholes = [15.0 if i % 2 else 17.0 for i in range(n)]
         for i in (10500, 12000, 15000):
@@ -244,7 +234,7 @@ class JoinTests(unittest.TestCase):
             t += w
         ends = [s + w for s, w in zip(starts, wholes)]
         times = [e + 30.0 + ((1.0 if i % 2 else -1.0) if i < 10000 else 0.0) for i, e in enumerate(ends)]
-        times.append(times[-1] + 16.0)  # recording runs one frame past the window
+        times.append(times[-1] + 16.0)
         frames = present.Frames(starts, wholes)
         trace = present.Trace([present.Present(x) for x in times], 'qpc', {}, display_source='DisplayedTime')
         offset, source, _ = present.estimate_offset(frames, trace, hint_ms=0.0)
@@ -263,7 +253,6 @@ class JoinTests(unittest.TestCase):
 
 
 class ClassifierTests(unittest.TestCase):
-    """Each class fires only on its own evidence; a frame with none is unattributed."""
 
     def classes(self, s, c=None):
         return attribute.classify(s, c or ctx())['classes']
@@ -292,26 +281,22 @@ class ClassifierTests(unittest.TestCase):
                 self.assertEqual(self.classes(stall(100.0, **args)), [expected])
 
     def test_pc_union_needs_half_of_the_excess_over_the_reference_p50(self):
-        # interval 100, baseline 16: excess 84, needs 42 ms of union.
         self.assertIn('pc-union', self.classes(stall(100.0, [frame(1, mod=42.0)])))
         self.assertNotIn('pc-union', self.classes(stall(100.0, [frame(1, mod=41.9)])))
         s = attribute.classify(stall(100.0, [frame(1, mod=50.0, components={'AdvancePopulation': 45.0, 'OnGUI': 4.0})]), ctx())
         self.assertEqual(s['evidence']['pc-union']['component'], 'AdvancePopulation')
 
     def test_whole_minus_union_is_never_pc_union(self):
-        # 300 ms frame, 20 ms union: the 280 ms remainder is not PC's, whatever else is known.
         s = attribute.classify(stall(300.0, [frame(1, mod=20.0)]), ctx())
         self.assertEqual(s['classes'], ['unattributed'])
         self.assertEqual(s['not_pc_ms'], 280.0)
         self.assertEqual(s['mod_work_ms'], 20.0)
-        # A script phase that contains PC's Update is native only after the union is taken out.
         rlo = dict(frame=1, frame_ms=140.0, phases={"scripts' Update": 131.0, 'physics': 3.0}, saving=False, scene_change=False)
         s = attribute.classify(stall(140.0, [frame(1, mod=120.0)], rlo=[rlo]), ctx())
         self.assertEqual(s['classes'], ['pc-union'])
         s = attribute.classify(stall(140.0, [frame(1, mod=10.0)], rlo=[rlo]), ctx())
         self.assertEqual(s['classes'], ['native-frame'])
         self.assertEqual(s['evidence']['native-frame'][0]['outside_pc_ms'], 121.0)
-        # Trace CPU busy minus the union, never the union itself.
         busy = present.Present(0.0, cpu_busy_ms=130.0)
         s = attribute.classify(stall(140.0, [frame(1, mod=100.0)], presents=[busy]), ctx())
         self.assertEqual(s['classes'], ['pc-union'])
@@ -320,7 +305,6 @@ class ClassifierTests(unittest.TestCase):
         self.assertEqual(self.classes(stall(100.0, [frame(1, gc=0)])), ['unattributed'])
         s = attribute.classify(stall(100.0, [frame(1, gc=None)]), ctx())
         self.assertEqual((s['classes'], s['gc']), (['unattributed'], 'unknown'))
-        # RLO's collector line is context, not the probe evidence the class needs.
         rlo = attribute.parse_rlo_line(RLO_LINES[2])
         rlo.update(frame=1, saving=False, scene_change=False, phases={})
         self.assertEqual(self.classes(stall(100.0, rlo=[rlo])), ['unattributed'])
@@ -331,7 +315,7 @@ class ClassifierTests(unittest.TestCase):
         rlo = attribute.parse_rlo_line(RLO_LINES[2])
         rlo['frame'] = 1
         s = attribute.classify(stall(512.0, [frame(1, whole=512.0)], rlo=[rlo]), ctx())
-        self.assertEqual(s['classes'], ['save-load-scene', 'native-frame'])  # 470 ms loading phase is native work
+        self.assertEqual(s['classes'], ['save-load-scene', 'native-frame'])
 
     def test_present_wait_and_unnamed_phases_are_not_native_frame(self):
         rlo = attribute.parse_rlo_line(RLO_LINES[3])
@@ -341,8 +325,8 @@ class ClassifierTests(unittest.TestCase):
         self.assertEqual(self.classes(stall(95.0, presents=[wait], rlo=[rlo])), ['gpu-present'])
 
     def test_reference_rate_needs_same_size_at_similar_rate(self):
-        c = ctx(own_stalls=[100.0, 110.0, 95.0, 105.0])  # 4 per 300 s
-        same = dict(id='r', stalls=[100.0, 90.0], seconds=300.0)  # 2 per 300 s = half the rate
+        c = ctx(own_stalls=[100.0, 110.0, 95.0, 105.0])
+        same = dict(id='r', stalls=[100.0, 90.0], seconds=300.0)
         rare = dict(id='r', stalls=[100.0], seconds=300.0)
         other_size = dict(id='r', stalls=[400.0, 30.0, 500.0], seconds=300.0)
         self.assertEqual(self.classes(stall(100.0, reference=same), c), ['reference-rate'])
@@ -370,14 +354,13 @@ class RloLineTests(unittest.TestCase):
         frames = {'w': [frame(1, whole=16.0), frame(2, whole=236.4), frame(3, whole=140.2), frame(4, whole=139.6)]}
         attached, unmatched = attribute.attach_rlo([dict(line=RLO_LINES[1], window='w'), dict(line=RLO_LINES[0], window='w')], frames)
         self.assertEqual(list(attached), [('w', 2)])
-        self.assertEqual(unmatched[0]['candidates'], 2)  # 140 ms matches frames 3 and 4: attached to neither
+        self.assertEqual(unmatched[0]['candidates'], 2)
         attached, _ = attribute.attach_rlo([dict(line=RLO_LINES[0], first_frame=4, last_frame=4)], frames)
         self.assertEqual(list(attached), [('w', 4)])
         attached, _ = attribute.attach_rlo([dict(line=RLO_LINES[0], window='w', frame=3)], frames)
         self.assertEqual(list(attached), [('w', 3)])
 
     def test_unscoped_player_log_line_is_context_only(self):
-        # A bare Player.log line may describe a frame outside every window: it never attaches, even to a unique match.
         frames = {'w': [frame(1, whole=16.0), frame(2, whole=236.4)]}
         attached, unmatched = attribute.attach_rlo([dict(line=RLO_LINES[1])], frames)
         self.assertEqual(attached, {})
@@ -392,14 +375,13 @@ class RloLineTests(unittest.TestCase):
 
 
 class Fix128Tests(unittest.TestCase):
-    """Observation-level fix-128 fields go to the one matching frame only; non-advancement frames get none."""
 
     def export(self, summary_max=120.0, second=80.0):
         mod = {100: 121.0, 300: second + 1.0, 400: 70.0}
         rows, presents = st.session(600, stalls={100: 140.0, 300: second + 20.0, 400: 90.0}, mod=mod)
         rows[100]['components'] = {'AdvancePopulation': 120.0}
         rows[300]['components'] = {'AdvancePopulation': second}
-        rows[400]['components'] = {'PhysicalPopulation.Update': 70.0}  # outside advancement, scope bound
+        rows[400]['components'] = {'PhysicalPopulation.Update': 70.0}
         w = window_with('c', rows, summary_lines=[SUMMARY.format(max=summary_max, unit=119.5)])
         return synthetic.export([w]), trace_of(st.trace_rows(presents))
 
@@ -465,24 +447,20 @@ class EndToEndTests(unittest.TestCase):
         self.assertEqual(len(c['presented_ms']), 18000 - 1)
         result = analyze.analyze([enriched], CONTRACT)
         w = next(x for x in result['windows'] if x['id'] == 'c')
-        # P1/P2 are now established from the joined series (synthetic frames are 16.67 +/- 0.6 ms, so P1 may fail).
         ordered = sorted(c['presented_ms'])
         self.assertEqual(w['rows']['P1']['value'], analyze.nearest_rank(ordered, 95))
         self.assertEqual(w['rows']['P2']['value'], analyze.nearest_rank(ordered, 99))
-        for rid in ('P1', 'P2'):  # the reference's synthetic frames miss P1 too, so P1 may carry the native-baseline label
+        for rid in ('P1', 'P2'):
             row = w['rows'][rid]
             self.assertTrue(row['verdict'] in ('pass', 'fail') or row.get('native_baseline'), row)
-        # The 300 ms stall is >= 250 ms and classed pc-union (280 ms union): P3 fails on it.
         self.assertEqual(w['rows']['P3']['verdict'], 'fail')
         self.assertEqual(w['rows']['P3']['reason'], 'severe stall classed pc-union')
         self.assertIn(result['pairs'][0]['verdict'], ('pass', 'fail'))
         self.assertIsNotNone(result['pairs'][0]['value'])
-        # Whole-frame stalls in the analyzer's table carry F4c's classes (hook in analyze.stalls_of).
         whole = [s for s in result['stalls'] if s['kind'] == 'whole-frame' and s['window'] == 'c']
         self.assertTrue(whole and all('unclassified (F4c)' not in s['classes'] for s in whole))
         presented = [s for s in result['stalls'] if s['kind'] == 'presented' and s['window'] == 'c']
         self.assertTrue(presented and all('unclassified (F4c)' not in s['classes'] for s in presented))
-        # The 60 ms candidate stall has a same-size reference stall at the same rate.
         sixty = next(s for s in report['stalls'] if s['window'] == 'c' and s['kind'] == 'whole-frame' and s['frame'] == 6000)
         self.assertEqual(sixty['classes'], ['reference-rate'])
         self.assertTrue(sixty['baseline_source'].startswith('reference r'))
@@ -494,7 +472,7 @@ class EndToEndTests(unittest.TestCase):
         self.assertEqual(stall['classes'], ['unattributed'])
         self.assertIn(1100, [u['frame'] for u in report['unattributed']])
         w = next(x for x in analyze.analyze([enriched], CONTRACT)['windows'] if x['id'] == 'c')
-        self.assertEqual(w['rows']['P3']['verdict'], 'pass')  # one stall per 5 min, not pc-union
+        self.assertEqual(w['rows']['P3']['verdict'], 'pass')
 
     def test_input_export_is_not_changed(self):
         export, traces = self.pair({100: 300.0}, {})
@@ -514,8 +492,7 @@ class EndToEndTests(unittest.TestCase):
         w = synthetic.window('c')
         enriched, report = attribute.attribute(synthetic.export([w]), {'*': trace_of(st.trace_rows(st.session(100)[1]))})
         self.assertFalse(report['presentation']['c']['established'])
-        self.assertEqual(enriched['windows'][0]['presented_ms'], w['presented_ms'])  # untouched
-        # The supplied trace could not be joined: the receipt fails, so the existing series cannot pass P1.
+        self.assertEqual(enriched['windows'][0]['presented_ms'], w['presented_ms'])
         self.assertEqual(enriched['windows'][0]['receipts']['presentation_trace'], 'fail')
         result = analyze.analyze([enriched], CONTRACT)['windows'][0]
         self.assertFalse(result['valid'])
@@ -525,7 +502,7 @@ class EndToEndTests(unittest.TestCase):
         crow, _ = st.session(18000)
         w = window_with('c', crow)
         _, other = st.session(600, seed=99)
-        trace = present.parse_rows(st.trace_rows(other, 1, seconds_origin_ms=0.0))  # unrelated, no shared clock
+        trace = present.parse_rows(st.trace_rows(other, 1, seconds_origin_ms=0.0))
         enriched, report = attribute.attribute(synthetic.export([w]), {'*': trace})
         self.assertFalse(report['presentation']['c']['established'])
         self.assertIn('clock offset not established', report['presentation']['c']['reason'])
@@ -543,12 +520,10 @@ class EndToEndTests(unittest.TestCase):
                 self.assertNotIn('reference-rate', sixty['classes'])
                 self.assertIsNone(sixty['baseline_ms'])
                 self.assertTrue(sixty['baseline_source'].startswith('none'))
-                # A union of more than half the whole interval is pc-union against any p50.
                 big = next(s for s in report['stalls'] if s['window'] == 'c' and s['kind'] == 'whole-frame' and s['frame'] == 1100)
                 self.assertIn('pc-union', big['classes'])
 
     def test_union_that_needs_the_reference_p50_is_unresolved_without_one(self):
-        # 300 ms frame, 145 ms union: 50 % of 300 - 16.7 but not 50 % of 300.
         export, traces = self.pair({100: 300.0}, {}, cand_mod={100: 145.0})
         export['windows'][1]['checkpoint_minute'] = 1200
         _, report = attribute.attribute(export, traces)
@@ -558,7 +533,7 @@ class EndToEndTests(unittest.TestCase):
         export, traces = self.pair({100: 300.0}, {}, cand_mod={100: 145.0})
         _, report = attribute.attribute(export, traces)
         s = next(s for s in report['stalls'] if s['window'] == 'c' and s['kind'] == 'whole-frame' and s['frame'] == 1100)
-        self.assertIn('pc-union', s['classes'])  # against the matched reference p50
+        self.assertIn('pc-union', s['classes'])
 
     def test_whole_frame_stall_uses_the_joined_present(self):
         rows, presents = st.session(600, stalls={100: 300.0}, gpu_busy={100: 280.0})
@@ -571,7 +546,6 @@ class EndToEndTests(unittest.TestCase):
         self.assertEqual((whole['gpu_busy_ms'], whole['bound']), (280.0, 'gpu'))
 
     def test_initial_diagnostic_frame_does_not_hide_the_next_stall(self):
-        # The first shown present has no interval; it still closes its frame, so frame 1's 300 ms stall stays in.
         for flag in ('diagnostic', 'warmup'):
             with self.subTest(flag):
                 rows, presents = st.session(600, stalls={1: 300.0, 200: 120.0, 333: 260.0, 470: 90.0}, mod={1: 280.0})
@@ -604,12 +578,12 @@ class EndToEndTests(unittest.TestCase):
                 rows, presents = st.session(600, stalls={100: 300.0, 200: 120.0, 333: 260.0, 470: 90.0, 555: 75.0}, mod={100: 280.0})
                 rows[100][flag] = True
                 w = window_with('c', rows)
-                trace = trace_of(st.trace_rows(presents, version, dropped={100}, seconds_origin_ms=0.0))  # its present was not shown
+                trace = trace_of(st.trace_rows(presents, version, dropped={100}, seconds_origin_ms=0.0))
                 enriched, report = attribute.attribute(synthetic.export([w]), {'*': trace})
                 self.assertTrue(report['presentation']['c']['established'])
                 self.assertFalse(any(s['kind'] == 'presented' and 1100 in s['frame_numbers'] for s in report['stalls']))
                 self.assertFalse(any(v > 290.0 for v in enriched['windows'][0]['presented_ms']))
-                self.assertEqual(len(enriched['windows'][0]['presented_ms']), 600 - 1 - 2)  # first, dropped 100 and the one spanning it
+                self.assertEqual(len(enriched['windows'][0]['presented_ms']), 600 - 1 - 2)
 
     def test_f4b_probe_rows_with_component_arrays(self):
         rows, presents = st.session(600, stalls={100: 140.0}, mod={100: 120.0})
@@ -626,7 +600,6 @@ class EndToEndTests(unittest.TestCase):
         self.assertEqual((m2['frame'], m2['component']), (1100, 'AdvancePopulation'))
 
     def test_zero_filled_advancement_is_not_an_advancement_call(self):
-        # F4b arrays hold 0 for a bound scope that did not run; a spike only in PhysicalPopulation.Update has no advancement fields.
         rows, presents = st.session(600, stalls={100: 90.0}, mod={100: 70.0})
         for r in rows:
             r.pop('components')
@@ -669,7 +642,7 @@ class EndToEndTests(unittest.TestCase):
         trace = trace_of(st.trace_rows(presents, offset_ms=37.0, missing=missing, dropped=dropped))
         start = time.perf_counter()
         _, report = attribute.attribute(synthetic.export([w]), {'*': trace})
-        if os.environ.get('PC_PERF_ASSERTS') == '1':  # wall-clock limits only on request (AGENTS.md)
+        if os.environ.get('PC_PERF_ASSERTS') == '1':
             self.assertLess(time.perf_counter() - start, 10.0)
         self.assertTrue(report['presentation']['c']['established'])
 

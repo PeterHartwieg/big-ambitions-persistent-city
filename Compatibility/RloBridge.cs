@@ -7,11 +7,6 @@ using PersistentCity.Core;
 
 namespace PersistentCity.Compatibility
 {
-    /// <summary>
-    /// RLO's public read contract for other mods (<c>RealLifeOverhaul.ModApi.CityApi</c>), bound by reflection.
-    /// The contract carries its own version, so any RLO release with a supported version is accepted without review.
-    /// See docs/rlo-bridge.md. Main thread only.
-    /// </summary>
     internal sealed class RloBridge
     {
         public const string ApiTypeName = "RealLifeOverhaul.ModApi.CityApi";
@@ -59,22 +54,18 @@ namespace PersistentCity.Compatibility
             citizenArgs[0] = Activator.CreateInstance(typeof(List<>).MakeGenericType(citizenType))!;
         }
 
-        /// <summary>Null when the assembly has no CityApi (an RLO release from before the contract). Throws when it has
-        /// one that Persistent City cannot use; that release is then incompatible, with no reflection fallback.</summary>
         public static RloBridge? Find(Assembly assembly)
         {
             Type? api = assembly.GetType(ApiTypeName, false);
             return api == null ? null : Bind(api);
         }
 
-        // Tests bind a stand-in API from their own assembly; the game always goes through Find.
         internal static RloBridge Bind(Type api)
         {
             try { return new RloBridge(api); }
             catch (Exception error) when (!(error is InvalidOperationException)) { throw Invalid("could not bind", error); }
         }
 
-        /// <summary>Asks RLO for its contract version again, as a fresh binding would. Throws, as binding does, if it has changed.</summary>
         public void CheckContractVersion()
         {
             int current;
@@ -83,7 +74,6 @@ namespace PersistentCity.Compatibility
             if (current != SupportedContract) throw Unsupported(current);
         }
 
-        /// <summary>Copies the citizens into Persistent City identities, in RLO's order. Ready leaves <paramref name="read"/> filled.</summary>
         public Status ReadCitizens(List<RloBridgeCitizen> read, out int citySeed)
         {
             read.Clear();
@@ -113,7 +103,6 @@ namespace PersistentCity.Compatibility
         public Status ReadSlowedLanes(List<object> lanes, List<int> originalLimits, List<int> currentLimits)
         { laneArgs[0] = lanes; laneArgs[1] = originalLimits; laneArgs[2] = currentLimits; return Call(slowedLanes, laneArgs); }
 
-        /// <summary>Core's persona for one of the contract's persona names, or false for any other text (numbers included).</summary>
         public static bool TryPersona(string? name, out Persona value)
         {
             foreach (Persona p in Enum.GetValues(typeof(Persona)))

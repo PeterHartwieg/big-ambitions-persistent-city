@@ -3,17 +3,13 @@ using PersistentCity.Persistence;
 
 namespace PersistentCity.Runtime
 {
-    /// <summary>F7b exact save epoch: binding, re-entrancy guard and detach markers (plan F7 section 3.3).</summary>
     public sealed partial class PopulationRuntime
     {
         private SaveEpochBinding? saveEpoch;
-        // Retained after detach for diagnostics only; never written through.
         private SaveEpochBinding? lastSaveEpoch;
-        // PC units, checkout and initialization all run inside Update; a native save there is re-entrant.
         private int saveEpochUnits;
         private bool saveEpochStopPending;
 
-        /// <summary>On-demand rig projection; no frame path builds it.</summary>
         public object SaveEpochDiagnostics => new {
             policy = "save-epoch-v1", attached = saveEpoch != null,
             sequence = lastSaveEpoch?.Sequence ?? 0, published = lastSaveEpoch?.Published ?? 0,
@@ -32,9 +28,6 @@ namespace PersistentCity.Runtime
             }
         }
 
-        /// <summary>Rule 5 for a PC unit that native code runs outside Update (C5d: one research billing attempt
-        /// inside native MarketingHelper.RunDaily). A save started inside it writes both failure markers, publishes
-        /// no payload and stops Persistent City after the outermost unit returns.</summary>
         internal void RunSaveEpochUnit(Action unit)
         {
             saveEpochUnits++;
@@ -67,7 +60,6 @@ namespace PersistentCity.Runtime
             catch (Exception error) { log?.Warn("Persistent City stop after a re-entrant save was contained: " + error); }
         }
 
-        /// <summary>Binds the save epoch and subscribes the callbacks when initialization starts.</summary>
         private void BeginInitializingSaveEpoch(object save, System.Collections.Generic.IDictionary<string, string> data, long sequence)
         {
             DropSaveEpoch();
@@ -77,7 +69,6 @@ namespace PersistentCity.Runtime
             subscribed = true;
         }
 
-        /// <summary>Abandoned initialization for a replaced save object: unsubscribe without writing anything.</summary>
         private void DropSaveEpoch()
         {
             var epoch = saveEpoch;
@@ -89,7 +80,6 @@ namespace PersistentCity.Runtime
             subscribed = false;
         }
 
-        /// <summary>Rule 9: before any teardown, mark the still-current save object so a later native save is refused.</summary>
         private void DetachSaveEpoch()
         {
             var epoch = saveEpoch;

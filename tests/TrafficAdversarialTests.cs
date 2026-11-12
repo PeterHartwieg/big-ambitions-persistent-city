@@ -69,7 +69,6 @@ public sealed class TrafficAdversarialTests
         var planner=new Planner();planner.Closed.Add(0);
         var city=City(1,planner);city.AdvanceTo(1440);
         var citizen=city.State.Citizens[0];
-        // The access walk reaches the car on the logical clock and waits at the closed section; no body can move it on.
         city.AdvanceTo(1450);
         Assert.True(city.TryGetTrafficPermission(citizen.Identity.Id,out var permission));
         Assert.Null(permission.LinkId);
@@ -111,7 +110,6 @@ public sealed class TrafficAdversarialTests
         Assert.Equal(SaveCodec.Write(city.State),SaveCodec.Write(restored.State));
     }
 
-    // F2d: no vehicle is ever physically controlled, so the former leased variants have no counterpart.
     [Theory]
     [InlineData(1)]
     [InlineData(6)]
@@ -147,7 +145,6 @@ public sealed class TrafficAdversarialTests
         var citizen=city.State.Citizens[0];
         double completed=double.NaN;city.Traffic!.VehicleCompleted+=(_,at)=>completed=at;
         city.AdvanceTo(1444);
-        // The kernel completed the traffic leg on its own clock; the egress walk is not frozen and not admitted again.
         Assert.False(double.IsNaN(completed));
         Assert.False(city.TryGetTrafficPermission(citizen.Identity.Id,out _));Assert.Equal(0,citizen.CompletedJourneys);
         Assert.Equal(TravelMode.Walk,city.SampleJourney(citizen).Mode);

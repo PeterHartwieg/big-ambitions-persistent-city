@@ -82,7 +82,7 @@ public sealed class PersistenceTests
     public void MissingAndUnsupportedOldVersionAreDistinct()
     {
         Assert.Equal(SaveReadStatus.Missing, SaveWire.Read(null).Status);
-        Assert.Equal(SaveReadStatus.DevelopmentSchema, SaveWire.Read("{\"Schema\":0}").Status); // any number other than the held 1
+        Assert.Equal(SaveReadStatus.DevelopmentSchema, SaveWire.Read("{\"Schema\":0}").Status);
         var data = new Dictionary<string, string>();
         Assert.Equal(SaveReadStatus.Missing, SaveStore.ReadFrom(data, "population-a").Status);
         Assert.True(SaveStore.WriteTo(data, Example()).Success);
@@ -140,7 +140,6 @@ public sealed class PersistenceTests
         citizen.NextEventMinute = state.Minute; citizen.ActivityUntilMinute = state.Minute;
         InitializeFixture(state);
         var json = SaveWire.Parse(SaveCodec.Write(state));
-        // Leave identity and population fingerprint untouched, as in a damaged assignment record.
         json["Citizens"]![0]!["DayPlaceId"] = wrongPlace;
         string payload = json.ToString();
         var data = new Dictionary<string, string> { [SaveStore.StateKey] = payload, ["rlo:readonly"] = "unchanged" };
@@ -193,7 +192,6 @@ public sealed class PersistenceTests
     public void ReaderValidatesWholeStateRatherThanAcceptingDeserializerDefaults(string corruption)
     {
         var json = SaveWire.Parse(SaveCodec.Write(Example()));
-        // F7d control: the unchanged body, indented by JObject.ToString(), is re-encoded and loads.
         var control = SaveWire.Read(json.ToString());
         Assert.True(control.Status == SaveReadStatus.Loaded, control.Error);
         var citizen = (JObject)json["Citizens"]![0]!;
@@ -212,7 +210,6 @@ public sealed class PersistenceTests
             case "string-bool": citizen["Identity"]!["Female"] = "true"; break;
             case "wrong-case": citizen["phase"] = citizen["Phase"]; citizen.Remove("Phase"); break;
         }
-        // The mutated body reaches the product reader in the writer's spelling, so the semantic check is what refuses it.
         string mutated = SaveWire.Payload(json.ToString());
         Assert.StartsWith(SaveCodec.BodyPrefix, mutated);
         var read = SaveCodec.Read(mutated);

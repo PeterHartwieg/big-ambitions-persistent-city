@@ -10,10 +10,6 @@ using Xunit;
 
 namespace PersistentCity.Tests;
 
-/// <summary>F5c-lite: a fresh seeded city's behaviour over its first days. The trace reads only behaviour (phases,
-/// places, events, meals, purchases, money, orders), never the save shape, and reloads through the live codec at
-/// each day boundary. The no-food trace stays pinned at base e9995e5; X3 repinned the food trace once at the one
-/// writer (docs/checks/x3.md).</summary>
 public sealed class FreshCityTraceTests
 {
     internal sealed class Walk : IRoutePlanner
@@ -23,7 +19,6 @@ public sealed class FreshCityTraceTests
                 Minutes = 1 + Position.Distance(from.Position, to.Position) / 80 } } };
     }
 
-    /// <summary>The fresh trace city.</summary>
     internal static (CityState State, WeightedFoodChoiceTests.Market Market) Fresh(int factor, bool food, int seed = 4242)
     {
         var identities = Enumerable.Range(0, 8).Select(n => new CitizenIdentity {
@@ -54,9 +49,6 @@ public sealed class FreshCityTraceTests
 
     private static string R(double value) => value.ToString("R", CultureInfo.InvariantCulture);
 
-    // The represented consumer's host and slot are behaviour (whose day it eats on). At the base they were stored as
-    // AnchorId/Slot; schema 26 stores each record as its own person's and keeps the host as the scheduling adapter
-    // HostId/HostSlot, so the trace text and its pinned hash are unchanged.
     private static void Snapshot(StringBuilder trace, CityState state, WeightedFoodChoiceTests.Market market)
     {
         trace.Append('@').Append(R(state.Minute)).Append('\n');
@@ -102,8 +94,6 @@ public sealed class FreshCityTraceTests
         return Convert.ToHexString(sha.ComputeHash(Encoding.UTF8.GetBytes(trace.ToString()))).ToLowerInvariant();
     }
 
-    // The no-food trace still matches base e9995e5. X3 repinned the food trace at the one writer: the old pin ran the
-    // pre-attendance ledger path, which no longer exists.
     [Theory]
     [InlineData(1, true, "734a0638790204aa7d7b8342800f56d462e995d6eeb6f1da51784da5452541f6")]
     [InlineData(1, false, "27c36028fbcc6b9ffe3ad602d8e81c4ce101a0395ac9d2a8d78b4b838cf34910")]

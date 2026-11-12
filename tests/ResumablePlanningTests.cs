@@ -10,8 +10,6 @@ using Xunit;
 
 namespace PersistentCity.Tests;
 
-/// <summary>Route answers that arrive frames later must produce the same city as synchronous answers.
-/// The planner doubles share one pure route function, so every difference comes from the event machinery.</summary>
 public sealed class ResumablePlanningTests
 {
     private static Position Shift(Position p, double metres) => new(p.X + metres, p.Y, p.Z);
@@ -21,9 +19,6 @@ public sealed class ResumablePlanningTests
         if (metres > 0.000001) route.Legs.Add(new RouteLeg { From = from, To = to, Mode = mode, Minutes = metres / metresPerMinute });
     }
 
-    // Straight-line walking, a car trip when the resident owns a parked car and the trip is long, a home car
-    // allocated on the first plan from home (as the native planner does) and a deterministic refusal so the
-    // waiting and retry paths run. Pure in the request, so sync and deferred answers are the same.
     private static Route? Answer(RouteRequest request)
     {
         uint draw = StableRandom.Hash(request.From.Id + ">" + request.To.Id + "@" + request.DepartureMinute.ToString("R", CultureInfo.InvariantCulture), 3);
@@ -66,8 +61,6 @@ public sealed class ResumablePlanningTests
     {
         public Func<int, int> ContinuesFor = _ => 1;
         public Func<int, int, bool>? ThrowAt;
-        // (request, request index, continue index): lose the captured snapshot here. As in the runtime job, only
-        // a job resumed after an earlier sliced Continue can throw it; a job run inline from its start cannot.
         public Func<RouteRequest, int, int, bool>? RestartAt;
         public int Requests, Disposed, Continues, RestartsThrown;
         public bool InputsHeld;
@@ -98,7 +91,6 @@ public sealed class ResumablePlanningTests
                 owner.Continues++;
                 if(revision!=owner.ManagedRevision) throw new RoutePlanningRestartRequired("Managed input replacement");
                 if (owner.ThrowAt?.Invoke(index, continues) == true) throw new InvalidOperationException("planner failure");
-                // Like the runtime job, a sliced job may lose its captured state before any slice, including the first.
                 if ((sliced || !double.IsPositiveInfinity(budgetMilliseconds)) && owner.RestartAt?.Invoke(request, index, continues) == true)
                 { owner.RestartsThrown++; throw new RoutePlanningRestartRequired("road snapshot replaced"); }
                 if (!double.IsPositiveInfinity(budgetMilliseconds)) sliced = true;
@@ -136,12 +128,10 @@ public sealed class ResumablePlanningTests
             new Place { Id = "leisure-3", Name = "Leisure 3", District = "a", Kind = PlaceKind.Leisure, Position = new(-200, 0, 800), OpenMinute = 720, CloseMinute = 1440 }
         };
         var city = Population.Create(identities, places, "resumable-test", "0.40.4", seed, 1440);
-        // Some workers start unemployed so the daily employment check probes workplaces during the run.
         for (int i = 0; i < city.Citizens.Count; i += 5) city.Citizens[i].DayPlaceId = "";
         return city;
     }
 
-    // Native frames: one event per slice, and a pending plan gets one Continue per frame.
     private static void RunFrames(CitySimulator city, double target, Action<CitySimulator>? whilePending = null)
     {
         int guard = 0;
@@ -165,7 +155,6 @@ public sealed class ResumablePlanningTests
 
     internal static double Target(int day) => 1440 * (day + 1) + 37;
 
-    // A fixed meal outing at the same simulated moment in every run, to exercise the preference-only return request.
     private static bool BeginLunch(CitySimulator city)
     {
         double now = city.State.Minute;
@@ -282,7 +271,6 @@ public sealed class ResumablePlanningTests
                     pendingSeen++;
                     var request = planner.Seen[planner.Seen.Count - 1];
                     var live = city.State.Citizens.Single(c => c.Identity.Id == request.Citizen!.Identity.Id);
-                    // The published state still holds the unstarted event at the held clock.
                     Assert.Equal(city.State.Minute, live.NextEventMinute);
                     Assert.False(city.IsCaughtUpTo(city.State.Minute));
                     if (pendingSeen % 7 == 0)
@@ -291,7 +279,6 @@ public sealed class ResumablePlanningTests
                         var read = SaveWire.Read(saved);
                         Assert.Equal(SaveReadStatus.Loaded, read.Status);
                         Assert.Equal(saved, SaveCodec.Write(read.State!));
-                        // The old simulator is dropped with its job; the reload runs the event again from the start.
                         city = new CitySimulator(read.State!, planner);
                         Assert.False(city.PlanningPending);
                         saves++;
@@ -325,13 +312,11 @@ public sealed class ResumablePlanningTests
         var live = city.State.Citizens.Single(c => c.Identity.Id == request.Citizen!.Identity.Id);
         string before = JsonConvert.SerializeObject(live);
         Assert.Equal(held, live.NextEventMinute);
-        // Another frame slice does nothing while the answer is outstanding.
         var again = city.AdvanceFrameSlice(Target(3), 1);
         Assert.True(again.PlanningPending); Assert.Equal(0, again.Events); Assert.Equal(held, city.State.Minute);
         Assert.False(city.TryBeginOptionalShopVisit(live.Identity.Id, "shop-1", new Route { Legs = { new RouteLeg { From = new(0, 0, 0), To = new(150, 0, 120), Minutes = 2, Mode = TravelMode.Walk } } }, 2, 10, held + 30));
         Assert.False(city.ContinuePlanning(0)); Assert.Equal(before, JsonConvert.SerializeObject(live)); Assert.Equal(held, city.State.Minute);
         Assert.False(city.ContinuePlanning(0)); Assert.Equal(before, JsonConvert.SerializeObject(live));
-        // The third Continue answers; the event completes and schedules the next one.
         bool finished = city.ContinuePlanning(0);
         if (!finished) { while (city.PlanningPending) city.ContinuePlanning(0); }
         Assert.False(city.PlanningPending);
@@ -377,7 +362,6 @@ public sealed class ResumablePlanningTests
         reference.AdvanceTo(Target(3));
         foreach (int failing in new[] { 0, 1 })
         {
-            // Fail once at a chosen request and continue index; the city then recovers without any manual repair.
             var planner = new DeferredPlanner { ContinuesFor = index => 1 + index % 3 };
             bool thrown = false;
             planner.ThrowAt = (index, c) => index == 37 && c == failing && !thrown;
@@ -410,7 +394,6 @@ public sealed class ResumablePlanningTests
             city.SynchronizeSnapshot();
             Assert.Equal(SaveCodec.Write(reference.State), SaveCodec.Write(city.State));
         }
-        // The same holds when a synchronous planner throws inside AdvanceTo.
         var sync = new SyncPlanner(); bool syncThrown = false;
         sync.ThrowAt = call => call == 53 && !syncThrown;
         var inline = new CitySimulator(City(48), sync);
@@ -425,15 +408,11 @@ public sealed class ResumablePlanningTests
     [Fact]
     public void FrameCadenceDoesNotChangeDeparturesOrOrder()
     {
-        // Two deferred runs with different interruption patterns and different frame interleavings agree
-        // with each other and with every observed departure of the synchronous run.
         var departures = new List<string>();
         void Observe(List<string> into, CitySimulator city) => city.ActivityObserved += (id, citizen, minute) =>
             into.Add(id + ":" + minute.ToString("R", CultureInfo.InvariantCulture) + ":" + citizen.Phase + ":" + citizen.PlaceId + ":" + citizen.DestinationId);
         var reference = new CitySimulator(City(36), new SyncPlanner()); Observe(departures, reference);
         var slow = new List<string>(); var fast = new List<string>();
-        // Snapshot restarts at pseudo-random requests and continue indices replay whole events; they must not
-        // change any departure or its order either.
         static bool Draw(string what, int index, int seed) => StableRandom.Hash(what + ":" + index.ToString(CultureInfo.InvariantCulture), seed) % 6 == 0;
         var slowPlanner = new DeferredPlanner { ContinuesFor = index => 1 + index % 7, RestartAt = (_, index, c) => Draw("slow:" + c, index, 5) };
         var fastPlanner = new DeferredPlanner { ContinuesFor = index => index % 3 == 0 ? 2 : 1, RestartAt = (_, index, _) => Draw("fast", index, 9) };
@@ -443,7 +422,6 @@ public sealed class ResumablePlanningTests
         {
             reference.AdvanceTo(Target(day));
             RunFrames(slowCity, Target(day), city => city.SynchronizeSnapshot());
-            // Coarser frames: several events between pending checks.
             while (!fastCity.IsCaughtUpTo(Target(day)))
             {
                 if (fastCity.PlanningPending) fastCity.ContinuePlanning(0);
@@ -482,8 +460,6 @@ public sealed class ResumablePlanningTests
             Assert.True(++guard < 10_000_000);
             if (city.PlanningPending)
             {
-                // Arm the restart on an employment check that has answered its first workplace probe and is now
-                // planning a later request, so the event already holds an answer from the old snapshot.
                 int latest = planner.Seen.Count - 1;
                 if (!restarted && armedIndex < 0 && eventFirst >= 0 && latest > eventFirst && IsProbe(city.State, planner.Seen[eventFirst]))
                     armedIndex = latest;
@@ -497,7 +473,6 @@ public sealed class ResumablePlanningTests
                     Assert.Equal(planner.Requests, planner.Disposed);
                     var first = planner.Seen[eventFirst];
                     var live = city.State.Citizens.Single(c => c.Identity.Id == first.Citizen!.Identity.Id);
-                    // The resident is unstarted at the held clock, exactly as before the event began.
                     Assert.Equal(city.State.Minute, live.NextEventMinute);
                     Assert.Equal(first.DepartureMinute, city.State.Minute);
                     Assert.Equal(residentBefore, JsonConvert.SerializeObject(live));
@@ -506,7 +481,6 @@ public sealed class ResumablePlanningTests
                     var read = SaveWire.Read(saved);
                     Assert.Equal(SaveReadStatus.Loaded, read.Status);
                     Assert.Equal(saved, SaveCodec.Write(read.State!));
-                    // The next slice replays the event from its first yield: the first probe is asked again.
                     int before = planner.Seen.Count;
                     var replay = city.AdvanceFrameSlice(Target(3), 1);
                     Assert.True(replay.PlanningPending);
@@ -548,8 +522,6 @@ public sealed class ResumablePlanningTests
         var city = new CitySimulator(City(48), planner);
         string unlucky = city.State.Citizens[7].Identity.Id;
         var attempts = new Dictionary<double, int>();
-        // Twelve replacements at each held event minute, well beyond the former three-restart
-        // escape. Once inputs stabilize, the same event must finish without changing outcomes.
         planner.RestartAt = (request, _, c) =>
         {
             if (c < 1 || request.Citizen?.Identity.Id != unlucky) return false;
@@ -604,7 +576,6 @@ public sealed class ResumablePlanningTests
         AdvanceResult result;
         do { result = city.AdvanceFrameSlice(Target(2), 1); } while (!result.PlanningPending);
         Assert.False(city.ContinuePlanning(0));
-        // The sliced job resumes inside AdvanceTo with an unlimited budget and finds its snapshot replaced.
         int suspended = planner.Requests - 1;
         planner.RestartAt = (_, index, _) => index == suspended;
         reference.AdvanceTo(Target(2));
@@ -651,11 +622,8 @@ public sealed class ResumablePlanningTests
     {
         var identity = new CitizenIdentity { Id = "copy", Name = "Copy" };
         var one = Filled(1, identity); var two = Filled(2, identity);
-        // The fixture must differ in every public property, so a new field added to CitizenState fails here
-        // until both the fixture and the event copy know about it.
         foreach (var property in typeof(CitizenState).GetProperties(BindingFlags.Public | BindingFlags.Instance))
         {
-            // IsVisitor is derived from the transient visitor link, which the event copy shares.
             if (property.Name == nameof(CitizenState.Identity) || property.Name == nameof(CitizenState.IsVisitor)) continue;
             Assert.NotEqual(JsonConvert.SerializeObject(property.GetValue(one)), JsonConvert.SerializeObject(property.GetValue(two)));
         }
@@ -663,26 +631,20 @@ public sealed class ResumablePlanningTests
         var working = CitySimulator.CloneForEvent(live);
         Assert.Equal(JsonConvert.SerializeObject(live), JsonConvert.SerializeObject(working));
         Assert.Same(live.Identity, working.Identity); Assert.Same(live.Journey, working.Journey);
-        // Traits are immutable after generation, so the event copy shares them and events never write them back.
         Assert.Same(live.Traits, working.Traits);
-        // GR-1: the wallet is the person's own object; events spend nothing and share it.
         Assert.Same(live.Wallet, working.Wallet);
         Assert.NotSame(live.RecentVisits, working.RecentVisits); Assert.NotSame(live.Car, working.Car);
         Assert.NotSame(live.CommutePreparation, working.CommutePreparation); Assert.NotSame(live.MealOuting, working.MealOuting);
         Assert.NotSame(live.Preferences, working.Preferences);
         Assert.NotSame(live.OptionalStop, working.OptionalStop);
         Assert.NotSame(live.OptionalStop!.Members, working.OptionalStop!.Members);
-        // GR-2: the copy owns its item states and shares the immutable item definitions.
         Assert.NotSame(live.Plan, working.Plan); Assert.True(live.Plan!.SameAs(working.Plan!));
         Assert.Same(live.Plan.Items, working.Plan!.Items);
-        // GR-3: the copy owns its needs; commit hands them back.
         Assert.NotSame(live.Needs, working.Needs); Assert.True(live.Needs!.SameAs(working.Needs));
         var car = live.Car; var preparation = live.CommutePreparation; var outing = live.MealOuting; var preferences = live.Preferences; var visits = live.RecentVisits;
         CitySimulator.CommitEvent(live, Filled(2, identity));
-        // F2e: the player-hold allowance belongs to one journey; a replaced journey (or arrival) clears it.
         var replaced = Filled(2, identity); replaced.PlayerHoldMinutes = 0;
         Assert.Equal(JsonConvert.SerializeObject(replaced), JsonConvert.SerializeObject(live));
-        // Objects that survive the event keep their identity; a cleared one is dropped.
         Assert.Same(car, live.Car); Assert.Same(preparation, live.CommutePreparation); Assert.Same(outing, live.MealOuting);
         Assert.Same(preferences, live.Preferences); Assert.Same(visits, live.RecentVisits);
         var cleared = Filled(3, identity); cleared.Car = null; cleared.MealOuting = null;
@@ -691,7 +653,6 @@ public sealed class ResumablePlanningTests
         CitySimulator.CommitEvent(live, Filled(4, identity));
         var arrived = Filled(4, identity); arrived.PlayerHoldMinutes = 0;
         Assert.Equal(JsonConvert.SerializeObject(arrived), JsonConvert.SerializeObject(live));
-        // The same journey, still travelling: the working copy's consumed minutes are kept.
         var travelling = Filled(1, identity);
         var held = CitySimulator.CloneForEvent(travelling); held.PlayerHoldMinutes = 0.75;
         CitySimulator.CommitEvent(travelling, held);
@@ -709,8 +670,6 @@ public sealed class ResumablePlanningTests
         Assert.Throws<ArgumentNullException>(() => new RouteRequest(null!, new Place(), 0, null, new TravelPreferences()));
         Assert.Throws<ArgumentNullException>(() => new RouteRequest(new Place(), new Place(), 0, null, null!));
     }
-    // A resumable planner that also owns a traffic network the test can replace, as the runtime does when a
-    // road snapshot is rebuilt while a route job is suspended.
     private sealed class TrafficDeferredPlanner : IResumableRoutePlanner, ICommuteTimingPlanner, ITrafficRoutePlanner
     {
         public readonly DeferredPlanner Inner;
@@ -727,8 +686,6 @@ public sealed class ResumablePlanningTests
         public Route? Plan(Place from, Place to, double minute, TravelPreferences preferences) => Inner.Plan(from, to, minute, preferences);
     }
 
-    // The scheduler's queue through reflection: every entry once, in strict (minute, resident) order,
-    // findable by the set's own comparer, and never the event that is still in flight.
     private static void AssertQueueSound(CitySimulator city)
     {
         var field = typeof(CitySimulator).GetField("due", BindingFlags.NonPublic | BindingFlags.Instance)!;
@@ -755,9 +712,6 @@ public sealed class ResumablePlanningTests
     [Fact]
     public void NetworkRebuildWhilePendingKeepsTheInFlightEventOutOfTheQueue()
     {
-        // The runtime replaces the road snapshot while a job is suspended and refreshes closures before planning
-        // resumes. EnsureTrafficNetwork then rebuilds the scheduler queue; the in-flight event must stay out of
-        // it until CompleteEvent (or AbortPending) re-adds it.
         var departures = new List<string>(); var rebuiltDepartures = new List<string>();
         void Observe(List<string> into, CitySimulator city) => city.ActivityObserved += (id, citizen, minute) =>
             into.Add(id + ":" + minute.ToString("R", CultureInfo.InvariantCulture) + ":" + citizen.Phase + ":" + citizen.PlaceId + ":" + citizen.DestinationId);
@@ -782,7 +736,6 @@ public sealed class ResumablePlanningTests
                     {
                         planner.TrafficNetwork = TrafficDeferredPlanner.Network();
                         city.RefreshTrafficClosures();
-                        // A frame slice while pending also passes through EnsureTrafficNetwork.
                         planner.TrafficNetwork = TrafficDeferredPlanner.Network();
                         Assert.True(city.AdvanceFrameSlice(target, 1).PlanningPending);
                         rebuilds++;
@@ -802,7 +755,6 @@ public sealed class ResumablePlanningTests
             Assert.Equal(SaveCodec.Write(reference.State), SaveCodec.Write(city.State));
         }
         Assert.True(rebuilds > 20, "too few rebuilds while pending: " + rebuilds);
-        // Every event, including each interrupted resident's, lands in the uninterrupted order.
         Assert.Equal(departures, rebuiltDepartures);
         Assert.True(departures.Count > 300);
     }

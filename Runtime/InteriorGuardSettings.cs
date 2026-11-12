@@ -14,7 +14,6 @@ namespace PersistentCity.Runtime
         public string[]? ThirdPartyInteriorHarmonyOwnerIds { get; set; } = Array.Empty<string>();
     }
 
-    // Retain invalid input as a refusal rather than silently turning detection off.
     internal sealed class InteriorGuardRulesConverter : JsonConverter<string[]>
     {
         public override string[]? ReadJson(JsonReader reader, Type objectType, string[]? existingValue,

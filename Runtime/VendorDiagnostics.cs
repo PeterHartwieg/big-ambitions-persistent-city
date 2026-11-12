@@ -19,7 +19,6 @@ namespace PersistentCity.Runtime
         {
             try
             {
-                // One router per existing pc arity, preserving the population console commands.
                 CommandHelper.AddCommand<string, string>("pc", "pc population census | pc vendor status | pc vendor sales | pc food decisions | pc food contract | pc probe status | pc probe businesses", RoutePcCommand);
                 CommandHelper.AddCommand<string, string, string>("pc", "pc population person <id> | pc vendor withdraw <vehicle> | pc food contract <status|capabilities|hints|stamps|catalogue> (FT cities only)", RoutePcDetail);
                 CommandHelper.AddCommand<string, string, string, string>("pc", "pc movement corrections since <seq> | pc probe <resident> <place> <ceiling cents> (FT cities only)", RoutePcMovement);
@@ -51,7 +50,6 @@ namespace PersistentCity.Runtime
             if (!VendorDiagnosticCity(SaveGameManager.Current?.SaveGameName)) return;
             try
             {
-                // Store detached text, bounded to 50 decisions; no diagnostic objects enter saved state.
                 string line = JsonConvert.SerializeObject(new { resident = trace.Consumer.Id, trace.Intent.Id, trace.MealKind,
                     trace.Intent.BusinessId, vendors = trace.Businesses.Where(b => VendorNames.IsVendorPlace(b.PlaceId)),
                     trace.ChoiceCosts, trace.Decision, trace.RouteChecks });
@@ -98,7 +96,6 @@ namespace PersistentCity.Runtime
                     Debug.Log("[Persistent City] vendor sales\n" + JsonConvert.SerializeObject(new {
                         market.Purchases, receipts = save.modData.Where(p => FoodSaleReceipts.IsReceiptKey(p.Key)
                             && p.Value.Contains(Uri.EscapeDataString(VendorNames.SignaturePrefix))),
-                        // F9e: detached records of the vendor-place meals and copies of their wallets.
                         meals = CityViewReports.VendorMeals(simulation.View)
                             .Select(v => new { v.Record.IntentId, v.Record.ResidentId, v.Record.BusinessId, v.Record.ProductId, cents = v.Record.Price.ToCentsText(),
                                 v.Record.Status, receipt = FoodSaleReceipts.ReadStatus(save.modData, v.Record).ToString(), wallet = v.Wallet }) }));

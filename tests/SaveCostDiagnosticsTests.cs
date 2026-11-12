@@ -7,7 +7,6 @@ using Xunit;
 
 namespace PersistentCity.Tests;
 
-/// <summary>F7a: explicit save-cost diagnostics never change bytes; representative fixtures are deterministic.</summary>
 public sealed class SaveCostDiagnosticsTests
 {
     private static readonly SaveCostPhase[] Phases = Enum.GetValues<SaveCostPhase>();
@@ -15,7 +14,6 @@ public sealed class SaveCostDiagnosticsTests
     [Fact]
     public void DiagnosticsOnAndOffPublishIdenticalPayloadBytes()
     {
-        // Two independent replays: one saved only with diagnostics, the other only without.
         var timedCity = RepresentativeFixture.Build(120).State;
         var plainCity = RepresentativeFixture.Build(120).State;
         var timedData = new Dictionary<string, string>(StringComparer.Ordinal) { ["other:sentinel"] = "keep" };
@@ -75,7 +73,7 @@ public sealed class SaveCostDiagnosticsTests
         var session = SaveSession.Open(data, city.PopulationKey);
         Assert.True(session.WriteTo(data, city).Success);
         string original = data[SaveCodec.StateKey];
-        city.Citizens.Add(city.Citizens[0]); // Duplicate identity: validation must refuse.
+        city.Citizens.Add(city.Citizens[0]);
         var cost = new SaveCostRecorder();
         cost.Begin();
         var result = session.WriteTo(data, city, cost);
@@ -120,13 +118,10 @@ public sealed class SaveCostDiagnosticsTests
         Assert.Equal(1914, state.Food!.Residents.Count);
         Assert.True(replay.Events > 0 && state.Food.Residents.Sum(m => m.Purchases) > 0);
         Assert.NotEmpty(state.Food.History);
-        // The replay crossed midnight: every consumer budget posted for the new day.
         int day = (int)Math.Floor(RepresentativeFixture.TargetMinute / 1440);
         Assert.All(state.Food.Residents, meal => Assert.Equal(day, meal.Budget!.LastPostedDay));
-        // Natural, not saturated, histories (E5d stress retains 32 visits/resident).
         Assert.InRange(state.Citizens.Max(c => c.RecentVisits.Count), 1, SaveCodec.MaxRecentVisits);
         Assert.True(state.Citizens.Average(c => c.RecentVisits.Count) < 32);
-        // No stored visitor identity (F5 B6): every roster record is a saved resident's or a visitor person's own (F5d).
         var persons = state.Citizens.Select(c => c.Identity.Id).Concat(state.Visitors.Select(v => v.Id)).ToHashSet(StringComparer.Ordinal);
         Assert.Equal(957, state.Visitors.Count);
         Assert.All(state.Food.Residents, meal => { Assert.Contains(meal.HostId, persons); Assert.Equal(meal.ResidentId, meal.HostId); });

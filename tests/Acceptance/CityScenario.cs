@@ -10,21 +10,15 @@ using PersistentCity.Runtime;
 
 namespace PersistentCity.Tests.Acceptance;
 
-/// <summary>The in-flight states a reload arm saves and loads at (Decision 3), plus the first save on each day boundary.</summary>
 internal enum CityReload { DayBoundary, BetweenFillUnits, UncertainReceipt, ResearchPendingBilling, VendorLeaseOpen, HeldMealDecision, MidJourney }
 
-/// <summary>Faults the oracles must catch (F9c tests): each makes the run throw <see cref="CityViolation"/>.</summary>
 public enum CityFault { None, DuplicateSale, SkippedInput, ResearchChargeWithoutReport, VendorSaleOutsideLease,
-    /// <summary>Not an oracle failure: two same-minute postings swap execution order with equal amounts; only the ledger comparison can see it.</summary>
     ReorderedPostings }
 
-/// <summary>One arm of the scenario. The reference drains every native minute synchronously (no frame loop, synchronous
-/// planner); every other arm runs F1's frame loop with F5h's admitted planner at its cadence and budget.</summary>
 internal sealed partial record CityArm(string Name, bool Reference, int Fps = 60, int Budget = 16, double Milliseconds = 2, bool Skip = false,
     bool Reloads = false, CityFault Fault = CityFault.None, int Days = CityScenario.Days)
 {
     public static CityArm ReferenceArm => new("reference", true);
-    /// <summary>F5h's F1 arms (30/32/4, 60/16/2, 120/128/2), a hidden skip and the reload arm.</summary>
     public static IEnumerable<CityArm> Arms() => new[]
     {
         new CityArm("fps30", false, 30, 32, 4), new CityArm("fps60", false, 60, 16, 2), new CityArm("fps120", false, 120, 128, 2),
@@ -32,8 +26,6 @@ internal sealed partial record CityArm(string Name, bool Reference, int Fps = 60
     };
 }
 
-/// <summary>What one arm produced: the ordered event ledger, the save at every drained day boundary, the native orders and
-/// vendor sales, and the facts the tests read.</summary>
 internal sealed partial class CityRun
 {
     public string Arm = "";
@@ -44,9 +36,7 @@ internal sealed partial class CityRun
     public readonly List<(CityReload State, double Minute)> Reloads = new();
     public readonly Dictionary<string, ResearchFact> Research = new(StringComparer.Ordinal);
     public long Frames, Checkpoints, HistoricalClockMisses, HistoricalCheckouts, InputsPublished, Postings;
-    /// <summary>The schedule this arm ran, derived from its checkpoint.</summary>
     public IReadOnlyList<InterventionInput> Inputs = Array.Empty<InterventionInput>();
-    /// <summary>Each agency charge: the order it bills and the native day it was booked to.</summary>
     public List<(string Order, int Day)> ResearchChargeDays = new();
     public string VendorBusiness = "";
     public double MaxLag, Seconds;
@@ -66,11 +56,6 @@ internal sealed class ResearchFact
     public bool ReadableNextMorning;
 }
 
-/// <summary>Drives one arm of Decision 3 from the fixture checkpoint: 06:00 on day 1 to 06:00 on day 4. Native time
-/// advances under the F1 fence (<see cref="AccountingClock"/>); at every whole native minute, once the ending epoch has
-/// drained, the scenario runs the checkpoint oracles (hourly), publishes the inputs stamped at that minute (F6a's
-/// <see cref="InputSchedule"/>), advances the Street Food stand-in, places research orders and, at native midnight, runs
-/// the agency bill. Reload arms save and reload into a new simulator at each <see cref="CityReload"/> state.</summary>
 internal sealed partial class CityScenario
 {
     public const int Days = 3;
@@ -121,7 +106,6 @@ internal sealed partial class CityScenario
         return scenario.run;
     }
 
-    // ---- City lifecycle ----
 
     private void Start(CityState state)
     {
@@ -146,26 +130,22 @@ internal sealed partial class CityScenario
     private void Reload(CityReload reason)
     {
         ReloadCity(reason.ToString());
-        // The fill-unit counter belongs to the simulator, so after the load the pending fill is the state that must survive.
         bool kept = reason == CityReload.BetweenFillUnits ? city.PopulationFillPending : reason == CityReload.DayBoundary || Holds(reason);
         if (!kept) throw new CityViolation("reloaded city lost its " + reason + " state");
         run.Reloads.Add((reason, city.View.Minute));
         pendingReloads.Remove(reason);
     }
 
-    /// <summary>Saves the city as Runtime does, checks the round trip and continues in a new simulator from the loaded save.</summary>
     private void ReloadCity(string reason)
     {
         BodiesBeforeSave();
         native.Vendor!.CompleteForSave();
-        // The miss counter belongs to the simulator being replaced: keep it for the whole run.
         missesBeforeReload += city.HistoricalClockMisses;
         if (missesBeforeReload != 0) throw new CityViolation("historical clock miss before the reload at " + reason);
         string saved = SaveCodec.Write(city.State);
         var read = SaveCodec.Read(saved);
         if (read.Status != SaveReadStatus.Loaded) throw new CityViolation("reload refused at " + reason + ": " + read.Error);
         if (SaveCodec.Write(read.State!) != saved) throw new CityViolation("reload round trip changed the save at " + reason);
-        // A native save carries the receipt dictionary next to the population bytes.
         native.Receipts = new Dictionary<string, string>(native.Receipts, StringComparer.Ordinal);
         Start(read.State!);
         BodiesAfterLoad();
@@ -174,7 +154,6 @@ internal sealed partial class CityScenario
 
     private bool Holds(CityReload state)
     {
-        // Meals are not in the city view (F9e); research, vendor rows and persons are read through it.
         var s = city.State; var view = city.View;
         switch (state)
         {
@@ -210,9 +189,7 @@ internal sealed partial class CityScenario
         }
     }
 
-    // ---- Native minute boundary ----
 
-    /// <summary>Everything native that happens as the clock enters <paramref name="epoch"/>. The ending epoch has drained.</summary>
     private void Crossing(long epoch)
     {
         if (!city.IsAccountingEpochDrained(epoch)) throw new CityViolation("ending epoch not drained at " + epoch);
@@ -231,16 +208,12 @@ internal sealed partial class CityScenario
         Research(epoch);
     }
 
-    // ---- Posting capture ----
 
     private static readonly System.Reflection.FieldInfo BudgetDueField = typeof(FoodCommerce).GetField("budgetDue", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!;
     private FoodCommerce food = null!;
     private object budgetDue = null!;
     private System.Reflection.PropertyInfo budgetMin = null!, budgetCount = null!, budgetMinute = null!;
 
-    /// <summary>The harness posts one wallet per posting unit (Core's own test bound, <c>BudgetPostingsPerEvent</c>), so the
-    /// wallet a unit posts is the posting queue's minimum just before it. Results do not depend on the bound; the reference
-    /// and every arm use the same one.</summary>
     private void AttachPostingCapture()
     {
         food = F5hIntegratedAcceptanceTests.Food(city);
@@ -251,8 +224,6 @@ internal sealed partial class CityScenario
         budgetMinute = budgetDue.GetType().GetProperty("Minute")!;
     }
 
-    /// <summary>One simulator unit. A unit that posts a wallet (daily bill, income or shift wage) appends that posting to the
-    /// ledger at its execution point: its scheduled minute, the run-wide posting sequence, the wallet and its posted fields.</summary>
     private AdvanceResult Step(double target)
     {
         var next = (int)budgetCount.GetValue(budgetDue)! > 0 ? (CitizenState)budgetMin.GetValue(budgetDue)! : null;
@@ -265,15 +236,12 @@ internal sealed partial class CityScenario
         {
             run.Postings++;
             if (due > city.View.Minute) throw new CityViolation("wallet " + next!.Identity.Id + " posted before its minute " + CityOracles.M(due));
-            // The posting's own minute (daily bill or shift end); the simulator clock at that unit depends on the frame target.
             run.Ledger.Add("p|" + CityOracles.M(due) + "|" + run.Postings.ToString(CultureInfo.InvariantCulture) + "|" + next!.Identity.Id
                 + "|" + CityOracles.Posting(next.Wallet!));
         }
         return advanced;
     }
 
-    /// <summary>Fault: the next posting minute's first two wallets swap places in the posting queue, so they post in the other
-    /// order with the same amounts. Balances and saves stay equal; only the execution order changes.</summary>
     private void ReorderNextPostings()
     {
         var items = (System.Collections.IList)budgetDue.GetType().GetField("items", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!.GetValue(budgetDue)!;
@@ -376,7 +344,6 @@ internal sealed partial class CityScenario
         }
     }
 
-    // ---- Arms ----
 
     private void Drained()
     {
@@ -393,7 +360,6 @@ internal sealed partial class CityScenario
         }
     }
 
-    /// <summary>The checkpoint's own minute: the hourly oracles and the stand-in's first poll, before any native time passes.</summary>
     private void Crossing0(long start)
     {
         clock = start; native.SetClock(start);
@@ -444,7 +410,6 @@ internal sealed partial class CityScenario
                     continue;
                 }
                 var advanced = Step(target);
-                // A reload arm ends the frame between two fill units, so the save falls inside the boundary's fill.
                 if (pendingReloads.Contains(CityReload.BetweenFillUnits) && Holds(CityReload.BetweenFillUnits)) break;
                 if (advanced.PlanningPending) { if (Elapsed() >= milliseconds) break; continue; }
                 if (advanced.CaughtUp || Elapsed() >= milliseconds) break;
@@ -474,7 +439,6 @@ internal sealed partial class CityScenario
         LoopFinish();
     }
 
-    // ---- Presentation bodies (F9f, CityMovementArms.cs); no-ops for an arm without bodies ----
 
     partial void BodiesBeforeAdvance(bool hidden, float gameMinutes);
     partial void BodiesAfterFrame(double nativeMinute, bool hidden);
@@ -483,7 +447,6 @@ internal sealed partial class CityScenario
     partial void BodiesReadyToReload(CityReload state, ref bool ready);
     partial void BodiesFinish();
 
-    // ---- The whole loop (GR-4 J1, CityLoopArms.cs); no-ops for an arm without purchases ----
 
     partial void LoopPrepare(CityState state);
     partial void LoopAttach();

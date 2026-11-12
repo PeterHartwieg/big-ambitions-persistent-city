@@ -10,8 +10,6 @@ namespace PersistentCity.Core
         bool Active(string business);
     }
 
-    /// <summary>Event-only publication/index build. A query visits fixed day/type buckets and eight
-    /// indexed slots, never the business collection. No resident rows or persistent exposure cache.</summary>
     public sealed partial class FoodCampaignSource : IFoodCampaignAwarenessProvider
     {
         private readonly FoodCommerceState food;
@@ -46,8 +44,6 @@ namespace PersistentCity.Core
         {
             if (!HasEvidence || preparedConsumer.Length==0 || preparedDay!=preparedHour/24
                 || !imagesByBusiness.TryGetValue(business,out var image)) return false;
-            // Native observations may be ahead of the meal clock. Only its exact saved hour bit
-            // proves activity; neither a newer observation nor a stopped/missing read rewrites it.
             uint bit=1u<<(preparedHour%24);
             for(int type=0;type<8;type++) if((image.Mask(preparedDay,type)&bit)!=0) return true;
             return false;
@@ -55,8 +51,6 @@ namespace PersistentCity.Core
         internal FoodMemoryStore ReferencesFor(FoodCommerceState owner)
             => ReferenceEquals(owner, food) ? references : throw new ArgumentException("Campaign source belongs to another city.");
 
-        /// <summary>Only a complete C1 image may enter. Snapshot minute is the actual observed boundary,
-        /// never the lagging simulation clock or an inferred campaign start. Retired generations drop here.</summary>
         private IEnumerable<int> PublishSteps(CampaignSnapshot snapshot, IReadOnlyDictionary<string, string> eligiblePlaces)
         {
             if (!settings.Enabled) yield break;
@@ -99,13 +93,11 @@ namespace PersistentCity.Core
                 int reference = references.Find(business.BusinessId);
                 if (reference < 0 && types == 0) continue;
                 if (reference < 0) reference = references.RegisterCampaign(business.BusinessId, eligiblePlaces[business.BusinessId]);
-                if (reference < 0) continue; // table saturation cannot fabricate a generation
+                if (reference < 0) continue;
                 old.TryGetValue(reference, out var previous);
                 var image = FoodCampaignImage.Observe(previous, reference, hour, types);
                 if (image != null) next.Add(image);
             }
-            // Lack of a current read is not retirement. Keep observed history for a retained scope,
-            // aging it without adding evidence. Only an absent/replaced generation drops here.
             foreach(var previous in food.Campaigns)
             {
                 yield return 1;
@@ -116,9 +108,8 @@ namespace PersistentCity.Core
                 if(image!=null) next.Add(image);
             }
             next.Sort((a, b) => a.BusinessRef.CompareTo(b.BusinessRef));
-            // Build everything privately. Neither a partially merged image nor partial indexes escape.
             var built = scratch;
-            foreach (var bucket in built) bucket?.Clear(); // fixed 64 buckets
+            foreach (var bucket in built) bucket?.Clear();
             int day = -1, entries = 0;
             var ordered = new List<KeyValuePair<string,FoodCampaignImage>>(next.Count);
             foreach (var image in next)
@@ -127,7 +118,7 @@ namespace PersistentCity.Core
                 day = Math.Max(day, image.Day);
                 ordered.Add(new KeyValuePair<string,FoodCampaignImage>(references.Identity(image.BusinessRef), image));
             }
-            ordered.Sort((a,b) => StringComparer.Ordinal.Compare(a.Key,b.Key)); // <=1024 immutable identities
+            ordered.Sort((a,b) => StringComparer.Ordinal.Compare(a.Key,b.Key));
             var images = scratchImages; images.Clear();
             foreach (var pair in ordered)
             {
@@ -149,8 +140,6 @@ namespace PersistentCity.Core
             foreach(var bucket in result) bucket?.Clear();
             day = -1; entries = 0;
             foreach (var image in images) day = Math.Max(day, image.Day);
-            // Sort business identities once, then all fixed buckets inherit ordinal order. The
-            // scratch buckets retain capacity across publications; the live image is never cleared.
             var ordered = new List<KeyValuePair<string,FoodCampaignImage>>(images.Count);
             foreach(var image in images) ordered.Add(new KeyValuePair<string,FoodCampaignImage>(references.Identity(image.BusinessRef),image));
             ordered.Sort((a,b)=>StringComparer.Ordinal.Compare(a.Key,b.Key));
@@ -193,7 +182,6 @@ namespace PersistentCity.Core
             if (!HasEvidence) return;
             preparedConsumer = consumer; preparedDay = day; preparedHour=(int)(minute/60); Array.Clear(selected, 0, 8);
             int count = 0, mass = 0;
-            // Fixed eight days x eight types; no consumer/campaign scan or demographic filter.
             for (int age = 0; age < 8; age++)
             {
                 int exposureDay = newestDay - age, elapsed = day - exposureDay;
@@ -214,7 +202,6 @@ namespace PersistentCity.Core
                 int exposureDay = newestDay - bucketKeys[bucket] % 64 / 8;
                 int lastHour = (int)(minute / 60) - exposureDay * 24;
                 uint permitted = lastHour < 0 ? 0 : lastHour >= 23 ? 0xffffff : (1u << (lastHour + 1)) - 1;
-                // Reach is shared across overlapping types for the same consumer/business/day.
                 uint gate = StableRandom.Finish(StableRandom.Append(Hash(consumer, exposureDay, 0, "pc:campaign:reach:1"), entry.Id));
                 double probability = settings.ReachProbability
                     * Math.Pow(settings.DailyReachDecay, day - exposureDay);

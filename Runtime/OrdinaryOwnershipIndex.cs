@@ -5,7 +5,6 @@ using PersistentCity.Core;
 
 namespace PersistentCity.Runtime
 {
-    /// <summary>Main-thread hourly observation, 16 reads then one atomic unit publication. No native writes.</summary>
     public sealed class OrdinaryOwnershipIndex : IOrdinaryVisitOwnership
     {
         public const int PlacesPerUnit = 16, MaximumPlaces = 20000;
@@ -55,7 +54,6 @@ namespace PersistentCity.Runtime
                 var facts = read(places[cursor + i]);
                 staged[i] = new OrdinaryVisitTerms(hour, facts.PlayerOwned, facts.Kind);
             }
-            // A failed read publishes none of this unit; all its older entries fail the hour guard.
             for (int i = 0; i < count; i++) published[cursor + i] = staged[i];
             cursor += count; CompletedUnits++;
             LastUnitMilliseconds = (Stopwatch.GetTimestamp() - started) * 1000d / Stopwatch.Frequency;

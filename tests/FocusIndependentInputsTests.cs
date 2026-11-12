@@ -12,7 +12,6 @@ using Xunit.Abstractions;
 
 namespace PersistentCity.Tests;
 
-// F2h: native inputs that feed optional stops and stations do not depend on where the player stands.
 public sealed class FocusIndependentInputsTests
 {
     private readonly ITestOutputHelper output;
@@ -27,8 +26,6 @@ public sealed class FocusIndependentInputsTests
         public Position Position;
     }
 
-    // Scene double. It drives the same StaticSceneMemory and PerformerSites the native environment uses, in the
-    // same order: game reasons first, then activity once; audience targets from static performer areas.
     private sealed class Scene : IOptionalStopEnvironment
     {
         public readonly Dictionary<string, SceneObject> Frontages = new(StringComparer.Ordinal);
@@ -40,7 +37,6 @@ public sealed class FocusIndependentInputsTests
         public bool Raining { get; set; }
         public int Capacity = 8;
         public int SpotQueries, AvailabilityQueries;
-        /// <summary>A scene load or unload: the native environment rescans performer spawners.</summary>
         public void SceneSetChanged() => revision++;
         public void DeactivateAll()
         {
@@ -116,7 +112,6 @@ public sealed class FocusIndependentInputsTests
             c.Journey = new FixedWalk(10).Plan(places[0], places[1], minute, c.Preferences);
         }
         scene ??= FullScene();
-        // Only the kind under test is in the scene, so the planner cannot fall through to another kind.
         if (kind != DwellKind.Audience) scene.Performers.Clear();
         if (kind != DwellKind.Resting) scene.Parks.Clear();
         if (kind == DwellKind.Audience || kind == DwellKind.Resting) scene.Frontages.Clear();
@@ -150,7 +145,6 @@ public sealed class FocusIndependentInputsTests
         scene.DeactivateAll();
         Assert.Equal(before, Image(scene.Spots(place, kind)));
         Assert.Equal(availableBefore, stops.Select(scene.Available).ToArray());
-        // Reactivation and a further rescan change nothing either.
         foreach (var o in scene.Frontages.Values.Concat(scene.Parks.Values).Concat(scene.Performers)) o.Active = true;
         scene.SceneSetChanged();
         Assert.Equal(before, Image(scene.Spots(place, kind)));
@@ -169,7 +163,6 @@ public sealed class FocusIndependentInputsTests
         Assert.NotEmpty(planned);
         Assert.All(planned, c => Assert.Equal(kind, c.OptionalStop!.Kind));
         double active = planned.Max(c => c.OptionalStop!.StartMinute) + 0.1;
-        // The player walks up: native objects near them are pooled, culled or toggled.
         near.DeactivateAll();
         for (double m = 1450.25; m <= active; m += 0.25) { watched.AdvanceTo(m); watched.RefreshOptionalStops(); away.AdvanceTo(m); away.RefreshOptionalStops(); }
         Assert.All(planned, c => Assert.False(c.OptionalStop!.Cancelled));
@@ -214,7 +207,6 @@ public sealed class FocusIndependentInputsTests
     [Fact]
     public void DlcGatedInaccessibleClosedAndNeverActiveObjectsStayExcluded()
     {
-        // DLC-gated performer area and an inaccessible building frontage: active, but excluded by the game.
         var dlc = FullScene(); dlc.Performers[0].Excluded = true;
         var (audience, _) = Ready(DwellKind.Audience, 4, dlc); audience.AdvanceTo(1450);
         Assert.All(audience.State.Citizens, c => Assert.Null(c.OptionalStop));
@@ -222,12 +214,10 @@ public sealed class FocusIndependentInputsTests
         var locked = FullScene(); locked.Frontages["venue"].Excluded = true;
         var (shop, _) = Ready(DwellKind.WindowShopping, 4, locked); shop.AdvanceTo(1450);
         Assert.All(shop.State.Citizens, c => Assert.Null(c.OptionalStop));
-        // A validated frontage that the game then closes still ends the saved stop.
         var (open, openScene) = Ready(DwellKind.WindowShopping, 2); open.AdvanceTo(1450);
         var stop = open.State.Citizens.First(c => c.OptionalStop != null).OptionalStop!;
         openScene.Frontages["venue"].Excluded = true; open.RefreshOptionalStops();
         Assert.True(stop.Cancelled);
-        // A performer area the game hides after validation, or one gone from the scene, ends audience stops.
         var (shown, shownScene) = Ready(DwellKind.Audience, 2); shown.AdvanceTo(1450);
         var watching = shown.State.Citizens.First(c => c.OptionalStop != null).OptionalStop!;
         shownScene.Performers[0].Excluded = true; shownScene.SceneSetChanged(); shown.RefreshOptionalStops();
@@ -241,25 +231,18 @@ public sealed class FocusIndependentInputsTests
     [Fact]
     public void SpawnerInactiveAtTheFirstScanIsCataloguedLikeAnActiveOne()
     {
-        // CityMapHider deactivates city objects while the player is indoors or the city map is open, including
-        // when a save loads inside a building. The performer catalogue must not depend on that first scan.
         var indoors = FullScene(); indoors.Performers[0].Active = false;
         var (loadedIndoors, indoorScene) = Ready(DwellKind.Audience, 4, indoors);
         var (loadedOutdoors, _) = Ready(DwellKind.Audience, 4);
         loadedIndoors.AdvanceTo(1450); loadedOutdoors.AdvanceTo(1450);
         Assert.Equal(1, indoorScene.Sites.Count);
         Assert.Contains(loadedIndoors.State.Citizens, c => c.OptionalStop != null);
-        // The spawner becomes active later (the player walks out); nothing changes and no rescan is needed.
         indoors.Performers[0].Active = true; loadedIndoors.RefreshOptionalStops(); loadedOutdoors.RefreshOptionalStops();
         Assert.Equal(DevelopmentChain.Write(loadedOutdoors.State), DevelopmentChain.Write(loadedIndoors.State));
         loadedIndoors.AdvanceTo(1600); loadedOutdoors.AdvanceTo(1600);
         Assert.Equal(DevelopmentChain.Write(loadedOutdoors.State), DevelopmentChain.Write(loadedIndoors.State));
     }
 
-    // Base-shape model of the removed live performer check, for the RefreshOptionalStops baseline: per audience stop,
-    // the target and zone lookups, a reflection read of the spawner's private performer field, an activity flag, a
-    // transform identity compare and the facing distance. Spots come from the same scene double. It models CPU work
-    // only; Unity's native property costs (activeInHierarchy, transform.position) are not included.
     private sealed class LivePerformerModel : IOptionalStopEnvironment
     {
         private sealed class Zone { private readonly object? _streetPerformer; public Zone(object p) => _streetPerformer = p; public object? Peek() => _streetPerformer; }
@@ -294,7 +277,6 @@ public sealed class FocusIndependentInputsTests
         sim.AdvanceTo(1450);
         double activeMinute = sim.State.Citizens.Where(c => c.OptionalStop != null).Max(c => c.OptionalStop!.StartMinute) + 0.1;
         sim.AdvanceTo(activeMinute);
-        // After: the scene is deactivated (the stops survive). Before: performers stay live, so both arms keep every stop.
         if (!liveModel) scene.DeactivateAll();
         int stops = sim.State.Citizens.Count(c => c.OptionalStop is { Cancelled: false });
         var clock = new Stopwatch(); var samples = new List<double>();
@@ -306,7 +288,6 @@ public sealed class FocusIndependentInputsTests
 
     private sealed class Station { public string Key = ""; public string Name = ""; public bool Active = true; public bool DlcHidden; }
 
-    // EnsureStations' filter: DLC visibility every preparation, activity once per static scene key.
     private static string[] StationSet(IEnumerable<Station> scene, StaticSceneMemory memory)
         => scene.Where(s => memory.Admit(s.Key, s.Active, s.DlcHidden)).Select(s => "subway:" + s.Name)
             .OrderBy(id => id, StringComparer.Ordinal).ToArray();
@@ -326,11 +307,9 @@ public sealed class FocusIndependentInputsTests
         Assert.Equal(new[] { "subway:Harbor", "subway:Midtown" }, before);
         foreach (var s in stations) s.Active = false;
         Assert.Equal(before, StationSet(stations, memory));
-        // Retimed routes keep the save-scoped evidence (ReuseRoadSceneForRetiming).
         var retimed = new StaticSceneMemory(); retimed.Include(memory);
         Assert.Equal(before, StationSet(stations, retimed));
         Assert.Equal(2, retimed.Count);
-        // A DLC toggle that hides a validated station still removes it.
         stations[1].DlcHidden = true;
         Assert.Equal(new[] { "subway:Midtown" }, StationSet(stations, memory));
     }
@@ -348,12 +327,10 @@ public sealed class FocusIndependentInputsTests
         Assert.Equal(new[] { "performer:City/Spawner[7]" }, near.Select(t => t.Id));
         Assert.Same(near, sites.Near(place));
         Assert.Equal(center, near[0].Position);
-        // No performer object exists anywhere in this reading; the stop is still available and faces the area (Q4).
         Assert.True(sites.Available("performer:City/Spawner[7]", center));
         Assert.True(sites.Available("performer:City/Spawner[7]", new Position(13.4, 0, 0)));
         Assert.False(sites.Available("performer:City/Spawner[7]", new Position(13.6, 0, 0)));
         Assert.False(sites.Available("performer:City/Spawner[8]", center));
-        // A rescan keeps the site; only a game reason removes it.
         sites.Replace(new[] { new PerformerSiteReading("City/Spawner[7]", false, center, zone, zone) });
         Assert.True(sites.Available("performer:City/Spawner[7]", center));
         sites.Replace(new[] { new PerformerSiteReading("City/Spawner[7]", true, center, zone, zone) });
@@ -370,7 +347,6 @@ public sealed class FocusIndependentInputsTests
     [Fact]
     public void OfflineCostOfCachedSceneAnswers()
     {
-        // Offline component timings only, not in-game mod-work. 200 spawners, 64 places, 1,000 saved audience stops.
         var readings = Enumerable.Range(0, 200).Select(i => new PerformerSiteReading("City/Spawner[" + i + "]", false,
             new Position(i * 5, 0, (i % 7) * 3), new object(), new object())).ToArray();
         var places = Enumerable.Range(0, 64).Select(i => new Place { Id = "p" + i, Position = new Position(i * 15, 0, 2) }).ToArray();
@@ -378,7 +354,6 @@ public sealed class FocusIndependentInputsTests
         var clock = Stopwatch.StartNew();
         for (int i = 0; i < 100; i++) sites.Replace(readings);
         double replace = clock.Elapsed.TotalMilliseconds / 100;
-        // Before shape: every audience query scanned every spawner with a distance test.
         clock.Restart(); int found = 0;
         for (int r = 0; r < 1000; r++) foreach (var place in places) foreach (var z in readings) if (Position.Distance(place.Position, z.Center) <= 8) found++;
         double scan = clock.Elapsed.TotalMilliseconds / (1000.0 * places.Length);
@@ -396,7 +371,6 @@ public sealed class FocusIndependentInputsTests
         clock.Restart();
         for (int r = 0; r < 100; r++) for (int i = 0; i < 1000; i++) memory.Admit("k" + i, false, false);
         double admit = clock.Elapsed.TotalMilliseconds / 100;
-        // RefreshOptionalStops, same fixture and sampling: base-shape live performer model, then this build.
         var before = RefreshCost(liveModel: true);
         var after = RefreshCost(liveModel: false);
         Assert.Equal(before.Stops, after.Stops);
@@ -405,8 +379,6 @@ public sealed class FocusIndependentInputsTests
         output.WriteLine($"F2H-PERF refresh-before stops={before.Stops} p50={before.P50:F4}ms p95={before.P95:F4}ms max={before.Max:F4}ms");
         output.WriteLine($"F2H-PERF refresh-after stops={after.Stops} p50={after.P50:F4}ms p95={after.P95:F4}ms max={after.Max:F4}ms");
     }
-    // P2 review: a scene-set change marks park and performer caches pending together, before any query, and each stays
-    // pending until its own scan runs, even while another scan takes the frame's slot.
     [Fact]
     public void SceneChangeKeepsEveryCachePendingUntilItsOwnScan()
     {
@@ -417,20 +389,16 @@ public sealed class FocusIndependentInputsTests
         Assert.True(scans.Due(DwellKind.Resting)); Assert.True(scans.Due(DwellKind.Audience));
         Assert.False(scans.Due(DwellKind.Break));
         Assert.Equal(SceneScan.Parks, scans.Next); scans.Completed(SceneScan.Parks);
-        // The park scan used this frame: the performer catalogue is still the old scene's and is not read.
         Assert.False(scans.Due(DwellKind.Resting)); Assert.True(scans.Due(DwellKind.Audience));
         Assert.Equal(SceneScan.Performers, scans.Next); scans.Completed(SceneScan.Performers);
         Assert.False(scans.Due(DwellKind.Audience)); Assert.Equal(SceneScan.None, scans.Next);
     }
 
-    // P2 review: a cold saved resting stop whose cached trigger was replaced stays Deferred while the rescan is pending
-    // and is decided only after Maintain has run it.
     [Fact]
     public void ReplacedParkTriggerDefersAColdSavedStopUntilMaintainRescans()
     {
         var scans = new SceneScanSchedule();
         scans.Completed(SceneScan.Parks); scans.Completed(SceneScan.Performers);
-        // The geometry read finds the cached trigger destroyed and raises the park scan, then reports a miss.
         scans.ParkTriggerLost();
         Assert.Equal(OptionalStopAvailability.Deferred,
             SceneScanSchedule.AfterGeometry(OptionalStopAvailability.Unavailable, scans.Due(DwellKind.Resting)));
@@ -439,13 +407,11 @@ public sealed class FocusIndependentInputsTests
         Assert.False(scans.Due(DwellKind.Audience));
         Assert.Equal(OptionalStopAvailability.Unavailable,
             SceneScanSchedule.AfterGeometry(OptionalStopAvailability.Unavailable, scans.Due(DwellKind.Audience)));
-        // Maintain runs the park scan; a miss after it ends the stop, and a hit is Ready either way.
         Assert.Equal(SceneScan.Parks, scans.Next); scans.Completed(SceneScan.Parks);
         Assert.Equal(OptionalStopAvailability.Unavailable,
             SceneScanSchedule.AfterGeometry(OptionalStopAvailability.Unavailable, scans.Due(DwellKind.Resting)));
         Assert.Equal(OptionalStopAvailability.Ready, SceneScanSchedule.AfterGeometry(OptionalStopAvailability.Ready, true));
         string environment = File.ReadAllText(Path.Combine(Root(), "Runtime", "OptionalStopEnvironment.cs"));
-        // Scene changes are observed on the first read of a frame, RefreshOptionalStops before Maintain included.
         foreach (string entry in new[] { "public void Maintain()", "public IReadOnlyList<OptionalStopSpot> Spots(", "public OptionalStopAvailability Available(" })
         {
             int at = environment.IndexOf(entry, StringComparison.Ordinal);

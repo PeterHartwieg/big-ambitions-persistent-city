@@ -11,8 +11,6 @@ namespace PersistentCity.Persistence
 {
     public static partial class SaveCodec
     {
-        // Canonical fixed-width uppercase base36 integers. Money is exact signed-64-range nonnegative units,
-        // never a price float or a rounded decimal. Fixed widths include leading zeros and reject alternate spellings.
         private const string Digits = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
         private static string Cell(long n, int width)
         {
@@ -187,8 +185,6 @@ namespace PersistentCity.Persistence
             public override void WriteJson(JsonWriter writer, ShopObservation? shop, JsonSerializer serializer)
             {
                 writer.WriteStartArray();
-                // Z85 includes HTML punctuation. Keep this bounded literal canonical even if the host's global
-                // Json.NET defaults escape HTML; restore the setting before writing any other field.
                 var escaping = writer.StringEscapeHandling;
                 try { writer.StringEscapeHandling = StringEscapeHandling.Default; writer.WriteValue(Cell(shop!.BusinessRef, 3) + shop.Fingerprint); }
                 finally { writer.StringEscapeHandling = escaping; }
@@ -202,7 +198,6 @@ namespace PersistentCity.Persistence
             }
             public override ShopObservation ReadJson(JsonReader reader, Type type, ShopObservation? value, bool hasValue, JsonSerializer serializer)
             {
-                // Decode with the name table rather than the streaming placeholders.
                 int ignored = 0;
                 var shop = ReadObservation(reader, null, ref ignored);
                 for (int i = 0; i < shop.Changes.Count; i++)
@@ -237,8 +232,6 @@ namespace PersistentCity.Persistence
                 previous = d.Day; records++;
             }
             previous = -1;
-            // Native input may already be at the boundary while the logical clock is its exact predecessor.
-            // Accept that one compatible minute without changing the first-observed timestamp.
             double latestObservation = state.Minute, nextMinute = Math.Floor(state.Minute) + 1;
             if (nextMinute <= 1e9 && state.Minute == AccountingClock.PreviousEpochTarget(nextMinute)) latestObservation = nextMinute;
             var references = state.Food?.BusinessReferences.ToDictionary(r => r.Slot);

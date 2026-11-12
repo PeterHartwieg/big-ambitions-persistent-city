@@ -7,7 +7,6 @@ using Xunit;
 
 namespace PersistentCity.Tests;
 
-// Representative seam/invariant checks only. The 85 six-week sweeps remain opt-in in the tool.
 public sealed class F6hIntegratedTests
 {
     [Fact]
@@ -21,7 +20,6 @@ public sealed class F6hIntegratedTests
         var prices = new OrdinaryVisitPrices();
         Assert.Equal(Money.FromCents(500), prices.Price(OrdinaryVisitClass.Retail));
         Assert.Equal(Money.FromCents(1200), prices.Price(OrdinaryVisitClass.Leisure));
-        // F6k (Peter, 8 Nov): only the price weight moves, 1 -> 1.2. Household weight and the F6j extras rule stay.
         var choice = new FoodChoiceSettings();
         Assert.Equal(1.2, choice.FoodChoicePriceWeight);
         Assert.Equal(1, choice.FoodChoiceHouseholdWeight);
@@ -102,11 +100,9 @@ public sealed class F6hIntegratedTests
             Assert.All(market.Shops, s => Assert.Equal(cents, s.Prices[product]));
             Assert.Equal(cents, market.RivalShop.Prices[product]);
         }
-        // Menu +50% scales from the profile's own menu; revert restores it exactly.
         var menu = InterventionArms.Price(NonBindingNative).Single(a => a.Name == "menu-plus-50");
         Assert.Equal(new[] { 1875, 1386, 2504 }, menu.Inputs.Take(3).Select(i => i.Value));
         Assert.Equal(EconomyFixture.NativeMenu.Select(m => m.Cents), menu.Inputs.Skip(3).Select(i => i.Value));
-        // The canonical fixture's price arms and metric bytes are unchanged by the profile seam.
         Assert.Equal(InterventionArms.Price(FixtureProfile.CapacityBound).SelectMany(a => a.Inputs),
             InterventionArms.All().Where(a => a.Family == "price").SelectMany(a => a.Inputs));
         var canonical = EconomyRun.Run(new RunOptions { Integrated = true, Seed = 3, Residents = 8, Days = 1 });
@@ -119,8 +115,6 @@ public sealed class F6hIntegratedTests
     [Fact]
     public void NonBindingMenuMarkupCostsDemandWithoutWalletExhaustion()
     {
-        // Representative of the six-week non-binding native-menu arm on the F6j base (-27.2% meals, -26.5% items,
-        // +10.8% revenue, refusals 2.03% -> 2.13%; post-F6i -26.0% / +11.2%). Four days, 128 residents + 128 visitors; +50% from day 2.
         var markup = EconomyFixture.NativeMenu.Select(m => new InterventionInput(2 * 1440, InputKind.ProductPrice,
             EconomyFixture.Shop, m.Product, (int)Math.Round(m.Cents * 1.5, MidpointRounding.AwayFromZero))).ToArray();
         RunResult Run(InterventionInput[] inputs) => EconomyRun.Run(new RunOptions {
@@ -137,8 +131,6 @@ public sealed class F6hIntegratedTests
         Assert.True(Refused(high) - Refused(control) < .01, $"affordability refusals {Refused(control):P2} -> {Refused(high):P2}");
         Assert.True(high.Days.Skip(1).Sum(d => d.HomeMeals) > control.Days.Skip(1).Sum(d => d.HomeMeals));
         Assert.All(control.Days.Concat(high.Days), d => Assert.True(d.Shops.Values.Max(s => s.Hours.Max()) < 6000));
-        // F6j: the measured quantity and revenue are whole tickets. Items include same-visit extras, so they
-        // exceed meals (visits) in both arms; capacity is judged on meals per hour.
         double Meals(RunResult r) => Sum(r, d => d.OwnMealHours.Values.Sum(h => h.Sum()));
         Assert.True(q0 > Meals(control) && q1 > Meals(high), $"extras must be in the ticket: items {q0}/{q1}, meals {Meals(control)}/{Meals(high)}");
         Assert.True(Meals(high) < Meals(control) * .85, $"markup must cost at least 15% of meals: {Meals(control)} -> {Meals(high)}");

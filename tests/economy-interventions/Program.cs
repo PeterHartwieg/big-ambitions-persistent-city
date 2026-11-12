@@ -4,10 +4,6 @@ using System.IO;
 using System.Linq;
 using PersistentCity.EconomyInterventions;
 
-// F6a/F6h intervention harness. Usage:
-//   EconomyInterventions <outDir> [--seeds N] [--residents N] [--arms family/name,...] [--skip-curve] [--skip-perf] [--checks-only] [--integrated] [--price-weight 0..3] [--meals-per-hour N] [--menu legacy|native] [--no-rival]
-// Writes one metrics JSON per arm and seed, a seed-band summary, today's rival saturation curve
-// and tool-cost measurements. Offline Core evidence only; never native or rig proof.
 internal static class Program
 {
     private static int Main(string[] args)
@@ -28,8 +24,6 @@ internal static class Program
         string? priceArg = args.SkipWhile(a => a != "--price-weight").Skip(1).FirstOrDefault();
         double priceWeight = priceArg == null ? new RunOptions().PriceWeight
             : double.Parse(priceArg, System.Globalization.CultureInfo.InvariantCulture);
-        // Integrated runs use the fast representative unit checks instead of silently running
-        // the legacy 48-person six-week self-checks before every opt-in sweep.
         if (!integrated) SelfChecks.Run();
         if (args.Contains("--checks-only")) return 0;
 
@@ -39,11 +33,9 @@ internal static class Program
         var profile = mealsPerHour == EconomyFixture.MealsPerHour && menu == "legacy" ? FixtureProfile.CapacityBound
             : new FixtureProfile((mealsPerHour == EconomyFixture.MealsPerHour ? "capacity-bound" : "non-binding-" + mealsPerHour) + "-" + menu + "-menu",
                 mealsPerHour, menu == "native" ? EconomyFixture.NativeMenu : EconomyFixture.Menu);
-        // --no-rival: the sole-shop (monopoly) price fixture; the rival is never listed.
         bool rivalListed = !args.Contains("--no-rival");
         if (!rivalListed && profile == FixtureProfile.CapacityBound) { Console.Error.WriteLine("--no-rival is a price-only profile option"); return 2; }
         if (!rivalListed) profile = profile with { Name = profile.Name + "-no-rival" };
-        // Staffing/other inputs restore the original fixture's terms, so a changed profile is price-only.
         var candidates = profile == FixtureProfile.CapacityBound ? InterventionArms.All() : InterventionArms.Price(profile);
         var arms = new[] { InterventionArms.Control }.Concat(candidates)
             .Where(a => filter == null || a.Family == "control" || filter.Split(',').Contains(a.Family + "/" + a.Name)).ToList();
@@ -60,7 +52,6 @@ internal static class Program
             }
             if (arm == InterventionArms.Control)
             {
-                // Full-size save/reload equivalence on the measured fixture, outside any timing claim.
                 var reloaded = EconomyRun.Run(new RunOptions { Seed = 0, Residents = residents, ReloadAt = SelfChecks.MidEpochReload, Integrated = integrated, PriceWeight = priceWeight, Profile = profile, RivalListed = rivalListed });
                 if (reloaded.Json != list[0].Json || reloaded.FinalSaveSha256 != list[0].FinalSaveSha256)
                     throw new InvalidOperationException("full-size mid-epoch reload changed metrics");

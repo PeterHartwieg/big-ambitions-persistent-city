@@ -20,12 +20,9 @@ namespace PersistentCity.Persistence
             catch (InvalidOperationException e) { throw new SaveValidationException(e.Message); }
         }
 
-        /// <summary>Small early authority check; no population graph, identities or wallets are allocated.
-        /// Full decode remains mandatory at population startup. Any failure keeps authority suspended.</summary>
         public static void RequireExecutableCapabilities(string source)
         {
             Require(source != null && source.Length <= MaxInputCharacters, "Invalid population payload.");
-            // The retired F7d columnar wire is an older development city, never decoded.
             Require(!RetiredCompact(source!) && !PreWalletBody(source!) && !PrePlanBody(source!), DevelopmentSchemaMessage);
             using var reader = Reader(source);
             Require(reader.Read() && reader.TokenType == JsonToken.StartObject, "Expected population object.");
@@ -33,8 +30,6 @@ namespace PersistentCity.Persistence
             PopulationCapabilities? capabilities = null;
             string? menuPolicy = null;
             var names = new HashSet<string>(StringComparer.Ordinal);
-            // Resolve token offsets only as far as a header requires; TokenText(source) would scan
-            // every character even when both headers precede the population graph.
             int tokenLine = 1, lineStart = 0;
             bool canonicalInteger = false;
             int HeaderInteger(bool requireCanonical = true)
@@ -64,7 +59,6 @@ namespace PersistentCity.Persistence
                 if (name == "Schema")
                 {
                     schema = HeaderInteger(requireCanonical: false);
-                    // Held at 1 until release: any other number is an older development city (no migration).
                     Require(schema == CityState.CurrentSchema, DevelopmentSchemaMessage);
                     Require(canonicalInteger, "Noncanonical population schema.");
                 }
@@ -94,7 +88,6 @@ namespace PersistentCity.Persistence
                     menuPolicy = (string)reader.Value!;
                 }
                 else reader.Skip();
-                // Full population startup still validates all fields, duplicates and trailing content.
                 if (schema.HasValue && capabilities != null && menuPolicy != null) return;
             }
             Require(reader.TokenType == JsonToken.EndObject && !reader.Read(), "Incomplete or trailing population content.");
@@ -125,12 +118,9 @@ namespace PersistentCity.Persistence
                 previous = entry.Slot;
                 Text(entry.BusinessId, "Business reference identity", IdentityBound(entry.BusinessId, 512));
                 Text(entry.PlaceId, "Business reference place", IdentityBound(entry.PlaceId, 256));
-                // E6c: the place of any vendor row, tombstones included, for that row's signature at a generation
-                // from 1 to its current one; any other business id at a vendor place is refused.
                 if (vendors.ByPlace.TryGetValue(entry.PlaceId, out var vendor))
                     Require(VendorReference30(vendor, entry.BusinessId), "A business reference at a vendor place names another business or generation.");
                 else Require(places.Contains(entry.PlaceId), "Unknown business reference place.");
-                // Existing references must never disagree with the same complete identity elsewhere.
             }
             var byId = refs.ToDictionary(r => r.BusinessId, r => r.PlaceId, StringComparer.Ordinal);
             void Match(string id, string place) { if (byId.TryGetValue(id, out var expected)) Require(place == expected, "Reused business identity at another place."); }
@@ -146,7 +136,6 @@ namespace PersistentCity.Persistence
             return refs.Count;
         }
 
-        /// <summary>Reports both published counting paths; callers must budget the larger.</summary>
         public static (int Streaming, int Semantic) CountRecords(CityState state, string source)
         {
             int semantic = Validate(state), streaming = 0;
@@ -179,14 +168,10 @@ namespace PersistentCity.Persistence
                 Require(ProductNames.Length <= FoodNameIdentity.MaximumNames, "Oversized product name table.");
                 for (int i = 0; i < ProductNames.Length; i++) ProductIndex.Add(ProductNames[i], i + 1);
             }
-            /// <summary>Schema-26 station table for visitor stays (ordinal); empty when reading.</summary>
             public List<string> Portals = new List<string>();
-            /// <summary>E6c: the place of every vendor row in the table's saved ordinal order (live, retired and
-            /// tombstone rows); the business-reference <c>v</c> form indexes this list.</summary>
             public string[] VendorPlaces = Array.Empty<string>();
             public Dictionary<string, int> VendorIndex = new Dictionary<string, int>(StringComparer.Ordinal);
             private VendorTable? decodedVendors;
-            /// <summary>The table <see cref="FromSource"/> decoded, handed to the reader at most once.</summary>
             public VendorTable? TakeVendors() { var table = decodedVendors; decodedVendors = null; return table; }
             private void SetVendors(VendorTable? table)
             {
@@ -209,7 +194,6 @@ namespace PersistentCity.Persistence
             }
             public static WireContext FromSource(string source, TokenText? tokenText = null)
             {
-                // Root/property/Places order is irrelevant. Collect only bounded saved IDs; no native lookup.
                 using var reader = Reader(source);
                 Require(reader.Read() && reader.TokenType == JsonToken.StartObject, "Expected root.");
                 var ids = new List<string>(); bool found = false;
@@ -231,7 +215,6 @@ namespace PersistentCity.Persistence
                     }
                     if (name == "Vendors" && reader.TokenType == JsonToken.StartArray)
                     {
-                        // Read before business references are decoded.
                         Require(vendors == null, "Duplicate vendor table.");
                         int records = 0;
                         vendors = ReadVendors30(reader, text, ref records);
@@ -271,7 +254,6 @@ namespace PersistentCity.Persistence
             public readonly Action<JsonWriter, object, JsonSerializer>[] Write;
             public readonly Action<object, JsonReader, JsonSerializer>[] Read;
             public readonly Func<object> Create;
-            // Held at 1 until release (docs/decisions/2026-11-09-schema-one.md). Do not bump it or add per-feature schema constants; change the format in place.
             public const int CurrentVersion = 1;
             public readonly int Version = CurrentVersion;
             private TupleLayout(Type type, string fields, string derived = "")
@@ -312,10 +294,7 @@ namespace PersistentCity.Persistence
                 }).ToArray();
                 Create = Expression.Lambda<Func<object>>(Expression.Convert(Expression.New(type), typeof(object))).Compile();
             }
-            // Positional contracts, independent of declaration/reflection order. The version is slot zero.
             private static readonly TupleLayout EconomicBudget = new TupleLayout(typeof(ResidentBudget), "Arrears Balance BaseIncomeCents DailyEssentialsCents DailyHomeFoodCents DailyHousingCents DailyIncomeCents DaysWithoutHomeFood EssentialsPaid HeldPurchase HomeFoodFundedDay HomeFoodPaid IncomeReceived IncomeSource LastPostedDay NextPostingMinute OpeningBalance PreparedFoodSpent ExternalFoodSpent Ledger");
-            // One roster record per person, so the anchor and slot are derived from the person table (PersonWire26). GR-1: the
-            // wallet is saved with its person (Budget is a link, derived after the read); its old slot holds the legacy account.
             private static readonly TupleLayout Meal = new TupleLayout(typeof(ResidentMeal), "Allowance LegacyExternalFoodSpent BusinessId ContextAttempts Day DayAllowanceUsed Deadline Decision DesiredAt DueAt Excursion ExistingStop ExistingStopPurchases ExpiresAt Kind LastContextKey NeedsHomeResync PlaceId PreferenceBonusCents PreferredProductId Price ProductId Purchases Reason RepresentedTraits ResidentId ReturnMinutes ServiceAt ServiceMinutes Spent Status Today Memory External", "AnchorId Slot Budget");
             public static TupleLayout? For(Type type) => type == typeof(ResidentBudget) ? EconomicBudget : type == typeof(ResidentMeal) ? Meal : null;
         }
@@ -380,7 +359,6 @@ namespace PersistentCity.Persistence
         {
             private readonly WireContext context;
             public VisitConverter(WireContext context) { this.context = context; }
-            // Place cell at 17-19: a city index or "v" and a vendor table row (PlaceCells).
             public static string Check(JsonReader reader, PlaceCells cells)
             {
                 Require(reader.TokenType == JsonToken.String, "Invalid visit token."); string text = (string)reader.Value!;
@@ -409,8 +387,6 @@ namespace PersistentCity.Persistence
         {
             private readonly WireContext context;
             public BusinessReferenceConverter(WireContext context) { this.context = context; }
-            // Place cell: three base-36 digits of the ordinal Places index, or "v" and two base-36
-            // digits of the vendor table's saved row order. Each form has its own bound.
             public static void Check(JsonReader reader, TokenText text)
             {
                 Require(reader.TokenType == JsonToken.StartArray && reader.Read() && reader.TokenType == JsonToken.Integer && IntegerToken(reader.Value, 1, 1) && text.CanonicalInteger((IJsonLineInfo)reader), "Invalid business reference version.");
@@ -437,7 +413,6 @@ namespace PersistentCity.Persistence
                 reader.Read(); string cell = (string)reader.Value!; string place;
                 if (cell.Length == 1 + VendorIndexWidth && cell[0] == VendorPlaceForm)
                 {
-                    // v indices resolve only through the vendor table.
                     int row = MemoryWire.Number(cell, 1, VendorIndexWidth);
                     Require(row < context.VendorPlaces.Length, "Unknown vendor business place reference.");
                     place = context.VendorPlaces[row];

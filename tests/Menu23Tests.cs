@@ -61,7 +61,7 @@ public sealed partial class FoodCommerceTests
         Assert.Equal(new[]{FoodProducts.Croissant,FoodProducts.Burger,FoodProducts.HotDog},FoodProducts.Ids);
         foreach(int code in new[]{4,5,6}) Assert.False(FoodProducts.Known(FoodMenuPolicy.Product(code)!));
         Assert.Equal(193,FoodDecisionTuning.Capture(LegacyFoodChoice.Settings()).ToWire().Length);
-        Assert.Equal(241,FoodDecisionTuning.Capture(new FoodChoiceSettings()).ToWire().Length); // E5b5: eight is explicit
+        Assert.Equal(241,FoodDecisionTuning.Capture(new FoodChoiceSettings()).ToWire().Length);
         var settings=new FoodChoiceSettings{FoodMenuMaximumOffersPerShop=8,FoodMenuNewTasteWeight=.5,FoodMenuHealthWeight=2};
         string held=FoodDecisionTuning.Capture(settings).ToWire();settings.FoodMenuMaximumOffersPerShop=1;
         Assert.True(FoodDecisionTuning.TryParse(held,out var replay));Assert.Equal(held,replay!.ToWire());
@@ -69,7 +69,6 @@ public sealed partial class FoodCommerceTests
     }
 
     [Theory]
-    // E5b5 (Q1): the default and the fallback for an invalid value are the live limit of eight.
     [InlineData("{}",8,1,0)]
     [InlineData("{\"FoodMenuMaximumOffersPerShop\":99,\"FoodMenuNewTasteWeight\":\"Infinity\",\"FoodMenuHealthWeight\":-1}",8,2,0)]
     [InlineData("{\"FoodMenuMaximumOffersPerShop\":1.5,\"FoodMenuNewTasteWeight\":{},\"FoodMenuHealthWeight\":\"NaN\"}",8,1,0)]

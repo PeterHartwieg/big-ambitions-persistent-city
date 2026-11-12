@@ -6,8 +6,6 @@ using Xunit;
 
 namespace PersistentCity.Tests;
 
-// F6a harness invariants on the small fixture: determinism (including an interrupted save/reload),
-// epoch-boundary inputs, per-owner daily conservation and loud fault injections.
 public sealed class EconomyInterventionTests
 {
     static Arm ArmNamed(string name) => InterventionArms.All().Single(a => a.Name == name);
@@ -56,7 +54,6 @@ public sealed class EconomyInterventionTests
         Assert.Equal(0, schedule.PublishAt(first - 1, true, first - 2, market));
         Assert.Equal(1, schedule.PublishAt(first, true, AccountingClock.PreviousEpochTarget(first), market));
         Assert.Equal(0, market.Shops[0].MealsPerHour);
-        // Every native read is fenced to the published epoch.
         market.Enter(first);
         Assert.NotNull(market.CaptureBusiness(EconomyFixture.Shop, first + 0.75));
         Assert.Throws<InputViolation>(() => market.CaptureBusiness(EconomyFixture.Shop, first + 1));
@@ -110,7 +107,6 @@ public sealed class EconomyInterventionTests
         });
         Assert.Equal((long)EconomyRun.Days * owners, run.ConservationChecks);
         Assert.Equal(6, run.InputsPublished);
-        // The whole-shop stockout day sells nothing at the own shop; other days do.
         Assert.Equal(0, run.Days.Single(d => d.Day == 16).OwnPurchases);
         Assert.True(run.Days.Single(d => d.Day == 15).OwnPurchases > 0 && run.Days.Single(d => d.Day == 17).OwnPurchases > 0);
         Assert.True(run.Days.Single(d => d.Day == 16).Shops.Values.Sum(s => s.Stock) > 0);
@@ -170,7 +166,6 @@ public sealed class EconomyInterventionTests
         var run = EconomyRun.Run(SelfChecks.Small());
         Assert.All(run.Days, d => Assert.Equal(d.OutsideLedgerUnits, d.WatermarkedOutflowUnits));
         Assert.True(run.Days.Last().OutsideLedgerUnits > 0);
-        // After rollover the rolling window is smaller than the lifetime total; before it they agree.
         Assert.Equal(run.Days.Single(d => d.Day == 10).OutsideLedgerUnits, run.Days.Single(d => d.Day == 10).WatermarkedOutflowWindowUnits);
         Assert.True(run.Days.Last().WatermarkedOutflowWindowUnits < run.Days.Last().WatermarkedOutflowUnits);
     }
@@ -187,12 +182,10 @@ public sealed class EconomyInterventionTests
                 Assert.Equal(c.Resolved, c.ThisShop + c.OtherOwn + c.Rival + c.Home + c.Skipped + c.Unconfirmed);
                 Assert.True(c.ThisShop <= Purchases(d, business));
             }
-            // F6j: shop-day purchases count sold items, so a meal with extras adds up to 1 + 3 of them.
             long meals = d.Catchment(EconomyFixture.Shop, c => c.ThisShop), items = Purchases(d, EconomyFixture.Shop);
             Assert.InRange(items, meals, meals * (1 + FoodMealExtras.MaximumExtras));
             Assert.All(d.Offers.Values, o => Assert.True(o.Chosen <= o.Feasible && o.Feasible <= o.Considered));
         });
-        // The dormant second site has no catchment until it opens, and one while it is open.
         Assert.All(run.Days.Where(d => d.Day < InterventionArms.FirstInterventionDay), d => Assert.False(d.Catchments.ContainsKey(EconomyFixture.FarShop)));
         Assert.Contains(run.Days, d => d.Catchment(EconomyFixture.FarShop, c => c.Resolved) > 0);
         Assert.Contains(run.Days, d => d.Catchment(EconomyFixture.Shop, c => c.Resolved) < d.Resolved);

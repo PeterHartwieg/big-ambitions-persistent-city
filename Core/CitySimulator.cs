@@ -10,18 +10,12 @@ namespace PersistentCity.Core
     {
         public AdvanceResult(int events, bool caughtUp, int trafficEvents = 0, bool planningPending = false, int foodContinuationEvents = 0, int researchUnits = 0)
         { Events = events; CaughtUp = caughtUp; TrafficEvents = trafficEvents; PlanningPending = planningPending; FoodContinuationEvents = foodContinuationEvents; ResearchUnits = researchUnits; }
-        /// <summary>Total bounded work units, including citizen, traffic and food continuation units.</summary>
         public int Events { get; }
         public int TrafficEvents { get; }
-        /// <summary>Bounded shared awareness-index preparation and already-started food decision units,
-        /// including commit. Begin counts once as a citizen event; these units use the same work/time caps.</summary>
         public int FoodContinuationEvents { get; }
-        /// <summary>Bounded research survey units (index or C4 engine) run inside the hold.</summary>
         public int ResearchUnits { get; }
         public int CitizenEvents => Events - TrafficEvents - FoodContinuationEvents - ResearchUnits;
         public bool CaughtUp { get; }
-        /// <summary>A citizen event is waiting for a route answer. The clock stays at that event's minute
-        /// until ContinuePlanning reports completion; nothing else advances meanwhile.</summary>
         public bool PlanningPending { get; }
     }
 
@@ -29,8 +23,6 @@ namespace PersistentCity.Core
     {
         private sealed class Due
         {
-            // Never rebind a queued event after external removal, replacement or reordering
-            // of the public snapshot list. Residents retain their identities.
             public readonly int ListIndex;
             public Due(int listIndex) { ListIndex = listIndex; }
             public CitizenState Citizen = null!;
@@ -51,23 +43,14 @@ namespace PersistentCity.Core
         private readonly Dictionary<string, Due> citizenEvents = new Dictionary<string, Due>(StringComparer.Ordinal);
         private readonly Dictionary<string, Place> places = new Dictionary<string, Place>(StringComparer.Ordinal);
         private readonly IRoutePlanner routes;
-        /// <summary>The mutable city: load, save and the simulator's own writers. Observers read <see cref="View"/> instead
-        /// (F9e); tests/OwnershipBoundaryTests.cs lists the Runtime files that may still read this property.</summary>
         public CityState State { get; }
         private CityView? view;
-        /// <summary>F9e: the read-only city for observers (diagnostics, panel, inspector, F9 oracles). Created once and
-        /// read live, so a read allocates nothing; see <see cref="ICityView"/>.</summary>
         public ICityView View => view ??= new CityView(State);
         private FoodCommerce? food;
         public long HistoricalClockMisses => food?.HistoricalClockMisses ?? 0;
-        /// <summary>F5d diagnostic counter: food/finance reads of a person other than the meal's owner (zero from schema 27).</summary>
         public long FoodAnchorReads => food?.AnchorReads ?? 0;
-        /// <summary>Measurement only: queued person events and queued meal events.</summary>
         internal int QueuedPersonEvents => due.Count;
         internal int QueuedMealEvents => food?.QueuedMeals ?? 0;
-        /// <summary>Measurement only (F5h): queued person events and meal events due at or before <paramref name="minute"/>,
-        /// that is, due work not yet run. Walks the ordered queues from their minimum and stops at the first later entry.
-        /// An event waiting for its route has left the queue but has not run, so it counts too (review Sol-r2-1).</summary>
         internal int DuePersonEventsAtOrBefore(double minute)
         {
             int count = pending != null && pending.Item.Minute <= minute && !due.Contains(pending.Item) ? 1 : 0;
@@ -78,26 +61,17 @@ namespace PersistentCity.Core
         internal CitizenState? FindCitizen(string id) => citizenEvents.TryGetValue(id, out var entry) ? entry.Citizen : null;
         internal Place FindPlace(string id) => places[id];
         internal IReadOnlyDictionary<string, Place> PlaceIndex => places;
-        // F5f: derived from saved state, rebuilt on construction (load, route rebuild) and filed at every
-        // change of a live citizen's phase, activity, place or optional stop (FileOptionalStop and the visit starts).
-        // F2f: its presentation grid resolves stationary candidates through this simulator's place table.
         private readonly ActiveJourneyIndex activeJourneys;
-        // F5e: seated persons per workplace for the job-finding vacancy check; moved only at event commit.
         private readonly WorkplaceOccupancy occupancy = new WorkplaceOccupancy();
         internal bool OccupancyMatchesFullCount() => occupancy.Matches(State);
-        /// <summary>Read-only view of the active-journey candidate index for physical selection.</summary>
         public ActiveJourneyIndex ActiveJourneys => activeJourneys;
-        /// <summary>Shadow comparison of the index against a full scan of the population.</summary>
         public bool ActiveJourneyIndexMatchesState() => activeJourneys.MatchesScan(State.Citizens, State.VisitorRoutines);
         internal Position? FindPosition(string id) => places.TryGetValue(id,out var place) ? place.Position : (Position?)null;
-        /// <summary>Read-only inspector view of one resident from already stored facts, or null if the
-        /// ID has left the population. Never changes the city, draws, plans routes or reads a market.</summary>
         public ResidentInsight? Inspect(string residentId, Func<string, string>? productName = null, Func<string, int, string>? formatAddress = null,
             Func<string, string?>? shopName = null, Func<FoodScope, bool>? currentOwnShop = null)
         {
             if (residentId == null) return null;
             var person = FindCitizen(residentId);
-            // Visitors have no body before F5i, so nothing selects them for the resident inspector.
             if (person == null || person.IsVisitor) return null;
             ResidentMeal? meal = food != null ? food.FindMeal(residentId) : State.Food?.Residents.Find(m => m.ResidentId == residentId);
             return ResidentInsight.Capture(View, person, meal, id => places.TryGetValue(id, out var place) ? place : null, productName, formatAddress, food?.MemorySettings, food == null ? null : food.MemoryReference, shopName, currentOwnShop,
@@ -110,20 +84,14 @@ namespace PersistentCity.Core
         }
 
         private ResearchSurveyRunner? research;
-        /// <summary>The attached research survey runner, or null.</summary>
         public ResearchSurveyRunner? Research => research;
-        /// <summary>C5b seam: surveys the ledger's Ordered orders inside the F1 hold. The ledger is not part of
-        /// CityState here; the caller owns it (C5e attaches CityState.Research the same way).</summary>
         public ResearchSurveyRunner AttachResearch(ResearchLedger ledger, int consumersPerUnit = 256, Func<string, string?>? businessPlace = null)
         {
             if (research != null) throw new InvalidOperationException("Research already attached.");
             return research = new ResearchSurveyRunner(this, ledger, consumersPerUnit, businessPlace);
         }
 
-        /// <summary>Explicit place/catalogue publication notification for non-versioned Core providers.</summary>
         public void InvalidateFoodAwareness() => food?.InvalidateAwareness();
-        /// <summary>On-demand read-only bridge diagnostic. Does not create a context, request routes,
-        /// read supply or modify meal/state. day may vary for seeded discovery checks.</summary>
         public FoodAwarenessDump? InspectFoodAwareness(string consumerId, int? day=null) => food?.InspectAwareness(consumerId,day);
 
         private sealed class ActivityObservers
@@ -133,8 +101,6 @@ namespace PersistentCity.Core
             public Action<RoutineDiagnostic>? RoutineHandlers;
         }
         private ActivityObservers activityObservers = new ActivityObservers();
-        // Optional observer. No extra per-event allocation or scheduling in normal play.
-        // Shared across a route rebuild so subscribers can also unsubscribe through the old facade.
         public event Action<string, CitizenState, double>? ActivityObserved
         {
             add { activityObservers.Handlers += value; }
@@ -161,12 +127,10 @@ namespace PersistentCity.Core
             DayPlanExecutor.Mark(person, slot.Activity, slot.EndsAt, PlanItemState.Missed, cause != PlanMissCause.None ? cause : DayPlanExecutor.CauseOf(reason));
             if (slot.Activity == Activity.Work)
             {
-                var w = DailyRoutine.WorkOnDay(person, State.Seed, Math.Max(0, slot.EndsAt - 480), places); // a shift's start day
+                var w = DailyRoutine.WorkOnDay(person, State.Seed, Math.Max(0, slot.EndsAt - 480), places);
                 if (w.HasValue && person.Accrual.Day == (int)(w.Value.StartsAt / 1440)
                     && (person.Accrual.Shift == EmploymentWages.Closed || person.Accrual.Shift == EmploymentWages.ClosureDay))
                 { ObserveRoutine(person, slot, now, "closed", "workplace-closed"); return; }
-                // Early commutes can fail before the workplace's start-time closure snapshot exists.
-                // Settle the personal miss once at shift end, after closure and all attendance are known.
                 if (food?.TracksEmployment(person) == true)
                 { ObserveRoutine(person, slot, now, "missed", reason); return; }
             }
@@ -176,10 +140,6 @@ namespace PersistentCity.Core
         internal bool ObservingFood => activityObservers.FoodHandlers != null;
         internal void ObserveFood(FoodDecisionTrace trace) => activityObservers.FoodHandlers?.Invoke(trace);
 
-        /// <summary>Rebuild scheduling indexes after retiming this same state, retaining observation
-        /// ownership. The caller replaces the old simulator and must not advance it again. An event
-        /// waiting for a route is abandoned here; the state still holds it unstarted, so the replacement
-        /// runs it again from the beginning.</summary>
         public CitySimulator RebuildRoutes(IRoutePlanner replacementRoutes)
         {
             AbortPending();
@@ -193,15 +153,11 @@ namespace PersistentCity.Core
             replacement.venueFeedback = venueFeedback; replacement.throughTraffic = throughTraffic?.Fresh();
             replacement.HouseholdOutingsEnabled = HouseholdOutingsEnabled;
             replacement.weatherSource=weatherSource;replacement.weatherSettings=weatherSettings;
-            // F5g: the latched boundary plan carries over; its seat counter is rebuilt against the replacement's occupancy.
-            // F5g: the latched plan carries over; its seat counter is rebuilt against the replacement's occupancy.
             replacement.fillCatalogue = fillCatalogue; replacement.fillPlan = fillPlan;
             if (fillPlan != null) fillPlan.Factory = null;
             if (stopEnvironment != null) replacement.AttachOptionalStops(stopEnvironment, stopPercentage, stopTiming);
             if (food != null) replacement.AttachFoodMarket(food.Market, food.ChoiceSettings, food.MemorySettings, food.AwarenessSettings, food.MemoryProvider, food.CampaignProvider, food.RivalSettings);
-            // A running survey is transient; the replacement starts it again from zero.
             if (research != null) replacement.AttachResearch(research.Ledger, research.ConsumersPerUnit, research.BusinessPlace);
-            // GR-3: the purchase market and its fault carry over; a faulted market stays detached.
             replacement.purchases = purchases; replacement.PurchaseFault = PurchaseFault;
             return replacement;
         }
@@ -217,7 +173,6 @@ namespace PersistentCity.Core
             this.routes = routes ?? throw new ArgumentNullException(nameof(routes));
             foreach (var place in state.Places)
             {
-                // Vendor places are published from the vendor table, never stored as city places.
                 if (VendorNames.IsVendorPlace(place.Id)) throw new ArgumentException("A city place uses the vendor place prefix.");
                 places.Add(place.Id, place);
                 if (place.Kind == PlaceKind.Shop || place.Kind == PlaceKind.Leisure) optionalPlaces.Add(place);
@@ -232,7 +187,6 @@ namespace PersistentCity.Core
                 if (!due.Add(item)) throw new ArgumentException("Duplicate citizen event.");
                 citizenEvents.Add(person.Identity.Id, item);
             }
-            // Visitor routines share the queue. Their slot is the complement of their list index.
             if (state.VisitorRoutines.Count != 0 || state.Visitors.Count != 0)
             {
                 VisitorSchedules.LinkAll(state);
@@ -253,8 +207,6 @@ namespace PersistentCity.Core
             EnsureTrafficNetwork();
         }
 
-        /// <summary>Queues visitor routines created after construction (a fresh roster). Every visitor slot is rebuilt
-        /// from the current ordinal list, so no in-flight visitor event may exist.</summary>
         internal void ScheduleVisitors()
         {
             if (pending != null && pending.Item.ListIndex < 0) throw new InvalidOperationException("A visitor event is in flight.");
@@ -274,46 +226,31 @@ namespace PersistentCity.Core
                 citizenEvents.Add(routine.Identity.Id, item);
                 activeJourneys.File(routine);
             }
-            // Fresh visitors were seated against the city's capacity when they were created.
             occupancy.Rebuild(State);
         }
 
         public AdvanceResult AdvanceTo(double targetMinute, int eventBudget = 10000)
             => AdvanceCore(targetMinute, eventBudget, true);
 
-        /// <summary>Native frames may stop between events for their time budget; publish once after the frame batch.
-        /// With a resumable planner a citizen event that needs a route returns PlanningPending instead of
-        /// finishing; drive it with ContinuePlanning until that reports completion.</summary>
         public AdvanceResult AdvanceFrameSlice(double targetMinute, int eventBudget = 1)
             => AdvanceCore(targetMinute, eventBudget, false);
 
-        // Several events may share the published minute, especially daily budget postings.
-        // Minute equality alone does not establish that the simulation has drained its work.
         public bool IsCaughtUpTo(double targetMinute) => Position.Finite(targetMinute)
             && State.Minute >= targetMinute && NoEventsThrough(targetMinute);
 
-        /// <summary>Read-only startup/clock check, including saved food work before market attachment.
-        /// Minute equality at the predecessor alone cannot prove that the ending epoch drained.</summary>
         public bool IsAccountingEpochDrained(double nativeMinute)
         {
             double target = AccountingClock.PreviousEpochTarget(nativeMinute);
-            if (Math.Floor(nativeMinute) == 0) return true; // No simulation events exist before minute zero.
+            if (Math.Floor(nativeMinute) == 0) return true;
             return State.Minute >= target && NoEventsThrough(target, inspectSavedFood: true);
         }
-        /// <summary>Publish a verified new epoch before closure, physical or save observations.
-        /// This executes no events and cannot forgive any unfinished previous-epoch work.</summary>
         public bool BeginAccountingObservations(double nativeMinute)
         {
             if (!AccountingClock.Compatible(State.Minute, nativeMinute) || !IsAccountingEpochDrained(nativeMinute)) return false;
             double epoch = Math.Floor(nativeMinute);
             if (traffic != null && traffic.Clock < epoch) traffic.BeginObservationEpoch(epoch);
-            // F5g: the clock moves onto a midnight epoch as before (review Sol-r3-1); that boundary's fill then runs at the
-            // epoch minute before its ordinary events, so physical and traffic observations stay in the new epoch.
             if (State.Minute < epoch)
             {
-                // This boundary was implicit in the predecessor clock. Publish its calendar
-                // capability fact too, or deriving the next midnight from the new clock would
-                // skip it. No citizen, meal, budget, traffic or native transaction executes here.
                 if (!State.Capabilities.Active && Math.Floor(State.Minute / 1440) < Math.Floor(epoch / 1440))
                     State.Capabilities.Active = true;
                 State.Minute = epoch; SynchronizeSnapshot();
@@ -338,11 +275,8 @@ namespace PersistentCity.Core
             return true;
         }
         private bool NoEventsThrough(double targetMinute, bool inspectSavedFood = false)
-            // A queued campaign publication belongs to the epoch that observed its hour boundary.
-            // It holds native time (IsCaughtUpTo) but is never unfinished previous-epoch work.
             => (ordinaryOwnership?.Pending != true || inspectSavedFood)
             && (food?.HasPendingCampaignPublication != true || inspectSavedFood)
-            // An open research survey holds native time the same way and is not previous-epoch work either.
             && (research == null || inspectSavedFood || !research.HoldsThrough(targetMinute))
             && (pending == null || inspectSavedFood && pending.Item.Minute > targetMinute)
             && (food?.HasPendingDecision != true || inspectSavedFood && food!.NextMinute > targetMinute)
@@ -350,9 +284,7 @@ namespace PersistentCity.Core
             && (traffic == null || traffic.NextEventMinute > targetMinute)
             && (State.Food == null || (food != null ? food.NextMinute > targetMinute : inspectSavedFood && SavedFoodAfter(targetMinute)))
             && (State.Capabilities.Active || (Math.Floor(State.Minute / 1440) + 1) * 1440 > targetMinute)
-            // GR-8: a due through-car entry or hour schedule is traffic work like the kernel's own events.
             && ThroughPeek() > targetMinute
-            // Last: it latches a boundary's fill plan only after every other event through the target has drained.
             && !FillHolds(targetMinute);
 
         private AdvanceResult AdvanceCore(double targetMinute, int eventBudget, bool publishSnapshot)
@@ -365,9 +297,7 @@ namespace PersistentCity.Core
             int count = 0, trafficCount = 0, foodContinuationCount = 0, researchCount = 0;
             if (pending != null)
             {
-                // The non-frame path finishes an interrupted event inline; a frame slice leaves it to ContinuePlanning.
                 if (!publishSnapshot) return new AdvanceResult(0, false, 0, planningPending: true);
-                // A restart requeues the event unstarted; the loop below then runs it again inline.
                 bool completed = false;
                 while (pending != null) completed = ContinuePlanning(double.PositiveInfinity);
                 if (completed) count++;
@@ -383,30 +313,19 @@ namespace PersistentCity.Core
                 double foodMinute = food?.NextMinute ?? double.PositiveInfinity;
                 double activation = State.Capabilities.Active ? double.PositiveInfinity : (Math.Floor(State.Minute / 1440) + 1) * 1440;
                 double next = Math.Min(activation, Math.Min(foodMinute, Math.Min(citizenMinute, trafficMinute)));
-                // A survey runs once everything through its SurveyAtMinute has drained, before the next event.
-                // F5g: an unreached day boundary, or fill work left on the boundary the clock stands on, counts as the next work,
-                // so a survey never runs ahead of that boundary's fill.
-                // F5g: fill work at the boundary the clock stands on, or an unreached boundary, counts as the next work.
-                // GR-8: through-traffic work is ordered with the rest (review Sol-r1-2): it can come before a survey or a midnight.
                 double through = throughTraffic == null ? double.PositiveInfinity : ThroughMinute();
                 double work = Math.Min(next, through);
                 if (research != null && research.ReadyBefore(!FillActive ? work : FillUnitDue() ? State.Minute : Math.Min(work, NextDayBoundary), targetMinute))
                 { research.Continue(); count++; researchCount++; continue; }
-                // F5g: a bounded fill unit at the boundary minute, before the boundary's ordinary events.
                 if (FillUnitDue()) { RunFillUnit(); count++; continue; }
-                // F5g: once every event before a day boundary inside the target has run, stop the clock on the boundary,
-                // with the first midnight's capability activation (review Sol-r2-1), so its fill runs before its events.
                 if (FillActive && NextDayBoundary <= work && NextDayBoundary <= targetMinute)
                 {
                     double boundary = NextDayBoundary;
-                    // Publish the traffic epoch with the city's (review Sol-r4-2): every earlier traffic event has run, and
-                    // events due exactly at midnight stay queued for after the fill, so the two clocks always agree.
                     if (traffic != null && traffic.Clock < boundary) traffic.BeginObservationEpoch(boundary);
                     State.Minute = boundary;
                     if (!State.Capabilities.Active) { State.Capabilities.Active = true; count++; }
                     continue;
                 }
-                // GR-8: through-traffic work strictly before every other event (ties go to the city's own events).
                 if (through < next && through <= targetMinute && (!FillActive || through < NextDayBoundary))
                 {
                     State.Minute = Math.Max(State.Minute, through);
@@ -419,8 +338,6 @@ namespace PersistentCity.Core
                 if (next == activation) { State.Capabilities.Active = true; count++; continue; }
                 if(food?.NeedsAwarenessPreparation(next)==true)
                 {
-                    // One bounded shared-index unit. Keep this event/due ordering unchanged until
-                    // atomic publication; reload restarts this transient build at the same event.
                     food.ContinueAwarenessPreparation();count++;foodContinuationCount++;continue;
                 }
                 bool postingFirst = food?.PostingDueAt(next) == true
@@ -428,8 +345,6 @@ namespace PersistentCity.Core
                 if (food?.HasPendingDecision == true || postingFirst || foodMinute < citizenMinute && foodMinute < trafficMinute)
                 {
                     traffic?.AdvanceTo(next, 0);
-                    // Charge a decision once at begin. A restored decision has already begun;
-                    // its quote/selection/commit units remain bounded work, not new citizen events.
                     bool continuation = food!.HasPendingDecision;
                     food.Step(); count++;
                     if (continuation) foodContinuationCount++;
@@ -462,9 +377,6 @@ namespace PersistentCity.Core
             return new AdvanceResult(count, caughtUp, trafficCount, foodContinuationEvents: foodContinuationCount, researchUnits: researchCount);
         }
 
-        // One citizen event in flight. The event runs on a working copy of the resident, so the published
-        // state keeps the unstarted event (NextEventMinute equal to the clock) until the copy is committed.
-        // A save or a planner rebuild taken meanwhile therefore stores and replays the event from its start.
         private sealed class PendingEvent
         {
             public PendingEvent(Due item, CitizenState working, IEnumerator<RouteRequest> steps)
@@ -477,22 +389,16 @@ namespace PersistentCity.Core
             public bool InputLease;
         }
         private PendingEvent? pending;
-        /// <summary>True while a citizen event waits for its route answer.</summary>
         public bool PlanningPending => pending != null;
-        /// <summary>Route requests handed to a resumable planner, inline or across frames.</summary>
         public long PlanningRequests { get; private set; }
         private bool InProgress(Due item) => pending != null && ReferenceEquals(pending.Item, item);
-        /// <summary>Citizen events abandoned between slices because a job lost its captured native state and
-        /// requeued to run again from their first request.</summary>
         public long EventRestarts { get; private set; }
-        /// <summary>Compatibility diagnostic. Frame slices never fall back to inline planning.</summary>
         public long InlineAfterRestarts => 0;
         // A changed version discards one attempt and requeues the original event. Every replay uses
         // the same finite frame admission as its first attempt; no number of restarts grants an
         // unlimited call. The held clock is intentional: later events can change route forecasts,
         // employment and meals. Reordering them would make a frame cadence change city outcomes.
 
-        // Returns false only when a resumable planner's job was left pending for the frame loop.
         private bool RunEvent(Due item, bool inline)
         {
             var working = CloneForEvent(item.Citizen);
@@ -524,13 +430,6 @@ namespace PersistentCity.Core
                 ? citizenRoutes.Plan(request.From, request.To, request.DepartureMinute, request.Citizen)
                 : routes.Plan(request.From, request.To, request.DepartureMinute, request.Preferences);
 
-        /// <summary>Give the pending route job its finite work/time and native-query admission,
-        /// resume the event when the answer arrives, and report true once no request is pending.
-        /// A planner exception leaves the resident's published state untouched with the event still due;
-        /// the next advance runs it again from the beginning. A job that throws RoutePlanningRestartRequired
-        /// abandons the whole event the same way, without propagating: earlier answers of the event belong to
-        /// the replaced snapshot, so the working copy is discarded, the clock stays held and this returns false.
-        /// The next advance replays the event from its first request on the new snapshot, as a reload would.</summary>
         public bool ContinuePlanning(double budgetMilliseconds)
         {
             if (double.IsNaN(budgetMilliseconds) || budgetMilliseconds < 0) throw new ArgumentOutOfRangeException(nameof(budgetMilliseconds));
@@ -589,8 +488,6 @@ namespace PersistentCity.Core
                 throw new InvalidOperationException("Each citizen event must schedule a later event.");
             }
             var arrivalRoute = live.Phase == CitizenPhase.Travelling ? live.Journey : null;
-            // A routine/lifecycle event can retain the admitted visit without recording a new one.
-            // Keep its saved acceptance or decline; never reconstruct it using a changed rate.
             bool sameVisit = live.Phase == CitizenPhase.AtPlace && working.Phase == CitizenPhase.AtPlace
                 && live.PlaceId == working.PlaceId && live.Activity == working.Activity
                 && live.RecentVisits.Count > 0 && working.RecentVisits.Count > 0
@@ -599,12 +496,8 @@ namespace PersistentCity.Core
             if (sameVisit)
             {
                 working.OptionalStopChoice = live.OptionalStopChoice;
-                // Retain consumed-opportunity evidence until this visit ends. The event still
-                // ends the stop; an accepted visitor must not be recruited again after it clears.
                 working.OptionalStop = live.OptionalStop?.Copy();
             }
-            // A pending chance outlives its visit. Read it from the live citizen at commit, so a chance
-            // handed on while this event was in flight is not restored.
             else if (live.OptionalStopChoice == true && live.OptionalStop == null) working.OptionalStopChoice = true;
             occupancy.Move(live.DayPlaceId, working.DayPlaceId);
             food?.AccrueWorkDeparture(live, working);
@@ -620,8 +513,6 @@ namespace PersistentCity.Core
             if (sameVisit && live.OptionalStop != null) CancelOptionalStop(live.Identity.Id);
             if (live.Visitor != null) VisitorSchedules.Sync(live.Visitor);
             item.Minute = ScheduledMinute(live);
-            // The in-flight item is outside the queue; failing to add it means it was queued meanwhile and
-            // its sort key just changed inside the set.
             if (!due.Add(item)) throw new InvalidOperationException("A completed event was already queued.");
             food?.ObserveStop(live);
             food?.SyncPlanMeals(live);
@@ -637,8 +528,6 @@ namespace PersistentCity.Core
             ((IRouteEventInputs)routes).EndRouteEvent();
         }
 
-        // The event works on a copy that shares the immutable identity and the route object (events replace
-        // journeys, never edit their legs) and owns copies of everything an event edits in place.
         internal static CitizenState CloneForEvent(CitizenState live) => new CitizenState
         {
             Identity = live.Identity, HomeId = live.HomeId, DayPlaceId = live.DayPlaceId, ShopId = live.ShopId, LeisureId = live.LeisureId,
@@ -658,9 +547,7 @@ namespace PersistentCity.Core
             CompletedJourneys = live.CompletedJourneys, MissedActivities = live.MissedActivities,
             PlayerHoldMinutes = live.PlayerHoldMinutes,
             RecentVisits = new List<VisitRecord>(live.RecentVisits),
-            // Immutable once generated, so the copy shares it; events never change traits.
             Traits = live.Traits,
-            // Derived from the shared identity and the seed, so the copy may share it.
             RoutineKeys = live.RoutineKeys,
             Visitor = live.Visitor, VisitorCarried = live.VisitorCarried
         };
@@ -677,7 +564,6 @@ namespace PersistentCity.Core
         private static CarState CopyCar(CarState source) => new CarState
         { Id = source.Id, ModelId = source.ModelId, PaintSeed = source.PaintSeed, ParkedPosition = source.ParkedPosition };
 
-        // Objects other code may hold (the car, the preparation, an outing) keep their identity when they survive the event.
         internal static void CommitEvent(CitizenState live, CitizenState working)
         {
             live.OptionalStop = working.OptionalStop;
@@ -708,12 +594,10 @@ namespace PersistentCity.Core
             }
             live.JoinedMinute = working.JoinedMinute; live.LastEmploymentCheckDay = working.LastEmploymentCheckDay; live.JobChanges = working.JobChanges;
             live.EmploymentStartDay = working.EmploymentStartDay; live.Accrual = working.Accrual;
-            // GR-1: the copy shares the person's wallet; an event never replaces it.
             live.Wallet = working.Wallet;
             live.Plan = working.Plan;
             live.Needs = working.Needs;
             live.Phase = working.Phase; live.Activity = working.Activity; live.PlaceId = working.PlaceId; live.DestinationId = working.DestinationId;
-            // F2e: the player-hold allowance belongs to one journey; it ends at arrival and on replacement.
             live.PlayerHoldMinutes = working.Phase == CitizenPhase.Travelling && ReferenceEquals(working.Journey, live.Journey) ? working.PlayerHoldMinutes : 0;
             live.DestinationActivity = working.DestinationActivity; live.Journey = working.Journey; live.DepartureMinute = working.DepartureMinute;
             live.NextEventMinute = working.NextEventMinute; live.ActivityUntilMinute = working.ActivityUntilMinute;
@@ -763,7 +647,6 @@ namespace PersistentCity.Core
             if (seenCar && containsTransit) throw new InvalidOperationException("A car route cannot also use public transit.");
         }
 
-        // Car.Id == Identity.Id + ":car" (a null ID concatenating as empty) without building the string for every car leg.
         private static bool OwnedCarId(string? car, string? resident)
         {
             resident ??= "";
@@ -782,18 +665,15 @@ namespace PersistentCity.Core
         private RouteRequest CitizenRequest(Place from, Place to, double now, CitizenState person)
             => new RouteRequest(from, to, now, person, person.Preferences);
 
-        // One citizen event. Every route question is yielded as a request and the event resumes with its
-        // answer, so the side effects before and after each plan keep the order of the former synchronous Step.
         private IEnumerable<RouteRequest> StepEvent(CitizenState person, double now)
         {
-            // GR-2: the event is the plan executor. Today's plan is drawn once and items past their deadline are closed.
             var planBefore = person.Plan;
             var needPlanning = NeedPlanningNow();
             DayPlanExecutor.Ensure(person, State.Seed, now, State.Places, places, State.Food != null, needPlanning, HouseholdLookup);
             if (needPlanning != null && !ReferenceEquals(planBefore, person.Plan)) WakeForNewPlan(person, now);
             DayPlanExecutor.Settle(person, now);
             person.OptionalStopChoice = null;
-            person.OptionalStop = null; // The original activity event owns the continuation.
+            person.OptionalStop = null;
             var outing = BeginMealOuting(person, now);
             if (outing == MealOutingStep.Handled) yield break;
             if (outing == MealOutingStep.NeedsReturnRoute)
@@ -815,8 +695,6 @@ namespace PersistentCity.Core
             {
                 CommitCarArrival(person);
                 person.PlaceId = person.DestinationId;
-                // Activity also describes the physical place's role for persistence. Admission is
-                // recorded separately: reaching a closed venue or an expired window is not a visit.
                 person.Activity = person.DestinationActivity;
                 person.Phase = CitizenPhase.AtPlace;
                 person.CompletedJourneys++;
@@ -833,7 +711,6 @@ namespace PersistentCity.Core
                 }
                 else
                 {
-                    // A closure during travel can still leave a later opening in this activity.
                     double? opening = affordable && !closedWorkShift && now < person.ActivityUntilMinute
                         ? DailyRoutine.NextOpen(places[person.PlaceId], Math.Max(now, admissionFrom), person.ActivityUntilMinute) : null;
                     if (opening.HasValue)
@@ -850,7 +727,6 @@ namespace PersistentCity.Core
                 person.DepartureMinute = 0;
                 arrived = true;
             }
-            // The daily employment check probes candidate workplaces with detached residents; each probe is one request.
             var candidates = ResidentLifecycle.BeginEmploymentCheck(State, person, now, places, occupancy);
             if (candidates != null)
                 foreach (var candidate in candidates)
@@ -861,10 +737,7 @@ namespace PersistentCity.Core
                     ResidentLifecycle.AssignWorkplace(person, candidate);
                     break;
                 }
-            // A job found or lost just now replans today's work item.
             DayPlanExecutor.Ensure(person, State.Seed, now, State.Places, places, State.Food != null, NeedPlanningNow(), HouseholdLookup);
-            // Retain a home fallback until its original window ends. This also survives reload
-            // and prevents counting the same closed activity again after the journey home.
             if (arrived && person.Activity == Activity.Home && now < person.ActivityUntilMinute)
             {
                 person.NextEventMinute = HomeEvent(person, person.ActivityUntilMinute, now);
@@ -872,8 +745,6 @@ namespace PersistentCity.Core
             }
             if (person.CommutePreparation.PlaceId != person.DayPlaceId)
                 person.CommutePreparation = new CommutePreparation();
-            // An admitted activity retains its saved deadline, including an old
-            // routine loaded after a policy change. A closure still ends attendance.
             bool attending = !paidRefusedArrival && person.Phase == CitizenPhase.AtPlace && person.Activity != Activity.Home
                 && !(person.Activity == Activity.Work && person.Accrual.Shift == EmploymentWages.Closed)
                 && now < person.ActivityUntilMinute;
@@ -883,8 +754,6 @@ namespace PersistentCity.Core
                 person.NextEventMinute = Math.Min(person.ActivityUntilMinute, currentClose.Value);
                 yield break;
             }
-            // Waits own their original destination/window too. In particular, a
-            // failed early commute must not become Home on its next pre-shift retry.
             bool committedWait = (person.Phase == CitizenPhase.WaitingForRoute || person.Phase == CitizenPhase.WaitingForOpening)
                 && person.DestinationId != "" && now < person.ActivityUntilMinute
                 && !(person.DestinationActivity == Activity.Work && person.Accrual.Shift == EmploymentWages.Closed);
@@ -915,7 +784,7 @@ namespace PersistentCity.Core
             }
             if (slot.Activity == Activity.Work)
             {
-                var work = DailyRoutine.WorkOnDay(person, State.Seed, Math.Max(0, slot.EndsAt - 480), places); // a shift's start day
+                var work = DailyRoutine.WorkOnDay(person, State.Seed, Math.Max(0, slot.EndsAt - 480), places);
                 if (work.HasValue && now >= work.Value.StartsAt && person.Accrual.Day == (int)(work.Value.StartsAt / 1440)
                     && person.Accrual.Shift == EmploymentWages.Closed)
                 {
@@ -1009,8 +878,6 @@ namespace PersistentCity.Core
         private RouteRequest WorkplaceProbe(CitizenState person, Place destination)
         {
             var home = places[person.HomeId];
-            // Native planners may allocate a home car. Feasibility checks use a detached
-            // resident, preserving live car identity, parking and committed travel state.
             var probe = new CitizenState
             {
                 Identity = Population.CloneIdentity(person.Identity), HomeId = person.HomeId,
@@ -1037,7 +904,7 @@ namespace PersistentCity.Core
         private double AdmissionFrom(CitizenState person)
         {
             if (!(routes is ICommuteTimingPlanner) || (person.DestinationActivity != Activity.Work && person.DestinationActivity != Activity.Study)) return 0;
-            var window = DailyRoutine.WorkOnDay(person, State.Seed, Math.Max(0, person.ActivityUntilMinute - 480), places); // a shift's start day
+            var window = DailyRoutine.WorkOnDay(person, State.Seed, Math.Max(0, person.ActivityUntilMinute - 480), places);
             return window.HasValue && window.Value.EndsAt == person.ActivityUntilMinute ? window.Value.StartsAt : 0;
         }
 
@@ -1054,29 +921,20 @@ namespace PersistentCity.Core
             public CommutePlanPoint Plan { get; }
         }
 
-        // The former TryPrepareCommute up to its route search. A decision that names a plan point has done
-        // every side effect that preceded the search; FinishCommute performs the ones that followed it.
         private CommuteDecision DecideCommute(CitizenState person, double now, bool allowPlanning)
         {
             if (!(routes is ICommuteTimingPlanner) || !ResidentLifecycle.IsSafelyHome(person)) return CommuteDecision.None;
-            // A current shift is handled by the ordinary activity path, never by
-            // planning tomorrow while today's worker still needs to leave home.
             var current = DailyRoutine.WorkOnDay(person, State.Seed, now, places);
             if (current.HasValue && now >= current.Value.StartsAt && now < current.Value.EndsAt) return CommuteDecision.None;
             var planned = DailyRoutine.NextWork(person, State.Seed, now, places);
             if (!planned.HasValue || planned.Value.PlaceId == person.HomeId) return CommuteDecision.None;
             var window = planned.Value;
-            // A return-home fallback owns a missed activity's original deadline.
-            // Replanning that same shift after an early closed-venue arrival would
-            // send the resident out again and count the same miss twice.
             if (person.ActivityUntilMinute == window.EndsAt) return CommuteDecision.None;
             var preparation = person.CommutePreparation;
             bool matches = preparation.PlaceId == window.PlaceId && preparation.WorkStartsAt == window.StartsAt
                 && preparation.WorkEndsAt == window.EndsAt;
             if (matches)
             {
-                // A failed estimate is retried at shift start, not at every home
-                // event overnight. A successful estimate schedules one departure.
                 double leaveAt = preparation.TravelMinutes > 0
                     ? Math.Max(preparation.PreparedAt, window.StartsAt - preparation.TravelMinutes) : window.StartsAt;
                 return new CommuteDecision(true, window, leaveAt,
@@ -1087,8 +945,6 @@ namespace PersistentCity.Core
             if (now < prepareAt) return new CommuteDecision(false, window, prepareAt, CommutePlanPoint.None);
             if (previousMinutes > 0)
             {
-                // A known commute supplies tomorrow's departure estimate without
-                // another route search. Changes are resolved honestly at departure.
                 person.CommutePreparation = new CommutePreparation
                 {
                     PlaceId = window.PlaceId, WorkStartsAt = window.StartsAt, WorkEndsAt = window.EndsAt,
@@ -1098,11 +954,7 @@ namespace PersistentCity.Core
                 return new CommuteDecision(true, window, leaveAt,
                     now < leaveAt || !allowPlanning ? CommutePlanPoint.None : CommutePlanPoint.KnownDuration);
             }
-            // A home arrival only schedules work. Its next event will perform any
-            // required search once, retaining the result when departure is due now.
             if (!allowPlanning) return new CommuteDecision(false, window, now, CommutePlanPoint.None);
-            // Only a duration estimate is retained. Route geometry and winners are
-            // freshly selected at departure so reopened/off-path roads can compete.
             return new CommuteDecision(true, window, double.PositiveInfinity, CommutePlanPoint.FreshEstimate);
         }
 
@@ -1124,8 +976,6 @@ namespace PersistentCity.Core
                         PlaceId = window.PlaceId, WorkStartsAt = window.StartsAt, WorkEndsAt = window.EndsAt,
                         PreparedAt = now, TravelMinutes = minutes
                     };
-                    // A first unknown or changed route can already be too long. Leave now
-                    // when necessary; never backdate a departure or invent punctuality.
                     return new CommuteDecision(true, window, minutes > 0 ? Math.Max(now, window.StartsAt - minutes) : window.StartsAt, CommutePlanPoint.None);
                 default:
                     return decision;
@@ -1142,9 +992,6 @@ namespace PersistentCity.Core
         private bool IsHomeRoutineFallback(CitizenState person, double now)
         {
             if (!ResidentLifecycle.IsSafelyHome(person) || now >= person.ActivityUntilMinute) return false;
-            // Existing saves encode a failed activity window as Home until its
-            // original deadline. Preserve that window even when timing conversion
-            // or a lifecycle event wakes this resident before the deadline.
             var original = DailyRoutine.At(person, State.Seed, Math.Max(0, person.ActivityUntilMinute - 0.001), places);
             return original.Activity != Activity.Home && original.EndsAt == person.ActivityUntilMinute;
         }
@@ -1160,14 +1007,11 @@ namespace PersistentCity.Core
 
         private void WaitForOpening(CitizenState person, RoutineSlot slot, double opening)
         {
-            // Wait at the current entrance; retain the intended destination and full deadline.
-            // In particular, do not invent a return-home trip that can consume the activity.
             person.Phase = CitizenPhase.WaitingForOpening;
             person.DestinationId = slot.PlaceId;
             person.DestinationActivity = slot.Activity;
             person.ActivityUntilMinute = slot.EndsAt;
             person.NextEventMinute = opening;
-            // The event owns this queue even when no physical body/camera has observed the door.
             if (person.PlaceId == slot.PlaceId && (slot.Activity == Activity.Shop || slot.Activity == Activity.Leisure))
                 CaptureQueueWeather(person, State.Minute);
             person.Journey = null;

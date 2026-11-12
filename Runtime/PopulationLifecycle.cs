@@ -17,7 +17,6 @@ namespace PersistentCity.Runtime
             physical?.Dispose(); physical = null; physicalFailed = false;
             inspector.Reset(); inspectorFailed = false;
             Detach();
-            // No computation or cached payload from the stopped save may attach to its successor.
             if (initialization != null)
                 _ = initialization.ContinueWith(task => { _ = task.Exception; }, TaskContinuationOptions.OnlyOnFaulted);
             initialization = null; initializingSave = null; initializingPayload = null; initializingHadPayload = false;

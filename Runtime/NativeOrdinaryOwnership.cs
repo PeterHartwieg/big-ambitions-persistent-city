@@ -5,7 +5,6 @@ using PersistentCity.Core;
 
 namespace PersistentCity.Runtime
 {
-    /// <summary>Existing registration fields only. Controllers are indexed once; hourly units read at most 16 places.</summary>
     internal static class NativeOrdinaryOwnership
     {
         internal static OrdinaryOwnershipIndex Create(IReadOnlyList<Place> places, double minute)
@@ -40,14 +39,12 @@ namespace PersistentCity.Runtime
             }
             OrdinaryVisitTerms Read(Place place)
             {
-                // Missing, ambiguous or unsupported registrations are activity only; never infer an outside owner.
                 if (ambiguous.Contains(place.Id) || !controllers.TryGetValue(place.Id, out var controller) || controller == null)
                     return default;
                 var reg = controller.buildingRegistration;
                 if (reg == null || reg.RentedByPlayer) return new OrdinaryVisitTerms(0, true, OrdinaryVisitClass.ActivityOnly);
                 if (string.IsNullOrWhiteSpace(reg.businessOwnerRivalId) || !reg.HasEstablishedBusiness || reg.AvailableForRent) return default;
                 string type = reg.businessTypeName;
-                // Explicit non-food class table; unsupported/food businesses stay activity only.
                 var kind = Classify(type, place.Kind);
                 return new OrdinaryVisitTerms(0, false, kind);
             }

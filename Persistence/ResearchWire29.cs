@@ -6,28 +6,18 @@ using PersistentCity.Core;
 
 namespace PersistentCity.Persistence
 {
-    // C5c (docs/plans/c5-agency-research.md section 5): the research section, CityState.Research.
     public static partial class SaveCodec
     {
         public const int MaxResearchOpenOrders = ResearchLedger.MaximumOpenOrders;
         public const int MaxResearchKeptOrders = ResearchLedger.MaximumKeptReports;
         public const int MaxResearchClosedOrders = ResearchLedger.MaximumClosedOrders;
-        /// <summary>C4's widest tier (In-depth) has 64 cells.</summary>
         public const int MaxResearchCells = 64;
         public const int MaxResearchProductCode = 64;
-        /// <summary>A C4 query key: base64 of a SHA-256 hash.</summary>
         public const int ResearchReportIdLength = 44;
-        /// <summary>C4's consumer cap; no cell counts more consumers than a survey may examine.</summary>
         public const int MaxResearchCellValue = MarketResearchEngine.MaximumConsumers;
 
         private const int ResearchVersion29 = 1;
 
-        // ---- Wire ----
-        // Research: [1, NextSequence, [open], [kept], [closed]]
-        // order:    [1, sequence, product, price units, business, agency, tax, radius, order minute, survey minute,
-        //            state, decline reason, report ID, report | null]
-        // report:   [1, ID, tier, logical day, address | null, radius, [[metric, band, value | null], ...]]
-        // Lists keep the ledger's own order: open by sequence, kept by delivery, closed by closing.
 
         private sealed class ResearchConverter29 : JsonConverter<ResearchLedger>
         {
@@ -83,12 +73,8 @@ namespace PersistentCity.Persistence
             }
         }
 
-        /// <summary>Streaming check before deserialization: canonical tokens, bounds before allocation, then the
-        /// same restore the reader runs, so a payload that passes here decodes to exactly one ledger.</summary>
         private static void CheckResearch29(JsonReader reader, TokenText text, ref int records) => ReadResearch29(reader, text, ref records);
 
-        /// <summary>Strict decode of the research section. With <paramref name="text"/> it also checks the original
-        /// token text (canonical integers and money, exact strings). Charges one record per order.</summary>
         private static ResearchLedger ReadResearch29(JsonReader reader, TokenText? text, ref int records)
         {
             Require(reader.TokenType == JsonToken.StartArray, "Expected the research section.");
@@ -103,7 +89,6 @@ namespace PersistentCity.Persistence
 
         private static List<ResearchOrderImage> Orders29(JsonReader reader, TokenText? text, int limit, ref int records, string list)
         {
-            // Messages are built only on failure: these checks run for every order of every save and load.
             if (!reader.Read() || reader.TokenType != JsonToken.StartArray) Fail("Expected the research " + list + " orders.");
             var orders = new List<ResearchOrderImage>();
             while (reader.Read() && reader.TokenType != JsonToken.EndArray)
@@ -212,10 +197,7 @@ namespace PersistentCity.Persistence
             return value;
         }
 
-        // ---- Rules shared by the reader and the writer ----
 
-        /// <summary>The ledger's own restore, then the report rules it does not own: the C4 cell layout of the tier,
-        /// the query key form and the logical day of the survey minute.</summary>
         private static ResearchLedger RestoreResearch29(long next, List<ResearchOrderImage> open, List<ResearchOrderImage> kept, List<ResearchOrderImage> closed)
         {
             foreach (var rows in new[] { open, kept, closed }) foreach (var order in rows) ValidateResearchReport29(order);
@@ -223,8 +205,6 @@ namespace PersistentCity.Persistence
             return ledger!;
         }
 
-        /// <summary>Write-side check of the in-memory ledger through the same restore the reader runs. Returns the
-        /// records it charges, the same count as the streaming check.</summary>
         private static int ValidateResearch29(CityState state)
         {
             var ledger = state.Research;
@@ -266,7 +246,6 @@ namespace PersistentCity.Persistence
                 var (metric, band) = ResearchCell29(i);
                 Require(cell != null && cell.Metric == metric && cell.Band == band, "Research cell differs from the C4 layout.");
                 Require(!cell!.Value.HasValue || cell.Value.Value >= 0 && cell.Value.Value <= MaxResearchCellValue, "Invalid research cell value.");
-                // C4 has no input for loyalty or rival share yet; those cells are always unavailable.
                 Require(i < 62 || !cell.Value.HasValue, "Research cell has a value C4 cannot produce.");
             }
         }
@@ -282,11 +261,8 @@ namespace PersistentCity.Persistence
             return true;
         }
 
-        /// <summary>C4's report lengths: Basic 13, Detailed 62, In-depth 64 (MarketResearchEngine.Project).</summary>
         internal static int ResearchCellCount29(MarketResearchTier tier) => tier == MarketResearchTier.Basic ? 13 : tier == MarketResearchTier.Detailed ? 62 : 64;
 
-        /// <summary>The fixed metric and band of cell <paramref name="index"/>, as MarketResearchEngine.Project lays them out.
-        /// ResearchSaveTests pins this table against the engine's own reports.</summary>
         internal static (MarketResearchMetric Metric, MarketResearchBand Band) ResearchCell29(int index)
         {
             if (index < 5) return ((MarketResearchMetric)index, MarketResearchBand.All);

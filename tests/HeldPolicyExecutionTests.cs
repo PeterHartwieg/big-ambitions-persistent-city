@@ -12,8 +12,6 @@ using Xunit.Abstractions;
 
 namespace PersistentCity.Tests;
 
-/// <summary>E5b4 (Decisions 9 to 11): writer 36 executes DynamicWire. A market supplies one product policy per new decision
-/// context; a held revision-2 tuple replays as saved; older writers are refused with the new-city status.</summary>
 public sealed class HeldPolicyExecutionTests
 {
     private readonly ITestOutputHelper output;
@@ -21,7 +19,6 @@ public sealed class HeldPolicyExecutionTests
 
     private const string Dumplings = FoodMetadataApiTests.Dumplings, ChoppedCheese = FoodMetadataApiTests.ChoppedCheese;
 
-    /// <summary>A shop double whose product policy the test sets. It sells from its offers and can lose the acknowledgement.</summary>
     internal sealed class PolicyMarket : IFoodMarket, IFoodProductPolicyMarket, IFoodSaleEvidence
     {
         public double EarliestMinute => 0;
@@ -41,7 +38,7 @@ public sealed class HeldPolicyExecutionTests
             if (ThrowAfterSale) throw new InvalidOperationException("Acknowledgement lost");
             return new(true, "Confirmed");
         }
-        public bool IsConfirmedPaid(ResidentMeal meal) => false; // the lost acknowledgement stays uncertain
+        public bool IsConfirmedPaid(ResidentMeal meal) => false;
     }
 
     private static FoodBusiness Business(string id, string place, params string[] products) => new()
@@ -51,7 +48,6 @@ public sealed class HeldPolicyExecutionTests
         Offers = products.Select((p, i) => new FoodOffer { ProductId = p, Price = Money.FromCents(100 + 10 * i), Units = 100 }).ToList(),
     };
 
-    /// <summary>The weighted single-resident city at the current writer with shop menus <paramref name="menus"/>.</summary>
     private static (CitySimulator City, PolicyMarket Market, WeightedFoodChoiceTests.Planner Planner) Ready(int seed, IFoodProductPolicy policy, params string[][] menus)
     {
         var (seeded, _, planner) = WeightedFoodChoiceTests.Ready(seed, menus.Length);
@@ -104,7 +100,6 @@ public sealed class HeldPolicyExecutionTests
 
     private static ResidentTraits Traits(CitySimulator city) => city.State.Citizens.Single().Traits!;
 
-    // ---- Writer ----
 
     [Fact]
     public void FreshCityIsDynamicWireAndSavesAndReloadsByteIdentical()
@@ -120,7 +115,6 @@ public sealed class HeldPolicyExecutionTests
         Assert.Equal(payload, SaveCodec.Write(read.State));
         Assert.Equal(payload, SaveCodec.Encode(SaveCodec.Capture(read.State)));
         _ = new CitySimulator(read.State, new WeightedFoodChoiceTests.Planner());
-        // A real session round trip with a running city.
         var (city, market, planner) = Ready(3, Policy(), new[] { Dumplings, FoodProducts.Burger }, new[] { ChoppedCheese });
         ToCapture(city);
         string before = SaveCodec.Write(city.State);
@@ -154,13 +148,11 @@ public sealed class HeldPolicyExecutionTests
         Assert.Throws<SaveValidationException>(() => SaveCodec.RequireExecutableCapabilities(body));
     }
 
-    // ---- Held revision-2 execution ----
 
     [Theory]
     [InlineData(3)] [InlineData(11)] [InlineData(40)]
     public void ARevision2HeldDecisionReplaysAcrossReloadWhileConfigAndApiChangeAndTheNextContextUsesTheNewValues(int seed)
     {
-        // Policy A: config sets dumplings' taste and fits; the API supplies chopped cheese's.
         var registry = FoodMetadataApiTests.Registry(); using var provider = FoodMetadataApiTests.Provider(registry);
         var input = new FoodProductMetadataInput { MealClass = MealClass.Food, TasteBand = 4, BreakfastFitCents = 10, LunchFitCents = 20, DinnerFitCents = 30 };
         Assert.True(provider.TryRegisterProductMetadata(ChoppedCheese, input, 1, out _));
@@ -186,7 +178,6 @@ public sealed class HeldPolicyExecutionTests
         Assert.Contains(HeldOffers(changed), o => o.ProductId == Dumplings && o.Metadata!.TasteBand == 3 && o.Metadata.LunchFitCents == 50);
         Assert.Contains(HeldOffers(changed), o => o.ProductId == ChoppedCheese && o.Metadata!.TasteBand == 4 && o.Metadata.LunchFitCents == 20);
 
-        // Policy B: config and API both change, and dumplings becomes a Drink. Reload under B.
         input.TasteBand = 0; input.LunchFitCents = 5000;
         Assert.True(provider.TryRegisterProductMetadata(ChoppedCheese, input, 1, out _));
         var configB = Config((Dumplings, new FoodProductMetadataOverride(MealClass.Drink, 0, 0, 0, 0)));
@@ -197,11 +188,9 @@ public sealed class HeldPolicyExecutionTests
         double at = Meal(control).DesiredAt;
         while (!control.AdvanceTo(at + 60, 128).CaughtUp) { }
         while (!changed.AdvanceTo(at + 60, 1).CaughtUp) { }
-        // The held decision finished exactly as the uninterrupted run under A: same bytes, same order.
         Assert.Equal(SaveCodec.Write(control.State), SaveCodec.Write(changed.State));
         Assert.Equal(cm.Orders, mm.Orders); Assert.Single(mm.Orders);
 
-        // The next uncaptured context reads B: dumplings (Drink) never enters; chopped cheese carries B's API values.
         FoodDecisionState? nextDecision = null;
         changed.FoodDecisionObserved += t => nextDecision ??= t.Decision;
         double end = changed.State.Minute + 3 * 1440;
@@ -224,7 +213,6 @@ public sealed class HeldPolicyExecutionTests
         Assert.Throws<ArgumentException>(() => policy.Capture(Dumplings, new ResidentTraits { Bands = "2222222222" }, 1, "r"));
         var (city, _, _) = Ready(5, policy, new[] { Dumplings }, new[] { FoodProducts.Burger, Dumplings }, new[] { ChoppedCheese });
         ToCapture(city);
-        // A whole shop with an excluded name is skipped; the Food shop stays.
         Assert.DoesNotContain(HeldOffers(city), o => o.ProductId == Dumplings);
         Assert.Contains(HeldOffers(city), o => o.ProductId == ChoppedCheese);
         Assert.DoesNotContain(Meal(city).Decision!.Shops, s => s.BusinessId == "b0" || s.BusinessId == "b1");
@@ -234,7 +222,7 @@ public sealed class HeldPolicyExecutionTests
     public void UnloadedNonCanonicalAndUnpublishedNamesAreNotExecutable()
     {
         var policy = Policy(null, ChoppedCheese);
-        Assert.False(policy.Executable(Dumplings)); // not in the loaded-name image
+        Assert.False(policy.Executable(Dumplings));
         Assert.True(policy.Executable(ChoppedCheese));
         Assert.False(policy.Executable("bad|name")); Assert.False(policy.Executable(""));
         var unpublished = new FoodProductPolicy(FoodProductMetadataResolver.Empty, null);
@@ -260,7 +248,6 @@ public sealed class HeldPolicyExecutionTests
                 JsonConvert.SerializeObject(policy.Capture(original, traits, 957, "pc:1")));
             Assert.Equal(1, policy.Capture(original, traits, 957, "pc:1").Revision);
         }
-        // A whole original-three run is byte-identical with the policy market and with no policy at all.
         foreach (int seed in new[] { 2, 9, 31 })
         {
             var (a, ma, _) = Ready(seed, policy, new[] { FoodProducts.Croissant, FoodProducts.Burger }, new[] { FoodProducts.HotDog });
@@ -328,7 +315,6 @@ public sealed class HeldPolicyExecutionTests
         Assert.Equal("937617912baf43dfdc29f75444d394ee4505fa89bea2dbc72c3f938194b3949e", sha);
     }
 
-    // ---- Runtime composition ----
 
     private sealed class Seller : IFoodMarket, IFoodProductPolicyMarket
     {
@@ -351,25 +337,20 @@ public sealed class HeldPolicyExecutionTests
         var composite = new FoodMarkets(new FoodCommerceState(), new Seller(), new Seller(), _ => new Position(0, 0, 0), source);
         var first = composite.ProductPolicy;
         Assert.Same(first, source.Current);
-        // The inner sellers' own policies are never consulted: both channels see the composite's.
         Assert.True(first.Executable(Dumplings)); Assert.False(first.Executable("other:name"));
         Assert.Equal(1, first.Capture(Dumplings, new ResidentTraits { Bands = "2222222222" }, 1, "r").TasteBand);
         long published = source.Publications;
         for (int i = 0; i < 100; i++) Assert.Same(first, composite.ProductPolicy);
         Assert.Equal(published, source.Publications); Assert.NotNull(lastCatalogue); Assert.True(lastCatalogue!.Contains(ChoppedCheese));
-        // Config, API and image changes each publish a new policy at the next read.
         config = Config((Dumplings, new FoodProductMetadataOverride(MealClass.Drink, 1, 1, 1, 1)));
         var second = composite.ProductPolicy; Assert.NotSame(first, second); Assert.False(second.Executable(Dumplings));
         image = Image(2, ChoppedCheese);
         var third = composite.ProductPolicy; Assert.NotSame(second, third); Assert.True(third.Executable(ChoppedCheese));
         Assert.False(lastCatalogue.Contains(Dumplings));
-        // A dirty catalogue (no published image) admits no dynamic name; the original three stay.
         image = null;
         var dirty = composite.ProductPolicy; Assert.False(dirty.Executable(ChoppedCheese)); Assert.True(dirty.Executable(FoodProducts.Burger));
         image = new LoadedNameImage(3, new[] { ChoppedCheese }, FoodEligibilityRefusal.CargoBounds);
         Assert.False(composite.ProductPolicy.Executable(ChoppedCheese));
-        // A failed publication falls back to the original three and recovers at a later read.
-        // Review Opus-r1-2: while the inputs are unchanged a failure is neither rebuilt nor rethrown, and it is reported once.
         var failingImage = Image(1, Dumplings); bool unbound = true; var reports = new List<string>();
         var failing = new FoodProductPolicySource(() => failingImage, () => config,
             c => unbound ? throw new InvalidOperationException("Metadata publication requires the bound host main thread.") : FoodProductMetadataSnapshot.Empty,
@@ -377,14 +358,12 @@ public sealed class HeldPolicyExecutionTests
         Assert.Same(FoodProductPolicy.OriginalThree, failing.Current); Assert.Contains("main thread", failing.Failure);
         for (int i = 0; i < 50; i++) Assert.Same(FoodProductPolicy.OriginalThree, failing.Current);
         Assert.Equal(1, failing.PublishAttempts); Assert.Single(reports);
-        unbound = false; failingImage = Image(2, ChoppedCheese); // a new image retries
+        unbound = false; failingImage = Image(2, ChoppedCheese);
         Assert.True(failing.Current.Executable(ChoppedCheese)); Assert.Equal("", failing.Failure); Assert.Single(reports);
-        // A composite without a source supplies the original three.
         Assert.Same(FoodProductPolicy.OriginalThree, new FoodMarkets(new FoodCommerceState(), new Seller(), new Seller(), _ => new Position(0, 0, 0)).ProductPolicy);
         Assert.True(apiCalls > 0);
     }
 
-    /// <summary>Steady path 0 B added: a clean policy read, a legacy weight and Select over legacy offers allocate nothing.</summary>
     [Fact]
     public void ThePolicyReadAndTheLegacyWeightPathAllocateNothingInSteadyState()
     {
@@ -397,7 +376,6 @@ public sealed class HeldPolicyExecutionTests
         var held = new EvaluatedFoodOffer("b9", Dumplings, Money.FromCents(900), 4, 0, 20, 60, 60, 50, MealKind.Lunch, newTasteBand: 3,
             metadata: new FoodProductMetadata(MealClass.Food, 3, 900, 100, 450));
         for (int i = 0; i < 100; i++) { _ = source.Current; FoodChoicePolicy.Select(offers, traits, Money.FromCents(100000), draw, settings, true); }
-        // A steady-state allocation shows in every round; runtime work during one round (tiering, other test threads) does not.
         long allocated = long.MaxValue;
         for (int round = 0; round < 5; round++)
         {
@@ -411,7 +389,6 @@ public sealed class HeldPolicyExecutionTests
             allocated = Math.Min(allocated, GC.GetAllocatedBytesForCurrentThread() - before);
         }
         Assert.Equal(0, allocated);
-        // Review Opus-r1-3: the checkout taste lookup equals the held capture's and allocates nothing.
         var policy = source.Current;
         Assert.Equal(policy.Capture(Dumplings, traits, 957, "pc:1").TasteBand, policy.TasteBand(Dumplings, traits, 957, "pc:1"));
         Assert.Equal(policy.Capture(FoodProducts.Burger, traits, 957, "pc:1").TasteBand, policy.TasteBand(FoodProducts.Burger, traits, 957, "pc:1"));

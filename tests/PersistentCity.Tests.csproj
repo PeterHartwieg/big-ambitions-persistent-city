@@ -7,7 +7,6 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
   <ItemGroup>
-    <!-- Tool projects that live under tests/ (X5): the test project compiles their shared sources, not their entry points or build output. -->
     <Compile Remove="economy-interventions/**;movement-equivalence/**;capability-matrix/**" />
     <Compile Include="economy-interventions/EconomyFixture.cs;economy-interventions/InterventionInputs.cs;economy-interventions/EconomyRun.cs;economy-interventions/EconomyMetrics.cs;economy-interventions/InterventionArms.cs;economy-interventions/SelfChecks.cs" />
     <Compile Include="movement-equivalence/MovementFixture.cs;movement-equivalence/PresentationDriver.cs;movement-equivalence/MovementRun.cs;movement-equivalence/MovementArms.cs;movement-equivalence/Equivalence.cs;movement-equivalence/SelfChecks.cs;movement-equivalence/HoldReplay.cs" />

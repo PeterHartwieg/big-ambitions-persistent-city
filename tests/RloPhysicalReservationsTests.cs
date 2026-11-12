@@ -28,7 +28,6 @@ public sealed class RloPhysicalReservationsTests
         guard.Update();
         Assert.Empty(guard.ReservedCitizenIds);
         Assert.False(guard.IsReserved(source.Id));
-        // Reading reservations has not changed the RLO cast's look or identity.
         Assert.Equal("Ada Resident", fixture.Person.GetType().GetField("Name")!.GetValue(fixture.Person));
         Assert.Equal(871, fixture.Person.GetType().GetField("Seed")!.GetValue(fixture.Person));
     }

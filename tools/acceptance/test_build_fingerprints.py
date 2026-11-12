@@ -1,9 +1,3 @@
-"""F9b game-assembly fingerprints (Decision 4). python -m unittest discover -s tools/acceptance -p test_*.py
-
-The build.py cases run the real script on a fake Managed directory with no .NET SDK reachable, so the script stops at
-its SDK lookup, after the provenance step and before compiling. The deterministic-DLL case needs the installed game
-(PC_GAME_MANAGED, else the PC's default Steam path) and is skipped without it.
-"""
 import hashlib
 import json
 import os
@@ -27,7 +21,6 @@ NO_SDK = "Cannot find dotnet"
 
 
 def build_references():
-    """The assembly names tools/build.py references, read from its source (plus Newtonsoft.Json)."""
     text = BUILD.read_text(encoding="utf-8")
     block = re.search(r"references = \[(.*?)\]", text, re.S).group(1)
     return [n + ".dll" for n in re.findall(r'"([^"]+)"', block)] + ["Newtonsoft.Json.dll"]
@@ -39,7 +32,6 @@ def installed_managed():
 
 
 class FakeGame:
-    """A temporary Managed directory with one small file per referenced assembly and a declared set that matches it."""
 
     def __init__(self, test):
         self.tmp = tempfile.TemporaryDirectory()
@@ -61,7 +53,6 @@ class FakeGame:
         self.declared.write_text(json.dumps({"schema": "persistentcity-supported-game-1", "current": name, "sets": sets}))
 
     def build(self, *extra, provenance=True):
-        """build.py with this Managed directory and no reachable SDK: it ends at the SDK lookup, after the provenance step."""
         empty = self.dir / "empty"
         empty.mkdir(exist_ok=True)
         env = dict(os.environ, PATH=str(empty), LOCALAPPDATA=str(empty))
@@ -78,7 +69,7 @@ class BuildProvenance(unittest.TestCase):
     def test_matching_set_is_named_and_the_build_continues(self):
         game = FakeGame(self)
         done = game.build()
-        self.assertIn(NO_SDK, done.stderr)  # past the provenance step: the build went on to look for the SDK
+        self.assertIn(NO_SDK, done.stderr)
         record = game.record()
         self.assertEqual("fake-set", record["set"])
         self.assertEqual([], record["differing"])
@@ -95,7 +86,6 @@ class BuildProvenance(unittest.TestCase):
         self.assertEqual(["BigAmbitions.dll"], record["differing"])
         self.assertIn("differs: BigAmbitions.dll", done.stdout)
         self.assertIn(NO_SDK, done.stderr)
-        # Without the flag the same build fails at the same point: unknown changes nothing about an ordinary build.
         plain = game.build(provenance=False)
         self.assertEqual(done.returncode, plain.returncode)
         self.assertEqual(done.stderr, plain.stderr)
@@ -158,13 +148,11 @@ class DeclaredSets(unittest.TestCase):
             for value in entry["assemblies"].values():
                 self.assertRegex(value, r"^[0-9a-f]{64}$")
         self.assertIsNone(re.search(r"[A-Za-z]:[\\/]|/Users/|/home/", SUPPORTED.read_text(encoding="utf-8")))
-        # Hashes only: no assembly is tracked anywhere under tools/acceptance.
         self.assertEqual([], [p.name for p in HERE.rglob("*.dll")])
 
 
 @unittest.skipIf(installed_managed() is None, "installed game assemblies not found (set PC_GAME_MANAGED)")
 class InstalledGame(unittest.TestCase):
-    """Real builds against the installed game: read-only hashing, and the DLL is the same with and without the flag."""
 
     def build(self, *extra):
         done = subprocess.run([sys.executable, str(BUILD), "--game-managed", str(installed_managed()), *extra],
@@ -181,14 +169,12 @@ class InstalledGame(unittest.TestCase):
             self.assertEqual(plain, again)
             game = json.loads(record.read_text(encoding="utf-8"))
         declared = json.loads(SUPPORTED.read_text(encoding="utf-8"))
-        # On the machine the first set was recorded from, the installed game is that set.
         if os.environ.get("PC_GAME_MANAGED") is None:
             self.assertEqual(declared["current"], game["set"], game["differing"])
         self.assertIn("Game fingerprint set: " + game["set"], stdout)
 
 
 class RunnerBuildStage(unittest.TestCase):
-    """The runner's build stage reads build.py's record; an unknown set holds native incomplete."""
 
     def run_build(self, game_set, differing=()):
         f = Fixture(self)

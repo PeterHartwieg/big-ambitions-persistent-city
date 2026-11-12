@@ -2,7 +2,6 @@ using System;
 
 namespace PersistentCity.Core
 {
-    /// <summary>The same refresh gate is used by the live panel and offline frame checks.</summary>
     public sealed class FoodPanelRefresh
     {
         private double next;

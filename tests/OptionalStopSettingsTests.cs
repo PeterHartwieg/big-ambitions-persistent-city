@@ -99,7 +99,6 @@ public sealed class OptionalStopSettingsTests
                         settings.ReportStreetLifeSettings(messages.Add); settings.ReportStreetLifeSettings(messages.Add);
                         Assert.Equal(2, messages.Count); Assert.Contains(key, messages[0]);
                     }
-                // Numeric strings keep the invariant format even under a comma-decimal culture.
                 var localized = JsonConvert.DeserializeObject<PrototypeSettings>("{\"" + key + "\":\"" + (minimum - 0.5).ToString(CultureInfo.GetCultureInfo("de-DE")) + "\"}")!;
                 Assert.Equal(maximum, localized.StopTiming().Maximum(kind));
             }
@@ -118,7 +117,7 @@ public sealed class OptionalStopSettingsTests
                 var settings = JsonConvert.DeserializeObject<PrototypeSettings>("{\"Enabled\":false,\"" + spelling + "\":" + endpoint.ToString(CultureInfo.InvariantCulture) + "}")!;
                 Assert.Equal(endpoint, settings.StopTiming().Maximum(kind)); Assert.False(settings.Enabled);
                 var messages = new System.Collections.Generic.List<string>(); settings.ReportStreetLifeSettings(messages.Add);
-                Assert.Single(messages); // A valid endpoint requires no adjustment diagnostic.
+                Assert.Single(messages);
             }
     }
 

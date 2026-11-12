@@ -7,7 +7,6 @@ namespace PersistentCity.Tests;
 
 public sealed class TrafficSignalMigrationTests
 {
-    // Generated and validated by the old schema-1 implementation. Synthetic only.
     private static TrafficKernelState Legacy(bool handoff = false)
     {
         const double clock = 2186.691011389108;

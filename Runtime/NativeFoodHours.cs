@@ -12,8 +12,6 @@ namespace PersistentCity.Runtime
         private double lastHoursRefreshMinute = double.NegativeInfinity;
         public long HoursRefreshPasses { get; private set; }
 
-        // Refresh the enrolled slice only. The native menu remains the schedule authority;
-        // route planners and the simulator share these existing Place objects and stable IDs.
         public void RefreshRoutineHours(double minute, bool force = false)
         {
             if (!ReferenceEquals(save, SaveGameManager.Current) || (!force && Math.Floor(minute) == lastHoursRefreshMinute)) return;

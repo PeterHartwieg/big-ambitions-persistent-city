@@ -2,8 +2,6 @@ using System;
 
 namespace PersistentCity.Core
 {
-    /// <summary>Frozen E4 inputs for predecessor replay. This does not resolve new products.
-    /// FoodProducts' additional definitions exist only in the offline E4 envelope harness.</summary>
     public static class LegacyFoodOfferMetadata
     {
         public static FoodOfferMetadata Capture(ResidentTraits traits, int seed, string consumer, string product)

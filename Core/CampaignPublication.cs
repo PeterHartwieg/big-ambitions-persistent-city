@@ -21,15 +21,12 @@ namespace PersistentCity.Core
         public bool HasPendingPublication => publications.Count != 0;
         public long PublicationUnits { get; private set; }
         public int LastPublicationUnits { get; private set; }
-        // Runtime owns containment: invalid campaign evidence disables observation, not the city.
         public Action<Exception>? PublicationFailed { get; set; }
         public void DiscardPublications()
         {
             publicationWork?.Dispose(); publicationWork = null; publications.Clear();
         }
 
-        // Snapshot contains detached immutable values, never live registrations. Keep hourly order.
-        // Saves must finish this transient work before capturing the native/mod epoch together.
         public void EnqueuePublication(CampaignSnapshot snapshot, IReadOnlyDictionary<string,string> places)
         {
             if (!settings.Enabled) return;
@@ -64,13 +61,12 @@ namespace PersistentCity.Core
         }
         public void CompletePublicationsForSave()
         {
-            // Explicit save/checkpoint path only; normal frame advancement never drains here.
             while (HasPendingPublication) ContinuePublication(64);
         }
         public void Publish(CampaignSnapshot snapshot, IReadOnlyDictionary<string,string> places)
         {
             EnqueuePublication(snapshot,places);
-            CompletePublicationsForSave(); // explicit synchronous/offline API
+            CompletePublicationsForSave();
         }
     }
 }

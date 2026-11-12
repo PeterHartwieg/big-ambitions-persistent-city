@@ -6,16 +6,6 @@ using UnityEngine;
 
 namespace PersistentCity.Runtime
 {
-    /// <summary>
-    /// Stops the game's stationary pedestrian zones from placing their anonymous standers: 2–4 bodies per zone,
-    /// put down whenever the zone comes into view and taken away when it leaves, whatever the hour or weather
-    /// [1.0: StationaryAiSpawner.SpawnGroupOverFrames, Spawn(Vector3)]. Street performers and the homeless from
-    /// the same zones stay: the performer is a happiness source the game's help names. Only Spawn(Vector3), the
-    /// ordinary stander, is skipped; the zones, their culling and their other spawns run as before.
-    /// RLO 1.0 overrule: RLO's landmark, campus and Uptown crowds are copies of these same native zones
-    /// (<see cref="RloLivingPopulation.CrowdZoneName"/>), so their standers are deliberately off too, including zones RLO
-    /// makes later. RLO's own CityPeople scene pool is a separate system and is not touched.
-    /// </summary>
     internal sealed class StationaryCrowds : IDisposable
     {
         private const string Owner = "hart.persistentcity.stationarycrowds.v1";
@@ -24,10 +14,8 @@ namespace PersistentCity.Runtime
         private readonly FieldInfo? visible = AccessTools.Field(typeof(StationaryAiSpawner), "isVisible");
         private bool active;
         public string LastError { get; private set; } = "";
-        /// <summary>The stander prefix is installed (for the RLO overrule status line).</summary>
         internal static bool Overruling { get; private set; }
 
-        /// <summary>Native zones RLO made, counted on request (status), never per frame.</summary>
         internal static int RloZones()
         {
             int count = 0;
@@ -46,8 +34,6 @@ namespace PersistentCity.Runtime
                 if (Harmony.HasAnyPatches(Owner)) throw new InvalidOperationException("Another stationary crowd hook owner is already registered.");
                 harmony.Patch(spawn, prefix: new HarmonyMethod(typeof(StationaryCrowds), nameof(SpawnPrefix)));
                 active = Overruling = true;
-                // Zones already in view keep their standers until they leave view; clear them now and let the
-                // next time each zone comes into view place only its performer or homeless person.
                 int cleared = 0;
                 foreach (var zone in StationaryAiSpawner.AllPedestrianSpawners)
                 {

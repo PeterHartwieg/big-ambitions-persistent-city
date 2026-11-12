@@ -45,7 +45,7 @@ public sealed partial class FoodMemoryTests
         var represented = new ResidentMeal { ResidentId = FoodRepresentation.ConsumerId("physical", 1), AnchorId = "physical",
             Slot = 1, RepresentedTraits = Traits(4), Memory = MemoryWire.Decode(MemoryWire.Encode(food.Residents[0].Memory)) };
         food.Residents.Add(represented);
-        food.Residents.Add(represented); // duplicate observation cannot invent another person
+        food.Residents.Add(represented);
         food.Residents[0].Purchases = 1000; food.Residents[0].ContextAttempts = 4;
         Assert.Equal(2, Projection(food).CountOwnShop("own"));
         food.Shops[0].BusinessId = "new-generation";
@@ -116,11 +116,11 @@ public sealed partial class FoodMemoryTests
         Assert.Equal(1, a.ProjectRegulars()!.CountOwnShop("b0"));
         Assert.Equal(0, b.ProjectRegulars()!.CountOwnShop("b0"));
         a.Inspect(a.State.Citizens[0].Identity.Id); a.DumpFoodMemory(a.State.Food!.Residents[0].ResidentId);
-        Assert.Equal(checkpoint, DevelopmentChain.Write(a.State)); // exact payload, zero growth
+        Assert.Equal(checkpoint, DevelopmentChain.Write(a.State));
         double at = a.State.Food!.Residents.Max(m => m.DesiredAt) + 20;
         Advance(a, at, 1); Advance(b, at, 128);
         Assert.Equal(pa.Out, pb.Out); Assert.Equal(pa.Back, pb.Back); Assert.Equal(ma.Calls, mb.Calls);
-        Assert.Equal(DevelopmentChain.Write(a.State), DevelopmentChain.Write(b.State)); // weights/draws included
+        Assert.Equal(DevelopmentChain.Write(a.State), DevelopmentChain.Write(b.State));
         var restored = Reload(a, ma, new(), sa);
         Assert.Equal(a.ProjectRegulars()!.CountOwnShop("b0"), restored.ProjectRegulars()!.CountOwnShop("b0"));
         var replay = new CitySimulator(DevelopmentChain.Read(checkpoint).State!, new WeightedFoodChoiceTests.Planner());
@@ -146,7 +146,7 @@ public sealed partial class FoodMemoryTests
         meal.Memory.Entries[0].Outcome = ShopExperience.Stockout;
         Assert.Contains("was let down by a stockout at Native Bakery", Capture(meal).MemoryWords);
         meal.AssignHost(person.Identity.Id, 1); meal.ResidentId = FoodRepresentation.ConsumerId(person.Identity.Id, 1);
-        Assert.Empty(Capture(meal).MemoryWords); // never attribute an abstract consumer to the visible person
+        Assert.Empty(Capture(meal).MemoryWords);
         meal.AssignHost(person.Identity.Id, 0); meal.ResidentId = person.Identity.Id; food.Shops[0].BusinessId = "replaced";
         Assert.DoesNotContain(Capture(meal).MemoryWords, w => w.Contains("Bakery"));
     }
@@ -159,11 +159,10 @@ public sealed partial class FoodMemoryTests
         meal.Day = 0; meal.ContextAttempts = 1; meal.BusinessId = "b0"; meal.PlaceId = "s0";
         Visit(store, meal, ShopExperience.Served, 0); meal.Memory.Entries[0].Served = 3; meal.Memory.Entries[0].Affinity = 8;
         meal.Day = 1; meal.ContextAttempts = 0; meal.BusinessId = meal.PlaceId = "";
-        // Reattach to rebuild B1's existing generation index after the fixture's direct setup.
         city = Reload(city, market, paths);
         string before = DevelopmentChain.Write(city.State);
         var dump = JObject.FromObject(city.DumpFoodMemory(meal.ResidentId)!);
-        Assert.True((bool)dump["Regular"]!); Assert.False((bool)dump["Represented"]!); // visitors are persons, not represented consumers Assert.True((bool)dump["Entries"]![0]!["Regular"]!);
+        Assert.True((bool)dump["Regular"]!); Assert.False((bool)dump["Represented"]!);
         Assert.Equal(1, (int)dump["OwnShopRegulars"]![0]!["Regulars"]!);
         var refused = JObject.FromObject(city.DumpFoodMemory(meal.ResidentId, _ => false)!);
         Assert.False((bool)refused["Regular"]!);

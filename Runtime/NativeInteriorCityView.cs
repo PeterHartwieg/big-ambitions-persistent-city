@@ -8,7 +8,6 @@ using UnityEngine.SceneManagement;
 
 namespace PersistentCity.Runtime
 {
-    // Read-only adapter: owns no native transform, renderer, volume, camera or culling state.
     internal static class NativeInteriorCityView
     {
         internal static readonly InteriorViewState State = new InteriorViewState();
@@ -51,7 +50,6 @@ namespace PersistentCity.Runtime
         }
         private static void OnTimeMachineStarted()
         {
-            // Vanilla raises this synchronously in StartTimeMachine, before its first Update tick.
             try { restoreBodies?.Invoke(); }
             finally { Suspend(); }
         }
@@ -88,8 +86,6 @@ namespace PersistentCity.Runtime
             try
             {
                 var travel = NativeTravelPace.Visibility;
-                // Only these non-reflective safety reads repeat within a frame: blockers may
-                // change after an earlier body query, before Unity increments frameCount.
                 if (travel.OtherHidden) { Suspend(); return; }
                 var manager = InstanceBehavior<BuildingManager>.Instance;
                 if (!travel.Inside || manager == null || manager.building == null)
@@ -153,8 +149,6 @@ namespace PersistentCity.Runtime
                 Vector3 p = door.position;
                 cachedAnchor = new Position(p.x, p.y, p.z);
             }
-            // The vanilla floor-element cache is populated by LoadBuilding. Never instantiate a
-            // layout or infer ground floor from an address/name. Missing floor evidence closes.
             double floor = double.NaN;
             if (cachedFloor == null)
                 foreach (var element in InteriorElementsHelper.InteriorElementsCache.Values)

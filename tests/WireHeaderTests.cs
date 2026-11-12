@@ -38,8 +38,6 @@ public sealed class WireHeaderTests
         var layout = typeof(SaveCodec).GetNestedType("TupleLayout", BindingFlags.NonPublic)!;
         var instance = layout.GetMethod("For")!.Invoke(null, new object[] { dto })!;
         var fields = (PropertyInfo[])layout.GetField("Properties")!.GetValue(instance)!;
-        // A roster record's anchor and slot are derived from the person table (one record per person), and its wallet
-        // link from the person's own wallet (GR-1); the allowance-only external account has its own slot.
         var writable = dto.GetProperties(BindingFlags.Public | BindingFlags.Instance).Where(p => p.GetSetMethod() != null
             && !(dto == typeof(ResidentMeal) && (p.Name == "AnchorId" || p.Name == "Slot" || p.Name == "Budget")));
         Assert.Equal(expected, fields.Length);
@@ -52,7 +50,6 @@ public sealed class WireHeaderTests
     public void EarlyProbeStopsAtBothHeadersAndFullDecodeStillRejectsDamagedTail(bool capabilitiesFirst)
     {
         const string capability = "\"Capabilities\":{\"Active\":false,\"Code\":\"B\",\"Revision\":1}";
-        // The menu-policy header also precedes the population graph.
         string menu = "\"MenuPolicy\":\"" + FoodNameIdentity.DynamicWire + "\",";
         string current = "\"Schema\":" + CityState.CurrentSchema + ",";
         string prefix = capabilitiesFirst ? "{" + capability + "," + current + menu : "{" + current + capability + "," + menu;
@@ -101,8 +98,6 @@ public sealed class WireHeaderTests
     public void ProbeSupportsPrettyHeadersAndAllPublishedLegacySchemas()
     {
         SaveCodec.RequireExecutableCapabilities("{\r\n \"Capabilities\": {\r \"Code\":\"B\",\n\"Active\":false,\r\n\"Revision\":1},\r\n\"Schema\":" + CityState.CurrentSchema + ",\r\n\"MenuPolicy\":\"" + FoodNameIdentity.DynamicWire + "\",\"UnreadBody\":[");
-        // Every other schema number (older development builds wrote 2 to 36), in each integer grammar the probe reads, is
-        // refused with the development message, so the native authority bootstrap never takes PC ownership.
         foreach (string schema in new[] { "0xD", "0", "2", "13", "25", "29", "36", "37" })
             Assert.Contains("older development build", Assert.Throws<SaveValidationException>(() => SaveCodec.RequireExecutableCapabilities(
                 "{\"Unrelated\":[],\"Schema\":" + schema + ",\"Capabilities\":{\"Active\":false,\"Code\":\"B\",\"Revision\":1}}")).Message);

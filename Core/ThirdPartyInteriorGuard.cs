@@ -3,7 +3,6 @@ using System.Collections.Generic;
 
 namespace PersistentCity.Core
 {
-    /// <summary>Detached process-name evidence only. Never part of a saved city.</summary>
     public readonly struct InteriorGuardVerdict
     {
         public bool Detected { get; }
@@ -37,7 +36,6 @@ namespace PersistentCity.Core
                         if (match) return new InteriorGuardVerdict(true, "assembly rule " + pattern + " matched " + name);
                     }
                 }
-                // With no configured owners, do not even enumerate metadata inputs.
                 if (ownerIds!.Count > 0)
                     foreach (var owner in patchOwners)
                     {

@@ -10,11 +10,6 @@ using Xunit.Abstractions;
 
 namespace PersistentCity.Tests;
 
-/// <summary>E6c offline save cost (docs/perf/e6c.md): payload size and SaveCodec write/read time with 0, 8 and 64 live
-/// vendors, 128 live plus retired, and 1,024 tombstones, on the small food city and on the representative 957x2 city.
-/// Every row with a stand has its Vehicle scope; with references, every row also has a business reference. Measurement
-/// only, not a gate: it runs when PC_E6C_MEASURE is set, e.g.
-/// <c>PC_E6C_MEASURE=1 dotnet test tests/PersistentCity.Tests.csproj --filter FullyQualifiedName~E6cVendorSaveMeasure --logger "console;verbosity=detailed"</c>.</summary>
 [Collection(StreetFoodHooks.Collection)]
 public sealed class E6cVendorSaveMeasure
 {
@@ -36,7 +31,7 @@ public sealed class E6cVendorSaveMeasure
     [Fact]
     public void SaveBytesAndReadWriteTime()
     {
-        if (string.IsNullOrEmpty(PerfGate.Variable("PC_E6C_MEASURE"))) return; // measurement only on request
+        if (string.IsNullOrEmpty(PerfGate.Variable("PC_E6C_MEASURE"))) return;
         foreach (string city in new[] { "small", "representative-957x2" })
         {
             int samples = city == "small" ? 200 : 20;

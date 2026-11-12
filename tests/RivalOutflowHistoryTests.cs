@@ -27,7 +27,7 @@ public sealed class RivalOutflowHistoryTests
         var history = RivalOutflowHistory.Begin(food, 1440);
         for (int day = 1; day <= 30; day++)
         {
-            Reopen(meal); meal.Day = day - 1; // A late meal belongs to its actual debit day.
+            Reopen(meal); meal.Day = day - 1;
             Assert.True(ExternalFoodSettlement.TryPay(meal, history, day * 1440));
             string paid = history.ToWire();
             for (int repeat = 0; repeat < 4; repeat++)
@@ -38,7 +38,7 @@ public sealed class RivalOutflowHistoryTests
             }
             Assert.True(history.Reconciles(food));
             Assert.Equal(Math.Min(day, 14) + 1, history.RecordCount);
-            history = RivalOutflowHistory.FromWire(history.ToWire()); // Replay retains D2 watermark.
+            history = RivalOutflowHistory.FromWire(history.ToWire());
         }
         var view = history.Capture(30);
         Assert.Equal(Enumerable.Range(17, 14), view.Days.Select(d => d.Day));
@@ -51,7 +51,7 @@ public sealed class RivalOutflowHistoryTests
         Assert.True(ExternalFoodSettlement.TryPay(meal, history, 10 * 1440));
         Assert.False(ExternalFoodSettlement.TryPay(meal, history, 10 * 1440));
         Assert.Equal(1, history.RecordCount); Assert.Equal(BigInteger.Zero, history.Capture(60).Count);
-        Assert.True(history.Reconciles(food)); // A late old debit stays in the lifetime reconciliation only.
+        Assert.True(history.Reconciles(food));
     }
     [Fact]
     public void UnknownPartialAndKnownZeroAreDifferentAndAmountsRemainExact()

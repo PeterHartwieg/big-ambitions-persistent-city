@@ -35,7 +35,6 @@ public sealed partial class FoodCommerceTests
         registry.BindPublicationThread();
         var defaults=FoodProductMetadataResolver.Empty.WithApi(registry.Publish(catalogue)).Capture(name,FoodMetadataApiTests.Traits,957,"pc:1");
         Assert.Equal(900,defaults.BreakfastFitCents);
-        // E5b4: the writer executes DynamicWire, so the held city passes the early authority probe.
         SaveCodec.RequireExecutableCapabilities(held);
     }
 }

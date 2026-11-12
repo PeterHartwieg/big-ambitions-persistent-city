@@ -5,10 +5,6 @@ using PersistentCity.Core;
 
 namespace PersistentCity.EconomyInterventions;
 
-/// <summary>Detached native double for the F6a harness. It reports player supply, a read-only rival
-/// observation and walking routes; it is the only place an intervention input changes anything.
-/// Player checkout is the sale authority (one order per intent, refused on changed terms). No rival
-/// checkout exists. Every read is fenced to the current input epoch.</summary>
 public sealed class EconomyMarket : IFoodMarket, IFoodTicketMarket, IFoodTicketEvidence, IFoodCandidateMarket, IFoodAwarenessRevision, IRivalFoodMarket,
     IFoodBusinessAuthority, IFoodSaleEvidence
 {
@@ -18,7 +14,6 @@ public sealed class EconomyMarket : IFoodMarket, IFoodTicketMarket, IFoodTicketE
         public readonly SortedDictionary<string, int> Prices = new(StringComparer.Ordinal);
         public readonly SortedDictionary<string, int> StockOverride = new(StringComparer.Ordinal);
         public int MealsPerHour, OpenMinute, CloseMinute, RouteTimePercent = 100;
-        // Base walking minutes each way; the second site is twice as far as the first.
         public double BaseRouteMinutes = 1;
         public bool DoorClosed, SiteOpen = true;
     }
@@ -27,16 +22,12 @@ public sealed class EconomyMarket : IFoodMarket, IFoodTicketMarket, IFoodTicketE
         public string BusinessId = "", PlaceId = "";
         public readonly SortedDictionary<string, int> Prices = new(StringComparer.Ordinal);
         public int OpenMinute, CloseMinute;
-        // Percentage of the default F6b lanes; units remain fixed in the lane-only arm.
         public int EstimatedLanes;
         public bool Listed = true;
     }
     sealed class Batch : IDisposable { public void Dispose() { } }
     private static readonly Batch NoBatch = new();
 
-    // F6h shares the live settings instance with Core. Timestamped lane inputs therefore
-    // affect later evaluations/arrivals. The base's committed travellers still meet the
-    // live arrival limit; no held lane/unit fields or old-term replay are invented here.
     public readonly RivalFoodSettings RivalSettings = new();
     public FoodChoiceSettings ChoiceSettings = new();
     public FoodChangeJournal? Journal;
@@ -46,7 +37,6 @@ public sealed class EconomyMarket : IFoodMarket, IFoodTicketMarket, IFoodTicketE
     public int WorkerRoutesBlockedPercent;
     public const int BaseStockUnits = 100000;
 
-    // Native-side evidence that persists across a city save/reload, as native game state would.
     private readonly HashSet<string> paid = new(StringComparer.Ordinal);
     public long NativeOrders, NativeRevenueUnits, DuplicateOrders, Refusals;
     public long Epoch { get; private set; } = -1;
@@ -64,8 +54,6 @@ public sealed class EconomyMarket : IFoodMarket, IFoodTicketMarket, IFoodTicketE
     }
     private void Fence(double minute)
     {
-        // A native read belongs to the epoch that is currently published. Any read outside it
-        // would mean an input could be observed mid-epoch or before its boundary.
         if (!(minute >= Epoch && minute < Epoch + 1)) { EpochReadViolations++; throw new InputViolation("native read outside its input epoch: " + minute + " in " + Epoch); }
     }
 
@@ -103,8 +91,6 @@ public sealed class EconomyMarket : IFoodMarket, IFoodTicketMarket, IFoodTicketE
 
     private FoodBusiness Business(Shop shop)
     {
-        // Consume the exact image this detached native double already reads, as Runtime does.
-        // No extra observation or speculative sweep is introduced by the journal.
         if (Journal != null)
         {
             var offers = shop.Prices.Select(p => new ShopObservedOffer { ProductId = p.Key,
@@ -131,7 +117,6 @@ public sealed class EconomyMarket : IFoodMarket, IFoodTicketMarket, IFoodTicketE
         return shop == null || !shop.SiteOpen ? null : Business(shop);
     }
     public FoodSale Buy(ResidentMeal meal, double minute) => Sell(meal, minute, null);
-    // F6j: extras sell as further lines of the same intent's one order, each refused on changed terms.
     public bool SellsExtras(string businessId) => Find(businessId) != null;
     public FoodSale BuyTicket(ResidentMeal meal, FoodMealTicket ticket, double minute) => Sell(meal, minute, ticket);
     private FoodSale Sell(ResidentMeal meal, double minute, FoodMealTicket? ticket)
@@ -167,8 +152,6 @@ public sealed class EconomyMarket : IFoodMarket, IFoodTicketMarket, IFoodTicketE
         return new FoodSale(true, "Native double confirmed", null, sold);
     }
     public bool IsConfirmedPaid(ResidentMeal meal) => paid.Contains(meal.IntentId);
-    // Harness evidence only: sold tickets per (meal day, business, main dish). Planned extras are what checkout
-    // planned within the wallet; sold extras are what this double confirmed. Lives across reloads with the double.
     public readonly SortedDictionary<(int Day, string Business, string Main), (long Meals, long Extras, long Planned)> Tickets = new();
     private readonly Dictionary<string, (Money Total, FoodTicketLine[] Extras)> sales = new(StringComparer.Ordinal);
     public bool TryConfirmedTicket(ResidentMeal meal, out Money total, out IReadOnlyList<FoodTicketLine> extras)
@@ -196,9 +179,6 @@ public sealed class EconomyMarket : IFoodMarket, IFoodTicketMarket, IFoodTicketE
     }
 }
 
-/// <summary>One-minute walking routes (the F1 supported fixture); two minutes each way to the second
-/// site at twice the distance; both scaled by a shop's access input.
-/// Work trips refuse while the workplace is closed or the worker's route is blocked.</summary>
 public sealed class EconomyRoutes : ICitizenRoutePlanner, IFoodWalkingPace, IWorkplaceAvailability
 {
     private readonly EconomyMarket market;
@@ -227,9 +207,6 @@ public sealed class EconomyRoutes : ICitizenRoutePlanner, IFoodWalkingPace, IWor
     }
 }
 
-/// <summary>The F1 supported fixture shape (957 residents / 1,914 consumers, one-minute walking routes,
-/// minute-stamped inputs), extended with a three-product own shop, an equidistant rival with the same
-/// menu, price and hours, a dormant second site at twice the distance and ten workplaces.</summary>
 public static class EconomyFixture
 {
     public const int Residents = 957;
@@ -237,15 +214,12 @@ public static class EconomyFixture
     public const int Workplaces = 10;
     public const double StartMinute = 1440;
     public const int OpenMinute = 7 * 60, CloseMinute = 22 * 60;
-    // Two staffed counters at 30 meals per hour each.
     public const int MealsPerHour = 60;
     public static readonly (string Product, int Cents)[] Menu = {
         (FoodProducts.Burger, 800), (FoodProducts.Croissant, 300), (FoodProducts.HotDog, 500) };
-    // F6i rerun: retained native price levels (decision 2026-11-08); the hot dog is a salad-price proxy.
     public static readonly (string Product, int Cents)[] NativeMenu = {
         (FoodProducts.Burger, 1250), (FoodProducts.Croissant, 924), (FoodProducts.HotDog, 1669) };
     public const string Shop = "b-shop", FarShop = "b-far", RivalBusiness = "b-rival";
-    // Twice the one-minute own-shop walk, each way, matching the doubled distance.
     public const double FarSiteRouteMinutes = 2;
 
     public static string WorkplaceId(int index) => "work" + index;
@@ -268,8 +242,6 @@ public static class EconomyFixture
             "economy-interventions", "0.40.4", seed, StartMinute);
         if (residents > 5000)
         {
-            // The immutable donor catalogue is capped at 5,000. Stress cities grow through
-            // the same F5 housing expansion as the E5d save fixtures, retaining stable pc: IDs.
             state.Places.Single(p => p.Id == "home").Capacity = (int)(((long)residents * 10 + 8) / 9);
             Population.ExpandToHousing(state);
             if (state.Citizens.Count != residents) throw new InvalidOperationException("stress housing target mismatch");
@@ -284,7 +256,6 @@ public static class EconomyFixture
             ProductId = products[0], AdditionalProductIds = products.Skip(1).ToList() };
         state.Food = new FoodCommerceState { RepresentationFactor = RepresentationFactor, MealRhythmVersion = MealRhythm.PolicyVersion,
             Shops = new List<FoodScope> { Scope("shop", Shop), Scope("shop-far", FarShop) } };
-        // F5d: one subway portal, so the factor-2 roster creates one visitor per resident on its own routine.
         PortalPlaces.Add(state, new[] { new PortalStation("subway:economy", new Position(0, 0, 1)) });
         var market = new EconomyMarket();
         foreach (var (business, place, open, minutes) in new[] { (Shop, "shop", ownListed, 1.0), (FarShop, "shop-far", false, FarSiteRouteMinutes) })
@@ -301,7 +272,6 @@ public static class EconomyFixture
         return (state, market);
     }
 
-    /// <summary>Attaches the current Core model unchanged: weighted choice, awareness, rivals and budgets.</summary>
     public static CitySimulator Attach(CityState state, EconomyMarket market, EconomyRoutes routes, bool fresh)
     {
         var city = new CitySimulator(state, routes);
@@ -315,11 +285,8 @@ public static class EconomyFixture
     }
 }
 
-/// <summary>Matched fixture inputs shared by every arm and seed of one sweep: the own shops'
-/// staffed ceiling and the own/rival menu. Fixture terms, never product defaults.</summary>
 public sealed record FixtureProfile(string Name, int MealsPerHour, IReadOnlyList<(string Product, int Cents)> Menu)
 {
-    // F6a/F6h original: 60 meals/hour binds at peak; $8/$3/$5 menu.
     public static readonly FixtureProfile CapacityBound = new("capacity-bound", EconomyFixture.MealsPerHour, EconomyFixture.Menu);
     public int Base(string product) => Menu.Single(m => m.Product == product).Cents;
 }

@@ -5,15 +5,6 @@ using PersistentCity.Core;
 
 namespace PersistentCity.Tests;
 
-/// <summary>
-/// F7c golden fixtures, all fresh cities in the current schema (no migration). The F7a representative replay
-/// (RepresentativeFixture, one natural day and midnight, factor 2) at its three sizes; the E5d size matrix at factor 3
-/// (the factor-2 sizes are the representative ones); two saturated variants of the 957-resident city (64 recent visits
-/// per resident, E5d's per-resident bound); an escaping variant (30 scopes of eight 256-character non-ASCII product
-/// names, E5d's encoding-max shape inside the 256-name table); and morning-rush cities saved at 08:20 on the second
-/// day, when many residents and visitors are mid-journey (the representative save at 00:30 has none). Uses only API that exists before and after F7c, so the same source builds the
-/// before pins on the base commit.
-/// </summary>
 internal static class F7cFixtures
 {
     public static readonly string[] All =
@@ -22,7 +13,6 @@ internal static class F7cFixtures
         "representative-5000x2", "fresh-5000x3", "rush-5000x2", "representative-50000x2", "fresh-50000x3",
     };
 
-    /// <summary>The fixtures small enough for the unit suite.</summary>
     public static readonly string[] Unit = { "representative-957x2", "fresh-957x3", "saturated-957x3", "encoding-max", "rush-957x2" };
 
     public sealed class Built
@@ -50,7 +40,6 @@ internal static class F7cFixtures
         return built;
     }
 
-    /// <summary>08:20 the morning after the representative save.</summary>
     public const double RushMinute = RepresentativeFixture.TargetMinute + 7 * 60 + 50;
 
     private static Built Fresh(int residents, int factor, double target)
@@ -65,7 +54,6 @@ internal static class F7cFixtures
         return new Built(city, routes);
     }
 
-    /// <summary>Fill every resident's recent visits to the 64-visit bound with ordered past home visits.</summary>
     private static void SaturateVisits(CityState state)
     {
         foreach (var citizen in state.Citizens)
@@ -77,7 +65,6 @@ internal static class F7cFixtures
         }
     }
 
-    /// <summary>30 shop scopes, each naming eight 256-character non-ASCII products, so characters and UTF-8 bytes diverge.</summary>
     private static void EscapingNames(CityState state)
     {
         string Name(int n) => new string('é', 255) + (char)('Ā' + n);

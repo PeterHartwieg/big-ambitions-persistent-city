@@ -4,10 +4,6 @@ using System.Linq;
 
 namespace PersistentCity.Core
 {
-    /// <summary>
-    /// Sparse FIFO finite-storage traffic. Every mutation uses Clock, and every processed event moves
-    /// at most one incoming vehicle and one terminal vehicle. No wall clock, actors, or per-car ticking.
-    /// </summary>
     public sealed class TrafficKernel
     {
         private sealed class Link
@@ -49,12 +45,9 @@ namespace PersistentCity.Core
         public int VehicleCount => vehicles.Count;
         public int PendingEventCount => events.Count;
         public int LinkCount => links.Count;
-        /// <summary>Diagnostic counters for this kernel instance (F2d perf): link reconsiderations and processed link
-        /// events since construction or restore. Never saved; a forecast projection keeps its own.</summary>
         public long Reconsiders { get; private set; }
         public long ProcessedEvents { get; private set; }
         public event Action<string, double>? VehicleCompleted;
-        /// <summary>Stable detached closure-refresh set: demand/occupancy plus blocked heads' immediate receivers.</summary>
         public IEnumerable<int> RelevantLinkIds
         {
             get
@@ -64,8 +57,6 @@ namespace PersistentCity.Core
                 return result;
             }
         }
-        // Keep the detached ascending order while allowing the per-frame caller to reuse its buffer.
-        // Sorting and compacting avoids allocating a tree node for every relevant section each frame.
         internal void CopyRelevantLinkIds(List<int> result)
         {
             result.Clear();
@@ -86,8 +77,6 @@ namespace PersistentCity.Core
         public double? NextEventTime => events.Count == 0 ? (double?)null : events.Min!.At;
         public double NextEventMinute => NextEventTime ?? double.PositiveInfinity;
 
-        // New observations can schedule work at Clock. Publish the new epoch first,
-        // retaining events exactly at its boundary without executing them or skipping old work.
         internal void BeginObservationEpoch(double minute)
         {
             RequireTime(minute, nameof(minute));
@@ -125,7 +114,6 @@ namespace PersistentCity.Core
             Reconsider(first);
         }
 
-        /// <summary>When interrupted, continue toward RequestedTime. Clock never jumps over unprocessed events.</summary>
         public TrafficAdvanceResult AdvanceTo(double targetMinute, int maximumEvents)
         {
             RequireTime(targetMinute, nameof(targetMinute));
@@ -157,7 +145,6 @@ namespace PersistentCity.Core
         }
         public TrafficVehicleSnapshot GetPermission(string vehicleId) => Snapshot(FindVehicle(vehicleId));
 
-        /// <summary>Check a rebuilt native network without copying all queues or replacing saved logical signal phase.</summary>
         public bool HasCompatibleDefinitions(IReadOnlyList<TrafficLinkDefinition> network)
         {
             if (network == null || network.Count != links.Count) return false;
@@ -177,19 +164,6 @@ namespace PersistentCity.Core
 
         private static bool SameDuration(double a, double b) => Math.Abs(a - b) <= 1e-9 * Math.Max(1, Math.Max(Math.Abs(a), Math.Abs(b)));
 
-        /// <summary>
-        /// F2e player hold (plan Decision 4): the vehicle was blocked by the player for the last <paramref name="minutes"/>,
-        /// so its analytical motion and readiness are rebased to where it was before that interval, at <see cref="Clock"/>.
-        /// All bounds are in the held leg's motion coordinate u (that of MotionStartFraction): the new u is
-        /// min(u_now, max(u_motion, u_entry, u_floor, u_follower)), so the car never moves forward, never leaves the link it
-        /// entered, never goes below its NominalMinutes floor and never lands inside its follower's storage spacing (the
-        /// follower's sampled position is unchanged). ReadyAt becomes max(old, Clock + (1 - u) * FreeFlowMinutes). The charge
-        /// is the change of the vehicle's own earliest discharge (or curb exit); headway or a signal can absorb part of the
-        /// input. <paramref name="maximumCharge"/> bounds the charge (a journey's remaining allowance): a hold that would miss a
-        /// signal window by more is shortened until it fits. A hold that changes neither motion nor discharge is refused and
-        /// changes nothing. Applied once, here; the
-        /// kernel keeps no hold state afterwards, and Reconsider reschedules the link.
-        /// </summary>
         public TrafficHoldResult HoldVehicle(string vehicleId, double minutes, double maximumCharge = double.PositiveInfinity)
         {
             if (!Finite(minutes) || minutes <= 0) throw new ArgumentOutOfRangeException(nameof(minutes));
@@ -216,13 +190,11 @@ namespace PersistentCity.Core
             double before = DischargeAt(link, node);
             void Set(double value)
             {
-                // Without a motion change the motion anchor stays as it is; only readiness can move.
                 if (value < now) { vehicle.MotionStartFraction = value; vehicle.MotionStartedAt = Clock; }
                 else { vehicle.MotionStartFraction = start; vehicle.MotionStartedAt = at; }
                 vehicle.ReadyAt = Math.Max(ready, Clock + (1 - value) * free);
             }
             Set(u);
-            // Converting the follower's spacing into u can round one ulp behind it; step forward until its position holds.
             for (int step = 0; node.Next != null && u < now && SpatialPosition(link, node.Next) < follower; step++)
             {
                 u = step < 64 ? Math.Min(now, NextDouble(u)) : now;
@@ -234,8 +206,6 @@ namespace PersistentCity.Core
                 return double.IsPositiveInfinity(before) || double.IsPositiveInfinity(after) ? 0 : Math.Max(0, after - before);
             }
             double charge = Charge();
-            // A small hold can miss a signal window and delay the discharge by a whole cycle. The charge only falls as u
-            // rises, so take the largest hold (smallest u, toward u_now) whose charge fits the caller's bound.
             if (charge > maximumCharge)
             {
                 double low = u, high = now;
@@ -259,11 +229,9 @@ namespace PersistentCity.Core
             return new TrafficHoldResult(true, charge, vehicle.MotionStartFraction, vehicle.MotionStartedAt, vehicle.ReadyAt);
         }
 
-        // The vehicle's own earliest discharge: its curb exit, or its crossing/completion at the far end.
         private double DischargeAt(Link link, LinkedListNode<TrafficVehicleState> node)
             => IsCurbExit(node.Value) ? CurbExitAt(link, node) : EligibleAt(link, node.Value);
 
-        // Spatial link fraction of a queued vehicle, with the same front-to-back rule Snapshot uses.
         private double SpatialPosition(Link link, LinkedListNode<TrafficVehicleState> target)
         {
             double previous = 0;
@@ -283,7 +251,6 @@ namespace PersistentCity.Core
             throw new InvalidOperationException("The vehicle is not queued on its link.");
         }
 
-        /// <summary>F2d phase count: whether a link's kernel signal is green at Clock (true without a signal). Read-only.</summary>
         public bool IsSignalGreen(int linkId) => (FindLink(linkId).Definition.Signal?.NextGreen(Clock) ?? Clock) <= Clock;
 
         public void SetLinkClosed(int linkId, bool closed)
@@ -295,8 +262,6 @@ namespace PersistentCity.Core
             Reconsider(link);
         }
 
-        /// <summary>GR-8: true when the vehicle cannot move on because of a closure: it heads its section and the next one is
-        /// closed, or it waits outside a closed first section. O(1); the closure states are the kernel's own.</summary>
         internal bool IsBlockedByClosure(string vehicleId)
         {
             if (!vehicles.TryGetValue(vehicleId, out TrafficVehicleState? vehicle) || vehicle.Completed) return false;
@@ -306,7 +271,6 @@ namespace PersistentCity.Core
                 && links[vehicle.Route[vehicle.RouteIndex + 1].LinkId].State.Closed;
         }
 
-        /// <summary>Only acknowledged terminal state can be discarded.</summary>
         public bool RemoveCompleted(string vehicleId)
         {
             if (!vehicles.TryGetValue(vehicleId, out TrafficVehicleState? vehicle) || !vehicle.Completed) return false;
@@ -336,13 +300,6 @@ namespace PersistentCity.Core
             return new TrafficLinkForecast(linkId, link.Queue.Count, link.Sources.Count, delay, link.State.Closed);
         }
 
-        /// <summary>
-        /// Extra, unweighted wait for an interior source's empty-section opportunity. Subtracts the
-        /// queue/headway admission estimate already in Forecast, weighted by sectionShare. Current committed dependencies only;
-        /// blocked queues or projection bounds return positive infinity.
-        /// Boundary/empty fast paths allocate nothing. Projection is bounded to 32 links, 64 vehicles,
-        /// 1024 inspected route/predecessor references and 256 events; it never mutates live queues.
-        /// </summary>
         public double ForecastEntry(int linkId, double entryMinute, double startFraction, double sectionShare = 1)
         {
             RequireTime(entryMinute, nameof(entryMinute));
@@ -435,12 +392,9 @@ namespace PersistentCity.Core
                 }
                 projection.vehicles.Add(copy.VehicleId, copy);
             }
-            // Resolve queue references only after all projected vehicles have been cloned.
-            // Forecasts must never advance the live kernel's vehicle objects.
             foreach (int id in selected)
                 foreach (var vehicle in links[id].Queue)
                     projection.links[id].Queue.AddLast(projection.vehicles[vehicle.VehicleId]);
-            // This is an ETA projection, never authority over a live actor.
             foreach (Link copy in projection.links.Values) projection.Reconsider(copy);
             return projection;
         }
@@ -453,7 +407,6 @@ namespace PersistentCity.Core
             for (int inspected = 0; inspected < 64; inspected++)
             {
                 if (current.Queue.Count < current.Definition.Capacity || current.Queue.First == null) return false;
-                // Only geometrically possible curb exits can break a full-storage cycle.
                 for (var node = current.Queue.First; node != null; node = node.Next)
                 {
                     if (++references > ForecastMaximumReferences) return false;
@@ -465,7 +418,7 @@ namespace PersistentCity.Core
                 current = links[head.Route[head.RouteIndex + 1].LinkId];
                 if (current.State.Closed) return true;
             }
-            return false; // An unproven long dependency chain is not classified as a cycle.
+            return false;
         }
 
         private bool MayCurbFreeStorage(Link link, LinkedListNode<TrafficVehicleState> target, ref int references)
@@ -475,7 +428,7 @@ namespace PersistentCity.Core
             int separation = 0;
             for (var predecessor = target.Previous; predecessor != null; predecessor = predecessor.Previous)
             {
-                if (++references > ForecastMaximumReferences) return true; // Unknown, not a proven cycle.
+                if (++references > ForecastMaximumReferences) return true;
                 TrafficVehicleState ahead = predecessor.Value;
                 if (end + ++separation / (double)link.Definition.Capacity > ahead.Route[ahead.RouteIndex].EndLinkFraction) return false;
             }
@@ -485,8 +438,6 @@ namespace PersistentCity.Core
         private void Process(Link link)
         {
             string? completedId = null;
-            // A curb exit does not cross the far-end stop line. It can leave behind a
-            // predecessor that has already passed its destination, retaining through FIFO.
             for (var node = link.Queue.First; node != null; node = node.Next)
             {
                 TrafficVehicleState vehicle = node.Value;
@@ -592,8 +543,6 @@ namespace PersistentCity.Core
 
         private static bool CanReceive(Link destination, TrafficVehicleState vehicle, int routeIndex)
         {
-            // Interior source points cannot jump ahead of an existing FIFO queue. Waiting for an
-            // empty section is conservative and wakes on discharge, never on a polling timer.
             return !destination.State.Closed && destination.Queue.Count < destination.Definition.Capacity &&
                 (vehicle.Route[routeIndex].StartLinkFraction == 0 || destination.Queue.Count == 0);
         }
@@ -622,8 +571,6 @@ namespace PersistentCity.Core
             TrafficRouteLeg leg = vehicle.Route[vehicle.RouteIndex];
             double at = Math.Max(Clock, vehicle.ReadyAt);
             int separation = 0;
-            // Each predecessor must clear the curb point plus one storage spacing.
-            // Background motion supplies an analytical threshold, never a periodic retry.
             for (var predecessor = target.Previous; predecessor != null; predecessor = predecessor.Previous)
             {
                 double required = leg.EndLinkFraction + ++separation / (double)link.Definition.Capacity;
@@ -674,17 +621,12 @@ namespace PersistentCity.Core
                 double floor = (occupant.NominalMinutes - occupantLeg.StartNominalMinutes) / span;
                 double motion = Math.Min(1, occupant.MotionStartFraction + Math.Max(0, Clock - occupant.MotionStartedAt) / occupantLeg.FreeFlowMinutes);
                 double spatialSpan = occupantLeg.EndLinkFraction - occupantLeg.StartLinkFraction;
-                // A head has no predecessor. Constructing a synthetic point beyond the link
-                // and subtracting storage spacing can leave its endpoint one ulp unreachable.
                 double queueLimit = rank == 0 ? 1 : Math.Max(0, Math.Min(1,
                     (previousFraction - 1.0 / link.Definition.Capacity - occupantLeg.StartLinkFraction) / spatialSpan));
                 double allowed = Math.Max(floor, Math.Min(motion, queueLimit));
                 if (ReferenceEquals(occupant, vehicle))
                 {
-                    // The committed endpoint is exact route evidence, not a reconstructed span.
                     maximum = allowed == 1 ? occupantLeg.EndNominalMinutes : occupantLeg.StartNominalMinutes + allowed * span;
-                    // Reconstructing an already observed interior floor can round down. Keeping
-                    // owned progress cannot grant new spacing or motion permission.
                     maximum = Math.Max(occupant.NominalMinutes, maximum);
                     break;
                 }
@@ -726,10 +668,6 @@ namespace PersistentCity.Core
             return state;
         }
 
-        /// <summary>GR-8: a snapshot without the vehicles <paramref name="exclude"/> names, as if they had been cancelled: the
-        /// remaining queues keep their order and their wakeups are rebuilt as a retiming restore rebuilds them. The live kernel
-        /// is not changed. Without a match it is exactly <see cref="Capture()"/>. A vehicle queued behind a removed one keeps
-        /// its live position: its motion is re-anchored at that position now, so the gap the removal opens is not a jump.</summary>
         public TrafficKernelState Capture(Func<string, bool> exclude)
         {
             if (exclude == null) throw new ArgumentNullException(nameof(exclude));
@@ -741,7 +679,6 @@ namespace PersistentCity.Core
                 bool behind = false;
                 double previous = 0;
                 int rank = 0;
-                // The same front-to-back rule as SpatialPosition, recording each retained follower's leg fraction.
                 for (var queued = link.Queue.First; queued != null; queued = queued.Next, rank++)
                 {
                     TrafficVehicleState occupant = queued.Value;
@@ -771,10 +708,8 @@ namespace PersistentCity.Core
             return Restore(state, true).Capture();
         }
 
-        /// <summary>Restores a detached snapshot exactly.</summary>
         public static TrafficKernel Restore(TrafficKernelState state) => Restore(state, false);
 
-        // Retiming can reconstruct derived wakeups. Saved states must already supply timely wakeups.
         private static TrafficKernel Restore(TrafficKernelState state, bool rebuildWakeups)
         {
             if (state == null) throw new ArgumentNullException(nameof(state));
@@ -879,10 +814,8 @@ namespace PersistentCity.Core
             return kernel;
         }
 
-        /// <summary>Throws on unreadable schemas, invalid identity/order/cursors, or inconsistent finite occupancy.</summary>
         public static void ValidateState(TrafficKernelState state) => Restore(state, false);
 
-        /// <summary>Explicit demand cancellation, never used for body disposal. Other vehicles retain FIFO order.</summary>
         public bool Cancel(string vehicleId)
         {
             if (!vehicles.TryGetValue(vehicleId, out TrafficVehicleState? vehicle)) return false;
@@ -906,12 +839,6 @@ namespace PersistentCity.Core
             return true;
         }
 
-        /// <summary>
-        /// Returns a detached kernel with future residual travel/headway/signal times scaled around
-        /// the current Clock. Route geometry coordinates and historical/completion timestamps remain
-        /// unchanged unless mapNominalMinutes is supplied. The active leg is clipped to its actual
-        /// spatial point; the optional map must be affine over its remaining moving geometry.
-        /// </summary>
         public TrafficKernel RescaleTime(double factor, Func<string, double, double>? mapNominalMinutes = null)
         {
             if (!Finite(factor) || factor <= 0) throw new ArgumentOutOfRangeException(nameof(factor));
@@ -965,10 +892,6 @@ namespace PersistentCity.Core
                     TrafficRouteLeg current = vehicle.Route[currentIndex];
                     if (oldActualFraction < 1)
                     {
-                        // Retain the actual full-section spatial point when a completed nominal
-                        // prefix is fixed while remaining route coordinates are retimed.
-                        // A near-end point can round onto the endpoint in either coordinate
-                        // system. Keep one representable residual step.
                         if (vehicle.NominalMinutes >= current.EndNominalMinutes)
                             vehicle.NominalMinutes = PreviousDouble(current.EndNominalMinutes);
                         current.StartNominalMinutes = vehicle.NominalMinutes;
@@ -979,17 +902,11 @@ namespace PersistentCity.Core
                     double span = current.EndNominalMinutes - current.StartNominalMinutes;
                     double mappedMotion = mapNominalMinutes == null ? motionCoordinate : mapNominalMinutes(vehicle.VehicleId, motionCoordinate);
                     vehicle.MotionStartFraction = Math.Max(0, Math.Min(1, (mappedMotion - current.StartNominalMinutes) / span));
-                    // Scaling an already rounded absolute readiness can amplify its error
-                    // beyond the reconstructed residual motion's tolerance. Keep any later
-                    // readiness constraint, but never discharge before that motion finishes.
                     double motionReady = vehicle.MotionStartedAt + (1 - vehicle.MotionStartFraction) * current.FreeFlowMinutes;
                     vehicle.ReadyAt = Math.Max(vehicle.ReadyAt, motionReady);
                 }
             }
             foreach (TrafficEventState item in state.Events) item.At = Clock + (item.At - Clock) * factor;
-            // Signal/curb calculations can round earlier than independently scaled events.
-            // Reconsider in stable link order before validation: retain safe early events,
-            // bring late ones forward, and let the normal admission guards decide movement.
             return Restore(state, true);
         }
 

@@ -29,7 +29,6 @@ namespace PersistentCity.Core
                 ResumeUntil = person.ActivityUntilMinute, ResumeEvent = person.NextEventMinute };
             if (!due.Remove(item)) throw new InvalidOperationException("Resident has no queued event.");
             CancelOptionalStop(citizenId);
-            // Commit the attended portion before leaving the logical workplace.
             food?.AccrueWorkDeparture(person);
             person.MealOuting = outing; person.DestinationId = shopId; person.DestinationActivity = Activity.Shop;
             person.ActivityUntilMinute = leave; person.Phase = CitizenPhase.Travelling;
@@ -52,8 +51,6 @@ namespace PersistentCity.Core
 
         private enum MealOutingStep { Ordinary, Handled, NeedsReturnRoute }
 
-        // The former StepMealOuting up to its return-route search. Ordinary hands the event to the regular
-        // routine, Handled ends it, and NeedsReturnRoute asks for the walk back before FinishMealReturn.
         private MealOutingStep BeginMealOuting(CitizenState person, double now)
         {
             var outing = person.MealOuting;
@@ -65,7 +62,6 @@ namespace PersistentCity.Core
                 person.ActivityUntilMinute = outing.ResumeUntil; person.MealOuting = null;
                 if (person.Activity == Activity.Work && now < person.ActivityUntilMinute)
                     VisitorSchedules.RecordArrival(person, now, person.PlaceId, Activity.Work);
-                // A late return lets the regular routine decide what to do next.
                 if (now >= outing.ResumeEvent) return MealOutingStep.Ordinary;
                 person.NextEventMinute = outing.ResumeEvent; return MealOutingStep.Handled;
             }
@@ -76,8 +72,6 @@ namespace PersistentCity.Core
                 person.DepartureMinute = 0; person.CompletedJourneys++;
                 if (now < person.ActivityUntilMinute && food?.OwnsRivalMealVisit(person, person.PlaceId) == true)
                 {
-                    // Arrival is at the door; FoodCommerce revalidates the detached terms
-                    // before recording admission or serving. No shared place-hours write.
                     person.NextEventMinute = person.ActivityUntilMinute;
                     return MealOutingStep.Handled;
                 }
@@ -91,7 +85,6 @@ namespace PersistentCity.Core
             if (!outing.Returning && person.Phase == CitizenPhase.AtPlace && now < person.ActivityUntilMinute
                 && food?.OwnsRivalMealVisit(person, person.PlaceId) == true)
             { person.NextEventMinute = person.ActivityUntilMinute; return MealOutingStep.Handled; }
-            // While admitted, the ordinary event owns the planned eating/stay interval.
             if (!outing.Returning && person.Phase == CitizenPhase.AtPlace && now < person.ActivityUntilMinute
                 && DailyRoutine.Open(places[person.PlaceId], now)) return MealOutingStep.Ordinary;
             return MealOutingStep.NeedsReturnRoute;
@@ -110,9 +103,6 @@ namespace PersistentCity.Core
             person.NextEventMinute = now + route.Minutes;
         }
 
-        /// <summary>Explicit, bounded home-origin walking visit. The caller owns the decision,
-        /// not a second journey. Existing committed activity and lifecycle events take priority.
-        /// No scheduler calls this automatically; the native food pilot is its first caller.</summary>
         public bool TryBeginOptionalShopVisit(string citizenId, string shopId, Route outward,
             double returnMinutes, double stayMinutes, double latestReturnMinute)
         {

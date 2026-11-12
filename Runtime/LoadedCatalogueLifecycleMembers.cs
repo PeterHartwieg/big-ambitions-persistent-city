@@ -7,9 +7,6 @@ using Helpers;
 
 namespace PersistentCity.Runtime
 {
-    /// <summary>Binds the Decision 1 hook inventory (<see cref="FoodContractHookTable"/>) by exact declaring type,
-    /// name, static-ness and parameter types, and installs its postfixes. The postfixes are hints for the E5a
-    /// reader, never a completeness proof: docs/plans/e5b-remaining.md section 2.2 lists the writers no hook sees.</summary>
     public static class LoadedCatalogueLifecycleMembers
     {
         private const BindingFlags All = BindingFlags.Static | BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
@@ -46,7 +43,6 @@ namespace PersistentCity.Runtime
             failure = ""; return method;
         }
 
-        /// <summary>E5a's 19 members, in table order. Throws when any is not bound exactly.</summary>
         public static IReadOnlyList<MethodInfo> Discover()
         {
             var found = new List<MethodInfo>();
@@ -71,7 +67,6 @@ namespace PersistentCity.Runtime
             public void UnpatchAll() => harmony.UnpatchAll(PatchId);
         }
 
-        // One body per table id. Each reads only the owner's reference or address; none retains it.
         private static class Postfixes
         {
             private static void Hook0() => FoodContractHintRouter.Catalogue(0);

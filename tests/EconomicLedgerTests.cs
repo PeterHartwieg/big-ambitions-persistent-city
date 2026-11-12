@@ -28,7 +28,6 @@ public sealed class EconomicLedgerTests
         foreach (var m in state.Food!.Residents)
         {
             var b = m.Budget!;
-            // Test-only conserved extension exercises both accounts independently of shift attendance.
             b.Ledger = new OwnerAccounts { EmploymentIncome = Money.FromUnits(17), Discretionary = Money.FromUnits(17), VisitWatermark = (long)state.Minute };
         }
         int day = (int)(state.Minute / 1440);
@@ -70,7 +69,6 @@ public sealed class EconomicLedgerTests
     {
         string previous = SaveCodec.Write(CurrentSchemaOnlyTests.City());
         var data = new Dictionary<string, string> { [SaveStore.StateKey] = previous, ["other"] = "kept" };
-        // Use matching population so the refusal is validation, not a different city.
         state.PopulationKey = CurrentSchemaOnlyTests.City().PopulationKey;
         Assert.Throws<SaveValidationException>(() => SaveCodec.Write(state));
         Assert.False(SaveStore.WriteTo(data, state).Success);
@@ -226,7 +224,7 @@ public sealed class EconomicLedgerTests
                 .Invoke(null, new object[] { context! })!;
             Refused(JsonConvert.SerializeObject(state, Formatting.None, settings));
         }
-        catch (SaveValidationException) { } // negative/over-width scalars have no wire representation at all
+        catch (SaveValidationException) { }
         catch (JsonSerializationException e) when (e.InnerException is SaveValidationException) { }
     }
     [Theory]
@@ -271,7 +269,6 @@ public sealed class EconomicLedgerTests
         b.Ledger = new OwnerAccounts { EmploymentIncome = Money.FromUnits(long.MaxValue), Discretionary = Money.FromUnits(long.MaxValue) };
         AssertRoundTrip(state);
         var root = SaveWire.Parse(SaveCodec.Write(state));
-        // One unit beyond the signed-64 range is representable by the base36 width but always refused.
         const string overflow = "1Y2P0IJ32E8E8";
         root["Citizens"]![0]!["Wallet"]![20] = overflow + new string('0', 19);
         Refused(root.ToString(Formatting.None));

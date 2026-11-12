@@ -9,7 +9,6 @@ using UnityEngine.AI;
 
 namespace PersistentCity.Runtime
 {
-    /// <summary>Complete NPC NavMesh paths only; no agents, actor movement or direct-line fallback. Main thread only.</summary>
     internal sealed class WalkingRoutes : IRoutePlanner, IWalkingQuoteOperation
     {
         public NativeRouteMetrics Metrics { get; } = new NativeRouteMetrics();
@@ -21,7 +20,6 @@ namespace PersistentCity.Runtime
         private readonly Func<Position, Position, bool>? publicSegment;
         private readonly Dictionary<string, CachedPath> cache = new Dictionary<string, CachedPath>(StringComparer.Ordinal);
         private readonly Queue<string> insertionOrder = new Queue<string>();
-        // Within one shared-quote request only: the latest complete calculation it made, and its inputs.
         private bool quoteOperation;
         private CachedPath? observed;
         private string observedKey = "";
@@ -34,13 +32,9 @@ namespace PersistentCity.Runtime
             this.publicSegment = publicSegment;
         }
 
-        /// <summary>Invalidate on city reload or navigation changes; no cached route is persistent state.</summary>
         public void Clear() { DropGeometry(); observed = null; }
-        // A refusal drops shared geometry, not the calculation that refused it: the replacement plan
-        // in the same request must use the path just observed, exactly as a recalculation would.
         private void DropGeometry() { cache.Clear(); insertionOrder.Clear(); Metrics.WalkingCacheClears++; }
 
-        /// <summary>See IWalkingQuoteOperation. Outside a request every calculation is live.</summary>
         public void BeginWalkingQuote()
         {
             if (quoteOperation) throw new InvalidOperationException("Walking quote operation cannot be nested.");
@@ -53,8 +47,6 @@ namespace PersistentCity.Runtime
             get
             {
                 var filter = NavMeshHelper.NpcNavMeshFilter;
-                // Native NPC defaults include every area; walking must not cross the
-                // game's separately named Swimmable polygons.
                 filter.areaMask &= ~NavMeshHelper.SwimmingAreaMask;
                 return filter;
             }
@@ -66,7 +58,6 @@ namespace PersistentCity.Runtime
             if (from == null || to == null || preferences == null || !from.Position.IsFinite || !to.Position.IsFinite
                 || !Position.Finite(departureMinute) || departureMinute < 0 || !Position.Finite(preferences.WalkingToleranceMetres) || preferences.WalkingToleranceMetres < 0
                 || !FitsVector(from.Position) || !FitsVector(to.Position)) { Metrics.WalkingInvalidInputs++; return null; }
-            // Geometric lower bound avoids native path work for walks already outside the citizen's limit.
             if (Position.Distance(from.Position, to.Position) > preferences.WalkingToleranceMetres) { Metrics.WalkingDistanceRejects++; return null; }
             string key = PointKey(from.Position) + ">" + PointKey(to.Position);
             if (!cache.TryGetValue(key, out CachedPath? path))
@@ -90,20 +81,15 @@ namespace PersistentCity.Runtime
                 if (path.Route == null) Metrics.WalkingNegativeCacheHits++;
             }
             if (path.Route == null || path.Metres > preferences.WalkingToleranceMetres) return null;
-            // Core owns returned routes; callers can change them without corrupting the geometry cache.
             var result = new Route();
             foreach (var leg in path.Route.Legs)
             {
-                // Recheck current public access even for cached geometry; NavMesh alone need not encode a gate.
                 if (publicSegment != null && !publicSegment(leg.From, leg.To)) return null;
                 result.Legs.Add(new RouteLeg { From = leg.From, To = leg.To, Minutes = leg.Minutes, Mode = TravelMode.Walk });
             }
             return result;
         }
 
-        // Only a repeat of the request's latest calculation, for identical endpoints and filter, is reused.
-        // Between the two run only the request's own Core and planner checks: none calls a game script,
-        // changes NavMesh data or yields. Public access is still read at every check.
         private CachedPath Observe(Position from, Position to)
         {
             var filter = DryFilter;
@@ -169,10 +155,6 @@ namespace PersistentCity.Runtime
             return new CachedPath(route, metres);
         }
 
-        // Shared meal quotes outlive a single call. Recalculate the complete dry path
-        // and require matching geometry plus current public access on every reuse.
-        // Resampling individual native corners and raycasting between them can reject
-        // a complete native path at polygon boundaries; corners are not independent endpoints.
         public bool IsWalkingQuoteValid(Place from, Place to, Route route, TravelPreferences preferences)
         {
             Metrics.WalkingQuoteChecks++;
@@ -209,17 +191,12 @@ namespace PersistentCity.Runtime
                 previous = leg.To;
             }
             if (Position.Distance(previous, to.Position) > .001) return false;
-            // Calculate is bounded to 512 legs and samples only the original endpoints.
-            // A changed/partial path invalidates both this quote and cached native geometry;
-            // the caller may then plan afresh, but cannot reuse the former corridor.
             var current = Observe(from.Position, to.Position).Route;
             if (current == null || current.Legs.Count != route.Legs.Count)
             { DropGeometry(); return false; }
             for (int i = 0; i < current.Legs.Count; i++)
             {
                 var fresh = current.Legs[i]; var quoted = route.Legs[i];
-                // The same 1 mm continuity tolerance is tighter than the 5 cm native
-                // endpoint sampling bound; timing retains its existing strict tolerance.
                 if (Position.Distance(fresh.From, quoted.From) > .001 || Position.Distance(fresh.To, quoted.To) > .001
                     || Math.Abs(fresh.Minutes - quoted.Minutes) > .000001
                     || (publicSegment != null && !publicSegment(fresh.From, fresh.To)))

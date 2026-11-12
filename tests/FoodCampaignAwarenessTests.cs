@@ -43,7 +43,6 @@ public sealed class FoodCampaignAwarenessTests
         food.Campaigns = food.Campaigns.Select(i=>FoodCampaignImage.Decode(i.Encode())).ToList();
         source = Source(food); Assert.Contains("b",Draw(source,1,24*60));
         source.Publish(Snapshot(25,Business("b")),places); Assert.Contains("b",Draw(source,1,25*60));
-        // Missed boundaries add no bits, including when a later sample observes enabled again.
         source.Publish(Snapshot(50,Business("b",Campaign())),places);
         image=Assert.Single(food.Campaigns);Assert.Equal(1u << 2,image.Mask(2,0)); Assert.Equal(1u,image.Mask(1,0));
         Assert.Equal(image.Encode(),FoodCampaignImage.Decode(image.Encode()).Encode());
@@ -87,7 +86,7 @@ public sealed class FoodCampaignAwarenessTests
         var food=new FoodCommerceState();var source=Source(food);var places=Places("b");
         source.Publish(Snapshot(24,Business("b",Campaign())),places);
         Draw(source,1,1440);Assert.True(source.Active("b"));
-        source.Publish(Snapshot(25),places); // temporarily not a current candidate
+        source.Publish(Snapshot(25),places);
         Assert.Equal(1u,Assert.Single(food.Campaigns).Mask(1,0));
         Assert.Contains("b",Draw(source,1,1500));Assert.False(source.Active("b"));
         source.Publish(Snapshot(26,Business("b",Campaign())),places);
@@ -106,7 +105,6 @@ public sealed class FoodCampaignAwarenessTests
             source.Prepare("r",day,minute);
             return catalogue.Sample(79,"r",day,new Position(),null,null,new(),_=>true,campaign:source);
         }
-        // Capture at 23:10 and 24:10, straddling midnight; the meal clock can lag the observer.
         source.Publish(Snapshot(23,Business("b",Campaign())),places);
         var timely23=Capture(0,1390);Assert.True(timely23.CampaignActive("b"));
         source.Publish(Snapshot(24,Business("b",Campaign())),places);
@@ -116,27 +114,26 @@ public sealed class FoodCampaignAwarenessTests
         Assert.Equal(JsonConvert.SerializeObject(timely24),JsonConvert.SerializeObject(Capture(1,1450)));
         source.Publish(Snapshot(26,Business("b",Campaign(enabled:false))),places);
         Assert.False(Capture(1,1570).CampaignActive("b"));
-        // The disabled hour stays disabled even when a later observation is enabled again.
         source.Publish(Snapshot(28,Business("b",Campaign())),places);
         for(int replay=0;replay<2;replay++)
         {
             Assert.Equal(JsonConvert.SerializeObject(timely23),JsonConvert.SerializeObject(Capture(0,1390)));
             Assert.Equal(JsonConvert.SerializeObject(timely24),JsonConvert.SerializeObject(Capture(1,1450)));
-            Assert.False(Capture(1,1570).CampaignActive("b")); // observed stopped
-            Assert.False(Capture(1,1630).CampaignActive("b")); // unobserved gap
-            Assert.False(Capture(0,1330).CampaignActive("b")); // before first observation
+            Assert.False(Capture(1,1570).CampaignActive("b"));
+            Assert.False(Capture(1,1630).CampaignActive("b"));
+            Assert.False(Capture(0,1330).CampaignActive("b"));
             Assert.True(Capture(1,1690).CampaignActive("b"));
-            Assert.False(Capture(1,1750).CampaignActive("b")); // not yet observed
+            Assert.False(Capture(1,1750).CampaignActive("b"));
             food.Campaigns=food.Campaigns.Select(i=>FoodCampaignImage.Decode(i.Encode())).ToList();
             source=Source(food,settings:new() {ReachProbability=0});
             source.Rebuild();
         }
-        source.Prepare("r",1,1450);source.Active("b"); // warm bounded generation lookup
+        source.Prepare("r",1,1450);source.Active("b");
         long before=GC.GetAllocatedBytesForCurrentThread();
         for(int i=0;i<1000;i++) Assert.True(source.Active("b"));
         Assert.Equal(0,GC.GetAllocatedBytesForCurrentThread()-before);
         source.Publish(Snapshot(9*24,Business("b")),places);
-        Assert.False(Capture(1,1450).CampaignActive("b")); // outside retained eight-day image
+        Assert.False(Capture(1,1450).CampaignActive("b"));
     }
     [Fact]
     public void ActiveCampaignRaisesPickProbabilityAndSoftensDistanceForEveryTraitProfile()
@@ -221,7 +218,7 @@ public sealed class FoodCampaignAwarenessTests
         var food=new FoodCommerceState();var source=Source(food,settings:new() {Enabled=!disabled});
         if(disabled) source.Publish(Snapshot(1,Business("b",Campaign())),Places("b"));
         Assert.False(source.HasEvidence);
-        source.Prepare("r",0,60); // warm up before allocation counter
+        source.Prepare("r",0,60);
         long before=GC.GetAllocatedBytesForCurrentThread();
         for(int i=0;i<1000;i++) {source.Prepare("r",0,60);source.Reference("r",0,0);}
         Assert.Equal(0,GC.GetAllocatedBytesForCurrentThread()-before);
@@ -236,7 +233,6 @@ public sealed class FoodCampaignAwarenessTests
         var source=Source(state.Food);var ids=state.Food.Shops.Select(s=>s.BusinessId).ToArray();
         int observationHour=(int)(state.Food.Residents[0].DesiredAt/60);
         source.Publish(Snapshot(observationHour,ids.Select(id=>Business(id,Campaign())).ToArray()),state.Food.Shops.ToDictionary(s=>s.BusinessId,s=>s.PlaceId));
-        // Production uses the same universal rule; replay retains the captured active modifier.
         source=Source(state.Food);
         var city=new CitySimulator(state,planner);city.AttachWeather(new FrameWeatherSource(()=>1,()=>true));city.AttachFoodMarket(market,LegacyFoodChoice.Settings(),campaign:source);city.InspectFoodAwareness("r");
         var meal=state.Food.Residents[0];city.AdvanceTo(meal.DesiredAt,1);var decision=meal.Decision!;
@@ -251,7 +247,7 @@ public sealed class FoodCampaignAwarenessTests
         var otherDecision=loaded.State.Food.Residents[0].Decision!;
         while(otherDecision.Result==FoodDecisionResult.Evaluating) other.AdvanceTo(meal.DesiredAt,128);
         Assert.Equal(JsonConvert.SerializeObject(decision),JsonConvert.SerializeObject(otherDecision));
-        Assert.InRange(planner.Out+planner.Back,0,32); // two matched continuations, <=16 each
+        Assert.InRange(planner.Out+planner.Back,0,32);
     }
     [Fact]
     public void RainAndActiveCampaignComposeInShortlistAndFinalOfferWithoutChangingTravel()
@@ -275,7 +271,7 @@ public sealed class FoodCampaignAwarenessTests
         var source=Source(state.Food!);var shop=state.Food!.Shops[0];source.Publish(Snapshot(24,Business(shop.BusinessId,Campaign())),new Dictionary<string,string>{{shop.BusinessId,shop.PlaceId}});
         string wire=DevelopmentChain.Write(state);var read=DevelopmentChain.Read(wire);Assert.True(read.Status==SaveReadStatus.Loaded,read.Error);Assert.Equal(wire,DevelopmentChain.Write(read.State!));
         var counts=SaveCodec.CountRecords(state,wire);var previous=DevelopmentChain.Read(before).State!;var oldCounts=SaveCodec.CountRecords(previous,before);
-        Assert.Equal(2,counts.Streaming-oldCounts.Streaming);Assert.Equal(2,counts.Semantic-oldCounts.Semantic); // image plus shared generation
+        Assert.Equal(2,counts.Streaming-oldCounts.Streaming);Assert.Equal(2,counts.Semantic-oldCounts.Semantic);
         var root=SaveWire.Parse(wire);var image=root["Food"]!["Campaigns"]![0]!;
         root["Food"]!["Campaigns"]![0]="bad";Assert.Equal(SaveReadStatus.Invalid,DevelopmentChain.Read(root.ToString(Formatting.None)).Status);
         root["Food"]!["Campaigns"]![0]="1ZZZ"+image.ToString().Substring(4);Assert.Equal(SaveReadStatus.Invalid,DevelopmentChain.Read(root.ToString(Formatting.None)).Status);
@@ -283,7 +279,7 @@ public sealed class FoodCampaignAwarenessTests
         var masks=new uint[64];masks[6]=1;Assert.Throws<ArgumentException>(()=>new FoodCampaignImage(0,0,masks));
         masks=new uint[64];masks[0]=2;Assert.Throws<ArgumentException>(()=>new FoodCampaignImage(0,0,masks));
         masks[0]=1;var detached=new FoodCampaignImage(0,0,masks);masks[0]=0;
-        Assert.Equal(1u,detached.Mask(0,0)); // public buffers cannot alter a published image
+        Assert.Equal(1u,detached.Mask(0,0));
     }
     [Fact]
     public void HourlyReferenceInsertionDoesNotMoveCatalogueWorkOntoTheNextMemoryLookup()
@@ -291,7 +287,7 @@ public sealed class FoodCampaignAwarenessTests
         var (city,market,planner)=WeightedFoodChoiceTests.Ready(79,1024);
         var food=city.State.Food!;var source=Source(food);
         var commerce=new FoodCommerce(city,market,planner,campaign:source);
-        commerce.MemoryReference(-1); // warm the bounded lookup before publication
+        commerce.MemoryReference(-1);
         source.Publish(Snapshot(24,food.Shops.Select(s=>Business(s.BusinessId,Campaign())).ToArray()),
             food.Shops.ToDictionary(s=>s.BusinessId,s=>s.PlaceId));
         Assert.Equal(1024,food.BusinessReferences.Count);

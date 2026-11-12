@@ -34,7 +34,6 @@ namespace PersistentCity.Runtime
                 .Select(c => new FoodEnrollmentShop { PlaceId = PlaceId(c.buildingRegistration), Name = ShopLabel(c.buildingRegistration) })
                 .OrderBy(s => s.Name, System.StringComparer.Ordinal).ThenBy(s => s.PlaceId, System.StringComparer.Ordinal).ToArray();
         }
-        // Existing native statements are read, never recalculated or posted a second time.
         public IReadOnlyList<string> UnmanagedShopStatuses() => registrations.Values.Where(r => r.RentedByPlayer)
             .Select(r => new { Name = ShopLabel(r), Status = MenuStatus(PlaceId(r)) })
             .Where(r => r.Status.Length > 0).OrderBy(r => r.Name, StringComparer.Ordinal)

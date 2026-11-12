@@ -10,14 +10,6 @@ using PersistentCity.Persistence;
 
 namespace PersistentCity.Tests;
 
-/// <summary>
-/// Issue #128 replay: a 957-resident / 1,914-consumer city on a 24x24 road grid with persistent car
-/// traffic, household finances, three food scopes and optional stops, driven frame by frame through
-/// the same loop shape as PopulationRuntime.AdvancePopulation at 30 FPS (PopulationFrameBudget caps).
-/// Each AdvanceFrameSlice call (one unit) and each frame's advancement interval is timed. The detached
-/// planner, market and stop environment are native doubles: they count the calls a unit makes into
-/// each seam but cannot reproduce native cost. Also compiled by tools/rush-spike-replay.
-/// </summary>
 public static class RushSpikeReplay
 {
     public const string Native = "1280000000000000000000000000000000000000000000000000000000000128";
@@ -96,7 +88,6 @@ public static class RushSpikeReplay
         public double EarliestMinute => 0;
         private readonly bool nativePrices;
         public Market(bool nativePrices = false) { this.nativePrices = nativePrices; }
-        // Keep the original cheap menu as well as native price levels (hotdog is a salad-price proxy).
         private Money Price(string product) => product == FoodProducts.Croissant ? Money.FromCents(nativePrices ? 924 : 350)
             : product == FoodProducts.Burger ? Money.FromCents(nativePrices ? 1250 : 725) : Money.FromCents(nativePrices ? 1669 : 480);
         public IReadOnlyList<FoodBusiness> Read(double minute)
@@ -110,7 +101,6 @@ public static class RushSpikeReplay
         public bool IsConfirmedPaid(ResidentMeal meal) => paid.Contains(meal.IntentId);
     }
 
-    /// <summary>Stands in for Runtime's OptionalStopEnvironment: fixed spots, every call counted.</summary>
     public sealed class Stops : IOptionalStopEnvironment
     {
         private readonly Dictionary<string, OptionalStopSpot[]> cache = new Dictionary<string, OptionalStopSpot[]>(StringComparer.Ordinal);
@@ -142,7 +132,6 @@ public static class RushSpikeReplay
                     District = random.Next(2) == 0 ? "a" : "b", Kind = kind, Capacity = capacity,
                     Position = At(random.Next(Side * Side)), OpenMinute = open, CloseMinute = close });
         }
-        // 1,058 places, as in the 6 Nov rig city: 331 households, 383 workplaces, shops, leisure and parks.
         Add("home-", 331, PlaceKind.Home, 4);
         Add("work-", 383, PlaceKind.Work, 4, 420, 1140);
         Add("shop-", 220, PlaceKind.Shop, 20, 540, 1260);
@@ -180,17 +169,12 @@ public static class RushSpikeReplay
         return city;
     }
 
-    /// <summary>Warm up uninterrupted to <paramref name="from"/>, then advance frame by frame to
-    /// <paramref name="to"/> at the rig's pace (about 98.6 frames per game minute at 30 FPS).</summary>
     public static Result Run(double from, double to, double framesPerGameMinute = 98.6, int fps = 30, bool nativePrices = false)
     {
         var planner = new Planner(); var market = new Market(nativePrices); var stops = new Stops();
         var state = Create();
         var city = Attach(state, planner, market, stops);
         while (!city.AdvanceTo(from, 256).CaughtUp) { }
-        // Collect the warm-up's and earlier tests' garbage before the timed window, so a collection of memory this replay
-        // did not allocate in the window cannot land in one of its intervals. Collections caused by the window's own
-        // allocations still count.
         GC.Collect(); GC.WaitForPendingFinalizers(); GC.Collect();
         var result = new Result();
         var frames = new List<double>();
@@ -250,7 +234,6 @@ public static class RushSpikeReplay
         return result;
     }
 
-    /// <summary>The same city advanced without frame slicing, for the cadence-independence hash.</summary>
     public static string RunUninterrupted(double from, double to, bool nativePrices = false)
     {
         var state = Create();

@@ -7,7 +7,6 @@ using PersistentCity.Core;
 
 namespace PersistentCity.Runtime
 {
-    /// <summary>A caller-selected existing registration. The caller owns generation-safe identity resolution.</summary>
     public sealed class CampaignBusinessSource
     {
         public CampaignBusinessSource(string businessId, object? registration)
@@ -16,15 +15,11 @@ namespace PersistentCity.Runtime
         public object? Registration { get; }
     }
 
-    /// <summary>Explicit main-thread fields-only reader. Never scheduled by Update, choice or meals.
-    /// Bind metadata once per shape, with a hard cache bound; do not invoke native getters/helpers.</summary>
     public sealed partial class NativeCampaignReader
     {
         public const int MaximumBusinesses = 1024;
         public const int MaximumCampaignsPerBusiness = 8;
         public const int MaximumBusinessesPerUnit = 64;
-        // One non-preemptible fields-only capture at the actual boundary. The native envelope
-        // remains 1024 actual lifecycle candidates; detached publication is resumable afterwards.
         public const int MaximumBoundaryBusinesses = MaximumBusinesses;
         public static bool BoundaryScopeAdmitted(int businesses) => businesses >= 0 && businesses <= MaximumBoundaryBusinesses;
         public CampaignSnapshot ReadBoundary(IReadOnlyList<CampaignBusinessSource> sources, double minute, long revision)
@@ -47,7 +42,6 @@ namespace PersistentCity.Runtime
             private readonly Dictionary<string, FieldInfo> fields = new Dictionary<string, FieldInfo>(StringComparer.Ordinal);
             public Shape(Type type)
             {
-                // Only a fixed field allowlist. Properties, method dispatch and setters are excluded.
                 foreach (string name in new[] { "marketingCampaigns", "promotion", "marketingTypeName", "enabled",
                     "agencyAddress", "streetName", "streetNumber", "trafficIndex", "marketing", "total" })
                 {
@@ -109,8 +103,6 @@ namespace PersistentCity.Runtime
             }
             public int Cursor { get; private set; }
             public bool Refused => refused;
-            // No partially refreshed image escapes. A caller must hold its logical boundary/revision stable
-            // across units (including native campaign/UI writers); otherwise discard, never backdate.
             public CampaignSnapshot? Snapshot => snapshot;
             public int Step(int businessBudget, double currentMinute, long currentRevision)
             {
@@ -137,7 +129,6 @@ namespace PersistentCity.Runtime
                 var promotion = Field(registration, "promotion");
                 int? traffic = Index(promotion, "trafficIndex"), marketing = Index(promotion, "marketing"), total = Index(promotion, "total");
                 var raw = Field(registration, "marketingCampaigns");
-                // Native storage is List<MarketingCampaign>. Arbitrary enumerators/providers are never executed.
                 if (raw == null || !raw.GetType().IsGenericType || raw.GetType().GetGenericTypeDefinition() != typeof(List<>)
                     || !(raw is IList list)) return UnknownBusiness(id, traffic, marketing, total);
                 if (list.Count > MaximumCampaignsPerBusiness)
@@ -149,7 +140,6 @@ namespace PersistentCity.Runtime
                 for (int i = 0; i < campaigns.Length; i++)
                 {
                     var c = campaigns[i];
-                    // At most eight entries: bounded pair checks avoid allocating two hash sets per business.
                     if (c.TypeCode is int code)
                         for (int j = 0; j < campaigns.Length; j++)
                             if (j != i && campaigns[j].TypeCode == code)
@@ -174,7 +164,6 @@ namespace PersistentCity.Runtime
             if (campaign == null) return new CampaignObservation(null, null, null, null, CampaignReadStatus.Unknown);
             object? rawType = Field(campaign, "marketingTypeName");
             int? code = null;
-            // The enum's complete metadata contract was checked when binding its containing shape.
             if (rawType != null) code = Convert.ToInt32(rawType, CultureInfo.InvariantCulture);
             string? name = code.HasValue ? CampaignTypeGroups.VerifiedName(code.Value) : null;
             bool? enabled = Field(campaign, "enabled", typeof(bool)) as bool?;

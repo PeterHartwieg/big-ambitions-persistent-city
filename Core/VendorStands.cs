@@ -4,49 +4,33 @@ using System.Globalization;
 
 namespace PersistentCity.Core
 {
-    /// <summary>Walkable height at a stand. The Runtime implementation samples the NavMesh (E6d); Core only reads the answer.</summary>
     public interface IVendorStandSampler
     {
         bool TrySample(Position stand, double radiusMetres, out Position point);
     }
 
-    /// <summary>What the vendor rules need from the simulator: the walking-only vendor place with its Vehicle scope,
-    /// and the places that state still names. <see cref="CitySimulator"/> implements it.</summary>
     public interface IVendorPlaces
     {
-        /// <summary>Creates or updates the row's vendor place at its stand, open only while the stand is published,
-        /// and its Vehicle scope. <paramref name="menu"/> replaces the scope's products when given.</summary>
         void PublishVendorPlace(VendorRow row, VendorVehicle? menu);
         void RemoveVendorPlace(VendorRow row);
         void CollectVendorReferences(VendorReferences into);
     }
 
-    /// <summary>Vendor places named by city state, split by how long the reference lives.</summary>
     public sealed class VendorReferences
     {
-        /// <summary>Committed meals, excursions, held decisions and routine stops: these resolve within one meal window.</summary>
         public HashSet<string> ShortLived { get; } = new HashSet<string>(StringComparer.Ordinal);
-        /// <summary>Uncertain meals and retained market history rows: they block compaction, not stand moves.</summary>
         public HashSet<string> Retained { get; } = new HashSet<string>(StringComparer.Ordinal);
-        /// <summary>Memory business references. Never reclaimed, so they turn a compacted row into a tombstone.</summary>
         public HashSet<string> Memory { get; } = new HashSet<string>(StringComparer.Ordinal);
         public void Clear() { ShortLived.Clear(); Retained.Clear(); Memory.Clear(); }
     }
 
-    /// <summary>The whole-vehicle and opening rules of E6 plan 3.3-3.5 and the section 9 defaults.</summary>
     public static class VendorRules
     {
         public const double StandRadiusMetres = 2;
-        /// <summary>A stand within this distance of the current one is the same spot, not a move.</summary>
         public const double SameStandMetres = 0.1;
 
-        /// <summary>The predicate of a coordinator built without a product policy. The live vehicle market passes the
-        /// held policy's <see cref="IFoodProductPolicy.Executable"/> instead (E6f).</summary>
         public static bool OriginalThree(string item) => FoodProducts.KnownLegacy(item);
 
-        /// <summary>Null when PC may own this vehicle's openings, otherwise why the whole vehicle stays with Street Food.
-        /// Units of zero are sold out, not a refusal. <paramref name="maximumItems"/> is the resident choice menu width:
-        /// a wider vehicle could never be chosen, so PC must not take it from Street Food (E6f).</summary>
         public static string? MenuRefusal(VendorVehicle vehicle, Func<string, bool> executable, int maximumItems = VendorVehicle.MaximumItems)
         {
             if (vehicle.MenuOverflow) return "menu has more than 8 items";
@@ -61,8 +45,6 @@ namespace PersistentCity.Core
             return null;
         }
 
-        /// <summary>Null when PC may serve this opening. Player-opened windows and city event or catering openings stay
-        /// with Street Food (section 9, Q2 and Q4); a window must have a planned close less than a day after it opens.</summary>
         public static string? OpeningRefusal(VendorVehicle vehicle)
         {
             if (!vehicle.Open) return "vehicle is closed";
@@ -73,7 +55,6 @@ namespace PersistentCity.Core
             return null;
         }
 
-        /// <summary>The stand of the vehicle's current opening at the sampled walkable point, or null with a reason.</summary>
         public static VendorStand? PlanStand(VendorVehicle vehicle, IVendorStandSampler sampler, out string reason)
         {
             var window = vehicle.Window;
@@ -84,7 +65,6 @@ namespace PersistentCity.Core
                 ClosesDay = vehicle.ClosesDay, ClosesMinute = vehicle.ClosesMinute };
         }
 
-        /// <summary>The vendor place's weekly hours: the stand's one window while it is published, otherwise none.</summary>
         public static List<OpeningWindow> StandHours(VendorStand stand)
         {
             var hours = new List<OpeningWindow>();
@@ -93,7 +73,6 @@ namespace PersistentCity.Core
             return hours;
         }
 
-        /// <summary>DailyRoutine's weekday (Monday = 0) of a native day.</summary>
         public static int Weekday(int day) => ((day - 1) % 7 + 7) % 7;
 
         public static string Describe(VendorApiStatus status)
@@ -109,12 +88,9 @@ namespace PersistentCity.Core
         }
     }
 
-    /// <summary>Copies Street Food's snapshot into a validated Core image, at most 16 vehicles per unit, only when the
-    /// revision changed. Two images are allocated once and swapped; an unchanged revision costs one property read.</summary>
     public sealed class VendorImageReader
     {
         public const int CopyUnit = 16;
-        /// <summary>A non-Ready image is read again once per this many native minutes even at the same revision.</summary>
         public const int RetryMinutes = 15;
         private readonly IVendorApi api;
         private long retrySlot = long.MinValue;
@@ -126,18 +102,15 @@ namespace PersistentCity.Core
         public VendorImageReader(IVendorApi api) { this.api = api ?? throw new ArgumentNullException(nameof(api)); }
         public VendorImage Image => published;
         public bool Pending => copied >= 0;
-        /// <summary>The next <see cref="Poll"/> reads Street Food again even at the same revision.</summary>
         public void Refresh() => refresh = true;
 
-        /// <summary>One revision read. True when a copy is pending or a new image was published. With a native minute,
-        /// an image that is not Ready is also read again once per 15 minutes: Street Food may recover without a new revision.</summary>
         public bool Poll(long minute = -1)
         {
             long revision = api.Revision;
             if (copied >= 0)
             {
                 if (revision == buildingRevision) return true;
-                copied = -1; // Street Food changed again mid-copy; start over from its new view.
+                copied = -1;
             }
             else if (revision == published.Revision && !refresh && (published.Ready || minute < 0 || minute / RetryMinutes == retrySlot)) return false;
             if (minute >= 0) retrySlot = minute / RetryMinutes;
@@ -154,7 +127,6 @@ namespace PersistentCity.Core
             return true;
         }
 
-        /// <summary>Copies one unit. True when this call published a new image.</summary>
         public bool Continue()
         {
             if (copied < 0) return false;
@@ -176,13 +148,10 @@ namespace PersistentCity.Core
         private void Swap() { var old = published; published = building; building = old; }
     }
 
-    /// <summary>PC's lease with Street Food. Renewed in every 15-minute slot it is needed, so the 60-minute lease never
-    /// runs out while PC is healthy, at any update cadence of 45 minutes or less.</summary>
     public sealed class VendorLease
     {
         public const int RenewMinutes = 15, LeaseMinutes = 60;
         private long renewedSlot = -1;
-        /// <summary>PC absolute minute the lease runs to; -1 when none was granted.</summary>
         public long UntilMinute { get; private set; } = -1;
         public bool Valid(long minute) => minute < UntilMinute;
         public bool Due(long minute) => minute / RenewMinutes != renewedSlot;
@@ -202,12 +171,8 @@ namespace PersistentCity.Core
         internal void End() { UntilMinute = -1; renewedSlot = -1; }
     }
 
-    /// <summary>Drives the vendor rows from Street Food's snapshot: request, acquire, serve, release, lease, stands,
-    /// retirement. Core only; Runtime calls <see cref="Poll"/> once per logical minute and <see cref="Continue"/> in
-    /// bounded continuation units. Without the API every vehicle scope stays unserviceable and shops are untouched.</summary>
     public sealed class VendorCoordinator
     {
-        /// <summary>How often rows that wait on residents (a deferred stand, a release) are checked again.</summary>
         public const int WaitingRecheckMinutes = 5;
         private readonly VendorTable table;
         private readonly IVendorApi? api;
@@ -238,14 +203,10 @@ namespace PersistentCity.Core
         public VendorTable Table => table;
         public VendorLease Lease => lease;
         public VendorImage? Image => reader?.Image;
-        /// <summary>Why no vehicle is served at all; empty while the bridge is bound and its image is Ready.</summary>
         public string Reason { get; private set; }
-        /// <summary>Vehicles in the last applied image that have no live row, with the reason (whole-vehicle refusal, table full).</summary>
         public IReadOnlyList<KeyValuePair<string, string>> Refusals => refusals;
-        /// <summary>Why the last lease renewal failed; empty after a successful one.</summary>
         public string LeaseFault { get; private set; } = "";
 
-        /// <summary>The logical-minute step: lease renewal and one revision read. True when continuation work is pending.</summary>
         public bool Poll(long minute)
         {
             if (api == null || stopped) return false;
@@ -255,7 +216,6 @@ namespace PersistentCity.Core
             return reader.Pending || applyPending;
         }
 
-        /// <summary>One bounded unit: copy at most 16 vehicles, or apply a finished image. False when nothing was pending.</summary>
         public bool Continue(long minute)
         {
             if (api == null || stopped) return false;
@@ -266,8 +226,6 @@ namespace PersistentCity.Core
             return true;
         }
 
-        /// <summary>True only while the snapshot says open, the opening is the stand's, the owner is PC, the lease is valid
-        /// and the whole-vehicle and opening rules hold.</summary>
         public bool CanServe(string businessId, long minute)
         {
             if (api == null || stopped || !lease.Valid(minute)) return false;
@@ -285,12 +243,10 @@ namespace PersistentCity.Core
             return false;
         }
 
-        /// <summary>Hands every vehicle back at once (stopped epoch, refused city) and stops until <see cref="Resume"/>.
-        /// If Street Food cannot be reached the lease runs out by itself.</summary>
         public void ReleaseAll(long minute, string reason)
         {
             if (api == null) return;
-            try { api.ReleaseAll(); } catch (InvalidOperationException) { } // the lease then runs out by itself
+            try { api.ReleaseAll(); } catch (InvalidOperationException) { }
             for (int r = 0; r < table.Rows.Count; r++)
             {
                 var row = table.Rows[r];
@@ -305,18 +261,10 @@ namespace PersistentCity.Core
 
         public void Resume() { stopped = false; applyPending = true; Reason = ""; }
 
-        /// <summary>The executable predicate's answers changed (E6f: a new product policy). The current image is applied
-        /// again at the next unit, so a vehicle whose menu turned non-executable is handed back after drain and a vehicle
-        /// whose menu turned executable is admitted, without waiting for a new Street Food revision.</summary>
         public void Revalidate() { if (api != null && !stopped) applyPending = true; }
 
-        /// <summary>While true, a finished image is copied but not applied: no request, acquisition, release or stand
-        /// change. The vehicle market sets it while the product policy is still being prepared (E6f), so an unfinished
-        /// catalogue never counts as a refusal. Lease renewal and snapshot reads continue.</summary>
         public bool Deferred { get; set; }
 
-        /// <summary>At a save-consistent event boundary: removes retired rows nothing names, or keeps them as tombstones
-        /// when memory names their place. <paramref name="pendingReceipt"/> reports a pending or uncertain receipt.</summary>
         public int Compact(Func<VendorRow, bool>? pendingReceipt = null)
         {
             int changed = 0;
@@ -328,7 +276,7 @@ namespace PersistentCity.Core
                 References();
                 if (references.ShortLived.Contains(row.PlaceId) || references.Retained.Contains(row.PlaceId) || pendingReceipt?.Invoke(row) == true) continue;
                 bool remembered = references.Memory.Contains(row.PlaceId);
-                if (remembered && table.Tombstones >= VendorTable.MaximumTombstones) continue; // stays retired, within 128
+                if (remembered && table.Tombstones >= VendorTable.MaximumTombstones) continue;
                 if (row.PlacePublished) { places.RemoveVendorPlace(row); row.PlacePublished = false; }
                 if (remembered)
                 {
@@ -352,7 +300,6 @@ namespace PersistentCity.Core
             long hour = minute / 60;
             if (!image.Ready)
             {
-                // Street Food absent, off or broken: no row is retired, nothing is served, places show no hours.
                 Reason = image.Reason;
                 for (int r = 0; r < table.Rows.Count; r++)
                 {
@@ -362,7 +309,6 @@ namespace PersistentCity.Core
                 return;
             }
             Reason = "";
-            // Retire first: a live row turning retired keeps live + retired, and frees a live slot for a newcomer.
             for (int r = 0; r < table.Rows.Count; r++)
                 if (table.Rows[r].State == VendorRowState.Live && image.Find(table.Rows[r].VehicleId) == null) Retire(table.Rows[r], hour);
             for (int i = 0; i < image.Count; i++)
@@ -373,15 +319,12 @@ namespace PersistentCity.Core
                 if (row == null || row.State != VendorRowState.Live)
                 {
                     string? admission = refusal ?? table.AdmissionRefusal(row);
-                    // A retired vehicle that returns becomes the next generation only after residents committed to the
-                    // previous generation at its place have resolved (the same drain rule as a kind change).
                     if (admission == null && row != null && row.State == VendorRowState.Retired && Committed(row))
                     { admission = "returning vehicle waits for committed residents"; revivalPending = true; }
                     if (admission != null) { refusals.Add(new KeyValuePair<string, string>(v.VehicleId, admission)); continue; }
                     if (row == null) row = table.Admit(v.VehicleId, v.Kind);
                     else
                     {
-                        // A returning vehicle is a new business generation at the same place and signature.
                         table.Move(row, VendorRowState.Live);
                         row.Generation = checked(row.Generation + 1); row.Kind = v.Kind; row.Authority = new VendorAuthority();
                         if (row.PlacePublished) places.PublishVendorPlace(row, v);
@@ -389,7 +332,6 @@ namespace PersistentCity.Core
                 }
                 if (v.Kind != row.Kind)
                 {
-                    // Another kind under the same id is another business: drain, release, then the next generation.
                     var a = row.Authority;
                     if (!a.Requested && !a.Managed && a.OpeningId < 0 && !Committed(row))
                     {
@@ -408,24 +350,21 @@ namespace PersistentCity.Core
             var a = row.Authority;
             bool owned = v.OwnedByPersistentCity;
             row.Reason = refusal ?? "";
-            if (refusal != null) a.Desired = false; // stop new captures at once
+            if (refusal != null) a.Desired = false;
             else if (!a.Desired) a.Desired = true;
             if (lapsed) a.RequestedHour = -1;
 
-            // The opening PC served has ended, or Street Food took it back (lease ran out).
             if (a.OpeningId >= 0 && (!owned || v.OpeningId != a.OpeningId))
             {
-                if (v.Open && v.OpeningId == a.OpeningId) a.RequestedHour = -1; // handed back: request the next opening again
+                if (v.Open && v.OpeningId == a.OpeningId) a.RequestedHour = -1;
                 a.OpeningId = -1; row.DeferredStand = null; Close(row);
             }
-            // A handback Street Food has not confirmed blocks every new request and acquisition until it succeeds.
             if (a.HandbackPending)
             {
-                if (!lease.Valid(minute)) a.HandbackPending = false; // the lapsed lease handed every PC opening and request back
+                if (!lease.Valid(minute)) a.HandbackPending = false;
                 else
                 {
                     if (!Release(row, hour, row.Reason)) { row.Reason = "handback to Street Food not confirmed; retrying"; return; }
-                    // Confirmed: this snapshot predates the handback, so the next request and grant wait for a fresh read.
                     if (refusal == null) a.Desired = true;
                     reader!.Refresh();
                     return;
@@ -436,14 +375,11 @@ namespace PersistentCity.Core
             if (owned && a.OpeningId != v.OpeningId && a.Desired)
             {
                 VendorStand? stand = null;
-                // A grant counts only against a request Street Food confirmed (RequestedHour recorded) and only for a later hour.
                 string? why = !a.Requested ? "Street Food granted an opening without a confirmed ownership request"
                     : v.OpenedHour <= a.RequestedHour ? "Street Food granted an opening that started in the request hour" : VendorRules.OpeningRefusal(v);
                 if (why == null) stand = VendorRules.PlanStand(v, sampler, out why);
                 if (stand == null)
                 {
-                    // No PC work exists for this opening yet: hand it back at once and ask for the next one,
-                    // but only once Street Food has confirmed the handback.
                     if (Release(row, hour, why!)) { a.Desired = true; Request(row, minute, hour); }
                     row.Reason = why!;
                 }
@@ -454,7 +390,6 @@ namespace PersistentCity.Core
                     Place(row, stand, v);
                 }
             }
-            // Release only after PC's own work at the served opening has drained.
             if (!a.Desired && (a.Requested || a.Managed || a.OpeningId >= 0 || owned) && (a.OpeningId < 0 || !Committed(row)))
                 Release(row, hour, refusal ?? "not desired");
 
@@ -464,7 +399,7 @@ namespace PersistentCity.Core
                 row.Stand = next; next.Published = true; places.PublishVendorPlace(row, v);
             }
             else if (a.OpeningId >= 0 && row.Stand != null && row.Stand.OpeningId == a.OpeningId && !row.Stand.Published && row.DeferredStand == null)
-            { row.Stand.Published = true; places.PublishVendorPlace(row, v); } // reopened after Street Food came back
+            { row.Stand.Published = true; places.PublishVendorPlace(row, v); }
             a.Suspended = a.OpeningId >= 0 && !lease.Valid(minute);
         }
 
@@ -478,7 +413,6 @@ namespace PersistentCity.Core
                 places.PublishVendorPlace(row, v); row.PlacePublished = true;
                 return;
             }
-            // Residents still walk to, wait at or hold a meal for the old position: keep it, with no open hours.
             row.DeferredStand = stand; old.Published = false;
             places.PublishVendorPlace(row, null);
             row.Reason = "stand move waits for committed residents";
@@ -495,8 +429,6 @@ namespace PersistentCity.Core
             else row.Reason = "ownership request refused: " + (string.IsNullOrEmpty(reason) ? status.ToString() : reason);
         }
 
-        /// <summary>Asks Street Food to take the vehicle back. PC stops serving at once either way; a handback Street Food
-        /// did not confirm stays pending and is retried, because another vehicle may keep the shared lease alive.</summary>
         private bool Release(VendorRow row, long hour, string reason)
         {
             var a = row.Authority;
@@ -535,7 +467,6 @@ namespace PersistentCity.Core
             catch (InvalidOperationException error) { renewed = false; reason = error.Message; }
             LeaseFault = reason;
             if (!renewed) return;
-            // Street Food handed every PC opening back when the lease ran out; ask again for later openings.
             if (held && !wasValid) { leaseLapsed = true; applyPending = true; }
         }
 
@@ -546,7 +477,6 @@ namespace PersistentCity.Core
                 var row = table.Rows[r];
                 if (row.State != VendorRowState.Live) continue;
                 var a = row.Authority;
-                // A pending handback alone does not renew: without other PC work the lease runs out and Street Food takes the vehicle back.
                 if (a.Desired || a.Requested || a.Managed || a.OpeningId >= 0) return true;
             }
             return false;
@@ -586,7 +516,7 @@ namespace PersistentCity.Core
                 places.Add(place.Id, place);
             }
             place.Position = stand.Position;
-            place.OpenMinute = 0; place.CloseMinute = 0; // no hours outside the stand's one window
+            place.OpenMinute = 0; place.CloseMinute = 0;
             place.WeeklyHours = VendorRules.StandHours(stand);
             var scope = food.Shops.Find(s => s.PlaceId == row.PlaceId);
             if (scope == null)
@@ -614,7 +544,6 @@ namespace PersistentCity.Core
             InvalidateFoodAwareness();
         }
 
-        /// <summary>One pass over meals, routine stops, history and memory references; only vendor places are kept.</summary>
         public void CollectVendorReferences(VendorReferences into)
         {
             into.Clear();
@@ -634,9 +563,6 @@ namespace PersistentCity.Core
                     foreach (var shop in meal.Decision.Shops) if (VendorNames.IsVendorPlace(shop.PlaceId)) into.ShortLived.Add(shop.PlaceId);
             }
             foreach (var stop in state.RoutineStops) if (VendorNames.IsVendorPlace(stop.PlaceId)) into.ShortLived.Add(stop.PlaceId);
-            // A physical resident or visitor walking to, eating at or about to leave the stand: its return route starts
-            // from the place's position, so the place must not move until the person has left it. A recent visit names
-            // the place in the save (E6c), so it keeps the row and its place until the visit ages out.
             foreach (var person in State.Citizens) Person(person);
             foreach (var routine in State.VisitorRoutines) Person(routine);
             void Person(CitizenState person)
@@ -649,19 +575,14 @@ namespace PersistentCity.Core
             foreach (var reference in state.BusinessReferences) if (VendorNames.IsVendorPlace(reference.PlaceId)) into.Memory.Add(reference.PlaceId);
         }
 
-        /// <summary>False while the shared awareness image waits for a rebuild (after a vendor place change, for example).</summary>
         internal bool FoodAwarenessCurrent => food != null && food.AwarenessCurrent;
 
-        /// <summary>A route rebuild replaces the simulator; vendor places live outside CityState.Places and move along.
-        /// The replacement already rebuilt the saved table's places, so the old simulator's objects replace them.</summary>
         private void CopyVendorPlaces(CitySimulator from)
         {
             foreach (var pair in from.places)
                 if (VendorNames.IsVendorPlace(pair.Key)) places[pair.Key] = pair.Value;
         }
 
-        /// <summary>E6c: a loaded city's vendor places come from its table, not from CityState.Places. Every live or
-        /// retired row with a stand has a place and its Vehicle scope (the reader checked both).</summary>
         private void RestoreVendorPlaces()
         {
             var table = State.Vendors;
