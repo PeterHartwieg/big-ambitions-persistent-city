@@ -48,7 +48,8 @@ namespace PersistentCity.Runtime
         internal static RloLivingReading ReadForLoad()
         {
             var tracker = Living;
-            if (tracker.Refresh()) Debug.Log("[Persistent City] RLO " + tracker.Changes[tracker.Changes.Count - 1] + " at city load; Persistent City keeps the shops it owns.");
+            if (tracker.Refresh()) Debug.Log("[Persistent City] RLO " + tracker.Changes[tracker.Changes.Count - 1] + " at city load; "
+                + (tracker.Current.State == RloLivingState.Unknown ? "food.checkout.shop is refused for this load and every shop stays native." : "Persistent City keeps the shops it owns."));
             return tracker.Current;
         }
 
