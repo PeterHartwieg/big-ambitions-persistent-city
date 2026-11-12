@@ -270,21 +270,25 @@ namespace PersistentCity.Runtime
             // batch defensively; never substitute the global hour for simulator.currentHour.
             return (SaveGameManager.Current.Day - (hour > SaveGameManager.Current.Hour ? 1L : 0L)) * 24 + hour;
         }
+        // RLO 1.0 overrule: the four gates below are Core's owned-shop gate (RloOverrule.AdmitsNative), the same with RLO's
+        // Living population on, off or unknown. RLO's replaced calculators only run inside native generation, and its
+        // loyalty and interiors basket lines only reach native entries, so neither adds customers or sold lines here.
         private static bool HourlyCustomers(RetailBusinessSimulator __instance)
         {
-            if (!Suppress((BuildingRegistration)Registration.GetValue(__instance)!, BatchHour(__instance))) return true;
+            if (RloOverrule.AdmitsNative(NativeShopPath.Batch, Suppress((BuildingRegistration)Registration.GetValue(__instance)!, BatchHour(__instance)))) return true;
             SuppressedBatches++; return false; // Native restock/tasks/settlement still run.
         }
         private static bool CustomerSale(RetailBusinessSimulator __instance)
         {
             var reg = (BuildingRegistration)Registration.GetValue(__instance)!;
-            return NativeFoodMarket.IsBuying(reg) || NativeSaleProbe.IsProbing(reg) || !Suppress(reg, BatchHour(__instance));
+            bool own = NativeFoodMarket.IsBuying(reg) || NativeSaleProbe.IsProbing(reg);
+            return own || RloOverrule.AdmitsNative(NativeShopPath.Process, Suppress(reg, BatchHour(__instance)));
         }
-        private static bool GenerateCustomers(BuildingRegistration registration) => !Suppress(registration, Hour);
+        private static bool GenerateCustomers(BuildingRegistration registration) => RloOverrule.AdmitsNative(NativeShopPath.Generation, Suppress(registration, Hour));
         private static bool CustomerDraw(Address address, ref List<CustomerEntry> __result)
         {
             EnsureSave();
-            if (!addresses.TryGetValue(address, out var reg) || !Suppress(reg, Hour)) return true;
+            if (!addresses.TryGetValue(address, out var reg) || RloOverrule.AdmitsNative(NativeShopPath.Draw, Suppress(reg, Hour))) return true;
             SuppressedDraws++; __result = new List<CustomerEntry>(); return false;
         }
         private static void AfterNativeTick()

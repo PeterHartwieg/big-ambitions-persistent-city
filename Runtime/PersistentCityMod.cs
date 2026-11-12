@@ -262,6 +262,7 @@ namespace PersistentCity.Runtime
                 if (!BeginAccountingObservations()) return;
                 foodMarket?.RefreshDiscovery();
                 routeObjects?.Step(preparingPausedCity: Time.timeScale == 0);
+                RloOverrules.Poll(Time.unscaledTime, log); // RLO 1.0 Living population toggle: one field read a second at most
                 if (Time.unscaledTime >= nextDependencyCheck)
                 {
                     long checkStarted = Stopwatch.GetTimestamp();

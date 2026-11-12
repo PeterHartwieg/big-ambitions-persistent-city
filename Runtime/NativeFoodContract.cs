@@ -49,7 +49,10 @@ namespace PersistentCity.Runtime
         {
             settled = !loading;
             if (loading) { HookConflicts.TakeLoadScan(); return Checkout; } // drop a scan from an earlier market
-            return Decide(Checkout, HookConflicts.ScanForLoad);
+            // RLO 1.0 overrule: RLO's presence, its Living population on or off and its calculator replacement never refuse;
+            // an unreadable Living population switch does (RloOverrule.CheckoutRefusal), after any foreign Harmony refusal.
+            var decided = Decide(Checkout, HookConflicts.ScanForLoad);
+            return WithConflict(decided, RloOverrule.CheckoutRefusal(null, RloOverrules.ReadForLoad()));
         }
 
         /// <summary>The decision from a scan the caller supplies (the harness's throwing arm). A failed scan refuses

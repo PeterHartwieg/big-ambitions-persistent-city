@@ -35,6 +35,21 @@ namespace PersistentCity.Core
         public string Signature => Type + "." + Method + "(" + string.Join(", ", Parameters) + ")";
     }
 
+    /// <summary>F8h, RLO 1.0 overrule: a native object another mod swapped without Harmony, such as RLO's subclasses in
+    /// the five static fields of CustomerEntriesCalculatorFactory. Harmony's metadata cannot see these; the Runtime scan
+    /// reads the fields. A replacement never refuses food.checkout.shop: the owned-shop gate takes no native draw there.</summary>
+    public readonly struct HookReplacement
+    {
+        public HookReplacement(string target, string nativeType, string replacementType, string owner)
+        { Target = target ?? ""; NativeType = nativeType ?? ""; ReplacementType = replacementType ?? ""; Owner = owner ?? ""; }
+        /// <summary>"Type.field" of the native holder.</summary>
+        public string Target { get; }
+        public string NativeType { get; }
+        public string ReplacementType { get; }
+        /// <summary>The replacing type's assembly name.</summary>
+        public string Owner { get; }
+    }
+
     public sealed class HookConflictEntry
     {
         internal HookConflictEntry(string signature, IReadOnlyList<string> capabilities, IReadOnlyList<string> pcOwners, bool patched,
@@ -54,9 +69,12 @@ namespace PersistentCity.Core
 
     public sealed class HookConflictReport
     {
-        private HookConflictReport(IReadOnlyList<HookConflictEntry> entries) { Entries = entries; }
+        private HookConflictReport(IReadOnlyList<HookConflictEntry> entries, IReadOnlyList<HookReplacement> replacements)
+        { Entries = entries; Replacements = replacements; }
         /// <summary>One entry per distinct inventory target method, in inventory order.</summary>
         public IReadOnlyList<HookConflictEntry> Entries { get; }
+        /// <summary>Native objects replaced without Harmony, in scan order; overruled at owned shops, never refusing.</summary>
+        public IReadOnlyList<HookReplacement> Replacements { get; }
         public int ForeignOwners => Entries.SelectMany(e => e.Foreign.Select(f => f.Owner)).Distinct(StringComparer.Ordinal).Count();
         /// <summary>F8h: the food.checkout.shop refusal of the first refusing entry in inventory order, or null.</summary>
         public string? CheckoutRefusal => Entries.Select(e => e.CheckoutRefusal).FirstOrDefault(r => r != null);
@@ -85,8 +103,10 @@ namespace PersistentCity.Core
         /// <summary>Joins Harmony's patched methods to the F8a inventory by signature. Owners in the inventory are Persistent
         /// City's, never foreign; every other owner on an inventory target is foreign and classed by its patch kind. F8h: on
         /// a target named in <paramref name="checkoutPolicy"/> (signatures), a foreign owner that is not an observer refuses
-        /// food.checkout.shop; without a policy nothing refuses.</summary>
-        public static HookConflictReport Build(IEnumerable<HookPatchedMethod> patched, IEnumerable<string>? checkoutPolicy = null)
+        /// food.checkout.shop; without a policy nothing refuses. <paramref name="replacements"/> are reported and overruled,
+        /// never refusing.</summary>
+        public static HookConflictReport Build(IEnumerable<HookPatchedMethod> patched, IEnumerable<string>? checkoutPolicy = null,
+            IEnumerable<HookReplacement>? replacements = null)
         {
             var policy = new HashSet<string>(checkoutPolicy ?? Array.Empty<string>(), StringComparer.Ordinal);
             var ours = new HashSet<string>(NativeHookInventory.Owners.Select(o => o.Id), StringComparer.Ordinal);
@@ -113,7 +133,7 @@ namespace PersistentCity.Core
                         if (f.Item3 != HookConflictClass.Observer) { refusal = "foreign " + KindWord(f.Kind) + " by " + f.Owner + " on " + group.Key; break; }
                 entries.Add(new HookConflictEntry(group.Key, capabilities, pc, true, foreign, refusal));
             }
-            return new HookConflictReport(entries);
+            return new HookConflictReport(entries, (replacements ?? Array.Empty<HookReplacement>()).ToArray());
         }
 
         private static string Key(NativeHookTarget target)
@@ -145,6 +165,9 @@ namespace PersistentCity.Core
                 if (entry.CheckoutRefusal != null) text.Append(" -> refuses food.checkout.shop");
                 text.Append('\n');
             }
+            foreach (var r in Replacements)
+                text.Append(r.Target).Append(" [non-Harmony]: ").Append(r.NativeType).Append(" replaced by ").Append(r.Owner).Append(' ')
+                    .Append(r.ReplacementType).Append(" -> overruled at owned food shops, does not refuse food.checkout.shop\n");
             return text.ToString();
         }
 
@@ -154,11 +177,16 @@ namespace PersistentCity.Core
             var conflicted = Entries.Where(e => e.Foreign.Count > 0).ToArray();
             var text = new StringBuilder("Persistent City hook conflicts at activation (scan ")
                 .Append(ScanMilliseconds.ToString("F3", System.Globalization.CultureInfo.InvariantCulture)).Append(" ms): ");
-            if (conflicted.Length == 0) return text.Append("no foreign owner on ").Append(Entries.Count(e => e.Patched)).Append(" patched targets.").ToString();
+            if (conflicted.Length == 0)
+                return text.Append("no foreign owner on ").Append(Entries.Count(e => e.Patched)).Append(" patched targets.").Append(ReplacementClause()).ToString();
             text.Append(string.Join("; ", conflicted.Select(e => e.Signature + " " + string.Join(", ",
                 e.Foreign.Select(f => f.Owner + " " + ClassWord(f.Class)))))).Append('.');
             if (CheckoutRefusal is string refusal) text.Append(" food.checkout.shop off: ").Append(refusal).Append('.');
-            return text.Append(" Details: pc capability hooks.").ToString();
+            return text.Append(ReplacementClause()).Append(" Details: pc capability hooks.").ToString();
         }
+
+        private string ReplacementClause() => Replacements.Count == 0 ? ""
+            : " " + Replacements.Count + " native object(s) replaced without Harmony by "
+                + string.Join(", ", Replacements.Select(r => r.Owner).Distinct(StringComparer.Ordinal)) + ", overruled at owned food shops.";
     }
 }

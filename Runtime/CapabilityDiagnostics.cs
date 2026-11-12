@@ -26,7 +26,8 @@ namespace PersistentCity.Runtime
                 try
                 {
                     var inputs = ReadCapabilityInputs();
-                    Debug.Log("[Persistent City] capability status (read-only)\n" + capabilityReport.Status(CapabilitySnapshot.Build(inputs), Application.version, CapabilitySnapshot.Context(inputs)));
+                    Debug.Log("[Persistent City] capability status (read-only)\n" + capabilityReport.Status(CapabilitySnapshot.Build(inputs), Application.version, CapabilitySnapshot.Context(inputs))
+                        + "\n" + RloOverruleLine());
                 }
                 catch (Exception error) { Debug.LogWarning("[Persistent City] capability status unavailable: " + error.Message); }
                 return;
@@ -135,6 +136,21 @@ namespace PersistentCity.Runtime
         {
             log?.Info(CapabilityActivationLine()); // F8d (D7): one line naming every capability that is not active
             log?.Info(HookConflictActivationLine()); // F8e: foreign owners on Persistent City targets
+            log?.Info(RloOverruleLine().TrimEnd('\n').Replace("\n", "; ")); // RLO 1.0 overrule: what Persistent City owns
+        }
+
+        /// <summary>RLO 1.0 overrule status (pc capability status and the activation lines). Reads the calculator fields
+        /// once; on request or once per load only.</summary>
+        private string RloOverruleLine()
+        {
+            try
+            {
+                int replaced;
+                try { replaced = HookConflicts.CalculatorReplacements().Count; }
+                catch (Exception) { replaced = -1; }
+                return RloOverrules.Status(replaced, foodMarket?.CheckoutRefusal);
+            }
+            catch (Exception error) { return "Persistent City RLO overrule status unavailable: " + error.Message; }
         }
 
         /// <summary>F8e: the once-per-load conflict line. F8h: it reuses the scan this load's checkout decision used (taken

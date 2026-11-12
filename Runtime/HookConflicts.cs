@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
+using AI.Customers.CustomerEntries;
 using HarmonyLib;
 using PersistentCity.Core;
 
@@ -61,9 +63,28 @@ namespace PersistentCity.Runtime
                 methods.Add(new HookPatchedMethod(method.DeclaringType?.Name ?? "", method.Name,
                     method.GetParameters().Select(p => p.ParameterType.Name).ToArray(), patches));
             }
-            var report = HookConflictReport.Build(methods, CheckoutPolicy);
+            var report = HookConflictReport.Build(methods, CheckoutPolicy, CalculatorReplacements());
             report.ScanMilliseconds = (System.Diagnostics.Stopwatch.GetTimestamp() - started) * 1000.0 / System.Diagnostics.Stopwatch.Frequency;
             return report;
+        }
+
+        /// <summary>F8h, RLO 1.0 overrule: the native customer calculators another mod swapped without Harmony. RLO 1.0
+        /// assigns its own subclasses to the five static calculator fields of CustomerEntriesCalculatorFactory (Plain, Retail,
+        /// Office, Casino, Cinema); Harmony's metadata never shows that. Every static field of a calculator type whose value is
+        /// not exactly the field's own type is listed. One read per scan (a city load or a request), never per frame.</summary>
+        internal static List<HookReplacement> CalculatorReplacements()
+        {
+            var found = new List<HookReplacement>();
+            var factory = typeof(CustomerEntriesCalculatorFactory);
+            foreach (var field in factory.GetFields(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly))
+            {
+                if (!typeof(CustomerEntriesCalculator).IsAssignableFrom(field.FieldType)) continue;
+                var value = field.GetValue(null);
+                if (value == null || value.GetType() == field.FieldType) continue;
+                var type = value.GetType();
+                found.Add(new HookReplacement(factory.Name + "." + field.Name, field.FieldType.Name, type.FullName ?? type.Name, type.Assembly.GetName().Name ?? ""));
+            }
+            return found;
         }
 
         /// <summary>The metadata part of the capability report's inputs, shared by Runtime and the harness that times it:

@@ -300,6 +300,7 @@ namespace PersistentCity.Runtime
             UnityEngine.Object.DontDestroyOnLoad(holder);
             OwnHolder = holder.transform;
             HoldNativeAmbient(pool);
+            RloOverrules.TrafficHeld = heldGroups.Count != 0 || nativeDensity.HasValue;
             active = true; return true;
         }
         private static bool Size(float value) => !float.IsNaN(value) && !float.IsInfinity(value) && value > 0;
@@ -354,13 +355,13 @@ namespace PersistentCity.Runtime
 
         private void ReleaseNativeAmbient()
         {
-            if (!TrafficManager.IsInitialized || !TrafficManager.HasInstance) { nativeShares = appliedShares = null; nativeDensity = null; return; }
+            if (!TrafficManager.IsInitialized || !TrafficManager.HasInstance) { nativeShares = appliedShares = null; nativeDensity = null; RloOverrules.TrafficHeld = false; return; }
             try
             {
                 if (appliedShares != null && nativeShares != null && heldGroups.Count != 0) TrafficManager.Instance.UpdateVehicleGroupTypePercentages(nativeShares);
                 if (nativeDensity.HasValue) Manager.SetTrafficDensity(nativeDensity.Value);
             }
-            finally { nativeShares = appliedShares = null; nativeDensity = null; heldGroups.Clear(); }
+            finally { nativeShares = appliedShares = null; nativeDensity = null; heldGroups.Clear(); RloOverrules.TrafficHeld = false; }
         }
 
         internal static bool IsTaxi(VehicleComponent vehicle) => vehicle != null && vehicle.GetComponentInChildren<TaxiController>(true) != null;
@@ -597,8 +598,11 @@ namespace PersistentCity.Runtime
             if (heldGroups.Count == 0 && !nativeDensity.HasValue) return;
             var pool = Manager.GetVehicleList(); if (pool.Count == 0) return;
             var vehicle = pool[retireCursor++ % pool.Count];
+            // RLO 1.0 overrule: a car RLO holds for a scene (an accident, a reckless driver, a response unit) carries a preset
+            // path or is on native's ignore list; it is RLO's and never retired. Ordinary groups stay held for our own cars.
             if (vehicle != null && vehicle.gameObject.activeInHierarchy && vehicle.presetPath == null
                 && (nativeDensity.HasValue || heldGroups.Contains(vehicle.vehicleGroupType)) && Ordinary(vehicle) && !IsTaxi(vehicle)
+                && !TrafficManager.Instance.IsVehicleIgnored(vehicle.GetIndex())
                 && !vehicle.GetComponentsInChildren<Renderer>().Any(r => r.isVisible))
             { Manager.RemoveVehicle(vehicle.GetIndex()); retired++; }
         }

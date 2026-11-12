@@ -395,13 +395,22 @@ namespace PersistentCity.Tests
     {
         private const string Space = "RealLifeOverhaul.ModApi.";
 
-        /// <summary><c>liveContract</c> answers ContractVersion from <see cref="CityApiHooks.Contract"/> on every call.</summary>
-        public static Assembly Build(string version, int contract = 1, string fault = "", bool liveContract = false)
+        /// <summary><c>liveContract</c> answers ContractVersion from <see cref="CityApiHooks.Contract"/> on every call.
+        /// <c>living</c> also emits RLO 1.0's <c>public static bool RealLifeOverhaul.Settings.LivingPopulation</c> and its
+        /// population director type (RloOverruleTests); the field starts false and tests assign it as RLO's options do.</summary>
+        public static Assembly Build(string version, int contract = 1, string fault = "", bool liveContract = false, bool living = false)
         {
             var name = new AssemblyName("RealLifeOverhaul") { Version = Version.TryParse(version, out var v) ? v : new Version(0, 0) };
             var assembly = AssemblyBuilder.DefineDynamicAssembly(name, AssemblyBuilderAccess.Run);
             assembly.SetCustomAttribute(new CustomAttributeBuilder(typeof(AssemblyInformationalVersionAttribute).GetConstructor(new[] { typeof(string) })!, new object[] { version }));
             var module = assembly.DefineDynamicModule("RealLifeOverhaul");
+            if (living)
+            {
+                var settings = module.DefineType("RealLifeOverhaul.Settings", TypeAttributes.Public | TypeAttributes.Abstract | TypeAttributes.Sealed | TypeAttributes.Class);
+                settings.DefineField("LivingPopulation", typeof(bool), FieldAttributes.Public | FieldAttributes.Static);
+                settings.CreateType();
+                module.DefineType("RealLifeOverhaul.Population.PopulationDirector", TypeAttributes.NotPublic | TypeAttributes.Sealed | TypeAttributes.Class).CreateType();
+            }
             if (fault == "CityApi") { module.DefineType("RealLifeOverhaul.Elsewhere", TypeAttributes.Public).CreateType(); return assembly; }
 
             var status = module.DefineEnum(Space + "CityApiStatus", TypeAttributes.Public, typeof(int));
