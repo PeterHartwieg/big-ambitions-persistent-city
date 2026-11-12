@@ -80,6 +80,10 @@ namespace PersistentCity.Runtime
         public override string ToString() => Reference == null ? "null" : "v" + Version + "/n" + Count;
     }
 
+    /// <summary>E5b2 Decision 2 structural stamp of one registration: menu, price and furniture collections
+    /// by reference, version and count; business type by reference; four scalar flags. In-place writes to an
+    /// element's fields (a price, a stock name, an amount) do not move it; that limit is known and E5b3's
+    /// recheck owns it. Shadow evidence only: a mismatch dirties the image, never ownership.</summary>
     public readonly struct ShopContractStamp
     {
         [Flags] private enum Flags : byte { Valid = 1, Rented = 2, Established = 4, ForRent = 8, Closed = 16 }

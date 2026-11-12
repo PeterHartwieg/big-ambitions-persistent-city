@@ -55,6 +55,10 @@ Persistence/SaveCodec.cs	imperfect-choice	// B1 executes the finite B0b scalar; 
 Runtime/DwellSpots.cs	skipped	// The point must be walkable, near where it was asked for (not snapped out into the
 Runtime/DwellSpots.cs	skipped	// street or onto another level), clear of other doors, and reachable in a straight
 Runtime/DwellSpots.cs	skipped	// line from the spot before it. The door's own carve is not tested.
+Runtime/FoodContractStamps.cs	known-gap	/// <summary>E5b2 Decision 2 structural stamp of one registration: menu, price and furniture collections
+Runtime/FoodContractStamps.cs	known-gap	/// by reference, version and count; business type by reference; four scalar flags. In-place writes to an
+Runtime/FoodContractStamps.cs	known-gap	/// element's fields (a price, a stock name, an amount) do not move it; that limit is known and E5b3's
+Runtime/FoodContractStamps.cs	known-gap	/// recheck owns it. Shadow evidence only: a mismatch dirties the image, never ownership.</summary>
 Runtime/FoodProductOverrideSettings.cs	known-gap	// E5a/E5b must supply an already detached loaded-name image at load/publication, not per frame.
 Runtime/FoodProductOverrideSettings.cs	known-gap	// Pure E5c cannot infer loaded names, so this diagnostic seam is deliberately not polled.
 Runtime/FoodProductOverrideSettings.cs	imperfect-choice	// Charge canonical escaped JSON and UTF-8 independently, including punctuation.
@@ -79,6 +83,7 @@ tests/F6dMeasure.cs	imperfect-choice	// Conservative: retain every byte/record o
 tests/F6dMeasure.cs	imperfect-choice	// growth allowance, even though this image already contains the places, scopes and full histories.
 tests/FoodAuthorityTests.cs	imperfect-choice	// Eligibility is solely the reviewed menu/business contract; operational outages
 tests/FoodAuthorityTests.cs	imperfect-choice	// change offers, not ownership. The policy deliberately accepts no stock/staff input.
+tests/FoodContractStampTests.cs	known-gap	/// <summary>The known limit: element field writes move no collection stamp. E5b3's recheck owns them.</summary>
 tests/FoodOutcomeTests.cs	imperfect-choice	// This fixture deliberately constructs an already active decision.
 tests/FoodProductMetadataTests.cs	imperfect-choice	// Reference strings intentionally allocate here; production streams the same UTF-16 units.
 tests/MovementEquivalenceTests.cs	skipped	/// <summary>P-C: one path per leg follows as the F2c pose aim did. Both equal the bodies-off run on every projection,
@@ -114,3 +119,4 @@ tools/perf-union-probe/Probe.cs	imperfect-choice	// Deliberately outside the per
 tools/perf-union-probe/build_probe.py	runtime-doc	"""Build the rig-only F4b union probe DLL with pinned local references. No installation, no packaging. The probe binds Persistent City by reflection, so it has no PersistentCity.dll reference and the same artifact runs in candidate and reference mode. The manifest records names and hashes only (no machine paths), so two builds of the same inputs produce byte-identical manifests. """
 tools/perf-union-probe/check_scopes.py	runtime-doc	"""Fail-closed check that the F4b probe's expected scope list matches Persistent City's source. Scans Core/, Compatibility/, Persistence/ and Runtime/ for Harmony patch calls, HarmonyMethod uses, MonoBehaviour messages, native event subscriptions and transpiler helpers, and compares them with ScopeInventory.cs in both directions. Component methods and their call sites (including F2e's player-hold calls) must still exist where the list says. Any construct the scanner does not recognise is a failure, never a silent pass. Exit 0 only when everything matches. """
 tools/test-focused.py	runtime-doc	"""Run only the unit tests in test files this branch changed. Usage: python tools/test-focused.py [--base origin/codex/persistent-city] [--list] Changed files are the branch's commits since the merge base with --base plus uncommitted and untracked files. Every class declared in a changed tests/**/*.cs file is passed to `dotnet test --filter`. With no changed test files nothing runs. This is the focused run for implementers, fix rounds and the harness. The full suite runs once before merge. Neither waits for other test runs. """
+workshop/art/render.sh	workaround	# html, w, h, png. Headless Chrome now and then exits without a screenshot, so try three times.

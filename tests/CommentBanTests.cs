@@ -77,6 +77,29 @@ public sealed class CommentBanTests
         Assert.Single(CommentBanScanner.Scan("a.css", "/* note */\n.a { }\n"));
     }
 
+    [Fact]
+    public void PythonFormatSpecsAreStringText()
+    {
+        Assert.Empty(CommentBanScanner.Scan("tools/a.py", "x = f\"{value:#06x}\"\ny = f\"{v:{w}#x} {d['k']!r:#>{n}}\"\n"));
+        Assert.Single(CommentBanScanner.Scan("tools/a.py", "x = f\"{value:#06x}\"  # note\n"));
+    }
+
+    [Fact]
+    public void ASingleLineSuiteDocstringIsFound()
+    {
+        Assert.Equal(new[] { "\"\"\"Describe f.\"\"\"", "'C.'", "\"\"\"G.\"\"\"" },
+            CommentBanScanner.Scan("tools/a.py", "def f(): \"\"\"Describe f.\"\"\"\nclass C(B): 'C.'\nasync def g(a: int = 1) -> \"T\": \"\"\"G.\"\"\"\n").Select(c => c.Text));
+        Assert.Empty(CommentBanScanner.Scan("tools/a.py", "def f(): return \"x\"\nh = lambda: \"y\"\nz: \"T\" = \"w\"\nfn(a, \"b\")\n"));
+    }
+
+    [Fact]
+    public void ShellHeredocsAreTextAndSubstitutionsAreCode()
+    {
+        Assert.Empty(CommentBanScanner.Scan("tools/a.sh", "cat <<'EOF'\n# literal output\nEOF\ncat <<-EOF > x\n\t# also literal\n\tEOF\nx=$(( 1 << 2 )); y=<<<\"# z\"\n"));
+        Assert.Equal(new[] { 1, 6 },
+            CommentBanScanner.Scan("tools/a.sh", "echo \"$(date # explanation\n)\"\ncat <<EOF\nbody\nEOF\necho done # after\n").Select(c => c.Line));
+    }
+
     static IEnumerable<string> TrackedFiles(string root)
     {
         var start = new ProcessStartInfo("git", "ls-files -z")

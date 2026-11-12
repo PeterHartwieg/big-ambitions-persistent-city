@@ -212,6 +212,7 @@ public sealed class FoodContractStampTests
         ("W10 in-place RetailPrice.itemName", r => r.retailPrices![0].itemName = "ba:itemname_croissant"),
     }.Select(w => new object[] { w.Writer, w.Write });
 
+    /// <summary>The known limit: element field writes move no collection stamp. E5b3's recheck owns them.</summary>
     [Theory]
     [MemberData(nameof(InPlaceWrites))]
     public void StampsDoNotMoveOnInPlaceElementWrites(string writer, Action<Registration> write)

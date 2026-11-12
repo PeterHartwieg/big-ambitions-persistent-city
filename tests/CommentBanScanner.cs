@@ -43,8 +43,8 @@ public static class CommentBanScanner
         string name = path.Substring(path.LastIndexOf('/') + 1);
         if (name.EndsWith(".cs", StringComparison.Ordinal)) new CSharpLexer(text, spans).Run();
         else if (name.EndsWith(".py", StringComparison.Ordinal)) new PythonLexer(text, spans).Run();
-        else if (name.EndsWith(".sh", StringComparison.Ordinal)) Hash(text, spans, true);
-        else if (name == ".gitignore" || name == ".gitattributes") Hash(text, spans, false);
+        else if (name.EndsWith(".sh", StringComparison.Ordinal)) new ShellLexer(text, spans).Run();
+        else if (name == ".gitignore" || name == ".gitattributes") Hash(text, spans);
         else if (name.EndsWith(".css", StringComparison.Ordinal)) Css(text, spans);
         else Markup(text, spans);
         var found = new List<FoundComment>();
@@ -92,7 +92,7 @@ public static class CommentBanScanner
         return failures;
     }
 
-    static void Hash(string s, List<(int, int)> spans, bool shell)
+    static void Hash(string s, List<(int, int)> spans)
     {
         int n = s.Length;
         bool lineStart = true;
@@ -100,15 +100,7 @@ public static class CommentBanScanner
         {
             char c = s[i];
             if (c == '\n') { lineStart = true; continue; }
-            if (shell && (c == '"' || c == '\''))
-            {
-                int j = i + 1;
-                while (j < n && s[j] != c) j += c == '"' && s[j] == '\\' ? 2 : 1;
-                i = j;
-                lineStart = false;
-                continue;
-            }
-            if (c == '#' && (lineStart || (shell && (s[i - 1] == ' ' || s[i - 1] == '\t' || s[i - 1] == ';'))))
+            if (c == '#' && lineStart)
             {
                 int k = s.IndexOf('\n', i);
                 if (k < 0) k = n;
@@ -279,6 +271,139 @@ public static class CommentBanScanner
         }
     }
 
+    sealed class ShellLexer
+    {
+        readonly string s;
+        readonly List<(int, int)> spans;
+        readonly List<(string Word, bool Tabs)> pending = new List<(string, bool)>();
+        int i;
+
+        public ShellLexer(string text, List<(int, int)> found) { s = text; spans = found; }
+
+        public void Run() => Code(false);
+
+        void Code(bool inner)
+        {
+            int n = s.Length, depth = 0;
+            bool wordStart = true;
+            while (i < n)
+            {
+                char c = s[i];
+                if (c == '\n') { i++; Bodies(); wordStart = true; continue; }
+                if (c == ' ' || c == '\t' || c == ';') { i++; wordStart = true; continue; }
+                if (c == '#' && wordStart)
+                {
+                    int k = s.IndexOf('\n', i);
+                    if (k < 0) k = n;
+                    spans.Add((i, k));
+                    i = k;
+                    continue;
+                }
+                wordStart = false;
+                if (c == '\\') { i += 2; continue; }
+                if (c == '\'')
+                {
+                    int k = s.IndexOf('\'', i + 1);
+                    i = k < 0 ? n : k + 1;
+                    continue;
+                }
+                if (c == '"') { i++; Quoted(); continue; }
+                if (c == '$' && i + 1 < n && s[i + 1] == '(') { Substitution(); continue; }
+                if (c == '<' && i + 1 < n && s[i + 1] == '<')
+                {
+                    if (i + 2 < n && s[i + 2] == '<') { i += 3; continue; }
+                    i += 2;
+                    Heredoc();
+                    continue;
+                }
+                if (inner)
+                {
+                    if (c == '(') depth++;
+                    else if (c == ')')
+                    {
+                        if (depth == 0) { i++; return; }
+                        depth--;
+                    }
+                }
+                i++;
+            }
+        }
+
+        void Quoted()
+        {
+            int n = s.Length;
+            while (i < n)
+            {
+                char c = s[i];
+                if (c == '\\') { i += 2; continue; }
+                if (c == '"') { i++; return; }
+                if (c == '$' && i + 1 < n && s[i + 1] == '(') { Substitution(); continue; }
+                i++;
+            }
+        }
+
+        void Substitution()
+        {
+            int n = s.Length;
+            if (i + 2 < n && s[i + 2] == '(')
+            {
+                int depth = 0;
+                for (i += 1; i < n; i++)
+                {
+                    if (s[i] == '(') depth++;
+                    else if (s[i] == ')' && --depth == 0) { i++; return; }
+                }
+                return;
+            }
+            i += 2;
+            Code(true);
+        }
+
+        void Heredoc()
+        {
+            int n = s.Length;
+            bool tabs = i < n && s[i] == '-';
+            if (tabs) i++;
+            while (i < n && (s[i] == ' ' || s[i] == '\t')) i++;
+            var word = new System.Text.StringBuilder();
+            while (i < n && !char.IsWhiteSpace(s[i]) && ";&|<>()".IndexOf(s[i]) < 0)
+            {
+                char c = s[i];
+                if (c == '\'' || c == '"')
+                {
+                    int k = s.IndexOf(c, i + 1);
+                    if (k < 0) k = n;
+                    word.Append(s, i + 1, k - i - 1);
+                    i = Math.Min(k + 1, n);
+                    continue;
+                }
+                if (c == '\\') { if (i + 1 < n) word.Append(s[i + 1]); i += 2; continue; }
+                word.Append(c);
+                i++;
+            }
+            if (word.Length > 0) pending.Add((word.ToString(), tabs));
+        }
+
+        void Bodies()
+        {
+            int n = s.Length;
+            foreach (var (word, tabs) in pending)
+            {
+                while (i < n)
+                {
+                    int k = s.IndexOf('\n', i);
+                    if (k < 0) k = n;
+                    int j = i;
+                    if (tabs) while (j < k && s[j] == '\t') j++;
+                    string line = s.Substring(j, k - j).TrimEnd('\r');
+                    i = Math.Min(k + 1, n);
+                    if (line == word) break;
+                }
+            }
+            pending.Clear();
+        }
+    }
+
     sealed class PythonLexer
     {
         readonly string s;
@@ -292,13 +417,13 @@ public static class CommentBanScanner
         void Code(bool inner)
         {
             int n = s.Length, depth = 0;
-            bool statementStart = true, continued = false;
+            bool statementStart = true, continued = false, header = false;
             while (i < n)
             {
                 char c = s[i];
                 if (c == '\n')
                 {
-                    if (depth == 0 && !continued) statementStart = true;
+                    if (depth == 0 && !continued) { statementStart = true; header = false; }
                     continued = false;
                     i++;
                     continue;
@@ -324,7 +449,10 @@ public static class CommentBanScanner
                     statementStart = false;
                     continue;
                 }
+                bool wasStart = statementStart;
                 statementStart = false;
+                if (inner && depth == 0 && c == ':') { i++; FormatSpec(); return; }
+                if (!inner && depth == 0 && header && c == ':') { header = false; statementStart = true; i++; continue; }
                 if (c == '(' || c == '[' || c == '{') depth++;
                 else if (c == ')' || c == ']' || c == '}')
                 {
@@ -333,10 +461,29 @@ public static class CommentBanScanner
                 }
                 if (char.IsLetterOrDigit(c) || c == '_')
                 {
+                    int start = i;
                     while (i < n && (char.IsLetterOrDigit(s[i]) || s[i] == '_')) i++;
+                    if (wasStart)
+                    {
+                        string word = s.Substring(start, i - start);
+                        if (word == "def" || word == "class") header = true;
+                        else if (word == "async") statementStart = true;
+                    }
                     continue;
                 }
                 i++;
+            }
+        }
+
+        void FormatSpec()
+        {
+            int n = s.Length;
+            while (i < n)
+            {
+                char c = s[i];
+                if (c == '{') { i++; Code(true); continue; }
+                i++;
+                if (c == '}') return;
             }
         }
 

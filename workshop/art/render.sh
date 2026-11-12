@@ -6,7 +6,7 @@ PY="${HART_PY:-$HOME/Coding_Projects/youtube/hart-group/.venv/bin/python}"
 CHROME="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
 mkdir -p "$TMP/fonts" "$OUT/cards"
 cp "$BRAND/fonts/Archivo-variable.ttf" "$BRAND/fonts/IBMPlexMono-Medium.ttf" "$TMP/fonts/"
-shot() {
+shot() { # html, w, h, png. Headless Chrome now and then exits without a screenshot, so try three times.
   rm -f "$4"
   for _ in 1 2 3; do
     "$CHROME" --headless=new --disable-gpu --hide-scrollbars --allow-file-access-from-files \
