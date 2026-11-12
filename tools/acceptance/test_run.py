@@ -490,9 +490,9 @@ class Stages(unittest.TestCase):
         catalogue = json.loads((HERE / "stages.json").read_text())
         ids = {s["id"] for s in catalogue["stages"]}
         self.assertTrue(set(catalogue["profiles"]["quick"]) <= ids and set(catalogue["profiles"]["full"]) <= ids)
-        self.assertEqual(["provenance", "population", "economy-fast", "saves", "city-s"],
+        self.assertEqual(["provenance", "population", "economy-fast", "saves", "city-s", "loop"],
                          [s for s in catalogue["profiles"]["quick"] if s != "test-build"])
-        self.assertEqual(["provenance", "build", "unit", "population", "economy", "saves", "movement", "city-s", "city-m"],
+        self.assertEqual(["provenance", "build", "unit", "population", "economy", "saves", "movement", "city-s", "city-m", "loop"],
                          catalogue["profiles"]["full"])
         text = json.dumps(catalogue)
         self.assertNotIn("regression", text)
@@ -588,6 +588,16 @@ class Movement(unittest.TestCase):
                 text = source.read_text(encoding="utf-8")
                 self.assertIn(f'Trait("{key}", "{value}")', text, source.name)
                 self.assertTrue(any(c.startswith(prefix) for c in re.findall(r"public sealed class (\w+)", text)), source.name)
+
+    def test_loop_stage_selects_the_gr4_whole_loop_facts(self):
+        # GR-4: the loop stage runs every J1 whole-loop fact, both sizes, and no F9 city class.
+        stages = {s["id"]: s for s in json.loads((HERE / "stages.json").read_text())["stages"]}
+        prefix = re.fullmatch(r"FullyQualifiedName~(\w+)", stages["loop"]["filter"]).group(1)
+        text = (ROOT / "tests/Acceptance/CityLoopArms.cs").read_text(encoding="utf-8")
+        self.assertIn(prefix, re.findall(r"public sealed class (\w+)", text))
+        self.assertFalse(prefix.startswith("F9IntegratedCity"))
+        for size in ("city-s", "city-m"):
+            self.assertIn(f'Trait("Size", "{size}")', text)
 
     def test_end_to_end_with_recorded_baseline(self):
         f = Fixture(self)

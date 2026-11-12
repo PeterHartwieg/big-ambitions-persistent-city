@@ -125,6 +125,7 @@ internal sealed partial class CityScenario
 
     private void Start(CityState state)
     {
+        LoopPrepare(state);
         city = new CitySimulator(state, planner);
         native.Vendor = new StreetFoodVendorMarket(city, native.Api, "", native.Sampler, native.Receipts, () => clock, () => true);
         native.Markets = new FoodMarkets(state.Food!, native.Shops, native.Vendor, id => city.FindPlace(id).Position);
@@ -132,6 +133,7 @@ internal sealed partial class CityScenario
         city.AttachPopulationFill(checkpoint.Size.Catalogue);
         city.AttachResearch(state.Research);
         city.AttachWorkplaceAvailability(native.Shops);
+        LoopAttach();
         AttachPostingCapture();
         city.ActivityObserved += (id, person, minute) => run.Ledger.Add("a|" + CityOracles.M(minute) + "|" + id + "|" + person.Phase + "|" + person.PlaceId + "|" + person.Activity);
         city.RoutineObserved += r => run.Ledger.Add("r|" + CityOracles.M(r.Minute) + "|" + r.CitizenId + "|" + r.DestinationId + "|" + r.Outcome + "|" + r.Reason);
@@ -142,6 +144,17 @@ internal sealed partial class CityScenario
     }
 
     private void Reload(CityReload reason)
+    {
+        ReloadCity(reason.ToString());
+        // The fill-unit counter belongs to the simulator, so after the load the pending fill is the state that must survive.
+        bool kept = reason == CityReload.BetweenFillUnits ? city.PopulationFillPending : reason == CityReload.DayBoundary || Holds(reason);
+        if (!kept) throw new CityViolation("reloaded city lost its " + reason + " state");
+        run.Reloads.Add((reason, city.View.Minute));
+        pendingReloads.Remove(reason);
+    }
+
+    /// <summary>Saves the city as Runtime does, checks the round trip and continues in a new simulator from the loaded save.</summary>
+    private void ReloadCity(string reason)
     {
         BodiesBeforeSave();
         native.Vendor!.CompleteForSave();
@@ -157,11 +170,6 @@ internal sealed partial class CityScenario
         Start(read.State!);
         BodiesAfterLoad();
         while (native.Vendor!.Prepare((long)Math.Floor(clock))) { }
-        // The fill-unit counter belongs to the simulator, so after the load the pending fill is the state that must survive.
-        bool kept = reason == CityReload.BetweenFillUnits ? city.PopulationFillPending : reason == CityReload.DayBoundary || Holds(reason);
-        if (!kept) throw new CityViolation("reloaded city lost its " + reason + " state");
-        run.Reloads.Add((reason, city.View.Minute));
-        pendingReloads.Remove(reason);
     }
 
     private bool Holds(CityReload state)
@@ -188,6 +196,9 @@ internal sealed partial class CityScenario
         if (!arm.Reloads) return;
         if (pendingReloads.Contains(CityReload.BetweenFillUnits) && Holds(CityReload.BetweenFillUnits)) { Reload(CityReload.BetweenFillUnits); return; }
         if (dayReloadDue) { dayReloadDue = false; Reload(CityReload.DayBoundary); return; }
+        bool loopReloaded = false;
+        LoopMaybeReload(ref loopReloaded);
+        if (loopReloaded) return;
         if (city.View.Minute < CityFixture.StartMinute + 30) return;
         foreach (var state in new[] { CityReload.UncertainReceipt, CityReload.ResearchPendingBilling,
                      CityReload.VendorLeaseOpen, CityReload.HeldMealDecision, CityReload.MidJourney })
@@ -286,6 +297,7 @@ internal sealed partial class CityScenario
         CityOracles.Research(city.View.Research, native.Port, context);
         CityOracles.Vendor(native.Api, context);
         CityOracles.Schedule(schedule, published, epoch, context);
+        LoopCheckpoint(context);
         if (epoch % 1440 == 360)
             foreach (var fact in run.Research.Values.Where(f => f.BilledAt >= 0 && f.BilledAt == epoch - 360))
                 fact.ReadableNextMorning = city.View.Research.KeptOrders.Any(o => o.ProductCode == fact.Product && o.HasReport);
@@ -459,6 +471,7 @@ internal sealed partial class CityScenario
         run.Final = SaveCodec.Write(city.State);
         run.State = city.State;
         BodiesFinish();
+        LoopFinish();
     }
 
     // ---- Presentation bodies (F9f, CityMovementArms.cs); no-ops for an arm without bodies ----
@@ -469,4 +482,12 @@ internal sealed partial class CityScenario
     partial void BodiesAfterLoad();
     partial void BodiesReadyToReload(CityReload state, ref bool ready);
     partial void BodiesFinish();
+
+    // ---- The whole loop (GR-4 J1, CityLoopArms.cs); no-ops for an arm without purchases ----
+
+    partial void LoopPrepare(CityState state);
+    partial void LoopAttach();
+    partial void LoopMaybeReload(ref bool reloaded);
+    partial void LoopCheckpoint(string context);
+    partial void LoopFinish();
 }

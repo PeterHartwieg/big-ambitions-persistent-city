@@ -32,8 +32,8 @@ No other machine-specific script, path or user name is needed or recorded.
 
 | Profile | Stages |
 | --- | --- |
-| `quick` | `provenance`, `test-build` (one required `dotnet build`, so the filtered stages share one build), `population`, `economy-fast`, `saves`, `city-s` |
-| `full` | `provenance`, `build`, `unit`, `population`, `economy`, `saves`, `movement`, `city-s`, `city-m` |
+| `quick` | `provenance`, `test-build` (one required `dotnet build`, so the filtered stages share one build), `population`, `economy-fast`, `saves`, `city-s`, `loop` |
+| `full` | `provenance`, `build`, `unit`, `population`, `economy`, `saves`, `movement`, `city-s`, `city-m`, `loop` |
 | `summarize` | merges rig results (class `native`) and F4's performance record into an existing result (see *Summarize*) |
 | `rig-manifest` | writes the native-evidence ledger state and the ordered rig batch manifest (see *Native-evidence ledger*); seconds, no .NET |
 
@@ -47,6 +47,7 @@ No other machine-specific script, path or user name is needed or recorded.
 | `saves` | `SaveRoundTripTests`, `ReaderCorpusTests`, `SaveEpochTests` and every `*CurrentWriterGolden*` fact | zero failed |
 | `movement` | `tests/movement-equivalence --out {out}/movement.json` | see below |
 | `city-s`, `city-m` | `FullyQualifiedName~F9IntegratedCity&Size=city-s` / `city-m` | zero failed. Selects F9c's `F9IntegratedCityTests` and F9f's body arms `F9IntegratedCityMovementTests`, both with `[Trait("Size", "city-s")]` / `"city-m"`. |
+| `loop` | `FullyQualifiedName~J1WholeLoopTests` | zero failed. GR-4's whole loop (J1) in both city sizes: `tests/Acceptance/CityLoopArms.cs`. |
 
 Before a stage runs, the runner deletes the outputs it owns under `{out}` (its log, TRX directory, harness JSON, `f6h/`), so a rerun into the same directory never reads a stale report. A filter stage runs with `--no-build` only after this run's test build (`test-build` or `unit`) succeeded; if that build failed, the filter stages fail without running older binaries, and without a test build in the run they build themselves. A TRX stage with no executed test is `not-run` when the exit is 0 or the log says no test matched the filter; a non-zero exit with no result (a crashed test host) is `fail`. A stage with no TRX and a non-zero exit is `fail` (build or host failure). In `full`, the filter stages whose filter is a plain `FullyQualifiedName~` alternation are evaluated on the `unit` TRX instead of running again (`reusedFrom: "unit"`); trait filters run on their own.
 
