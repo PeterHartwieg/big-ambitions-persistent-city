@@ -7,6 +7,21 @@ using Stopwatch = System.Diagnostics.Stopwatch;
 
 namespace PersistentCity.Runtime
 {
+    /// <summary>The mod's own words from Runtime/Localization/en.json, with the English text Core gives as the fallback when
+    /// the table is not loaded or lacks the key.</summary>
+    internal static class ModWords
+    {
+        internal static string Text(string key, string english)
+        {
+            try
+            {
+                string text = Localizor.LocalizorManager.Localize(key, (object?)null).ToString();
+                return string.IsNullOrEmpty(text) || text == key ? english : text;
+            }
+            catch (Exception) { return english; }
+        }
+    }
+
     /// <summary>
     /// Resident inspector in the normal view: hovering an own walker highlights it, a click opens a
     /// small popup. Read-only: it changes no simulation, economy, schedule or save state, and makes
@@ -282,11 +297,18 @@ namespace PersistentCity.Runtime
         {
             long started = Stopwatch.GetTimestamp();
             nextRefresh = Time.unscaledTime + RefreshSeconds;
-            insight = simulation.Inspect(selectedId!, null, FormattedAddress, ShopName, CurrentOwnShop);
-            if (insight == null) { body = "This resident has left the city."; personality = homeLabel = workLabel = ""; header = "Resident"; }
+            // GR-8: a through car belongs to nobody; it has no person to inspect.
+            string? vehicle = CitySimulator.DescribeVehicle(selectedId!);
+            insight = vehicle != null ? null : simulation.Inspect(selectedId!, null, FormattedAddress, ShopName, CurrentOwnShop);
+            if (vehicle != null) { body = ModWords.Text(ThroughTraffic.InspectorKey, vehicle) + "."; personality = homeLabel = workLabel = ""; header = "Car"; }
+            else if (insight == null) { body = "This resident has left the city."; personality = homeLabel = workLabel = ""; header = "Resident"; }
             else
             {
                 body = insight.Text();
+                // GR-7: today's non-food visits, purchases and refusals with their causes.
+                var visits = VenueFeedbackPanel.ResidentLines(simulation.VenueFeedback, insight.ResidentId, (int)Math.Floor(simulation.State.Minute / 1440),
+                    id => simulation.PlaceLabel(id, FormattedAddress), ModWords.Text);
+                if (visits.Count > 0) body += string.Join(".\n", visits) + ".\n";
                 personality = insight.Personality.Count == 0 ? "" : "Personality: " + string.Join(" · ", insight.Personality);
                 header = insight.Name + (insight.Age > 0 ? ", " + insight.Age.ToString(System.Globalization.CultureInfo.InvariantCulture) : "");
                 homeLabel = insight.Home == null ? "" : insight.Home.Label + (insight.Home.CanNavigate ? "  ↗" : "");

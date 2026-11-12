@@ -190,6 +190,15 @@ namespace PersistentCity.Runtime
                 if (accounts.Length == 0) text.AppendLine("Native daily cost statement pending settlement.");
                 text.AppendLine();
             }
+            // GR-7: the player's other businesses the purchase market serves: today's visits, purchases and refusals by cause.
+            var purchases = simulation.Purchases;
+            if (purchases != null && purchases.Venues.Count > 0)
+            {
+                text.AppendLine(ModWords.Text(VenueWords.PanelHeading, VenueWords.English(VenueWords.PanelHeading)));
+                foreach (var row in VenueFeedbackPanel.Build(simulation.VenueFeedback, purchases.Venues, day))
+                    text.AppendLine(VenueFeedbackPanel.Text(row, simulation.PlaceLabel(row.VenueId), ModWords.Text));
+                text.AppendLine();
+            }
             if (money.Budgets > 0) text.Append(money.Text());
             CityViewReports.AppendCityEconomy(text, money, city, day);
             text.AppendLine();

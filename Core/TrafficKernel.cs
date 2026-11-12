@@ -715,6 +715,22 @@ namespace PersistentCity.Core
             return state;
         }
 
+        /// <summary>GR-8: a snapshot without the vehicles <paramref name="exclude"/> names, as if they had been cancelled: the
+        /// remaining queues keep their order and their wakeups are rebuilt as a retiming restore rebuilds them. The live kernel
+        /// is not changed. Without a match it is exactly <see cref="Capture()"/>.</summary>
+        public TrafficKernelState Capture(Func<string, bool> exclude)
+        {
+            if (exclude == null) throw new ArgumentNullException(nameof(exclude));
+            TrafficKernelState state = Capture();
+            if (state.Vehicles.RemoveAll(v => exclude(v.VehicleId)) == 0) return state;
+            foreach (TrafficLinkState link in state.Links)
+            {
+                link.Vehicles.RemoveAll(id => exclude(id));
+                link.WaitingSources.RemoveAll(id => exclude(id));
+            }
+            return Restore(state, true).Capture();
+        }
+
         /// <summary>Restores a detached snapshot exactly.</summary>
         public static TrafficKernel Restore(TrafficKernelState state) => Restore(state, false);
 

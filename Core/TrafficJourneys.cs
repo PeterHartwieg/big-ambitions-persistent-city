@@ -72,6 +72,8 @@ namespace PersistentCity.Core
                 if (needsRoad && !network.TryMapRemainingSpans(citizen.Journey, MappingProgress(citizen, progress), mappingSpans))
                     throw new InvalidOperationException("Committed road geometry no longer matches the native network; preserve the saved journey.");
             }
+            // GR-8: through cars are not saved and belong to one network; a new network drops them and generates again.
+            if (throughTraffic != null && traffic != null) DropThroughCars(throughTraffic);
             if (traffic != null && State.TrafficTopologyId != network.TopologyId && traffic.VehicleCount != 0)
                 throw new InvalidOperationException("The road topology changed during committed traffic; preserve the saved state.");
             if (traffic != null && traffic.VehicleCount != 0)
@@ -79,7 +81,7 @@ namespace PersistentCity.Core
                 // Binding is infrequent. Validate the saved spatial ownership against every
                 // committed corner, including an untagged fragment split by clock conversion.
                 foreach (var vehicle in traffic.Capture().Vehicles)
-                    network.ValidateRemainingMapping(trafficCitizens[vehicle.VehicleId].Journey!, vehicle.Route, vehicle.NominalMinutes);
+                    if (!ThroughTraffic.IsThroughVehicle(vehicle.VehicleId)) network.ValidateRemainingMapping(trafficCitizens[vehicle.VehicleId].Journey!, vehicle.Route, vehicle.NominalMinutes);
             }
             if (traffic == null || State.TrafficTopologyId != network.TopologyId)
             {
@@ -146,6 +148,7 @@ namespace PersistentCity.Core
                 foreach (var leg in mapped) traffic.SetLinkClosed(leg.LinkId, planner.IsTrafficLinkClosed(leg.LinkId));
             traffic.Enqueue(citizen.Identity.Id, mapped);
             trafficCitizens.Add(citizen.Identity.Id, citizen);
+            CountResidentCar();
             return true;
         }
 
@@ -176,6 +179,7 @@ namespace PersistentCity.Core
 
         private void TrafficCompleted(string id, double at)
         {
+            if (traffic != null && ThroughCompleted(id)) return;
             if (traffic == null || !trafficCitizens.TryGetValue(id, out var citizen)
                 || !traffic.TryGetVehicle(id, out var vehicle) || !vehicle.IsCompleted || citizen.Journey == null)
                 throw new InvalidOperationException("Traffic completion lost its resident ownership.");
@@ -249,7 +253,8 @@ namespace PersistentCity.Core
         private void CaptureTraffic()
         {
             SynchronizeSnapshot();
-            State.Traffic = traffic?.Capture();
+            // GR-8: the save holds resident cars only; a loaded city generates its through cars again.
+            State.Traffic = traffic == null ? null : ThroughCarCount > 0 ? traffic.Capture(ThroughTraffic.IsThroughVehicle) : traffic.Capture();
         }
 
         /// <summary>Publish progress after a batch of budgeted native-frame slices. Saving also calls this.</summary>
