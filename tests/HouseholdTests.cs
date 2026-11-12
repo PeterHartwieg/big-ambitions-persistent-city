@@ -193,6 +193,22 @@ public sealed class HouseholdTests
         Assert.Throws<ArgumentException>(() => new Household(resident.HomeId, household.Members.Append(visitors[0]).ToList()));
     }
 
+    [Fact]
+    public void AMemberWhoMovedHomeTodayLeavesTheHouseholdWithoutBreakingIt()
+    {
+        var (city, _) = NeedPurchaseTests.Banded();
+        city.HouseholdOutingsEnabled = true;
+        var resident = city.State.Citizens.First(c => !c.IsVisitor && city.HouseholdOf(c) != null);
+        var others = city.HouseholdOf(resident)!.Members.Where(m => m.Identity.Id != resident.Identity.Id).ToList();
+        string elsewhere = city.State.Places.First(p => p.Kind == PlaceKind.Home && p.Id != resident.HomeId).Id;
+        // The day's index still groups them; the moves take effect before it is rebuilt.
+        others[0].HomeId = elsewhere;
+        var smaller = city.HouseholdOf(resident);
+        if (others.Count > 1) Assert.DoesNotContain(smaller!.Members, m => m.Identity.Id == others[0].Identity.Id);
+        foreach (var other in others) other.HomeId = elsewhere;
+        Assert.Null(city.HouseholdOf(resident));
+    }
+
     private static Place Typed(CityState state, string type, int from = 18 * 60, int to = 24 * 60)
     {
         var workplace = state.Places.Where(p => p.Kind == PlaceKind.Work)

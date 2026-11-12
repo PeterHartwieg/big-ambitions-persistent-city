@@ -151,9 +151,10 @@ namespace PersistentCity.Core
             {
                 bool self = string.Equals(member.Identity.Id, person.Identity.Id, StringComparison.Ordinal);
                 found |= self;
-                current.Add(self ? person : member);
+                // The index is per day; a member who moved home since it was built is no longer in this household.
+                if (self || member.HomeId == person.HomeId) current.Add(self ? person : member);
             }
-            return found ? new Household(person.HomeId, current) : null;
+            return found && current.Count >= 2 ? new Household(person.HomeId, current) : null;
         }
     }
 }
