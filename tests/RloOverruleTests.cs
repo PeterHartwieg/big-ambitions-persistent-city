@@ -259,9 +259,88 @@ namespace PersistentCity.Tests
             Assert.Contains("owned checkout sells private orders only", text);
             Assert.Contains("books no native rent, wage or tax", text);
             Assert.Contains("4 of them RLO's; RLO's own scene people kept", text);
-            Assert.Contains("cars RLO holds are never retired", text);
+            Assert.Contains("RLO staged accidents and reckless drivers stood down; cars RLO holds are never retired", text);
             Assert.Equal("Persistent City RLO overrule: RLO not loaded\nnothing to overrule\n",
                 RloOverrule.Describe(new RloLivingReading(RloLivingState.Absent), 0, 0, null, false, 0, false));
+        }
+
+        [Fact]
+        public void AnUnknownSwitchDuringPlayHoldsNewTakeoversButKeepsOwnedShopsAndHandBacks()
+        {
+            var answers = new Queue<RloLivingReading>(new[] { new RloLivingReading(RloLivingState.On), new RloLivingReading(RloLivingState.Unknown, "surface gone") });
+            var tracker = new RloLivingTracker(() => answers.Dequeue());
+            Assert.False(RloOverrule.HoldsAcquisitions(tracker.Current.State));
+            var owned = new FoodAuthority { PlaceId = "place:a:shop" };
+            owned.Observe("sig-a", true, 10);
+            Assert.True(owned.Boundary(11, true, false, true, !RloOverrule.HoldsAcquisitions(tracker.Current.State)));
+            var leaving = new FoodAuthority { PlaceId = "place:c:shop" };
+            leaving.Observe("sig-c", true, 10);
+            Assert.True(leaving.Boundary(11, true, false, true, true));
+
+            Assert.True(tracker.Poll(20)); // the switch turns unreadable during play
+            bool hold = RloOverrule.HoldsAcquisitions(tracker.Current.State);
+            Assert.True(hold);
+
+            // A shop becoming eligible now is not taken over at the next boundary, nor later this session.
+            var fresh = new FoodAuthority { PlaceId = "place:b:shop" };
+            fresh.Observe("sig-b", true, 21);
+            Assert.Equal(FoodBoundaryStep.Acquire, fresh.Pending(22, true, false, true));
+            Assert.False(fresh.Boundary(22, true, false, true, !hold));
+            Assert.False(fresh.Boundary(40, true, false, true, !RloOverrule.HoldsAcquisitions(tracker.Current.State)));
+            Assert.False(fresh.Managed);
+            Assert.True(fresh.Deferred);
+
+            // The shop owned before keeps its hours and its own checkout; a hand-back never waits.
+            Assert.True(owned.OwnsHour(22));
+            Assert.True(RloOverrule.AdmitsNative(NativeShopPath.Process, owned.OwnsHour(22), ownCheckout: true));
+            Assert.False(RloOverrule.AdmitsNative(NativeShopPath.Generation, owned.OwnsHour(22)));
+            leaving.Observe("sig-c", false, 22);
+            Assert.True(leaving.Boundary(23, true, false, true, !hold));
+            Assert.False(leaving.Managed);
+        }
+
+        [Fact]
+        public void TrafficSceneSwitchesAreHeldOffWhileOurCarsHoldTrafficAndGivenBack()
+        {
+            var rlo = LivingShape("scenes");
+            var settings = rlo.GetType("RealLifeOverhaul.Settings")!;
+            var accidents = settings.GetField("TrafficAccidents")!; var reckless = settings.GetField("NaturalAccidents")!;
+            accidents.SetValue(null, true); reckless.SetValue(null, false); // the player has reckless drivers off
+            var scenes = RloTrafficScenes.Bind(rlo);
+            Assert.Empty(scenes.Unbound);
+
+            Assert.Equal(2, scenes.Hold());
+            Assert.True(scenes.Holding);
+            Assert.False((bool)accidents.GetValue(null)!); // a staged accident under way gets no successor; a reckless drive ends
+            Assert.False((bool)reckless.GetValue(null)!);
+
+            reckless.SetValue(null, true); // the player switches reckless drivers on during the hold
+            scenes.Hold();                  // the next coarse poll
+            Assert.False((bool)reckless.GetValue(null)!);
+
+            scenes.Release();
+            Assert.False(scenes.Holding);
+            Assert.True((bool)accidents.GetValue(null)!);
+            Assert.True((bool)reckless.GetValue(null)!); // the player's latest choice is the one given back
+
+            var partial = RloTrafficScenes.Bind(LivingShape("scenes without reckless"));
+            Assert.Single(partial.Holds);
+            Assert.Contains(partial.Unbound, u => u.StartsWith("NaturalAccidents", StringComparison.Ordinal));
+            Assert.Empty(RloTrafficScenes.Bind(null).Holds);
+        }
+
+        [Fact]
+        public void NeedPurchaseClaimsTheNativeSlotButSellsNoRloBasketLine()
+        {
+            // A native entry at a native-owned shop: the game drew two lines, RLO's loyalty and interiors added two more.
+            var claimed = new List<string> { "shampoo", "conditioner", "loyalty-extra", "interiors-extra" };
+            const string own = "shampoo"; // NativeSalePath's own basket: one unit of the first priced product
+            foreach (RloLivingState state in Enum.GetValues(typeof(RloLivingState)))
+            {
+                var basket = RloOverrule.QuotesClaimedLines(state) ? claimed : new List<string> { own };
+                if (state == RloLivingState.Absent) Assert.Equal(claimed, basket);
+                else Assert.DoesNotContain(basket, line => line.EndsWith("-extra", StringComparison.Ordinal));
+            }
         }
 
         /// <summary>An assembly named RealLifeOverhaul whose Settings has one shape of the Living population switch.</summary>
@@ -277,6 +356,12 @@ namespace PersistentCity.Tests
             if (shape == "int field") settings.DefineField("LivingPopulation", typeof(int), FieldAttributes.Public | FieldAttributes.Static);
             else if (shape == "readonly field") settings.DefineField("LivingPopulation", typeof(bool), FieldAttributes.Public | FieldAttributes.Static | FieldAttributes.InitOnly);
             else if (shape == "instance class") settings.DefineField("LivingPopulation", typeof(bool), FieldAttributes.Public | FieldAttributes.Static);
+            else if (shape.StartsWith("scenes", StringComparison.Ordinal))
+            {
+                settings.DefineField("LivingPopulation", typeof(bool), FieldAttributes.Public | FieldAttributes.Static);
+                settings.DefineField("TrafficAccidents", typeof(bool), FieldAttributes.Public | FieldAttributes.Static);
+                if (shape == "scenes") settings.DefineField("NaturalAccidents", typeof(bool), FieldAttributes.Public | FieldAttributes.Static);
+            }
             else if (shape != "missing field" && shape != "old release") throw new ArgumentException(shape);
             settings.CreateType();
             return assembly;

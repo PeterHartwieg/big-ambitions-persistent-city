@@ -131,7 +131,9 @@ namespace PersistentCity.Runtime
                     { claimed = entry; break; }
             string? fee = adapter.AppendsEntranceFee && type.hasEntranceFee ? BusinessTypeHelper.GetEntranceFeeNameForBusinessType(type) : null;
             if (fee != null && !Line(fee, reg, true, basket)) { refusal = "Entrance fee " + fee + " has no supported price"; return null; }
-            if (claimed != null)
+            // RLO 1.0 overrule (review Sol-r1-3): with RLO loaded the claimed entry is only the native slot this sale
+            // retires; RLO's loyalty and interiors lines on it are never quoted, so the basket is written as below.
+            if (claimed != null && RloOverrule.QuotesClaimedLines(RloOverrules.Living.Current.State))
             {
                 foreach (var entry in claimed.order.entries)
                     if (entry == null || !Line(entry.itemName, reg, IsTicket(entry.itemName), basket)) { refusal = "Claimed entry has an unpriced line"; return null; }

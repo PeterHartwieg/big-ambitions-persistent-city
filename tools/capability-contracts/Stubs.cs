@@ -12,6 +12,15 @@ namespace AI.Citizens { public sealed class CitizenData { [MethodImpl(MethodImpl
 namespace AI.Customers.CustomerEntries
 {
     public sealed class CustomerEntry { }
+    // The calculator factory's shape as RLO 1.0's GameContract reads it: one static field per calculator type.
+    public class CustomerEntriesCalculator { }
+    public class CustomerEntriesCalculatorRetail : CustomerEntriesCalculator { }
+    public static class CustomerEntriesCalculatorFactory
+    {
+        private static CustomerEntriesCalculator CustomerEntriesCalculator = new CustomerEntriesCalculator();
+        private static CustomerEntriesCalculatorRetail CustomerEntriesCalculatorRetail = new CustomerEntriesCalculatorRetail();
+        private static int unrelated;
+    }
     public static class CustomerEntriesHelper
     {
         [MethodImpl(MethodImplOptions.NoInlining)] public static List<CustomerEntry> GetEntriesByAddress(Address address) => new();
@@ -42,5 +51,15 @@ namespace Changed
         public static int Calls;
         [MethodImpl(MethodImplOptions.NoInlining)] private void ProcessAllCustomersFromThisHour() { }
         [MethodImpl(MethodImplOptions.NoInlining)] private void ProcessCustomer(AI.Customers.CustomerEntries.CustomerEntry customerEntry, int seat) { Calls++; }
+    }
+}
+
+// Runtime/RloOverrules.cs needs Unity; the harness answers the Living population reading NativeFoodContract asks for.
+namespace PersistentCity.Runtime
+{
+    internal static class RloOverrules
+    {
+        internal static PersistentCity.Core.RloLivingReading Reading = new PersistentCity.Core.RloLivingReading(PersistentCity.Core.RloLivingState.Absent);
+        internal static PersistentCity.Core.RloLivingReading ReadForLoad() => Reading;
     }
 }

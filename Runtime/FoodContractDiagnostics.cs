@@ -498,8 +498,9 @@ namespace PersistentCity.Runtime
         internal void BeginContractCommit() { boundaryEpoch.Begin(); contractBoundaryCommitMs = 0; }
         internal FoodContractBoundary.Outcome CommitBoundary(FoodAuthority row, long hour, bool liveNativeCustomers)
         {
-            // Warming: no acquisition before every seeded shop has an image; hand-backs are never held.
-            if (contractMode == ContractMode.Warming)
+            // Warming: no acquisition before every seeded shop has an image; hand-backs are never held. Review Sol-r1-1:
+            // an RLO Living population switch that turned unreadable during play holds acquisitions the same way.
+            if (contractMode == ContractMode.Warming || RloOverrules.HoldsAcquisitions)
             {
                 if (row.Pending(hour, true, liveNativeCustomers, true) != FoodBoundaryStep.Acquire)
                     return row.Boundary(hour, true, liveNativeCustomers, true) ? FoodContractBoundary.Outcome.HandedBack : FoodContractBoundary.Outcome.None;

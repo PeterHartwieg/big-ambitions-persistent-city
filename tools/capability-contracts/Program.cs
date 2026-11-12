@@ -38,6 +38,7 @@ internal static partial class Program
         ContractCheckTime();
         HookConflictArms();
         ConflictRefusalArms();
+        RloOverruleArms();
         Console.WriteLine(checks + " capability-contract checks passed (synthetic native surfaces and Harmony 2.4.2, not game execution).");
         return 0;
     }

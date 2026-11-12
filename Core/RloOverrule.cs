@@ -44,6 +44,17 @@ namespace PersistentCity.Core
                     + "); no shop is taken over in an unknown state"
                 : null);
 
+        /// <summary>Review Sol-r1-1: while the switch is Unknown, a boundary takes no shop over (as while the food contract
+        /// warms: FoodAuthority.Boundary with contractReady false defers the acquisition). Hours already owned keep their
+        /// gate and checkout, and hand-backs never wait.</summary>
+        public static bool HoldsAcquisitions(RloLivingState living) => living == RloLivingState.Unknown;
+
+        /// <summary>Review Sol-r1-3, the non-food need purchase (NativeSalePath): the claimed native entry is a service
+        /// slot; its order lines become the resident's basket only without RLO. With RLO loaded its loyalty and interiors
+        /// code appends lines to those entries, which nothing marks, so the basket is written as for an unclaimed slot
+        /// and the claimed entry is still retired: no RLO line is sold to a resident, and no native customer is added.</summary>
+        public static bool QuotesClaimedLines(RloLivingState living) => living == RloLivingState.Absent;
+
         public static string Word(RloLivingState state) => state switch
         {
             RloLivingState.Absent => "RLO not loaded", RloLivingState.NotInRelease => "no Living population in this RLO release",
@@ -71,7 +82,7 @@ namespace PersistentCity.Core
                     ? "ordinary standers off in every native zone" + (rloCrowdZones > 0 ? ", " + rloCrowdZones + " of them RLO's" : "") + "; RLO's own scene people kept"
                     : "not overruled (stationary crowds inactive)").Append('\n')
                 .Append("traffic: ").Append(trafficHeld
-                    ? "ordinary native groups held for Persistent City cars; cars RLO holds are never retired"
+                    ? "ordinary native groups held for Persistent City cars; RLO staged accidents and reckless drivers stood down; cars RLO holds are never retired"
                     : "own cars inactive; native traffic as the game and RLO run it").Append('\n');
             return text.ToString();
         }
@@ -124,6 +135,43 @@ namespace PersistentCity.Core
         {
             try { return read(); }
             catch (Exception error) { return new RloLivingReading(RloLivingState.Unknown, "read failed: " + error.Message); }
+        }
+    }
+
+    /// <summary>Review Sol-r1-2: RLO switches whose scenes take over live native cars (staged accidents and reckless
+    /// drivers pick ordinary moving cars from the native pool), held off while Persistent City holds the ordinary native
+    /// groups for its own cars, and given back afterwards. The player's own value wins: one they set during the hold is
+    /// the value restored. Pure; Compatibility/RloTrafficScenes reads and writes the fields.</summary>
+    public sealed class RloSceneHold
+    {
+        private readonly Func<bool?> read;
+        private readonly Action<bool> write;
+        private bool? original;
+
+        public RloSceneHold(string name, Func<bool?> read, Action<bool> write)
+        { Name = name ?? ""; this.read = read ?? throw new ArgumentNullException(nameof(read)); this.write = write ?? throw new ArgumentNullException(nameof(write)); }
+
+        public string Name { get; }
+        public bool Holding => original.HasValue;
+
+        /// <summary>Starts or keeps the hold: records the player's value the first time, and again whenever the player
+        /// switched it back on, then writes off. False when the switch cannot be read.</summary>
+        public bool Hold()
+        {
+            bool? now = read();
+            if (!now.HasValue) return false;
+            if (!original.HasValue || now.Value) original = now.Value;
+            if (now.Value) write(false);
+            return true;
+        }
+
+        /// <summary>Gives the recorded value back; nothing when not holding.</summary>
+        public void Release()
+        {
+            if (!original.HasValue) return;
+            bool value = original.Value;
+            original = null;
+            if (value) write(true);
         }
     }
 }
