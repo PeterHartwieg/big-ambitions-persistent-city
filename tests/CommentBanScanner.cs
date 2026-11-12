@@ -359,10 +359,12 @@ public static class CommentBanScanner
         void Arithmetic()
         {
             int n = s.Length, depth = 0;
-            for (; i < n; i++)
+            while (i < n)
             {
+                if (s[i] == '$' && i + 1 < n && s[i + 1] == '(') { Substitution(); continue; }
                 if (s[i] == '(') depth++;
                 else if (s[i] == ')' && --depth == 0) { i++; return; }
+                i++;
             }
         }
 

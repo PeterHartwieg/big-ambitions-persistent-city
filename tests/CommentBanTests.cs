@@ -100,6 +100,8 @@ public sealed class CommentBanTests
             CommentBanScanner.Scan("tools/a.sh", "echo \"$(date # explanation\n)\"\ncat <<EOF\nbody\nEOF\necho done # after\n").Select(c => c.Line));
         Assert.Equal(new[] { 2, 5, 13 },
             CommentBanScanner.Scan("tools/a.sh", "((mask = 1 << 2))\n# banned\nfor ((i = 0; i << 2; i++)); do :; done\ncat <<EOF\n$(date # banned\n)\n# literal $x\nEOF\ncat <<'EOF'\n$(date # literal\n)\nEOF\necho # last\n").Select(c => c.Line));
+        Assert.Equal(new[] { 1, 3, 4, 6 },
+            CommentBanScanner.Scan("tools/a.sh", "((count += $(printf 1 # banned\n)))\n# after\nx=$(( $(echo 2 # inner\n) << 1 ))\n# end\n").Select(c => c.Line));
     }
 
     static IEnumerable<string> TrackedFiles(string root)
