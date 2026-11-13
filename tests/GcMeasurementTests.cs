@@ -76,6 +76,11 @@ public sealed class GcMeasurementTests
         Assert.Equal(16, sampler.MaxFrameMs); Assert.Equal(3, sampler.MaxModMs);
         Assert.Equal(0, sampler.FrameSpikes()); Assert.Equal(0, sampler.CollectionSpikes());
         Assert.Equal(2, sampler.FrameSpread(false).Count); Assert.Equal(1, sampler.ModSpread(false).P50);
+        sampler.Rebaseline();
+        sampler.Observe(2000, 9, 1, 0, 1000);
+        sampler.Observe(2016, 10, 1, 0, 200);
+        Assert.Equal(4, sampler.Frames); Assert.Equal(2, sampler.Collections(0));
+        Assert.Equal((101L + 1000) / 2, sampler.HeapBeforeCollection); Assert.Equal((90L + 200) / 2, sampler.HeapAfterCollection);
     }
 
     [Fact]

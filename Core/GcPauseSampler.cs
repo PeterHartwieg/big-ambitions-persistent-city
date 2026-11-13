@@ -88,6 +88,7 @@ namespace PersistentCity.Core
             if (!Running) return;
             if (baselined)
                 Frame(stampMilliseconds - lastStampMs, pendingModMs, gen0Total - lastCounts[0], gen1Total - lastCounts[1], gen2Total - lastCounts[2], heapBytes);
+            else if (heapBytes >= 0) lastHeap = heapBytes;
             lastStampMs = stampMilliseconds; lastCounts[0] = gen0Total; lastCounts[1] = gen1Total; lastCounts[2] = gen2Total;
             pendingModMs = 0; baselined = true;
         }
