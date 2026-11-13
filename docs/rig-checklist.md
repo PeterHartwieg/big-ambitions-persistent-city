@@ -13,3 +13,5 @@ The checks written by slices merged before 10 November are in the history tag, o
 ## Checks
 
 None added since 10 November.
+
+- 13 November 2026: [Mac results — GR-4, GR-6/7/8, GR-9 and RLO #239 at a3a6c8db](checks/rig-2026-11-13-mac-results.md) — 2 passed / 6 partial / 1 failed / 11 not run; BLOCKED.
