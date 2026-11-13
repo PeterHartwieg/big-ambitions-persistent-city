@@ -11,5 +11,9 @@ namespace PersistentCity.Core
         public const int WorkplaceRouteProbes = 2;
         public const int SupportIncomePercent = 60;
         public const int PensionIncomePercent = 70;
+        public const double UnrentableHomeUsableShare = 0.6;
+        public const double UnrentableHomeSquareMetresPerPerson = 30;
+        public const double StoreyHeightMetres = 3.5;
+        public const int CityResidentTotal = 1000;
     }
 }

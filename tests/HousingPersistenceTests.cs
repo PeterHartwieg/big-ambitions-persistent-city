@@ -49,6 +49,7 @@ public sealed class HousingPersistenceTests
     public void LargeCurrentPopulationWithVisitsAndCarJourneysRoundTripsWithinBound(int legs, int travellingEvery)
     {
         var city = Housing(28328);
+        Population.ExpandToHousing(city);
         Assert.Equal(25495, city.Citizens.Count);
         int index = 0;
         foreach (var person in city.Citizens)
