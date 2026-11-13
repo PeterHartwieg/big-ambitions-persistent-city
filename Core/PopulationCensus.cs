@@ -66,6 +66,14 @@ namespace PersistentCity.Core
             long commuters = Math.Min(commuterDemand, capacity);
             return new VisitorTargets(true, capacity, commuterDemand, perDay, poolDemand, commuters, Math.Min(poolDemand, capacity - commuters));
         }
+
+        public static VisitorTargets ForMeasurement(VisitorTargets normal, long visitors)
+        {
+            if (!normal.HasPortals) return normal;
+            long capacity = Math.Max(0, Math.Min(visitors, PopulationCensusPolicy.MaximumVisitors));
+            long commuters = Math.Min(normal.CommuterTarget, capacity);
+            return new VisitorTargets(true, capacity, normal.CommuterDemand, normal.DayVisitorsPerDay, normal.PoolDemand, commuters, capacity - commuters);
+        }
     }
 
     public sealed class CensusWorkplace

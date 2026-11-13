@@ -60,8 +60,9 @@ namespace PersistentCity.Core
         internal bool Closed;
         internal bool CommutersPaused;
         internal bool Refused;
+        internal long BoundaryLimit = PopulationFillPolicy.MaximumPersonsPerBoundary;
         internal long Aggregate => Commuters + Pool;
-        internal VisitorPattern? Next => Closed || Refused || CreatedHere >= PopulationFillPolicy.MaximumPersonsPerBoundary
+        internal VisitorPattern? Next => Closed || Refused || CreatedHere >= BoundaryLimit
             || Aggregate >= Targets.VisitorCapacity ? (VisitorPattern?)null
             : Commuters < Targets.CommuterTarget && !CommutersPaused ? VisitorPattern.Commuter
             : Pool < Targets.PoolTarget ? VisitorPattern.DayVisit : (VisitorPattern?)null;
@@ -82,6 +83,15 @@ namespace PersistentCity.Core
         public double? PopulationFillBoundary => fillPlan?.Boundary;
         public bool PopulationFillAttached => fillCatalogue != null;
         public bool PopulationFillPending => FillUnitDue();
+        public int? MeasurementPersonTarget { get; private set; }
+
+        public void SetMeasurementPersonTarget(int? persons)
+        {
+            if (persons is int n && (n < 1 || n > PersonTable.MaximumPersons))
+                throw new ArgumentOutOfRangeException(nameof(persons), "A measurement target is 1 to " + PersonTable.MaximumPersons + " persons.");
+            MeasurementPersonTarget = persons;
+            fillPlan = null;
+        }
 
         public void AttachPopulationFill(PopulationFillCatalogue? catalogue)
         {
@@ -102,8 +112,11 @@ namespace PersistentCity.Core
                 if (State.Visitors[i].Stay.Pattern == VisitorPattern.DayVisit) pool++; else commuters++;
                 if (State.VisitorRoutines[i].JoinedMinute == boundary) here++;
             }
-            fillPlan = new PopulationFillPlan { Boundary = boundary, Targets = fillCatalogue!.Targets(State), Commuters = commuters, Pool = pool,
-                CreatedHere = here, Closed = OrdinaryBoundaryEventsBegan(boundary) };
+            var targets = fillCatalogue!.Targets(State);
+            if (MeasurementPersonTarget is int persons) targets = VisitorTargets.ForMeasurement(targets, persons - (long)State.Citizens.Count);
+            fillPlan = new PopulationFillPlan { Boundary = boundary, Targets = targets, Commuters = commuters, Pool = pool,
+                CreatedHere = here, Closed = OrdinaryBoundaryEventsBegan(boundary),
+                BoundaryLimit = MeasurementPersonTarget.HasValue ? PersonTable.MaximumVisitors : PopulationFillPolicy.MaximumPersonsPerBoundary };
             return fillPlan;
         }
 

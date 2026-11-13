@@ -153,7 +153,7 @@ namespace PersistentCity.Core
             replacement.venueFeedback = venueFeedback; replacement.throughTraffic = throughTraffic?.Fresh();
             replacement.HouseholdOutingsEnabled = HouseholdOutingsEnabled;
             replacement.weatherSource=weatherSource;replacement.weatherSettings=weatherSettings;
-            replacement.fillCatalogue = fillCatalogue; replacement.fillPlan = fillPlan;
+            replacement.fillCatalogue = fillCatalogue; replacement.fillPlan = fillPlan; replacement.MeasurementPersonTarget = MeasurementPersonTarget;
             if (fillPlan != null) fillPlan.Factory = null;
             if (stopEnvironment != null) replacement.AttachOptionalStops(stopEnvironment, stopPercentage, stopTiming);
             if (food != null) replacement.AttachFoodMarket(food.Market, food.ChoiceSettings, food.MemorySettings, food.AwarenessSettings, food.MemoryProvider, food.CampaignProvider, food.RivalSettings);
