@@ -2,7 +2,7 @@
 
 Role `rig_test`, where `mac`, isolated `agentmac`. **Summary: 2 passed / 6 partial / 1 failed / 11 not run. Result: BLOCKED.** Counts cover the 20 requested rows below; setup and cleanup are reported separately. This is an evidence PR and does not gate a merge.
 
-`<stage>` = `/Users/peterhartwieg/HART-Builds/persistent-city-rig-2026-11-13-mac`; `<rig>` = `/Users/peterhartwieg/Coding_Projects/big-ambitions/big-ambitions-agent-rig`. Raw replies, logs, parsed snapshots, images, tools and backups stay there. The report is also copied to `~/Coding_Projects/.agent-logs/persistent-city-rig-2026-11-13-mac.md`.
+`<stage>` = `/Users/peterhartwieg/HART-Builds/persistent-city-rig-2026-11-13-mac`; `<rig>` = the official agent-rig checkout. Raw replies, logs, parsed snapshots, images, tools and backups stay there. The report is also copied to `~/Coding_Projects/.agent-logs/persistent-city-rig-2026-11-13-mac.md`.
 
 ## Build and rig
 
