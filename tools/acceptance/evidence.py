@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Reference-run evidence and the cross-machine digest comparison (F9h; docs/plans/f9-city-acceptance.md, row F9h,
+"""Reference-run evidence and the cross-machine digest comparison (F9h; https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/a3a6c8db8686f4382ac3cf941010e0b614e48805/docs/plans/f9-city-acceptance.md, row F9h,
 Decision 6 and section 3.10).
 
 python tools/acceptance/evidence.py record --result build/acceptance/<runId>/acceptance.json [--evidence DIR]

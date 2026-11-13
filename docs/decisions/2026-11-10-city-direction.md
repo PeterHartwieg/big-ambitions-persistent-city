@@ -1,119 +1,104 @@
-# City direction, 10 November 2026
+# Decisions in force
 
-Peter's answers to eight design questions on 10 November 2026, and a ninth decision later that day, asked after the [9 November review](../reviews/2026-11-09-city-review.md). The review found that the model and the density policy limit how real the city feels, and that the technology does not. These decisions set the direction for the remaining work. The [roadmap](../roadmap.md) carries the slices.
+This is the one register of owner decisions that still bind Persistent City. Each entry carries its date. Binding agent rules are in [AGENTS.md](../../AGENTS.md); the food price weight is in [its own record](2026-11-08-price-weight.md); optional stops are in [stationary citizens](../stationary-citizens.md); the RLO contract is in [rlo-contract](../rlo-contract.md). The source records were removed on 13 November 2026 and are readable at [a3a6c8d](https://github.com/PeterHartwieg/big-ambitions-persistent-city/tree/a3a6c8db8686f4382ac3cf941010e0b614e48805/docs/decisions). Deleting a record does not revive an approach it rejected.
 
-## Peter's decisions
+## City direction
 
-1. **Everyone on the street is a named person.** The population grows by housing renters in homes the player cannot rent. Peter: "We can expand the population by having renters in non-player rentable houses. But we should still make sure that every person you meet can be inspected you can see they live/work somewhere." No anonymous pedestrians, as on 31 October.
-2. **Through-traffic cars are the one exception.** Peter: "I think cars we can make the exception and have some cars just spawn to cross the city (someone travelling through the city)."
-3. **Daily life in the first release** has three changes. Work follows the workplace's opening hours. Evenings and weekends differ from weekdays, and days off are not the same for everyone. People who share a home sometimes go out together.
-4. **Residents buy at every kind of player business in the first release.** Peter: "All businesses need to be supported somehow, lets think about the easiest implementation for all that doesnt require per store individualization (also a fallback for modded stores)." This replaces "food-first products" from 31 October.
-5. **Non-food buying has two causes.** Recurring needs that come due on their own rhythm, and impulse buys while visiting or passing.
+Peter answered these on 10 November 2026 after the [9 November review](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/a3a6c8db8686f4382ac3cf941010e0b614e48805/docs/reviews/2026-11-09-city-review.md). They replace "food-first products" and "later: households" from 30 October to 2 November.
+
+1. **Everyone on the street is a named person** who can be inspected and lives and works somewhere. The population grows by housing renters in homes the player cannot rent.
+2. **Through-traffic cars are the one exception.** They cross the city with no driver identity, wallet or destination.
+3. **Daily life in the first release:** work follows the workplace's hours, evenings and weekends differ, days off differ between people, and people who share a home sometimes go out together. Households share outings and nothing else; domestic simulation stays out.
+4. **Residents buy at every kind of player business**, with no per-store individualization and a neutral fallback for modded stores.
+5. **Non-food buying has two causes:** recurring needs and impulse buys.
 6. **Wallets stay individual.** On a shared outing each person pays for themselves.
-7. **City work goes first.** Slices already in flight finish. Then cleanup, saves and the city work. Food slices not yet started wait for the new day model so they are built once.
+7. **City work goes first.**
 8. **The hands-on session stays last**, before the single release. Feature work does not pause for it.
-9. **Visitors are the balance lever.** Added later the same day. Peter: "We should have the visitor mechanic allow us to finetune balance a bit more (e.g. we can add just more, or some with specific preferences to increase a specific's shop types customers)". Commuters and day visitors stay named people who arrive by subway.
+9. **Visitors are the first balance lever:** more visitors, or visitor groups that lean toward a shop type. A group changes who comes, never what a shop is paid.
 
-## What this changes in older decisions
+The technical plan that followed (one purchase contract with a spending ceiling checked first, saved day plans, one checkout) was the coordinator's proposal, not an owner decision. It can change without Peter. No revenue multiplier, bigger baskets or population target is approved.
 
-- [30 October to 2 November](2026-10-30-roadmap-decisions.md): "food-first products" becomes all player businesses. "No anonymous crowds" stays for people and gains the car exception. "Later: residents as employees, households" moves into the first release as shared outings.
-- [24 October scope](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/docs-history-2026-11-10/docs/archive/implementation-plan.md): "domestic simulation" stays out. Households share outings and nothing else.
-- AGENTS.md keeps its current ownership rules ("unsupported businesses stay native-owned", "no economic effect unless the saved city owns a food scope") until the generic sale path below is proven in game. The plan for that track proposes the new wording.
+### Open: revenue scale
 
-## Technical direction
+The game tunes rent, wages and prices to its own customer volume, and the resident volume may fall short. Decision 9 is the first answer. If visitors do not close the gap, the choices are lower player revenue, one visit counting as more than one customer, or higher spending per visit. Peter decides that with measured numbers.
 
-The coordinator's proposals, revised on 10 November after an approach review by Claude Opus 5.5, gpt-6.1-sol and gpt-6-astra. All three judged the direction sound with changes; the last section lists what they changed. The joint plan refines these proposals, and any of them can change without a new owner decision.
+## Scope and product, 30 October to 6 November 2026
 
-### Order
+- **Vision** (30 October): a living city that also drives the business, played as a deep optimization game.
+- **Choice is probabilistic** and seeded per save, so a reload replays the same day. Distance raises the chance for nearby shops and never rules out distant ones.
+- **Traits are shown in words.** City-wide statistics are sold as paid research through the marketing agencies.
+- **Memory** follows the loyalty or curiosity trait and stays bounded, about four shops per person.
+- **Marketing** is awareness plus targeting; awareness makes a visit possible and traits decide.
+- **Rivals** are real alternatives and read-only, with a modeled outflow. Nothing native is written to them.
+- **One release, at the end** (30 October). The hands-on session comes last.
+- **Research products** (6 November): neighbourhood snapshot (500 m) $500, customer profile (500 m) $2,000, city profile $6,000. Billed with that night's marketing bill; the report arrives the next morning only if the bill is paid; an unpaid bill declines the order with nothing charged. At most one pending order per owned food business and eight per city; the last 16 reports are kept.
+- **Street Food vehicles** (6 November): at a vehicle Persistent City owns, crew-run openings get residents instead of Street Food's customers. Openings the player works personally, city events and catering stay with Street Food. Street Food reputation and health grades do not affect residents. Drinks count as food unless config marks them as drinks.
+- **Movement** (6 November): blocking a person delays them by at most one game minute per journey. A visible person far behind hurries for up to ten seconds, then fades out at a safe corner or doorway. Nobody jumps on screen.
 
-- Prove a sale first. Repair the rig's serving fixture and read the game's customer code before the city is built around it. This runs beside the cleanup and save work.
-- Build one whole loop at today's population before growing it: a resident earns, plans a visit, travels, buys, pays and survives a reload.
-- Grow the population after that loop is measured, so the save and frame work is sized against the real workload.
-- Days, needs and sales get one joint plan. A need coming due is a plan item, a shared outing is a plan item, and the wallet decides whether either happens.
+## Ownership and authority, October 2026
 
-### Population
+- On 24 October automatic ownership of eligible player food businesses replaced opt-in enrolment. Ownership transfers only at native accounting boundaries. Unsupported businesses stay native-owned. Rival finances are never written.
+- None of this authorizes RLO source changes, deployment to an ordinary save, or publication.
 
-- House people in residential buildings the player cannot rent. Those buildings expose no interior area, so the plan needs a second capacity rule, for example floor area from the building footprint and floor count. The rule that whole-property area never stands in for a rentable interior stays for rentable homes.
-- Size the population from consistency between homes, jobs, shops and trips, and from what the save and the frame can carry. The plan sets the number after the save rewrite and a Mono GC measurement on the rig.
-- Commuters and day visitors stay as built: named people with traits and a wallet who live outside the city and arrive through the subway stations. Day plans, needs and the purchase contract apply to them as to residents. Households do not, because a visitor has no home in the city.
+## RLO overlap, 12 November 2026
 
-### Visitors as the balance lever
+Peter decided that Persistent City stays independent of RLO, stays compatible with RLO 1.0, and overrules RLO where the two overlap ([#239](https://github.com/PeterHartwieg/big-ambitions-persistent-city/pull/239)).
 
-- Today the visitor count follows fixed constants in `Core/PopulationCensus.cs`: at most two visitors per resident, a day-visitor pool of about 15 percent of residents, a 25 percent chance of a visit per day. Those become a tuning table in the mod's balance settings.
-- The table has two controls. How many visitors come, by kind and by day of the week. And visitor groups: a named group has a share of the visitors and its own leaning toward business types, for example a group that favours clothes shops or nightlife.
-- A group changes who comes, never what a shop is paid. Every visitor in a group is still one named person with one wallet who makes their own choices, so the inspector stays truthful and a shop still has to win the visit on price, distance and memory.
-- Groups lean toward business types from the loaded catalogue, so a modded shop type can be given customers the same way.
-- This is the first tool for the revenue-scale question below, ahead of any change to what one visit is worth.
-- The table is for balancing the mod. Whether the player ever sees or changes it is not decided.
+- RLO's Living population switch on or off, and RLO's customer-calculator replacements, no longer refuse the owned checkout.
+- A Living population switch that reads Unknown at load refuses the checkout. Unknown during play defers new acquisitions.
+- Foreign Harmony patches on the economy hooks still refuse.
+- While Persistent City cars hold the ordinary car groups, RLO's accident switches are held off and the player's stored value is restored at release.
+- This is runtime coordination. It authorizes no RLO source edit and no new RLO API. Details are in the [RLO contract](../rlo-contract.md).
 
-### Days
+## Money, 28 October 2026
 
-- Replace the fixed template in `Core/DailyRoutine.cs` with a plan per person per day: an ordered list of intended activities with a venue, a time window, a duration and a priority.
-- A plan depends on the person's wallet, needs and the current catalogue, so a seed alone cannot replay it. Each day's plan is generated once, at the start of the day, with seeded draws, and saved. A reload continues the saved plan.
-- One executor runs plans. Today commute preparation, meal outings, waits for opening and optional stops each keep their own scheduling state in `CitySimulator`. The executor takes those over and handles late arrivals, closed venues, missed items and a household member who does not turn up.
-- Work windows come from the workplace's real weekly hours and a shift type. Meals become plan items instead of interrupts.
-- Days off vary by workplace and person. The shared three-day weekend goes.
-- A household is the people in one home. It gets one kind of shared plan item, an optional outing with a clear rule for cancelling. No shared budget, no relationships beyond living together.
+- Resident payments match native price precision exactly. Native prices are never changed or rounded. Amounts use a fixed unit that holds every supported native price and every cent; the unit is defined in `Core/FoodMoney.cs`.
+- Peter accepted a cap of about $343.6 million per amount; checked arithmetic fails loudly above it.
+- The game's own float running totals drift by native accumulation. That drift is the game's and is reported apart from the exact order and resident sums.
+- Accepted limit: a receipt confirmed late adds to its checkout day's history row, which other sales may have filled meanwhile. Overflow there needs about $343.6 million in one shop-day. It is not guarded, and it is not a fix task.
 
-### Through-traffic cars
+## Performance and RLO checks, 28 October 2026
 
-- A through car enters at one map edge and leaves at another. It occupies road capacity in the traffic kernel like a resident's car, so queues stay honest.
-- It has no driver identity, wallet or destination in the city. The inspector says it is passing through.
-- Its share of traffic is a setting with a low default. It never parks and nobody gets out.
+- Performance work must keep outputs, save validation and save bytes unchanged.
+- The food decision cache stays; checkout always reads live offers and prices.
+- RLO checks stay synchronous and single-pass, with no sliced or delayed refusal.
 
-### One sale path for every business
+## Food choice, 8 November 2026
 
-What the code shows today. `CustomerEntriesHelper` creates hourly customer entries for a player business, and each entry already carries its order. The business simulator then processes the entry: price acceptance, stock, a completed order. The food code stops the native entries for a shop it owns, builds its own entry with a one-product order (`Runtime/NativeFoodMarket.cs:588`), and runs it through a `FullServiceBusinessSimulator`. It refuses businesses with an entrance fee. So food proves one processing family with an order the mod wrote. It does not prove that the game will choose a basket for a resident, or that services and entrance-fee venues use the same processing.
+- **Meals:** one main dish plus up to three affordable extras from the same shop in the same visit. Extras are mostly cheaper items; a second similarly priced dish is rare. Extras add no appetite, journey or service slot, and nothing is inferred from product names. The band edges are policy: an extra costs at most 75% of the main to count as cheaper, 75% to 125% is the rare band, and above 125% is never an extra. Smoothing that step would be a new owner decision. Rates are in `Core/FoodMealExtras.cs`.
+- **Price anchor:** a fixed $12.50 typical-meal reference gives a monopoly a demand penalty for raising its whole menu. The earlier $5 anchor came from a detached fixture and had no grounding in native meal prices; it was rejected. Hard wallet affordability stays. The weight and the acceptance criterion are in the [price weight record](2026-11-08-price-weight.md).
 
-The proposal is one purchase contract for every business, with as little per-type code as the game allows.
+## Save schema, 9 November 2026
 
-- **The resident decides whether and where.** A need comes due or an impulse fires. Budget, distance, memory of past visits, price level and opening hours pick the business.
-- **One purchase contract.** A purchase carries the resident, a spending ceiling and the intention of the visit, and returns a confirmed result: what was bought, what was paid, or why not. The ceiling is checked before anything irreversible happens. Debiting whatever the game booked afterwards is too late when the basket costs more than the wallet holds.
-- **Where the order comes from.** First candidate: keep the game's own entry generation and let an arriving resident take one of that hour's native entries, so the game keeps order choice, stock and booking for every type, modded ones included. The plan checks this against the game assembly. Where it does not hold, a small adapter per processing family fills the gap, chosen by what the business can do and never by shop name.
-- **One checkout.** Food rides the same contract and adds only its product choice from tastes and menus. A second checkout beside the food one would double the ownership, receipt and refusal code.
-- **A small need model.** A purchase has an effect: it satisfies a need for a while, the resident can defer, and the visit is remembered. Categories come from the loaded catalogue, modded ones included. A category nobody has described gets a neutral default. That is the fallback for modded shops, with the honest limit that catalogue presence cannot guarantee a modded shop's own code works with the contract.
-- **Native customer counts calibrate, they do not drive.** The plan first establishes what those counts already include, such as price, marketing or location, so the resident's choice does not apply the same effect twice. Household essentials already deducted from wallets are re-cut so a need is not paid for twice.
-- **Businesses without walk-in customers**, such as offices, factories and warehouses, are supported through their workforce. Residents work there on the venue's hours. Their contracts and production stay native.
-- **Rivals** stay read-only. Spending at rival non-food shops stays a modeled outflow, as today.
+Peter: "We should hold it at 1 until release. Nobody has a save since its not released."
 
-Prerequisites shared with the day model, built before day plans: a business type on every place, a place catalogue that refreshes when businesses open or close, and the wallet moved from the food roster to the person.
+- The save schema and every own-state version written into a save stay 1 until release. No per-feature schema constant, writer number, migration, build stamp or format fingerprint.
+- The format changes in place. A deliberate change re-pins the golden hashes in the same change.
+- Other schema numbers, malformed data and over-bound data are refused and kept, never overwritten.
+- Accepted risk: a development save written at schema 1 by an older build may fail or misread after an in-place change. Rig and test cities are rebuilt. `tests/SchemaHeldAtOneTests.cs` enforces the number.
+- Normal versioning starts with the released format.
 
-### Saves
+## Delivery and docs, 6 to 13 November 2026
 
-- Start with a direct single-pass writer inside the existing save callback, and measure capture, validation and encoding separately.
-- Resident wallets and native sales must describe the same moment. Encoding on a worker or into a sidecar file comes only with a mechanism that keeps one save consistent and recovers from a crash between the two writes.
+- In-game checks are batched for the rig and do not gate merge (6 November). Evidence goes in the PR description.
+- Tests run focused while working and in full once before merge (9 November). Peter removed the machine-wide dotnet lock on 10 November.
+- Docs stay as lean as possible (10 November): slices write no docs unless the task names the file. Later rules on code comments and new Markdown files are in AGENTS.md.
 
-### Open question for Peter: revenue scale
+## Lessons from failed approaches
 
-The game tunes rent, wages and prices to its own customer volume. The 9 November review estimates about three resident visits per shop per day in today's city. Nobody has measured the native volume, and a population of 8,000 to 15,000 may still fall short of it. The first answer is decision 9: more visitors, and visitor groups that lean toward the shop types that fall short. If that is not enough, either the player's revenue drops, or each visit has to count for more than one customer in the books, or prices and spending per visit rise. The joint plan measures the gap in game, shows how far visitors close it, and brings what is left to Peter with numbers.
+- **Compact save format (F7d, 6 November):** fewer bytes did not show a shorter native pause, and the extra encoding, compression and identity work cost time. The format was dropped in P-A. [Record](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/a3a6c8db8686f4382ac3cf941010e0b614e48805/docs/decisions/2026-11-06-f7d-compact-format.md).
+- **Interior view (Track F, October):** no safe renderer for life seen from inside or through shop windows was found.
+- **Physical bodies at 6× speed:** the experiment drifted off roads. Native 6×, interiors and time-machine skips release bodies and the city continues in the background.
 
-### Not yet proven
+## Continuity rules
 
-- Where native orders are generated, and whether one native processing path serves every customer-facing business type, including services, gyms, nightclubs, cinemas and theatres.
-- That a native entry can be bound to the resident who takes it, and that a spending ceiling can be enforced before the sale commits.
-- What the game's own customer counts already include.
-- The rig cannot make a sale today, with or without the mod ([9 November rig results](https://github.com/PeterHartwieg/big-ambitions-persistent-city/pull/170)). The serving fixture has to work before any sale path counts as verified. The proof is one food sale, one goods sale and one service sale, including a refusal and a reload.
-- The hands-on session stays last. Its cost: density, day plans and bodies are tuned without the owner seeing them. A recorded rig walk-through at morning, midday and night, once day plans land, is the stand-in.
+Carried from the October design page.
 
-### Coordinator defaults Peter can overrule
-
-- Clicking a through car shows "Passing through the city" and nothing else.
-- Indoor customers and staff inside a shop stay native bodies for now. Whether they can be shown as the residents they stand for is a question for the plan, because the interior view experiments found no safe renderer.
-- Children do not exist in the population. Residents are 18 to 85, so a household is adults who share a home.
-
-## Approach review, 10 November 2026
-
-Three reviewers read the first version of this record, the review and the roadmap, with the brief to judge the approach and ignore detail: Claude Opus 5.5, gpt-6.1-sol and gpt-6-astra. All three said "sound with changes", agreed with no full rewrite and no change of stack, and none disputed an owner decision.
-
-What changed because of them:
-
-- The first version said the game's customer processing picks what is sold. All three checked `Runtime/NativeFoodMarket.cs` and found the mod writes the order itself. The sale path is now a purchase contract with a spending ceiling checked first, and the native-entry route is a candidate to verify.
-- Proving a sale moved to the front, beside cleanup and saves (all three).
-- Business types and the wallet on the person come before day plans, and days, needs and sales share one plan (all three).
-- Day plans are saved when generated and run by one executor (Opus 5.5, gpt-6-astra).
-- Needs have effects and native counts only calibrate (gpt-6.1-sol, gpt-6-astra). The revenue-scale question is written down (Opus 5.5).
-- The save starts as a direct writer inside the save callback; anything asynchronous needs a consistency mechanism (gpt-6.1-sol, gpt-6-astra).
-- Food and everything else share one checkout (Opus 5.5).
-- The population grows after one whole loop works at today's size (gpt-6.1-sol, gpt-6-astra).
-- The repository-wide rename is cut; a subsystem is renamed when its track replaces it (all three).
-- Fingerprints, the native-evidence ledger and the cross-machine acceptance record are deferred as guarding nobody sees (Opus 5.5).
+- A route is contiguous and ends at a known destination. Unreachable routes wait and retry; arrival is never fabricated.
+- Player and camera position change representation only, never who exists or what they did.
+- Travel completes before another activity starts. Late or closed arrivals may lose an activity; nobody teleports to recover a timetable.
+- An attainable later opening uses a saved waiting state with the original destination and deadline.
+- A simulation step has a bounded event budget and records how far it has caught up.
+- The RLO source roster stays separate from active residents. Actual assignments and journeys are saved; incompatible snapshots are refused, never re-rolled.
+- Housing uses only known rentable or buyable interior area. Gated private estates stay excluded. Decision 1's homes the player cannot rent need their own capacity rule.
+- A road body needs the saved topology fingerprint and node sequence. No match means no body; the adapter never fabricates a road route or borrows a foreign vehicle.

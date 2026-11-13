@@ -9,7 +9,7 @@ A Big Ambitions mod that keeps a persistent city of residents, journeys and traf
 - `Runtime/`: Unity and game calls. `PersistentCityMod`, the `PopulationRuntime` partials, `PhysicalPopulation`, `NativeFoodMarket`.
 - `Compatibility/`: the only RLO access. `RloBridge`, `RloIdentityAdapter`.
 - `tests/`: xUnit, `PersistentCity.Tests.csproj`. `tools/`: build, harnesses, `docs-links`.
-- Docs: [README](README.md), [roadmap](docs/roadmap.md), [behaviour](docs/behaviour.md), [glossary](docs/glossary.md), [rig checklist](docs/rig-checklist.md), `docs/plans/` (open plans only), `docs/decisions/`. Nothing else is kept in the tree; older records are in the tag `docs-history-2026-11-10` and are not required reading.
+- Docs: [README](README.md), [roadmap](docs/roadmap.md), [rig checklist](docs/rig-checklist.md), [decisions in force](docs/decisions/2026-11-10-city-direction.md), `docs/plans/` (open plans only), `docs/decisions/` (the register plus the price-weight record). Nothing else is kept in the tree; older records are in the tag `docs-history-2026-11-10` and are not required reading.
 
 ## Start a slice
 
@@ -21,15 +21,15 @@ Read this file, your plan row and the sections your task lists. Then read the co
 - Perf gate: mod-work p95 < 5 ms; flag every mod-work spike >= 30 ms; whole-frame timing is reported separately. Take cheap, safe wins and give their before/after numbers in the PR description. In unit tests, wall-clock limits go through `PerfGate.Under` (checked only with `PC_PERF_ASSERTS=1`), never a plain `Assert`.
 - Local tests while working and in fix rounds: build, `python tools/test-focused.py` (the classes in test files you changed) and the slice's own new checks. Do not run the full suite: the harness runs it once before merge. There is no dotnet lock; never wait for other test runs. The `tools/*-regression` suites are not run before release.
 - In-game checks are batched for the next rig run and do not gate merge. List them in the PR description under "In-game checks", each numbered with setup, steps and expected result. The coordinator copies them into `docs/rig-checklist.md` after merge.
-- The save schema is held at 1 until release. Never bump it, add a per-feature schema constant, or plan a writer number; change the format in place. This overrides older plan text. A test enforces it. [decision](docs/decisions/2026-11-09-schema-one.md)
-- Slices write no docs unless the task names the file. Evidence, perf numbers and in-game checks go in the PR description. The coordinator updates the roadmap and the rig checklist after merge. Plans are frozen and leave the tree once their slices have merged; later owner decisions go in `docs/decisions/`. [decision](docs/decisions/2026-11-10-lean-docs.md)
+- The save schema is held at 1 until release. Never bump it, add a per-feature schema constant, or plan a writer number; change the format in place. This overrides older plan text. A test enforces it. [decision](docs/decisions/2026-11-10-city-direction.md#save-schema-9-november-2026)
+- Slices write no docs unless the task names the file. Evidence, perf numbers and in-game checks go in the PR description. The coordinator updates the roadmap and the rig checklist after merge. Plans are frozen and leave the tree once their slices have merged; later owner decisions go in `docs/decisions/`. [decision](docs/decisions/2026-11-10-city-direction.md#delivery-and-docs-6-to-13-november-2026)
 - No code comments. Fix the problem or open an issue instead of leaving an excuse in the code. The only exceptions are tooling directives and the lines in `comment-excuses.txt`; `CommentBanTests` enforces this.
 - No new markdown files unless Peter explicitly asks for one (a plan or a review); put status in the PR description or the issue. `tools/md-ban.py` (`MarkdownBanTests`) fails on new `.md`/`.mdx` paths; `--pr <n>` passes when Peter has applied the `docs-approved` label, and `PC_MD_BAN_PR=<n>` makes the test use it.
 - Use "Refs #N", not "Fixes #N".
 - Do not change RLO or publish anything upstream. Do not ask about release or Workshop.
 - Implementers do not use the game, the rig, ModsLocal or the bridge.
 
-Details: [delivery rules, 6 Nov 2026](docs/decisions/2026-11-06-delivery-rules.md); [agent speed, 9 Nov 2026](docs/decisions/2026-11-09-agent-speed.md) (tests, reading); [schema held at 1, 9 Nov 2026](docs/decisions/2026-11-09-schema-one.md); [city direction, 10 Nov 2026](docs/decisions/2026-11-10-city-direction.md).
+Details: [delivery and docs, 6–13 Nov 2026](docs/decisions/2026-11-10-city-direction.md#delivery-and-docs-6-to-13-november-2026); [schema held at 1, 9 Nov 2026](docs/decisions/2026-11-10-city-direction.md#save-schema-9-november-2026); [city direction, 10 Nov 2026](docs/decisions/2026-11-10-city-direction.md#city-direction).
 
 ## Safety rules
 
@@ -43,4 +43,4 @@ Details: [delivery rules, 6 Nov 2026](docs/decisions/2026-11-06-delivery-rules.m
 - Diagnostic helpers create fixtures only in their named disposable FT cities on the owned rig, and restore preexisting rig files and preferences before releasing it. Fixture evidence is not release approval.
 - Perf runs disable autosave in the isolated test profile before timing. Record the original setting, check it is off before each measured window (also after reload), and restore it at cleanup. A save inside a window invalidates the sample. Save profiling needs a separate, explicitly requested run.
 
-The October authorizations and the old scope statement are in [docs/decisions/2026-10-22-24-authorizations.md](docs/decisions/2026-10-22-24-authorizations.md).
+The October authorizations are in the [register](docs/decisions/2026-11-10-city-direction.md#ownership-and-authority-october-2026).
