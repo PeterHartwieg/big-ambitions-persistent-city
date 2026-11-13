@@ -15,6 +15,96 @@ namespace PersistentCity.Runtime
         private PlayerHoldReplay? holdReplay;
         private CitySimulator? holdReplayCity;
         private const int MaxHoldReplayCharacters = 8 * 1024 * 1024;
+        private GcPauseSampler? gcSampler;
+        private readonly int[] gcCounts = new int[GcPauseSampler.Generations];
+        private long gcFrameStarted;
+        private double gcModMilliseconds;
+        private static readonly double GcMillisecondsPerTimestamp = 1000.0 / System.Diagnostics.Stopwatch.Frequency;
+
+        private long GcFrameBegin()
+        {
+            var sampler = gcSampler;
+            if (sampler == null || !sampler.Running) return 0;
+            long now = System.Diagnostics.Stopwatch.GetTimestamp();
+            int gen0 = GcDelta(0), gen1 = GcDelta(1), gen2 = GcDelta(2);
+            if (gcFrameStarted != 0)
+                sampler.Frame((now - gcFrameStarted) * GcMillisecondsPerTimestamp, gcModMilliseconds, gen0, gen1, gen2, GC.GetTotalMemory(false));
+            gcFrameStarted = now;
+            return now;
+        }
+
+        private void GcFrameEnd(long started)
+        {
+            if (started != 0) gcModMilliseconds = (System.Diagnostics.Stopwatch.GetTimestamp() - started) * GcMillisecondsPerTimestamp;
+        }
+
+        private int GcDelta(int generation)
+        {
+            if (generation > GC.MaxGeneration) return 0;
+            int count = GC.CollectionCount(generation), delta = count - gcCounts[generation];
+            gcCounts[generation] = count;
+            return delta;
+        }
+
+        private void GcCommand(string action, string detail)
+        {
+            if (action == "start" && detail.Length == 0)
+            {
+                gcSampler ??= new GcPauseSampler();
+                for (int g = 0; g < gcCounts.Length; g++) GcDelta(g);
+                gcFrameStarted = 0; gcModMilliseconds = 0;
+                gcSampler.Start(GC.GetTotalMemory(false));
+                Debug.Log("[Persistent City] gc measurement started (diagnostic only, " + GcPauseSampler.PolicyId + ", " + gcSampler.Capacity + " stored frames). Use pc gc report or pc gc stop.");
+                return;
+            }
+            if ((action == "stop" || action == "report") && detail.Length == 0)
+            {
+                if (gcSampler == null) { Debug.LogWarning("[Persistent City] gc measurement not started. Use pc gc start."); return; }
+                if (action == "stop") gcSampler.Stop(GC.GetTotalMemory(false));
+                var context = GcContext();
+                Debug.Log(GcPauseSampler.ReportPrefix + gcSampler.ReportJson(context));
+                Debug.Log(gcSampler.ReportHuman(context));
+                return;
+            }
+            if (action == "population") { GcPopulationCommand(detail); return; }
+            Debug.LogWarning("[Persistent City] Unknown command. Use: pc gc start | pc gc report | pc gc stop | pc gc population [<persons>|off] (FT cities only)");
+        }
+
+        private GcReportContext GcContext()
+        {
+            bool incremental = false;
+            try { incremental = UnityEngine.Scripting.GarbageCollector.isIncremental; } catch (Exception) { }
+            long heap = -1, used = -1;
+            try { heap = UnityEngine.Profiling.Profiler.GetMonoHeapSizeLong(); used = UnityEngine.Profiling.Profiler.GetMonoUsedSizeLong(); } catch (Exception) { }
+            var state = simulation?.State;
+            return new GcReportContext(state?.Citizens.Count ?? 0, state?.Visitors.Count ?? 0, simulation?.MeasurementPersonTarget, GC.MaxGeneration, incremental, heap, used);
+        }
+
+        private void GcPopulationCommand(string detail)
+        {
+            var save = SaveGameManager.Current;
+            if (!VendorDiagnosticCity(save?.SaveGameName)) { Debug.LogWarning("[Persistent City] gc population refused: measurement mode needs a disposable FT city."); return; }
+            if (failed || simulation == null || save == null || !ReferenceEquals(saveIdentity, save))
+            { Debug.LogWarning("[Persistent City] gc population refused: no active city."); return; }
+            var city = simulation;
+            if (detail == "off") city.SetMeasurementPersonTarget(null);
+            else if (detail.Length > 0)
+            {
+                if (!int.TryParse(detail, NumberStyles.None, CultureInfo.InvariantCulture, out int persons) || persons < 1 || persons > PersonTable.MaximumPersons)
+                { Debug.LogWarning("[Persistent City] gc population refused: give 1 to " + PersonTable.MaximumPersons + " persons or off."); return; }
+                city.SetMeasurementPersonTarget(persons);
+            }
+            var state = city.State;
+            var targets = city.PopulationFillTargets;
+            Debug.Log("[Persistent City] MEASUREMENT MODE gc population (diagnostic only; not saved, cleared on reload; existing persons are never removed) "
+                + "target=" + (city.MeasurementPersonTarget?.ToString(CultureInfo.InvariantCulture) ?? "off")
+                + " reached=" + PersonTable.PersonCount(state).ToString(CultureInfo.InvariantCulture)
+                + " residents=" + state.Citizens.Count.ToString(CultureInfo.InvariantCulture) + " visitors=" + state.Visitors.Count.ToString(CultureInfo.InvariantCulture)
+                + " portals=" + state.Portals.Count.ToString(CultureInfo.InvariantCulture)
+                + " fill=" + (city.PopulationFillAttached ? "attached" : "detached") + " refusals=" + city.PopulationFillRefusals.ToString(CultureInfo.InvariantCulture)
+                + " visitor_capacity=" + (targets?.VisitorCapacity.ToString(CultureInfo.InvariantCulture) ?? "unplanned")
+                + ". Visitors are added at the next midnight boundary; the fill stops at its own limits and reports the reached count.");
+        }
 
         private void MovementCommand(string action, string detail, string value)
         {

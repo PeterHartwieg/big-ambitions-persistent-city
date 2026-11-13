@@ -19,10 +19,12 @@ namespace PersistentCity.Runtime
 
         private void Update()
         {
+            long gcFrame = GcFrameBegin();
             saveEpochUnits++;
             try { UpdateCity(); }
             finally
             {
+                GcFrameEnd(gcFrame);
                 saveEpochUnits--;
                 if (saveEpochStopPending && saveEpochUnits == 0) FinishDeferredSaveEpochStop();
             }
