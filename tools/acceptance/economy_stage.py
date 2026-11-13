@@ -1,4 +1,4 @@
-"""F9a economy stage adapter (docs/plans/f9-city-acceptance.md, Decision 2, "Economy stage adapter").
+"""F9a economy stage adapter (https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/a3a6c8db8686f4382ac3cf941010e0b614e48805/docs/plans/f9-city-acceptance.md, Decision 2, "Economy stage adapter").
 
 Reads the JSON that tests/economy-interventions/acceptance.py writes and turns it into one stage verdict.
 acceptance.py belongs to F6 and is not changed; its exit code is ignored because it exits 1 on every
@@ -20,7 +20,7 @@ ROUTES = {
         "proof": "pending rig capability RIG-WHOLESALE (native wholesale unit cost per product of the FT-F9 shop)"},
     "native staffed-throughput calibration": {
         "class": "native", "row": "native-staffed-throughput", "verdict": "incomplete",
-        "proof": "F6b rig check 2, native staffed throughput (docs/checks/f6b.md)"},
+        "proof": "F6b rig check 2, native staffed throughput (docs-history-2026-11-10:docs/checks/f6b.md)"},
     "full section 6 perf and 100000-consumer stress": {
         "class": "performance", "owner": "F4"},
     "F1 cadence byte identity": {

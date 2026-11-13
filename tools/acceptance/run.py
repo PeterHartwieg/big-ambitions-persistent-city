@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Persistent City acceptance runner (F9a; docs/plans/f9-city-acceptance.md, Decisions 1, 2, 5 and 6).
+"""Persistent City acceptance runner (F9a; https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/a3a6c8db8686f4382ac3cf941010e0b614e48805/docs/plans/f9-city-acceptance.md, Decisions 1, 2, 5 and 6).
 
 python tools/acceptance/run.py quick [--out DIR] [--dotnet PATH]
 python tools/acceptance/run.py full --game-managed <Managed dir> [--price-weight W]

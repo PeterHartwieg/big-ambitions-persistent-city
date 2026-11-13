@@ -1,6 +1,6 @@
 {
   "schema": "persistentcity-supported-game-1",
-  "rule": "Each set is the SHA-256 of every assembly tools/build.py references plus Newtonsoft.Json.dll. Hashes only, never assemblies. A game update is a new set added by a reviewed change; it marks every native assumption stale (docs/plans/f9-city-acceptance.md, Decisions 4 and 7).",
+  "rule": "Each set is the SHA-256 of every assembly tools/build.py references plus Newtonsoft.Json.dll. Hashes only, never assemblies. A game update is a new set added by a reviewed change; it marks every native assumption stale (a3a6c8db8686f4382ac3cf941010e0b614e48805:docs/plans/f9-city-acceptance.md, Decisions 4 and 7).",
   "current": "steam-1331550-build-25482473",
   "sets": [
     {

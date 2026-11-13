@@ -1,6 +1,6 @@
 # Reader corpus (F7f)
 
-Golden population payloads of the writer. The save schema is held at 1 until release ([decision](../../docs/decisions/2026-11-09-schema-one.md)), so there is one folder, `schema-01`. X3 removed the folders of the development schemas 13 to 35 and the old `schema-36` folder; the record is in `docs/checks/x3.md`.
+Golden population payloads of the writer. The save schema is held at 1 until release ([decision](../../docs/decisions/2026-11-10-city-direction.md#save-schema-9-november-2026)), so there is one folder, `schema-01`. X3 removed the folders of the development schemas 13 to 35 and the old `schema-36` folder; the record is in [X3 checks](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/docs-history-2026-11-10/docs/checks/x3.md). Repository navigation is in [AGENTS.md](../../AGENTS.md).
 
 ## Layout
 

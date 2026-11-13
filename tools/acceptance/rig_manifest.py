@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Native-evidence ledger and rig batch manifest (F9d; docs/plans/f9-city-acceptance.md, Decision 7 and section 7).
+"""Native-evidence ledger and rig batch manifest (F9d; https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/a3a6c8db8686f4382ac3cf941010e0b614e48805/docs/plans/f9-city-acceptance.md, Decision 7 and section 7).
 
 python tools/acceptance/rig_manifest.py [--out FILE] [--build-json FILE] [--head REV]
 python tools/acceptance/run.py rig-manifest [--out DIR]          (the same, as a runner profile)
