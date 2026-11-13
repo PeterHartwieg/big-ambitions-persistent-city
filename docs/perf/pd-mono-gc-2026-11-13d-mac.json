@@ -1,0 +1,402 @@
+{
+  "run": "persistent-city-rig-2026-11-13d-mac",
+  "built_head": "f3e3d53859f8b21e0619edd61af1d5db22e3e259",
+  "candidate_base": "83b6156e56275069ad684b26cfa8677dbca4b2a4",
+  "dll_sha256": "61b8292227e17fe9609098ef40d52238b556e2e2fc73da782870b848d1a074cc",
+  "fixture": "FT-PD-GC-13d",
+  "mode": "headless",
+  "rlo_version": "1.0.6",
+  "rlo_living_population": "on (capability status; rlo_option read unavailable)",
+  "timing": "provisional; other sessions live on shared Mac",
+  "clock": "speed1; fixed street; one in-game settling hour before each 600-real-second window",
+  "measurements": [
+    {
+      "requested_persons": 3000,
+      "growth_status_lines": [
+        "[Persistent City] MEASUREMENT MODE gc population (diagnostic only; not saved, cleared on reload; existing persons are never removed) target=3000 reached=3222 residents=1611 visitors=1611 portals=20 fill=attached refusals=0 visitor_capacity=1389. Visitors are added at the next midnight boundary; the fill stops at its own limits and reports the reached count.",
+        "[Persistent City] MEASUREMENT MODE gc population (diagnostic only; not saved, cleared on reload; existing persons are never removed) target=3000 reached=3222 residents=1611 visitors=1611 portals=20 fill=attached refusals=0 visitor_capacity=1389. Visitors are added at the next midnight boundary; the fill stops at its own limits and reports the reached count."
+      ],
+      "autosave_before": {
+        "enabled": true,
+        "autosave_disabled": true,
+        "save_mode": {
+          "save_specific": false,
+          "allow": [],
+          "error": null
+        },
+        "suppressed": true
+      },
+      "autosave_after": {
+        "enabled": true,
+        "autosave_disabled": true,
+        "save_mode": {
+          "save_specific": false,
+          "allow": [],
+          "error": null
+        },
+        "suppressed": true
+      },
+      "clock_before": {
+        "day": 3,
+        "weekday": "Wednesday",
+        "time": "01:10",
+        "paused": false,
+        "speed": 1.0,
+        "run_until": null,
+        "arrived_at": null,
+        "keep_needs": false
+      },
+      "clock_after": {
+        "day": 3,
+        "weekday": "Wednesday",
+        "time": "04:22",
+        "paused": true,
+        "speed": 1.0,
+        "run_until": null,
+        "arrived_at": null,
+        "keep_needs": false
+      },
+      "json_line": "[Persistent City] gc report {\"policy\":\"gc-sampler-v1\",\"mode\":\"measurement\",\"running\":false,\"residents\":1611,\"visitors\":1611,\"persons\":3222,\"person_target\":3000,\"max_generation\":0,\"incremental\":true,\"frames\":16960,\"frames_stored\":16960,\"frames_dropped\":0,\"collection_frames\":5,\"gen0\":5,\"gen1\":0,\"gen2\":0,\"heap_start_bytes\":1303191552,\"heap_end_bytes\":1220288512,\"heap_peak_bytes\":1471025152,\"heap_before_gc_bytes\":1458471731,\"heap_after_gc_bytes\":1281739980,\"mono_heap_bytes\":1471660032,\"mono_used_bytes\":1220288512,\"frame_ms_gc\":{\"count\":5,\"p50\":67.492,\"p95\":69.907,\"max\":69.907},\"frame_ms_plain\":{\"count\":16955,\"p50\":33.966,\"p95\":38.354,\"max\":385.641},\"pause_ms\":{\"count\":5,\"p50\":33.526,\"p95\":35.941,\"max\":35.941},\"mod_ms_gc\":{\"count\":5,\"p50\":0.176,\"p95\":1.604,\"max\":1.604},\"mod_ms_plain\":{\"count\":16955,\"p50\":0.177,\"p95\":0.946,\"max\":10.939},\"gc_spikes_30ms\":5,\"frame_spikes_30ms\":16955,\"max_frame_ms\":385.641,\"max_mod_ms\":10.939}",
+      "human_line": "[Persistent City] gc measurement (diagnostic only): persons=3222 frames=16960 collections gen0/1/2=5/0/0 pause p50/p95/max=33.53/35.94/35.94 ms, gc frames >= 30 ms=5, heap 1242.8 MB -> 1163.8 MB (peak 1402.9 MB)"
+    },
+    {
+      "requested_persons": 10000,
+      "growth_status_lines": [
+        "[Persistent City] MEASUREMENT MODE gc population (diagnostic only; not saved, cleared on reload; existing persons are never removed) target=10000 reached=10000 residents=1611 visitors=8389 portals=20 fill=attached refusals=0 visitor_capacity=8389. Visitors are added at the next midnight boundary; the fill stops at its own limits and reports the reached count."
+      ],
+      "autosave_before": {
+        "enabled": true,
+        "autosave_disabled": true,
+        "save_mode": {
+          "save_specific": false,
+          "allow": [],
+          "error": null
+        },
+        "suppressed": true
+      },
+      "autosave_after": {
+        "enabled": true,
+        "autosave_disabled": true,
+        "save_mode": {
+          "save_specific": false,
+          "allow": [],
+          "error": null
+        },
+        "suppressed": true
+      },
+      "clock_before": {
+        "day": 4,
+        "weekday": "Thursday",
+        "time": "01:10",
+        "paused": false,
+        "speed": 1.0,
+        "run_until": null,
+        "arrived_at": null,
+        "keep_needs": false
+      },
+      "clock_after": {
+        "day": 4,
+        "weekday": "Thursday",
+        "time": "04:21",
+        "paused": true,
+        "speed": 1.0,
+        "run_until": null,
+        "arrived_at": null,
+        "keep_needs": false
+      },
+      "json_line": "[Persistent City] gc report {\"policy\":\"gc-sampler-v1\",\"mode\":\"measurement\",\"running\":false,\"residents\":1611,\"visitors\":8389,\"persons\":10000,\"person_target\":10000,\"max_generation\":0,\"incremental\":true,\"frames\":16949,\"frames_stored\":16949,\"frames_dropped\":0,\"collection_frames\":5,\"gen0\":5,\"gen1\":0,\"gen2\":0,\"heap_start_bytes\":1302716416,\"heap_end_bytes\":1327161344,\"heap_peak_bytes\":1454264320,\"heap_before_gc_bytes\":1446135398,\"heap_after_gc_bytes\":1303608524,\"mono_heap_bytes\":1458585600,\"mono_used_bytes\":1327161344,\"frame_ms_gc\":{\"count\":5,\"p50\":63.498,\"p95\":70.809,\"max\":70.809},\"frame_ms_plain\":{\"count\":16944,\"p50\":33.966,\"p95\":38.639,\"max\":212.053},\"pause_ms\":{\"count\":5,\"p50\":29.533,\"p95\":36.843,\"max\":36.843},\"mod_ms_gc\":{\"count\":5,\"p50\":0.173,\"p95\":0.203,\"max\":0.203},\"mod_ms_plain\":{\"count\":16944,\"p50\":0.184,\"p95\":1.189,\"max\":5.605},\"gc_spikes_30ms\":5,\"frame_spikes_30ms\":16941,\"max_frame_ms\":212.053,\"max_mod_ms\":5.605}",
+      "human_line": "[Persistent City] gc measurement (diagnostic only): persons=10000 frames=16949 collections gen0/1/2=5/0/0 pause p50/p95/max=29.53/36.84/36.84 ms, gc frames >= 30 ms=5, heap 1242.4 MB -> 1265.7 MB (peak 1386.9 MB)"
+    },
+    {
+      "requested_persons": 20000,
+      "growth_status_lines": [
+        "[Persistent City] MEASUREMENT MODE gc population (diagnostic only; not saved, cleared on reload; existing persons are never removed) target=20000 reached=20000 residents=1611 visitors=18389 portals=20 fill=attached refusals=0 visitor_capacity=18389. Visitors are added at the next midnight boundary; the fill stops at its own limits and reports the reached count."
+      ],
+      "autosave_before": {
+        "enabled": true,
+        "autosave_disabled": true,
+        "save_mode": {
+          "save_specific": false,
+          "allow": [],
+          "error": null
+        },
+        "suppressed": true
+      },
+      "autosave_after": {
+        "enabled": true,
+        "autosave_disabled": true,
+        "save_mode": {
+          "save_specific": false,
+          "allow": [],
+          "error": null
+        },
+        "suppressed": true
+      },
+      "clock_before": {
+        "day": 5,
+        "weekday": "Friday",
+        "time": "01:10",
+        "paused": false,
+        "speed": 1.0,
+        "run_until": null,
+        "arrived_at": null,
+        "keep_needs": false
+      },
+      "clock_after": {
+        "day": 5,
+        "weekday": "Friday",
+        "time": "04:23",
+        "paused": true,
+        "speed": 1.0,
+        "run_until": null,
+        "arrived_at": null,
+        "keep_needs": false
+      },
+      "json_line": "[Persistent City] gc report {\"policy\":\"gc-sampler-v1\",\"mode\":\"measurement\",\"running\":false,\"residents\":1611,\"visitors\":18389,\"persons\":20000,\"person_target\":20000,\"max_generation\":0,\"incremental\":true,\"frames\":16916,\"frames_stored\":16916,\"frames_dropped\":0,\"collection_frames\":5,\"gen0\":5,\"gen1\":0,\"gen2\":0,\"heap_start_bytes\":1501503488,\"heap_end_bytes\":1456799744,\"heap_peak_bytes\":1560170496,\"heap_before_gc_bytes\":1556833075,\"heap_after_gc_bytes\":1391149875,\"mono_heap_bytes\":1562296320,\"mono_used_bytes\":1456799744,\"frame_ms_gc\":{\"count\":5,\"p50\":74.288,\"p95\":78.142,\"max\":78.142},\"frame_ms_plain\":{\"count\":16911,\"p50\":33.949,\"p95\":38.545,\"max\":276.46},\"pause_ms\":{\"count\":5,\"p50\":40.339,\"p95\":44.193,\"max\":44.193},\"mod_ms_gc\":{\"count\":5,\"p50\":0.22,\"p95\":0.352,\"max\":0.352},\"mod_ms_plain\":{\"count\":16911,\"p50\":0.246,\"p95\":0.841,\"max\":35.364},\"gc_spikes_30ms\":5,\"frame_spikes_30ms\":16900,\"max_frame_ms\":276.46,\"max_mod_ms\":35.364}",
+      "human_line": "[Persistent City] gc measurement (diagnostic only): persons=20000 frames=16916 collections gen0/1/2=5/0/0 pause p50/p95/max=40.34/44.19/44.19 ms, gc frames >= 30 ms=5, heap 1431.9 MB -> 1389.3 MB (peak 1487.9 MB)"
+    }
+  ],
+  "save_guard_before": {
+    "rig_test": true,
+    "guard_installed": true,
+    "save_specific": false,
+    "allow": [],
+    "error": null,
+    "attempts": 20095,
+    "default_allowed": 1,
+    "armed_allowed": 0,
+    "refused": 20094,
+    "unrestricted": 0,
+    "in_progress": false,
+    "compress_thread_alive": false,
+    "autosave_minutes": 5,
+    "autosave_max_per_game": 3,
+    "prevent_autosave": false
+  },
+  "save_guard_after": {
+    "rig_test": true,
+    "guard_installed": true,
+    "save_specific": false,
+    "allow": [],
+    "error": null,
+    "attempts": 132049,
+    "default_allowed": 1,
+    "armed_allowed": 0,
+    "refused": 132048,
+    "unrestricted": 0,
+    "in_progress": false,
+    "compress_thread_alive": false,
+    "autosave_minutes": 5,
+    "autosave_max_per_game": 3,
+    "prevent_autosave": false
+  },
+  "report_self_sampling": [
+    {
+      "frames": 284,
+      "max_frame_ms": 174.007,
+      "gen0": 0,
+      "gen1": 0,
+      "gen2": 0,
+      "max_mod_ms": 4.333
+    },
+    {
+      "frames": 566,
+      "max_frame_ms": 208.456,
+      "gen0": 0,
+      "gen1": 0,
+      "gen2": 0,
+      "max_mod_ms": 5.442
+    },
+    {
+      "frames": 850,
+      "max_frame_ms": 298.525,
+      "gen0": 1,
+      "gen1": 0,
+      "gen2": 0,
+      "max_mod_ms": 5.442
+    },
+    {
+      "frames": 853,
+      "max_frame_ms": 298.525,
+      "gen0": 1,
+      "gen1": 0,
+      "gen2": 0,
+      "max_mod_ms": 5.442
+    }
+  ],
+  "sampler_off_windows": {
+    "pd-baseline": {
+      "seconds": 120.416,
+      "frames": 3152,
+      "mod_work": {
+        "count": 3152,
+        "p50_ms": 2.8537,
+        "p95_ms": 4.9141,
+        "p99_ms": 8.4973,
+        "max_ms": 44.7533,
+        "mean_ms": 2.7385,
+        "spikes_30ms": 1,
+        "spikes": [
+          {
+            "frame_index": 1078,
+            "frame": 4748,
+            "ms": 44.7533,
+            "whole_frame_ms": 94.5057,
+            "condition": "sampler=off-speed=1|hour=08",
+            "dominant": "PopulationRuntime.Update",
+            "dominant_group": "frame_update",
+            "components": {
+              "PopulationRuntime.Update": 44.7177,
+              "PopulationRuntime.LateUpdate": 0.0145,
+              "NativeCityClock.AccountingPrefix": 0.0082,
+              "ResidentInspector.UiRaycastPrefix": 0.0073,
+              "ResidentInspector.MouseRunPrefix": 0.0012,
+              "NativeCityClock.TickPrefix": 0.001
+            }
+          }
+        ],
+        "spikes_listed": 1
+      },
+      "whole_frame": {
+        "count": 3152,
+        "p50_ms": 33.7867,
+        "p95_ms": 64.4839,
+        "p99_ms": 138.0928,
+        "max_ms": 176.2406,
+        "mean_ms": 38.1317,
+        "spikes_30ms": 3035
+      },
+      "validity": {
+        "off_main_thread_calls": 0,
+        "cross_frame_scopes": 0,
+        "unbalanced_exits": 0,
+        "depth_overflow": 0,
+        "frames_dropped": 0,
+        "valid": true,
+        "invalid_reasons": []
+      },
+      "coverage_complete": true
+    },
+    "candidate-matched": {
+      "seconds": 120.375,
+      "frames": 3081,
+      "mod_work": {
+        "count": 3081,
+        "p50_ms": 3.6008,
+        "p95_ms": 4.8769,
+        "p99_ms": 8.2103,
+        "max_ms": 34.3841,
+        "mean_ms": 3.2092,
+        "spikes_30ms": 1,
+        "spikes": [
+          {
+            "frame_index": 1145,
+            "frame": 4085,
+            "ms": 34.3841,
+            "whole_frame_ms": 172.3043,
+            "condition": "sampler=off-speed=1|hour=08",
+            "dominant": "PopulationRuntime.Update",
+            "dominant_group": "frame_update",
+            "components": {
+              "PopulationRuntime.Update": 34.342,
+              "PopulationRuntime.LateUpdate": 0.019,
+              "NativeCityClock.AccountingPrefix": 0.0101,
+              "ResidentInspector.UiRaycastPrefix": 0.0069,
+              "ResidentInspector.MouseRunPrefix": 0.0015,
+              "NativeTravelPace.ObserveTickPostfix": 0.0012
+            }
+          }
+        ],
+        "spikes_listed": 1
+      },
+      "whole_frame": {
+        "count": 3081,
+        "p50_ms": 33.7365,
+        "p95_ms": 67.7599,
+        "p99_ms": 139.7114,
+        "max_ms": 209.623,
+        "mean_ms": 39.0075,
+        "spikes_30ms": 2931
+      },
+      "validity": {
+        "off_main_thread_calls": 0,
+        "cross_frame_scopes": 0,
+        "unbalanced_exits": 0,
+        "depth_overflow": 0,
+        "frames_dropped": 0,
+        "valid": true,
+        "invalid_reasons": []
+      },
+      "coverage_complete": true
+    },
+    "previous-matched": {
+      "seconds": 120.395,
+      "frames": 3084,
+      "mod_work": {
+        "count": 3084,
+        "p50_ms": 3.5299,
+        "p95_ms": 4.8969,
+        "p99_ms": 8.0444,
+        "max_ms": 33.5161,
+        "mean_ms": 3.1492,
+        "spikes_30ms": 2,
+        "spikes": [
+          {
+            "frame_index": 469,
+            "frame": 3436,
+            "ms": 33.5161,
+            "whole_frame_ms": 68.0442,
+            "condition": "sampler=off-speed=1|hour=08",
+            "dominant": "PopulationRuntime.Update",
+            "dominant_group": "frame_update",
+            "components": {
+              "PopulationRuntime.Update": 33.4713,
+              "PopulationRuntime.LateUpdate": 0.0205,
+              "NativeCityClock.AccountingPrefix": 0.0116,
+              "ResidentInspector.UiRaycastPrefix": 0.0067,
+              "ResidentInspector.MouseRunPrefix": 0.0013,
+              "NativeCityClock.TickPrefix": 0.001
+            }
+          },
+          {
+            "frame_index": 944,
+            "frame": 3911,
+            "ms": 31.5054,
+            "whole_frame_ms": 68.3142,
+            "condition": "sampler=off-speed=1|hour=08",
+            "dominant": "PopulationRuntime.Update",
+            "dominant_group": "frame_update",
+            "components": {
+              "PopulationRuntime.Update": 31.4622,
+              "PopulationRuntime.LateUpdate": 0.0193,
+              "NativeCityClock.AccountingPrefix": 0.0109,
+              "ResidentInspector.UiRaycastPrefix": 0.0073,
+              "ResidentInspector.MouseRunPrefix": 0.0014,
+              "NativeCityClock.TickPrefix": 0.0009
+            }
+          }
+        ],
+        "spikes_listed": 2
+      },
+      "whole_frame": {
+        "count": 3084,
+        "p50_ms": 33.5761,
+        "p95_ms": 69.3143,
+        "p99_ms": 140.2993,
+        "max_ms": 283.8007,
+        "mean_ms": 38.9801,
+        "spikes_30ms": 2928
+      },
+      "validity": {
+        "off_main_thread_calls": 0,
+        "cross_frame_scopes": 0,
+        "unbalanced_exits": 0,
+        "depth_overflow": 0,
+        "frames_dropped": 0,
+        "valid": true,
+        "invalid_reasons": []
+      },
+      "coverage_complete": true
+    }
+  }
+}

@@ -8,6 +8,7 @@ Detailed specs: [F8 §7](https://github.com/PeterHartwieg/big-ambitions-persiste
 
 ## Latest evidence
 
+- **13 November d, Mac, build `f3e3d538` (code `83b6156e`):** P-D 5 passed / 1 partial / 1 not run; RLO 1.0.6 #239 1 passed / 3 partial / 2 not run; GR-9 2 partial / 8 not run. Three GC windows and background capture ran; Living ops remain blocked ([13d results](#rig-results--13-november-2026-d-mac-p-d-mono-gc-rlo-106-239-and-gr-9-at-f3e3d538)).
 - **13 November, Mac, build `a3a6c8db`:** GR-4, GR-6/7/8, GR-9 and RLO #239 rows: 2 passed, 6 partial, 1 failed, 11 not run; blocked. The rig ran RLO 0.45.0, not 1.0 ([13 November report](checks/rig-2026-11-13-mac-results.md)).
 - **12b, Mac, build `060a7947`:** 15 targeted rows verified by rig: food, goods and service probe sales, ceiling refusal, mid-probe cut refusal and pre-probe recovery, #77 goods and service fixtures, F7-3 Pending capture. This proves those rows at that build only. It predates GR-3, GR-4, GR-6 to GR-9 and #239.
 - **12a, Mac:** the old "loaded cut has no half sale" assertion failed. #233 replaced it with refuse-and-recover; 12b passed the new contract, and 12a's failure stands ([12a](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/a3a6c8db8686f4382ac3cf941010e0b614e48805/docs/checks/rig-2026-11-12a-mac-results.md)).
@@ -238,3 +239,154 @@ Before copying the DLL, 34 existing files were backed up with SHA-256: the isola
 ### Validation
 
 Build passed. Evidence-only changes require no production tests; no full or regression suite ran. Markdown-ban, changed-document links, JSON parsing and diff whitespace checks passed. Raw evidence remains outside Git. PR #245 remains open and unmerged, with no reviewers requested.
+
+## Rig results — 13 November 2026 d, Mac (P-D Mono GC, RLO 1.0.6 #239 and GR-9 at f3e3d538)
+
+Role `rig_test`, where `mac`, isolated `agentmac`. This is 13d after 13b was blocked by startup receipt validation and 13c by the missing candidate-staging path. Both earlier sections remain unchanged. **P-D: 5 passed / 1 partial / 0 failed / 1 NOT RUN. RLO #239: 1 passed / 3 partial / 0 failed / 2 NOT RUN. GR-9: 0 passed / 2 partial / 0 failed / 8 NOT RUN. RESULT: BLOCKED** by the Living-option operation and remaining check coverage. In-game proof gates no merge.
+
+The requested three ten-minute Mono GC windows ran. The Living-on owned-food check is verified by rig under RLO 1.0.6. Background capture now completes without the earlier client crash. No production source, schema, economy defaults, RLO files, version or changelog was changed. No release, merge or Workshop action occurred. The Windows PC, Steam app, normal profile and other sessions were not used.
+
+`<stage>` = `/Users/peterhartwieg/HART-Builds/persistent-city-rig-2026-11-13d-mac`. Raw logs, screenshots, fixture extractions, commands, input corrections and backup originals stay there. Report copy: `/Users/peterhartwieg/Coding_Projects/.agent-logs/persistent-city-rig-2026-11-13d-mac.md`. [Complete GC JSON/human lines and sampler-off records](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/codex/mac-rig-2026-11-13b/docs/perf/pd-mono-gc-2026-11-13d-mac.json), 15,771 bytes, SHA-256 `2d4e4f94cb4470955666761534dd2629e40341eea50a29957c55ba03f4cc6086`.
+
+### Build and rig
+
+| Item | Observation |
+|---|---|
+| Built HEAD | `f3e3d53859f8b21e0619edd61af1d5db22e3e259`, the existing results-branch head. Its non-docs content equals candidate `83b6156e56275069ad684b26cfa8677dbca4b2a4` (#244). |
+| Base / evidence branch | `codex/mac-rig-2026-11-13b`, tracking the existing remote branch, in the new `rig-2026-11-13d-mac-evidence` worktree. The candidate was already an ancestor; no candidate-base merge was needed before build. The final fetch/normal merge of the remote results branch was already up to date at f3e3d538; no rebase or force-push. |
+| Build | `python3 tools/build.py --game-managed "/Users/peterhartwieg/Library/Application Support/BigAmbitionsMCP/dll-import-shim/Big Ambitions_Data/Managed"`, exit 0. `/opt/homebrew/bin` was prepended to PATH; DOTNET_ROOT was the Homebrew dotnet prefix plus `/libexec`. |
+| Candidate DLL SHA-256 | `61b8292227e17fe9609098ef40d52238b556e2e2fc73da782870b848d1a074cc`. The installed file matched before the run. Startup receipt verification and the live measurement command identify the staged package. Player.log has the population activation line but no commit-stamped build/version line; none is invented. |
+| Agent-rig HEAD | `0b18d38ece6e8fe77c35ee5ea694849c7478d054`, clean; `git fetch origin` / `git pull --ff-only` were already up to date. No edits, commits or pushes to that checkout. The final HEAD and clean tree matched the initial check. |
+| Live AgentRigOps SHA-256 | `5578f9f4657fa2269ee50aa86adfc6d699881fac7e102084918da625045cd59e`; live health also reports this hash and `ready`. The final on-disk hash was unchanged. |
+| RLO loaded | Player.log: `[Mod:RealLifeOverhaul] Real Life Overhaul 1.0.6 initialised.` Capability status reports Living population on. The Living read/set operations fail as recorded below. |
+| Initial resources / lease | 62.1 GiB disk / 61% memory free; lease was free and acquired at 17:55:58 UTC for this run. The initial game was stopped. All lifecycle commands used owner `persistent-city-rig-2026-11-13d-mac`. |
+| Autosave original | Native setting 5 minutes / 3 saves; no autosave-named plist key. Every process used `--rig-test`, with #70 suppression confirmed after loads and before/after each window. No preference-based autosave workaround. |
+| Configurations | GC and sampler-off windows used the built package defaults, physical caps 96/24 and radius 120 m. The later overlap package changed only the test setting `NeedPurchasesEnabled=true`; its DLL stayed identical. Price/household weights remained 1.2/1.0. |
+| Previous-head comparison | Detached build worktree at `9c617c62efee91f999695ebc6a47171e1218282e`, the direct parent of #244; DLL `bdc95999f6b55f54da398ee8eca81079cbd7f91c5ee54e34e56cf73209556641`. Built with the same command, then staged only for the sampler-off comparison. |
+
+Every staging command below ran from the official agent-rig checkout, stopped and leased, first with `--what-if` and then without it. The helper accepted all three; no refresh fallback, manual receipt edit or RLO install/rollback command was used. Each printed rollback is retained verbatim in `<stage>/stage.txt`, `previous-stage.txt` or `candidate-rlo-stage.txt`.
+
+| Exact staging command | Actual receipt-backups folder |
+|---|---|
+| `python3 scripts/install-mac.py --stage-mod PersistentCity /Users/peterhartwieg/HART-Builds/persistent-city-rig-2026-11-13d-mac/package` | `/Users/peterhartwieg/Library/Application Support/BigAmbitionsAgentTestsMac/receipt-backups/20261113T175700Z` |
+| `python3 scripts/install-mac.py --stage-mod PersistentCity /Users/peterhartwieg/HART-Builds/persistent-city-rig-2026-11-13d-mac/package-previous` | `/Users/peterhartwieg/Library/Application Support/BigAmbitionsAgentTestsMac/receipt-backups/20261113T192637Z` |
+| `python3 scripts/install-mac.py --stage-mod PersistentCity /Users/peterhartwieg/HART-Builds/persistent-city-rig-2026-11-13d-mac/package-rlo` | `/Users/peterhartwieg/Library/Application Support/BigAmbitionsAgentTestsMac/receipt-backups/20261113T193130Z` |
+
+The first stage added `Locales/en.json` as expected. The initial backup, not either later candidate backup, is the cleanup source. Independent manifests/copies were taken before staging; the original set has 34 files, including the entire original PersistentCity folder, isolated profile root files and preference plist. RLO mod files were hashed read-only, never staged or restored.
+
+### P-D measurements and GR-5
+
+Timings are **provisional on the shared Mac**: other live sessions were present (coding-agent and desktop app processes were observed, without inspecting or changing their work). All three GC windows were headless, at 1× on one fixed street, after one in-game settling hour. They ran from about 01:10 to 02:50 in the city, not a daytime crowd stress scene. The 30 FPS rig cap makes an ordinary frame interval exceed the 30 ms reporting threshold. Whole-frame intervals remain separate from mod work.
+
+| Requested / actual persons | Day / stored frames / dropped | reached / visitor_capacity / portals / refusals | gen0/1/2 | pause_ms p50 / p95 / max | frame_ms_plain p95 / max_frame_ms | mod_ms_plain p95 / max_mod_ms | GC / frame spikes >=30 ms | incremental / autosave off |
+|---|---|---|---|---|---|---|---|---|
+| 3,000 / **3,222** | 3 / 16,960 / 0 | 3,222 / 1,389 / 20 / 0 | 5 / 0 / 0 | 33.526 / 35.941 / 35.941 | 38.354 / 385.641 | 0.946 / 10.939 | 5 / 16,955 | true / yes |
+| 10,000 / **10,000** | 4 / 16,949 / 0 | 10,000 / 8,389 / 20 / 0 | 5 / 0 / 0 | 29.533 / 36.843 / 36.843 | 38.639 / 212.053 | 1.189 / 5.605 | 5 / 16,941 | true / yes |
+| 20,000 / **20,000** | 5 / 16,916 / 0 | 20,000 / 18,389 / 20 / 0 | 5 / 0 / 0 | 40.339 / 44.193 / 44.193 | 38.545 / 276.460 | 0.841 / **35.364** | 5 / 16,900 | true / yes |
+
+All times are ms. `mod_ms_plain` times UpdateCity as #244 defines it; the sampler-off windows below use the rig's broader mod-work union. The **35.364 ms** 20,000-person maximum is flagged. The GC command exports a maximum, not a per-frame mod-work spike list; its exact spike count is unavailable. Every exported GC/frame spike count is above. Mono reported `max_generation=0` in each window.
+
+| Actual persons | heap_start_bytes | heap_end_bytes | heap_peak_bytes | heap_before_gc_bytes | heap_after_gc_bytes | mono_heap_bytes | mono_used_bytes |
+|---|---|---|---|---|---|---|---|
+| 3,222 | 1303191552 | 1220288512 | 1471025152 | 1458471731 | 1281739980 | 1471660032 | 1220288512 |
+| 10,000 | 1302716416 | 1327161344 | 1454264320 | 1446135398 | 1303608524 | 1458585600 | 1327161344 |
+| 20,000 | 1501503488 | 1456799744 | 1560170496 | 1556833075 | 1391149875 | 1562296320 | 1456799744 |
+
+The fresh city started above 3,000. The target never removes people; 3,222 persisted across two consecutive midnights, satisfying the stabilization stop. The later targets reached exactly. Growth stayed outside sampling. Save readback before/after the sequence stayed at `default_allowed=1`, `armed_allowed=0`, `unrestricted=0`, with saving/compression idle; all automatic attempts were refused. The one allowed save was the initial fixture checkpoint, not a measured-window save.
+
+With `incremental=true`, `pause_ms` describes cycle-ending frames and understates total collection work. Across these observed windows, plain-frame p95 stayed 38.354–38.639 ms; maximum frame time was not monotonic with population. GR-5 now has the requested size measurements, including exact 10,000 and 20,000 populations. These data do not identify a code cause or verify GR-5's broader gameplay/performance target. P-D check 5 and the non-FT refusal check remain incomplete.
+
+| P-D check | Result | Evidence |
+|---|---|---|
+| 1. Sampler off costs nothing | **PASS** | Same RLO 1.0.6 city/checkpoint, headless, 1×, 120-second union windows: candidate p95 4.8769 ms, previous head 4.8969 ms (−0.0200 ms, −0.41%). The earlier candidate window was 4.9141 ms. Previous-head p95 lies within those candidate observations. No GC command preceded the matched candidate window; no gc report line was emitted. Both matched windows have complete 61-entry-point coverage, valid timing and zero dropped frames. |
+| 2. Near 3,000 persons | **PASS** | Full 600-real-second window at actual 3,222; stabilized at two midnights, zero dropped frames. Requested and actual sizes are kept distinct. |
+| 3. 10,000 persons | **PASS** | Same city; full 600-real-second window, exact target and zero dropped frames. |
+| 4. 20,000 persons | **PASS** | Same city; full 600-real-second window, exact target and zero refusals/dropped frames. |
+| 5. Report does not sample itself | **PARTIAL** | Three reports ten seconds apart gave frames 284→566→850; stop gave 853. Max frame grew 174.007→208.456→298.525 ms; gen0 was 0→0→1. Frame growth is observed, but these aggregate reports cannot attribute the maximum increases or establish that reporting caused none of them. No weaker pass criterion is substituted. |
+| 6. Target gone after reload | **PASS** | Cold restart/reload of the original FT city without saving the measurement state: `target=off reached=3222`. #70 suppression confirmed after reload. |
+| 7. Ordinary save refused | **NOT RUN** | The supported new_game path refuses the disposable non-FT name before creating it. No ordinary/Peter save was used and the mod's own refusal was not exercised. |
+
+Sampler-off windows and every recorded union-work spike >=30 ms:
+
+| Window | Seconds / frames | Mod-work p95 / max / spikes | Whole-frame p95 / max / spikes |
+|---|---|---|---|
+| Initial candidate | 120.416 / 3152 | 4.9141 / 44.7533 / 1 | 64.4839 / 176.2406 / 3035 |
+| Matched candidate | 120.375 / 3081 | 4.8769 / 34.3841 / 1 | 67.7599 / 209.623 / 2931 |
+| Matched previous head | 120.395 / 3084 | 4.8969 / 33.5161 / 2 | 69.3143 / 283.8007 / 2928 |
+
+| Window / Unity frame | Mod-work ms | Whole-frame ms | Dominant component |
+|---|---|---|---|
+| Initial candidate / 4748 | 44.7533 | 94.5057 | PopulationRuntime.Update |
+| Matched candidate / 4085 | 34.3841 | 172.3043 | PopulationRuntime.Update |
+| Previous / 3436 | 33.5161 | 68.0442 | PopulationRuntime.Update |
+| Previous / 3911 | 31.5054 | 68.3142 | PopulationRuntime.Update |
+
+### RLO #239
+
+Both fixtures used the documented Mac recipes with unique id/name/checkpoint overrides, $100M funding/readback, staffed registers on cabinets and independent ready=true reads. Food: `ba:street_fourthavenue#19`; service: `ba:street_fourthavenue#23`. The service package included the head wash and all four service offers. The source/default JSON was not edited; the test override was staged through the sanctioned helper. During overlap, rlo.donor reported transient Refreshing with its saved donor catalogue in use; checkout stayed active.
+
+| Check | Result | Observation |
+|---|---|---|
+| 1. Living on, owned food shop | **PASS** | The shop became managed at 10:00. From 10:00–12:00, native revenue $35→$110 matches 15 paid Persistent City receipts of 500 cents. The native log has exactly 15 visits and 15 croissant orders at $5, plus 15 normal zero-price paper bags, with no other product lines. No dropped entries or hook faults. Two native draws and hourly batches were suppressed. Checkout remained active; hooks list all five RLO calculator replacements as overruled; status says Living population on. |
+| 2. Living off before load | **NOT RUN** | The pre-load set-false request failed with `ops_rlo_option_unavailable`; no off-state city was loaded. |
+| 3. Mid-session toggle | **NOT RUN** | The set-false request failed with the same error. No successful transition, two-toggle status or toggled sales interval is claimed. |
+| 4. Crowds | **PARTIAL** | Native walking at the RLO university, 26 Second Avenue, and background views ran. Activation/status count 574 native zones, 115 RLO zones, and report ordinary standers suppressed. Street-performer/homeless preservation and RLO CityPeople identity were not independently established in the views. The retained campus views are roof-occluded, so they are not evidence of an unobstructed crowd census. |
+| 5. Traffic and RLO scenes | **PARTIAL** | A full 600.544-real-second pavement walk ran at 1×, with 363/363 arrived=true, complete-path segments and periodic background captures. The initial off-pavement waypoint refusal is recorded below. Activation logs 2/2 traffic scene switches stood down and “a scene under way ended”. Physical player-car driving, a controlled rival-door event, scene-car retention and the second Accidents-off-during-hold arm were not run; the rig exposes no supported control for those steps. Cleanup release evidence is below. |
+| 6. Native-owned non-food / need basket | **PARTIAL** | Need purchases were enabled and the runtime attached without fault. The ready hairdresser remained unmanaged by food authority (`BusinessContract`, next boundary native). The 13:00–14:00 observation produced two ordinary native visits and sales ($90→$125), but natural need status stayed bought=0/refused=0 with no resident purchase receipts. RLO loyalty/interiors values were not exposed by the queried native Mods page or supported rlo_option names. Therefore no resident basket/one-entry-retirement comparison is claimed. |
+
+The owned-food reconciliation uses actual saved `persistentcity:food-sale-v1:*` paid values, not a probe or a zero-sales equality. Its extraction is `<stage>/rlo-owned-12-pcsave.json`; the compact arithmetic is `rlo-on-reconciliation.json`. A purchase logger added `agent-rig.shop-log` observer postfixes after every performance window and before the sales interval. The hooks report identifies them; no foreign refusing prefix was added. The non-food hour used the logger independently and did not substitute ordinary native customers for residents.
+
+### GR-9 and background capture
+
+Five initial background `capture take` calls completed with `capture_method=render_texture`, `fallback_reason=ops_view_capture_background`, Metal, 640×480 PNGs and live rig-ops readiness afterward. Actual game/UI pixels were inspected; changed UI/view content appears in subsequent captures. The busy-street sequence then produced 94 PNGs over 121.142 seconds, all render_texture; median spacing 1.271 s (range 1.137–1.895 s). No TransformStreamHandle error or capture-induced client exit occurred. No capture-crash restart was needed. The ordinary comparison/reload restarts were separate lifecycle steps. Captures ran after all P-D timing windows.
+
+Only the capture-dependent rows that can run without player-car control or walker/resident identity binding were re-run. Other earlier results are not silently upgraded.
+
+| GR-9 row | Result | Observation / remaining coverage |
+|---|---|---|
+| 1. Walker fade-in | **PARTIAL** | Two-minute street sequence has moving walkers and clear pavement, without the prior central modal. Its 1.271-second median spacing cannot resolve a 0.75-second fade or exclude a pop between images. |
+| 2. Mode-change fades | **NOT RUN** | No supported resident→walker→own-car binding for following both transitions. |
+| 3. Parked cars across reload | **NOT RUN** | The full row needs model/body/owner binding and the owner's departure/destination transition; those capabilities remain absent. Not re-run as a weaker logical-record comparison. |
+| 4. Own cars / no borrowing hooks | **PARTIAL** | No physicalvehicles/physicalintersections owner in the retained hooks report; ownCars was positive and Personal was held. Observed ownCars reached 3; retired rose 0→55 and loadsRetired 0→44 during the session. The full-modpack log still contains DrivenRides Patch DrivingAI.WaypointRequested, Patch GameSpeedController.SetPause and Patch TrafficManager.FixedUpdate lines. Taxi/service driving was not identified independently, so the full literal criterion is not met. |
+| 5. Wardrobe and looks | **NOT RUN** | Opaque walker handles do not bind to a Persistent City resident/donor across reload. |
+| 6. 96/48 performance | **NOT RUN** | Outside this capture-fix rerun; the earlier provisional FAIL remains. The sampler-off windows are not a replacement cap comparison. |
+| 7. Native/player traffic against own cars | **NOT RUN** | Physical player-car control and a controlled junction sequence are absent. |
+| 8. Parked occupancy | **NOT RUN** | No controlled two-resident/curb/player-car/bollard fixture or identity binding. |
+| 9. Own cars stop for traffic/player car | **NOT RUN** | No stopped player-car / red-light / adjacent-turn fixture or control. |
+| 10. Own cars stop for walkers | **NOT RUN** | No identified own-car / bound walker crossing or exposed layer readback. Casual walking is not collision proof. |
+
+### Tooling gaps, exact refusals and corrected inputs
+
+| Operation | Exact outcome | Consequence |
+|---|---|---|
+| `python3 scripts/mac-agent op rlo_option '{"action":"read","name":"living_population"}'` | `ops_rlo_option_unavailable` | Original live on-state was read from capability status; stored-value readback unavailable. |
+| `python3 scripts/mac-agent op rlo_option '{"action":"set","name":"living_population","value":false}'` (once for each requested arm) | `ops_rlo_option_unavailable` | #239 checks 2 and 3 NOT RUN. No UI toggle, file edit or replacement RLO was used. |
+| `python3 scripts/mac-agent call new_game '{"name":"PD-GC-Refusal-13d"}'` | `The bridge starts only games whose name starts with FT, not 'PD-GC-Refusal-13d'.` | P-D 7 NOT RUN. The guard was not bypassed. |
+| `op ops {}`, `op screen_pos list`, `call drive {"op":"status"}` | The schemas have opaque walker/business/position targets, no stable resident/donor/car binding or physical ordinary-player-car control. Drive status returned `running:false, phase:none`; the documented drive path is an FT simulated trip. | Binding/car-control rows remain NOT RUN; no invented failing op is used as evidence. |
+| `call ui {"op":"escape"}` from native Options | `Nothing is open to close (Esc would open the pause menu).` | Closed through the observed Back [Escape] and MiniMenu Close buttons. No setting value was changed. |
+| Initial campus walk to x −163.39, z 335.27 | `No walkable ground within 3 m of x -163.4, z 335.3.` | Stopped the attempt safely after two successful pavement walks; restarted the full ten-minute walk on the verified two-point pavement route. |
+
+Two input mistakes were refused before the affected action: the stage recipe used `FT-RLO...` for a display name instead of required `FT ` (`Shop name must start with "FT " so it stays recognisably disposable`); and the first teleport omitted `who` (`Missing "who": "player" or a food vehicle's id.`). Both were corrected and the documented commands succeeded. An obsolete CloseButton request after collapsing the campaign panel returned `No button or option reads "CloseButton".`; a fresh state read showed no held screen. These are setup corrections, not product failures or capture crashes.
+
+### NOT RUN grouped
+
+- P-D 7: supported city creation/console guards do not provide the non-FT fixture path.
+- RLO #239 2–3: Living-population read/set operation unavailable. The off-before-load and two-toggle scenarios remain unverified under 1.0.6.
+- GR-9 2, 3, 5, 7, 8, 9, 10: controlled physical player-car and/or stable resident/donor/body bindings are absent. GR-9 6 was deliberately not re-run because it did not depend on the background-capture fix.
+- Partial portions: report self-isolation, subsecond fade observation, RLO scene/crowd identity preservation, controlled traffic and option-release arms, and a non-food resident basket purchase with verified RLO loyalty/interiors settings.
+
+### Fixtures, restoration and validation
+
+Created fresh cities: `FT-PD-GC-13d` and `FT-RLO-13d`. Created checkpoints: `FT RLO 13d Food v1`, `FT RLO 13d Owned 12`, `FT RLO 13d Service v1`, `FT RLO 13d Service 14`. The planned `PD-GC-Refusal-13d` was not created. Disposable fixture saves stay in the isolated profile. Actual saved population payloads report schema 1; no measurement target was saved.
+
+The Living restore request, before stopping, also returned `ops_rlo_option_unavailable`. No Living mutation had succeeded; capability status was **on before and after** the restore attempt, matching the original live state. The stored option/journal could not be read through that op. The original isolated preferences were restored and verified independently.
+
+All four game processes stopped normally, without `--force`. The final log reports `[Persistent City] RLO traffic scene switches given back (the player's stored options).` No after-release options-screen verification is claimed.
+
+The execution layer rejected the printed destructive shell rollback before it ran: **`rm -f style commands are not permitted. Use a safer approach`**. Restoration then used a non-destructive equivalent: the staged PersistentCity folder was atomically moved to `<stage>/retained-staged-mod`, the initial `20261113T175700Z/mod` copied into the empty original path, and that backup's unchanged install.json copied back. The staged candidate remains retained for review. No receipt was hand-edited and no RLO backup was restored.
+
+Verification: **34 original-file hashes matched; 0 mismatches**. The full original PersistentCity file manifest matched, including removal of the staged locale addition. Isolated preferences/configuration match their original hashes. The two preexisting RLO diagnostic text files were checked read-only, never restored. **All 53 RLO mod-file hashes match.** install.json SHA-256 is **`6668d8ef07ae4bc4281a8ac53f7611edeb85a2068ee6b60f8bdb6c45284b846b`**, equal to both the initial independent copy and the helper's backup. AgentRigOps retained its recorded hash. Autosave preferences returned to their original bytes; process-only suppression ended with the game.
+
+Final status: `running=false`, `process=null`, lease `held=false`, `pending=0`. None of the four owned game PIDs (22012, 32132, 32403, 32630) or their caffeinate assertions remains. No post-restore game start was needed. Only the two 13d worktrees are removed after the evidence commit and PR update; 13b/13c and other sessions' leftovers remain untouched.
+
+Candidate and previous-head builds passed. Final checks: JSON parses with all three complete report/human lines; all requested person observations and zero dropped samples match raw reports; autosave guard counts show no measured save; 363 complete walking segments; full RLO folder manifest unchanged; restore hashes and stopped/free-lease state verified. `python3 tools/docs-links/check.py`: 20 Markdown files, 0 broken relative links. `python3 tools/md-ban.py --base origin/codex/persistent-city`: no new markdown files. `git diff --check`: clean. No test source changed; no full xUnit or regression suite ran.
