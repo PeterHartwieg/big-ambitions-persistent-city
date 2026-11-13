@@ -23,7 +23,7 @@ namespace PersistentCity.Core
         public static bool TryUnrentableCapacity(double footprintSquareMetres, double floors, out int capacity)
         {
             capacity = 0;
-            if (!Position.Finite(footprintSquareMetres) || !Position.Finite(floors) || footprintSquareMetres <= 0 || floors < 1) return false;
+            if (!Position.Finite(footprintSquareMetres) || !Position.Finite(floors) || footprintSquareMetres <= 0 || floors < 0) return false;
             double people = Math.Floor(footprintSquareMetres * Math.Floor(floors) * CityBalance.UnrentableHomeUsableShare
                 / CityBalance.UnrentableHomeSquareMetresPerPerson);
             if (!Position.Finite(people)) return false;

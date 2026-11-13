@@ -55,7 +55,7 @@ public sealed class Gr5PopulationTableTests
         var bad = new (double Footprint, double Floors)[]
         {
             (double.NaN, 3), (400, double.NaN), (double.PositiveInfinity, 3), (400, double.NegativeInfinity),
-            (0, 3), (-10, 3), (400, 0), (400, 0.5), (double.MaxValue, double.MaxValue)
+            (0, 3), (-10, 3), (400, -1), (double.MaxValue, double.MaxValue)
         };
         var tally = new UnrentableHomeTally();
         foreach (var (footprint, floors) in bad)
@@ -67,7 +67,10 @@ public sealed class Gr5PopulationTableTests
         Assert.Equal(bad.Length, tally.Unreadable);
         Assert.Equal(0, tally.Housed); Assert.Equal(0, tally.Beds);
         Assert.Equal(0, tally.Add(10, 1));
-        Assert.Equal(1, tally.Empty);
+        Assert.Equal(0, tally.Add(400, 0));
+        Assert.Equal(0, tally.Add(400, 0.5));
+        Assert.Equal(3, tally.Empty);
+        Assert.Equal(bad.Length, tally.Unreadable);
         Assert.Equal(40, tally.Add(400, 5));
         Assert.Equal(1, tally.Housed); Assert.Equal(40, tally.Beds);
         Assert.Contains("unreadable=" + bad.Length, tally.Summary());
