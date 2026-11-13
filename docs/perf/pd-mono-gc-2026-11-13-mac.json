@@ -1,0 +1,214 @@
+{
+  "run": "persistent-city-rig-2026-11-13b-mac",
+  "role": "rig_test",
+  "where": "mac",
+  "head": "83b6156e56275069ad684b26cfa8677dbca4b2a4",
+  "result": "BLOCKED",
+  "counts": {
+    "pass": 0,
+    "partial": 0,
+    "fail": 0,
+    "not_run": 7
+  },
+  "startup_error": "Installed file changed: /Users/peterhartwieg/Library/Application Support/com.hovgaardgames.bigambitions.agenttests.mac/ModsLocal/RealLifeOverhaul/Bundles/reallife_anim",
+  "sizes": [
+    {
+      "requested_persons": 3000,
+      "head": "83b6156e56275069ad684b26cfa8677dbca4b2a4",
+      "status": "NOT RUN",
+      "reason": "Private rig launcher refused install verification before launching a process",
+      "gc_report_json_line": null,
+      "gc_report_human_line": null,
+      "persons": null,
+      "reached": null,
+      "visitor_capacity": null,
+      "portals": null,
+      "refusals": null,
+      "gen0": null,
+      "gen1": null,
+      "gen2": null,
+      "heap_start_bytes": null,
+      "heap_end_bytes": null,
+      "heap_peak_bytes": null,
+      "heap_before_gc_bytes": null,
+      "heap_after_gc_bytes": null,
+      "mono_heap_bytes": null,
+      "mono_used_bytes": null,
+      "pause_ms_p50": null,
+      "pause_ms_p95": null,
+      "pause_ms_max": null,
+      "gc_spikes_30ms": null,
+      "frame_spikes_30ms": null,
+      "frame_ms_plain_p95": null,
+      "mod_ms_plain_p95": null,
+      "max_frame_ms": null,
+      "incremental": null,
+      "frames_dropped": null,
+      "autosave_stayed_off": null
+    },
+    {
+      "requested_persons": 10000,
+      "head": "83b6156e56275069ad684b26cfa8677dbca4b2a4",
+      "status": "NOT RUN",
+      "reason": "Private rig launcher refused install verification before launching a process",
+      "gc_report_json_line": null,
+      "gc_report_human_line": null,
+      "persons": null,
+      "reached": null,
+      "visitor_capacity": null,
+      "portals": null,
+      "refusals": null,
+      "gen0": null,
+      "gen1": null,
+      "gen2": null,
+      "heap_start_bytes": null,
+      "heap_end_bytes": null,
+      "heap_peak_bytes": null,
+      "heap_before_gc_bytes": null,
+      "heap_after_gc_bytes": null,
+      "mono_heap_bytes": null,
+      "mono_used_bytes": null,
+      "pause_ms_p50": null,
+      "pause_ms_p95": null,
+      "pause_ms_max": null,
+      "gc_spikes_30ms": null,
+      "frame_spikes_30ms": null,
+      "frame_ms_plain_p95": null,
+      "mod_ms_plain_p95": null,
+      "max_frame_ms": null,
+      "incremental": null,
+      "frames_dropped": null,
+      "autosave_stayed_off": null
+    },
+    {
+      "requested_persons": 20000,
+      "head": "83b6156e56275069ad684b26cfa8677dbca4b2a4",
+      "status": "NOT RUN",
+      "reason": "Private rig launcher refused install verification before launching a process",
+      "gc_report_json_line": null,
+      "gc_report_human_line": null,
+      "persons": null,
+      "reached": null,
+      "visitor_capacity": null,
+      "portals": null,
+      "refusals": null,
+      "gen0": null,
+      "gen1": null,
+      "gen2": null,
+      "heap_start_bytes": null,
+      "heap_end_bytes": null,
+      "heap_peak_bytes": null,
+      "heap_before_gc_bytes": null,
+      "heap_after_gc_bytes": null,
+      "mono_heap_bytes": null,
+      "mono_used_bytes": null,
+      "pause_ms_p50": null,
+      "pause_ms_p95": null,
+      "pause_ms_max": null,
+      "gc_spikes_30ms": null,
+      "frame_spikes_30ms": null,
+      "frame_ms_plain_p95": null,
+      "mod_ms_plain_p95": null,
+      "max_frame_ms": null,
+      "incremental": null,
+      "frames_dropped": null,
+      "autosave_stayed_off": null
+    }
+  ],
+  "install_discrepancies": [
+    {
+      "path": "/Users/peterhartwieg/Library/Application Support/com.hovgaardgames.bigambitions.agenttests.mac/ModsLocal/RealLifeOverhaul/Bundles/reallife_anim",
+      "expected": "d8c8e95cba530293961d2185d26251029f595d8391f77740683c0dc4afc4cdcd",
+      "actual": "ebd6d965b2550eb31eae3b833dcaba259442c3d0a3a98f25d4dda82c8c414319",
+      "bytes": 6382679
+    },
+    {
+      "path": "/Users/peterhartwieg/Library/Application Support/com.hovgaardgames.bigambitions.agenttests.mac/ModsLocal/RealLifeOverhaul/Bundles/reallife_props",
+      "expected": "b36e365f627dbbeb2469eef4591ddb31a3f16fcb06c669dc2b65b25268aa3731",
+      "actual": "6ecd55eb3171a33c47079c33ee5f30e3169904072c4144c11bc126858c47ea6a",
+      "bytes": 10650842
+    },
+    {
+      "path": "/Users/peterhartwieg/Library/Application Support/com.hovgaardgames.bigambitions.agenttests.mac/ModsLocal/RealLifeOverhaul/Locales/de.json",
+      "expected": "ac6176a37118bef04d74d5cc81da4a9e05260232abdca081546c6ddbb147b0ea",
+      "actual": "0a5d81ccc9fc11007f3e0d7f92343e9041d6e32e561a9f38c3c3f8cd583cba62",
+      "bytes": 4454265
+    },
+    {
+      "path": "/Users/peterhartwieg/Library/Application Support/com.hovgaardgames.bigambitions.agenttests.mac/ModsLocal/RealLifeOverhaul/Locales/en.json",
+      "expected": "cdaef4d2a15568d3bc1051cae7395dcd71782bfcb6f98a9ba97c6f5833957c20",
+      "actual": "e870da8b55f6b7ec4cfb9dec008771b1f49d817c61f7b47d09fd6a78f51f1b42",
+      "bytes": 3982388
+    },
+    {
+      "path": "/Users/peterhartwieg/Library/Application Support/com.hovgaardgames.bigambitions.agenttests.mac/ModsLocal/RealLifeOverhaul/Locales/es.json",
+      "expected": "c689179463f5554c81dcaa911e0722d201c22e13be405e35efd43e4c38602192",
+      "actual": "4f5117669027c9dd3ee8a3fa1f8ccb011abd9b2aa9f7b5e1ff1f2477dd5bc88d",
+      "bytes": 4339951
+    },
+    {
+      "path": "/Users/peterhartwieg/Library/Application Support/com.hovgaardgames.bigambitions.agenttests.mac/ModsLocal/RealLifeOverhaul/Locales/fr.json",
+      "expected": "0473f38a3e6022160eb3c4416dee80ed404a0350ddd720020d401dcdee43885c",
+      "actual": "654ea0e1c53cb1e162c485b55ea2f47efd2456a5175216beb569e57b52a6fddf",
+      "bytes": 4557410
+    },
+    {
+      "path": "/Users/peterhartwieg/Library/Application Support/com.hovgaardgames.bigambitions.agenttests.mac/ModsLocal/RealLifeOverhaul/Locales/nl.json",
+      "expected": "b790e969d6e86015df235505b27b96087e24e5e6b4e21a39854a116f8610ef0c",
+      "actual": "f2e18d4873b04c37f675149f6f631c382c59555268d60f6386f480113fa73de2",
+      "bytes": 4297318
+    },
+    {
+      "path": "/Users/peterhartwieg/Library/Application Support/com.hovgaardgames.bigambitions.agenttests.mac/ModsLocal/RealLifeOverhaul/Locales/pt.json",
+      "expected": "1fe35b26930fb83bda83747f36080eb4c5482d911712153ba87309703d55fd00",
+      "actual": "24f5c3a9569855555dbb8eac40e916c2ead293ea5dd687f00cdfc475d2c49e18",
+      "bytes": 4296953
+    },
+    {
+      "path": "/Users/peterhartwieg/Library/Application Support/com.hovgaardgames.bigambitions.agenttests.mac/ModsLocal/RealLifeOverhaul/Locales/ru.json",
+      "expected": "08d2b9a04a1fb0fafe23dd61e7db91902578636042c007d770b849a0feba072c",
+      "actual": "4d7664c82a76b78b64d21ab6730f7811c38d3dadb0d5c02bd2b6827decb40148",
+      "bytes": 6091576
+    },
+    {
+      "path": "/Users/peterhartwieg/Library/Application Support/com.hovgaardgames.bigambitions.agenttests.mac/ModsLocal/RealLifeOverhaul/Locales/tr.json",
+      "expected": "fe049109ff7f79066631e1235608d82bae0d429a148852b48ed04fa2de093d86",
+      "actual": "330433a18ec9c84ee8764d7fb8a5b03bb3737e3400a65f4dbc5587485dc66b7f",
+      "bytes": 4398456
+    },
+    {
+      "path": "/Users/peterhartwieg/Library/Application Support/com.hovgaardgames.bigambitions.agenttests.mac/ModsLocal/RealLifeOverhaul/Locales/zh-cn.json",
+      "expected": "10d1f623f6bc2ac0144f7dc70000a15c61815877e0512b1f18567fd825baf101",
+      "actual": "6520f313db6681da7ed3f85aeed9f90bff3986d7d1d7fd1bc4cd8d09cd3a0129",
+      "bytes": 3966896
+    },
+    {
+      "path": "/Users/peterhartwieg/Library/Application Support/com.hovgaardgames.bigambitions.agenttests.mac/ModsLocal/RealLifeOverhaul/RealLifeOverhaul.dll",
+      "expected": "2f360a365cf7915f012cd62f4fd06214ef5cdaa0498331e05a7c831a3c20ab32",
+      "actual": "c96709779d8bb534c05a6743d243a000eeb3e03901995da03d8d9b5593a9f6fe",
+      "bytes": 22803968
+    },
+    {
+      "path": "/Users/peterhartwieg/Library/Application Support/com.hovgaardgames.bigambitions.agenttests.mac/ModsLocal/RealLifeOverhaul/thumbnail.jpg",
+      "expected": "f711731e8bddd16befa2182f0544e3d2bf731d2e7fb26bb56eb8784c1967aae4",
+      "actual": "e44ea3eaa896160831075d319643b0bfdd407c5a277d17eb1c6576a267ced022",
+      "bytes": 209631
+    }
+  ],
+  "restore": {
+    "verified_files": 267,
+    "mismatches": [],
+    "autosave_restored": true
+  },
+  "rlo_offline": {
+    "dll_sha256": "c96709779d8bb534c05a6743d243a000eeb3e03901995da03d8d9b5593a9f6fe",
+    "embedded_version_strings": [],
+    "live_loaded_version": "NOT RUN: start refused before process launch",
+    "embedded_numeric_version_candidates": [
+      "0.0.0.0",
+      "1.0.6+7024b945c199c5b31a5754ab189c70d03a2d9904",
+      "1.0.6.0",
+      "4.0.30319"
+    ]
+  }
+}
