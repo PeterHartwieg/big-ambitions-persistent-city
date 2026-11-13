@@ -44,6 +44,19 @@ namespace PersistentCity.Core
             return best;
         }
 
+        internal static string Choose(IReadOnlyList<Place> places, Place origin, PlaceKind kind, string choiceKey, int seed, VisitorGroup group)
+        {
+            uint key = KeyState(choiceKey, seed);
+            string best = "";
+            double bestScore = double.PositiveInfinity;
+            for (int i = 0; i < places.Count; i++)
+            {
+                var place = places[i];
+                if (place.Kind == kind && place.Capacity > 0) Consider(place, origin, key, ref best, ref bestScore, group.Weight(place.BusinessType));
+            }
+            return best;
+        }
+
         internal static string Choose(IReadOnlyList<Place> places, Place origin, PlaceKind kind, uint key)
         {
             string best = "";
@@ -56,12 +69,12 @@ namespace PersistentCity.Core
             return best;
         }
 
-        private static void Consider(Place place, Place origin, uint key, ref string best, ref double bestScore)
+        private static void Consider(Place place, Place origin, uint key, ref string best, ref double bestScore, double leaning = 1)
         {
             double attraction = Position.Finite(place.AttractionWeight) ? Math.Max(0.05, Math.Min(20, place.AttractionWeight)) : 1;
             double traffic = place.NativeTrafficIndex < 0 ? 1 : 1 + Math.Min(100, place.NativeTrafficIndex) / 100.0;
             double distance = Position.Distance(origin.Position, place.Position) / 1200.0;
-            double weight = attraction * traffic / ((1 + distance) * (1 + distance));
+            double weight = attraction * traffic * leaning / ((1 + distance) * (1 + distance));
             double uniform = (StableRandom.Finish(StableRandom.Append(key, place.Id)) + 1.0) / (uint.MaxValue + 2.0);
             double score = -Math.Log(uniform) / weight;
             if (score < bestScore || (score == bestScore && StringComparer.Ordinal.Compare(place.Id, best) < 0))

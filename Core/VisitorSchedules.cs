@@ -93,7 +93,8 @@ namespace PersistentCity.Core
             var routine = new VisitorRoutine
             {
                 Identity = identity, HomeId = portalId, PlaceId = portalId, DayPlaceId = work,
-                ShopId = DestinationChoice.Choose(candidates[PlaceKind.Shop], portal, PlaceKind.Shop, id + ":shop", city.Seed),
+                ShopId = DestinationChoice.Choose(candidates[PlaceKind.Shop], portal, PlaceKind.Shop, id + ":shop", city.Seed,
+                    VisitorTable.GroupOf(id, city.Seed)),
                 LeisureId = DestinationChoice.Choose(candidates[PlaceKind.Leisure], portal, PlaceKind.Leisure, id + ":leisure", city.Seed),
                 Activity = Activity.Home, Phase = CitizenPhase.AtPlace, NextEventMinute = minute, ActivityUntilMinute = minute,
                 Preferences = VisitorSchedules.Preferences(id, persona, city.Seed),
@@ -147,10 +148,10 @@ namespace PersistentCity.Core
         }
 
         public static bool VisitsOn(CitizenState person, int seed, int day)
-            => VisitsOn(RoutineKeys.For(person, seed), day, ((day - 1) % 7 + 7) % 7 >= 4);
+            => PresentOn(RoutineKeys.For(person, seed), day, VisitorPattern.DayVisit);
 
-        internal static bool VisitsOn(RoutineKeys keys, int day, bool weekend)
-            => RoutineKeys.Draw(keys.VisitDay, day) % 10000 < (weekend ? PopulationCensusPolicy.DayVisitWeekendBasisPoints : PopulationCensusPolicy.DayVisitWeekdayBasisPoints);
+        internal static bool PresentOn(RoutineKeys keys, int day, VisitorPattern pattern)
+            => RoutineKeys.Draw(keys.VisitDay, day) % 10000 < VisitorTable.BasisPoints(pattern, DayPlanner.Weekday(day));
 
         public static TravelPreferences Preferences(string id, Persona persona, int seed) => new TravelPreferences
         {

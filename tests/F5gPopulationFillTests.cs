@@ -164,7 +164,7 @@ public sealed class F5gPopulationFillTests
         t = VisitorTargets.Compute(1000, 0, 100, 0);
         Assert.Equal(0, t.CommuterTarget); Assert.Equal(0, t.PoolTarget); Assert.False(t.CommuterClamped); Assert.False(t.PoolClamped);
         Assert.Equal(PopulationCensusPolicy.DayVisitProbabilityPercent * 100 * 7,
-            4 * PopulationCensusPolicy.DayVisitWeekdayBasisPoints + 3 * PopulationCensusPolicy.DayVisitWeekendBasisPoints);
+            Enumerable.Range(0, 7).Sum(d => VisitorTable.BasisPoints(VisitorPattern.DayVisit, d)));
     }
 
 

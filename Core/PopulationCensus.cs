@@ -11,11 +11,9 @@ namespace PersistentCity.Core
         private static readonly int[] WorkplaceBandUpperSquareMetres = { 40, 75, 150, 300, 600 };
         private static readonly int[] WorkplaceBandCapacity = { 2, 4, 6, 10, 16, 24 };
         public const int StudentsPerWorkplaceBandSlot = 2;
-        public const int WorkFillPercent = 80;
-        public const int LeisureVisitorSharePercent = 15;
-        public const int DayVisitProbabilityPercent = 25;
-        public const int DayVisitWeekdayBasisPoints = 1375;
-        public const int DayVisitWeekendBasisPoints = 4000;
+        public const int WorkFillPercent = VisitorTable.CommuterWorkFillPercent;
+        public const int LeisureVisitorSharePercent = VisitorTable.DayVisitorSharePercent;
+        public const int DayVisitProbabilityPercent = VisitorTable.DayVisitProbabilityPercent;
         public const int VisitorCapacityPerResident = 2;
         public const int MaximumVisitors = 100000;
         public const int MaximumPersons = 150000;
@@ -37,6 +35,63 @@ namespace PersistentCity.Core
         public static int StudyCapacity(double areaSquareMetres) => WorkplaceCapacity(areaSquareMetres) * StudentsPerWorkplaceBandSlot;
 
         internal static long RoundPercent(long value, int percent) => (value * percent + 50) / 100;
+    }
+
+    public sealed class VisitorGroup
+    {
+        private readonly Dictionary<string, double> leaning;
+
+        internal VisitorGroup(string id, int shareBasisPoints, params (string BusinessType, double Weight)[] leaning)
+        {
+            Id = id; ShareBasisPoints = shareBasisPoints;
+            this.leaning = new Dictionary<string, double>(StringComparer.Ordinal);
+            foreach (var (type, weight) in leaning) this.leaning.Add(type, weight);
+        }
+
+        public string Id { get; }
+        public int ShareBasisPoints { get; }
+        public IReadOnlyDictionary<string, double> Leaning => leaning;
+        public double Weight(string? businessType) => businessType != null && leaning.TryGetValue(businessType, out var weight) ? weight : 1;
+    }
+
+    public static class VisitorTable
+    {
+        public const int CommuterWorkFillPercent = 80;
+        public const int DayVisitorSharePercent = 15;
+        public const int DayVisitProbabilityPercent = 25;
+        private static readonly int[] CommuterDays = { 10000, 10000, 10000, 10000, 0, 0, 0 };
+        private static readonly int[] DayVisitDays = { 1375, 1375, 1375, 1375, 4000, 4000, 4000 };
+
+        public static readonly IReadOnlyList<VisitorGroup> Groups = new[]
+        {
+            new VisitorGroup("shoppers", 3500, ("ba:businesstype_clothingstore", 2), ("ba:businesstype_jewelrystore", 1.5),
+                ("ba:businesstype_giftshop", 1.5), ("ba:businesstype_toys", 1.5), ("ba:businesstype_bookstore", 1.25)),
+            new VisitorGroup("food-and-coffee", 3500, ("ba:businesstype_coffeeshop", 2), ("ba:businesstype_bakery", 2),
+                ("ba:businesstype_fastfoodrestaurant", 2), ("ba:businesstype_fastfood", 2)),
+            new VisitorGroup("home-and-errands", 3000, ("ba:businesstype_furniturestore", 2), ("ba:businesstype_appliancestore", 2),
+                ("ba:businesstype_electronicsstore", 1.5), ("ba:businesstype_florist", 1.5))
+        };
+
+        public static int BasisPoints(VisitorPattern kind, int weekday)
+        {
+            if (weekday < 0 || weekday > 6) throw new ArgumentOutOfRangeException(nameof(weekday));
+            return kind == VisitorPattern.DayVisit ? DayVisitDays[weekday] : CommuterDays[weekday];
+        }
+
+        public static VisitorGroup GroupOf(string visitorId, int seed)
+        {
+            int draw = (int)(StableRandom.Hash((visitorId ?? "") + ":group", seed) % 10000), sum = 0;
+            foreach (var group in Groups) { sum += group.ShareBasisPoints; if (draw < sum) return group; }
+            return Groups[Groups.Count - 1];
+        }
+
+        public static string Describe()
+        {
+            var text = new StringBuilder(128);
+            foreach (var group in Groups)
+                text.Append(text.Length == 0 ? "" : ",").Append(group.Id).Append(':').Append(group.ShareBasisPoints.ToString(CultureInfo.InvariantCulture));
+            return text.ToString();
+        }
     }
 
     public readonly struct VisitorTargets
@@ -279,13 +334,7 @@ namespace PersistentCity.Core
                 }
             }
 
-            if (census.Beds > 0)
-            {
-                long target = HousingPolicy.Fill(census.Beds);
-                if (target > HousingPolicy.MaximumResidents)
-                    return census.Refuse("housing target " + target + " exceeds " + HousingPolicy.MaximumResidents);
-                census.ResidentTarget = target;
-            }
+            if (census.Beds > 0) census.ResidentTarget = HousingPolicy.CityTarget(census.Beds);
 
             census.StationsKnown = input.StationIds != null;
             if (input.StationIds != null)
@@ -338,6 +387,7 @@ namespace PersistentCity.Core
             Number("resident_workers", ResidentWorkers); Number("resident_workers_player_owned", ResidentWorkersAtPlayerOwned);
             Number("students", Students);
             Line("discovered_stations", StationsKnown ? Stations.ToString(CultureInfo.InvariantCulture) : "pending");
+            Line("visitor_groups", VisitorTable.Describe());
             Line("visitor_arrival", PopulationCensusPolicy.VisitorsDrive ? "subway-walk-road" : "subway-walk");
             Number("commuter_demand", CommuterDemand); Number("commuter_target", CommuterTarget);
             Number("day_visitors_per_day", DayVisitorsPerDay); Number("day_visitor_pool_demand", DayVisitorPoolDemand);

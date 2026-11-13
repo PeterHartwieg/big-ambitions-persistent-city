@@ -157,7 +157,9 @@ public sealed class PopulationCensusTests
         AssertRefused(new PopulationCensusInput { Places = homes, Residents = exactResidents.Append(Resident("x", Persona.Commuter, "h")).ToList() }, "residents");
 
         Assert.False(PopulationCensus.Compute(new PopulationCensusInput { Places = new List<Place> { Home("h", 55556) } }).Refused);
-        AssertRefused(new PopulationCensusInput { Places = new List<Place> { Home("h", 55557) } }, "housing target");
+        var huge = PopulationCensus.Compute(new PopulationCensusInput { Places = new List<Place> { Home("h", 55557) } });
+        Assert.False(huge.Refused);
+        Assert.Equal(CityBalance.CityResidentTotal, huge.ResidentTarget);
 
         var stations = Enumerable.Range(0, PopulationCensusPolicy.MaximumStations).Select(i => "subway:" + i).ToList();
         Assert.False(PopulationCensus.Compute(new PopulationCensusInput { StationIds = stations }).Refused);

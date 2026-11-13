@@ -76,7 +76,7 @@ namespace PersistentCity.Core
                 || !Enum.IsDefined(typeof(Persona), p.Persona)) || people.Select(p => p.Id).Distinct(StringComparer.Ordinal).Count() != people.Count)
                 throw new ArgumentException("Citizens must have unique, nonempty identities and known personas.");
             long beds = city.Places.Where(p => p.Kind == PlaceKind.Home).Sum(p => (long)p.Capacity);
-            int target = useHousing ? HousingPolicy.Target(beds) : people.Count;
+            int target = useHousing ? HousingPolicy.CityTarget(beds) : people.Count;
             if (beds < target) throw new InvalidOperationException("The catalogue has insufficient residential capacity; no population was created.");
             city.SourceIdentities = people.Select(CloneIdentity).ToList();
             city.PopulationTarget = target;

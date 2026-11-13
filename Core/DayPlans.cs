@@ -331,7 +331,7 @@ namespace PersistentCity.Core
             result.Work = WorkOn(person, day, shift, places);
             bool weekend = person.IsVisitor ? Weekend(day) : DayOff(person, day, places);
             bool dayVisit = person.Visitor?.Stay.Pattern == VisitorPattern.DayVisit;
-            if (person.IsVisitor && (dayVisit ? !VisitorSchedules.VisitsOn(keys, day, weekend) : weekend)) return result;
+            if (person.IsVisitor && !VisitorSchedules.PresentOn(keys, day, dayVisit ? VisitorPattern.DayVisit : VisitorPattern.Commuter)) return result;
             result.Present = true;
             double midnight = day * 1440.0;
             bool late = person.Identity.Persona == Persona.NightOwl;

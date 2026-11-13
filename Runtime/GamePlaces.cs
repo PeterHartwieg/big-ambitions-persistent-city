@@ -21,6 +21,8 @@ namespace PersistentCity.Runtime
 
         public static List<Place> Read() => Read(null);
 
+        public static UnrentableHomeTally LastUnrentableHomes { get; private set; } = new UnrentableHomeTally();
+
         public static List<Place> Read(List<CensusWorkplace>? census)
         {
             var places = new List<Place>();
@@ -30,7 +32,8 @@ namespace PersistentCity.Runtime
             var interiorAreas = new Dictionary<string, int>(StringComparer.Ordinal);
             foreach (var size in BuildingSizeHelper.GetAllBuildingSizes())
                 if (size != null && !string.IsNullOrWhiteSpace(size.buildingSize)) interiorAreas[size.buildingSize] = size.squareMeters;
-            int unknownHomeAreas = 0, undersizedHomes = 0;
+            int undersizedHomes = 0;
+            var unrentable = new UnrentableHomeTally();
             foreach (var controller in manager.cityBuildingControllers)
             {
                 if (controller == null || controller.building == null || controller.blockPedestrianSpawn) continue;
@@ -48,7 +51,15 @@ namespace PersistentCity.Runtime
                 {
                     if (building.IsHamptonsAIVilla() || Helpers.BuildingHelper.IsHamptonsBuildingOwnedByRival(building)) continue;
                     interiorAreas.TryGetValue(building.BuildingSize ?? "", out int area);
-                    if (area <= 0) { unknownHomeAreas++; continue; }
+                    if (area <= 0)
+                    {
+                        ReadFootprint(controller, out double footprint, out double floors);
+                        int beds = unrentable.Add(footprint, floors);
+                        if (beds > 0)
+                            Add(PlaceKind.Home, addressName, beds, 0, 1440, footprint * Math.Floor(floors) * CityBalance.UnrentableHomeUsableShare,
+                                "native:building-bounds;policy:" + HousingPolicy.UnrentablePolicyId);
+                        continue;
+                    }
                     int capacity = HousingPolicy.Capacity(area);
                     if (capacity <= 0) { undersizedHomes++; continue; }
                     string evidence = "native:BuildingSizeData.squareMeters;policy:" + HousingPolicy.PolicyId;
@@ -118,8 +129,10 @@ namespace PersistentCity.Runtime
                     places.Add(place);
                 }
             }
-            if (unknownHomeAreas > 0 || undersizedHomes > 0)
-                Debug.LogWarning("[Persistent City] Residential places omitted: " + unknownHomeAreas + " without positive native rentable interior area; "
+            LastUnrentableHomes = unrentable;
+            Debug.Log("[Persistent City] " + unrentable.Summary());
+            if (unrentable.Unreadable > 0 || undersizedHomes > 0)
+                Debug.LogWarning("[Persistent City] Residential places omitted: " + unrentable.Unreadable + " without a finite footprint or floor count; "
                     + undersizedHomes + " below the household policy's minimum interior area.");
             foreach (var place in OutdoorPlaces.Read(places)) if (ids.Add(place.Id)) places.Add(place);
             places.Sort((a, b) => StringComparer.Ordinal.Compare(a.Id, b.Id));
@@ -171,6 +184,21 @@ namespace PersistentCity.Runtime
                 else if (businessType == "ba:businesstype_gym") weight *= 1.25;
             }
             return weight;
+        }
+
+        private static void ReadFootprint(CityBuildingController controller, out double footprint, out double floors)
+        {
+            footprint = double.NaN; floors = double.NaN;
+            Bounds? combined = null;
+            foreach (var collider in controller.GetComponentsInChildren<Collider>())
+            {
+                if (collider == null || !collider.enabled || collider.isTrigger) continue;
+                var bounds = collider.bounds;
+                if (combined is Bounds sum) { sum.Encapsulate(bounds); combined = sum; } else combined = bounds;
+            }
+            if (!(combined is Bounds total)) return;
+            footprint = (double)total.size.x * total.size.z;
+            floors = Math.Floor(total.size.y / CityBalance.StoreyHeightMetres);
         }
 
         internal static bool TryEntrance(CityBuildingController controller, out Position position)
