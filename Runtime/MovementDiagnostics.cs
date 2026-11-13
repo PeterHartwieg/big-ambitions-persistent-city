@@ -16,9 +16,6 @@ namespace PersistentCity.Runtime
         private CitySimulator? holdReplayCity;
         private const int MaxHoldReplayCharacters = 8 * 1024 * 1024;
         private GcPauseSampler? gcSampler;
-        private readonly int[] gcCounts = new int[GcPauseSampler.Generations];
-        private long gcFrameStarted;
-        private double gcModMilliseconds;
         private static readonly double GcMillisecondsPerTimestamp = 1000.0 / System.Diagnostics.Stopwatch.Frequency;
 
         private long GcFrameBegin()
@@ -26,33 +23,22 @@ namespace PersistentCity.Runtime
             var sampler = gcSampler;
             if (sampler == null || !sampler.Running) return 0;
             long now = System.Diagnostics.Stopwatch.GetTimestamp();
-            int gen0 = GcDelta(0), gen1 = GcDelta(1), gen2 = GcDelta(2);
-            if (gcFrameStarted != 0)
-                sampler.Frame((now - gcFrameStarted) * GcMillisecondsPerTimestamp, gcModMilliseconds, gen0, gen1, gen2, GC.GetTotalMemory(false));
-            gcFrameStarted = now;
+            sampler.Observe(now * GcMillisecondsPerTimestamp, GcCount(0), GcCount(1), GcCount(2), GC.GetTotalMemory(false));
             return now;
         }
 
         private void GcFrameEnd(long started)
         {
-            if (started != 0) gcModMilliseconds = (System.Diagnostics.Stopwatch.GetTimestamp() - started) * GcMillisecondsPerTimestamp;
+            if (started != 0) gcSampler?.ModWork((System.Diagnostics.Stopwatch.GetTimestamp() - started) * GcMillisecondsPerTimestamp);
         }
 
-        private int GcDelta(int generation)
-        {
-            if (generation > GC.MaxGeneration) return 0;
-            int count = GC.CollectionCount(generation), delta = count - gcCounts[generation];
-            gcCounts[generation] = count;
-            return delta;
-        }
+        private static int GcCount(int generation) => generation > GC.MaxGeneration ? 0 : GC.CollectionCount(generation);
 
         private void GcCommand(string action, string detail)
         {
             if (action == "start" && detail.Length == 0)
             {
                 gcSampler ??= new GcPauseSampler();
-                for (int g = 0; g < gcCounts.Length; g++) GcDelta(g);
-                gcFrameStarted = 0; gcModMilliseconds = 0;
                 gcSampler.Start(GC.GetTotalMemory(false));
                 Debug.Log("[Persistent City] gc measurement started (diagnostic only, " + GcPauseSampler.PolicyId + ", " + gcSampler.Capacity + " stored frames). Use pc gc report or pc gc stop.");
                 return;
@@ -64,6 +50,7 @@ namespace PersistentCity.Runtime
                 var context = GcContext();
                 Debug.Log(GcPauseSampler.ReportPrefix + gcSampler.ReportJson(context));
                 Debug.Log(gcSampler.ReportHuman(context));
+                gcSampler.Rebaseline();
                 return;
             }
             if (action == "population") { GcPopulationCommand(detail); return; }

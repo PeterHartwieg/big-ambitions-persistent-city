@@ -47,9 +47,52 @@ public sealed class GcMeasurementTests
         Assert.Equal(10, sampler.Frames); Assert.Equal(6, sampler.Dropped);
         Assert.Equal(1, sampler.Collections(0)); Assert.Equal(80, sampler.MaxFrameMs);
         Assert.Equal(0, sampler.FrameSpread(true).Count);
+        Assert.Equal(1, sampler.CollectionSpikes()); Assert.Equal(1, sampler.FrameSpikes());
         sampler.Start(20);
         Assert.Equal(0, sampler.Frames); Assert.Equal(0, sampler.Collections(0)); Assert.Equal(0, sampler.FrameSpread(false).Count);
+        Assert.Equal(0, sampler.CollectionSpikes()); Assert.Equal(0, sampler.FrameSpikes());
         Assert.Equal(-1, sampler.HeapBeforeCollection);
+    }
+
+    [Fact]
+    public void ReportingWorkAndItsCollectionsStayOutOfTheWindow()
+    {
+        var sampler = new GcPauseSampler(64);
+        sampler.Start(100);
+        sampler.Observe(1000, 5, 0, 0, 100);
+        sampler.ModWork(2);
+        sampler.Observe(1016, 5, 0, 0, 101);
+        sampler.ModWork(3);
+        sampler.Observe(1032, 6, 0, 0, 90);
+        Assert.Equal(2, sampler.Frames); Assert.Equal(1, sampler.Collections(0));
+        Assert.Equal(2, sampler.ModSpread(false).Max); Assert.Equal(3, sampler.ModSpread(true).Max);
+        sampler.ReportJson(Context());
+        sampler.Rebaseline();
+        sampler.ModWork(40);
+        sampler.Observe(1600, 9, 1, 0, 300);
+        sampler.ModWork(1);
+        sampler.Observe(1616, 9, 1, 0, 301);
+        Assert.Equal(3, sampler.Frames); Assert.Equal(1, sampler.Collections(0)); Assert.Equal(0, sampler.Collections(1));
+        Assert.Equal(16, sampler.MaxFrameMs); Assert.Equal(3, sampler.MaxModMs);
+        Assert.Equal(0, sampler.FrameSpikes()); Assert.Equal(0, sampler.CollectionSpikes());
+        Assert.Equal(2, sampler.FrameSpread(false).Count); Assert.Equal(1, sampler.ModSpread(false).P50);
+    }
+
+    [Fact]
+    public void MeasurementTargetSurvivesARouteRebuildBeforeItsBoundary()
+    {
+        var (state, market) = F5gPopulationFillTests.City(12, 1);
+        var fill = F5gPopulationFillTests.Catalogue(12, F5gPopulationFillTests.Base, F5gPopulationFillTests.Since(3));
+        var city = F5gPopulationFillTests.Start(state, market, fill);
+        int day = (int)(state.Minute / 1440) + 1;
+        int target = state.Citizens.Count * 3 + 1500;
+        city.SetMeasurementPersonTarget(target);
+        F5gPopulationFillTests.Advance(city, day * 1440 - 30);
+        var rebuilt = city.RebuildRoutes(new FreshCityTraceTests.Walk());
+        Assert.Equal(target, rebuilt.MeasurementPersonTarget);
+        F5gPopulationFillTests.Advance(rebuilt, day * 1440 + 1);
+        Assert.Equal(target, PersonTable.PersonCount(state));
+        Assert.Null(F5gPopulationFillTests.Reload(rebuilt, market, fill).MeasurementPersonTarget);
     }
 
     [Fact]

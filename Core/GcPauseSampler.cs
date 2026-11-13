@@ -44,6 +44,10 @@ namespace PersistentCity.Core
         private int stored;
         private long heapBeforeSum, heapAfterSum, heapPairs;
         private long lastHeap = -1;
+        private readonly int[] lastCounts = new int[Generations];
+        private double lastStampMs, pendingModMs;
+        private bool baselined;
+        private int collectionSpikes, frameSpikes;
 
         public GcPauseSampler(int capacity = DefaultCapacity)
         {
@@ -67,8 +71,9 @@ namespace PersistentCity.Core
         {
             Array.Clear(collections, 0, collections.Length);
             stored = 0; Frames = 0; CollectionFrames = 0; heapBeforeSum = heapAfterSum = heapPairs = 0;
-            MaxFrameMs = MaxModMs = 0;
+            MaxFrameMs = MaxModMs = 0; collectionSpikes = frameSpikes = 0;
             HeapStart = HeapEnd = HeapPeak = lastHeap = heapBytes;
+            baselined = false; pendingModMs = 0;
             Running = true;
         }
 
@@ -77,6 +82,19 @@ namespace PersistentCity.Core
             if (!Running) return;
             HeapEnd = heapBytes; Running = false;
         }
+
+        public void Observe(double stampMilliseconds, int gen0Total, int gen1Total, int gen2Total, long heapBytes)
+        {
+            if (!Running) return;
+            if (baselined)
+                Frame(stampMilliseconds - lastStampMs, pendingModMs, gen0Total - lastCounts[0], gen1Total - lastCounts[1], gen2Total - lastCounts[2], heapBytes);
+            lastStampMs = stampMilliseconds; lastCounts[0] = gen0Total; lastCounts[1] = gen1Total; lastCounts[2] = gen2Total;
+            pendingModMs = 0; baselined = true;
+        }
+
+        public void ModWork(double milliseconds) { if (Running && baselined) pendingModMs = milliseconds; }
+
+        public void Rebaseline() { baselined = false; pendingModMs = 0; }
 
         public void Frame(double frameMilliseconds, double modMilliseconds, int gen0, int gen1, int gen2, long heapBytes)
         {
@@ -93,6 +111,7 @@ namespace PersistentCity.Core
             }
             if (heapBytes > HeapPeak) HeapPeak = heapBytes;
             if (heapBytes >= 0) { lastHeap = heapBytes; HeapEnd = heapBytes; }
+            if (frameMilliseconds >= SpikeMilliseconds) { frameSpikes++; if (gc) collectionSpikes++; }
             if (stored == frameMs.Length) return;
             frameMs[stored] = (float)frameMilliseconds; modMs[stored] = (float)modMilliseconds; collected[stored] = gc;
             stored++;
@@ -102,19 +121,9 @@ namespace PersistentCity.Core
         public GcSpread ModSpread(bool withCollection) => Spread(modMs, withCollection, 0);
         public GcSpread PauseSpread() => Spread(frameMs, true, FrameSpread(false).P50);
 
-        public int CollectionSpikes()
-        {
-            int count = 0;
-            for (int i = 0; i < stored; i++) if (collected[i] && frameMs[i] >= SpikeMilliseconds) count++;
-            return count;
-        }
+        public int CollectionSpikes() => collectionSpikes;
 
-        public int FrameSpikes()
-        {
-            int count = 0;
-            for (int i = 0; i < stored; i++) if (frameMs[i] >= SpikeMilliseconds) count++;
-            return count;
-        }
+        public int FrameSpikes() => frameSpikes;
 
         public long HeapBeforeCollection => heapPairs == 0 ? -1 : heapBeforeSum / heapPairs;
         public long HeapAfterCollection => heapPairs == 0 ? -1 : heapAfterSum / heapPairs;
