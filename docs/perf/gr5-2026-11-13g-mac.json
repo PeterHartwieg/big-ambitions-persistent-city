@@ -1,0 +1,608 @@
+{
+  "format": "persistent-city-gr5-rig-2026-11-13g-mac",
+  "candidate": "37a150d330c294bb64943a39dc1eaa125618cc77",
+  "role": "rig_test",
+  "where": "mac",
+  "stage": "/Users/peterhartwieg/HART-Builds/persistent-city-rig-2026-11-13g-mac",
+  "provisional": "Other coding-agent and desktop processes were live on the shared Mac.",
+  "agent_rig_head": "0b18d38ece6e8fe77c35ee5ea694849c7478d054",
+  "agent_rig_ops_sha256": "5578f9f4657fa2269ee50aa86adfc6d699881fac7e102084918da625045cd59e",
+  "persistent_city_dll_sha256": "5557daaed9fe142c12978f66add0de8831d822244bc4c8e42273a3391d9b1bdc",
+  "gc": {
+    "gc-day": {
+      "report_lines": [
+        "[Persistent City] gc report {\"policy\":\"gc-sampler-v1\",\"mode\":\"measurement\",\"running\":true,\"residents\":1000,\"visitors\":2000,\"persons\":3000,\"person_target\":null,\"max_generation\":0,\"incremental\":true,\"frames\":16868,\"frames_stored\":16868,\"frames_dropped\":0,\"collection_frames\":11,\"gen0\":11,\"gen1\":0,\"gen2\":0,\"heap_start_bytes\":1260138496,\"heap_end_bytes\":1339281408,\"heap_peak_bytes\":1433260032,\"heap_before_gc_bytes\":1318832686,\"heap_after_gc_bytes\":1163485184,\"mono_heap_bytes\":1366654976,\"mono_used_bytes\":1339715584,\"frame_ms_gc\":{\"count\":11,\"p50\":59.842,\"p95\":90.609,\"max\":90.609},\"frame_ms_plain\":{\"count\":16857,\"p50\":33.938,\"p95\":41.279,\"max\":174.645},\"pause_ms\":{\"count\":11,\"p50\":25.904,\"p95\":56.671,\"max\":56.671},\"mod_ms_gc\":{\"count\":11,\"p50\":0.643,\"p95\":57.374,\"max\":57.374},\"mod_ms_plain\":{\"count\":16857,\"p50\":0.649,\"p95\":4.241,\"max\":94.984},\"gc_spikes_30ms\":11,\"frame_spikes_30ms\":16852,\"max_frame_ms\":174.645,\"max_mod_ms\":94.984,\"alloc_frames\":16857,\"frame_alloc_bytes\":1787936768,\"mod_alloc_bytes\":1091997696,\"mod_alloc_samples\":16868,\"mod_alloc_skipped\":1,\"advance_alloc_bytes\":219332608,\"advance_alloc_samples\":16775,\"advance_alloc_skipped\":0,\"physical_alloc_bytes\":805834752,\"physical_alloc_samples\":16774,\"physical_alloc_skipped\":1}",
+        "[Persistent City] gc measurement (diagnostic only): persons=3000 frames=16868 collections gen0/1/2=11/0/0 pause p50/p95/max=25.90/56.67/56.67 ms, gc frames >= 30 ms=11, heap 1201.8 MB -> 1277.2 MB (peak 1366.9 MB)"
+      ],
+      "clock_before": {
+        "day": 2,
+        "weekday": "Tuesday",
+        "time": "15:30",
+        "paused": false,
+        "speed": 1.0,
+        "run_until": null,
+        "arrived_at": null,
+        "keep_needs": true
+      },
+      "clock_after": {
+        "day": 2,
+        "weekday": "Tuesday",
+        "time": "18:24",
+        "paused": false,
+        "speed": 1.0,
+        "run_until": null,
+        "arrived_at": null,
+        "keep_needs": true
+      }
+    },
+    "gc-night": {
+      "report_lines": [
+        "[Persistent City] gc report {\"policy\":\"gc-sampler-v1\",\"mode\":\"measurement\",\"running\":true,\"residents\":1000,\"visitors\":2000,\"persons\":3000,\"person_target\":null,\"max_generation\":0,\"incremental\":true,\"frames\":17048,\"frames_stored\":17048,\"frames_dropped\":0,\"collection_frames\":8,\"gen0\":8,\"gen1\":0,\"gen2\":0,\"heap_start_bytes\":1407692800,\"heap_end_bytes\":1224052736,\"heap_peak_bytes\":1689186304,\"heap_before_gc_bytes\":1392872448,\"heap_after_gc_bytes\":1214712832,\"mono_heap_bytes\":1465794560,\"mono_used_bytes\":1224376320,\"frame_ms_gc\":{\"count\":8,\"p50\":63.884,\"p95\":138.482,\"max\":138.482},\"frame_ms_plain\":{\"count\":17040,\"p50\":33.931,\"p95\":37.997,\"max\":168.978},\"pause_ms\":{\"count\":8,\"p50\":29.953,\"p95\":104.551,\"max\":104.551},\"mod_ms_gc\":{\"count\":8,\"p50\":0.281,\"p95\":91.871,\"max\":91.871},\"mod_ms_plain\":{\"count\":17040,\"p50\":0.28,\"p95\":2.988,\"max\":86.925},\"gc_spikes_30ms\":8,\"frame_spikes_30ms\":17043,\"max_frame_ms\":168.978,\"max_mod_ms\":91.871,\"alloc_frames\":17040,\"frame_alloc_bytes\":1241608192,\"mod_alloc_bytes\":517779456,\"mod_alloc_samples\":17048,\"mod_alloc_skipped\":1,\"advance_alloc_bytes\":91938816,\"advance_alloc_samples\":16955,\"advance_alloc_skipped\":0,\"physical_alloc_bytes\":379510784,\"physical_alloc_samples\":16954,\"physical_alloc_skipped\":1}",
+        "[Persistent City] gc measurement (diagnostic only): persons=3000 frames=17048 collections gen0/1/2=8/0/0 pause p50/p95/max=29.95/104.55/104.55 ms, gc frames >= 30 ms=8, heap 1342.5 MB -> 1167.3 MB (peak 1610.9 MB)"
+      ],
+      "clock_before": {
+        "day": 3,
+        "weekday": "Wednesday",
+        "time": "01:00",
+        "paused": false,
+        "speed": 1.0,
+        "run_until": null,
+        "arrived_at": null,
+        "keep_needs": true
+      },
+      "clock_after": {
+        "day": 3,
+        "weekday": "Wednesday",
+        "time": "04:10",
+        "paused": false,
+        "speed": 1.0,
+        "run_until": null,
+        "arrived_at": null,
+        "keep_needs": true
+      }
+    }
+  },
+  "windows": {
+    "gc-day": {
+      "label": "gc-day",
+      "started_utc": "2026-11-14T04:44:39.7327220Z",
+      "ended_utc": "2026-11-14T04:54:40.3682270Z",
+      "seconds": 600.636,
+      "native_saving_frames": 0,
+      "save_activity": {
+        "attempts": 11600,
+        "allowed": 0,
+        "refused": 11600,
+        "native_saving_frames": 0,
+        "clean": true,
+        "invalid_reasons": []
+      },
+      "whole_frame": {
+        "count": 16872,
+        "p50_ms": 33.9599,
+        "p95_ms": 43.2988,
+        "max_ms": 484.8029,
+        "spikes_30ms": 16665,
+        "truncated": false
+      },
+      "autosave_before": {
+        "enabled": true,
+        "autosave_disabled": true,
+        "save_mode": {
+          "save_specific": false,
+          "allow": [],
+          "error": null
+        },
+        "suppressed": true
+      },
+      "autosave_after": {
+        "enabled": true,
+        "autosave_disabled": true,
+        "save_mode": {
+          "save_specific": false,
+          "allow": [],
+          "error": null
+        },
+        "suppressed": true
+      },
+      "native_autosave_before": {
+        "autosave_minutes": 5,
+        "autosave_max_per_game": 3,
+        "prevent_autosave": false
+      },
+      "native_autosave_after": {
+        "autosave_minutes": 5,
+        "autosave_max_per_game": 3,
+        "prevent_autosave": false
+      }
+    },
+    "gc-night": {
+      "label": "gc-night",
+      "started_utc": "2026-11-14T04:57:44.6406180Z",
+      "ended_utc": "2026-11-14T05:07:45.4393480Z",
+      "seconds": 600.799,
+      "native_saving_frames": 0,
+      "save_activity": {
+        "attempts": 17054,
+        "allowed": 0,
+        "refused": 17054,
+        "native_saving_frames": 0,
+        "clean": true,
+        "invalid_reasons": []
+      },
+      "whole_frame": {
+        "count": 17054,
+        "p50_ms": 34.0918,
+        "p95_ms": 37.831,
+        "max_ms": 450.2231,
+        "spikes_30ms": 16796,
+        "truncated": false
+      },
+      "autosave_before": {
+        "enabled": true,
+        "autosave_disabled": true,
+        "save_mode": {
+          "save_specific": false,
+          "allow": [],
+          "error": null
+        },
+        "suppressed": true
+      },
+      "autosave_after": {
+        "enabled": true,
+        "autosave_disabled": true,
+        "save_mode": {
+          "save_specific": false,
+          "allow": [],
+          "error": null
+        },
+        "suppressed": true
+      },
+      "native_autosave_before": {
+        "autosave_minutes": 5,
+        "autosave_max_per_game": 3,
+        "prevent_autosave": false
+      },
+      "native_autosave_after": {
+        "autosave_minutes": 5,
+        "autosave_max_per_game": 3,
+        "prevent_autosave": false
+      }
+    },
+    "street": {
+      "label": "street",
+      "started_utc": "2026-11-14T05:10:06.2485040Z",
+      "ended_utc": "2026-11-14T05:20:06.4329000Z",
+      "seconds": 600.184,
+      "native_saving_frames": 0,
+      "save_activity": {
+        "attempts": 2319,
+        "allowed": 0,
+        "refused": 2319,
+        "native_saving_frames": 0,
+        "clean": true,
+        "invalid_reasons": []
+      },
+      "whole_frame": {
+        "count": 3493,
+        "p50_ms": 166.685,
+        "p95_ms": 197.0065,
+        "max_ms": 541.8071,
+        "spikes_30ms": 3493,
+        "truncated": false
+      },
+      "autosave_before": {
+        "enabled": true,
+        "autosave_disabled": true,
+        "save_mode": {
+          "save_specific": false,
+          "allow": [],
+          "error": null
+        },
+        "suppressed": true
+      },
+      "autosave_after": {
+        "enabled": true,
+        "autosave_disabled": true,
+        "save_mode": {
+          "save_specific": false,
+          "allow": [],
+          "error": null
+        },
+        "suppressed": true
+      },
+      "native_autosave_before": {
+        "autosave_minutes": 5,
+        "autosave_max_per_game": 3,
+        "prevent_autosave": false
+      },
+      "native_autosave_after": {
+        "autosave_minutes": 5,
+        "autosave_max_per_game": 3,
+        "prevent_autosave": false
+      }
+    }
+  },
+  "street": {
+    "format": "agent-rig-modwork/1",
+    "label": "street",
+    "condition": null,
+    "started_utc": "2026-11-14T05:10:05.7217920Z",
+    "ended_utc": "2026-11-14T05:20:06.7413360Z",
+    "seconds": 601.02,
+    "frames": 3494,
+    "skipped_unity_frames": 0,
+    "mod_work": {
+      "count": 3494,
+      "p50_ms": 1.1816,
+      "p95_ms": 5.1897,
+      "p99_ms": 6.9618,
+      "max_ms": 66.9196,
+      "mean_ms": 2.2031,
+      "spikes_30ms": 2,
+      "spikes": [
+        {
+          "frame_index": 88,
+          "frame": 4282,
+          "ms": 66.9196,
+          "whole_frame_ms": 224.475,
+          "condition": "hour=15",
+          "dominant": "updatecity",
+          "dominant_group": "updatecity",
+          "components": {
+            "updatecity": 66.8762,
+            "PopulationRuntime.LateUpdate": 0.0192,
+            "NativeCityClock.AccountingPrefix": 0.0095,
+            "ResidentInspector.UiRaycastPrefix": 0.0065,
+            "PopulationRuntime.Update": 0.0027,
+            "ResidentInspector.MouseRunPrefix": 0.0012
+          }
+        },
+        {
+          "frame_index": 3114,
+          "frame": 7308,
+          "ms": 39.5754,
+          "whole_frame_ms": 190.1125,
+          "condition": "hour=17",
+          "dominant": "updatecity",
+          "dominant_group": "updatecity",
+          "components": {
+            "updatecity": 39.5327,
+            "PopulationRuntime.LateUpdate": 0.0138,
+            "NativeCityClock.AccountingPrefix": 0.0128,
+            "ResidentInspector.UiRaycastPrefix": 0.0075,
+            "PopulationRuntime.Update": 0.0033,
+            "ResidentInspector.MouseRunPrefix": 0.0012
+          }
+        }
+      ],
+      "spikes_listed": 2
+    },
+    "validity": {
+      "off_main_thread_calls": 0,
+      "cross_frame_scopes": 0,
+      "unbalanced_exits": 0,
+      "depth_overflow": 0,
+      "frames_dropped": 0,
+      "valid": true,
+      "invalid_reasons": []
+    },
+    "updatecity": {
+      "count": 3494,
+      "p50_ms": 1.1375,
+      "p95_ms": 5.1413,
+      "p99_ms": 6.8869,
+      "max_ms": 66.8762,
+      "mean_ms": 2.1584,
+      "group": "updatecity",
+      "calls": 3495,
+      "exceptions": 0,
+      "total_ms": 7541.389,
+      "self_spikes_30ms": 2,
+      "dominant_in_spikes": 2
+    },
+    "whole_frame": {
+      "count": 3494,
+      "p50_ms": 166.7264,
+      "p95_ms": 196.9605,
+      "p99_ms": 273.0698,
+      "max_ms": 532.7407,
+      "mean_ms": 171.8592,
+      "spikes_30ms": 3494
+    },
+    "coverage": {
+      "assembly": "PersistentCity",
+      "bound": 62,
+      "untimed": [],
+      "missing_components": [],
+      "patch_failures": [],
+      "complete": true,
+      "qualification": "Union of the mod assembly's Unity messages (Update/LateUpdate/FixedUpdate/OnGUI, Start/OnDestroy, OnTrigger*/OnCollision* and the rest), its Harmony prefixes/postfixes/finalizers, the mod methods its transpilers inject into native IL, GlobalEvents and SceneManager subscribers and IModBigAmbitions methods, timed in place. Coroutines, worker threads and callbacks registered with other native events are not timed. Observer overhead of nested scopes stays inside the union."
+    }
+  },
+  "camera_pans": [
+    {
+      "frame": 4529,
+      "position": {
+        "x": 223.0,
+        "y": 4.0,
+        "z": -9.0
+      },
+      "target": {
+        "kind": "position",
+        "x": 220,
+        "y": 1,
+        "z": 0
+      },
+      "active": true
+    },
+    {
+      "frame": 4878,
+      "position": {
+        "x": 207.0,
+        "y": 4.0,
+        "z": -9.0
+      },
+      "target": {
+        "kind": "position",
+        "x": 210,
+        "y": 1,
+        "z": 0
+      },
+      "active": true
+    },
+    {
+      "frame": 5236,
+      "position": {
+        "x": 223.0,
+        "y": 4.0,
+        "z": -9.0
+      },
+      "target": {
+        "kind": "position",
+        "x": 220,
+        "y": 1,
+        "z": 0
+      },
+      "active": true
+    },
+    {
+      "frame": 5594,
+      "position": {
+        "x": 207.0,
+        "y": 4.0,
+        "z": -9.0
+      },
+      "target": {
+        "kind": "position",
+        "x": 210,
+        "y": 1,
+        "z": 0
+      },
+      "active": true
+    },
+    {
+      "frame": 5951,
+      "position": {
+        "x": 223.0,
+        "y": 4.0,
+        "z": -9.0
+      },
+      "target": {
+        "kind": "position",
+        "x": 220,
+        "y": 1,
+        "z": 0
+      },
+      "active": true
+    },
+    {
+      "frame": 6308,
+      "position": {
+        "x": 207.0,
+        "y": 4.0,
+        "z": -9.0
+      },
+      "target": {
+        "kind": "position",
+        "x": 210,
+        "y": 1,
+        "z": 0
+      },
+      "active": true
+    },
+    {
+      "frame": 6665,
+      "position": {
+        "x": 223.0,
+        "y": 4.0,
+        "z": -9.0
+      },
+      "target": {
+        "kind": "position",
+        "x": 220,
+        "y": 1,
+        "z": 0
+      },
+      "active": true
+    },
+    {
+      "frame": 7023,
+      "position": {
+        "x": 207.0,
+        "y": 4.0,
+        "z": -9.0
+      },
+      "target": {
+        "kind": "position",
+        "x": 210,
+        "y": 1,
+        "z": 0
+      },
+      "active": true
+    },
+    {
+      "frame": 7379,
+      "position": {
+        "x": 223.0,
+        "y": 4.0,
+        "z": -9.0
+      },
+      "target": {
+        "kind": "position",
+        "x": 220,
+        "y": 1,
+        "z": 0
+      },
+      "active": true
+    }
+  ],
+  "unrentable_homes": "unrentable homes housed=0 beds=0 unreadable=0 empty=0",
+  "save_latency": {
+    "status": "NOT RUN",
+    "samples": 0,
+    "reason": "Owner decision pending; no save profiling in this run."
+  },
+  "optional": {
+    "optional-rlo": {
+      "op": "rlo_option",
+      "args": {
+        "action": "read",
+        "name": "living_population"
+      },
+      "error": "ops_rlo_option_unavailable"
+    },
+    "optional-nonft": {
+      "op": "new_game",
+      "args": {
+        "name": "GR5-NonFT-13g"
+      },
+      "error": "The bridge starts only games whose name starts with FT, not 'GR5-NonFT-13g'."
+    },
+    "optional-drive": {
+      "op": "drive",
+      "args": {
+        "op": "status"
+      },
+      "result": {
+        "ok": true,
+        "session": "245f2a65",
+        "op": 16,
+        "result": {
+          "running": false,
+          "phase": "none"
+        }
+      }
+    }
+  },
+  "raw_evidence": {
+    "build.txt": {
+      "bytes": 315,
+      "sha256": "1e06f60ed8cdc8bf52254110d9f83e9fd6dae8f0b2caa44fb12c842fd3948b61"
+    },
+    "stage.txt": {
+      "bytes": 1144,
+      "sha256": "aad5c6fc38ffedeeae60d28714267c8cf58e955e1fbd5ee0ec92c7fc14db5705"
+    },
+    "start.txt": {
+      "bytes": 2068,
+      "sha256": "74679e219f00c2fa31615c95c74fce4b8a6f43506a174e4e78a2e836d467c1b4"
+    },
+    "start-street.txt": {
+      "bytes": 2068,
+      "sha256": "806c913559cf87eede797c4c99e3d87949abedb1ab9781a92a650d6d61361d3f"
+    },
+    "prepared-Player.log": {
+      "bytes": 434493,
+      "sha256": "f5e6bf77484e97fc86ff070649b19f0ef93072ef2df68b3181b31c843195cef8"
+    },
+    "final-Player.log": {
+      "bytes": 741933,
+      "sha256": "62f8549c6aaaec5ce1e25240c51c89c0e41a123a9f121b1f5b5a379833479026"
+    },
+    "gc-day-gc-report.json": {
+      "bytes": 1703,
+      "sha256": "8adebb5368af322b771468edcf222054bf1ef438155cfebe1b66f8f7c2067d60"
+    },
+    "gc-night-gc-report.json": {
+      "bytes": 1698,
+      "sha256": "8da337da19bbb70a5e9e020fdd27b970cc687f8b92c2ca76473ca0db04d85191"
+    },
+    "gc-day-perf-end.json": {
+      "bytes": 25797,
+      "sha256": "b83286cbc9205eb568e48936e5a3c5ce6ea5d16ef480e55ab16c535fbf22132c"
+    },
+    "gc-night-perf-end.json": {
+      "bytes": 25800,
+      "sha256": "b1845c5c44e756189f7328457c4e51f0d85c9485cd8b94bdcaf1f6773edc7abc"
+    },
+    "street-perf-end.json": {
+      "bytes": 26021,
+      "sha256": "6b380e52141ac773ea2ba790c206ad2906ac441a64844032fd4dc49a0d076249"
+    },
+    "street-modwork-end.json": {
+      "bytes": 29032,
+      "sha256": "bc9f252abafabb4fce34f42101c15e7b1201092d414bb53a98575c1e93b1eee4"
+    },
+    "final-census.json": {
+      "bytes": 1374,
+      "sha256": "59d6e1f1f8018586f9b86901548ec8df15407774a5a5d2f66b56fe9fa0ab28f4"
+    },
+    "ops.json": {
+      "bytes": 107924,
+      "sha256": "22feedcc8a6f9d76f5902e41e32b9535cdc1f6d9ebda788169e46b1c7784a10a"
+    },
+    "pcstate-list.json": {
+      "bytes": 300,
+      "sha256": "fac1cf06afc5c1ffe266e1c05f59c7689e01a1be8a4394e6b2d1696cd191443e"
+    },
+    "camera-initial.json": {
+      "bytes": 1624,
+      "sha256": "abddc40cecd0d56967757d62678027b98b519795212442a0b5c3b2367c8cec81"
+    },
+    "optional-rlo.json": {
+      "bytes": 137,
+      "sha256": "998e7897b7eb7015d2af41bdb1646380e35ebc5cfbff65a803b8b33a1e10a7b0"
+    },
+    "optional-nonft.json": {
+      "bytes": 159,
+      "sha256": "cf1185857b5387317f74cc73c8558ed207557e8af0c71b755511f29709829e02"
+    },
+    "optional-drive.json": {
+      "bytes": 200,
+      "sha256": "b33341de893c385f4d612a52cd553d24a7c7f6b5fc9a829fffc4327af799d632"
+    },
+    "original-manifest.json": {
+      "bytes": 8107,
+      "sha256": "de5ee0287af2b24eaf356b00124eff3c123fb699e82378052386c6b7f41aeecb"
+    },
+    "restore-verification.json": {
+      "bytes": 14915,
+      "sha256": "9c71cfd439fb222c53c9e9e3d21748cabb633a1202cc0e83849cda9fee833601"
+    },
+    "owned-process-verification.json": {
+      "bytes": 137,
+      "sha256": "8db897297a704ed52e4c8f64eb38b2a5b05db204edf8137fa1476fd437a7e273"
+    },
+    "final-status.json": {
+      "bytes": 275,
+      "sha256": "d9599ae5368c9ca0284ed5567ca23b7832064d357928a68e7da87691c1f229e4"
+    },
+    "prepare.txt": {
+      "bytes": 1419,
+      "sha256": "ff0d86cf17456e17cfc418f266168878142240a4726dd15215725eca0aedc5d8"
+    },
+    "prepare-resume.txt": {
+      "bytes": 1144,
+      "sha256": "4831b9ab7d48450ca69dd84cb8816c3a26e9cc72e17fd707402a3599c4a0464e"
+    },
+    "inspect.json": {
+      "bytes": 829,
+      "sha256": "72eebb15d031bafe393d3be2223acbe7a7051ef2063879028483b804176b9e76"
+    },
+    "night-prepare.txt": {
+      "bytes": 1418,
+      "sha256": "f8a3ca9997195e711d34363c3fbd81b2f8baef9d03b2b916d85b99a3b2a253a8"
+    }
+  }
+}
