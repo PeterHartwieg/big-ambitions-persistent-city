@@ -213,11 +213,11 @@ namespace PersistentCity.Runtime
         public bool SetTarget(Position corner, double metresPerScaledSecond)
         {
             if (!Valid || !Fits(corner) || !PersistentCity.Core.Position.Finite(metresPerScaledSecond) || metresPerScaledSecond <= 0 || metresPerScaledSecond > 12) return false;
-            var path = new NavMeshPath();
+            var path = SharedPath;
             if (!Agent.CalculatePath(Vector(corner), path) || path.status != NavMeshPathStatus.PathComplete) return false;
-            var corners = path.corners;
-            if (corners == null || corners.Length < 1 || PersistentCity.Core.Position.Distance(Point(corners[corners.Length - 1]), corner) > 0.05) return false;
-            for (int i = 1; i + 1 < corners.Length; i++)
+            int count = Corners(path);
+            if (count < 1 || PersistentCity.Core.Position.Distance(Point(corners[count - 1]), corner) > 0.05) return false;
+            for (int i = 1; i + 1 < count; i++)
                 if (DistanceToSegment(corners[i], Character.transform.position, Vector(corner)) > 0.15f) return false;
             Agent.speed = (float)metresPerScaledSecond;
             if (!Agent.SetPath(path)) return false;
@@ -226,13 +226,26 @@ namespace PersistentCity.Runtime
         public bool SetPathTarget(Position target, double metresPerScaledSecond)
         {
             if (!Valid || !Fits(target) || !PersistentCity.Core.Position.Finite(metresPerScaledSecond) || metresPerScaledSecond <= 0 || metresPerScaledSecond > 12) return false;
-            var path = new NavMeshPath();
+            var path = SharedPath;
             if (!Agent.CalculatePath(Vector(target), path) || path.status != NavMeshPathStatus.PathComplete) return false;
-            var corners = path.corners;
-            if (corners == null || corners.Length < 1 || PersistentCity.Core.Position.Distance(Point(corners[corners.Length - 1]), target) > 0.3) return false;
+            int count = Corners(path);
+            if (count < 1 || PersistentCity.Core.Position.Distance(Point(corners[count - 1]), target) > 0.3) return false;
             Agent.speed = (float)metresPerScaledSecond;
             if (!Agent.SetPath(path)) return false;
             stopped = false; Tick(); return true;
+        }
+        private static NavMeshPath? sharedPath;
+        private static NavMeshPath SharedPath => sharedPath ??= new NavMeshPath();
+        private static Vector3[] corners = new Vector3[32];
+        private static int Corners(NavMeshPath path)
+        {
+            int count = path.GetCornersNonAlloc(corners);
+            while (count == corners.Length)
+            {
+                corners = new Vector3[corners.Length * 2];
+                count = path.GetCornersNonAlloc(corners);
+            }
+            return count;
         }
         public void Stop(bool stop) { stopped = stop; Tick(); }
         public bool HasPath => Valid && Agent.hasPath && !Agent.isPathStale;

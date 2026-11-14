@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace PersistentCity.Core
 {
@@ -26,6 +27,8 @@ namespace PersistentCity.Core
         private int entryCount;
         private int freeEntry;
         public int Count { get; private set; }
+        public readonly Dictionary<(int From, int To), (double Baseline, double Nominal, double Extra)> Costs
+            = new Dictionary<(int From, int To), (double Baseline, double Nominal, double Extra)>();
 
         public void Begin(int nodeCount)
         {

@@ -602,10 +602,25 @@ namespace PersistentCity.Runtime
         }
         private List<Station> Nearby(Position position)
         {
-            var sorted = new List<Station>(stations!);
-            sorted.Sort((a, b) => { int compare = Position.Distance(position, a.Entrance.Position).CompareTo(Position.Distance(position, b.Entrance.Position)); return compare != 0 ? compare : StringComparer.Ordinal.Compare(a.Id, b.Id); });
-            if (sorted.Count > 2) sorted.RemoveRange(2, sorted.Count - 2);
-            return sorted;
+            Station? first = null, second = null;
+            double firstDistance = 0, secondDistance = 0;
+            foreach (var station in stations!)
+            {
+                double distance = Position.Distance(position, station.Entrance.Position);
+                if (first == null || Closer(distance, station, firstDistance, first))
+                { second = first; secondDistance = firstDistance; first = station; firstDistance = distance; }
+                else if (second == null || Closer(distance, station, secondDistance, second))
+                { second = station; secondDistance = distance; }
+            }
+            var nearest = new List<Station>(2);
+            if (first != null) nearest.Add(first);
+            if (second != null) nearest.Add(second);
+            return nearest;
+        }
+        private static bool Closer(double distance, Station station, double otherDistance, Station other)
+        {
+            int compare = distance.CompareTo(otherDistance);
+            return compare != 0 ? compare < 0 : StringComparer.Ordinal.Compare(station.Id, other.Id) < 0;
         }
         private Route? Train(Station from, Station to)
         {

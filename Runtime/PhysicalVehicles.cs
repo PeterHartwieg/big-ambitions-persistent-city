@@ -393,7 +393,7 @@ namespace PersistentCity.Runtime
             float fraction = Vector3.Dot(offset, segment) / segment.sqrMagnitude;
             if (fraction < -0.001f || fraction > 1.001f || (offset - segment * fraction).sqrMagnitude > 0.25f) return false;
             LastAdmissionStage = "model catalogue";
-            if (!CarAppearance.TryModel(citizen.Car, () => modelNames, out string modelId) || !models.TryGetValue(modelId, out var model) || model.Refused) return false;
+            if (!CarAppearance.TryModel(citizen.Car, modelNameList ??= () => modelNames, out string modelId) || !models.TryGetValue(modelId, out var model) || model.Refused) return false;
             LastAdmissionStage = "junction rear clearance";
             if (!PhysicalRoadAdmission.Allows(sample.AdmissionBoundaries, sample.RouteProgress, model.Length)) return false;
             LastAdmissionStage = "body geometry";
@@ -615,8 +615,19 @@ namespace PersistentCity.Runtime
             if (vehicle == null || !vehicle.gameObject.activeInHierarchy || vehicle.presetPath != null
                 || !(nativeDensity.HasValue || heldGroups.Contains(vehicle.vehicleGroupType))) return;
             if (RloOverrule.RetiresNativeCar(true, true, false, TrafficManager.Instance.IsVehicleIgnored(vehicle.GetIndex()), Ordinary(vehicle), IsTaxi(vehicle),
-                vehicle.GetComponentsInChildren<Renderer>().Any(r => r.isVisible)))
+                AnyVisible(vehicle)))
             { Manager.RemoveVehicle(vehicle.GetIndex()); retired++; loads.Forget(slot); }
+        }
+
+        private readonly List<Renderer> retireRenderers = new List<Renderer>();
+        private bool AnyVisible(VehicleComponent vehicle)
+        {
+            retireRenderers.Clear();
+            vehicle.GetComponentsInChildren(false, retireRenderers);
+            bool visible = false;
+            for (int i = 0; i < retireRenderers.Count && !visible; i++) visible = retireRenderers[i].isVisible;
+            retireRenderers.Clear();
+            return visible;
         }
 
         private void Drive(PhysicalVehicleBody body, float seconds)
@@ -715,7 +726,8 @@ namespace PersistentCity.Runtime
         internal void ShowParked(IReadOnlyList<ParkedCar> wanted, Func<string, CarState?> car)
         {
             if (!Active || models == null) return;
-            var keep = new HashSet<string>(StringComparer.Ordinal);
+            var keep = parkedKeep;
+            keep.Clear();
             int count = 0;
             foreach (var entry in wanted)
             {
@@ -728,7 +740,7 @@ namespace PersistentCity.Runtime
                     ReleaseParked(shown);
                 }
                 var state = car(entry.CarId);
-                if (state == null || !SceneReady || !CarAppearance.TryModel(state, () => modelNames, out string modelId)
+                if (state == null || !SceneReady || !CarAppearance.TryModel(state, modelNameList ??= () => modelNames, out string modelId)
                     || !models.TryGetValue(modelId, out var model) || model.Refused) continue;
                 var rotation = Quaternion.Euler(0, ParkedYaw(entry), 0);
                 if (!ParkedClear(model, entry.At, rotation)) continue;
@@ -740,13 +752,18 @@ namespace PersistentCity.Runtime
                 instance.Root.SetActive(true);
                 parked.Add(entry.CarId, body);
             }
-            foreach (var shown in parked.Values.ToArray())
+            parkedScratch.Clear();
+            foreach (var shown in parked.Values) parkedScratch.Add(shown);
+            foreach (var shown in parkedScratch)
                 if (!keep.Contains(shown.CarId) && double.IsNaN(shown.FadeOut))
                 {
                     if (shown.Instance.CanFade && shown.Instance.OnScreen) shown.FadeOut = 0;
                     else ReleaseParked(shown);
                 }
+            parkedScratch.Clear(); keep.Clear();
         }
+        private readonly HashSet<string> parkedKeep = new HashSet<string>(StringComparer.Ordinal);
+        private Func<IReadOnlyList<string>>? modelNameList;
 
         private bool ParkedClear(OwnCarModel model, Position at, Quaternion rotation)
         {

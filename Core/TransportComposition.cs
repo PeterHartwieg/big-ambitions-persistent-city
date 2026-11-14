@@ -238,8 +238,8 @@ namespace PersistentCity.Core
                 this.extraMinutes = extraMinutes; this.estimateFound = estimateFound; this.maximumEstimatedMinutes = maximumEstimatedMinutes;
                 this.search = search; this.borrowed = borrowed;
                 search.Begin(graph.nodes.Count);
-                costs = extraMinutes == null && traversalMinutes == null ? null
-                    : new Dictionary<(int From, int To), (double Baseline, double Nominal, double Extra)>();
+                costs = extraMinutes == null && traversalMinutes == null ? null : search.Costs;
+                costs?.Clear();
                 search.SetDistance(start, 0, -1);
                 search.Add((Heuristic(start), 0, start));
             }

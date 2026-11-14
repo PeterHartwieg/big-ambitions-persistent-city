@@ -34,6 +34,8 @@ namespace PersistentCity.Runtime
         private readonly FieldInfo? pathTryCount;
         private readonly HashSet<Pedestrian> held = new HashSet<Pedestrian>();
         private readonly List<Pedestrian> departingScratch = new List<Pedestrian>();
+        private UnityEngine.AI.NavMeshPath? completePath;
+        private Vector3[] corners = new Vector3[32];
         private Predicate<Pedestrian>? heldGone;
         private readonly Dictionary<Pedestrian, float> resumeAt = new Dictionary<Pedestrian, float>();
         private readonly Dictionary<Pedestrian, Departure> departing = new Dictionary<Pedestrian, Departure>();
@@ -251,10 +253,12 @@ namespace PersistentCity.Runtime
 
         private bool CompletePath(UnityEngine.AI.NavMeshAgent agent, Vector3 target)
         {
-            var path = new UnityEngine.AI.NavMeshPath();
-            if (!agent.CalculatePath(target, path) || path.status != UnityEngine.AI.NavMeshPathStatus.PathComplete
-                || path.corners.Length == 0 || Vector3.Distance(path.corners[path.corners.Length - 1], target) > 1f) return false;
-            foreach (var corner in path.corners) if (city!.IsOutsidePlayerRange(corner)) return false;
+            var path = completePath ??= new UnityEngine.AI.NavMeshPath();
+            if (!agent.CalculatePath(target, path) || path.status != UnityEngine.AI.NavMeshPathStatus.PathComplete) return false;
+            int count = path.GetCornersNonAlloc(corners);
+            while (count == corners.Length) { corners = new Vector3[corners.Length * 2]; count = path.GetCornersNonAlloc(corners); }
+            if (count == 0 || Vector3.Distance(corners[count - 1], target) > 1f) return false;
+            for (int i = 0; i < count; i++) if (city!.IsOutsidePlayerRange(corners[i])) return false;
             return true;
         }
 
@@ -322,7 +326,12 @@ namespace PersistentCity.Runtime
             held.RemoveWhere(heldGone ??= pedestrian => pedestrian == null || !pedestrian.gameObject.activeInHierarchy
                 || !InActivePool(spawner.activePedestrians, pedestrian));
             if (resumeAt.Count > held.Count)
-                foreach (var gone in new List<Pedestrian>(resumeAt.Keys)) if (!held.Contains(gone)) resumeAt.Remove(gone);
+            {
+                departingScratch.Clear();
+                foreach (var key in resumeAt.Keys) if (!held.Contains(key)) departingScratch.Add(key);
+                foreach (var gone in departingScratch) resumeAt.Remove(gone);
+                departingScratch.Clear();
+            }
             if (departing.Count > 0)
             {
                 departingScratch.Clear();
@@ -335,7 +344,12 @@ namespace PersistentCity.Runtime
                 departingScratch.Clear();
             }
             if (failedSearches.Count > held.Count)
-                foreach (var gone in new List<Pedestrian>(failedSearches.Keys)) if (!held.Contains(gone)) failedSearches.Remove(gone);
+            {
+                departingScratch.Clear();
+                foreach (var key in failedSearches.Keys) if (!held.Contains(key)) departingScratch.Add(key);
+                foreach (var gone in departingScratch) failedSearches.Remove(gone);
+                departingScratch.Clear();
+            }
             if (resumedFrame != Time.frameCount)
                 foreach (var pair in resumeAt)
                 {

@@ -352,7 +352,9 @@ namespace PersistentCity.Runtime
                     }
                 }
                 var physicalHeap = GcAllocationBegin();
-                RunPhysical(physicalUpdate ??= () => physical?.Update());
+                PhysicalPopulation.AllocationSampler = physicalHeap.Heap >= 0 ? gcSampler : null;
+                try { RunPhysical(physicalUpdate ??= () => physical?.Update()); }
+                finally { PhysicalPopulation.AllocationSampler = null; }
                 GcAllocationEnd(GcAllocationSegment.Physical, physicalHeap);
                 UpdateInspector();
                 if (Time.unscaledTime >= nextSummary)

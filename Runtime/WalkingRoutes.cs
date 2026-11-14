@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using Stopwatch = System.Diagnostics.Stopwatch;
 using Extensions;
 using PersistentCity.Core;
@@ -18,11 +17,13 @@ namespace PersistentCity.Runtime
         private const float EndpointTolerance = 0.05f;
         private readonly double metresPerGameMinute;
         private readonly Func<Position, Position, bool>? publicSegment;
-        private readonly Dictionary<string, CachedPath> cache = new Dictionary<string, CachedPath>(StringComparer.Ordinal);
-        private readonly Queue<string> insertionOrder = new Queue<string>();
+        private readonly Dictionary<PathKey, CachedPath> cache = new Dictionary<PathKey, CachedPath>();
+        private readonly Queue<PathKey> insertionOrder = new Queue<PathKey>();
+        private readonly NavMeshPath navigation = new NavMeshPath();
+        private Vector3[] corners = new Vector3[64];
         private bool quoteOperation;
         private CachedPath? observed;
-        private string observedKey = "";
+        private PathKey observedKey;
         private NavMeshQueryFilter observedFilter;
 
         public WalkingRoutes(double metresPerGameMinute = 84, Func<Position, Position, bool>? publicSegment = null)
@@ -59,7 +60,7 @@ namespace PersistentCity.Runtime
                 || !Position.Finite(departureMinute) || departureMinute < 0 || !Position.Finite(preferences.WalkingToleranceMetres) || preferences.WalkingToleranceMetres < 0
                 || !FitsVector(from.Position) || !FitsVector(to.Position)) { Metrics.WalkingInvalidInputs++; return null; }
             if (Position.Distance(from.Position, to.Position) > preferences.WalkingToleranceMetres) { Metrics.WalkingDistanceRejects++; return null; }
-            string key = PointKey(from.Position) + ">" + PointKey(to.Position);
+            var key = new PathKey(from.Position, to.Position);
             if (!cache.TryGetValue(key, out CachedPath? path))
             {
                 Metrics.WalkingCacheMisses++; Metrics.WalkingCalculations++;
@@ -94,8 +95,8 @@ namespace PersistentCity.Runtime
         {
             var filter = DryFilter;
             if (!quoteOperation) return Calculate(from, to, filter);
-            string key = PointKey(from) + ">" + PointKey(to);
-            if (observed != null && observedKey == key
+            var key = new PathKey(from, to);
+            if (observed != null && observedKey.Equals(key)
                 && observedFilter.agentTypeID == filter.agentTypeID && observedFilter.areaMask == filter.areaMask)
             { Metrics.NavMeshPathReuses++; return observed; }
             observed = null;
@@ -117,7 +118,6 @@ namespace PersistentCity.Runtime
                 stationary.Legs.Add(new RouteLeg { From = from, To = to, Minutes = 0.01, Mode = TravelMode.Walk });
                 return new CachedPath(stationary, 0);
             }
-            var navigation = new NavMeshPath();
             Metrics.NavMeshPathQueries++;
             bool calculated;
             long pathStarted = Stopwatch.GetTimestamp();
@@ -129,17 +129,22 @@ namespace PersistentCity.Runtime
                 Metrics.MaximumNavMeshPathMilliseconds = Math.Max(Metrics.MaximumNavMeshPathMilliseconds, elapsed);
             }
             if (!calculated || navigation.status != NavMeshPathStatus.PathComplete) return new CachedPath(null, 0);
-            Vector3[] corners = navigation.corners;
-            if (corners == null || corners.Length < 2 || corners.Length > MaxLegs + 1
-                || !Point(corners[0]).IsFinite || !Point(corners[corners.Length - 1]).IsFinite
-                || Position.Distance(from, Point(corners[0])) > EndpointTolerance || Position.Distance(to, Point(corners[corners.Length - 1])) > EndpointTolerance)
+            int count = navigation.GetCornersNonAlloc(corners);
+            while (count == corners.Length && corners.Length <= MaxLegs + 1)
+            {
+                corners = new Vector3[corners.Length * 2];
+                count = navigation.GetCornersNonAlloc(corners);
+            }
+            if (count < 2 || count > MaxLegs + 1
+                || !Point(corners[0]).IsFinite || !Point(corners[count - 1]).IsFinite
+                || Position.Distance(from, Point(corners[0])) > EndpointTolerance || Position.Distance(to, Point(corners[count - 1])) > EndpointTolerance)
                 return new CachedPath(null, 0);
             var route = new Route();
             Position previous = from;
             double metres = 0;
-            for (int i = 1; i < corners.Length; i++)
+            for (int i = 1; i < count; i++)
             {
-                Position next = i == corners.Length - 1 ? to : Point(corners[i]);
+                Position next = i == count - 1 ? to : Point(corners[i]);
                 if (!next.IsFinite) return new CachedPath(null, 0);
                 double length = Position.Distance(previous, next);
                 if (!Position.Finite(length)) return new CachedPath(null, 0);
@@ -214,7 +219,26 @@ namespace PersistentCity.Runtime
         private static Position Point(Vector3 value) => new Position(value.x, value.y, value.z);
         private static Vector3 Vector(Position value) => new Vector3((float)value.X, (float)value.Y, (float)value.Z);
         private static bool FitsVector(Position value) => Math.Abs(value.X) <= float.MaxValue && Math.Abs(value.Y) <= float.MaxValue && Math.Abs(value.Z) <= float.MaxValue;
-        private static string PointKey(Position value) => value.X.ToString("R", CultureInfo.InvariantCulture) + "," + value.Y.ToString("R", CultureInfo.InvariantCulture) + "," + value.Z.ToString("R", CultureInfo.InvariantCulture);
+        private readonly struct PathKey : IEquatable<PathKey>
+        {
+            private readonly long ax, ay, az, bx, by, bz;
+            public PathKey(Position a, Position b)
+            {
+                ax = BitConverter.DoubleToInt64Bits(a.X); ay = BitConverter.DoubleToInt64Bits(a.Y); az = BitConverter.DoubleToInt64Bits(a.Z);
+                bx = BitConverter.DoubleToInt64Bits(b.X); by = BitConverter.DoubleToInt64Bits(b.Y); bz = BitConverter.DoubleToInt64Bits(b.Z);
+            }
+            public bool Equals(PathKey other) => ax == other.ax && ay == other.ay && az == other.az && bx == other.bx && by == other.by && bz == other.bz;
+            public override bool Equals(object? obj) => obj is PathKey other && Equals(other);
+            public override int GetHashCode()
+            {
+                unchecked
+                {
+                    long hash = ax;
+                    hash = hash * 31 + ay; hash = hash * 31 + az; hash = hash * 31 + bx; hash = hash * 31 + by; hash = hash * 31 + bz;
+                    return (int)hash ^ (int)(hash >> 32);
+                }
+            }
+        }
         private sealed class CachedPath
         {
             public CachedPath(Route? route, double metres) { Route = route; Metres = metres; }

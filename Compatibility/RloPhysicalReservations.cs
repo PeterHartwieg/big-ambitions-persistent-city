@@ -27,7 +27,19 @@ namespace PersistentCity.Compatibility
         public string LastError { get; private set; } = "";
 
         public static RloReservationVerdict? Last { get; private set; }
-        private void Record() => Last = new RloReservationVerdict(Ready, Ready && citizensKnown && bodiesKnown, LastError);
+        private void Record()
+        {
+            bool complete = Ready && citizensKnown && bodiesKnown;
+            var last = Last;
+            if (last == null || last.Ready != Ready || last.Complete != complete || !string.Equals(last.Error, LastError ?? "", StringComparison.Ordinal))
+                Last = new RloReservationVerdict(Ready, complete, LastError ?? "");
+        }
+        private string[] indexIds = Array.Empty<string>();
+        private string IndexId(int index)
+        {
+            if (index >= indexIds.Length) Array.Resize(ref indexIds, Math.Max(index + 1, indexIds.Length * 2));
+            return indexIds[index] ??= "c" + index.ToString(CultureInfo.InvariantCulture);
+        }
         public IReadOnlyCollection<string> ReservedCitizenIds => reserved;
         public bool IsReserved(string citizenId) => !Ready || !citizensKnown || reserved.Contains(citizenId);
         public bool IsReservedNativePedestrian(object pedestrian, object? character)
@@ -137,7 +149,8 @@ namespace PersistentCity.Compatibility
                     if (people == RloBridge.Status.Ready)
                         foreach (int index in readIndexes)
                         {
-                            string id = "c" + index.ToString(CultureInfo.InvariantCulture);
+                            if (index < 0) continue;
+                            string id = IndexId(index);
                             if (sourceIds.Contains(id)) reserved.Add(id);
                         }
                 }

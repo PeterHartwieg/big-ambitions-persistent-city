@@ -113,7 +113,10 @@ public sealed class GcMeasurementTests
             "heap_start_bytes", "heap_end_bytes", "heap_peak_bytes", "heap_before_gc_bytes", "heap_after_gc_bytes", "mono_heap_bytes", "mono_used_bytes",
             "frame_ms_gc", "frame_ms_plain", "pause_ms", "mod_ms_gc", "mod_ms_plain", "gc_spikes_30ms", "frame_spikes_30ms", "max_frame_ms", "max_mod_ms", "alloc_frames", "frame_alloc_bytes",
             "mod_alloc_bytes", "mod_alloc_samples", "mod_alloc_skipped", "advance_alloc_bytes", "advance_alloc_samples", "advance_alloc_skipped",
-            "physical_alloc_bytes", "physical_alloc_samples", "physical_alloc_skipped" };
+            "physical_alloc_bytes", "physical_alloc_samples", "physical_alloc_skipped",
+            "physical_ambient_alloc_bytes", "physical_ambient_alloc_samples", "physical_ambient_alloc_skipped",
+            "physical_vehicles_alloc_bytes", "physical_vehicles_alloc_samples", "physical_vehicles_alloc_skipped",
+            "physical_bindings_alloc_bytes", "physical_bindings_alloc_samples", "physical_bindings_alloc_skipped" };
         foreach (string json in new[] { empty, full })
         {
             Assert.DoesNotContain('\n', json);
