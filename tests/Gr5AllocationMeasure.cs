@@ -307,15 +307,26 @@ public sealed class Gr5AllocationMeasure
         private int Index(int x, int z) => x * rows + z;
         private int Nearest(Position p) => Index(Math.Clamp((int)Math.Round((p.X - minX) / Spacing), 0, columns - 1), Math.Clamp((int)Math.Round((p.Z - minZ) / Spacing), 0, rows - 1));
 
+        public long SearchBytes, CopyBytes;
+
         public Route Plan(Place a, Place b, double at, TravelPreferences p)
         {
             int start = Nearest(a.Position), goal = Nearest(b.Position);
             Route? road = null;
+            long began = GC.GetAllocatedBytesForCurrentThread();
             if (start != goal)
             {
                 Searches++;
                 road = graph.PlanWithTraversal(start, goal, _ => false, (_, _) => true, (_, _, baseline) => baseline * 1.1, 30000, null, (_, _) => 0.05, null);
             }
+            long searched = GC.GetAllocatedBytesForCurrentThread();
+            SearchBytes += searched - began;
+            try { return Copy(a, b, road); }
+            finally { CopyBytes += GC.GetAllocatedBytesForCurrentThread() - searched; }
+        }
+
+        private static Route Copy(Place a, Place b, Route? road)
+        {
             if (road == null) return Legs(a.Position, b.Position);
             var route = new Route { Legs = new() };
             Position previous = a.Position;
@@ -565,6 +576,9 @@ public sealed class Gr5AllocationMeasure
         for (double minute = start - 20; minute < start; minute += 1.0 / fps) Frame(simulator, minute);
         int idle = 0, busy = 0, events = 0;
         long idleBytes = 0, busyBytes = 0;
+        using var types = new AllocationTypes();
+        types.Recording = PerfGate.Variable("PC_GR5_TYPES") != null;
+        long searchesBefore = grid.Searches, searchBytes = grid.SearchBytes, copyBytes = grid.CopyBytes;
         for (double minute = start; minute < start + 20; minute += 1.0 / fps)
         {
             long before = GC.GetAllocatedBytesForCurrentThread();
@@ -577,11 +591,14 @@ public sealed class Gr5AllocationMeasure
         string? path = PerfGate.Variable("PC_GR5_ALLOC");
         if (!string.IsNullOrEmpty(path))
             Record(path, new { label = PerfGate.Variable("PC_GR5_ALLOC_LABEL") ?? "", component = "advance ticks 15:10-15:30", idleTicks = idle, idleBytes,
-                busyTicks = busy, events, busyBytes, bytesPerEvent = events == 0 ? 0 : busyBytes / events, roadSearches = grid.Searches });
+                busyTicks = busy, events, busyBytes, bytesPerEvent = events == 0 ? 0 : busyBytes / events, roadSearches = grid.Searches - searchesBefore,
+                searchBytes = grid.SearchBytes - searchBytes, fixtureCopyBytes = grid.CopyBytes - copyBytes,
+                simulatorBytesPerEvent = events == 0 ? 0 : (busyBytes - (grid.SearchBytes - searchBytes) - (grid.CopyBytes - copyBytes)) / events, topTypes = types.Recording ? Top(types) : null });
         Assert.Equal(CityBalance.CityResidentTotal, state.Citizens.Count);
         Assert.True(idle >= 200, "only " + idle + " idle ticks");
         Assert.True(busy > 0);
         Assert.Equal(0, idleBytes);
+        Assert.True(busyBytes / events < 9303, busyBytes / events + " B per busy event");
     }
 
     [Fact]

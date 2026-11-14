@@ -628,14 +628,14 @@ namespace PersistentCity.Runtime
             int compare = distance.CompareTo(otherDistance);
             return compare != 0 ? compare < 0 : StringComparer.Ordinal.Compare(station.Id, other.Id) < 0;
         }
-        private readonly Dictionary<(Station From, Station To), Route?> trains = new Dictionary<(Station From, Station To), Route?>();
+        private readonly Dictionary<(Station From, Station To), Route> trains = new Dictionary<(Station From, Station To), Route>();
         private List<Station>? trainStations;
         private SubwaySystem? trainSubway;
         private Route? Train(Station from, Station to)
         {
             if (!ReferenceEquals(trainStations, stations) || !ReferenceEquals(trainSubway, subway))
             { trains.Clear(); trainStations = stations; trainSubway = subway; }
-            if (!trains.TryGetValue((from, to), out var route)) { route = BuildTrain(from, to); trains.Add((from, to), route); }
+            if (!trains.TryGetValue((from, to), out Route? route)) { route = BuildTrain(from, to); if (route != null) trains.Add((from, to), route); }
             return route;
         }
         private Route? BuildTrain(Station from, Station to)
