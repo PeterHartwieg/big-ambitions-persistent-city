@@ -368,6 +368,46 @@ public sealed class Gr5AllocationMeasure
     }
 
     [Fact]
+    public void MeasureRetainedHeapAtTheCap()
+    {
+        string? path = PerfGate.Variable("PC_GR5_ALLOC");
+        if (string.IsNullOrEmpty(path)) return;
+        string label = PerfGate.Variable("PC_GR5_ALLOC_LABEL") ?? "";
+        for (int run = 1; run <= 3; run++)
+        {
+            GC.Collect(); GC.WaitForPendingFinalizers(); GC.Collect();
+            long empty = GC.GetTotalMemory(true);
+            Record(path, RetainedOnce(label, run, empty));
+        }
+    }
+
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
+    private static object RetainedOnce(string label, int run, long empty)
+    {
+        var state = RigCity();
+        long built = GC.GetTotalMemory(true);
+        var grid = new RoadGrid(state.Places);
+        var simulator = new CitySimulator(state, grid);
+        simulator.AttachFoodMarket(new VisitorRoutineTests.Market { Shops = F5gPopulationFillTests.Shops(state) });
+        simulator.AttachOptionalStops(new StopSpots(), OptionalStopPolicy.ApprovedChoicePercentage);
+        double day = Math.Floor(state.Minute / 1440) * 1440;
+        var rows = new List<object>();
+        foreach (var (window, minute) in new[] { ("day-15:30", day + 15.5 * 60), ("night-01:00", day + 1440 + 60) })
+        {
+            simulator.AdvanceTo(minute, int.MaxValue);
+            for (double m = minute; m < minute + 5; m += 1.0 / 90) Frame(simulator, m);
+            long retained = GC.GetTotalMemory(true);
+            int journeys = 0, legs = 0;
+            foreach (var c in state.Citizens) if (c.Journey != null) { journeys++; legs += c.Journey.Legs.Count; }
+            foreach (var v in state.Visitors) if (v.Routine?.Journey != null) { journeys++; legs += v.Routine.Journey.Legs.Count; }
+            rows.Add(new { window, retainedBytes = retained - empty, perPersonBytes = (retained - empty) / (state.Citizens.Count + state.Visitors.Count), journeys, legs });
+        }
+        GC.KeepAlive(simulator); GC.KeepAlive(grid);
+        return new { label, run, component = "CityState+CitySimulator retained (GC.GetTotalMemory(true))", residents = state.Citizens.Count,
+            visitors = state.Visitors.Count, places = state.Places.Count, stateBytes = built - empty, windows = rows };
+    }
+
+    [Fact]
     public void ASteadyStateAdvanceTickAtTheCapAllocatesNothing()
     {
         var state = RigCity();

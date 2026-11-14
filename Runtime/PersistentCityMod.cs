@@ -340,7 +340,9 @@ namespace PersistentCity.Runtime
                 RecordRoutingFrame(prepareElapsed, closureElapsed, true);
                 if (!NativeCityClock.CheckInputEpoch(target, simulation.State.Minute)) { StopAccounting(); return; }
                 var advanceHeap = GcAllocationBegin();
-                AdvancePopulation(HoldReplayLimit(Math.Max(AccountingClock.Target(target), simulation.State.Minute)));
+                AdvanceAllocation.Begin(gcSampler);
+                try { AdvancePopulation(HoldReplayLimit(Math.Max(AccountingClock.Target(target), simulation.State.Minute))); }
+                finally { AdvanceAllocation.End(); }
                 GcAllocationEnd(GcAllocationSegment.Advance, advanceHeap);
                 if (simulation.PurchaseFault is string purchaseFault)
                 {
@@ -436,6 +438,7 @@ namespace PersistentCity.Runtime
             string slowestKind = "";
             int collectionsBefore = GC.CollectionCount(0);
             stopEnvironment?.Maintain();
+            AdvanceAllocation.Detail(GcAllocationSegment.AdvanceStops);
             double stopsBefore = stopEnvironment?.SeamMilliseconds ?? 0;
             void Unit(string kind)
             {
@@ -457,6 +460,7 @@ namespace PersistentCity.Runtime
                         long sliceStarted = Stopwatch.GetTimestamp();
                         long queriesBefore = routes?.Metrics.NavMeshPathQueries ?? 0;
                         bool finished = active.ContinuePlanning(Math.Max(0, timeBudget - elapsed));
+                        AdvanceAllocation.Detail(GcAllocationSegment.AdvancePlanning);
                         double slice = (Stopwatch.GetTimestamp() - sliceStarted) * MillisecondsPerTimestamp;
                         planningSlices++; planningMilliseconds += slice;
                         if (slice > maxPlanningSliceMilliseconds)
@@ -473,6 +477,7 @@ namespace PersistentCity.Runtime
                         continue;
                     }
                     var result = active.AdvanceFrameSlice(target, 1);
+                    AdvanceAllocation.Detail(GcAllocationSegment.AdvanceEvents);
                     events += result.Events;
                     citizenEvents += result.CitizenEvents;
                     elapsed = (Stopwatch.GetTimestamp() - started) * MillisecondsPerTimestamp;

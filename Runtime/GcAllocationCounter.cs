@@ -96,4 +96,30 @@ namespace PersistentCity.Runtime
             current?.EndNested(GcAllocationSegment.Physical, GcAllocationSegment.PhysicalUnattributed, GcAllocationCounter.Read(), GcAllocationCounter.Collections);
         }
     }
+
+    internal static class AdvanceAllocation
+    {
+        private static GcPauseSampler? sampler;
+
+        public static void Begin(GcPauseSampler? running)
+        {
+            sampler = null;
+            if (running == null || !running.Running) return;
+            running.BeginNested(GcAllocationCounter.Read(), GcAllocationCounter.Collections);
+            if (running.Nested) sampler = running;
+        }
+
+        public static void Detail(GcAllocationSegment segment)
+        {
+            var current = sampler;
+            if (current != null) current.Detail(segment, GcAllocationCounter.Read(), GcAllocationCounter.Collections);
+        }
+
+        public static void End()
+        {
+            var current = sampler;
+            sampler = null;
+            current?.EndDetails(GcAllocationSegment.AdvanceOther, GcAllocationCounter.Read(), GcAllocationCounter.Collections);
+        }
+    }
 }

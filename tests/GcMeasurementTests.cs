@@ -119,7 +119,8 @@ public sealed class GcMeasurementTests
             "physical_bindings_alloc_bytes", "physical_bindings_alloc_samples", "physical_bindings_alloc_skipped" }
             .Concat(new[] { "physical_vendor_meals", "physical_fade", "physical_focus", "physical_observe", "physical_release", "physical_parked", "physical_index",
                 "physical_queues", "physical_roster", "physical_selection", "physical_spawn_pedestrian", "physical_spawn_appearance", "physical_spawn_check",
-                "physical_spawn_vehicle", "physical_unattributed", "physical_spawn_randomize", "physical_spawn_bake" }.SelectMany(n => new[] { n + "_alloc_bytes", n + "_alloc_samples", n + "_alloc_skipped" })).ToArray();
+                "physical_spawn_vehicle", "physical_unattributed", "physical_spawn_randomize", "physical_spawn_bake",
+                "advance_planning", "advance_events", "advance_stops", "advance_other" }.SelectMany(n => new[] { n + "_alloc_bytes", n + "_alloc_samples", n + "_alloc_skipped" })).ToArray();
         foreach (string json in new[] { empty, full })
         {
             Assert.DoesNotContain('\n', json);
@@ -137,6 +138,40 @@ public sealed class GcMeasurementTests
         Assert.Equal(16.25, root.GetProperty("frame_ms_plain").GetProperty("p50").GetDouble());
         Assert.Equal(JsonValueKind.Null, JsonDocument.Parse(empty).RootElement.GetProperty("person_target").ValueKind);
         Assert.Contains("diagnostic only", sampler.ReportHuman(Context()));
+    }
+
+    [Fact]
+    public void AdvanceDetailsSplitTheAdvanceWithoutChangingItsTotal()
+    {
+        var sampler = new GcPauseSampler(64);
+        sampler.Start(1000);
+        sampler.Allocated(GcAllocationSegment.Advance, 0, 700, false);
+        sampler.BeginNested(10_000, 0);
+        sampler.Detail(GcAllocationSegment.AdvanceStops, 10_100, 0);
+        sampler.Detail(GcAllocationSegment.AdvancePlanning, 10_400, 0);
+        sampler.Detail(GcAllocationSegment.AdvanceEvents, 10_450, 0);
+        sampler.Detail(GcAllocationSegment.AdvancePlanning, 10_650, 0);
+        sampler.EndDetails(GcAllocationSegment.AdvanceOther, 10_700, 0);
+        Assert.False(sampler.Nested);
+        Assert.Equal(100, sampler.SegmentBytes(GcAllocationSegment.AdvanceStops));
+        Assert.Equal(500, sampler.SegmentBytes(GcAllocationSegment.AdvancePlanning));
+        Assert.Equal(2, sampler.SegmentSamples(GcAllocationSegment.AdvancePlanning));
+        Assert.Equal(50, sampler.SegmentBytes(GcAllocationSegment.AdvanceEvents));
+        Assert.Equal(50, sampler.SegmentBytes(GcAllocationSegment.AdvanceOther));
+        Assert.Equal(700, sampler.SegmentBytes(GcAllocationSegment.Advance));
+        Assert.Equal(1, sampler.SegmentSamples(GcAllocationSegment.Advance));
+        Assert.Equal(0, sampler.SegmentBytes(GcAllocationSegment.Physical) + sampler.SegmentBytes(GcAllocationSegment.PhysicalUnattributed));
+        sampler.BeginNested(20_000, 0);
+        sampler.Detail(GcAllocationSegment.AdvanceEvents, 20_300, 1);
+        sampler.EndDetails(GcAllocationSegment.AdvanceOther, 20_400, 1);
+        Assert.Equal(50, sampler.SegmentBytes(GcAllocationSegment.AdvanceEvents));
+        Assert.Equal(1, sampler.SegmentSkipped(GcAllocationSegment.AdvanceEvents));
+        Assert.Equal(1, sampler.SegmentSkipped(GcAllocationSegment.AdvanceOther));
+        Assert.Equal(0, sampler.SegmentSkipped(GcAllocationSegment.Advance));
+        Assert.True(GcPauseSampler.IsDetail(GcAllocationSegment.AdvanceOther));
+        Assert.False(GcPauseSampler.IsDetail(GcAllocationSegment.Advance));
+        sampler.EndDetails(GcAllocationSegment.AdvanceOther, 30_000, 0);
+        Assert.Equal(50, sampler.SegmentBytes(GcAllocationSegment.AdvanceOther));
     }
 
     [Fact]
