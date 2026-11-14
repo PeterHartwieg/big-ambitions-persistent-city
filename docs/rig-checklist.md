@@ -8,6 +8,7 @@ Detailed specs: [F8 §7](https://github.com/PeterHartwieg/big-ambitions-persiste
 
 ## Latest evidence
 
+- **14 November f, PC, candidate `0795aa2c`:** 0 passed / 0 partial / 0 failed / 11 not run. Windows scoped receipt-safe staging missing; installed-player PowerShell probe succeeded; restored, lease free ([14f PC results](#rig-results--14-november-2026-f-pc-244-p-d-7--246-check-4-footprint--gr-5-60-fps-arms-at-0795aa2c)).
 - **14 November e, PC, build `2448bc40`:** 0 passed / 0 partial / 0 failed / 9 not run. Default start failed with SSH `homepc` resolution error; P-D 7 tooling gap; restored, lease free ([14e results](#rig-results--14-november-2026-e-pc-244-p-d-check-7-at-2448bc40)).
 - **14 November d, PC, build `913abd7d`:** 0 passed / 0 partial / 0 failed / 9 not run. Windows CLI refused `--rig-test`; neither 60 fps window started. Files/hash/lease restored ([14d results](#rig-results--14-november-2026-d-pc-gr-5-60-fps-arms-at-913abd7d)).
 - **14 November c, Mac, build `1d5d1b76`:** 1 passed / 1 partial / 1 failed / 6 NOT RUN groups. #255 runtime retime passed; rush-hour continuous visual proof partial; off/on paid receipts absent; restored ([14c results](#rig-results--14-november-2026-c-mac-255-retime-checks-1-3-at-1d5d1b76)).
@@ -2007,3 +2008,78 @@ The candidate folder was moved intact into this run's `retained-staged-Persisten
 Released with `python scripts/local_lock.py release`. Final local lease status: `held=false`, `owner=null`, `pending=0`. Direct read-only installed-launcher status: `installed=true`, `running=false`, `pid=null`, `health=null`. No other session's process was stopped. No normal game/profile or bridge ownership was used.
 
 Only this existing checklist is changed. Build passed; docs-links, markdown-ban and whitespace checks are recorded in the results PR. Report copy: `<stage>/../../Coding_Projects/.agent-logs/persistent-city-rig-2026-11-14e-pc.md`, a path relative to `<stage>`; the report stays in the agent-log folder outside the stage. Build worktree is removed after commit; evidence worktree after opening the unmerged docs-only results PR. No production change, issue, release, version/changelog change or merge.
+
+## Rig results — 14 November 2026 f, PC (#244 P-D 7 + #246 check 4 footprint + GR-5 60 fps arms at 0795aa2c)
+
+Role `rig_test`, where `pc`, isolated `agent1`. **Counts: 0 passed / 0 partial / 0 failed / 11 NOT RUN. RESULT: BLOCKED.** Four required arms are waiting on Rig run `20261114-154927-rig-windows-pc-cli-stage`; seven excluded arms are counted separately below. The single installed-player start/status probe succeeded and is outside the product-check counts. In-game proof gates no merge.
+
+### Build and rig
+
+| Item | Evidence |
+|---|---|
+| Candidate | `0795aa2c503869e5ab1feb91bc0738e2a163bfb9`, newer than required `b243c43b19f374b982c38d8e96633aa4f8f2ee90` by ancestry check. Initial and final fetch agree. This is the base tip, without the unmerged spawn_appearance fix. |
+| Worktrees | Results branch `codex/pc-rig-2026-11-14f` in `rig-2026-11-14f-pc-evidence`; detached build in `rig-2026-11-14f-pc`. Original checkout unchanged. |
+| Official agent-rig | `022630f7d6df8c533a230ac218413a68b181ed95`; clean, fetched, ff-only pull already current, clean after use. No edit, commit, push or overlay update. |
+| Live AgentRigOps SHA-256 | `9a8ad56e01df5d30920da35f5ba7f60e65009528b9c1abf3d5e8667bb1a2378b`; independently hashed before the run, health reports ready with that hash, unchanged at cleanup. |
+| Lease | Stable owner `pc-rig-2026-11-14f`; acquired while free at `2026-11-14T15:02:18.4755551Z`, no takeover. Released after stopped-player restoration. |
+| Build command | `python tools/build.py --game-managed "C:\Program Files (x86)\Steam\steamapps\common\Big Ambitions\Big Ambitions_Data\Managed"`, exit 0. PATH prefixed with `%LOCALAPPDATA%\Microsoft\dotnet`; required wait helper printed `dotnet lock removed 2026-11-10; continuing`. No offline test suite. |
+| Built/package PersistentCity DLL SHA-256 | `087fe9aa8c506c3d2fa43df62fec0f08450095ca415f7c3ffebf64bfd28bde29`; matching package retained outside Git. No RLO or game DLL packaged. |
+| Installed PersistentCity DLL SHA-256 | `6e0e5b58776a5a4430b4b585e03f7233d1dc5dedfd94200cb7f603a44ea55de1`, mtime 11 November 2026 16:53:38 local. Matches its existing receipt entry; too old for all four required arms. |
+| Installed receipt SHA-256 | `agent-install.json`: `7f4f73e05d6ee2eb70c31987f6a3f6c70ece33f4119f5fe61ad0e57aebad1761`, matching launch input and post-cleanup backup. |
+| Staged DLL / staging command | **None / skipped.** One search after official fetch/pull found scoped stage/refresh only in Mac `install-mac.py`, documented in `docs/MAC.md`. Windows has no documented scoped receipt-safe helper. The whole-modset transaction is not a PersistentCity-only receipt refresh. No manual copy fallback, receipt hand-edit or unmerged tooling branch was used. Waiting on `20261114-154927-rig-windows-pc-cli-stage`. |
+| Stage / backup | `<stage>` = `C:\Users\Peter\HART-Builds\persistent-city-rig-2026-11-14f-pc`; package in `<stage>\package\PersistentCity`, this run's exact-byte backup in `<stage>\pre-stage-backup`, independent manifest `<stage>\manifest.json`. |
+| RLO probe log | `[Mod:RealLifeOverhaul] Real Life Overhaul 0.45.0 initialised.` This is the installed probe's observed version. RLO was not changed. |
+| PC probe log identity | No Persistent City build/activation line emitted during the menu-only probe. Health includes the loaded `PersistentCity` assembly; the installed DLL hash and launch receipt establish binary identity. No candidate or city activation is claimed. |
+| Food Trucks | Health `mod_version=0.10.2`, bridge version 1. No update. |
+| Autosave | Numeric native interval/count not obtained in the menu-only probe; no matching autosave-named registry value found. Complete isolated registry/preferences backed up. Probe health `rig_test.enabled=true`, `autosave_disabled=true`, `save_specific=false`; process-only suppression ended at stop. No city or measured window, no persistent autosave setting changed. |
+| Frame-cap file | Original absence backed up and preserved; no request staged under the version gate. |
+| Machine load | Setup only at `2026-11-14T15:03:43.8482826Z`: CPU 69%; RAM 66,938,060 KiB total / 26,991,224 KiB free (63.84 / 25.74 GiB). Notable working sets: unrelated game 6.74 GiB, WSL 6.26 GiB, memory compression 5.27 GiB, browser and other agent sessions. No measurement-start sample exists. Future timing on this host needs **provisional (PC shared)**. |
+
+Read PR #244 and #246 through REST, prior 14a/14b/14d/14e checklist sections, and the official Windows/ops/throwaway/frame-cap documentation. No Mac contact, lifecycle CLI through `scripts/agent`, real mouse/keyboard action, Windows setting change, normal profile access or other session intervention occurred.
+
+### Required checks
+
+| Arm | Outcome | Missing evidence |
+|---|---|---|
+| #244 P-D 7, ordinary saves refused | **NOT RUN / version gate** | No `new_game`, `pc gc population` or `pc gc population 3000` call. Exact console refusal and matching log lines unavailable; persons before/immediately after/after one game hour all unavailable. |
+| #246 check 4, unrentable home footprint | **NOT RUN / version gate** | No `op building {"action":"list"}` or building reads attempted. No current-run op error, three targets, rotated/yard/plain comparison, Home area, height or storey evidence. Prior fixed building-tool claims are not reused as this run's proof. |
+| GR-5 street, cap 60, 600 s | **NOT RUN / version gate** | Measured fps, whole-frame p95/p99, gen0, pause p95, heap, UpdateCity/street mod-work p95 and every >=30 ms spike unavailable. No measurement window. |
+| GR-5 busy shop, cap 60, 600 s | **NOT RUN / version gate** | Same unavailable metrics; no city or busy-shop setup. No measurement window. |
+
+All four wait on Rig run `20261114-154927-rig-windows-pc-cli-stage`. No old-build measurement is substituted for the required pre-fix baseline.
+
+### PowerShell route probe and exact tooling observations
+
+With the lease held and `BA_LOCK_TOKEN` set privately from this owner's verified credential, one foreground start ran:
+
+```powershell
+powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "C:\BigAmbitions-AgentTests\Agent-Windows.ps1" -Action start -Mode windowed -RigTest
+```
+
+Exit 0; launched only isolated PID **25848**. Status through the same PowerShell launcher returned running=true, scene=menu, session `7705384b`, Ops ready. No city was created or loaded. The startup log identifies isolated agent1, windowed, runtime 7, audio muted, Steam disconnected. Raw evidence: `<stage>\start.log`, `probe-status.json`, `probe-Player-agent.log`.
+
+Probe cap health, not a 60 fps arm: `requested=null`, `applied=false`, `vsync_count=0`, `target_frame_rate=90`, `measured_fps=66.36`, `window_s=2.0`, `error=null`. No 60 fps compliance or product performance pass is claimed from menu cadence.
+
+Graceful `-Action stop` exited 0: `Quit requested for the verified agent process`. Immediate status still showed quit pending; the first lease release returned exactly **`Commands or lifecycle work are still pending; wait for completion before releasing the lock`**. It was not forced or broken. After process exit, launcher status confirmed running=false/pid=null/health=null, restoration was verified again, and release succeeded with pending=0. No force-stop or second launch.
+
+Recovered local inspection errors: `rg` was unavailable, so searches used PowerShell; registry `Get-ItemProperty` returned `Specified cast is not valid.`, so complete `reg export` and native registry enumeration were used; an initial read targeted the `tools/docs-links` directory and returned access denied, corrected to `tools/docs-links/check.py`. These were local read errors, not product/op failures.
+
+### NOT RUN grouped
+
+1. **Required version-gated group, four arms:** P-D 7, footprint check 4, street 60 fps and busy-shop 60 fps. Receipt-safe Windows stage missing; waiting on `20261114-154927-rig-windows-pc-cli-stage`.
+2. **Appearance, one arm:** #254 check 4; no stable resident identity through release/reacquire, identity op still queued.
+3. **Save latency, one arm:** GR-5 check 2; owner save-route decision pending. No save profiling.
+4. **Retime, three arms:** #255 checks 1–3 / #239-3 already covered by rig 14c / PR #258; zero-receipt finding has a fix run.
+5. **30 fps, two arms:** street and busy shop already attempted by rig 14b; this is the Windows 60 fps run.
+
+### Fixtures, restoration and validation
+
+Fixtures created/loaded/saved: **none**. Planned names `RIGTMP-PD7-14f` and `RIGTMP-GR5-14f` were not created. No save/load, fixture removal, existing save overwrite or native sales occurred.
+
+Before startup, this run backed up the entire isolated PersistentCity file set, isolated root settings/configuration, persistent-city.json bytes/absence, frame-cap absence, install receipts/run receipt and complete isolated registry export. No candidate was staged. Post-exit restoration used only this run's backups; file bytes/absences and registry preferences match. **120 verification checks, zero mismatches**, including full PersistentCity file set, read-only RLO/Food Trucks hashes and the Ops DLL. Registry export SHA-256 `d44a9390f89ea5d15b98020c6901b32e226fcd0bca76be6009f4fabcfb93440a`. The generated probe log is retained as evidence, not rolled back. No RLO, Food Trucks or overlay file was written.
+
+Final launcher status: **installed=true, running=false, pid=null, health=null**. PID 25848 no longer exists. Final agent1 lease **held=false, owner=null, pending=0**; no process started by this run remains. Release followed post-exit re-verification. Build worktree removed after the evidence commit; evidence worktree removed after PR creation.
+
+Validation: build passed; docs-links, markdown-ban and `git diff --check` run for this existing-file-only docs change. No offline dotnet tests or regression suites. Report copy: `C:\Users\Peter\Coding_Projects\.agent-logs\persistent-city-rig-2026-11-14f-pc.md`. Raw evidence/backups stay outside Git. No issue, merge, release, Workshop upload, version/changelog or production code change. Schema 1 and both food-choice weights unchanged.
+
+**RESULT: BLOCKED.**
