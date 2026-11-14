@@ -2485,7 +2485,7 @@ Refs #262
 
 Role `rig_test`, where `pc`, owner `pc-rig-2026-11-14h`, isolated `agent1`. All observed cadence values below are **PC 60 fps windowed, provisional (PC shared)**. A configured cap is verified; sustained 60 fps is not. The Mac was not contacted, started or used. The seventh-fix branch and other sessions were untouched.
 
-[Compact evidence](perf/gr5-2026-11-14h-pc.json) contains explicit null measurement fields, cap/guard readbacks, machine-load snapshot, Mac reference values and restoration results. Raw evidence and this run's backups: `C:\Users\Peter\HART-Builds\persistent-city-rig-2026-11-14h-pc`. The raw manifest records file sizes and SHA-256 values; no logs, binaries, credentials or saves are committed. Report copy: `C:\Users\Peter\Coding_Projects\.agent-logs\persistent-city-rig-2026-11-14h-pc.md`.
+[Compact evidence](perf/gr5-2026-11-14h-pc.json) contains explicit null measurement fields, cap/guard readbacks, machine-load snapshot, Mac reference values and restoration results. `<stage>` is this run's local staging folder and `<home>` the rig user's home folder. Raw evidence and this run's backups: `<stage>`. The raw manifest records file sizes and SHA-256 values; no logs, binaries, credentials or saves are committed. Report copy: `<home>\Coding_Projects\.agent-logs\persistent-city-rig-2026-11-14h-pc.md`.
 
 ### Build and rig
 
@@ -2509,7 +2509,7 @@ Role `rig_test`, where `pc`, owner `pc-rig-2026-11-14h`, isolated `agent1`. All 
 Exact stage command, stopped and leased, preceded by the same command with `--what-if`:
 
 ```text
-python scripts\stage_mod_windows.py --stage-mod PersistentCity C:\Users\Peter\HART-Builds\persistent-city-rig-2026-11-14h-pc\package
+python scripts\stage_mod_windows.py --stage-mod PersistentCity <stage>\package
 ```
 
 Printed rollback, executed stopped and leased:
