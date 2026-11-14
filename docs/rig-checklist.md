@@ -8,6 +8,7 @@ Detailed specs: [F8 §7](https://github.com/PeterHartwieg/big-ambitions-persiste
 
 ## Latest evidence
 
+- **14 November b, Mac, build `eb38a061`:** 0 passed / 0 partial / 3 failed / 7 not run. Day/night GC 11/8 gen0, pause p95 28.191/61.316 ms; physical+advance 1,021.6/433.6 MB; street UpdateCity p95 5.5170 ms; appearance/footprint/actual 60 fps proof blocked; restored ([14b results](#rig-results--14-november-2026-b-mac-gr-5-gc-254-footprint-60-fps-at-eb38a061)).
 - **14 November a, Mac, build `b3d58a6a`:** 1 passed / 0 partial / 4 failed / 1 not run. Day/night GC 11/9 gen0, pause p95 103.863/70.122 ms; street UpdateCity p95 5.2683 ms; Living-off passed, toggle repeat stopped, P-D console blocked; restored ([14a results](#rig-results--14-november-2026-a-mac-gr-5-gc-rlo-p-d-7-at-b3d58a6a)).
 - **14 November g, Mac, build `37a150d3`:** 0 passed / 0 partial / 3 failed / 6 not run. Day/night GC 11/8 gen0, pause p95 56.671/104.551 ms; street UpdateCity p95 5.1413 ms, two spikes; restored, run complete ([14g results](#rig-results--14-november-2026-g-mac-gr-5-gc-at-37a150d3)).
 - **14 November f, Mac, build `d237f443`:** 1 passed / 2 partial / 2 failed / 1 not run. PC callback save p95 742.826 ms (recorded phases 301.027 ms); day/night GC 12/6 gen0, pause p95 65.028/31.977 ms; street mod-work p95 4.2557 ms; old-format reload passed ([14f results](#rig-results--14-november-2026-f-mac-gr-5-at-d237f443)).
@@ -1019,3 +1020,252 @@ The execution layer rejected it before execution: `rm -f style commands are not 
 Verification: **35 original file hashes and 4 absent paths matched; full PersistentCity file set matched; all 53 RLO hashes matched; zero mismatches**. Preferences, persistent-city.json and original autosave bytes match. install.json SHA-256 **`94b9b916dd66398dd1728ef3976256d1897751f0dffb0e9af6d4fe2a7bb1bb0d`** matches independent and helper backups; AgentRigOps hash is unchanged. Final status running=false, process=null, lease held=false, pending=0. All six owned game PIDs (91977, 97422, 98252, 98597, 99212, 99546) and their caffeinate assertions are gone.
 
 Validation: candidate build passed; compact JSON parses and is under 20 KB; docs links, markdown ban and diff whitespace checks run for this docs-only result. No full unit or regression suite. Only the existing checklist and compact JSON are changed. The isolated build/evidence worktree is removed after commit, push and opening the one unmerged docs-only PR. No issue, release, Workshop upload, version/changelog change or merge.
+
+## Rig results — 14 November 2026 b, Mac (GR-5 GC #254, footprint, 60 fps at eb38a061)
+
+Role `rig_test`, where `mac`, isolated `agentmac`. **Counts: 0 passed / 0 partial / 3 failed / 7 NOT RUN. RESULT: BLOCKED.** Counts cover #254 checks 1–4, #246 footprint and the two requested 60 fps arms, plus the three owner-excluded checks. The two 600-second windowed diagnostics are recorded below; neither establishes the requested 60 fps arm. In-game proof gates no merge.
+
+All performance numbers are **provisional on the shared Mac**. Every command and all five 600-second windows ran in the foreground. Other sessions were left alone. No Windows PC, Steam app, ordinary profile, normal bridge instance or ordinary save was used. No production code, schema, food weights, release, version/changelog or Workshop change was made.
+
+Raw evidence: `/Users/peterhartwieg/HART-Builds/persistent-city-rig-2026-11-14b-mac`. [Complete GC reports and compact frame evidence](perf/gr5-2026-11-14b-mac.json): **16,790 bytes**, SHA-256 `c205b1ff6d070a0d03e6095641f0e0a0edc61143d204ee1ccdb290a718dbed80`. Both full GC JSON objects retain every allocation key and sample/skipped count. The raw filename/hash manifest is `raw-evidence-manifest.json` there (SHA-256 `44cddecdb4b5b4d8dc587d03e7a1388b36ee53214539620cd8096f0a1c21d60d`). Logs, requests, two body screenshots, obstructed captures, backups and scripts remain outside Git. Report copy: `/Users/peterhartwieg/Coding_Projects/.agent-logs/persistent-city-rig-2026-11-14b-mac.md`.
+
+### Build and rig
+
+| Item | Observation |
+|---|---|
+| Tested candidate | `eb38a061200ff2469d4bc5a568c0046144494686` (#254), exactly the remote tip at initial fetch. Final fetch moved to `1d5d1b765218974d41e848926f17137609bf4a58` (#255); that later code was not built or tested here. |
+| Branch/worktree | New `codex/mac-rig-2026-11-14b`, based on the tested tip, in `rig-2026-11-14b-mac-evidence`. One isolated worktree served build and evidence; original checkout stayed clean. |
+| Build | `python3 tools/build.py --game-managed "/Users/peterhartwieg/Library/Application Support/BigAmbitionsMCP/dll-import-shim/Big Ambitions_Data/Managed"`, passed; Homebrew PATH and DOTNET_ROOT used. |
+| PersistentCity DLL SHA-256 | `296f4d44ed7f0ac61e79bd99e883b66485ffb011f1b61e65f3fc736640f83f6c`; built/package/staged hashes match, and each start validated the receipt. |
+| Agent-rig HEAD | `2b8553606426f3e3e94f8a876dd58d935768732d`, clean before and after; fetch and ff-only pull were already current. No edits, commits or pushes to that checkout. |
+| AgentRigOps SHA-256 | `dd11e3fdea78c1c0a25ce33e0168ffbce6e785950d9e10caed55015254d748f8`, unchanged at cleanup; ops ready in the loaded city. |
+| RLO Player.log | `[Mod:RealLifeOverhaul] Real Life Overhaul 1.0.6 initialised.` No RLO files were staged or written. |
+| PC Player.log | `[Mod:PersistentCity] Persistent population active: 1000 residents, 2000 visitors, 1683 places.` No commit-stamped build line is emitted; binary identity is established by the matching DLL hashes and validated receipt. Shop fixture has 1,690 runtime places. |
+| Lease/resources | Initially stopped/free; acquired `2026-11-14T11:56:58.6792540Z`. Initial resources: 51.5 GiB disk / 79% memory free by `mac-agent resources`; no resource override or refusal. |
+| Starts/stops | Six starts, each successful on its first attempt: three headless, three windowed. All stops graceful; no force. Wrong-population and wrong-shop fixture setups were stopped before sampling. |
+| Autosave original | 5 minutes / 3 saves, prevent_autosave=false. #70 suppression checked after every load and before/after every measured window. All five guards report clean=true, zero allowed saves and zero native-saving frames. |
+| Config/options | SaveCostDiagnostics=false; native save profiler not installed. Schema 1, FoodChoicePriceWeight 1.2 and FoodChoiceHouseholdWeight 1.0. `living_population` unchanged: stored=null, live=true, original_saved=false before/after. |
+
+Staged once, stopped and leased, from the official agent-rig checkout. Package contains no RLO files.
+
+| Exact staging command | Receipt backup |
+|---|---|
+| `python3 scripts/install-mac.py --stage-mod PersistentCity /Users/peterhartwieg/HART-Builds/persistent-city-rig-2026-11-14b-mac/package` | `/Users/peterhartwieg/Library/Application Support/BigAmbitionsAgentTestsMac/receipt-backups/20261114T115729Z` |
+
+### Per-check outcomes
+
+| Check | Result | Observed against expected |
+|---|---|---|
+| #254 1, day GC | **FAIL** | boehm_total accepted; physical+advance **1,021.6 MB** fails well-under-about-100-MB target. 11 gen0 versus 14a 11; pause p95 **28.191 ms** versus 103.863 ms. Physical is largest; appearance is its largest child (745.4 MB). |
+| #254 2, night GC | **FAIL** | boehm_total accepted; physical+advance **433.6 MB** fails the same target. 8 gen0 versus 14a 9; pause p95 **61.316 ms** versus 70.122 ms. Physical is largest; appearance is its largest child (327.8 MB). |
+| #254 3, street | **FAIL** | UpdateCity p95 **5.5170 ms**, broader mod-work **5.5824 ms**, both above <5 ms. Four spikes >=30 ms, all listed below. |
+| #254 4, appearance release/reacquire | **NOT RUN to required proof / tooling gap** | Windowed start and two independent body images captured. Original walker handle disappears; return walk ends short; no stable PC resident identity or successful reacquisition established. No matching appearance comparison or reuse-count rise is claimed. |
+| #246 4, footprint | **NOT RUN / tooling gap** | `op building {"action":"list"}` returns `ops_game_api_unavailable`. No three targets, Home-area comparisons, rotated/yard coverage or visible storey comparison obtained. |
+| #246 1, street 60 fps arm | **NOT RUN at required cadence** | Cap 60 applied, vSync=0; seven pre-window readings 4.96–5.71 fps fail 51–66. A separate full 600-second diagnostic ran at 4.74 fps. |
+| #246 1, busy-shop 60 fps arm | **NOT RUN at required cadence/setup** | Cap 60 applied; readings 5.00–44.15 fps fail 51–66. Separate 600-second diagnostic at 4.98 fps used the known 13e food fixture; ready=true but no observed sales. It is not the same saved city as the street arm. |
+| #239 3, toggle recheck | **NOT RUN / owner-excluded** | #255 was unmerged when this run was launched and is absent from the tested DLL. It merged during the run; a later run covers it. |
+| #244 P-D 7 | **NOT RUN / owner-excluded** | Run request defers this until agent-rig #85 console-guard review is complete. No throwaway city or console refusal test attempted here. |
+| GR-5 save latency | **NOT RUN / owner-excluded** | Owner decision pending. No latency sample, save profiler or manual save was run. |
+
+### GC against 14a
+
+Day: Tuesday 15:30; night: Wednesday 01:00. Both use `FT GR5 13f Timing v1`, 1,000 residents / 2,000 visitors, target off, street x=215,z=0, speed 1, mod-work sampler unarmed. Untimed speed-20 positioning was limited to required clock setup. No TravelTiming.Apply stop occurred. 14a measured a different allocation counter; raw byte totals below are context, not a like-for-like improvement claim. `boehm_total` is cumulative/process-wide; 14a `heap_used` measures used heap. Legacy frame allocation remains separately labelled heap_used.
+
+| Window | Stored / dropped | gen0/1/2 | Pause p50 / p95 / max ms | Mono heap bytes | Sampled managed heap peak bytes | Native whole-frame p95 / max ms |
+|---|---|---|---|---|---|---|
+| 14b day | 16781 / 0 | 11/0/0 | 26.459/28.191/28.191 | 1535655936 | 1535467520 | 43.9235/494.3215 |
+| 14b night | 16965 / 0 | 8/0/0 | 30.116/61.316/61.316 | 1578450944 | 1510080512 | 38.0592/897.9312 |
+| 14a day | 16834 / 0 | 11/0/0 | 28.007/103.863/103.863 | 1416757248 | 1416048640 | 38.5703/235.8520 |
+| 14a night | 17077 / 0 | 9/0/0 | 30.104/70.122/70.122 | 1536327680 | 1466814464 | 37.6928/194.3882 |
+
+The original #246/13d reference is 5 gen0, pause p95 35.9 ms and about 1.47 GB Mono heap. Both current collection counts remain above that reference; both Mono heap readings exceed 1.47 GB. GC is incremental, max_generation=0; pause is cycle-ending frame excess, not all incremental collector work. MB/GB here are decimal bytes.
+
+| Allocation bytes | 14b day | 14b night | 14a day / night (heap_used) |
+|---|---|---|---|
+| Probed whole-frame counter | 2462840480 | 1909833056 | unavailable |
+| Legacy frame heap-used counter | 1830817792 | 1328979968 | 1789841408 / 1309499392 |
+| Mod intervals | 1142457656 | 557799024 | 978952192 / 424472576 |
+| Advance | 236447944 | 72745504 | 106491904 / 20717568 |
+| Physical | 785139168 | 360896416 | 809504768 / 360747008 |
+
+Every physical child below includes bytes / samples / skipped. Samples count charged spans, not frames. All 18 child rows sum exactly to physical in both windows; unattributed is zero.
+
+| Physical child | Day bytes / samples / skipped | Night bytes / samples / skipped |
+|---|---|---|
+| ambient | 3207280 / 16689 / 0 | 3242800 / 16874 / 0 |
+| vehicles | 1137328 / 16689 / 0 | 399552 / 16874 / 0 |
+| bindings | 23808 / 605584 / 0 | 19376 / 255918 / 0 |
+| vendor_meals | 0 / 16689 / 0 | 0 / 16874 / 0 |
+| fade | 0 / 16689 / 0 | 0 / 16874 / 0 |
+| focus | 0 / 16689 / 0 | 0 / 16874 / 0 |
+| observe | 286560 / 588494 / 0 | 103968 / 238834 / 0 |
+| release | 6720 / 401 / 0 | 14000 / 210 / 0 |
+| parked | 1961776 / 583 / 0 | 1710688 / 586 / 0 |
+| index | 80 / 2199 / 0 | 80 / 2191 / 0 |
+| queues | 8960 / 2199 / 0 | 17200 / 2191 / 0 |
+| roster | 292768 / 2199 / 0 | 194848 / 2191 / 0 |
+| selection | 1261480 / 2702 / 0 | 977352 / 2428 / 0 |
+| spawn_pedestrian | 29832816 / 858 / 0 | 25655416 / 377 / 0 |
+| spawn_appearance | 745426168 / 1281 / 0 | 327776384 / 561 / 0 |
+| spawn_check | 1518400 / 854 / 0 | 665088 / 374 / 0 |
+| spawn_vehicle | 175024 / 72 / 0 | 119664 / 47 / 0 |
+| unattributed | 0 / 33378 / 0 | 0 / 33748 / 0 |
+
+Appearance contributes 94.94% day / 90.82% night of physical allocation. The appearance-check children are 1,518,400 / 665,088 bytes. counter_frames=16,781 / 16,965. Largest measured parent: physical; largest child: spawn_appearance. No code cause or lower-cap recommendation is inferred.
+
+| Window | Last logged pedestrianLooks |
+|---|---|
+| gc-day | `pedestrianLooks=398 built/4 reused` |
+| gc-night | `pedestrianLooks=188 built/1 reused` |
+| street | `pedestrianLooks=155 built/2 reused` |
+| street60 | `pedestrianLooks=142 built/2 reused` |
+| shop60 | `pedestrianLooks=146 built/4 reused` |
+
+### Frame windows and every mod-work spike >=30 ms
+
+Main street: cold load of the GC fixture, Tuesday 15:30, speed 1, nine successful pans. Windowed street diagnostic began 15:33 after the appearance attempt, same fixture. Shop diagnostic cold-loaded `FT GR5 13e Timing v1`, 1,000 residents / 2,000 visitors, Tuesday 15:30, outside the shop entrance x=176.142853,z=-36.35211. All GC samplers were off for these windows.
+
+| Window | Native seconds / frames / achieved fps | UpdateCity p95 / max ms | Broader mod-work p95 / max ms / spikes >=30 | Whole-frame p95 / max ms / spikes >=30 |
+|---|---|---|---|---|
+| street | 600.284 / 3370 / 5.61 | 5.517/78.1533 | 5.5824/78.2031/4 | 238.9091/1002.2687/3370 |
+| street60 | 600.54 / 2848 / 4.74 | 11.3598/154.6731 | 11.6335/183.0037/52 | 312.994/1737.3838/2848 |
+| shop60 | 600.365 / 2988 / 4.98 | 11.1759/191.5129 | 11.4017/191.6901/21 | 304.8277/850.0762/2988 |
+| 14a street | 600.246 / 3493 / 5.82 | 5.2683/221.5981 | 5.3216/221.6495/3 | 196.3584/506.9880/3493 |
+
+All three mod-work records have complete coverage, valid=true and zero dropped/off-main-thread/cross-frame/unbalanced/depth-overflow faults. Every exported spike is listed: 4 main street, 52 windowed street diagnostic, 21 shop diagnostic (77 total). None was chased. Native whole-frame timings stay separate from the mod-work union.
+
+| Window / Unity frame | Mod-work ms | Dominant component/group | UpdateCity ms | Whole-frame ms in row | Condition |
+|---|---|---|---|---|---|
+| street / 3961 | 78.2031 | updatecity/updatecity | 78.1533 | 325.0361 | hour=15 |
+| street / 4686 | 38.7129 | updatecity/updatecity | 38.667 | 191.5107 | hour=16 |
+| street / 6278 | 40.6406 | updatecity/updatecity | 40.4722 | 316.4531 | hour=17 |
+| street / 6730 | 38.2282 | updatecity/updatecity | 38.1749 | 189.0002 | hour=17 |
+| street60 / 5274 | 36.9974 | updatecity/updatecity | 36.9423 | 192.1885 | hour=16 |
+| street60 / 5521 | 39.3364 | updatecity/updatecity | 39.2721 | 205.0291 | hour=16 |
+| street60 / 5541 | 60.0369 | updatecity/updatecity | 59.829 | 574.4246 | hour=16 |
+| street60 / 5542 | 34.3638 | updatecity/updatecity | 33.6831 | 434.9791 | hour=16 |
+| street60 / 5563 | 65.3679 | updatecity/updatecity | 64.5883 | 851.0843 | hour=16 |
+| street60 / 5565 | 33.9637 | updatecity/updatecity | 33.8666 | 752.1063 | hour=16 |
+| street60 / 5569 | 43.1151 | updatecity/updatecity | 42.6499 | 822.3757 | hour=16 |
+| street60 / 5601 | 64.8532 | updatecity/updatecity | 63.3008 | 815.4749 | hour=16 |
+| street60 / 5603 | 30.3043 | updatecity/updatecity | 29.077 | 1725.5583 | hour=16 |
+| street60 / 5604 | 65.2218 | updatecity/updatecity | 63.9547 | 1385.5413 | hour=16 |
+| street60 / 5605 | 100.7534 | updatecity/updatecity | 99.795 | 1539.5576 | hour=16 |
+| street60 / 5606 | 100.0533 | updatecity/updatecity | 89.7965 | 1613.6252 | hour=16 |
+| street60 / 5607 | 92.9644 | updatecity/updatecity | 89.068 | 1123.5389 | hour=16 |
+| street60 / 5609 | 64.0901 | updatecity/updatecity | 63.2534 | 1683.8818 | hour=16 |
+| street60 / 5610 | 116.6991 | updatecity/updatecity | 114.6702 | 1184.2536 | hour=16 |
+| street60 / 5611 | 32.582 | updatecity/updatecity | 32.1146 | 375.535 | hour=16 |
+| street60 / 5617 | 33.7542 | updatecity/updatecity | 32.2659 | 873.402 | hour=16 |
+| street60 / 5618 | 50.568 | updatecity/updatecity | 49.3611 | 1384.8985 | hour=16 |
+| street60 / 5619 | 40.2232 | updatecity/updatecity | 37.5156 | 1323.0545 | hour=16 |
+| street60 / 5620 | 183.0037 | updatecity/updatecity | 154.6731 | 1364.8021 | hour=16 |
+| street60 / 5625 | 63.7154 | updatecity/updatecity | 61.8779 | 1078.0434 | hour=16 |
+| street60 / 5626 | 39.746 | updatecity/updatecity | 38.6603 | 1119.0615 | hour=16 |
+| street60 / 5643 | 40.3283 | updatecity/updatecity | 39.6341 | 821.0729 | hour=16 |
+| street60 / 5648 | 97.6177 | updatecity/updatecity | 97.513 | 316.1594 | hour=16 |
+| street60 / 5701 | 56.3378 | updatecity/updatecity | 56.2591 | 255.4415 | hour=16 |
+| street60 / 5705 | 48.8614 | updatecity/updatecity | 48.7502 | 265.6071 | hour=16 |
+| street60 / 5717 | 62.8242 | updatecity/updatecity | 61.466 | 953.6815 | hour=16 |
+| street60 / 5720 | 37.7738 | updatecity/updatecity | 36.4564 | 692.257 | hour=16 |
+| street60 / 5725 | 42.9559 | updatecity/updatecity | 42.8722 | 370.1785 | hour=16 |
+| street60 / 5753 | 37.0138 | updatecity/updatecity | 36.4056 | 949.689 | hour=16 |
+| street60 / 5756 | 35.3189 | updatecity/updatecity | 34.2657 | 756.6054 | hour=16 |
+| street60 / 5774 | 35.142 | updatecity/updatecity | 34.9927 | 295.7526 | hour=16 |
+| street60 / 5780 | 31.0095 | updatecity/updatecity | 30.8932 | 208.3352 | hour=16 |
+| street60 / 5782 | 111.1083 | updatecity/updatecity | 110.9008 | 348.6953 | hour=16 |
+| street60 / 5783 | 99.7644 | updatecity/updatecity | 99.1704 | 890.4571 | hour=16 |
+| street60 / 5787 | 69.0672 | updatecity/updatecity | 68.9753 | 239.5268 | hour=16 |
+| street60 / 5790 | 61.4323 | updatecity/updatecity | 61.2462 | 237.5178 | hour=16 |
+| street60 / 5793 | 82.4707 | updatecity/updatecity | 82.4019 | 264.0663 | hour=16 |
+| street60 / 5801 | 89.9307 | updatecity/updatecity | 89.5512 | 378.6045 | hour=16 |
+| street60 / 5807 | 31.9207 | updatecity/updatecity | 31.7754 | 346.0769 | hour=16 |
+| street60 / 5817 | 45.0353 | updatecity/updatecity | 44.9328 | 235.4635 | hour=16 |
+| street60 / 5820 | 36.4515 | updatecity/updatecity | 36.3678 | 231.797 | hour=16 |
+| street60 / 6197 | 35.9882 | updatecity/updatecity | 35.9403 | 200.8827 | hour=16 |
+| street60 / 6655 | 49.3145 | updatecity/updatecity | 49.2487 | 280.1985 | hour=16 |
+| street60 / 6857 | 56.55 | updatecity/updatecity | 56.4291 | 385.8042 | hour=17 |
+| street60 / 6988 | 50.7617 | updatecity/updatecity | 50.537 | 482.1713 | hour=17 |
+| street60 / 7034 | 33.1742 | updatecity/updatecity | 33.0605 | 220.7119 | hour=17 |
+| street60 / 7039 | 34.038 | updatecity/updatecity | 33.9771 | 232.95 | hour=17 |
+| street60 / 7165 | 38.9581 | updatecity/updatecity | 38.7875 | 351.0833 | hour=17 |
+| street60 / 7196 | 40.1609 | updatecity/updatecity | 40.1122 | 234.5326 | hour=17 |
+| street60 / 7201 | 53.9309 | updatecity/updatecity | 53.8344 | 272.0931 | hour=17 |
+| street60 / 7237 | 36.3964 | updatecity/updatecity | 36.2329 | 850.1287 | hour=17 |
+| shop60 / 2665 | 191.6901 | updatecity/updatecity | 191.5129 | 562.5442 | hour=15 |
+| shop60 / 2666 | 50.3743 | updatecity/updatecity | 50.2249 | 245.71 | hour=15 |
+| shop60 / 2694 | 42.1562 | updatecity/updatecity | 42.0404 | 316.4843 | hour=15 |
+| shop60 / 2699 | 48.7071 | updatecity/updatecity | 48.6165 | 207.8582 | hour=15 |
+| shop60 / 3518 | 72.7335 | updatecity/updatecity | 72.6502 | 239.0418 | hour=16 |
+| shop60 / 3642 | 32.2273 | updatecity/updatecity | 31.6131 | 840.353 | hour=16 |
+| shop60 / 3646 | 33.5739 | updatecity/updatecity | 32.9509 | 664.2844 | hour=16 |
+| shop60 / 3649 | 34.426 | updatecity/updatecity | 33.9819 | 400.6688 | hour=16 |
+| shop60 / 3669 | 31.2136 | updatecity/updatecity | 23.8037 | 376.2538 | hour=16 |
+| shop60 / 3854 | 36.3836 | updatecity/updatecity | 36.1673 | 224.0276 | hour=16 |
+| shop60 / 3869 | 54.7504 | updatecity/updatecity | 54.6565 | 232.5811 | hour=16 |
+| shop60 / 3897 | 31.2478 | updatecity/updatecity | 31.1166 | 219.9265 | hour=16 |
+| shop60 / 4126 | 42.6629 | updatecity/updatecity | 42.5006 | 249.0814 | hour=16 |
+| shop60 / 4143 | 63.7596 | updatecity/updatecity | 63.6726 | 252.4926 | hour=16 |
+| shop60 / 4147 | 44.0425 | updatecity/updatecity | 43.9212 | 263.8383 | hour=16 |
+| shop60 / 4178 | 31.8277 | updatecity/updatecity | 31.4836 | 551.9618 | hour=16 |
+| shop60 / 4345 | 34.1677 | updatecity/updatecity | 33.8036 | 303.2314 | hour=16 |
+| shop60 / 4377 | 44.6788 | updatecity/updatecity | 44.5777 | 275.8483 | hour=16 |
+| shop60 / 4481 | 51.5786 | updatecity/updatecity | 51.4705 | 254.3372 | hour=16 |
+| shop60 / 4531 | 30.4385 | updatecity/updatecity | 30.2818 | 352.38 | hour=16 |
+| shop60 / 4734 | 46.5659 | updatecity/updatecity | 46.5059 | 209.6307 | hour=16 |
+
+GC-only UpdateCity maxima (not individual spike exports): gc-day plain 72.146 ms / GC 33.253 ms; gc-night plain 81.497 ms / GC 59.904 ms; individual frame/count rows are not available from that sampler.
+
+All five native windows are clean: no allowed saves and no native-saving frames. Autosave was checked before and after each. No save latency was measured.
+
+### Appearance and exact tooling gaps
+
+The windowed client started with `agent-frame-cap.json` containing `{"fps":60,"vsync":0}`. The first combined captures show a Camera Tools update overlay and native panels. Native panels were closed through supported UI button ops. Virtual input did not dismiss the update overlay. Desktop selection of the private app failed; no other app or desktop setting was changed.
+
+| Operation | Exact result / consequence |
+|---|---|
+| `op building {"action":"list"}` | `ops_game_api_unavailable`; retained full failed reply in `footprint-error.json`. A read-only repeat returned the same error. No building data was guessed. |
+| `cua.getApp("/Users/peterhartwieg/Library/Application Support/BigAmbitionsAgentTestsMac/Big Ambitions Agent Tests Mac.app")` | `Computer Use server error -10005: cgWindowNotFound` |
+| `call ui {"op":"escape"}` | `Nothing is open to close (Esc would open the pause menu).` Native panels were subsequently closed through their listed buttons. |
+| `call walk {"x":215,"z":0}` (return, op 29) | `Operation 29 is still pending: use tools/ft op 29; do not repeat the command`. Polled the existing operation, without replay. Final status done, arrived=false, x=230.57,z=-10.04, from_goal=18.53 m, waited_for_traffic_s=30. |
+| Street cap verification | applied=true, target_frame_rate=60, vsync_count=0, error=null; measured 5.58, 5.71, 5.32, 5.71, 4.96, 5.58, 5.54 fps. Required 51–66 not reached. |
+| Shop cap verification | applied=true, target_frame_rate=60, vsync_count=0, error=null; measured 44.15, 5.00, 5.45, 5.95, 5.32, 5.82, 5.37 fps. Required 51–66 not reached. |
+
+Building-op documentation says storeys=null; the requested substitution was bounds.height_m, compared with PC’s 3.5 m policy. The failed list prevented that comparison, including rotated and yard/sidewalk targets. No footprint/storey conclusion is claimed.
+
+Appearance outward `call walk {"x":305,"z":0}` completed a 100 m pavement route in about 30.3 seconds, ending x=304.09,z=-0.30. The original opaque walker handle was absent after the trip. Rig walker handles do not guarantee a PC resident identity across pool reuse; the required resident identity/reacquisition was not established. Last appearance-attempt counters include 12 built/0 reused before, 4 built/0 reused after; no reuse increase is proven. The attempt log has zero matches for `Appearance meshes unavailable` and `Empty appearance`, and no TravelTiming.Apply stop.
+
+Two independent, visually inspected 1600x900 images are retained outside Git:
+
+| Image | Observation | SHA-256 |
+|---|---|---|
+| `appearance-body-before.png` | Candidate body in purple shirt/burgundy shorts, short grey hair and red/white shoes. | `95fe425be4db400add52a6284b8b1cfdb9146d2632c2f37f349b3cb627bc4721` |
+| `appearance-body-after.png` | Same camera position; empty sidewalk. No matching resident available for comparison. | `c2cebcaf6d58e5869f9f59aee606e9528ac650cbf23e3e0eeeb481c0a9d06659` |
+
+The shop diagnostic used ready=true `FT GR5 13e Food`, `ba:street_fourthavenue#21`, one staffed register, croissants $5. Revenue remained $180 and stock remained 64 croissants / 265 bags, so no busy-sales proof is claimed. The same address in the 14a fixture is native gym `Pump Up`, rented=false; that setup was discarded before measurement. No fixture was created or saved by this run.
+
+### Findings, fixtures and NOT RUN groups
+
+At 1,000 residents, physical+advance remains above #254’s about-100-MB target in both windows, with appearance the largest measured child. Main street UpdateCity and broader mod-work p95 exceed 5 ms. Day pause p95 is lower than 14a, night has one fewer collection, but these observations do not establish the cap against the requested GC/allocation and street gates. Save latency remains unmeasured. No code root cause, alternative cap or release decision is inferred.
+
+**Required proof blocked (four NOT RUN arms):** #254 appearance identity/reacquire comparison; #246 three-building footprint; actual 60 fps street; actual 60 fps busy shop. Captures and low-cadence diagnostics above are retained as observations, not passes.
+
+**Owner-excluded (three NOT RUN checks):** #239 check 3 (later run with #255); #244 P-D check 7 (agent-rig #85 console guard); GR-5 save latency (owner decision pending).
+
+Fixtures: requested `FT RLO 13d Food v1` existed but loaded 1,611 residents / 1,611 visitors, so it could not supply the required cap. GC/main street/appearance/windowed street used the 14a fallback `FT GR5 13f Timing v1` (1,000/2,000; 1,683 runtime places). Shop diagnostic used `FT GR5 13e Timing v1` (1,000/2,000; 1,690 places). Existing saves were never overwritten; no new checkpoint or RIGTMP city was made. The load tally is `[Persistent City] unrentable homes housed=0 beds=0 unreadable=0 empty=0`; reused saves are not a fresh housing-allocation proof.
+
+### Restoration and validation
+
+An independent pre-stage manifest backed up the original PersistentCity folder, isolated root preference/config files, plist and install receipt, and recorded four absent request/config paths. RLO hashes and its original living_population values were recorded without changing them. The helper printed this rollback verbatim:
+
+```sh
+rm -rf "/Users/peterhartwieg/Library/Application Support/com.hovgaardgames.bigambitions.agenttests.mac/ModsLocal/PersistentCity" && cp -Rp "/Users/peterhartwieg/Library/Application Support/BigAmbitionsAgentTestsMac/receipt-backups/20261114T115729Z/mod" "/Users/peterhartwieg/Library/Application Support/com.hovgaardgames.bigambitions.agenttests.mac/ModsLocal/PersistentCity" && cp "/Users/peterhartwieg/Library/Application Support/BigAmbitionsAgentTestsMac/receipt-backups/20261114T115729Z/install.json" "/Users/peterhartwieg/Library/Application Support/BigAmbitionsAgentTestsMac/install.json"
+```
+
+With the game stopped and lease held, the non-destructive equivalent moved the staged mod intact to the raw evidence folder, copied the helper’s original mod folder into the empty path, restored the unchanged receipt, then restored independent preference/config bytes and original frame-cap absence. RLO files were checked read-only.
+
+Verification: **35 original file hashes, 4 absent paths, full PersistentCity file set and all 53 RLO hashes match; zero mismatches**. install.json SHA-256 `2381eebf577366ad720a6a18fcf82a2e8c9b72a1854605ebefdb67f37a413ace`; AgentRigOps SHA-256 unchanged. Original preferences, persistent-city.json, autosave bytes and frame-cap absence match. Process-only autosave suppression ended at stop.
+
+Final status: running=false, process=null, lease held=false, pending=0. All six owned PIDs (28591, 29551, 38926, 40985, 48859, 49413) and their caffeinate assertions are gone. All stops were graceful. No process belonging to another session was stopped.
+
+Validation for this docs-only result: candidate build passed; compact JSON parses and is under 20 KB; docs-links, markdown ban and diff whitespace checks are run before commit. No full unit or regression suite. Only this existing checklist and the compact JSON are changed. The build/evidence worktree is removed after commit, push and opening the one unmerged docs-only PR. No issue or merge is created.
