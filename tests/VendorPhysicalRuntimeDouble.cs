@@ -308,9 +308,13 @@ namespace PersistentCity.Runtime
             body = new(actor, identity.Id, ++generation) { OnScreen = AppearOnScreen }; Active.Add(identity.Id, body);
             Acquisitions.Add((identity, actor, generation)); return true;
         }
-        internal void Release(PhysicalPedestrianBody body)
+        internal double Minute { get; set; } = double.NaN;
+        internal readonly List<(string Id, double Wanted)> Released = new();
+        internal void Release(PhysicalPedestrianBody body) => Release(body, double.PositiveInfinity);
+        internal void Release(PhysicalPedestrianBody body, double wanted)
         {
             if (!Active.TryGetValue(body.IdentityId, out var current) || !ReferenceEquals(current, body)) return;
+            Released.Add((body.IdentityId, wanted));
             Active.Remove(body.IdentityId); body.Valid = false; idle.Push(body.Character);
         }
         public void Dispose() { foreach (var body in Active.Values) body.Valid = false; Active.Clear(); }

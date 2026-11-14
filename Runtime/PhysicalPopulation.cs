@@ -180,7 +180,7 @@ namespace PersistentCity.Runtime
         private void ReleaseBodies(Binding binding)
         {
             if (binding.Handoff && float.IsNaN(binding.FadeOutSince) && Leaves(binding)) return;
-            try { if (binding.Person != null) pedestrians.Release(binding.Person); }
+            try { if (binding.Person != null) pedestrians.Release(binding.Person, ReturnMinute(binding.Citizen)); }
             finally { if (binding.Car != null) vehicles.Release(binding.Car); }
         }
         private bool Leaves(Binding binding)
@@ -188,13 +188,25 @@ namespace PersistentCity.Runtime
             if (binding.Person != null ? !(binding.Person.Valid && binding.Person.OnScreen && binding.Person.CanFade)
                 : binding.Car == null || !(binding.Car.Valid && binding.Car.OnScreen && binding.Car.CanFade)) return false;
             binding.Person?.Pace(0);
-            leaving.Add(new Leaving(binding.Person, binding.Car, followClock));
+            leaving.Add(new Leaving(binding.Person, binding.Car, followClock, binding.Person != null ? ReturnMinute(binding.Citizen) : double.PositiveInfinity));
             return true;
+        }
+        internal const double ReturnTravelMinutes = 10;
+        private double ReturnMinute(CitizenState citizen)
+        {
+            Position focus = NativeTravelPace.Focus;
+            double minute = simulation.View.Minute;
+            if (!focus.IsFinite || !Position.Finite(minute)) return double.PositiveInfinity;
+            if (citizen.Phase == CitizenPhase.AtPlace || citizen.Phase == CitizenPhase.WaitingForOpening)
+                return places.TryGetValue(citizen.PlaceId, out var place) && Position.Distance(place.Position, focus) <= NativeInteriorCityView.AdmissionRadius(radius)
+                    && citizen.NextEventMinute > minute ? citizen.NextEventMinute : double.PositiveInfinity;
+            return citizen.Phase == CitizenPhase.Travelling && citizen.Journey != null ? minute + ReturnTravelMinutes : double.PositiveInfinity;
         }
         private readonly List<Leaving> leaving = new List<Leaving>();
         private readonly struct Leaving
         {
-            public Leaving(PhysicalPedestrianBody? person, PhysicalVehicleBody? car, float since) { Person = person; Car = car; Since = since; }
+            public Leaving(PhysicalPedestrianBody? person, PhysicalVehicleBody? car, float since, double wanted) { Person = person; Car = car; Since = since; Wanted = wanted; }
+            public double Wanted { get; }
             public PhysicalPedestrianBody? Person { get; }
             public PhysicalVehicleBody? Car { get; }
             public float Since { get; }
@@ -213,7 +225,7 @@ namespace PersistentCity.Runtime
                     continue;
                 }
                 leaving.RemoveAt(i);
-                try { if (body.Person != null) pedestrians.Release(body.Person); else if (body.Car != null) vehicles.Release(body.Car); }
+                try { if (body.Person != null) pedestrians.Release(body.Person, body.Wanted); else if (body.Car != null) vehicles.Release(body.Car); }
                 catch (Exception error) { failure = failure ?? error; }
             }
             if (failure != null) throw new InvalidOperationException("A leaving body could not be released.", failure);

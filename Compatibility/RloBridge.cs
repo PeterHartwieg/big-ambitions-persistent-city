@@ -103,10 +103,13 @@ namespace PersistentCity.Compatibility
         public Status ReadSlowedLanes(List<object> lanes, List<int> originalLimits, List<int> currentLimits)
         { laneArgs[0] = lanes; laneArgs[1] = originalLimits; laneArgs[2] = currentLimits; return Call(slowedLanes, laneArgs); }
 
+        private static readonly Persona[] PersonaValues = (Persona[])Enum.GetValues(typeof(Persona));
+        private static readonly string[] PersonaNames = Array.ConvertAll(PersonaValues, p => p.ToString());
+
         public static bool TryPersona(string? name, out Persona value)
         {
-            foreach (Persona p in Enum.GetValues(typeof(Persona)))
-                if (string.Equals(p.ToString(), name, StringComparison.Ordinal)) { value = p; return true; }
+            for (int i = 0; i < PersonaNames.Length; i++)
+                if (string.Equals(PersonaNames[i], name, StringComparison.Ordinal)) { value = PersonaValues[i]; return true; }
             value = default;
             return false;
         }
@@ -130,7 +133,7 @@ namespace PersistentCity.Compatibility
             try { result = method.Invoke(null, args); }
             catch (TargetInvocationException error) { throw Invalid(method.Name + " threw, which the contract forbids", error.InnerException ?? error); }
             int value = Convert.ToInt32(result, CultureInfo.InvariantCulture);
-            if (!Enum.IsDefined(typeof(Status), value)) throw Invalid(method.Name + " returned unknown status " + value);
+            if (value < (int)Status.Ready || value > (int)Status.Failed) throw Invalid(method.Name + " returned unknown status " + value);
             return (Status)value;
         }
 

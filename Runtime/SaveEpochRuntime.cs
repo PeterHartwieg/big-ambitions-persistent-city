@@ -22,10 +22,12 @@ namespace PersistentCity.Runtime
         {
             long gcFrame = GcFrameBegin();
             var gcHeap = GcAllocationBegin();
+            ModFrames.Begin(gcSampler, UnityEngine.Time.frameCount);
             saveEpochUnits++;
             try { UpdateCity(); }
             finally
             {
+                ModFrames.End();
                 GcAllocationEnd(GcAllocationSegment.Mod, gcHeap);
                 GcFrameEnd(gcFrame);
                 saveEpochUnits--;

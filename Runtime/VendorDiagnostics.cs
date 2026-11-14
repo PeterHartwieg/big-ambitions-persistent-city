@@ -19,8 +19,8 @@ namespace PersistentCity.Runtime
         {
             try
             {
-                CommandHelper.AddCommand<string, string>("pc", "pc population census | pc gc start|report|stop | pc vendor status | pc vendor sales | pc food decisions | pc food contract | pc probe status | pc probe businesses", RoutePcCommand);
-                CommandHelper.AddCommand<string, string, string>("pc", "pc population person <id> | pc gc population <persons|off> (FT cities only, measurement) | pc vendor withdraw <vehicle> | pc food contract <status|capabilities|hints|stamps|catalogue> (FT cities only)", RoutePcDetail);
+                CommandHelper.AddCommand<string, string>("pc", "pc population census | pc gc start|report|stop|frames | pc vendor status | pc vendor sales | pc food decisions | pc food contract | pc probe status | pc probe businesses", RoutePcCommand);
+                CommandHelper.AddCommand<string, string, string>("pc", "pc population person <id> | pc gc population <persons|off> (FT cities only, measurement) | pc gc frames <start|report|stop> | pc vendor withdraw <vehicle> | pc food contract <status|capabilities|hints|stamps|catalogue> (FT cities only)", RoutePcDetail);
                 CommandHelper.AddCommand<string, string, string, string>("pc", "pc movement corrections since <seq> | pc probe <resident> <place> <ceiling cents> (FT cities only)", RoutePcMovement);
                 vendorCommands = true;
             }

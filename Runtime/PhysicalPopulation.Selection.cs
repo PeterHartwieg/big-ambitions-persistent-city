@@ -58,6 +58,7 @@ namespace PersistentCity.Runtime
             followDelta = simulation.View.Minute > followMinute ? Time.unscaledDeltaTime : 0;
             followClock += followDelta;
             followMinute = simulation.View.Minute;
+            pedestrians.Minute = followMinute;
             PhysicalAllocation.Charge(GcAllocationSegment.PhysicalUnattributed);
             RefreshVendorMeals();
             PhysicalAllocation.Charge(GcAllocationSegment.PhysicalVendorMeals);

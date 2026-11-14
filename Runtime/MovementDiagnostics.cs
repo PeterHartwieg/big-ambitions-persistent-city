@@ -62,21 +62,48 @@ namespace PersistentCity.Runtime
                 gcSampler ??= new GcPauseSampler();
                 string counter = GcAllocationCounter.Probe();
                 gcSampler.Start(GC.GetTotalMemory(false), counter);
+                gcSampler.FrameRecorder.Arm(System.Diagnostics.Stopwatch.Frequency);
                 Debug.Log("[Persistent City] gc measurement started (diagnostic only, " + GcPauseSampler.PolicyId + ", " + gcSampler.Capacity + " stored frames, allocation counter " + counter + "). Use pc gc report or pc gc stop.");
                 return;
+            }
+            if (action == "frames")
+            {
+                gcSampler ??= new GcPauseSampler();
+                var frames = gcSampler.FrameRecorder;
+                if ((detail == "start" || detail == "stop") && gcSampler.Running)
+                {
+                    Debug.LogWarning("[Persistent City] pc gc frames " + detail + " refused: a gc measurement is running and its mod_* segments come from the frame recorder. Use pc gc frames for a readout or pc gc stop first.");
+                    return;
+                }
+                if (detail == "start")
+                {
+                    string counter = GcAllocationCounter.Probe();
+                    frames.Arm(System.Diagnostics.Stopwatch.Frequency);
+                    Debug.Log("[Persistent City] mod frame phases started (diagnostic only, mod-frames-v1, top " + ModFrameRecorder.TopFrames + " frames and up to "
+                        + ModFrameRecorder.SpikeCapacity + " frames >= 30 ms, allocation counter " + counter + "). Use pc gc frames or pc gc frames stop.");
+                    return;
+                }
+                if (detail.Length == 0 || detail == "report" || detail == "stop")
+                {
+                    if (detail == "stop") frames.Disarm();
+                    Debug.Log("[Persistent City] mod frames " + frames.ReportJson());
+                    Debug.Log(frames.ReportHuman());
+                    return;
+                }
             }
             if ((action == "stop" || action == "report") && detail.Length == 0)
             {
                 if (gcSampler == null) { Debug.LogWarning("[Persistent City] gc measurement not started. Use pc gc start."); return; }
-                if (action == "stop") gcSampler.Stop(GC.GetTotalMemory(false));
+                if (action == "stop") { gcSampler.Stop(GC.GetTotalMemory(false)); gcSampler.FrameRecorder.Disarm(); }
                 var context = GcContext();
                 Debug.Log(GcPauseSampler.ReportPrefix + gcSampler.ReportJson(context));
                 Debug.Log(gcSampler.ReportHuman(context));
+                Debug.Log(gcSampler.FrameRecorder.ReportHuman());
                 gcSampler.Rebaseline();
                 return;
             }
             if (action == "population") { GcPopulationCommand(detail); return; }
-            Debug.LogWarning("[Persistent City] Unknown command. Use: pc gc start | pc gc report | pc gc stop | pc gc population [<persons>|off] (FT cities only)");
+            Debug.LogWarning("[Persistent City] Unknown command. Use: pc gc start | pc gc report | pc gc stop | pc gc frames [start|stop] | pc gc population [<persons>|off] (FT cities only)");
         }
 
         private GcReportContext GcContext()

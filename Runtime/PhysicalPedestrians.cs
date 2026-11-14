@@ -16,11 +16,13 @@ namespace PersistentCity.Runtime
     internal sealed class PhysicalPedestrians : IDisposable
     {
         private readonly Transform parent;
-        private readonly int maximum;
+        private readonly int maximum, ceiling;
+        private readonly BodyLeases<ThirdPersonCharacter, PhysicalPedestrianBody> leases =
+            new BodyLeases<ThirdPersonCharacter, PhysicalPedestrianBody>(character => new PhysicalPedestrianBody(character));
         private readonly List<ThirdPersonCharacter> all = new List<ThirdPersonCharacter>();
-        private readonly DressedBodyPool<ThirdPersonCharacter> idle = new DressedBodyPool<ThirdPersonCharacter>();
+        private readonly DressedBodyPool<ThirdPersonCharacter> idle = new DressedBodyPool<ThirdPersonCharacter>(DressedBodyPool<ThirdPersonCharacter>.StreetSpare);
         private readonly DressBuildBudget budget = new DressBuildBudget(gate: new DressFrameGate(UpdateCityClock.Elapsed));
-        public const double TrimSeconds = 5, TrimIdleSeconds = 120;
+        public const double TrimSeconds = DressedBodyPool<ThirdPersonCharacter>.TrimEverySeconds, TrimIdleSeconds = DressedBodyPool<ThirdPersonCharacter>.TrimIdleSeconds;
         private double nextTrim;
         public long Trimmed { get; private set; }
         private readonly HashSet<AppearanceSetter> baked = new HashSet<AppearanceSetter>();
@@ -31,20 +33,66 @@ namespace PersistentCity.Runtime
         public void NoteDeferred() => deferredBeforeAcquire++;
         public bool LastDeferred { get; private set; }
         public string LookDiagnostics => AppearanceBuilds + " built/" + AppearanceReuses + " reused/" + AppearanceDeferred + " deferred/"
-            + idle.Count + " idle/" + all.Count + " owned/" + BlendshapeBake.Bakes + " baked/" + BlendshapeBake.ScratchSizes + " bake sizes/"
+            + idle.Count + " idle/" + all.Count + " owned/" + Adopted + " adopted/" + BlendshapeBake.Bakes + " baked/" + BlendshapeBake.ScratchSizes + " bake sizes/"
             + BlendshapeBake.ScratchBytes / 1024 + " KB bake scratch/" + Instantiated + " grown/" + Trimmed + " trimmed/"
             + budget.Gate!.Fitted + " fitted/" + budget.Gate.Waited + " waited/"
             + budget.Gate.EstimateMilliseconds.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture) + " ms build";
         private readonly Dictionary<string, PhysicalPedestrianBody> active = new Dictionary<string, PhysicalPedestrianBody>(StringComparer.Ordinal);
-        private long generation;
         private bool disposed;
 
         public PhysicalPedestrians(Transform parent, int maximum)
         {
             if (parent == null) throw new ArgumentNullException(nameof(parent));
             if (maximum < 1 || maximum > 256) throw new ArgumentOutOfRangeException(nameof(maximum));
-            this.parent = parent; this.maximum = maximum;
+            this.parent = parent; this.maximum = maximum; ceiling = DressedBodyPool<ThirdPersonCharacter>.Ceiling(maximum);
+            AdoptReserve();
             NavigationHook.Attach(this);
+        }
+
+        public double Minute { get => idle.Minute; set => idle.Minute = value; }
+        public long Adopted { get; private set; }
+
+        private readonly struct Reserved
+        {
+            public Reserved(ThirdPersonCharacter character, PersonDressing dressing, double wanted, bool baked)
+            { Character = character; Dressing = dressing; Wanted = wanted; Baked = baked; }
+            public ThirdPersonCharacter Character { get; }
+            public PersonDressing Dressing { get; }
+            public double Wanted { get; }
+            public bool Baked { get; }
+        }
+
+        private static readonly List<Reserved> reserve = new List<Reserved>();
+        private static Transform? reserveParent;
+        internal static int ReserveCount => reserve.Count;
+
+        private void AdoptReserve()
+        {
+            if (!ReferenceEquals(reserveParent, parent) || parent == null) { DestroyReserve(); return; }
+            double now = Time.unscaledTimeAsDouble;
+            foreach (var kept in reserve)
+            {
+                var character = kept.Character;
+                if (character == null) continue;
+                if (all.Count >= ceiling || character.transform.parent != parent) { DestroyCharacter(character); continue; }
+                all.Add(character);
+                if (kept.Baked && character.appearanceSetter != null) baked.Add(character.appearanceSetter);
+                idle.Return(character, kept.Dressing, now, kept.Wanted);
+                Adopted++;
+            }
+            reserve.Clear(); reserveParent = null;
+        }
+
+        internal static void DestroyReserve()
+        {
+            foreach (var kept in reserve) if (kept.Character != null) DestroyCharacter(kept.Character);
+            reserve.Clear(); reserveParent = null;
+        }
+
+        private static void DestroyCharacter(ThirdPersonCharacter character)
+        {
+            NotifyRemoved(character);
+            UnityEngine.Object.Destroy(character.gameObject);
         }
 
         public Action? BeforeNavigation { get; set; }
@@ -57,13 +105,13 @@ namespace PersistentCity.Runtime
 
         public bool WouldDefer(CitizenIdentity identity) =>
             !disposed && identity != null && identity.AppearanceSeed != 0
-            && idle.WouldDefer(new PersonDressing(identity, DaysPerYear()), all.Count, maximum, budget, Time.frameCount, Time.unscaledTimeAsDouble);
+            && idle.WouldDefer(new PersonDressing(identity, DaysPerYear()), all.Count, ceiling, budget, Time.frameCount, Time.unscaledTimeAsDouble);
 
         public bool TryAcquire(CitizenIdentity identity, Position position, out PhysicalPedestrianBody? body, bool immediate = false)
         {
             body = null; LastDeferred = false;
             if (disposed || identity == null || string.IsNullOrEmpty(identity.Id) || identity.AppearanceSeed == 0
-                || active.ContainsKey(identity.Id) || !PhysicalPedestrianBody.Fits(position)) return false;
+                || active.Count >= maximum || active.ContainsKey(identity.Id) || !PhysicalPedestrianBody.Fits(position)) return false;
             var filter = WalkingRoutes.DryFilter;
             if (!NavMesh.SamplePosition(PhysicalPedestrianBody.Vector(position), out NavMeshHit hit, 0.05f, filter)
                 || Position.Distance(position, PhysicalPedestrianBody.Point(hit.position)) > 0.05) return false;
@@ -73,7 +121,7 @@ namespace PersistentCity.Runtime
             {
                 int daysPerYear = DaysPerYear();
                 var dressing = new PersonDressing(identity, daysPerYear);
-                var choice = idle.Choose(dressing, all.Count, maximum, immediate ? null : budget, Time.frameCount, Time.unscaledTimeAsDouble, out var pooled);
+                var choice = idle.Choose(dressing, all.Count, ceiling, immediate ? null : budget, Time.frameCount, Time.unscaledTimeAsDouble, out var pooled);
                 if (choice == BodyChoice.Full) return false;
                 if (choice == BodyChoice.Deferred) { LastDeferred = true; return false; }
                 bool dressed = choice == BodyChoice.Hit;
@@ -81,7 +129,9 @@ namespace PersistentCity.Runtime
                 if (choice != BodyChoice.Grow) character = pooled;
                 else
                 {
+                    PhysicalAllocation.Mark();
                     character = Instantiate();
+                    PhysicalAllocation.Detail(PersistentCity.Core.GcAllocationSegment.PhysicalSpawnGrow);
                     if (character == null) return false;
                     if (!immediate)
                     {
@@ -130,7 +180,7 @@ namespace PersistentCity.Runtime
                 character.animator.enabled = true;
                 if (appearance.lastMergedMeshRenderer != null) appearance.lastMergedMeshRenderer.enabled = true;
                 if (character.shadowCaster != null) character.shadowCaster.enabled = true;
-                body = new PhysicalPedestrianBody(character, identity.Id, checked(++generation)) { Dressing = dressing };
+                body = leases.Lease(character, identity.Id, dressing, dressed);
                 var relay = character.capsuleCollider.gameObject.GetComponent<PhysicalPedestrianCrosswalk>();
                 if (relay == null) relay = character.capsuleCollider.gameObject.AddComponent<PhysicalPedestrianCrosswalk>();
                 relay.Body = body;
@@ -147,30 +197,35 @@ namespace PersistentCity.Runtime
 
         public long Instantiated { get; private set; }
 
+        private static GameObject? prefab;
+        private GameObject? staging;
+
         private ThirdPersonCharacter? Instantiate()
         {
-            var staging = new GameObject("PersistentCity character staging");
-            staging.SetActive(false); staging.transform.SetParent(parent, false);
-            try
+            if (staging == null)
             {
-                GameObject prefab = PrefabHelper.LoadPrefabAssetByName("Characters/HumanDefinitionLow");
-                if (prefab == null || prefab.GetComponent<ThirdPersonCharacter>() == null) return null;
-                GameObject instance = UnityEngine.Object.Instantiate(prefab, staging.transform);
-                var character = instance.GetComponent<ThirdPersonCharacter>();
-                if (character == null || character.navmeshAgent == null || character.capsuleCollider == null
-                    || character.appearanceSetter == null || character.animator == null || character.animator.runtimeAnimatorController == null
-                    || instance.GetComponentInChildren<Streets.Pedestrians.Pedestrian>(true) != null)
-                {
-                    UnityEngine.Object.Destroy(instance); return null;
-                }
-                character.gameObject.SetActive(false);
-                character.isPlayer = false; character.updatePlayerPos = false;
-                character.transform.SetParent(parent, false);
-                all.Add(character);
-                if (BlendshapeBake.Adopt(character.appearanceSetter.meshCombiner)) baked.Add(character.appearanceSetter);
-                return character;
+                staging = new GameObject("PersistentCity character staging");
+                staging.SetActive(false); staging.transform.SetParent(parent, false);
             }
-            finally { UnityEngine.Object.Destroy(staging); }
+            if (prefab == null)
+            {
+                prefab = PrefabHelper.LoadPrefabAssetByName("Characters/HumanDefinitionLow");
+                if (prefab == null || prefab.GetComponent<ThirdPersonCharacter>() == null) { prefab = null; return null; }
+            }
+            GameObject instance = UnityEngine.Object.Instantiate(prefab, staging.transform);
+            var character = instance.GetComponent<ThirdPersonCharacter>();
+            if (character == null || character.navmeshAgent == null || character.capsuleCollider == null
+                || character.appearanceSetter == null || character.animator == null || character.animator.runtimeAnimatorController == null
+                || instance.GetComponentInChildren<Streets.Pedestrians.Pedestrian>(true) != null)
+            {
+                UnityEngine.Object.Destroy(instance); return null;
+            }
+            character.gameObject.SetActive(false);
+            character.isPlayer = false; character.updatePlayerPos = false;
+            character.transform.SetParent(parent, false);
+            all.Add(character);
+            if (BlendshapeBake.Adopt(character.appearanceSetter.meshCombiner)) baked.Add(character.appearanceSetter);
+            return character;
         }
 
         private void Dress(AppearanceSetter appearance, CitizenIdentity identity, int daysPerYear)
@@ -219,7 +274,9 @@ namespace PersistentCity.Runtime
             new[] { AppearanceTag.Casual }, new[] { AppearanceTag.Formal }, new[] { AppearanceTag.Sport }, new[] { AppearanceTag.Party },
         };
 
-        public void Release(PhysicalPedestrianBody body)
+        public void Release(PhysicalPedestrianBody body) => Release(body, double.PositiveInfinity);
+
+        public void Release(PhysicalPedestrianBody body, double wantedMinute)
         {
             if (body == null || !active.TryGetValue(body.IdentityId, out var current) || !ReferenceEquals(current, body)) return;
             active.Remove(body.IdentityId);
@@ -235,7 +292,7 @@ namespace PersistentCity.Runtime
             NotifyRemoved(character);
             character.navmeshAgent.enabled = false; character.capsuleCollider.enabled = false;
             character.gameObject.SetActive(false);
-            idle.Return(character, body.Dressing, Time.unscaledTime);
+            idle.Return(character, body.Dressing, Time.unscaledTime, wantedMinute);
         }
 
         public bool TrimIdle(double seconds)
@@ -255,7 +312,7 @@ namespace PersistentCity.Runtime
 
         private void DestroyOwned(ThirdPersonCharacter character)
         {
-            all.Remove(character);
+            all.Remove(character); leases.Forget(character);
             if (character != null && character.appearanceSetter != null) baked.Remove(character.appearanceSetter);
             if (character != null)
             {
@@ -269,20 +326,35 @@ namespace PersistentCity.Runtime
         public void Dispose()
         {
             if (disposed) return;
-            disposed = true;
             BeforeNavigation = null; NavigationHook.Detach(this);
-            foreach (var body in active.Values) body.Invalidate();
-            active.Clear(); idle.Clear(); baked.Clear(); BlendshapeBake.Clear();
-            foreach (var character in all) if (character != null)
+            var releasing = new List<PhysicalPedestrianBody>(active.Values);
+            foreach (var body in releasing)
             {
-                NotifyRemoved(character);
-                UnityEngine.Object.Destroy(character.gameObject);
+                try { Release(body); }
+                catch (Exception) { body.Invalidate(); active.Remove(body.IdentityId); }
             }
-            all.Clear();
+            disposed = true;
+            DestroyReserve();
+            for (int i = 0; i < idle.Count; i++)
+            {
+                var character = idle[i];
+                if (character == null || parent == null) continue;
+                reserve.Add(new Reserved(character, idle.DressingAt(i), idle.WantedAt(i), character.appearanceSetter != null && baked.Contains(character.appearanceSetter)));
+            }
+            if (reserve.Count > 0) reserveParent = parent;
+            foreach (var character in all)
+            {
+                if (character == null) continue;
+                bool kept = false;
+                foreach (var entry in reserve) if (ReferenceEquals(entry.Character, character)) { kept = true; break; }
+                if (!kept) DestroyCharacter(character);
+            }
+            active.Clear(); idle.Clear(); baked.Clear(); leases.Clear(); BlendshapeBake.Clear(); all.Clear();
+            if (staging != null) { UnityEngine.Object.Destroy(staging); staging = null; }
         }
     }
 
-    internal sealed class PhysicalPedestrianBody
+    internal sealed class PhysicalPedestrianBody : IBodyLease
     {
         private bool valid = true;
         private bool stopped = true;
@@ -294,10 +366,15 @@ namespace PersistentCity.Runtime
             internal readonly CrosswalkToTrafficLightLink Link;
             internal bool Permitted;
         }
-        internal PhysicalPedestrianBody(ThirdPersonCharacter character, string identityId, long generation)
-        { Character = character; IdentityId = identityId; Generation = generation; }
-        public string IdentityId { get; }
-        public long Generation { get; }
+        internal PhysicalPedestrianBody(ThirdPersonCharacter character) { Character = character; valid = false; }
+        public void Renew(string identityId, long generation, PersonDressing dressing, bool sameLook)
+        {
+            IdentityId = identityId; Generation = generation; Dressing = dressing;
+            valid = true; stopped = true; crossings.Clear(); departedCrossings.Clear();
+            if (!sameLook) canFade = null;
+        }
+        public string IdentityId { get; private set; } = "";
+        public long Generation { get; private set; }
         internal PersonDressing Dressing { get; set; }
         public ThirdPersonCharacter Character { get; }
         public CapsuleCollider Capsule => Character.capsuleCollider;
@@ -487,7 +564,7 @@ namespace PersistentCity.Runtime
         {
             if (other != null && crossings.Remove(other)) Tick();
         }
-        internal void Invalidate()
+        public void Invalidate()
         {
             valid = false; stopped = true; crossings.Clear(); departedCrossings.Clear();
         }

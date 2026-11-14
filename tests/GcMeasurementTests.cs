@@ -120,7 +120,10 @@ public sealed class GcMeasurementTests
             .Concat(new[] { "physical_vendor_meals", "physical_fade", "physical_focus", "physical_observe", "physical_release", "physical_parked", "physical_index",
                 "physical_queues", "physical_roster", "physical_selection", "physical_spawn_pedestrian", "physical_spawn_appearance", "physical_spawn_check",
                 "physical_spawn_vehicle", "physical_unattributed", "physical_spawn_randomize", "physical_spawn_bake",
-                "advance_planning", "advance_events", "advance_stops", "advance_other" }.SelectMany(n => new[] { n + "_alloc_bytes", n + "_alloc_samples", n + "_alloc_skipped" })).ToArray();
+                "advance_planning", "advance_events", "advance_stops", "advance_other",
+                "physical_spawn_grow", "mod_prelude", "mod_rlo", "mod_food", "mod_optional_stops", "mod_routes", "mod_closures", "mod_hold_replay",
+                "mod_physical_setup", "mod_inspector", "mod_summary", "mod_other" }.SelectMany(n => new[] { n + "_alloc_bytes", n + "_alloc_samples", n + "_alloc_skipped" }))
+            .Concat(new[] { "phase_frames", "phase_spikes_30ms", "top_frames", "spike_frames", "phase_ms" }).ToArray();
         foreach (string json in new[] { empty, full })
         {
             Assert.DoesNotContain('\n', json);
