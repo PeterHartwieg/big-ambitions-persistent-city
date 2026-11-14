@@ -29,12 +29,22 @@ namespace PersistentCity.Core
         public double Max { get; }
     }
 
-    public enum GcAllocationSegment { Mod, Advance, Physical, PhysicalAmbient, PhysicalVehicles, PhysicalBindings }
+    public enum GcAllocationSegment
+    {
+        Mod, Advance, Physical, PhysicalAmbient, PhysicalVehicles, PhysicalBindings,
+        PhysicalVendorMeals, PhysicalFade, PhysicalFocus, PhysicalObserve, PhysicalRelease, PhysicalParked, PhysicalIndex, PhysicalQueues,
+        PhysicalRoster, PhysicalSelection, PhysicalSpawnPedestrian, PhysicalSpawnAppearance, PhysicalSpawnCheck, PhysicalSpawnVehicle, PhysicalUnattributed,
+    }
 
     public sealed class GcPauseSampler
     {
-        public const int Segments = 6;
-        private static readonly string[] SegmentNames = { "mod", "advance", "physical", "physical_ambient", "physical_vehicles", "physical_bindings" };
+        public const int Segments = 21;
+        private static readonly string[] SegmentNames =
+        {
+            "mod", "advance", "physical", "physical_ambient", "physical_vehicles", "physical_bindings",
+            "physical_vendor_meals", "physical_fade", "physical_focus", "physical_observe", "physical_release", "physical_parked", "physical_index", "physical_queues",
+            "physical_roster", "physical_selection", "physical_spawn_pedestrian", "physical_spawn_appearance", "physical_spawn_check", "physical_spawn_vehicle", "physical_unattributed",
+        };
         public const string PolicyId = "gc-sampler-v1";
         public const int Generations = 3;
         public const int DefaultCapacity = 65536;
@@ -56,6 +66,13 @@ namespace PersistentCity.Core
         private readonly long[] segmentBytes = new long[Segments];
         private readonly long[] segmentSamples = new long[Segments];
         private readonly long[] segmentSkipped = new long[Segments];
+        private readonly long[] pendingBytes = new long[Segments];
+        private readonly int[] pendingSpans = new int[Segments];
+        private long lastCounter = -1, counterFrameBytes, counterFrames;
+        private int lastCounterCollections;
+        private bool nested, nestedValid;
+        private long nestedMark;
+        private int nestedCollections;
 
         public GcPauseSampler(int capacity = DefaultCapacity)
         {
@@ -75,8 +92,12 @@ namespace PersistentCity.Core
         public double MaxModMs { get; private set; }
         public long Collections(int generation) => collections[generation];
 
-        public void Start(long heapBytes)
+        public string AllocationCounter { get; private set; } = "heap_used";
+
+        public void Start(long heapBytes, string allocationCounter = "heap_used")
         {
+            AllocationCounter = allocationCounter ?? "heap_used";
+            nested = false; lastCounter = -1; counterFrameBytes = counterFrames = 0;
             Array.Clear(collections, 0, collections.Length);
             stored = 0; Frames = 0; CollectionFrames = 0; heapBeforeSum = heapAfterSum = heapPairs = 0;
             MaxFrameMs = MaxModMs = 0; collectionSpikes = frameSpikes = 0;
@@ -113,13 +134,65 @@ namespace PersistentCity.Core
             segmentBytes[index] += heapAfter - heapBefore; segmentSamples[index]++;
         }
 
+        public void CounterFrame(long counter, int collections)
+        {
+            if (!Running) return;
+            if (lastCounter >= 0 && counter >= lastCounter && collections == lastCounterCollections) { counterFrameBytes += counter - lastCounter; counterFrames++; }
+            lastCounter = counter; lastCounterCollections = collections;
+        }
+
+        public long CounterFrames => counterFrames;
+        public long CounterFrameBytes => counterFrameBytes;
+
+        public bool Nested => nested;
+
+        public void BeginNested(long counter, int collections)
+        {
+            nested = false;
+            if (!Running || counter < 0) return;
+            Array.Clear(pendingBytes, 0, Segments); Array.Clear(pendingSpans, 0, Segments);
+            nested = nestedValid = true; nestedMark = counter; nestedCollections = collections;
+        }
+
+        public void Charge(GcAllocationSegment segment, long counter, int collections)
+        {
+            if (!nested) return;
+            int index = (int)segment;
+            if (counter < 0 || counter < nestedMark || collections != nestedCollections) nestedValid = false;
+            else pendingBytes[index] += counter - nestedMark;
+            pendingSpans[index]++;
+            nestedMark = counter; nestedCollections = collections;
+        }
+
+        public void EndNested(GcAllocationSegment parent, GcAllocationSegment remainder, long counter, int collections)
+        {
+            if (!nested) return;
+            Charge(remainder, counter, collections);
+            nested = false;
+            if (!Running) return;
+            int index = (int)parent;
+            if (!nestedValid)
+            {
+                segmentSkipped[index]++;
+                for (int i = 0; i < Segments; i++) if (pendingSpans[i] > 0) segmentSkipped[i]++;
+                return;
+            }
+            long total = 0;
+            for (int i = 0; i < Segments; i++)
+            {
+                if (pendingSpans[i] == 0) continue;
+                segmentBytes[i] += pendingBytes[i]; segmentSamples[i] += pendingSpans[i]; total += pendingBytes[i];
+            }
+            segmentBytes[index] += total; segmentSamples[index]++;
+        }
+
         public long AllocationFrames => allocationFrames;
         public long FrameAllocatedBytes => frameAllocatedBytes;
         public long SegmentBytes(GcAllocationSegment segment) => segmentBytes[(int)segment];
         public long SegmentSamples(GcAllocationSegment segment) => segmentSamples[(int)segment];
         public long SegmentSkipped(GcAllocationSegment segment) => segmentSkipped[(int)segment];
 
-        public void Rebaseline() { baselined = false; pendingModMs = 0; }
+        public void Rebaseline() { baselined = false; pendingModMs = 0; lastCounter = -1; }
 
         public void Frame(double frameMilliseconds, double modMilliseconds, int gen0, int gen1, int gen2, long heapBytes)
         {
@@ -197,7 +270,10 @@ namespace PersistentCity.Core
             S(text, "mod_ms_plain", ModSpread(false));
             text.Append(",\"gc_spikes_30ms\":").Append(N(CollectionSpikes())).Append(",\"frame_spikes_30ms\":").Append(N(FrameSpikes()))
                 .Append(",\"max_frame_ms\":").Append(D(MaxFrameMs)).Append(",\"max_mod_ms\":").Append(D(MaxModMs))
-                .Append(",\"alloc_frames\":").Append(N(allocationFrames)).Append(",\"frame_alloc_bytes\":").Append(N(frameAllocatedBytes));
+                .Append(",\"alloc_frames\":").Append(N(allocationFrames)).Append(",\"frame_alloc_bytes\":").Append(N(frameAllocatedBytes))
+                .Append(",\"frame_alloc_counter\":\"heap_used\"")
+                .Append(",\"alloc_counter\":\"").Append(AllocationCounter).Append('"')
+                .Append(",\"counter_frames\":").Append(N(counterFrames)).Append(",\"counter_frame_bytes\":").Append(N(counterFrameBytes));
             for (int i = 0; i < Segments; i++)
             {
                 string name = SegmentNames[i];

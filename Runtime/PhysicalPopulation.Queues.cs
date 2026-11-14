@@ -219,29 +219,60 @@ namespace PersistentCity.Runtime
         {
             bool vendorBound = false;
             foreach (var b in bindings.Values) if (b.VendorOpening > 0 && b.Step != QueueStep.Entering) { vendorBound = true; break; }
+            var occupied = occupiedScratch;
             if (vendorBound)
             {
-                foreach (var bound in bindings.Values.Where(b => b.VendorOpening > 0 && b.Step != QueueStep.Entering).OrderBy(b => b.Slot))
+                var vendorLine = inLineScratch;
+                vendorLine.Clear();
+                foreach (var b in bindings.Values) if (b.VendorOpening > 0 && b.Step != QueueStep.Entering) vendorLine.Add(b);
+                SortBySlot(vendorLine);
+                foreach (var bound in vendorLine)
                 {
                     if (!VendorWaiting(bound.Citizen, out _, out var vehicle) || vehicle.OpeningId != bound.VendorOpening) continue;
-                    int? ahead = DwellPlanner.MoveUp(new HashSet<int>(Standing(bound.Line!).Select(p => p.Value)), bound.Slot);
+                    occupied.Clear();
+                    foreach (var standing in Standing(bound.Line!)) occupied.Add(standing.Value);
+                    int? ahead = DwellPlanner.MoveUp(occupied, bound.Slot);
                     if (!ahead.HasValue || !bound.Person!.SetPathTarget(bound.Line!.Spots[ahead.Value], NativeTravelPace.WalkingMetresPerSecond)) continue;
                     bound.Slot = ahead.Value; bound.Step = QueueStep.Approaching; bound.StepWalked = 0;
                 }
+                vendorLine.Clear();
             }
             if (vendorWaiters.Count == 0) return;
-            foreach (var citizen in vendorWaiters.Values.OrderBy(c => vendorMeals.TryGetValue(c.Id, out var m) ? m.ServiceAt : double.MaxValue)
-                .ThenBy(c => c.Id, StringComparer.Ordinal))
+            var order = vendorOrder;
+            order.Clear();
+            foreach (var waiter in vendorWaiters.Values) order.Add(new VendorTurn(waiter, vendorMeals.TryGetValue(waiter.Id, out var m) ? m.ServiceAt : double.MaxValue));
+            order.Sort(VendorTurn.ByService);
+            foreach (var turn in order)
             {
+                var citizen = turn.Citizen;
                 if (ambient.IsReserved(citizen.Id) || !VendorWaiting(citizen, out var row, out var vehicle) || Position.Distance(row.Stand!.Position, focus) > radius
                     || !spots.TryVendorQueue(row, vehicle, out var line) || line == null) continue;
-                var occupied = new HashSet<int>(Standing(line).Select(p => p.Value));
+                occupied.Clear();
+                foreach (var standing in Standing(line)) occupied.Add(standing.Value);
                 foreach (var planned in queuers.Values) if (planned.Line.Key == line.Key) occupied.Add(planned.Slot);
                 int slot = 0;
                 if (bindings.TryGetValue(citizen.Id, out var binding) && binding.VendorOpening == vehicle.OpeningId
                     && binding.Line == line && binding.Step != QueueStep.Entering) slot = binding.Slot;
                 else { while (occupied.Contains(slot) && slot < line.Spots.Count) slot++; }
                 if (slot < line.Spots.Count) queuers[citizen.Id] = new QueuePlanEntry { Line = line, Slot = slot, VendorOpening = vehicle.OpeningId };
+            }
+            order.Clear(); occupied.Clear();
+        }
+
+        private readonly List<VendorTurn> vendorOrder = new List<VendorTurn>();
+        private readonly struct VendorTurn
+        {
+            public VendorTurn(IPersonView citizen, double serviceAt) { Citizen = citizen; ServiceAt = serviceAt; }
+            public IPersonView Citizen { get; }
+            public double ServiceAt { get; }
+            public static readonly IComparer<VendorTurn> ByService = new Order();
+            private sealed class Order : IComparer<VendorTurn>
+            {
+                public int Compare(VendorTurn a, VendorTurn b)
+                {
+                    int order = a.ServiceAt.CompareTo(b.ServiceAt);
+                    return order != 0 ? order : StringComparer.Ordinal.Compare(a.Citizen.Id, b.Citizen.Id);
+                }
             }
         }
 

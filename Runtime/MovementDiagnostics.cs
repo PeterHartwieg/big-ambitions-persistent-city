@@ -23,6 +23,7 @@ namespace PersistentCity.Runtime
             var sampler = gcSampler;
             if (sampler == null || !sampler.Running) return 0;
             long now = System.Diagnostics.Stopwatch.GetTimestamp();
+            sampler.CounterFrame(GcAllocationCounter.Read(), GcAllocationCounter.Collections);
             sampler.Observe(now * GcMillisecondsPerTimestamp, GcCount(0), GcCount(1), GcCount(2), GC.GetTotalMemory(false));
             return now;
         }
@@ -43,13 +44,13 @@ namespace PersistentCity.Runtime
         {
             var sampler = gcSampler;
             if (sampler == null || !sampler.Running) return new GcHeapMark(-1, 0);
-            return new GcHeapMark(GC.GetTotalMemory(false), GC.CollectionCount(0));
+            return new GcHeapMark(GcAllocationCounter.Read(), GcAllocationCounter.Collections);
         }
 
         private void GcAllocationEnd(GcAllocationSegment segment, GcHeapMark mark)
         {
             if (mark.Heap < 0) return;
-            gcSampler?.Allocated(segment, mark.Heap, GC.GetTotalMemory(false), GC.CollectionCount(0) != mark.Collections);
+            gcSampler?.Allocated(segment, mark.Heap, GcAllocationCounter.Read(), GcAllocationCounter.Collections != mark.Collections);
         }
 
         private static int GcCount(int generation) => generation > GC.MaxGeneration ? 0 : GC.CollectionCount(generation);
@@ -59,8 +60,9 @@ namespace PersistentCity.Runtime
             if (action == "start" && detail.Length == 0)
             {
                 gcSampler ??= new GcPauseSampler();
-                gcSampler.Start(GC.GetTotalMemory(false));
-                Debug.Log("[Persistent City] gc measurement started (diagnostic only, " + GcPauseSampler.PolicyId + ", " + gcSampler.Capacity + " stored frames). Use pc gc report or pc gc stop.");
+                string counter = GcAllocationCounter.Probe();
+                gcSampler.Start(GC.GetTotalMemory(false), counter);
+                Debug.Log("[Persistent City] gc measurement started (diagnostic only, " + GcPauseSampler.PolicyId + ", " + gcSampler.Capacity + " stored frames, allocation counter " + counter + "). Use pc gc report or pc gc stop.");
                 return;
             }
             if ((action == "stop" || action == "report") && detail.Length == 0)

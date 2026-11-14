@@ -116,7 +116,7 @@ namespace PersistentCity.Runtime
     internal static class NativeInteriorCityView
     {
         internal static bool Configured => false;
-        internal static InteriorViewState State => new();
+        internal static readonly InteriorViewState State = new();
         internal static double AdmissionRadius(double r) => r;
         internal static double ReleaseRadius(double r) => r * 1.2;
         internal static int Pedestrians(int n) => n;
@@ -285,6 +285,8 @@ namespace PersistentCity.Runtime
         internal static Func<Position, bool>? VisiblePoint;
         internal static bool AppearOnScreen;
         internal Action? BeforeNavigation { get; set; }
+        internal long AppearanceBuilds => Acquisitions.Count;
+        internal long AppearanceReuses => 0;
         internal bool Visible(Position at) => VisiblePoint?.Invoke(at) == true;
         internal bool TryAcquire(CitizenIdentity identity, Position position, out PhysicalPedestrianBody? body)
         {

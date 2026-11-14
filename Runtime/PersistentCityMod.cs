@@ -351,11 +351,9 @@ namespace PersistentCity.Runtime
                         log?.Warn("Physical population unavailable; ordinary spawning restored, persistent background simulation remains active: " + error);
                     }
                 }
-                var physicalHeap = GcAllocationBegin();
-                PhysicalPopulation.AllocationSampler = physicalHeap.Heap >= 0 ? gcSampler : null;
+                PhysicalAllocation.Begin(gcSampler);
                 try { RunPhysical(physicalUpdate ??= () => physical?.Update()); }
-                finally { PhysicalPopulation.AllocationSampler = null; }
-                GcAllocationEnd(GcAllocationSegment.Physical, physicalHeap);
+                finally { PhysicalAllocation.End(); }
                 UpdateInspector();
                 if (Time.unscaledTime >= nextSummary)
                 {

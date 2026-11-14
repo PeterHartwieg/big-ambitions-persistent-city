@@ -1,5 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
+using System.IO;
+using System.Text;
 using BigAmbitions.Characters;
 using BigAmbitions.Characters.Appearance;
 using Extensions;
@@ -19,7 +22,9 @@ namespace PersistentCity.Runtime
         private readonly Transform parent;
         private readonly int maximum;
         private readonly List<ThirdPersonCharacter> all = new List<ThirdPersonCharacter>();
-        private readonly Stack<ThirdPersonCharacter> idle = new Stack<ThirdPersonCharacter>();
+        private readonly DressedBodyPool<ThirdPersonCharacter> idle = new DressedBodyPool<ThirdPersonCharacter>();
+        public long AppearanceBuilds { get; private set; }
+        public long AppearanceReuses { get; private set; }
         private readonly Dictionary<string, PhysicalPedestrianBody> active = new Dictionary<string, PhysicalPedestrianBody>(StringComparer.Ordinal);
         private long generation;
         private bool disposed;
@@ -46,7 +51,10 @@ namespace PersistentCity.Runtime
             UnityEngine.Random.State dice = UnityEngine.Random.state;
             try
             {
-                if (idle.Count > 0) character = idle.Pop();
+                int daysPerYear = SaveGameManager.Current?.gameVariables.daysPerYear ?? 60;
+                if (daysPerYear < 8) daysPerYear = 60;
+                var dressing = new PersonDressing(identity, daysPerYear);
+                if (idle.TryTake(dressing, out var pooled, out bool dressed)) character = pooled;
                 else
                 {
                     if (all.Count >= maximum) return false;
@@ -83,37 +91,25 @@ namespace PersistentCity.Runtime
                 character.navmeshAgent.stoppingDistance = 0.02f;
                 character.capsuleCollider.enabled = true;
                 if (character.characterRigidbody != null) character.characterRigidbody.isKinematic = true;
-                character.gameObject.name = "PersistentCity " + identity.Id;
+                if (!dressed) character.gameObject.name = "PersistentCity " + identity.Id;
                 character.gameObject.SetActive(true);
                 character.navmeshAgent.enabled = true;
                 if (!character.navmeshAgent.Warp(hit.position) || !character.navmeshAgent.isOnNavMesh) throw new InvalidOperationException("NPC warp failed");
                 character.navmeshAgent.ResetPath(); character.navmeshAgent.isStopped = true;
                 character.ResetAnimator();
                 var appearance = character.appearanceSetter;
-                int daysPerYear = SaveGameManager.Current?.gameVariables.daysPerYear ?? 60;
-                if (daysPerYear < 8) daysPerYear = 60;
-                appearance.data = new CharacterData { name = identity.Name, ageInDays = checked(Mathf.Clamp(identity.Age, 18, 85) * daysPerYear) };
-                var look = PersonAppearance.For(identity);
-                var gender = identity.Female ? Gender.Female : Gender.Male;
-                var skin = SkinColorHelper.GetRandom(identity.AppearanceSeed);
-                UnityEngine.Random.InitState(look.Seed);
-                appearance.RandomizeElements(gender, skin, new[] { Tag(look.Wardrobe) }, look.Seed);
-                if (look.Wardrobe != Wardrobe.Casual && (appearance.data.elements == null || appearance.data.elements.Count == 0))
+                if (dressed)
                 {
-                    UnityEngine.Random.InitState(look.Seed);
-                    appearance.RandomizeElements(gender, skin, new[] { AppearanceTag.Casual }, look.Seed);
+                    if (appearance.data?.elements == null || appearance.data.elements.Count == 0) throw new InvalidOperationException("Empty appearance");
+                    AppearanceReuses++;
                 }
-                appearance.data.fatness = Mathf.Min(appearance.data.fatness, 0.55f);
-                if (appearance.data.elements == null || appearance.data.elements.Count == 0) throw new InvalidOperationException("Empty appearance");
-                string expectedAppearance = JsonConvert.SerializeObject(appearance.data);
-                appearance.UpdateVisuals();
-                if (JsonConvert.SerializeObject(appearance.data) != expectedAppearance || appearance.GetSelectedMeshRenderers().Count == 0) throw new InvalidOperationException("Appearance meshes unavailable");
+                else Dress(appearance, identity, daysPerYear);
                 character.ToggleVisibility(true, includePhysics: false);
                 character.OnVisibleChanged(true);
                 character.animator.enabled = true;
                 if (appearance.lastMergedMeshRenderer != null) appearance.lastMergedMeshRenderer.enabled = true;
                 if (character.shadowCaster != null) character.shadowCaster.enabled = true;
-                body = new PhysicalPedestrianBody(character, identity.Id, checked(++generation));
+                body = new PhysicalPedestrianBody(character, identity.Id, checked(++generation)) { Dressing = dressing };
                 var relay = character.capsuleCollider.gameObject.GetComponent<PhysicalPedestrianCrosswalk>();
                 if (relay == null) relay = character.capsuleCollider.gameObject.AddComponent<PhysicalPedestrianCrosswalk>();
                 relay.Body = body;
@@ -126,6 +122,52 @@ namespace PersistentCity.Runtime
                 body = null; return false;
             }
             finally { UnityEngine.Random.state = dice; }
+        }
+
+        private void Dress(AppearanceSetter appearance, CitizenIdentity identity, int daysPerYear)
+        {
+            PhysicalAllocation.Charge(PersistentCity.Core.GcAllocationSegment.PhysicalSpawnPedestrian);
+            appearance.data = new CharacterData { name = identity.Name, ageInDays = checked(Mathf.Clamp(identity.Age, 18, 85) * daysPerYear) };
+            var look = PersonAppearance.For(identity);
+            var gender = identity.Female ? Gender.Female : Gender.Male;
+            var skin = SkinColorHelper.GetRandom(identity.AppearanceSeed);
+            UnityEngine.Random.InitState(look.Seed);
+            appearance.RandomizeElements(gender, skin, new[] { Tag(look.Wardrobe) }, look.Seed);
+            if (look.Wardrobe != Wardrobe.Casual && (appearance.data.elements == null || appearance.data.elements.Count == 0))
+            {
+                UnityEngine.Random.InitState(look.Seed);
+                appearance.RandomizeElements(gender, skin, new[] { AppearanceTag.Casual }, look.Seed);
+            }
+            appearance.data.fatness = Mathf.Min(appearance.data.fatness, 0.55f);
+            if (appearance.data.elements == null || appearance.data.elements.Count == 0) throw new InvalidOperationException("Empty appearance");
+            PhysicalAllocation.Charge(PersistentCity.Core.GcAllocationSegment.PhysicalSpawnAppearance);
+            Snapshot(appearance.data, expectedAppearance);
+            PhysicalAllocation.Charge(PersistentCity.Core.GcAllocationSegment.PhysicalSpawnCheck);
+            appearance.UpdateVisuals();
+            PhysicalAllocation.Charge(PersistentCity.Core.GcAllocationSegment.PhysicalSpawnAppearance);
+            Snapshot(appearance.data, actualAppearance);
+            bool same = SameText(expectedAppearance, actualAppearance);
+            PhysicalAllocation.Charge(PersistentCity.Core.GcAllocationSegment.PhysicalSpawnCheck);
+            if (!same || appearance.GetSelectedMeshRenderers().Count == 0) throw new InvalidOperationException("Appearance meshes unavailable");
+            PhysicalAllocation.Charge(PersistentCity.Core.GcAllocationSegment.PhysicalSpawnAppearance);
+            AppearanceBuilds++;
+        }
+
+        private static JsonSerializer? appearanceSerializer;
+        private static readonly StringBuilder expectedAppearance = new StringBuilder(8192), actualAppearance = new StringBuilder(8192);
+        private static void Snapshot(CharacterData data, StringBuilder into)
+        {
+            into.Length = 0;
+            appearanceSerializer ??= JsonSerializer.CreateDefault();
+            using var writer = new StringWriter(into, CultureInfo.InvariantCulture);
+            using var json = new JsonTextWriter(writer) { Formatting = Formatting.None };
+            appearanceSerializer.Serialize(json, data);
+        }
+        private static bool SameText(StringBuilder a, StringBuilder b)
+        {
+            if (a.Length != b.Length) return false;
+            for (int i = 0; i < a.Length; i++) if (a[i] != b[i]) return false;
+            return true;
         }
 
         private static AppearanceTag Tag(Wardrobe wardrobe) => wardrobe switch
@@ -152,7 +194,7 @@ namespace PersistentCity.Runtime
             NotifyRemoved(character);
             character.navmeshAgent.enabled = false; character.capsuleCollider.enabled = false;
             character.gameObject.SetActive(false);
-            idle.Push(character);
+            idle.Return(character, body.Dressing);
         }
 
         private static void NotifyRemoved(ThirdPersonCharacter character)
@@ -205,6 +247,7 @@ namespace PersistentCity.Runtime
         { Character = character; IdentityId = identityId; Generation = generation; }
         public string IdentityId { get; }
         public long Generation { get; }
+        internal PersonDressing Dressing { get; set; }
         public ThirdPersonCharacter Character { get; }
         public CapsuleCollider Capsule => Character.capsuleCollider;
         public NavMeshAgent Agent => Character.navmeshAgent;

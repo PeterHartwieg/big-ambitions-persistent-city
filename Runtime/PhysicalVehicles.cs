@@ -404,7 +404,8 @@ namespace PersistentCity.Runtime
             var rootPosition = Vector(PhysicalVehicleReference.Root(sample.Position, Point(markerOffset), Point(direction)));
             var clearance = new Vector3(Math.Max(0.5f, model.Width + Math.Abs(markerOffset.x)),
                 Math.Max(0.3f, model.Height / 2f - 0.15f), Math.Max(1f, model.Length + Math.Abs(markerOffset.z)));
-            int mask = LayerMask.GetMask("Vehicles", "AiVehicles", "PlayerVehicles", "Obstacles", "Default");
+            if (spawnMask < 0) spawnMask = LayerMask.GetMask("Vehicles", "AiVehicles", "PlayerVehicles", "Obstacles", "Default");
+            int mask = spawnMask;
             LastAdmissionStage = "spawn obstruction";
             parked.TryGetValue(citizen.Car.Id, out var standing);
             bool blocked;
@@ -701,7 +702,7 @@ namespace PersistentCity.Runtime
         }
 
         private readonly RaycastHit[] hits = new RaycastHit[16];
-        private static int obstacleMask = -1;
+        private static int obstacleMask = -1, spawnMask = -1;
         private double? ObstacleAhead(PhysicalVehicleBody body)
         {
             if (obstacleMask < 0) obstacleMask = LayerMask.GetMask("Vehicles", "AiVehicles", "PlayerVehicles", "Player", "Obstacles", "Pedestrians", "Pedestrian", "Characters");
@@ -729,8 +730,9 @@ namespace PersistentCity.Runtime
             var keep = parkedKeep;
             keep.Clear();
             int count = 0;
-            foreach (var entry in wanted)
+            for (int index = 0; index < wanted.Count; index++)
             {
+                var entry = wanted[index];
                 if (count >= maximum) break;
                 if (bodies.ContainsKey(entry.CarId)) continue;
                 keep.Add(entry.CarId); count++;
