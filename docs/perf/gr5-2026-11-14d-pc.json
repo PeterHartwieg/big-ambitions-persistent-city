@@ -1,0 +1,114 @@
+{
+  "candidate": "913abd7dbfdcd7f7651baad768169f66bf698dfb",
+  "role": "rig_test",
+  "where": "pc",
+  "result": "BLOCKED",
+  "counts": {
+    "pass": 0,
+    "partial": 0,
+    "fail": 0,
+    "not_run": 9
+  },
+  "agent_rig_head": "4bcf80aa04431f3b54cac19335c9c4cbb57a4b48",
+  "ops_sha256": "fe4c40c1ba70512eb0b14704e275c1fa4842e98100ba563cc2d559a13be6bf6a",
+  "pc_dll_sha256": "087fe9aa8c506c3d2fa43df62fec0f08450095ca415f7c3ffebf64bfd28bde29",
+  "start": {
+    "command": "python scripts/agent start --mode windowed --rig-test",
+    "error": "agent: error: unrecognized arguments: --rig-test",
+    "started": false
+  },
+  "cap": {
+    "file_bytes": "{\"fps\":60,\"vsync\":0}",
+    "requested": null,
+    "applied": null,
+    "vsync_count": null,
+    "target_frame_rate": null,
+    "measured_fps": null,
+    "window_s": null
+  },
+  "arms": [
+    {
+      "name": "street-60",
+      "status": "NOT RUN / tooling gap",
+      "requested_seconds": 600,
+      "elapsed_seconds": null,
+      "measured_fps": null,
+      "frame_p95_ms": null,
+      "frame_p99_ms": null,
+      "gen0_count": null,
+      "pause_p95_ms": null,
+      "mono_heap_bytes": null,
+      "update_city_p95_ms": null,
+      "street_mod_work_p95_ms": null,
+      "spikes_30ms": null
+    },
+    {
+      "name": "busy-shop-60",
+      "status": "NOT RUN / tooling gap",
+      "requested_seconds": 600,
+      "elapsed_seconds": null,
+      "measured_fps": null,
+      "frame_p95_ms": null,
+      "frame_p99_ms": null,
+      "gen0_count": null,
+      "pause_p95_ms": null,
+      "mono_heap_bytes": null,
+      "update_city_p95_ms": null,
+      "street_mod_work_p95_ms": null,
+      "spikes_30ms": null
+    }
+  ],
+  "load": {
+    "at_utc": "2026-11-14T14:04:53.5097413Z",
+    "context": "post-cleanup preparation inventory; no measured window",
+    "cpu_percent": 51,
+    "total_memory_kib": 66938060,
+    "free_memory_kib": 26516228
+  },
+  "raw_evidence": "C:\\Users\\Peter\\HART-Builds\\persistent-city-rig-2026-11-14d-pc",
+  "restore": {
+    "files": [
+      {
+        "path": "C:\\BigAmbitions-AgentTests\\agent-install.json",
+        "verified": true
+      },
+      {
+        "path": "C:\\BigAmbitions-AgentTests\\install.json",
+        "verified": true
+      },
+      {
+        "path": "C:\\BigAmbitions-AgentTests\\run.json",
+        "verified": true
+      },
+      {
+        "path": "C:\\Users\\Peter\\AppData\\LocalLow\\Hovgaard Games\\Big Ambitions Agent Tests\\PlayerSettings.json",
+        "verified": true
+      },
+      {
+        "path": "C:\\Users\\Peter\\AppData\\LocalLow\\Hovgaard Games\\Big Ambitions Agent Tests\\persistent-city.json",
+        "verified": true
+      },
+      {
+        "path": "C:\\Users\\Peter\\AppData\\LocalLow\\Hovgaard Games\\Big Ambitions Agent Tests\\agent-frame-cap.json",
+        "verified": true
+      },
+      {
+        "path": "C:\\Users\\Peter\\AppData\\LocalLow\\Hovgaard Games\\Big Ambitions Agent Tests\\agent-save-mode.json",
+        "verified": true
+      },
+      {
+        "path": "C:\\Users\\Peter\\AppData\\LocalLow\\Hovgaard Games\\Big Ambitions Agent Tests\\agent-runtime.json",
+        "verified": true
+      },
+      {
+        "path": "C:\\Users\\Peter\\AppData\\LocalLow\\Hovgaard Games\\Big Ambitions Agent Tests\\tracked_commands.json",
+        "verified": true
+      }
+    ],
+    "persistent_city_verified": true,
+    "registry_verified": true,
+    "game_closed": true,
+    "started_processes": []
+  },
+  "lease_free_at_cleanup": true
+}
