@@ -1,0 +1,632 @@
+{
+  "run": {
+    "candidate": "b3d58a6a8c3f53eaa82652203b35e5ccf73b9241",
+    "agent_rig_head": "f6a2738eec9de76ff2b6e614263a0e528fbf7974",
+    "rig_ops_sha256": "51b387f84f41508e3a5bd6765dce582982c3ac40cc2810f4a4e69ec55e6e8142",
+    "pc_dll_sha256": "c5fa3d98fed91d8a219eb8ba88ebcb2fe377817458def47c498873db622335c3",
+    "receipt_backups": "/Users/peterhartwieg/Library/Application Support/BigAmbitionsAgentTestsMac/receipt-backups/20261114T090950Z",
+    "role": "rig_test",
+    "where": "mac",
+    "provisional": true
+  },
+  "gc": [
+    {
+      "label": "gc-day",
+      "report": {
+        "policy": "gc-sampler-v1",
+        "mode": "measurement",
+        "running": true,
+        "residents": 1000,
+        "visitors": 2000,
+        "persons": 3000,
+        "person_target": null,
+        "max_generation": 0,
+        "incremental": true,
+        "frames": 16834,
+        "frames_stored": 16834,
+        "frames_dropped": 0,
+        "collection_frames": 11,
+        "gen0": 11,
+        "gen1": 0,
+        "gen2": 0,
+        "heap_start_bytes": 1231052800,
+        "heap_end_bytes": 1416048640,
+        "heap_peak_bytes": 1416048640,
+        "heap_before_gc_bytes": 1341781457,
+        "heap_after_gc_bytes": 1195881192,
+        "mono_heap_bytes": 1416757248,
+        "mono_used_bytes": 1416474624,
+        "frame_ms_gc": {
+          "count": 11,
+          "p50": 61.896,
+          "p95": 137.752,
+          "max": 137.752
+        },
+        "frame_ms_plain": {
+          "count": 16823,
+          "p50": 33.889,
+          "p95": 38.822,
+          "max": 173.239
+        },
+        "pause_ms": {
+          "count": 11,
+          "p50": 28.007,
+          "p95": 103.863,
+          "max": 103.863
+        },
+        "mod_ms_gc": {
+          "count": 11,
+          "p50": 0.865,
+          "p95": 83.274,
+          "max": 83.274
+        },
+        "mod_ms_plain": {
+          "count": 16823,
+          "p50": 0.634,
+          "p95": 4.212,
+          "max": 66.442
+        },
+        "gc_spikes_30ms": 11,
+        "frame_spikes_30ms": 16816,
+        "max_frame_ms": 173.239,
+        "max_mod_ms": 83.274,
+        "alloc_frames": 16823,
+        "frame_alloc_bytes": 1789841408,
+        "mod_alloc_bytes": 978952192,
+        "mod_alloc_samples": 16832,
+        "mod_alloc_skipped": 3,
+        "advance_alloc_bytes": 106491904,
+        "advance_alloc_samples": 16735,
+        "advance_alloc_skipped": 0,
+        "physical_alloc_bytes": 809504768,
+        "physical_alloc_samples": 16733,
+        "physical_alloc_skipped": 2,
+        "physical_ambient_alloc_bytes": 1134592,
+        "physical_ambient_alloc_samples": 16735,
+        "physical_ambient_alloc_skipped": 0,
+        "physical_vehicles_alloc_bytes": 12288,
+        "physical_vehicles_alloc_samples": 16735,
+        "physical_vehicles_alloc_skipped": 0,
+        "physical_bindings_alloc_bytes": 4096,
+        "physical_bindings_alloc_samples": 16735,
+        "physical_bindings_alloc_skipped": 0
+      },
+      "human": "[Persistent City] gc measurement (diagnostic only): persons=3000 frames=16834 collections gen0/1/2=11/0/0 pause p50/p95/max=28.01/103.86/103.86 ms, gc frames >= 30 ms=11, heap 1174.0 MB -> 1350.4 MB (peak 1350.4 MB)",
+      "perf": {
+        "label": "gc-day",
+        "started_utc": "2026-11-14T09:11:42.8333590Z",
+        "ended_utc": "2026-11-14T09:21:43.4061730Z",
+        "seconds": 600.573,
+        "whole_frame": {
+          "count": 16839,
+          "p50_ms": 33.8411,
+          "p95_ms": 38.5703,
+          "max_ms": 235.852,
+          "spikes_30ms": 16556,
+          "truncated": false
+        },
+        "native_saving_frames": 0,
+        "activity_before": {
+          "rig_test": true,
+          "guard_installed": true,
+          "save_specific": false,
+          "allow": [],
+          "error": null,
+          "attempts": 0,
+          "default_allowed": 0,
+          "armed_allowed": 0,
+          "refused": 0,
+          "unrestricted": 0,
+          "in_progress": false,
+          "compress_thread_alive": false,
+          "autosave_minutes": 5,
+          "autosave_max_per_game": 3,
+          "prevent_autosave": false
+        },
+        "activity_after": {
+          "rig_test": true,
+          "guard_installed": true,
+          "save_specific": false,
+          "allow": [],
+          "error": null,
+          "attempts": 10889,
+          "default_allowed": 0,
+          "armed_allowed": 0,
+          "refused": 10889,
+          "unrestricted": 0,
+          "in_progress": false,
+          "compress_thread_alive": false,
+          "autosave_minutes": 5,
+          "autosave_max_per_game": 3,
+          "prevent_autosave": false
+        },
+        "save_activity": {
+          "attempts": 10889,
+          "allowed": 0,
+          "refused": 10889,
+          "native_saving_frames": 0,
+          "clean": true,
+          "invalid_reasons": []
+        }
+      },
+      "autosave_before": {
+        "enabled": true,
+        "autosave_disabled": true,
+        "save_mode": {
+          "save_specific": false,
+          "allow": [],
+          "error": null
+        },
+        "suppressed": true
+      },
+      "autosave_after": {
+        "enabled": true,
+        "autosave_disabled": true,
+        "save_mode": {
+          "save_specific": false,
+          "allow": [],
+          "error": null
+        },
+        "suppressed": true
+      },
+      "clock_before": {
+        "day": 2,
+        "weekday": "Tuesday",
+        "time": "15:30",
+        "paused": false,
+        "speed": 1.0,
+        "run_until": null,
+        "arrived_at": null,
+        "keep_needs": true
+      },
+      "clock_after": {
+        "day": 2,
+        "weekday": "Tuesday",
+        "time": "18:25",
+        "paused": false,
+        "speed": 1.0,
+        "run_until": null,
+        "arrived_at": null,
+        "keep_needs": true
+      }
+    },
+    {
+      "label": "gc-night",
+      "report": {
+        "policy": "gc-sampler-v1",
+        "mode": "measurement",
+        "running": true,
+        "residents": 1000,
+        "visitors": 2000,
+        "persons": 3000,
+        "person_target": null,
+        "max_generation": 0,
+        "incremental": true,
+        "frames": 17077,
+        "frames_stored": 17077,
+        "frames_dropped": 0,
+        "collection_frames": 9,
+        "gen0": 9,
+        "gen1": 0,
+        "gen2": 0,
+        "heap_start_bytes": 1350963200,
+        "heap_end_bytes": 1308385280,
+        "heap_peak_bytes": 1466814464,
+        "heap_before_gc_bytes": 1440841728,
+        "heap_after_gc_bytes": 1290604544,
+        "mono_heap_bytes": 1536327680,
+        "mono_used_bytes": 1308618752,
+        "frame_ms_gc": {
+          "count": 9,
+          "p50": 63.919,
+          "p95": 103.936,
+          "max": 103.936
+        },
+        "frame_ms_plain": {
+          "count": 17068,
+          "p50": 33.815,
+          "p95": 37.74,
+          "max": 175.602
+        },
+        "pause_ms": {
+          "count": 9,
+          "p50": 30.104,
+          "p95": 70.122,
+          "max": 70.122
+        },
+        "mod_ms_gc": {
+          "count": 9,
+          "p50": 0.468,
+          "p95": 63.454,
+          "max": 63.454
+        },
+        "mod_ms_plain": {
+          "count": 17068,
+          "p50": 0.295,
+          "p95": 2.987,
+          "max": 86.786
+        },
+        "gc_spikes_30ms": 9,
+        "frame_spikes_30ms": 17075,
+        "max_frame_ms": 175.602,
+        "max_mod_ms": 86.786,
+        "alloc_frames": 17068,
+        "frame_alloc_bytes": 1309499392,
+        "mod_alloc_bytes": 424472576,
+        "mod_alloc_samples": 17076,
+        "mod_alloc_skipped": 2,
+        "advance_alloc_bytes": 20717568,
+        "advance_alloc_samples": 16975,
+        "advance_alloc_skipped": 0,
+        "physical_alloc_bytes": 360747008,
+        "physical_alloc_samples": 16974,
+        "physical_alloc_skipped": 1,
+        "physical_ambient_alloc_bytes": 798720,
+        "physical_ambient_alloc_samples": 16975,
+        "physical_ambient_alloc_skipped": 0,
+        "physical_vehicles_alloc_bytes": 0,
+        "physical_vehicles_alloc_samples": 16975,
+        "physical_vehicles_alloc_skipped": 0,
+        "physical_bindings_alloc_bytes": 8192,
+        "physical_bindings_alloc_samples": 16975,
+        "physical_bindings_alloc_skipped": 0
+      },
+      "human": "[Persistent City] gc measurement (diagnostic only): persons=3000 frames=17077 collections gen0/1/2=9/0/0 pause p50/p95/max=30.10/70.12/70.12 ms, gc frames >= 30 ms=9, heap 1288.4 MB -> 1247.8 MB (peak 1398.9 MB)",
+      "perf": {
+        "label": "gc-night",
+        "started_utc": "2026-11-14T09:24:23.5889510Z",
+        "ended_utc": "2026-11-14T09:34:23.9211370Z",
+        "seconds": 600.332,
+        "whole_frame": {
+          "count": 17082,
+          "p50_ms": 33.7776,
+          "p95_ms": 37.6928,
+          "max_ms": 194.3882,
+          "spikes_30ms": 16796,
+          "truncated": false
+        },
+        "native_saving_frames": 0,
+        "activity_before": {
+          "rig_test": true,
+          "guard_installed": true,
+          "save_specific": false,
+          "allow": [],
+          "error": null,
+          "attempts": 15308,
+          "default_allowed": 0,
+          "armed_allowed": 0,
+          "refused": 15308,
+          "unrestricted": 0,
+          "in_progress": false,
+          "compress_thread_alive": false,
+          "autosave_minutes": 5,
+          "autosave_max_per_game": 3,
+          "prevent_autosave": false
+        },
+        "activity_after": {
+          "rig_test": true,
+          "guard_installed": true,
+          "save_specific": false,
+          "allow": [],
+          "error": null,
+          "attempts": 32390,
+          "default_allowed": 0,
+          "armed_allowed": 0,
+          "refused": 32390,
+          "unrestricted": 0,
+          "in_progress": false,
+          "compress_thread_alive": false,
+          "autosave_minutes": 5,
+          "autosave_max_per_game": 3,
+          "prevent_autosave": false
+        },
+        "save_activity": {
+          "attempts": 17082,
+          "allowed": 0,
+          "refused": 17082,
+          "native_saving_frames": 0,
+          "clean": true,
+          "invalid_reasons": []
+        }
+      },
+      "autosave_before": {
+        "enabled": true,
+        "autosave_disabled": true,
+        "save_mode": {
+          "save_specific": false,
+          "allow": [],
+          "error": null
+        },
+        "suppressed": true
+      },
+      "autosave_after": {
+        "enabled": true,
+        "autosave_disabled": true,
+        "save_mode": {
+          "save_specific": false,
+          "allow": [],
+          "error": null
+        },
+        "suppressed": true
+      },
+      "clock_before": {
+        "day": 3,
+        "weekday": "Wednesday",
+        "time": "01:00",
+        "paused": false,
+        "speed": 1.0,
+        "run_until": null,
+        "arrived_at": null,
+        "keep_needs": true
+      },
+      "clock_after": {
+        "day": 3,
+        "weekday": "Wednesday",
+        "time": "04:10",
+        "paused": false,
+        "speed": 1.0,
+        "run_until": null,
+        "arrived_at": null,
+        "keep_needs": true
+      }
+    }
+  ],
+  "street": {
+    "format": "agent-rig-modwork/1",
+    "label": "street",
+    "condition": null,
+    "started_utc": "2026-11-14T09:36:59.7226360Z",
+    "ended_utc": "2026-11-14T09:47:01.0010350Z",
+    "seconds": 601.278,
+    "frames": 3494,
+    "skipped_unity_frames": 0,
+    "mod_work": {
+      "count": 3494,
+      "p50_ms": 1.19,
+      "p95_ms": 5.3216,
+      "p99_ms": 7.817,
+      "max_ms": 221.6495,
+      "mean_ms": 2.2996,
+      "spikes_30ms": 3,
+      "spikes": [
+        {
+          "frame_index": 78,
+          "frame": 4387,
+          "ms": 221.6495,
+          "whole_frame_ms": 453.8571,
+          "condition": "hour=15",
+          "dominant": "updatecity",
+          "dominant_group": "updatecity",
+          "components": {
+            "updatecity": 221.5981,
+            "PopulationRuntime.LateUpdate": 0.0251,
+            "NativeCityClock.AccountingPrefix": 0.0108,
+            "ResidentInspector.UiRaycastPrefix": 0.0052,
+            "PopulationRuntime.Update": 0.0052,
+            "ResidentInspector.MouseRunPrefix": 0.0014
+          }
+        },
+        {
+          "frame_index": 79,
+          "frame": 4388,
+          "ms": 44.1359,
+          "whole_frame_ms": 335.1515,
+          "condition": "hour=15",
+          "dominant": "updatecity",
+          "dominant_group": "updatecity",
+          "components": {
+            "updatecity": 44.0248,
+            "PopulationRuntime.Update": 0.037,
+            "PhysicalPedestrianCrosswalk.OnTriggerEnter": 0.0267,
+            "PopulationRuntime.LateUpdate": 0.0193,
+            "NativeCityClock.AccountingPrefix": 0.016,
+            "ResidentInspector.UiRaycastPrefix": 0.0061
+          }
+        },
+        {
+          "frame_index": 805,
+          "frame": 5114,
+          "ms": 35.4132,
+          "whole_frame_ms": 223.7165,
+          "condition": "hour=16",
+          "dominant": "updatecity",
+          "dominant_group": "updatecity",
+          "components": {
+            "updatecity": 35.3696,
+            "PopulationRuntime.LateUpdate": 0.0162,
+            "NativeCityClock.AccountingPrefix": 0.0118,
+            "ResidentInspector.UiRaycastPrefix": 0.0066,
+            "PopulationRuntime.Update": 0.0029,
+            "NativeTravelPace.ObserveTickPostfix": 0.0014
+          }
+        }
+      ],
+      "spikes_listed": 3
+    },
+    "whole_frame": {
+      "count": 3494,
+      "p50_ms": 166.7388,
+      "p95_ms": 198.1789,
+      "p99_ms": 281.4663,
+      "max_ms": 490.1394,
+      "mean_ms": 171.8847,
+      "spikes_30ms": 3494
+    },
+    "groups": {
+      "frame_update": {
+        "count": 3494,
+        "p50_ms": 0.0157,
+        "p95_ms": 0.0207,
+        "p99_ms": 0.0363,
+        "max_ms": 3.1763,
+        "mean_ms": 0.0192,
+        "dominant_in_spikes": 0
+      },
+      "native_hook": {
+        "count": 3494,
+        "p50_ms": 0.0243,
+        "p95_ms": 0.0265,
+        "p99_ms": 0.0299,
+        "max_ms": 0.602,
+        "mean_ms": 0.0245,
+        "dominant_in_spikes": 0
+      },
+      "unity_message": {
+        "count": 3494,
+        "p50_ms": 0.0,
+        "p95_ms": 0.0151,
+        "p99_ms": 0.0206,
+        "max_ms": 0.3276,
+        "mean_ms": 0.002,
+        "dominant_in_spikes": 0
+      },
+      "updatecity": {
+        "count": 3494,
+        "p50_ms": 1.1447,
+        "p95_ms": 5.2683,
+        "p99_ms": 7.7454,
+        "max_ms": 221.5981,
+        "mean_ms": 2.2537,
+        "dominant_in_spikes": 3
+      }
+    },
+    "spikes_by_component": {
+      "updatecity": 3
+    },
+    "spikes_by_group": {
+      "updatecity": 3
+    },
+    "spikes_by_condition": {
+      "hour=15": 2,
+      "hour=16": 1
+    },
+    "by_condition": {
+      "hour=15": {
+        "count": 646,
+        "p50_ms": 0.7176,
+        "p95_ms": 4.2252,
+        "p99_ms": 7.8883,
+        "max_ms": 221.6495,
+        "mean_ms": 1.6701,
+        "spikes_30ms": 2
+      },
+      "hour=16": {
+        "count": 1473,
+        "p50_ms": 1.0849,
+        "p95_ms": 5.3098,
+        "p99_ms": 7.817,
+        "max_ms": 35.4132,
+        "mean_ms": 2.0688,
+        "spikes_30ms": 1
+      },
+      "hour=17": {
+        "count": 1375,
+        "p50_ms": 3.401,
+        "p95_ms": 5.5921,
+        "p99_ms": 7.7437,
+        "max_ms": 13.5563,
+        "mean_ms": 2.8425,
+        "spikes_30ms": 0
+      }
+    },
+    "validity": {
+      "off_main_thread_calls": 0,
+      "cross_frame_scopes": 0,
+      "unbalanced_exits": 0,
+      "depth_overflow": 0,
+      "frames_dropped": 0,
+      "valid": true,
+      "invalid_reasons": []
+    },
+    "coverage": {
+      "assembly": "PersistentCity",
+      "bound": 62,
+      "untimed": [],
+      "missing_components": [],
+      "patch_failures": [],
+      "complete": true,
+      "qualification": "Union of the mod assembly's Unity messages (Update/LateUpdate/FixedUpdate/OnGUI, Start/OnDestroy, OnTrigger*/OnCollision* and the rest), its Harmony prefixes/postfixes/finalizers, the mod methods its transpilers inject into native IL, GlobalEvents and SceneManager subscribers and IModBigAmbitions methods, timed in place. Coroutines, worker threads and callbacks registered with other native events are not timed. Observer overhead of nested scopes stays inside the union."
+    },
+    "perf": {
+      "label": "street",
+      "started_utc": "2026-11-14T09:37:00.4509050Z",
+      "ended_utc": "2026-11-14T09:47:00.6970610Z",
+      "seconds": 600.246,
+      "whole_frame": {
+        "count": 3493,
+        "p50_ms": 166.6647,
+        "p95_ms": 196.3584,
+        "max_ms": 506.988,
+        "spikes_30ms": 3493,
+        "truncated": false
+      },
+      "native_saving_frames": 0,
+      "activity_before": {
+        "rig_test": true,
+        "guard_installed": true,
+        "save_specific": false,
+        "allow": [],
+        "error": null,
+        "attempts": 0,
+        "default_allowed": 0,
+        "armed_allowed": 0,
+        "refused": 0,
+        "unrestricted": 0,
+        "in_progress": false,
+        "compress_thread_alive": false,
+        "autosave_minutes": 5,
+        "autosave_max_per_game": 3,
+        "prevent_autosave": false
+      },
+      "activity_after": {
+        "rig_test": true,
+        "guard_installed": true,
+        "save_specific": false,
+        "allow": [],
+        "error": null,
+        "attempts": 2359,
+        "default_allowed": 0,
+        "armed_allowed": 0,
+        "refused": 2359,
+        "unrestricted": 0,
+        "in_progress": false,
+        "compress_thread_alive": false,
+        "autosave_minutes": 5,
+        "autosave_max_per_game": 3,
+        "prevent_autosave": false
+      },
+      "save_activity": {
+        "attempts": 2359,
+        "allowed": 0,
+        "refused": 2359,
+        "native_saving_frames": 0,
+        "clean": true,
+        "invalid_reasons": []
+      }
+    },
+    "autosave_before": {
+      "enabled": true,
+      "autosave_disabled": true,
+      "save_mode": {
+        "save_specific": false,
+        "allow": [],
+        "error": null
+      },
+      "suppressed": true
+    },
+    "autosave_after": {
+      "enabled": true,
+      "autosave_disabled": true,
+      "save_mode": {
+        "save_specific": false,
+        "allow": [],
+        "error": null
+      },
+      "suppressed": true
+    }
+  },
+  "raw_manifest": {
+    "path": "/Users/peterhartwieg/HART-Builds/persistent-city-rig-2026-11-14a-mac/raw-evidence-manifest.json",
+    "sha256": "b033e410d9f4f6ac7eac81d4d164c5a70db0499374628f14762b2a988aeb8258"
+  }
+}
