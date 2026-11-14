@@ -56,6 +56,15 @@ namespace PersistentCity.Core
             return true;
         }
 
+        public bool HasDressed(in PersonDressing wanted)
+        {
+            for (int i = dressings.Count - 1; i >= 0; i--) if (dressings[i].Matches(wanted)) return true;
+            return false;
+        }
+
+        public bool WouldDefer(in PersonDressing wanted, int owned, int maximum, DressBuildBudget? budget, int frame, double seconds) =>
+            budget != null && !HasDressed(wanted) && !(owned >= maximum && items.Count == 0) && !budget.CanTake(frame, seconds);
+
         public BodyChoice Choose(in PersonDressing wanted, int owned, int maximum, DressBuildBudget? budget, int frame, double seconds, out T item)
         {
             if (TryTakeDressed(wanted, out item)) return BodyChoice.Hit;
@@ -88,6 +97,15 @@ namespace PersistentCity.Core
 
         public long Granted { get; private set; }
         public long Deferred { get; private set; }
+
+        public bool CanTake(int frame, double seconds)
+        {
+            if (double.IsNaN(seconds) || double.IsInfinity(seconds)) return false;
+            double available = tokens;
+            if (!double.IsNaN(lastSeconds) && seconds > lastSeconds) available = Math.Min(burst, tokens + (seconds - lastSeconds) * perSecond);
+            int built = frame != this.frame ? 0 : builtThisFrame;
+            return built < perFrame && available >= 1;
+        }
 
         public bool TryTake(int frame, double seconds)
         {

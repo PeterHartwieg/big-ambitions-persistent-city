@@ -45,8 +45,42 @@ public sealed class PhysicalAllocationAttributionTests
         Assert.Equal(100, sampler.SegmentBytes(GcAllocationSegment.PhysicalAmbient));
 
         long children = 0;
-        for (int i = (int)GcAllocationSegment.PhysicalAmbient; i < GcPauseSampler.Segments; i++) children += sampler.SegmentBytes((GcAllocationSegment)i);
+        for (int i = (int)GcAllocationSegment.PhysicalAmbient; i < GcPauseSampler.Segments; i++)
+            if (!GcPauseSampler.IsDetail((GcAllocationSegment)i)) children += sampler.SegmentBytes((GcAllocationSegment)i);
         Assert.Equal(sampler.SegmentBytes(GcAllocationSegment.Physical), children);
+    }
+
+    [Fact]
+    public void RandomizeAndBakeAreDetailsInsideAnUnchangedSpawnAppearance()
+    {
+        var sampler = new GcPauseSampler(64);
+        sampler.Start(1);
+        sampler.BeginNested(1000, 0);
+        sampler.Charge(GcAllocationSegment.PhysicalSpawnPedestrian, 1100, 0);
+        sampler.Detail(GcAllocationSegment.PhysicalSpawnRandomize, 1400, 0);
+        sampler.Charge(GcAllocationSegment.PhysicalSpawnAppearance, 1400, 0);
+        sampler.Charge(GcAllocationSegment.PhysicalSpawnCheck, 1450, 0);
+        sampler.Mark(9450, 0);
+        sampler.Detail(GcAllocationSegment.PhysicalSpawnBake, 9500, 0);
+        sampler.Charge(GcAllocationSegment.PhysicalSpawnAppearance, 9500, 0);
+        sampler.Charge(GcAllocationSegment.PhysicalSpawnCheck, 9520, 0);
+        sampler.Charge(GcAllocationSegment.PhysicalSpawnAppearance, 9530, 0);
+        sampler.EndNested(GcAllocationSegment.Physical, GcAllocationSegment.PhysicalUnattributed, 9530, 0);
+        Assert.Equal(300 + 8050 + 10, sampler.SegmentBytes(GcAllocationSegment.PhysicalSpawnAppearance));
+        Assert.Equal(3, sampler.SegmentSamples(GcAllocationSegment.PhysicalSpawnAppearance));
+        Assert.Equal(300, sampler.SegmentBytes(GcAllocationSegment.PhysicalSpawnRandomize));
+        Assert.Equal(50, sampler.SegmentBytes(GcAllocationSegment.PhysicalSpawnBake));
+        Assert.Equal(8530, sampler.SegmentBytes(GcAllocationSegment.Physical));
+        Assert.Equal(70, sampler.SegmentBytes(GcAllocationSegment.PhysicalSpawnCheck));
+
+        sampler.BeginNested(20000, 0);
+        sampler.Mark(20100, 0);
+        sampler.Detail(GcAllocationSegment.PhysicalSpawnBake, 20200, 1);
+        sampler.Charge(GcAllocationSegment.PhysicalSpawnAppearance, 20200, 1);
+        sampler.EndNested(GcAllocationSegment.Physical, GcAllocationSegment.PhysicalUnattributed, 20200, 1);
+        Assert.Equal(8530, sampler.SegmentBytes(GcAllocationSegment.Physical));
+        Assert.Equal(50, sampler.SegmentBytes(GcAllocationSegment.PhysicalSpawnBake));
+        Assert.Equal(1, sampler.SegmentSkipped(GcAllocationSegment.PhysicalSpawnBake));
     }
 
     [Fact]

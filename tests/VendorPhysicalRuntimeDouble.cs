@@ -289,10 +289,13 @@ namespace PersistentCity.Runtime
         internal long AppearanceReuses => 0;
         internal string LookDiagnostics => AppearanceBuilds + " built/" + AppearanceReuses + " reused";
         internal bool LastDeferred => false;
+        internal static Func<CitizenIdentity, bool>? Defer;
+        internal int DeferChecks, AcquireCalls;
+        internal bool WouldDefer(CitizenIdentity identity) { DeferChecks++; return Defer?.Invoke(identity) == true; }
         internal bool Visible(Position at) => VisiblePoint?.Invoke(at) == true;
         internal bool TryAcquire(CitizenIdentity identity, Position position, out PhysicalPedestrianBody? body, bool immediate = false)
         {
-            body = null;
+            body = null; AcquireCalls++;
             if (Active.ContainsKey(identity.Id) || Active.Count >= maximum) return false;
             Actor actor;
             if (idle.Count > 0) actor = idle.Pop();

@@ -12,6 +12,8 @@ namespace PersistentCity.Runtime
 {
     internal sealed partial class PhysicalPopulation
     {
+        internal const int DressScanLimit = 16;
+
         public void BeforeAdvance()
         {
             vehicles.AssertHealthy();
@@ -107,7 +109,7 @@ namespace PersistentCity.Runtime
             if (Time.unscaledTime < nextSelection || !routes.ReadyForPopulation) return;
             nextSelection = Time.unscaledTime + .25f;
             int people = personBindings, cars = bindings.Count - people;
-            int attempts = 0;
+            int attempts = 0, dressScans = 0;
             if (!journeyIndexFallback && Time.unscaledTime >= nextJourneyIndexCheck)
             {
                 nextJourneyIndexCheck = Time.unscaledTime + JourneyIndexCheckSeconds;
@@ -158,6 +160,11 @@ namespace PersistentCity.Runtime
                 bool queuer = !moving && queuers.TryGetValue(citizen.Identity.Id, out queue);
                 bool person = moving ? sample.Mode == TravelMode.Walk : queuer || Outdoor(citizen);
                 if ((!car && !person) || (car ? cars >= vehicleLimit : people >= pedestrianLimit)) continue;
+                if (!car && (dressScans >= DressScanLimit || pedestrians.WouldDefer(citizen.Identity)))
+                {
+                    if (dressScans < DressScanLimit) dressScans++;
+                    continue;
+                }
                 if (++attempts > 4) break;
                 attempted[citizen.Identity.Id] = Time.unscaledTime;
                 PhysicalRoadSample road = default;
@@ -196,7 +203,6 @@ namespace PersistentCity.Runtime
                         PhysicalAllocation.Charge(GcAllocationSegment.PhysicalSpawnPedestrian);
                         if (!taken && pedestrians.LastDeferred)
                         {
-                            attempts--;
                             if (float.IsNegativeInfinity(candidate.LastAttempt)) attempted.Remove(citizen.Identity.Id);
                             else attempted[citizen.Identity.Id] = candidate.LastAttempt;
                             continue;

@@ -276,6 +276,37 @@ public sealed class DressedBodyChurnTests
         Assert.False(new PersonDressing(older, 60).Matches(looks["p1"].Dressing));
     }
 
+    private static bool Granted(DressBuildBudget budget, int frame, double seconds)
+    {
+        long granted = budget.Granted, deferred = budget.Deferred;
+        bool can = budget.CanTake(frame, seconds);
+        Assert.Equal(can, budget.CanTake(frame, seconds));
+        Assert.Equal(granted, budget.Granted); Assert.Equal(deferred, budget.Deferred);
+        bool took = budget.TryTake(frame, seconds);
+        Assert.Equal(can, took);
+        return took;
+    }
+
+    [Fact]
+    public void WouldDeferPredictsChooseWithoutTakingABodyOrABuild()
+    {
+        var pool = new DressedBodyPool<Body>();
+        var budget = new DressBuildBudget(1, 1, 1);
+        var a = new PersonDressing(Identity(1), 60);
+        var b = new PersonDressing(Identity(2), 60);
+        pool.Return(new Body { Dressing = a }, a);
+        Assert.False(pool.WouldDefer(b, 1, 2, budget, 1, 0));
+        Assert.Equal(BodyChoice.Grow, pool.Choose(b, 1, 2, budget, 1, 0, out _));
+        Assert.True(pool.WouldDefer(b, 2, 2, budget, 1, 0));
+        Assert.False(pool.WouldDefer(a, 2, 2, budget, 1, 0));
+        Assert.False(pool.WouldDefer(b, 2, 2, null, 1, 0));
+        Assert.Equal(1, pool.Count);
+        Assert.Equal(BodyChoice.Deferred, pool.Choose(b, 2, 2, budget, 1, 0, out _));
+        Assert.Equal(BodyChoice.Hit, pool.Choose(a, 2, 2, budget, 1, 0, out _));
+        Assert.False(pool.WouldDefer(b, 2, 2, budget, 1, 0));
+        Assert.Equal(BodyChoice.Full, pool.Choose(b, 2, 2, budget, 1, 0, out _));
+    }
+
     [Fact]
     public void TheDressBudgetGrantsAtMostOneBuildPerFrameAndTheRateOverTime()
     {
@@ -286,7 +317,7 @@ public sealed class DressedBodyChurnTests
         {
             double seconds = frame / 60.0;
             for (int call = 0; call < 5; call++)
-                if (budget.TryTake(frame, seconds))
+                if (Granted(budget, frame, seconds))
                 {
                     granted++;
                     perFrame[frame] = perFrame.TryGetValue(frame, out int n) ? n + 1 : 1;

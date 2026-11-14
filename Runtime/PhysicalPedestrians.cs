@@ -41,6 +41,16 @@ namespace PersistentCity.Runtime
 
         public Action? BeforeNavigation { get; set; }
 
+        private static int DaysPerYear()
+        {
+            int days = SaveGameManager.Current?.gameVariables.daysPerYear ?? 60;
+            return days < 8 ? 60 : days;
+        }
+
+        public bool WouldDefer(CitizenIdentity identity) =>
+            !disposed && identity != null && identity.AppearanceSeed != 0
+            && idle.WouldDefer(new PersonDressing(identity, DaysPerYear()), all.Count, maximum, budget, Time.frameCount, Time.unscaledTimeAsDouble);
+
         public bool TryAcquire(CitizenIdentity identity, Position position, out PhysicalPedestrianBody? body, bool immediate = false)
         {
             body = null; LastDeferred = false;
@@ -53,8 +63,7 @@ namespace PersistentCity.Runtime
             UnityEngine.Random.State dice = UnityEngine.Random.state;
             try
             {
-                int daysPerYear = SaveGameManager.Current?.gameVariables.daysPerYear ?? 60;
-                if (daysPerYear < 8) daysPerYear = 60;
+                int daysPerYear = DaysPerYear();
                 var dressing = new PersonDressing(identity, daysPerYear);
                 var choice = idle.Choose(dressing, all.Count, maximum, immediate ? null : budget, Time.frameCount, Time.unscaledTimeAsDouble, out var pooled);
                 if (choice == BodyChoice.Full) return false;
@@ -151,15 +160,17 @@ namespace PersistentCity.Runtime
             }
             appearance.data.fatness = Mathf.Min(appearance.data.fatness, 0.55f);
             if (appearance.data.elements == null || appearance.data.elements.Count == 0) throw new InvalidOperationException("Empty appearance");
-            PhysicalAllocation.Charge(PersistentCity.Core.GcAllocationSegment.PhysicalSpawnRandomize);
+            PhysicalAllocation.Detail(PersistentCity.Core.GcAllocationSegment.PhysicalSpawnRandomize);
+            PhysicalAllocation.Charge(PersistentCity.Core.GcAllocationSegment.PhysicalSpawnAppearance);
             proof.Capture(appearance.data);
             PhysicalAllocation.Charge(PersistentCity.Core.GcAllocationSegment.PhysicalSpawnCheck);
             appearance.UpdateVisuals();
-            PhysicalAllocation.Charge(PersistentCity.Core.GcAllocationSegment.PhysicalSpawnAppearance);
             var merged = appearance.lastMergedMeshRenderer;
             if (merged == null || appearance.meshCombiner == null || !appearance.meshCombiner.isMeshesCombined()) throw new InvalidOperationException("Appearance meshes unavailable");
+            PhysicalAllocation.Mark();
             if (baked.Contains(appearance)) BlendshapeBake.Apply(appearance.meshCombiner, merged);
-            PhysicalAllocation.Charge(PersistentCity.Core.GcAllocationSegment.PhysicalSpawnBake);
+            PhysicalAllocation.Detail(PersistentCity.Core.GcAllocationSegment.PhysicalSpawnBake);
+            PhysicalAllocation.Charge(PersistentCity.Core.GcAllocationSegment.PhysicalSpawnAppearance);
             bool same = proof.Same(appearance.data);
             PhysicalAllocation.Charge(PersistentCity.Core.GcAllocationSegment.PhysicalSpawnCheck);
             if (!same || appearance.GetSelectedMeshRenderers().Count == 0) throw new InvalidOperationException("Appearance meshes unavailable");

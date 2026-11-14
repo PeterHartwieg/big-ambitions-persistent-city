@@ -77,6 +77,18 @@ namespace PersistentCity.Runtime
             if (current != null) current.Charge(segment, GcAllocationCounter.Read(), GcAllocationCounter.Collections);
         }
 
+        public static void Mark()
+        {
+            var current = sampler;
+            if (current != null) current.Mark(GcAllocationCounter.Read(), GcAllocationCounter.Collections);
+        }
+
+        public static void Detail(GcAllocationSegment segment)
+        {
+            var current = sampler;
+            if (current != null) current.Detail(segment, GcAllocationCounter.Read(), GcAllocationCounter.Collections);
+        }
+
         public static void End()
         {
             var current = sampler;
