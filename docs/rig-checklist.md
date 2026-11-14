@@ -8,6 +8,7 @@ Detailed specs: [F8 §7](https://github.com/PeterHartwieg/big-ambitions-persiste
 
 ## Latest evidence
 
+- **14 November c, Mac, build `1d5d1b76`:** 1 passed / 1 partial / 1 failed / 6 NOT RUN groups. #255 runtime retime passed; rush-hour continuous visual proof partial; off/on paid receipts absent; restored ([14c results](#rig-results--14-november-2026-c-mac-255-retime-checks-1-3-at-1d5d1b76)).
 - **14 November b, Mac, build `eb38a061`:** 0 passed / 0 partial / 3 failed / 7 not run. Day/night GC 11/8 gen0, pause p95 28.191/61.316 ms; physical+advance 1,021.6/433.6 MB; street UpdateCity p95 5.5170 ms; appearance/footprint/actual 60 fps proof blocked; restored ([14b results](#rig-results--14-november-2026-b-mac-gr-5-gc-254-footprint-60-fps-at-eb38a061)).
 - **14 November a, Mac, build `b3d58a6a`:** 1 passed / 0 partial / 4 failed / 1 not run. Day/night GC 11/9 gen0, pause p95 103.863/70.122 ms; street UpdateCity p95 5.2683 ms; Living-off passed, toggle repeat stopped, P-D console blocked; restored ([14a results](#rig-results--14-november-2026-a-mac-gr-5-gc-rlo-p-d-7-at-b3d58a6a)).
 - **14 November g, Mac, build `37a150d3`:** 0 passed / 0 partial / 3 failed / 6 not run. Day/night GC 11/8 gen0, pause p95 56.671/104.551 ms; street UpdateCity p95 5.1413 ms, two spikes; restored, run complete ([14g results](#rig-results--14-november-2026-g-mac-gr-5-gc-at-37a150d3)).
@@ -1269,3 +1270,593 @@ Verification: **35 original file hashes, 4 absent paths, full PersistentCity fil
 Final status: running=false, process=null, lease held=false, pending=0. All six owned PIDs (28591, 29551, 38926, 40985, 48859, 49413) and their caffeinate assertions are gone. All stops were graceful. No process belonging to another session was stopped.
 
 Validation for this docs-only result: candidate build passed; compact JSON parses and is under 20 KB; docs-links, markdown ban and diff whitespace checks are run before commit. No full unit or regression suite. Only this existing checklist and the compact JSON are changed. The build/evidence worktree is removed after commit, push and opening the one unmerged docs-only PR. No issue or merge is created.
+
+## Rig results — 14 November 2026 c, Mac (#255 retime checks 1-3 at 1d5d1b76)
+
+Role `rig_test`, where `mac`, isolated `agentmac`. **Counts: 1 passed / 1 partial / 1 failed / 6 NOT RUN groups.** The verdicts count #255 checks 1–3; the six excluded groups are listed below. Check 2 is partial because still screenshots cannot establish motion continuity at every change. No runtime stop occurred. In-game proof gates no merge. **RESULT: DONE** means execution, evidence delivery and restoration completed.
+
+Raw evidence: `/Users/peterhartwieg/HART-Builds/persistent-city-rig-2026-11-14c-mac`; report copy: `/Users/peterhartwieg/Coding_Projects/.agent-logs/persistent-city-rig-2026-11-14c-mac.md`. Raw logs, screenshots, extracted saves, backup manifests and operation replies stay outside Git. All commands ran in the foreground and were awaited. Other sessions were left alone. No Windows PC, ordinary profile, Steam app or ordinary save was used. No production code, weights, schema, version or changelog changed; schema remains 1, FoodChoicePriceWeight 1.2 and FoodChoiceHouseholdWeight 1.0.
+
+### Build and rig
+
+| Item | Observation |
+|---|---|
+| Candidate | `1d5d1b765218974d41e848926f17137609bf4a58`, origin/codex/persistent-city at preparation. Final fetch: `913abd7dbfdcd7f7651baad768169f66bf698dfb`. |
+| Evidence/build branch | `codex/mac-rig-2026-11-14c`, new isolated worktree `rig-2026-11-14c-mac-evidence`; original checkout untouched. One worktree served build and evidence; the unpushed results branch was advanced to the docs-only 913abd7d tip before the report commit. |
+| Build | `python3 tools/build.py --game-managed "/Users/peterhartwieg/Library/Application Support/BigAmbitionsMCP/dll-import-shim/Big Ambitions_Data/Managed"`, exit 0; Homebrew PATH and DOTNET_ROOT as requested. |
+| PersistentCity DLL SHA-256 | `087fe9aa8c506c3d2fa43df62fec0f08450095ca415f7c3ffebf64bfd28bde29`; build, package and live staged DLL matched. |
+| Agent-rig HEAD | `2b8553606426f3e3e94f8a876dd58d935768732d`, clean; fetch and ff-only pull already up to date. No checkout edits, commits or pushes. |
+| AgentRigOps SHA-256 | `dd11e3fdea78c1c0a25ce33e0168ffbce6e785950d9e10caed55015254d748f8`; live op status ready; unchanged at cleanup. |
+| RLO version, exact Player.log | `[Mod:RealLifeOverhaul] Real Life Overhaul 1.0.6 initialised.` RLO mod files unchanged. |
+| PC activation, exact Player.log | `[Mod:PersistentCity] Persistent population active: 1611 residents, 1611 visitors, 1685 places. Native-pace walking, subway and car journeys; physical population preflight follows road initialization. Ctrl+F8 opens food business feedback.` No commit-stamped PC build line is emitted; matching DLL hashes and validated install receipt establish build identity. |
+| Lease/resources | Free/stopped before acquisition; acquired 2026-11-14T13:42:00.5324480Z. Initial resources 69.2 GiB free disk / 57% reported free memory. No refusal, takeover or resource override. |
+| Starts/stops | Four cold processes: headless check 1, windowed first check-2 attempt, windowed check-2 repeat, headless check 3; `--rig-test` throughout. Each start succeeded on its first attempt; all stops graceful, no force. |
+| Autosave original | Native 5 minutes / 3 saves, prevent_autosave=false. #70 `autosave` confirmed suppressed=true after every load. Process-only suppression ended at stop; original preference/config bytes restored. |
+| Frame cap | Temporary `agent-frame-cap.json` with fps=30, vsync=0 for windowed screenshots; removed before headless check 3 and restored to its original absence. No cadence/performance gate. |
+| Independent backup | 39 file/absence manifest entries, including full PersistentCity, install.json, isolated root preferences/config and plist; 53 RLO files hashed read-only. |
+
+Exact staging command, run stopped and leased from the official agent-rig checkout:
+
+```sh
+python3 scripts/install-mac.py --stage-mod PersistentCity /Users/peterhartwieg/HART-Builds/persistent-city-rig-2026-11-14c-mac/package
+```
+
+Receipt backup: `/Users/peterhartwieg/Library/Application Support/BigAmbitionsAgentTestsMac/receipt-backups/20261114T134245Z`. Package contains no RLO files; only PersistentCity was staged.
+
+### Per-check outcomes
+
+| #255 check | Result | Evidence |
+|---|---|---|
+| 1. Maximum native route, speed 20 → 1 | **PASS** | Fresh 08:00 fixture, speed 20 to 10:30, exact `call time {"speed":1,"pause":false,"keep_needs":true}`. FoodDiagnostics.active=true, capability `city running`, no stop line. Next manual save `FT RLO 14c Retime 1030` at 10:31 has schema=1, published epoch sequence=2 and accounting_stop_present=false. |
+| 2. Rush-hour changes and visible continuity | **PARTIAL** | Cold repeat ran 1 → 3 → 20 → 1 → 20 → 3 → 1 during rush hour, plus 3 → 1 → 3 within one game minute. Active food diagnostics and no stop; one degraded-retime line at the repeat’s 08:50 speed 20 → 3 change; zero at every other requested change. Two usable screenshot pairs show no obvious jump. Continuous visual motion at every change is unverified. |
+| 3. #239 mid-session Living off/on | **FAIL: paid receipts absent** | Fresh 08:00 fixture and speed-20 10:30 setup, then speed 1 and off/on through rlo_option. Both transitions logged; runtime stayed active. Off interval has 0 new paid receipts; on interval adds 0 paid receipts. The continuing-sales expectation was not met; no runtime exception or op error caused the verdict. Original option restored. |
+
+No Persistent City runtime-stop exception or stack was emitted in any of the four processes. Check 1 before/after FoodDiagnostics travelClockRate changed from the speed-20 rate to 0.3333333333333333 at speed 1; capability stayed city running. Save epoch text:
+
+```text
+v1
+sequence=2
+schema=1
+minute=2071.2668972015381
+population=rlo:0.40.4:724c64860fe2a780eb29eccd135780ac1938ad6a49c20490683a6df7fe7377b0
+payload=25429111 persistentcity:state_v1
+```
+
+Exact fixture tally (all four loads):
+
+```text
+[Persistent City] unrentable homes housed=0 beds=0 unreadable=0 empty=0
+```
+
+### Rush-hour sequence and screenshots
+
+The final fetch moved origin from 1d5d1b76 to 913abd7d (#256), changing only docs/rig-checklist.md and docs/perf/gr5-2026-11-14b-mac.json. Production code was identical; the tested DLL remains the build from 1d5d1b76.
+
+First attempt speed changes returned at 08:10, 08:20, 08:30, 08:40, 09:05 and 09:06. Camera correction delayed the last two beyond the requested window, so that attempt supplies runtime observations only. Its process was stopped and a cold repeat ran the requested sequence. No game restart occurred within either attempt.
+
+| Repeat event | Clock returned | Speed |
+|---|---|---|
+| `check2b-change1-speed3` | 08:10 | 3 |
+| `check2b-change2-speed20` | 08:20 | 20 |
+| `check2b-change3-speed1` | 08:30 | 1 |
+| `check2b-change4-speed20` | 08:40 | 20 |
+| `check2b-change5-speed3` | 08:50 | 3 |
+| `check2b-change6-speed1` | 08:59 | 1 |
+| `check2b-rapid-speed1` | 08:10 | 1 |
+| `check2b-rapid-speed3` | 08:10 | 3 |
+
+Cars were present: Player.log reports 65 persistent cars and 63 scheduled road events before the first repeated speed change. Usable raw pairs: `check2b-change1-before.png` / `check2b-change1-after.png` (1 → 3), and `check2b-change3-before.png` / `check2b-change3-after.png` (20 → 1), 960×540. The fixed camera looks along the street from x=215,y=18,z=-18 toward x=215,y=1,z=3. Both show street traffic, kerbside cars and pedestrians; the first has a yellow car beside dark vehicles, the second a yellow taxi and white delivery vehicle. Vehicle and pedestrian positions show no obvious displacement in the sampled pairs. Still frames do not establish continuous trajectories or stable resident identity, so the full visual expectation remains partial.
+
+### Living transitions and paid receipts
+
+Original op read: stored=null, live=true, original_saved=false. For each transition the run resumed at speed 1, called `rlo_option set` with name=living_population and the required boolean, waited five real seconds, and read capability/FoodDiagnostics. Off sales interval was 10:30–12:30; on interval was 12:30–14:30. No sale probe fabricated a receipt. Native shop_log was enabled only for this check, after all rush-hour observations, and stopped afterward. The owned fixture shop is `ba:street_fourthavenue#19`.
+
+| Interval | Paid receipts newly arriving in interval | Paid cents |
+|---|---|---|
+| Living off | 0 | 0 |
+| Living on after second transition | 0 | 0 |
+
+The on count compares saved keys after the on interval against all off-interval keys. Before the toggle, FoodDiagnostics already showed zero purchases and the live key set contained no paid food receipts. The ready shop held 100 croissants at $5, a staffed register and free paper bags, with revenue $0. No causal claim about the option toggle is made: the required continuing-sale evidence did not occur in the two observed intervals. Both native shop_log snapshots report purchases=0, dropped=0 and hook_faults=0. Revenue stayed $0 and croissant stock stayed 100. Final food-contract readback reports capabilitiesPassed=true, firstFailure=null, coordinator mode=Active, images=1, Commits=1 and Refusals=0. These reads establish an active contract, without explaining why no sales arrived. Raw extracted PC keys and native shop visit replies are retained separately. Exact transition lines:
+
+```text
+[Mod:PersistentCity] RLO Living population on -> Living population off during play; Persistent City keeps owning its shops, crowds and traffic.
+[Mod:PersistentCity] RLO Living population off -> Living population on during play; Persistent City keeps owning its shops, crowds and traffic.
+```
+
+Restore op and independent read both returned stored=null, live=true, original_saved=false. No RLO file was edited.
+
+### Player.log around every speed change and toggle
+
+Each block quotes exact numbered lines captured around the operation, including up to three preceding context lines. Long unrelated periodic Population and RLO whole-frame Session diagnostics are omitted here; numbered gaps identify those omissions, and the complete excerpts stay in the raw evidence. The range JSON alongside each raw excerpt records line boundaries and operation arguments; the full process logs remain in the stage. Some successful `time` calls emit no new line, so their preceding context is retained. No missing retime message is invented. The repeat contains one `Clock retime degraded 1 journeys` line (line 2066), inside the 08:50 speed 20 → 3 operation range 2065–2071. Every other rush-hour change has zero, meeting the at-most-one-per-change bound. Other process totals are recorded below. The exact line is in that event’s block below.
+
+`check1-speed1-Player-excerpt.txt`:
+
+```text
+2699: crowds: ordinary standers off in every native zone, 115 of them RLO's; RLO's own scene people kept
+2700: traffic: ordinary native groups held for Persistent City cars; RLO staged accidents and reckless drivers stood down; cars loaded into held groups past the shares retired off screen; cars RLO holds are never retired
+2701: [Mod:FoodTrucks] Test bridge: console 'pc capability status' (1 lines).
+2702: [Mod:RealLifeOverhaul] City life check (ground): chat at (252, 0, -13) would stand on parking or a driveway, the place refused: PASS
+2703: [Persistent City] RLO traffic scene switches given back (the player's stored options).
+2704: [Mod:PersistentCity] Road snapshot started: frame=5645, reason=clock-rate index=-1, scene searches in this planner=0.
+2705: [Mod:RealLifeOverhaul] Traffic check (braking in good time): 'DeliveryTruck' at 23 km/h began to slow for a sharp bend 2 m ahead, needing 7.4 m/s2 to reach it at 21 km/h (an ordinary slowing is under 4.5; the game alone would have stopped it within 1.25 m of its sensor): a firm stop: it was 2 m off when it came into view
+2706: [Mod:RealLifeOverhaul] Street talk check (offer): nothing offered: nobody who can be talked to within 3.2 m and 60 deg of the player's facing; out: 40 walker(s), 0 standing or sitting; the nearest: nobody within 12 m: PASS.
+```
+
+`check1-speed20-to1030-Player-excerpt.txt`:
+
+```text
+2432: [Mod:RealLifeOverhaul] Street talk check (offer): nothing offered: closed: the game is busy (a pause, the time machine, a question, the activity panel, the hospital, the subway or the casino boat); out: 0 walker(s), 0 standing or sitting; the nearest: not looked for: PASS.
+2433: [Mod:RealLifeOverhaul] Street talk check (offer): nothing offered: closed: the game is busy (a pause, the time machine, a question, the activity panel, the hospital, the subway or the casino boat); out: 0 walker(s), 0 standing or sitting; the nearest: not looked for: PASS.
+2434: [Mod:RealLifeOverhaul] Street talk check (offer): nothing offered: closed: the game is busy (a pause, the time machine, a question, the activity panel, the hospital, the subway or the casino boat); out: 0 walker(s), 0 standing or sitting; the nearest: not looked for: PASS.
+2435: [Mod:FoodTrucks] Test bridge: running the clock at speed 20 until day 1 10:30.
+2436: [Persistent City] RLO traffic scene switches given back (the player's stored options).
+2437: [Mod:PersistentCity] Road snapshot started: frame=3509, reason=clock-rate index=-1, scene searches in this planner=0.
+2438: [Mod:RealLifeOverhaul] Street people: besides the walking pedestrians, the standing and sitting people of 7 of the game's pools count as people on the street (BenchPedestrian, CasualStationaryAi, SportPedestrian, SwimmingPoolBaseHuman, StreetPerformer, Homeless, Golfer).
+2440: [Mod:RealLifeOverhaul] Session check (work named for a long frame): the line of the frame of 400 ms leaves out 8 piece(s) of work begun after it, before the line was written; what the mod named up to its end is still named (a ring of 16): PASS.
+2441: [Mod:RealLifeOverhaul] Meta: welcome shown (after 0.45.0).
+2442: [Mod:RealLifeOverhaul] Meta: props notice shown: the props of reallife_props cannot be drawn: the game's lit shader is not supported on this graphics setting.
+2443: [Mod:RealLifeOverhaul] Meta: Meta check (welcome notice): shown as the game's own notification with a click that opens the Guide on 'What changed': PASS.
+2444: [Mod:RealLifeOverhaul] Car ownership: records read.
+2445: [Mod:RealLifeOverhaul] City events: state loaded; day 1 of a 60-day year (Winter), today: nothing on.
+2446: [Mod:RealLifeOverhaul] Traffic check (senses): cars sense layers [Player, Human, Vehicles]; pedestrians are on 'Human' with their capsule on; sensor box 4.5 m long on 'AiVehicles', which does not meet the pedestrians' layer in the physics settings; mode: stand-ins on 'Player' for everybody in a car's way.
+2447: [Mod:RealLifeOverhaul] Traffic check (proxy): 0 of 16 in use: PASS
+2448: [Mod:RealLifeOverhaul] Traffic check (cost): 1 looks in the last minute, 990 microseconds on average and 990 at worst (wanted: under 100 and 300); at most 4 cars looked at, 39 people in the grid, 0 of 16 stand-ins in use, 0 cars braked, 0 watched for contact now; mode StandIns: over budget; where it went, on average and in the worst look (microseconds): the cars gathered 30 and 30, the people 918 and 918, the strips and the decisions 32 and 32, the stand-ins and the fades 10 and 10; the diagnostics' own lines are not counted; people looked over in a look, at most: 40 walking and 0 standing or sitting, 0 of those near enough when last listed to be read; outside the looks, 11 car(s) measured in frames of their own (139 microseconds at most) and 0 that took the figures of a car of their kind.
+2449: [Mod:RealLifeOverhaul] Traffic check (city drivers' cost): 1 looks in the last minute, 165 microseconds a look on average and 165 at worst, over 12 cars a frame (wanted: under 150 and 600); at most 3 cars read, 4 things on the roads, 0 cars slowed at once, 0 hold line(s): FAIL, over budget; of it the street read and its cars gathered 77 on average and 77 in the worst look; outside the looks, 2 car(s) measured in frames of their own (148 microseconds at most) and 4 that took the figures of a car of their kind.
+2451: [Mod:RealLifeOverhaul] Traffic check (braking in good time): 'Taxi' at 27 km/h began to slow for a sharp bend 11 m ahead, needing 1.5 m/s2 to reach it at 19 km/h (an ordinary slowing is under 4.5; the game alone would have stopped it within 1.25 m of its sensor): PASS
+2452: [Mod:RealLifeOverhaul] Civic: ready. Election 0 None, election day 15, approval 58, 6 site(s) in progress.
+2453: [Mod:RealLifeOverhaul] Contacts check (picture): 'reallife-cityhall' is a logo, from the game's logo shape 'headquarter3', kept (its file read on a worker, 0.03 ms of the main thread, wanted under 3 ms); 27 contact picture(s): 9 face(s), 18 logo(s), 27 drawn: PASS
+```
+
+`check2-change1-speed3-Player-excerpt.txt`:
+
+```text
+1824: [Mod:RealLifeOverhaul] Traffic check (proxy): 0 of 16 in use: PASS
+1825: [Mod:RealLifeOverhaul] Clips: the 'smoke' clip is played by a street character (said the first time only).
+1826: [Mod:RealLifeOverhaul] City life: smoker started 62 m away; 1 of 3 sites out, 1 of 8 people.
+1827: [Persistent City] RLO traffic scene switches given back (the player's stored options).
+1828: [Mod:PersistentCity] Road snapshot started: frame=2734, reason=clock-rate index=-1, scene searches in this planner=0.
+1829: [Mod:RealLifeOverhaul] Street talk check (offer): nothing offered: nobody who can be talked to within 3.2 m and 60 deg of the player's facing; out: 40 walker(s), 1 standing or sitting; the nearest: nobody within 12 m: PASS.
+1830: [Mod:PersistentCity] RLO single-pass read context=periodic status=Ready identities=400 elapsedMs=3.068 reads=9 totalMs=21.348 maxMs=5.964
+```
+
+`check2-change2-speed20-Player-excerpt.txt`:
+
+```text
+1934: [Mod:RealLifeOverhaul] Traffic check (braking in good time): 'FreightTruckT1' at 40 km/h began to slow for a red light 29 m ahead, needing 2.2 m/s2 to reach it at 0 km/h (an ordinary slowing is under 4.5; the game alone would have stopped it within 1.25 m of its sensor): PASS
+1935: Couldn't find AI business logo: "BusinessLogos/Summit Care Clinic/Billboard" with extension .jpg or .png
+1936: [Mod:RealLifeOverhaul] Street talk check (offer): nothing offered: nobody who can be talked to within 3.2 m and 60 deg of the player's facing; out: 0 walker(s), 1 standing or sitting; the nearest: nobody within 12 m: PASS.
+1937: Couldn't find AI business logo: "BusinessLogos/The Cigar Box/Billboard" with extension .jpg or .png
+1938: [Persistent City] RLO traffic scene switches given back (the player's stored options).
+1939: [Mod:PersistentCity] Road snapshot started: frame=4010, reason=clock-rate index=-1, scene searches in this planner=0.
+```
+
+`check2-change3-speed1-Player-excerpt.txt`:
+
+```text
+2005: Couldn't find AI business logo: "BusinessLogos/Maple Leaf Tea/Billboard" with extension .jpg or .png
+2006: [Mod:RealLifeOverhaul] Street talk check (offer): nothing offered: nobody who can be talked to within 3.2 m and 60 deg of the player's facing; out: 3 walker(s), 1 standing or sitting; the nearest: nobody within 12 m: PASS.
+2007: [Mod:FoodTrucks] Test bridge: shot check2-change3-before (960x540) from x 176.0, y 18.0, z -56.0 (the camera stands inside something solid (a building, a prop or a vehicle); the picture may be dark); uncovered SM_FlatironAreaBuilding_03_Variation 02 (CityBuildingController, reveal 0.00, blocking the game's camera); outline lifted from SM_1StStreet_CheapRezidential_1; hover lifted from SM_FlatironAreaBuilding_06_Variation_Corner (under the mouse, its building card open, 6 objects outlined): /Users/peterhartwieg/Library/Application Support/com.hovgaardgames.bigambitions.agenttests.mac/FoodTrucksTest/shots/check2-change3-before.png.
+2008: [Persistent City] RLO traffic scene switches given back (the player's stored options).
+2009: [Mod:PersistentCity] Road snapshot started: frame=4631, reason=clock-rate index=-1, scene searches in this planner=0.
+2010: [Mod:RealLifeOverhaul] Traffic check (braking in good time): 'Taxi' at 35 km/h began to slow for a car 35 m ahead, needing 1.2 m/s2 to reach it at 7 km/h (an ordinary slowing is under 4.5; the game alone would have stopped it within 1.25 m of its sensor): PASS
+```
+
+`check2-change4-speed20-Player-excerpt.txt`:
+
+```text
+2108: Couldn't find AI business logo: "BusinessLogos/Summit Care Clinic/Billboard" with extension .jpg or .png
+2109: [Mod:PersistentCity] RLO single-pass read context=periodic status=Ready identities=400 elapsedMs=3.267 reads=13 totalMs=34.063 maxMs=5.964
+2110: [Mod:RealLifeOverhaul] Street talk check (offer): nothing offered: nobody who can be talked to within 3.2 m and 60 deg of the player's facing; out: 2 walker(s), 1 standing or sitting; the nearest: nobody within 12 m: PASS.
+2111: [Persistent City] RLO traffic scene switches given back (the player's stored options).
+2112: [Mod:PersistentCity] Road snapshot started: frame=5779, reason=clock-rate index=-1, scene searches in this planner=0.
+2113: [Mod:RealLifeOverhaul] Session: the managed heap grew by 116 MB in one frame of 34 ms; under the mod's own scripts: not known (not a sampled frame); the mod's last pieces of work: "city life: a site being set up" 98.3 s before, "city life: a character's look being built (a mesh merge)" 104.9 s before, "city life: a site being set up" 104.9 s before; on foot in the street, game hour 8.
+2114: [Mod:RealLifeOverhaul] Traffic check (braking in good time): 'Taxi' at 28 km/h began to slow for a red light 26 m ahead, needing 1.2 m/s2 to reach it at 0 km/h (an ordinary slowing is under 4.5; the game alone would have stopped it within 1.25 m of its sensor): PASS
+```
+
+`check2-change5-speed3-Player-excerpt.txt`:
+
+```text
+2178: Couldn't find AI business logo: "BusinessLogos/Summit Care Clinic/Billboard" with extension .jpg or .png
+2179: [Mod:FoodTrucks] Test bridge: shot check2-change5-before (960x540) from x 215.0, y 18.0, z -18.0; uncovered SM_FlatironAreaBuilding_03_Variation 02 (CityBuildingController, reveal 0.00, blocking the game's camera); outline lifted from SM_1StStreet_CheapRezidential_1; hover lifted from SM_FlatironAreaBuilding_06_Variation_Corner (under the mouse, its building card open, 6 objects outlined): /Users/peterhartwieg/Library/Application Support/com.hovgaardgames.bigambitions.agenttests.mac/FoodTrucksTest/shots/check2-change5-before.png.
+2180: Couldn't find AI business logo: "BusinessLogos/Maple Leaf Tea/Billboard" with extension .jpg or .png
+2181: [Mod:CityPerformance] PERF frames n=725 mean_ms=41.38 p50_le_ms=35 p95_le_ms=61 p99_le_ms=192 max_ms=652.79 over50=85 bin250plus=7 refill=False
+2182: [Mod:CityPerformance] PERF scope=CullingGroupController.Update calls=1450 total_ms=1.622 max_ms=0.017 exceptions=0
+2183: [Mod:CityPerformance] PERF scope=TrafficManager.FixedUpdate calls=1469 total_ms=430.697 max_ms=2.165 exceptions=0
+2184: [Mod:CityPerformance] PERF scope=PedestrianSpawner.SetActivePedestrians calls=2 total_ms=58.800 max_ms=58.519 exceptions=0
+2185: [Mod:CityPerformance] PERF scope=SaveGameManager.SerializeSaveGame calls=0 total_ms=0.000 max_ms=0.000 exceptions=0
+2186: [Mod:CityPerformance] PERF scope=GameManager.RunMainGameTick calls=725 total_ms=137.141 max_ms=88.989 exceptions=0
+2187: [Mod:CityPerformance] DETAIL hooks=0; retained=0; overwritten=0; daily_retained=0; daily_overwritten=0; session_worst_method=none; max_ms=0; full breakdown in exported methods CSV and capabilities.
+2188: [Mod:CityPerformance] TREE requested=True; installed=False; faulted=False; registered_seen=0; configured_records=0; skipped=0; changed_elsewhere=0; map_hold=False; lod_bias=1; maximum_lod=0; configured records are not visible-tree or selected-LOD counts.
+2189: [Persistent City] RLO traffic scene switches given back (the player's stored options).
+2190: [Mod:PersistentCity] Road snapshot started: frame=6250, reason=clock-rate index=-1, scene searches in this planner=0.
+```
+
+`check2-change6-speed1-Player-excerpt.txt`:
+
+```text
+2227: [Mod:RealLifeOverhaul] Traffic check (braking in good time): 'Bima320' at 35 km/h began to slow for a car 6 m ahead, needing 1.4 m/s2 to reach it at 26 km/h (an ordinary slowing is under 4.5; the game alone would have stopped it within 1.25 m of its sensor): PASS
+2229: [Mod:FoodTrucks] Test bridge: shot check2-change6-before (960x540) from x 215.0, y 18.0, z -18.0; uncovered SM_FlatironAreaBuilding_03_Variation 02 (CityBuildingController, reveal 0.00, blocking the game's camera); outline lifted from SM_1StStreet_CheapRezidential_1; hover lifted from SM_FlatironAreaBuilding_06_Variation_Corner (under the mouse, its building card open, 6 objects outlined): /Users/peterhartwieg/Library/Application Support/com.hovgaardgames.bigambitions.agenttests.mac/FoodTrucksTest/shots/check2-change6-before.png.
+2231: [Mod:RealLifeOverhaul] Session: the managed heap grew by 12 MB in one frame of 33 ms; under the mod's own scripts: not known (not a sampled frame); the mod's last pieces of work: "flare: the hour's milestones" 8.1 s before, "flare: the hour's words asked ahead" 8.1 s before, "flare: the hour's unread count" 8.1 s before; on foot in the street, game hour 9.
+2232: [Mod:RealLifeOverhaul] Traffic check (cost): 413 looks in the last minute, 67 microseconds on average and 606 at worst (wanted: under 100 and 300); at most 16 cars looked at, 43 people in the grid, 2 of 16 stand-ins in use, 1 cars braked, 0 watched for contact now; mode StandIns: over budget; where it went, on average and in the worst look (microseconds): the cars gathered 18 and 20, the people 39 and 14, the strips and the decisions 6 and 45, the stand-ins and the fades 3 and 528; the diagnostics' own lines are not counted; people looked over in a look, at most: 40 walking and 1 standing or sitting, 1 of those near enough when last listed to be read; outside the looks, 0 car(s) measured in frames of their own (0 microseconds at most) and 0 that took the figures of a car of their kind.
+2234: [Mod:RealLifeOverhaul] Session: the managed heap grew by 12 MB in one frame of 201 ms; under the mod's own scripts: not known (not a sampled frame); the mod's last pieces of work: "flare: the hour's milestones" 8.3 s before, "flare: the hour's words asked ahead" 8.4 s before, "flare: the hour's unread count" 8.4 s before; on foot in the street, game hour 9.
+2236: [Mod:RealLifeOverhaul] Traffic check (city drivers' cost): 412 looks in the last minute, 86 microseconds a look on average and 512 at worst, over 12 cars a frame (wanted: under 150 and 600); at most 16 cars read, 17 things on the roads, 9 cars slowed at once, 0 hold line(s): PASS; of it the street read and its cars gathered 57 on average and 94 in the worst look; outside the looks, 0 car(s) measured in frames of their own (0 microseconds at most) and 0 that took the figures of a car of their kind.
+```
+
+`check2-initial-speed1-Player-excerpt.txt`:
+
+```text
+1746: [Mod:CityPerformance] PERF scope=GameManager.RunMainGameTick calls=664 total_ms=86.297 max_ms=32.667 exceptions=0
+1747: [Mod:CityPerformance] DETAIL hooks=0; retained=0; overwritten=0; daily_retained=0; daily_overwritten=0; session_worst_method=none; max_ms=0; full breakdown in exported methods CSV and capabilities.
+1748: [Mod:CityPerformance] TREE requested=True; installed=False; faulted=False; registered_seen=0; configured_records=0; skipped=0; changed_elsewhere=0; map_hold=False; lod_bias=1; maximum_lod=0; configured records are not visible-tree or selected-LOD counts.
+1749: [Mod:RealLifeOverhaul] Street people: besides the walking pedestrians, the standing and sitting people of 7 of the game's pools count as people on the street (BenchPedestrian, CasualStationaryAi, SportPedestrian, SwimmingPoolBaseHuman, StreetPerformer, Homeless, Golfer).
+1751: [Mod:RealLifeOverhaul] Session check (work named for a long frame): the line of the frame of 133 ms leaves out 2 piece(s) of work begun after it, before the line was written; what the mod named up to its end is still named (a ring of 16): PASS.
+1752: [Mod:RealLifeOverhaul] Traffic check (senses): cars sense layers [Player, Human, Vehicles]; pedestrians are on 'Human' with their capsule on; sensor box 4.5 m long on 'AiVehicles', which does not meet the pedestrians' layer in the physics settings; mode: stand-ins on 'Player' for everybody in a car's way.
+1753: [Mod:RealLifeOverhaul] Traffic check (proxy): 0 of 16 in use: PASS
+1754: [Mod:RealLifeOverhaul] Traffic check (cost): 1 looks in the last minute, 965 microseconds on average and 965 at worst (wanted: under 100 and 300); at most 2 cars looked at, 10 people in the grid, 0 of 16 stand-ins in use, 0 cars braked, 0 watched for contact now; mode StandIns: over budget; where it went, on average and in the worst look (microseconds): the cars gathered 28 and 28, the people 892 and 892, the strips and the decisions 34 and 34, the stand-ins and the fades 12 and 12; the diagnostics' own lines are not counted; people looked over in a look, at most: 10 walking and 1 standing or sitting, 1 of those near enough when last listed to be read; outside the looks, 9 car(s) measured in frames of their own (208 microseconds at most) and 0 that took the figures of a car of their kind.
+1755: [Mod:RealLifeOverhaul] Traffic check (braking in good time): 'DeliveryTruck' at 33 km/h began to slow for a red light 21 m ahead, needing 2.1 m/s2 to reach it at 0 km/h (an ordinary slowing is under 4.5; the game alone would have stopped it within 1.25 m of its sensor): PASS
+1756: [Mod:RealLifeOverhaul] Traffic check (city drivers' cost): 1 looks in the last minute, 229 microseconds a look on average and 229 at worst, over 12 cars a frame (wanted: under 150 and 600); at most 4 cars read, 7 things on the roads, 1 cars slowed at once, 0 hold line(s): FAIL, over budget; of it the street read and its cars gathered 127 on average and 127 in the worst look; outside the looks, 8 car(s) measured in frames of their own (130 microseconds at most) and 1 that took the figures of a car of their kind.
+1757: [Mod:RealLifeOverhaul] Civic: ready. Election 0 None, election day 15, approval 58, 6 site(s) in progress.
+1759: [Mod:RealLifeOverhaul] Contacts check (picture): 'reallife-cityhall' is a logo, from the game's logo shape 'headquarter3', kept (its file read on a worker, 0.04 ms of the main thread, wanted under 3 ms); 27 contact picture(s): 9 face(s), 18 logo(s), 27 drawn: PASS
+```
+
+`check2-rapid-Player-excerpt.txt`:
+
+```text
+1858: traffic: own cars inactive; native traffic as the game and RLO run it
+1859: [Mod:FoodTrucks] Test bridge: console 'pc capability status' (1 lines).
+1860: [Mod:RealLifeOverhaul] Session: the managed heap grew by 15 MB in one frame of 68 ms; under the mod's own scripts: not known (not a sampled frame); the mod's last pieces of work: "city life: a site being set up" 3.0 s before, "transit: a parking lane beside a bus zone laid out again" 27.8 s before, "transit: a parking lane beside a bus zone laid out again" 28.0 s before; on foot in the street, game hour 8.
+1861: [Mod:RealLifeOverhaul] Traffic check (braking in good time): 'Taxi' at 21 km/h began to slow for a car 9 m ahead, needing 2.0 m/s2 to reach it at 7 km/h (an ordinary slowing is under 4.5; the game alone would have stopped it within 1.25 m of its sensor): PASS
+1862: [Mod:RealLifeOverhaul] Street talk check (offer): nothing offered: nobody who can be talked to within 3.2 m and 60 deg of the player's facing; out: 40 walker(s), 1 standing or sitting; the nearest: nobody within 12 m: PASS.
+```
+
+`check2b-change1-speed3-Player-excerpt.txt`:
+
+```text
+1796: [Mod:RealLifeOverhaul] Patrol: two officers on the beat, 54 m away, 4 stops.
+1797: [Mod:RealLifeOverhaul] Street talk check (offer): nothing offered: closed: a job board or an employer's door has the interact key; out: 14 walker(s), 2 standing or sitting; the nearest: not looked for: PASS.
+1798: [Mod:FoodTrucks] Test bridge: shot check2b-change1-before (960x540) from x 215.0, y 18.0, z -18.0; uncovered SM_FancyBuilding_V03 Variant 3 (CityBuildingController, reveal 0.00, blocking the game's camera); outline lifted from SM_1StStreet_CheapRezidential_1; hover lifted from Prefab_5thAV_BuildingV1_2 (under the mouse, its building card open, 6 objects outlined): /Users/peterhartwieg/Library/Application Support/com.hovgaardgames.bigambitions.agenttests.mac/FoodTrucksTest/shots/check2b-change1-before.png.
+1799: [Persistent City] RLO traffic scene switches given back (the player's stored options).
+1800: [Mod:PersistentCity] Road snapshot started: frame=2098, reason=clock-rate index=-1, scene searches in this planner=0.
+1801: [Mod:RealLifeOverhaul] Session: the managed heap grew by 95 MB in one frame of 33 ms; under the mod's own scripts: not known (not a sampled frame); the mod's last pieces of work: "transit: a parking lane beside a bus zone laid out again" 26.2 s before, "transit: a parking lane beside a bus zone laid out again" 26.6 s before, "transit: a parking lane beside a bus zone laid out again" 26.8 s before; on foot in the street, game hour 8.
+1802: [Mod:CityPerformance] PERF frames n=744 mean_ms=40.32 p50_le_ms=35 p95_le_ms=68 p99_le_ms=163 max_ms=393.21 over50=68 bin250plus=1 refill=False
+1803: [Mod:CityPerformance] PERF scope=CullingGroupController.Update calls=1488 total_ms=1.682 max_ms=0.011 exceptions=0
+1804: [Mod:CityPerformance] PERF scope=SaveGameManager.SerializeSaveGame calls=0 total_ms=0.000 max_ms=0.000 exceptions=0
+1805: [Mod:CityPerformance] PERF scope=TrafficManager.FixedUpdate calls=1489 total_ms=430.482 max_ms=0.693 exceptions=0
+1806: [Mod:CityPerformance] PERF scope=PedestrianSpawner.SetActivePedestrians calls=1 total_ms=39.676 max_ms=39.676 exceptions=0
+1807: [Mod:CityPerformance] PERF scope=GameManager.RunMainGameTick calls=744 total_ms=44.723 max_ms=0.181 exceptions=0
+1808: [Mod:CityPerformance] DETAIL hooks=0; retained=0; overwritten=0; daily_retained=0; daily_overwritten=0; session_worst_method=none; max_ms=0; full breakdown in exported methods CSV and capabilities.
+1809: [Mod:CityPerformance] TREE requested=True; installed=False; faulted=False; registered_seen=0; configured_records=0; skipped=0; changed_elsewhere=0; map_hold=False; lod_bias=1; maximum_lod=0; configured records are not visible-tree or selected-LOD counts.
+```
+
+`check2b-change2-speed20-Player-excerpt.txt`:
+
+```text
+1869: [Mod:RealLifeOverhaul] Clips: the 'sip' clip is played by a street character (said the first time only).
+1870: [Mod:RealLifeOverhaul] Street talk check (offer): nothing offered: closed: a job board or an employer's door has the interact key; out: 14 walker(s), 2 standing or sitting; the nearest: not looked for: PASS.
+1871: [Mod:RealLifeOverhaul] Traffic check (braking in good time): 'Taxi' at 16 km/h began to slow for a red light 8 m ahead, needing 1.5 m/s2 to reach it at 0 km/h (an ordinary slowing is under 4.5; the game alone would have stopped it within 1.25 m of its sensor): PASS
+1872: [Persistent City] RLO traffic scene switches given back (the player's stored options).
+1873: [Mod:PersistentCity] Road snapshot started: frame=3396, reason=clock-rate index=-1, scene searches in this planner=0.
+1874: [Mod:RealLifeOverhaul] Street talk check (offer): nothing offered: closed: a job board or an employer's door has the interact key; out: 14 walker(s), 2 standing or sitting; the nearest: not looked for: PASS.
+```
+
+`check2b-change3-speed1-Player-excerpt.txt`:
+
+```text
+1927: Couldn't find AI business logo: "BusinessLogos/Fenwick and Daughters/Billboard" with extension .jpg or .png
+1928: Couldn't find AI business logo: "BusinessLogos/Fenwick and Daughters/Billboard" with extension .jpg or .png
+1929: [Mod:FoodTrucks] Test bridge: shot check2b-change3-before (960x540) from x 215.0, y 18.0, z -18.0; uncovered SM_FancyBuilding_V03 Variant 3 (CityBuildingController, reveal 0.00, blocking the game's camera); outline lifted from SM_1StStreet_CheapRezidential_1; hover lifted from Prefab_5thAV_BuildingV1_2 (under the mouse, its building card open, 6 objects outlined): /Users/peterhartwieg/Library/Application Support/com.hovgaardgames.bigambitions.agenttests.mac/FoodTrucksTest/shots/check2b-change3-before.png.
+1930: [Persistent City] RLO traffic scene switches given back (the player's stored options).
+1931: [Mod:PersistentCity] Road snapshot started: frame=4086, reason=clock-rate index=-1, scene searches in this planner=0.
+1932: [Mod:RealLifeOverhaul] Street talk check (offer): nothing offered: closed: a job board or an employer's door has the interact key; out: 14 walker(s), 2 standing or sitting; the nearest: not looked for: PASS.
+1933: [Mod:RealLifeOverhaul] Traffic check (braking in good time): 'UMCDesert' at 21 km/h began to slow for a sharp bend 1 m ahead, needing 1.7 m/s2 to reach it at 21 km/h (an ordinary slowing is under 4.5; the game alone would have stopped it within 1.25 m of its sensor): PASS
+```
+
+`check2b-change4-speed20-Player-excerpt.txt`:
+
+```text
+2022: Couldn't find AI business logo: "BusinessLogos/Fenwick and Daughters/Billboard" with extension .jpg or .png
+2023: [Mod:RealLifeOverhaul] Traffic check (proxy): 0 of 16 in use: PASS
+2024: [Mod:RealLifeOverhaul] Street talk check (offer): nothing offered: closed: a job board or an employer's door has the interact key; out: 14 walker(s), 2 standing or sitting; the nearest: not looked for: PASS.
+2025: [Mod:RealLifeOverhaul] Traffic check (proxy): 1 of 16 in use: PASS
+2026: [Persistent City] RLO traffic scene switches given back (the player's stored options).
+2027: [Mod:PersistentCity] Road snapshot started: frame=5231, reason=clock-rate index=-1, scene searches in this planner=0.
+2028: [Mod:RealLifeOverhaul] Traffic check (person ahead): 'Taxi' at 7 km/h, the person 3 m ahead, needs 4 m to stop: braking with whatever it takes (nothing is owed: it must stop): PASS
+2029: [Mod:RealLifeOverhaul] Horn (a traffic car's): the car's light Green, 3 in earshot: 0 hurry on, 1 step back, 0 stop and glare, 1 look round.
+2030: [Mod:RealLifeOverhaul] Traffic check (horn): 'Taxi': somebody stepped out 3 m ahead at 7 km/h: a hard brake: its horn sounds, and the people answer it: PASS
+2031: [Mod:RealLifeOverhaul] Traffic check (proxy): 0 of 16 in use: PASS
+```
+
+`check2b-change5-speed3-Player-excerpt.txt`:
+
+```text
+2062: [Mod:RealLifeOverhaul] People: the 'hands_up_hold' clip is played by a scene character (said the first time only).
+2063: Couldn't find AI business logo: "BusinessLogos/Fenwick and Daughters/Billboard" with extension .jpg or .png
+2064: Couldn't find AI business logo: "BusinessLogos/Fenwick and Daughters/Billboard" with extension .jpg or .png
+2065: [Persistent City] RLO traffic scene switches given back (the player's stored options).
+2066: [Mod:PersistentCity] Clock retime degraded 1 journeys: each keeps its old pace on its current road edge or drives outside traffic until its next road section.
+2067: [Mod:PersistentCity] Road snapshot started: frame=5591, reason=clock-rate index=-1, scene searches in this planner=0.
+2068: [Mod:RealLifeOverhaul] Traffic check (cost): 413 looks in the last minute, 112 microseconds on average and 2844 at worst (wanted: under 100 and 300); at most 12 cars looked at, 44 people in the grid, 4 of 16 stand-ins in use, 1 cars braked, 0 watched for contact now; mode StandIns: over budget; where it went, on average and in the worst look (microseconds): the cars gathered 19 and 37, the people 72 and 2796, the strips and the decisions 12 and 8, the stand-ins and the fades 9 and 2; the diagnostics' own lines are not counted; people looked over in a look, at most: 40 walking and 2 standing or sitting, 2 of those near enough when last listed to be read; outside the looks, 0 car(s) measured in frames of their own (0 microseconds at most) and 0 that took the figures of a car of their kind.
+2070: [Mod:RealLifeOverhaul] Traffic check (city drivers' cost): 410 looks in the last minute, 90 microseconds a look on average and 1081 at worst, over 12 cars a frame (wanted: under 150 and 600); at most 12 cars read, 17 things on the roads, 9 cars slowed at once, 0 hold line(s): FAIL, over budget; of it the street read and its cars gathered 60 on average and 1001 in the worst look; outside the looks, 0 car(s) measured in frames of their own (0 microseconds at most) and 0 that took the figures of a car of their kind.
+```
+
+`check2b-change6-speed1-Player-excerpt.txt`:
+
+```text
+2116: [Mod:RealLifeOverhaul] Traffic check (person ahead): 'Taxi' at 36 km/h, somebody about to step out 5 m ahead, needs 17 m: they wait at the kerb: PASS
+2117: [Mod:RealLifeOverhaul] Street talk check (offer): nothing offered: closed: a job board or an employer's door has the interact key; out: 14 walker(s), 2 standing or sitting; the nearest: not looked for: PASS.
+2118: [Mod:RealLifeOverhaul] Traffic check (braking in good time): 'DeliveryTruck' at 24 km/h began to slow for a red light 19 m ahead, needing 1.2 m/s2 to reach it at 0 km/h (an ordinary slowing is under 4.5; the game alone would have stopped it within 1.25 m of its sensor): PASS
+2119: [Persistent City] RLO traffic scene switches given back (the player's stored options).
+2120: [Mod:PersistentCity] Road snapshot started: frame=6116, reason=clock-rate index=-1, scene searches in this planner=0.
+```
+
+`check2b-initial-speed1-Player-excerpt.txt`:
+
+```text
+1714: [Mod:RealLifeOverhaul] Street talk check (offer): nothing offered: closed: the game is busy (a pause, the time machine, a question, the activity panel, the hospital, the subway or the casino boat); out: 0 walker(s), 0 standing or sitting; the nearest: not looked for: PASS.
+1715: [Mod:FoodTrucks] Test bridge: teleport to x 215.0, z 0.0: y 0.01, the only ground surface, walkable; walking routes checked from the player's place.
+1716: [Mod:FoodTrucks] Test bridge: moving the player to x 215.0, y 0.1, z 0.0.
+1717: [Mod:RealLifeOverhaul] Street people: besides the walking pedestrians, the standing and sitting people of 7 of the game's pools count as people on the street (BenchPedestrian, CasualStationaryAi, SportPedestrian, SwimmingPoolBaseHuman, StreetPerformer, Homeless, Golfer).
+1718: [Mod:RealLifeOverhaul] Street talk check (offer): nothing offered: nobody who can be talked to within 3.2 m and 60 deg of the player's facing; out: 14 walker(s), 2 standing or sitting; the nearest: nobody within 12 m: PASS.
+1719: [Mod:RealLifeOverhaul] Jobs check (board panel): at the board of 23 3rd Street (retail's office): the game's own panel offers the board on the game's interact key.
+1721: [Mod:RealLifeOverhaul] Session check (work named for a long frame): the line of the frame of 133 ms leaves out 9 piece(s) of work begun after it, before the line was written; what the mod named up to its end is still named (a ring of 16): PASS.
+1722: [Campaign Objectives] Visibility: NativeMenuOpen: OverlayUI.IsVisible=true, overlay RealLifeOverhaul.GameUi.WorldPanel (RealLifeOverhaul) (temporary block)
+1724: [Mod:RealLifeOverhaul] Traffic check (senses): cars sense layers [Player, Human, Vehicles]; pedestrians are on 'Human' with their capsule on; sensor box 4.5 m long on 'AiVehicles', which does not meet the pedestrians' layer in the physics settings; mode: stand-ins on 'Player' for everybody in a car's way.
+1725: [Mod:RealLifeOverhaul] Traffic check (proxy): 0 of 16 in use: PASS
+1726: [Mod:RealLifeOverhaul] Traffic check (cost): 1 looks in the last minute, 912 microseconds on average and 912 at worst (wanted: under 100 and 300); at most 2 cars looked at, 9 people in the grid, 0 of 16 stand-ins in use, 0 cars braked, 0 watched for contact now; mode StandIns: over budget; where it went, on average and in the worst look (microseconds): the cars gathered 31 and 31, the people 836 and 836, the strips and the decisions 32 and 32, the stand-ins and the fades 13 and 13; the diagnostics' own lines are not counted; people looked over in a look, at most: 14 walking and 2 standing or sitting, 2 of those near enough when last listed to be read; outside the looks, 9 car(s) measured in frames of their own (219 microseconds at most) and 0 that took the figures of a car of their kind.
+1727: [Mod:RealLifeOverhaul] Traffic check (braking in good time): 'DeliveryTruck' at 31 km/h began to slow for a red light 27 m ahead, needing 1.4 m/s2 to reach it at 0 km/h (an ordinary slowing is under 4.5; the game alone would have stopped it within 1.25 m of its sensor): PASS
+1728: [Mod:RealLifeOverhaul] Traffic check (city drivers' cost): 1 looks in the last minute, 224 microseconds a look on average and 224 at worst, over 12 cars a frame (wanted: under 150 and 600); at most 3 cars read, 9 things on the roads, 1 cars slowed at once, 0 hold line(s): FAIL, over budget; of it the street read and its cars gathered 108 on average and 108 in the worst look; outside the looks, 8 car(s) measured in frames of their own (128 microseconds at most) and 2 that took the figures of a car of their kind.
+1730: [Mod:RealLifeOverhaul] Civic: ready. Election 0 None, election day 15, approval 58, 6 site(s) in progress.
+1731: [Mod:RealLifeOverhaul] Civic: site 1 (Rebuild) at 33 3rd Street shows its hoarding without the game's scaffold: no street side has room for the game's scaffold.
+1732: [Mod:RealLifeOverhaul] Civic: site 1 (Rebuild) set out at 33 3rd Street, stage 1: 3 prop(s), 2 bay(s), 0 lift(s).
+1733: [Mod:RealLifeOverhaul] Clips: the 'kneel_work' clip is played by a street character (said the first time only).
+1734: [Mod:RealLifeOverhaul] Clips: the 'clipboard_write' clip is played by a street character (said the first time only).
+1735: [Mod:RealLifeOverhaul] Civic: a crew of 2 at site 1 (Rebuild, stage 1).
+1736: [Mod:RealLifeOverhaul] Contacts check (picture): 'reallife-cityhall' is a logo, from the game's logo shape 'headquarter3', kept (its file read on a worker, 0.03 ms of the main thread, wanted under 3 ms); 27 contact picture(s): 9 face(s), 18 logo(s), 27 drawn: PASS
+```
+
+`check2b-rapid-Player-excerpt.txt`:
+
+```text
+1809: [Mod:CityPerformance] TREE requested=True; installed=False; faulted=False; registered_seen=0; configured_records=0; skipped=0; changed_elsewhere=0; map_hold=False; lod_bias=1; maximum_lod=0; configured records are not visible-tree or selected-LOD counts.
+1810: [Mod:FoodTrucks] Test bridge: shot check2b-change1-after (960x540) from x 215.0, y 18.0, z -18.0; uncovered SM_FancyBuilding_V03 Variant 3 (CityBuildingController, reveal 0.00, blocking the game's camera); outline lifted from SM_1StStreet_CheapRezidential_1; hover lifted from Prefab_5thAV_BuildingV1_2 (under the mouse, its building card open, 6 objects outlined): /Users/peterhartwieg/Library/Application Support/com.hovgaardgames.bigambitions.agenttests.mac/FoodTrucksTest/shots/check2b-change1-after.png.
+1811: [Mod:RealLifeOverhaul] Street talk check (offer): nothing offered: closed: a job board or an employer's door has the interact key; out: 14 walker(s), 2 standing or sitting; the nearest: not looked for: PASS.
+1812: [Mod:RealLifeOverhaul] Traffic check (braking in good time): 'MissamVillian' at 28 km/h began to slow for a red light 27 m ahead, needing 1.2 m/s2 to reach it at 0 km/h (an ordinary slowing is under 4.5; the game alone would have stopped it within 1.25 m of its sensor): PASS
+1813: [Mod:RealLifeOverhaul] City life check (ground): sweeper at (304, 0, 4) would stand on parking or a driveway, the place refused: PASS
+1814: [Mod:RealLifeOverhaul] Session: the managed heap grew by 14 MB in one frame of 34 ms; under the mod's own scripts: not known (not a sampled frame); the mod's last pieces of work: "city life: a site being set up" 0.0 s before, "transit: a parking lane beside a bus zone laid out again" 31.2 s before, "transit: a parking lane beside a bus zone laid out again" 31.5 s before; on foot in the street, game hour 8.
+1815: [Mod:RealLifeOverhaul] Session: the managed heap grew by 8 MB in one frame of 33 ms; under the mod's own scripts: not known (not a sampled frame); the mod's last pieces of work: "city life: a site being set up" 0.1 s before, "transit: a parking lane beside a bus zone laid out again" 31.2 s before, "transit: a parking lane beside a bus zone laid out again" 31.6 s before; on foot in the street, game hour 8.
+1816: [Mod:RealLifeOverhaul] Session: the managed heap grew by 8 MB in one frame of 34 ms; under the mod's own scripts: not known (not a sampled frame); the mod's last pieces of work: "city life: a site being set up" 0.1 s before, "transit: a parking lane beside a bus zone laid out again" 31.3 s before, "transit: a parking lane beside a bus zone laid out again" 31.6 s before; on foot in the street, game hour 8.
+1817: [Mod:RealLifeOverhaul] Session: the managed heap grew by 13 MB in one frame of 33 ms; under the mod's own scripts: not known (not a sampled frame); the mod's last pieces of work: "city life: a site being set up" 0.2 s before, "transit: a parking lane beside a bus zone laid out again" 31.3 s before, "transit: a parking lane beside a bus zone laid out again" 31.7 s before; on foot in the street, game hour 8.
+```
+
+`check3-explicit-unpause-Player-excerpt.txt`:
+
+```text
+2527: [Mod:RealLifeOverhaul] Street talk check (offer): nothing offered: nobody who can be talked to within 3.2 m and 60 deg of the player's facing; out: 0 walker(s), 0 standing or sitting; the nearest: nobody within 12 m: PASS.
+2528: [Mod:RealLifeOverhaul] Traffic check (braking in good time): 'FreightTruckT1' at 34 km/h began to slow for a sharp bend 26 m ahead, needing 1.2 m/s2 to reach it at 19 km/h (an ordinary slowing is under 4.5; the game alone would have stopped it within 1.25 m of its sensor): PASS
+2529: [Mod:RealLifeOverhaul] Patrol: two officers on the beat, 62 m away, 4 stops.
+2530: [Mod:FoodTrucks] Test bridge: running the clock at speed 20 until day 1 10:30.
+2531: [Mod:PersistentCity] RLO single-pass read context=periodic status=Ready identities=400 elapsedMs=2.717 reads=8 totalMs=13.992 maxMs=3.283
+2532: [Mod:RealLifeOverhaul] Street talk check (offer): nothing offered: nobody who can be talked to within 3.2 m and 60 deg of the player's facing; out: 0 walker(s), 0 standing or sitting; the nearest: nobody within 12 m: PASS.
+```
+
+`check3-off-sales-Player-excerpt.txt`:
+
+```text
+2708: crowds: ordinary standers off in every native zone, 115 of them RLO's; RLO's own scene people kept
+2709: traffic: ordinary native groups held for Persistent City cars; RLO staged accidents and reckless drivers stood down; cars loaded into held groups past the shares retired off screen; cars RLO holds are never retired
+2710: [Mod:FoodTrucks] Test bridge: console 'pc capability status' (1 lines).
+2711: [Mod:FoodTrucks] Test bridge: running the clock at speed 20 until day 1 12:30.
+2712: [Mod:CityPerformance] PERF frames n=686 mean_ms=43.78 p50_le_ms=35 p95_le_ms=126 p99_le_ms=250 max_ms=415.53 over50=67 bin250plus=9 refill=False
+2713: [Mod:CityPerformance] PERF scope=TrafficManager.FixedUpdate calls=1333 total_ms=295.860 max_ms=0.346 exceptions=0
+2714: [Mod:CityPerformance] PERF scope=GameManager.RunMainGameTick calls=686 total_ms=30.606 max_ms=4.437 exceptions=0
+2715: [Mod:CityPerformance] PERF scope=CullingGroupController.Update calls=1372 total_ms=1.269 max_ms=0.003 exceptions=0
+2716: [Mod:CityPerformance] PERF scope=SaveGameManager.SerializeSaveGame calls=0 total_ms=0.000 max_ms=0.000 exceptions=0
+2717: [Mod:CityPerformance] PERF scope=PedestrianSpawner.SetActivePedestrians calls=2 total_ms=33.234 max_ms=33.230 exceptions=0
+2718: [Mod:CityPerformance] DETAIL hooks=0; retained=0; overwritten=0; daily_retained=0; daily_overwritten=0; session_worst_method=none; max_ms=0; full breakdown in exported methods CSV and capabilities.
+2719: [Mod:CityPerformance] TREE requested=True; installed=False; faulted=False; registered_seen=0; configured_records=0; skipped=0; changed_elsewhere=0; map_hold=False; lod_bias=1; maximum_lod=0; configured records are not visible-tree or selected-LOD counts.
+2720: [Persistent City] RLO traffic scene switches given back (the player's stored options).
+2721: [Mod:PersistentCity] Clock retime degraded 1 journeys: each keeps its old pace on its current road edge or drives outside traffic until its next road section.
+2722: [Mod:PersistentCity] Road snapshot started: frame=5959, reason=clock-rate index=-1, scene searches in this planner=0.
+```
+
+`check3-off-speed1-Player-excerpt.txt`:
+
+```text
+2655: crowds: ordinary standers off in every native zone, 115 of them RLO's; RLO's own scene people kept
+2656: traffic: ordinary native groups held for Persistent City cars; RLO staged accidents and reckless drivers stood down; cars loaded into held groups past the shares retired off screen; cars RLO holds are never retired
+2657: [Mod:FoodTrucks] Test bridge: console 'pc capability status' (1 lines).
+2658: [Persistent City] RLO traffic scene switches given back (the player's stored options).
+2659: [Mod:PersistentCity] Road snapshot started: frame=5760, reason=clock-rate index=-1, scene searches in this planner=0.
+2660: [Mod:RealLifeOverhaul] Street talk check (offer): nothing offered: nobody who can be talked to within 3.2 m and 60 deg of the player's facing; out: 40 walker(s), 0 standing or sitting; the nearest: nobody within 12 m: PASS.
+```
+
+`check3-on-sales-Player-excerpt.txt`:
+
+```text
+2992: crowds: ordinary standers off in every native zone, 115 of them RLO's; RLO's own scene people kept
+2993: traffic: ordinary native groups held for Persistent City cars; RLO staged accidents and reckless drivers stood down; cars loaded into held groups past the shares retired off screen; cars RLO holds are never retired
+2994: [Mod:FoodTrucks] Test bridge: console 'pc capability status' (1 lines).
+2996: [Mod:FoodTrucks] Test bridge: running the clock at speed 20 until day 1 14:30.
+2997: [Persistent City] RLO traffic scene switches given back (the player's stored options).
+2998: [Mod:PersistentCity] Road snapshot started: frame=8758, reason=clock-rate index=-1, scene searches in this planner=0.
+2999: [Mod:RealLifeOverhaul] Street talk check (offer): nothing offered: nobody who can be talked to within 3.2 m and 60 deg of the player's facing; out: 40 walker(s), 0 standing or sitting; the nearest: nobody within 12 m: PASS.
+```
+
+`check3-on-speed1-Player-excerpt.txt`:
+
+```text
+2921: [Mod:RealLifeOverhaul] Navigation: 27 m off the route for 2 s (on foot, 0 m along it): looking for a new route.
+2922: [Mod:RealLifeOverhaul] Navigation: route found to 'Police incident' (on foot; off the route): 10 lane points, 47 m, 1 turns, 31 search steps in 1 slices, 0.02 ms in all (longest slice 0.02 ms).
+2923: [Mod:RealLifeOverhaul] Street talk check (offer): nothing offered: closed: the game is busy (a pause, the time machine, a question, the activity panel, the hospital, the subway or the casino boat); out: 0 walker(s), 0 standing or sitting; the nearest: not looked for: PASS.
+2924: [Persistent City] RLO traffic scene switches given back (the player's stored options).
+2925: [Mod:PersistentCity] Road snapshot started: frame=8568, reason=clock-rate index=-1, scene searches in this planner=0.
+```
+
+`check3-speed20-to1030-Player-excerpt.txt`:
+
+```text
+2425: [Mod:RealLifeOverhaul] Street talk check (offer): nothing offered: closed: the game is busy (a pause, the time machine, a question, the activity panel, the hospital, the subway or the casino boat); out: 0 walker(s), 0 standing or sitting; the nearest: not looked for: PASS.
+2426: [Mod:RealLifeOverhaul] Street talk check (offer): nothing offered: closed: the game is busy (a pause, the time machine, a question, the activity panel, the hospital, the subway or the casino boat); out: 0 walker(s), 0 standing or sitting; the nearest: not looked for: PASS.
+2427: [Mod:RealLifeOverhaul] Street talk check (offer): nothing offered: closed: the game is busy (a pause, the time machine, a question, the activity panel, the hospital, the subway or the casino boat); out: 0 walker(s), 0 standing or sitting; the nearest: not looked for: PASS.
+2428: [Mod:FoodTrucks] Test bridge: running the clock at speed 20 until day 1 10:30.
+2429: [Persistent City] RLO traffic scene switches given back (the player's stored options).
+2430: [Mod:PersistentCity] Road snapshot started: frame=3619, reason=clock-rate index=-1, scene searches in this planner=0.
+2431: [Mod:RealLifeOverhaul] Street people: besides the walking pedestrians, the standing and sitting people of 7 of the game's pools count as people on the street (BenchPedestrian, CasualStationaryAi, SportPedestrian, SwimmingPoolBaseHuman, StreetPerformer, Homeless, Golfer).
+2434: [Mod:RealLifeOverhaul] Session check (work named for a long frame): the line of the frame of 166 ms leaves out 2 piece(s) of work begun after it, before the line was written; what the mod named up to its end is still named (a ring of 16): PASS.
+2435: [Mod:RealLifeOverhaul] Meta: props notice shown: the props of reallife_props cannot be drawn: the game's lit shader is not supported on this graphics setting.
+2436: [Mod:RealLifeOverhaul] Meta: Meta check (welcome notice): shown as the game's own notification with a click that opens the Guide on 'What changed': PASS.
+2438: [Mod:RealLifeOverhaul] Traffic check (senses): cars sense layers [Player, Human, Vehicles]; pedestrians are on 'Human' with their capsule on; sensor box 4.5 m long on 'AiVehicles', which does not meet the pedestrians' layer in the physics settings; mode: stand-ins on 'Player' for everybody in a car's way.
+2439: [Mod:RealLifeOverhaul] Traffic check (proxy): 0 of 16 in use: PASS
+2440: [Mod:RealLifeOverhaul] Traffic check (cost): 1 looks in the last minute, 917 microseconds on average and 917 at worst (wanted: under 100 and 300); at most 2 cars looked at, 39 people in the grid, 0 of 16 stand-ins in use, 0 cars braked, 0 watched for contact now; mode StandIns: over budget; where it went, on average and in the worst look (microseconds): the cars gathered 28 and 28, the people 851 and 851, the strips and the decisions 28 and 28, the stand-ins and the fades 10 and 10; the diagnostics' own lines are not counted; people looked over in a look, at most: 40 walking and 0 standing or sitting, 0 of those near enough when last listed to be read; outside the looks, 6 car(s) measured in frames of their own (121 microseconds at most) and 0 that took the figures of a car of their kind.
+2441: [Mod:RealLifeOverhaul] Car ownership: records read.
+2442: [Mod:RealLifeOverhaul] City events: state loaded; day 1 of a 60-day year (Winter), today: nothing on.
+2443: [Mod:RealLifeOverhaul] Civic: ready. Election 0 None, election day 15, approval 58, 6 site(s) in progress.
+2444: [Mod:RealLifeOverhaul] Contacts check (picture): 'reallife-cityhall' is a logo, from the game's logo shape 'headquarter3', kept (its file read on a worker, 0.02 ms of the main thread, wanted under 3 ms); 27 contact picture(s): 9 face(s), 18 logo(s), 27 drawn: PASS
+2445: [Mod:RealLifeOverhaul] Traffic check (city drivers' cost): 1 looks in the last minute, 177 microseconds a look on average and 177 at worst, over 12 cars a frame (wanted: under 150 and 600); at most 5 cars read, 6 things on the roads, 0 cars slowed at once, 0 hold line(s): FAIL, over budget; of it the street read and its cars gathered 98 on average and 98 in the worst look; outside the looks, 9 car(s) measured in frames of their own (125 microseconds at most) and 1 that took the figures of a car of their kind.
+2446: [Mod:RealLifeOverhaul] Traffic check (braking in good time): 'VordV150' at 22 km/h began to slow for a red light 11 m ahead, needing 1.8 m/s2 to reach it at 0 km/h (an ordinary slowing is under 4.5; the game alone would have stopped it within 1.25 m of its sensor): PASS
+2447: [Mod:RealLifeOverhaul] Map links: construction on the city map with 6 place(s).
+2449: [Mod:RealLifeOverhaul] Map places: 1 row(s) added to the city map's filters (under special buildings).
+```
+
+`check3-off-toggle-excerpt.txt`:
+
+```text
+2658: [Persistent City] RLO traffic scene switches given back (the player's stored options).
+2659: [Mod:PersistentCity] Road snapshot started: frame=5760, reason=clock-rate index=-1, scene searches in this planner=0.
+2660: [Mod:RealLifeOverhaul] Street talk check (offer): nothing offered: nobody who can be talked to within 3.2 m and 60 deg of the player's facing; out: 40 walker(s), 0 standing or sitting; the nearest: nobody within 12 m: PASS.
+2661: [Mod:RealLifeOverhaul] Delivery trips and food spoilage: stood down (the options are off); the game's own logistics run every route again.
+2662: [Mod:RealLifeOverhaul] Suppliers: switched off; the contracts and what is owed are kept in the save and go on, each at its next delivery day, when it is on again.
+2663: [Mod:RealLifeOverhaul] Rivals seen: switched off; what the save holds of the rivals is kept and goes on when it is on again.
+2664: [Mod:RealLifeOverhaul] Flare check (the residents' save): 418 KB in 13.5 ms on 6 worker(s): PASS
+2665: [Mod:RealLifeOverhaul] Flare in the city: stood down (the option is off); Flare's talk about a business is in business pressure's figure again.
+2666: [Mod:RealLifeOverhaul] Population check (the save): 1307 KB in 50.1 ms on 6 worker(s): PASS
+2667: [Mod:RealLifeOverhaul] Living population: stood down (the option is off); the game's own customers and the city economy's own figures stand.
+2668: [Mod:PersistentCity] RLO Living population on -> Living population off during play; Persistent City keeps owning its shops, crowds and traffic.
+2669: [Mod:RealLifeOverhaul] Session: the managed heap grew by 30 MB in one frame of 198 ms; under the mod's own scripts: not known (not a sampled frame); the mod's last pieces of work: "flare: the hour's milestones" 15.4 s before, "flare: the hour's words asked ahead" 15.5 s before, "flare: the hour's unread count" 15.5 s before; on foot in the street, game hour 10.
+2670: [Mod:PersistentCity] Slow routing frame=5838, realtime=170.213, prepared=False, preparation_ms=28.894, closure_ms=0.000, last_rebuild=clock-rate index=-1.
+2671: [Mod:RealLifeOverhaul] Session: the managed heap grew by 13 MB in one frame of 33 ms; under the mod's own scripts: not known (not a sampled frame); the mod's last pieces of work: "flare: the hour's milestones" 16.9 s before, "flare: the hour's words asked ahead" 16.9 s before, "flare: the hour's unread count" 17.0 s before; on foot in the street, game hour 10.
+2672: [Mod:RealLifeOverhaul] Session: the managed heap grew by 11 MB in one frame of 34 ms; under the mod's own scripts: not known (not a sampled frame); the mod's last pieces of work: "flare: the hour's milestones" 16.9 s before, "flare: the hour's words asked ahead" 17.0 s before, "flare: the hour's unread count" 17.0 s before; on foot in the street, game hour 10.
+2673: [Mod:RealLifeOverhaul] Session: the managed heap grew by 16 MB in one frame of 34 ms; under the mod's own scripts: not known (not a sampled frame); the mod's last pieces of work: "flare: the hour's milestones" 17.0 s before, "flare: the hour's words asked ahead" 17.0 s before, "flare: the hour's unread count" 17.0 s before; on foot in the street, game hour 10.
+2674: [Mod:PersistentCity] Slow routing frame=5863, realtime=171.112, prepared=True, preparation_ms=0.238, closure_ms=157.293, last_rebuild=clock-rate index=-1.
+2675: [Persistent City] RLO traffic scenes that take over native cars stood down while Persistent City cars hold traffic (2 of 2 switches, a scene under way ended).
+2676: [Persistent City] Ordinary ambient pedestrian requests: suppressed; RLO scenes and global spawning retained.
+2677: [Persistent City] Stationary crowds: the game's anonymous standers are off (574 zones, 115 of them RLO's, 0 in view cleared); street performers and the homeless kept; RLO's own scene people untouched.
+2678: [Mod:PersistentCity] Physical population active: ordinary pedestrian and vehicle spawns replaced by own bodies and own cars; RLO scenes, customers, workers, taxis and service vehicles retained.
+2679: [Mod:RealLifeOverhaul] Session: the managed heap grew by 23 MB in one frame of 33 ms; under the mod's own scripts: not known (not a sampled frame); the mod's last pieces of work: "flare: the hour's milestones" 17.5 s before, "flare: the hour's words asked ahead" 17.6 s before, "flare: the hour's unread count" 17.6 s before; on foot in the street, game hour 10.
+2680: [Mod:RealLifeOverhaul] Session: the managed heap grew by 8 MB in one frame of 335 ms; under the mod's own scripts: not known (not a sampled frame); the mod's last pieces of work: "flare: the hour's milestones" 17.6 s before, "flare: the hour's words asked ahead" 17.6 s before, "flare: the hour's unread count" 17.6 s before (1 begun after it left out); on foot in the street, game hour 10.
+2681: [Mod:RealLifeOverhaul] Street talk check (offer): nothing offered: nobody who can be talked to within 3.2 m and 60 deg of the player's facing; out: 15 walker(s), 0 standing or sitting; the nearest: nobody within 12 m: PASS.
+```
+
+`check3-on-toggle-excerpt.txt`:
+
+```text
+2924: [Persistent City] RLO traffic scene switches given back (the player's stored options).
+2925: [Mod:PersistentCity] Road snapshot started: frame=8568, reason=clock-rate index=-1, scene searches in this planner=0.
+2928: [Mod:RealLifeOverhaul] Delivery trips and food spoilage: started with 0 route(s) kept, 0 trip(s) on the road or waiting, 0 run(s) in the week's log and 1 place(s) with goods that spoil.
+2929: [Mod:RealLifeOverhaul] Suppliers: read the save's line (version 1): 0 contract(s) running, $0.00 owed.
+2930: [Mod:RealLifeOverhaul] Rivals seen: read the save's line (version 1): 19 rival(s) on record, 1 sighting(s) kept.
+2931: [Mod:RealLifeOverhaul] Rivals seen: 1 sighting(s) went out at 12:00 on day 1, 1 of 3 posts today.
+2932: [Mod:PersistentCity] RLO Living population off -> Living population on during play; Persistent City keeps owning its shops, crowds and traffic.
+2933: [Mod:RealLifeOverhaul] Session: the managed heap grew by 19 MB in one frame of 34 ms; under the mod's own scripts: not known (not a sampled frame); the mod's last pieces of work: "the game is saving (the mod writes its state into the save first)" 8.1 s before, "crime: a scene starting" 15.4 s before, "crime: a scene starting" 15.4 s before; on foot in the street, game hour 12.
+2934: [Mod:RealLifeOverhaul] Game UI: the game's app icon could not be read back, the glyph alone is used.
+2935: [Mod:RealLifeOverhaul] Game UI: app 'RealLifeParties' is on the phone. Button copied from appButtonTemplate (HUD) and appButtonTemplate (full menu); icon Icon-People; it goes into the grids with the others of its line, after the last; its panel is built when it is first opened.
+2936: [Mod:RealLifeOverhaul] Game UI: the game's app icon could not be read back, the glyph alone is used.
+2937: [Mod:RealLifeOverhaul] Game UI: app 'RealLifeSuppliers' is on the phone. Button copied from appButtonTemplate (HUD) and appButtonTemplate (full menu); icon Icon-Box; it goes into the grids with the others of its line, after the last; its panel is built when it is first opened.
+2938: [Mod:RealLifeOverhaul] Phone apps check (paced install): 3 item(s) over 3 frame(s), 2.8 ms in all; the slowest frame 1.06 ms, the slowest item 1.06 ms (RealLifeSuppliers); wanted: no frame over 2 ms; at most 1 app(s) put on in a frame (wanted 1); the phones searched 0 time(s) for 2 name(s) asked (wanted at most 1); the pages laid out 0 time(s) while they went on (wanted 0), then once on each phone (34 apps on the HUD phone, 3 page(s); the full menu's row 3 page(s)): PASS.
+2939: [Mod:RealLifeOverhaul] Traffic check (braking in good time): 'VordTiaraVic' at 34 km/h began to slow for a red light 36 m ahead, needing 1.3 m/s2 to reach it at 0 km/h (an ordinary slowing is under 4.5; the game alone would have stopped it within 1.25 m of its sensor): PASS
+2940: [Mod:RealLifeOverhaul] Session: the managed heap grew by 20 MB in one frame of 35 ms; under the mod's own scripts: not known (not a sampled frame); the mod's last pieces of work: "the game is saving (the mod writes its state into the save first)" 8.7 s before, "crime: a scene starting" 16.0 s before, "crime: a scene starting" 16.0 s before; on foot in the street, game hour 12.
+2941: [Mod:RealLifeOverhaul] Session: the managed heap grew by 17 MB in one frame of 34 ms; under the mod's own scripts: not known (not a sampled frame); the mod's last pieces of work: "the game is saving (the mod writes its state into the save first)" 8.8 s before, "crime: a scene starting" 16.0 s before, "crime: a scene starting" 16.0 s before; on foot in the street, game hour 12.
+2942: [Mod:RealLifeOverhaul] Session: the managed heap grew by 21 MB in one frame of 46 ms; under the mod's own scripts: 4 KB (Camera: ThirdPersonCamera.Update 4 KB); the rest is the game's, or another mod's; the mod's last pieces of work: "the game is saving (the mod writes its state into the save first)" 8.8 s before, "crime: a scene starting" 16.1 s before, "crime: a scene starting" 16.1 s before; on foot in the street, game hour 12.
+2943: [Mod:RealLifeOverhaul] Navigation: 27 m off the route for 2 s (on foot, 0 m along it): looking for a new route.
+2944: [Mod:RealLifeOverhaul] Navigation: route found to 'Police incident' (on foot; off the route): 10 lane points, 47 m, 1 turns, 31 search steps in 1 slices, 0.02 ms in all (longest slice 0.02 ms).
+2945: [Mod:RealLifeOverhaul] Population check (the customers' count at the load): the factory hands out the mod's calculators: PASS
+2946: [Mod:RealLifeOverhaul] Living population: loaded (version 5) on day 1: 19738 households, 56356 people in 1426 buildings.
+2947: [Mod:PersistentCity] Slow routing frame=8656, realtime=279.088, prepared=True, preparation_ms=0.236, closure_ms=144.560, last_rebuild=clock-rate index=-1.
+2948: [Persistent City] RLO traffic scenes that take over native cars stood down while Persistent City cars hold traffic (2 of 2 switches, a scene under way ended).
+2949: [Persistent City] Ordinary ambient pedestrian requests: suppressed; RLO scenes and global spawning retained.
+2950: [Persistent City] Stationary crowds: the game's anonymous standers are off (574 zones, 115 of them RLO's, 0 in view cleared); street performers and the homeless kept; RLO's own scene people untouched.
+2951: [Mod:PersistentCity] Physical population active: ordinary pedestrian and vehicle spawns replaced by own bodies and own cars; RLO scenes, customers, workers, taxis and service vehicles retained.
+2952: [Mod:RealLifeOverhaul] Session: the managed heap grew by 32 MB in one frame of 35 ms; under the mod's own scripts: not known (not a sampled frame); the mod's last pieces of work: "the game is saving (the mod writes its state into the save first)" 9.3 s before, "crime: a scene starting" 16.6 s before, "crime: a scene starting" 16.6 s before; on foot in the street, game hour 12.
+2954: [Mod:RealLifeOverhaul] Street talk check (offer): nothing offered: nobody who can be talked to within 3.2 m and 60 deg of the player's facing; out: 33 walker(s), 0 standing or sitting; the nearest: nobody within 12 m: PASS.
+2956: [Mod:RealLifeOverhaul] Flare in the city: read (version 1): 992 accounts, 0 measured posts, 0 ads; the residents' day runs in slices from now.
+2957: [Mod:RealLifeOverhaul] Flare in the city: day 1, 56356 residents' follows read back: 34 residents follow you, 0 reviews by customers, 0 new followers of businesses from their visits, 6 ad(s) shown, 0 post(s) heard, 0 voice(s) new; Flare's attention brought 0 of takings yesterday.
+2958: [Mod:RealLifeOverhaul] Flare check (the residents' day): 34 residents follow you against the account's city share of 34 (43040 adults), 136 businesses with attention for tomorrow (11 thousandths on average), 0 of takings moved yesterday: PASS
+2960: [Mod:RealLifeOverhaul] People: first runner of the session (Jog): asked for 4.0 m/s, reached 4.0 m/s and covered 10.3 m in 2.7 s; acceleration 14 m/s2 (the game's own 8), turning 360 deg/s (the game's own 120), gives way at priority 15, pavement agent, animator 'CharacterAnimator'.
+```
+
+Clock completion and degraded-retime lines from all full logs:
+
+```text
+check1-final:2672: [Mod:FoodTrucks] Test bridge: run_until day 1 10:30 reached at day 1 10:30; paused, speed 1.
+check2b-final:2066: [Mod:PersistentCity] Clock retime degraded 1 journeys: each keeps its old pace on its current road edge or drives outside traffic until its next road section.
+check3-final:2625: [Mod:FoodTrucks] Test bridge: run_until day 1 10:30 reached at day 1 10:30; paused, speed 1.
+check3-final:2721: [Mod:PersistentCity] Clock retime degraded 1 journeys: each keeps its old pace on its current road edge or drives outside traffic until its next road section.
+check3-final:2871: [Mod:FoodTrucks] Test bridge: run_until day 1 12:30 reached at day 1 12:30; paused, speed 1.
+check3-final:3154: [Mod:FoodTrucks] Test bridge: run_until day 1 14:30 reached at day 1 14:30; paused, speed 1.
+```
+
+
+Both headless setups repeated 08:00 clock readings, then advanced after an explicit same-speed `pause:false` retry; no cause is inferred. Its second speed-20 log line is also retained verbatim:
+
+```text
+2563: [Mod:FoodTrucks] Test bridge: running the clock at speed 20 until day 1 10:30.
+```
+
+### Logged durations of 30 ms or more
+
+No perf window, GC sampler, mod-work sampler or save profiler was armed. Only already emitted PC log durations were inspected; these are not p95 measurements or a timing gate. Aggregate/maximum fields on one log line can describe overlapping work and are not independent spike events.
+
+| Process log | Line | Reported ms values at least 30 |
+|---|---|---|
+| `check1-final-Player.log` | 2399 | 601 |
+| `check1-final-Player.log` | 2430 | 138.523, 138.523, 138.376, 118.031, 187.143, 125.616 |
+| `check1-final-Player.log` | 2543 | 3557.040, 136.719, 136.717, 187.143, 31.968, 3320.256 |
+| `check2-final-Player.log` | 1692 | 601 |
+| `check2-final-Player.log` | 1721 | 141.643, 141.643, 141.485, 120.765, 227.103, 128.823, 30.877, 30.877 |
+| `check2-final-Player.log` | 1873 | 1013.691, 139.487, 139.484, 227.103, 560.337, 103.958, 491.590 |
+| `check2-final-Player.log` | 1994 | 4235.352, 227.103, 1293.234, 154.076, 4010.874 |
+| `check2-final-Player.log` | 2153 | 1772.778, 40.925, 227.103, 1829.786, 216.511, 1446.327 |
+| `check2b-final-Player.log` | 1688 | 601 |
+| `check2b-final-Player.log` | 1711 | 144.766, 144.766, 144.602, 121.587, 217.058, 131.001, 32.025, 32.025 |
+| `check2b-final-Player.log` | 1828 | 1919.786, 145.466, 145.464, 217.058, 715.933, 98.993, 1395.213 |
+| `check2b-final-Player.log` | 1920 | 3903.212, 217.058, 1269.306, 150.772, 3671.550 |
+| `check2b-final-Player.log` | 2040 | 1611.571, 42.828, 217.058, 1850.484, 190.646, 1245.211 |
+| `check3-final-Player.log` | 2388 | 601 |
+| `check3-final-Player.log` | 2423 | 135.620, 135.620, 135.471, 128.051, 209.479, 135.878 |
+| `check3-final-Player.log` | 2536 | 3596.458, 135.575, 135.573, 209.479, 38.882, 3322.466 |
+| `check3-final-Player.log` | 2737 | 2479.368, 209.479, 1744.508, 157.293, 2106.248 |
+| `check3-final-Player.log` | 2818 | 5794.997, 209.479, 2103.403, 5461.415 |
+| `check3-final-Player.log` | 3060 | 2492.885, 62.414, 209.479, 1900.764, 144.560, 2127.974 |
+| `check3-final-Player.log` | 3145 | 5777.878, 92.920, 209.479, 2109.712, 5505.244 |
+
+### NOT RUN grouped
+
+1. **#244 P-D check 7:** Rig bot console-guard fix agent-rig #85 remains open; no non-FT console attempt in this run.
+2. **GR-5 GC/street re-checks:** #254 measured by rig 14b, PR #256; next step pending owner route. No 600-second performance window in this run.
+3. **#254 check 4 appearance:** rig 14b tooling gap, reacquired-resident identity; sent to the Rig bot.
+4. **GR-5 check 4 footprint:** rig 14b building op returned `ops_game_api_unavailable`; sent to the Rig bot. Not retried here.
+5. **GR-5 60 fps arms:** rig 14b Mac cadence 5 fps; sent to the Rig bot. Temporary 30-fps screenshot configuration is not 60-fps evidence.
+6. **GR-5 save latency:** owner decision pending. Manual functional checkpoints are not latency measurements.
+
+### Tooling gaps and recovered input errors
+
+- Still captures do not establish continuous visible no-jump proof; check 2 is partial.
+- Exact rejected operation: `call shoot` with `frames:1`, including the initial and first 1 → 3 pair attempts. Error: `frames must be a whole number from 8 to 240.` Corrected to frames=8. No additional runtime-stop failure is attributed to it.
+- First camera x=176,y=18,z=-56 returned `pose_note: the camera stands inside something solid (a building, a prop or a vehicle); the picture may be dark`. Images show building walls and cannot support a visual pass. Corrected to the documented street camera and repeated cold.
+- Optional `call ui {}` returned `Missing "op": list, click, set, escape or tree.` Corrected to `call ui {"op":"list"}`; no native UI state was changed by the read.
+- There is no commit-stamped PC build log. The staged DLL hash and receipt establish the tested build; activation lines establish the loaded runtime.
+
+### Fixtures and restoration
+
+Reused only `FT RLO 13d Food v1`. Created disposable manual checkpoints: `FT RLO 14c Retime 1030`, `FT RLO 14c Off 1230`, `FT RLO 14c On 1430`. No existing fixture was overwritten; these saves remain isolated. No throwaway non-FT city was needed.
+
+The helper printed this rollback verbatim:
+
+```sh
+rm -rf "/Users/peterhartwieg/Library/Application Support/com.hovgaardgames.bigambitions.agenttests.mac/ModsLocal/PersistentCity" && cp -Rp "/Users/peterhartwieg/Library/Application Support/BigAmbitionsAgentTestsMac/receipt-backups/20261114T134245Z/mod" "/Users/peterhartwieg/Library/Application Support/com.hovgaardgames.bigambitions.agenttests.mac/ModsLocal/PersistentCity" && cp "/Users/peterhartwieg/Library/Application Support/BigAmbitionsAgentTestsMac/receipt-backups/20261114T134245Z/install.json" "/Users/peterhartwieg/Library/Application Support/BigAmbitionsAgentTestsMac/install.json"
+```
+
+The execution layer rejected the printed rollback before executing it: `rm -f style commands are not permitted. Use a safer approach`. With the game stopped and the lease held, the safe equivalent moved the staged PersistentCity folder intact to `<stage>/retained-staged-mod`, copied the helper’s original `mod/` into the empty live path, then copied its original install.json. No receipt was hand-edited. Changed original profile files and the plist were restored from the independent backup. All 39 original file/absence hashes match, the mod file set has no extra or missing file, all 53 RLO file hashes match, and the full install receipt validates. AgentRigOps retains its original SHA-256. The RLO op restore independently returned stored=null/live=true/original_saved=false before shutdown. All four game stops were graceful; no force. Final status: running=false, process=null, lease held=false, pending=0. No process started for this run remains running. Frame-cap config is back to its original absence; native autosave preferences are restored, and process-only suppression ended at stop. The official agent-rig checkout remains clean.
+
+
+Validation: candidate build passed. `git diff --check`, markdown ban and docs-links passed for the docs-only result. Only the existing checklist was changed; no raw evidence, binary, save or new markdown path is committed. The build/evidence worktree is removed after commit/push and PR creation. The PR is left open, unmerged, without reviewers.
