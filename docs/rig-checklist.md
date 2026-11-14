@@ -867,7 +867,7 @@ Role `rig_test`, where `mac`, isolated `agentmac`. **Counts: 1 passed / 0 partia
 
 All performance numbers are **provisional on the shared Mac**. Commands and all three 600-second windows ran in the foreground. Other sessions were left alone. No Windows PC, Steam app, ordinary profile or ordinary save was used. Production code, schema 1, FoodChoicePriceWeight 1.2 and FoodChoiceHouseholdWeight 1.0 were unchanged.
 
-`<stage>` = `/Users/peterhartwieg/HART-Builds/persistent-city-rig-2026-11-14a-mac`. Raw command replies, full logs, backups and extracted fixture data remain there, outside Git. Report copy: `/Users/peterhartwieg/Coding_Projects/.agent-logs/persistent-city-rig-2026-11-14a-mac.md`. [Complete day/night GC JSON and compact street evidence](perf/gr5-2026-11-14a-mac.json): **18,423 bytes**, SHA-256 `6ebe2b30eba12e7410ac415f23b341735257fb08b69172e77fe9bb84fd251ccf`. It includes every allocation key and sample count, both human lines, all street spikes, guard evidence and a raw-record filename/hash-manifest pointer.
+Placeholders: `<stage>` is this run's local staging folder, `<agent-logs>` the local agent-log folder, `<managed>` the local game Managed assemblies, `<rig-home>` the isolated rig's tooling folder and `<rig-data>` the isolated game profile's data folder. Raw command replies, full logs, backups and extracted fixture data remain in `<stage>`, outside Git. Report copy: `<agent-logs>/persistent-city-rig-2026-11-14a-mac.md`. [Complete day/night GC JSON and compact street evidence](perf/gr5-2026-11-14a-mac.json): **18,423 bytes**, SHA-256 `6ebe2b30eba12e7410ac415f23b341735257fb08b69172e77fe9bb84fd251ccf`. It includes every allocation key and sample count, both human lines, all street spikes, guard evidence and a raw-record filename/hash-manifest pointer.
 
 ### Build and rig
 
@@ -875,7 +875,7 @@ All performance numbers are **provisional on the shared Mac**. Commands and all 
 |---|---|
 | Candidate | `b3d58a6a8c3f53eaa82652203b35e5ccf73b9241` (#252). `origin/codex/persistent-city` was unchanged at the initial and final fetch. |
 | Build/evidence checkout | New `codex/mac-rig-2026-11-14a` from that tip, in `rig-2026-11-14a-mac-evidence`. One isolated worktree served build and evidence. Original checkout remained clean. |
-| Build | `python3 tools/build.py --game-managed "/Users/peterhartwieg/Library/Application Support/BigAmbitionsMCP/dll-import-shim/Big Ambitions_Data/Managed"`, exit 0. PATH included `/opt/homebrew/bin`; DOTNET_ROOT was Homebrew dotnet prefix plus `/libexec`. |
+| Build | `python3 tools/build.py --game-managed "<managed>"`, exit 0. PATH included `/opt/homebrew/bin`; DOTNET_ROOT was Homebrew dotnet prefix plus `/libexec`. |
 | PersistentCity DLL SHA-256 | `c5fa3d98fed91d8a219eb8ba88ebcb2fe377817458def47c498873db622335c3`. Built, packaged and staged DLLs matched; every start validated install.json. |
 | Agent-rig HEAD | `f6a2738eec9de76ff2b6e614263a0e528fbf7974`, clean before/after; fetch and ff-only pull were already up to date. No checkout edits, commits or pushes. |
 | AgentRigOps SHA-256 | `51b387f84f41508e3a5bd6765dce582982c3ac40cc2810f4a4e69ec55e6e8142`, unchanged at cleanup; live ops ready. |
@@ -890,7 +890,7 @@ The package contained no RLO files. Staging ran stopped and leased from the offi
 
 | Exact staging command | Receipt backup |
 |---|---|
-| `python3 scripts/install-mac.py --stage-mod PersistentCity /Users/peterhartwieg/HART-Builds/persistent-city-rig-2026-11-14a-mac/package` | `/Users/peterhartwieg/Library/Application Support/BigAmbitionsAgentTestsMac/receipt-backups/20261114T090950Z` |
+| `python3 scripts/install-mac.py --stage-mod PersistentCity <stage>/package` | `<rig-home>/receipt-backups/20261114T090950Z` |
 
 ### Per-check outcomes
 
@@ -1011,7 +1011,7 @@ Reused: `FT GR5 13f Timing v1`, `FT RLO 13d Owned 12`, `FT RLO 13d Food v1`. Cre
 An independent pre-stage manifest backed up the full PersistentCity folder, isolated root preferences/config files, plist, install.json and four absent request paths. The helper printed this rollback verbatim, retained in `<stage>/stage.txt`:
 
 ```sh
-rm -rf "/Users/peterhartwieg/Library/Application Support/com.hovgaardgames.bigambitions.agenttests.mac/ModsLocal/PersistentCity" && cp -Rp "/Users/peterhartwieg/Library/Application Support/BigAmbitionsAgentTestsMac/receipt-backups/20261114T090950Z/mod" "/Users/peterhartwieg/Library/Application Support/com.hovgaardgames.bigambitions.agenttests.mac/ModsLocal/PersistentCity" && cp "/Users/peterhartwieg/Library/Application Support/BigAmbitionsAgentTestsMac/receipt-backups/20261114T090950Z/install.json" "/Users/peterhartwieg/Library/Application Support/BigAmbitionsAgentTestsMac/install.json"
+rm -rf "<rig-data>/ModsLocal/PersistentCity" && cp -Rp "<rig-home>/receipt-backups/20261114T090950Z/mod" "<rig-data>/ModsLocal/PersistentCity" && cp "<rig-home>/receipt-backups/20261114T090950Z/install.json" "<rig-home>/install.json"
 ```
 
 The execution layer rejected it before execution: `rm -f style commands are not permitted. Use a safer approach`. With the game stopped and lease held, the non-destructive equivalent moved the staged folder intact to `<stage>/retained-staged-mod`, copied the helper's original `mod/` into the empty live path, then copied its unchanged receipt back. Changed original profile files and the plist were restored from the independent backup. RLO mod files were checked read-only, never restored.
