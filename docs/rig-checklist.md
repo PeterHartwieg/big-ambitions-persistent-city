@@ -8,6 +8,7 @@ Detailed specs: [F8 §7](https://github.com/PeterHartwieg/big-ambitions-persiste
 
 ## Latest evidence
 
+- **14 November k, Mac, build `8eb87be2`:** 0 passed / 0 partial / 3 failed / 5 NOT RUN groups. Day/night gen0 6/7, pause p95 219.813/234.512 ms; advance 85.040/35.434 MB; street union p95 23.2135 ms; restored ([14k results](#rig-results--14-november-2026-k-mac-gr-5-gctraffic-recheck-after-268-at-8eb87be2)).
 - **14 November j, Mac, build `50f52c18`:** 2 passed / 2 partial / 0 failed / 5 NOT RUN groups. Day/night gen0 7/6, pause p95 28.581/32.902 ms; street p95 3.7732/3.8197 ms with three spikes; night pool 16/16; look identity partial; restored ([14j results](#rig-results--14-november-2026-j-mac-gr-5-gc-recheck-after-266-at-50f52c18)).
 - **14 November i, Mac, build `65b41db5`:** 1 passed / 1 partial / 0 failed / 4 NOT RUN groups. Five unrentable fixture subjects, rig tally 3 housed / 1 unreadable / 1 empty; PC applied Home evidence not observable in-load; restored ([14i results](#rig-results--14-november-2026-i-mac-246-checks-4-5-with-unrentable_fixture-at-65b41db5)).
 - **14 November h, PC, candidate `650fc893`:** 0 passed / 0 partial / 0 failed / 9 NOT RUN. Local staging/windowed start worked; throwaway time/perf/modwork FT guards and fixture population blocked all four windows; exact restoration, lease free ([14h results](#rig-results--14-november-2026-h-pc-gr-5-60-fps-streetbusy-shop--gc-vs-mac-14g-at-650fc893)).
@@ -2933,3 +2934,325 @@ Lease released: running=false, process=null, held=false, pending=0. Both owned P
 Validation: candidate build passed; compact JSON parses and is under 20 KB. Docs-links, markdown-ban and whitespace checks recorded with the PR. No test source changed; no focused test classes, full suite or regression suite. Final fetch left the candidate at 50f52c18. All long commands ran in the foreground and were awaited.
 
 Refs #266
+
+## Rig results — 14 November 2026 k, Mac (GR-5 GC/traffic recheck after #268 at 8eb87be2)
+
+**0 passed / 0 partial / 3 failed / 5 NOT RUN groups. RESULT: DONE.** All three required 600 s windows completed in one fresh headless rig-test process. Counts use the GC gate for day/night and the full traffic expectation for street; completion is not a GC/street acceptance claim.
+
+Role `rig_test`, where `mac`, isolated `agentmac`, owner `persistent-city-rig-2026-11-14k-mac`. `<stage>` = `/Users/peterhartwieg/HART-Builds/persistent-city-rig-2026-11-14k-mac`. Raw logs, replies, scripts and backups remain outside Git. Report copy: `/Users/peterhartwieg/Coding_Projects/.agent-logs/persistent-city-rig-2026-11-14k-mac.md`.
+
+[Complete GC reports and compact timing evidence](perf/gr5-2026-11-14k-mac.json): 17,815 bytes, SHA-256 `6053bcd2f3b8487ab3902b8bdf3cd11001c3846e0096f476094d9982291c39ba`. Raw manifest `<stage>/raw-evidence-manifest.json`, SHA-256 `e95cbacfc0c34c7ac1b1b1223db3d2507b95966e9fd6cfc7a86232aea558ac61`.
+
+### Build and rig
+
+| Item | Evidence |
+| --- | --- |
+| Candidate | `8eb87be2c622357daa2cd6f11e0af590dc23f2d5`; initial tip matched the requested merge. Final fetched tip `8eb87be2c622357daa2cd6f11e0af590dc23f2d5`. Tested binary stayed at the initial SHA. |
+| Branch / worktree | New `codex/mac-rig-2026-11-14k` / `rig-2026-11-14k-mac-evidence`; one isolated worktree served build/evidence. Original checkout and other sessions untouched. |
+| Official agent-rig HEAD | `17ff9f86ef07a8c071a90886fa76ed2e98f56c57`; clean, fetch and ff-only pull current. No tooling edits or rig overlay update. |
+| Live AgentRigOps SHA-256 | `d3188b0e837188aec8be85535846953170da99807ad22914ccf4a3c38d77ed3c`; pre-start, loaded health and cleanup agree. |
+| Build | Homebrew PATH / DOTNET_ROOT; `python3 tools/build.py --game-managed "/Users/peterhartwieg/Library/Application Support/BigAmbitionsMCP/dll-import-shim/Big Ambitions_Data/Managed"`, exit 0. |
+| PersistentCity DLL SHA-256 | `365d427a2b968223d1d19c6d5ca63bfbc440fd01a63627a35e2509dcf7733ecf`; built package and live staged DLL matched; start validated receipt. Package has no RLO or game DLL. |
+| Loaded build | Package MVID `45939a7e-b32e-41bb-9936-8638d625d052` matches loaded health (inspection after measurement). No commit-stamped build line is emitted; hash-validated receipt and activation establish provenance. |
+| Stage | `python3 scripts/install-mac.py --stage-mod PersistentCity /Users/peterhartwieg/HART-Builds/persistent-city-rig-2026-11-14k-mac/package`; stopped and leased; refreshed 28 scoped receipt entries. Receipt backup `/Users/peterhartwieg/Library/Application Support/BigAmbitionsAgentTestsMac/receipt-backups/20261114T215916Z`. |
+| Start | One headless `start --mode headless --rig-test`, PID 74916; one bounded load. No load failure, cold restart or forced stop. |
+| RLO | `Real Life Overhaul 1.0.6 initialised.` living_population stored absent/live=true; social_media=1; social_media_notices=0. No option toggle or RLO file edit. |
+| Autosave / SaveCost | Original native 5 minutes / 3 saves, prevent_autosave=false. #70 process guard enabled/suppressed after load and before/after each window. SaveCostDiagnostics requested=false, writerSchema=1, save=null, activation=null; native save profiler installed=false. No manual save or save-latency measurement. |
+| Lease / resources | Free/stopped initially; acquired 2026-11-14T21:58:32.3102350Z. Pre-start 63.5 GiB disk / 75% reported memory free. No other session intervention, bot message or Windows contact. |
+
+Printed rollback, verbatim:
+
+```sh
+rm -rf "/Users/peterhartwieg/Library/Application Support/com.hovgaardgames.bigambitions.agenttests.mac/ModsLocal/PersistentCity" && cp -Rp "/Users/peterhartwieg/Library/Application Support/BigAmbitionsAgentTestsMac/receipt-backups/20261114T215916Z/mod" "/Users/peterhartwieg/Library/Application Support/com.hovgaardgames.bigambitions.agenttests.mac/ModsLocal/PersistentCity" && cp "/Users/peterhartwieg/Library/Application Support/BigAmbitionsAgentTestsMac/receipt-backups/20261114T215916Z/install.json" "/Users/peterhartwieg/Library/Application Support/BigAmbitionsAgentTestsMac/install.json"
+```
+
+### Per-check Expected lines and outcomes
+
+The REST body of PR #268 contains an “In-game checks” instruction and TARGETS, but no separately labelled Expected lines or completed before/after implementation table. The Expected lines below apply its stated target and this run’s explicit GC/street gates; no numerical criterion is relaxed. Offline proxy targets (below 44.73/4.36 MB, busy below 9,303 B/event, idle 0 B) are not re-tested by this in-game evidence.
+
+- **1. Day, 15:30 / 600 s: FAIL. Expected:** report all requested counters; GC pause p95 under about 36 ms **and** gen0 at or under about 5 per window. Day target from #268: advance well under 100 MB per in-game 600 s day window. **Observed:** gen0 6, pause p95 219.813 ms, advance 85.040 MB. GC gate not met. Day advance target: 85.040 MB (15.0% below 100 MB); day advance target met at this measured level.
+- **2. Night, 01:00 / 600 s after speed 20: FAIL. Expected:** report all requested counters; GC pause p95 under about 36 ms **and** gen0 at or under about 5 per window. Day target from #268: advance well under 100 MB per in-game 600 s day window. **Observed:** gen0 7, pause p95 234.512 ms, advance 35.434 MB. GC gate not met. The day-only allocation threshold is not silently applied to night.
+- **3. Headless street, 600 s with camera pans: FAIL. Expected:** busy-street traffic and arrivals look unchanged versus 14j (same journeys, forecasts, results); UpdateCity/mod-work p95 <5 ms and every >=30 ms spike reported. Timed union and operational counters are below. Headless has no rendered traffic/arrival comparison, so unchanged visual behaviour is unverified; no weaker visual pass substituted.
+
+### GC windows, timing and baselines
+
+Fixture `FT GR5 13f Timing v1`, 1,000 residents / 2,000 visitors / 1,683 places, person-target off, player x=215,z=0. No fallback, new city or save. Day Tuesday 15:30; night Wednesday 01:00; street Wednesday 15:30. Speed=1 in windows, speed-20 advances outside. GC counter=boehm_total; legacy frame_alloc_bytes=heap_used. Incremental=true, max_generation=0; pause is cycle-ending frame excess, not total incremental collector work. MB means decimal bytes.
+
+| Window | frames / dropped | gen0/1/2 | pause p50 / p95 / max ms | heap_after_gc_bytes | mono_heap_bytes | physical+advance MB | advance MB |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| gc-day | 15066 / 0 | 6/0/0 | 50.486/219.813/219.813 | 1367141034 | 1568964608 | 156.411 | 85.040 |
+| gc-night | 16697 / 0 | 7/0/0 | 33.347/234.512/234.512 | 1333411254 | 1549402112 | 75.158 | 35.434 |
+
+| Metric | 14b day / night | 14g day / night | 14j day / night | 14k day / night |
+| --- | --- | --- | --- | --- |
+| gen0 | 11 / 8 | 7 / 6 | 7 / 6 | 6 / 7 |
+| pause p95 ms | 28.191 / 61.316 | 67.048 / 141.801 | 28.581 / 32.902 | 219.813 / 234.512 |
+| physical+advance MB | 1021.587 / 433.642 | 309.570 / 134.021 | 200.927 / 68.086 | 156.411 / 75.158 |
+| advance MB | 236.448 / 72.746 | 209.051 / 71.735 | 107.466 / 33.489 | 85.040 / 35.434 |
+
+gc-day vs 14j: gen0 -1; pause p95 +191.232 ms; advance -22.426 MB (-20.9%).
+gc-night vs 14j: gen0 +1; pause p95 +201.610 ms; advance +1.946 MB (+5.8%).
+
+Every allocation segment below is bytes / samples / skipped. Randomize and bake overlap appearance and are not added again. Four advance children sum to advance; no finer advance sub-segments are exposed by this candidate.
+
+| Allocation segment | Day bytes / samples / skipped | Night bytes / samples / skipped |
+| --- | --- | --- |
+| mod | 283686640 / 15067 / 0 | 190858008 / 16698 / 0 |
+| advance | 85039992 / 14956 / 0 | 35434288 / 16625 / 0 |
+| physical | 71370752 / 14956 / 0 | 39723784 / 16625 / 0 |
+| physical_ambient | 2874768 / 14956 / 0 | 3193840 / 16625 / 0 |
+| physical_vehicles | 1174928 / 14956 / 0 | 571776 / 16625 / 0 |
+| physical_bindings | 17488 / 386991 / 0 | 17376 / 131893 / 0 |
+| physical_vendor_meals | 0 / 14956 / 0 | 0 / 16625 / 0 |
+| physical_fade | 0 / 14956 / 0 | 0 / 16625 / 0 |
+| physical_focus | 0 / 14956 / 0 | 0 / 16625 / 0 |
+| physical_observe | 398320 / 371790 / 0 | 144432 / 115147 / 0 |
+| physical_release | 9888 / 246 / 0 | 8880 / 152 / 0 |
+| physical_parked | 1919152 / 576 / 0 | 1708304 / 585 / 0 |
+| physical_index | 80 / 2123 / 0 | 80 / 2184 / 0 |
+| physical_queues | 9152 / 2123 / 0 | 17200 / 2184 / 0 |
+| physical_roster | 287904 / 2123 / 0 | 193024 / 2184 / 0 |
+| physical_selection | 1291128 / 2533 / 0 | 592168 / 2360 / 0 |
+| physical_spawn_pedestrian | 21737976 / 569 / 0 | 14445456 / 250 / 0 |
+| physical_spawn_appearance | 39317584 / 726 / 0 | 16341024 / 300 / 0 |
+| physical_spawn_check | 0 / 484 / 0 | 0 / 200 / 0 |
+| physical_spawn_vehicle | 176768 / 83 / 0 | 96224 / 26 / 0 |
+| physical_unattributed | 2155616 / 29912 / 0 | 2394000 / 33250 / 0 |
+| physical_spawn_randomize | 2161248 / 242 / 0 | 913856 / 100 / 0 |
+| physical_spawn_bake | 2829728 / 242 / 0 | 1561072 / 100 / 0 |
+| advance_planning | 43076448 / 9019 / 0 | 21750912 / 4236 / 0 |
+| advance_events | 39809880 / 18411 / 0 | 11289376 / 19854 / 0 |
+| advance_stops | 2153664 / 14956 / 0 | 2394000 / 16625 / 0 |
+| advance_other | 0 / 14956 / 0 | 0 / 16625 / 0 |
+
+### Remaining allocation and pool findings
+
+Day advance is 59.3% below 14g and 20.9% below 14j, meeting the below-100 MB day target at 85.040 MB. Both composite GC gates fail on pause p95 and gen0. The mod residual outside physical+advance exceeds either named parent; its source is not instrumented by the allocation sampler. This run does not assign that residual or the pause regression to a production method.
+
+- **gc-day:** largest physical/advance parent `advance` = 85,039,992 bytes (54.37% of physical+advance). Largest advance sub-segment `advance_planning` = 43,076,448 bytes (50.65% of advance). Mod allocation outside physical+advance = 127,275,896 bytes (44.86% of mod). Last logged AppearanceBuilds/Reuses=222/13, pool hit=5.53% (reuse/(build+reuse)); periodic, not exact window deltas.
+- **gc-night:** largest physical/advance parent `physical` = 39,723,784 bytes (52.85% of physical+advance). Largest advance sub-segment `advance_planning` = 21,750,912 bytes (61.38% of advance). Mod allocation outside physical+advance = 115,699,936 bytes (60.62% of mod). Last logged AppearanceBuilds/Reuses=101/1, pool hit=0.98% (reuse/(build+reuse)); periodic, not exact window deltas.
+
+| Window | Last logged pedestrianLooks |
+| --- | --- |
+| gc-day | 222 built/13 reused/3530 deferred/17 idle/65 owned/232 baked/45 bake sizes/1678 KB bake scratch/65 grown/1 trimmed/6 fitted/279 waited/4.9 ms build, ownCars=0, parkedCars=16, instances=26, heldGroups=Personal, retired=34, loadsRetired=29, shareReapplied=2, carAdmission=pc:257:admitted: |
+| gc-night | 101 built/1 reused/5242 deferred/16 idle/16 owned/479 baked/43 bake sizes/1618 KB bake scratch/46 grown/31 trimmed/52 fitted/93 waited/6.3 ms build, ownCars=0, parkedCars=18, instances=25, heldGroups=Personal, retired=0, loadsRetired=0, shareReapplied=2, carAdmission=c57:admitted: |
+| street | 30 built/0 reused/1166 deferred/16 idle/23 owned/644 baked/36 bake sizes/1289 KB bake scratch/25 grown/3 trimmed/12 fitted/41 waited/11.0 ms build, ownCars=0, parkedCars=18, instances=18, heldGroups=Personal, retired=25, loadsRetired=16, shareReapplied=1, carAdmission=:: |
+
+### UpdateCity, mod-work, whole-frame and every >=30 ms mod-work spike
+
+All windows used the rig union timer with UpdateCity, AdvancePopulation, route preparation, RunPhysical, inspector, body acquire, instantiate and dress components. Component timings are **self time**: children are subtracted. Thus the separately reported UpdateCity p95 is self time, not an inclusive UpdateCity percentile and not directly comparable to 14j’s single-component UpdateCity p95. Inclusive UpdateCity is bounded by the complete mod-work union in each frame, so union p95 <5 ms proves the inclusive <5 ms gate, but its exact percentile is a tooling gap. Observer overhead stays in union. GC windows now also have rig timing patches, unlike 14j; allocation/cadence comparisons are observational on this shared host.
+
+| Window | seconds / frames / fps | UpdateCity self p95 / max ms | mod-work p95 / max / spikes | whole-frame p95 / max ms | MaximumLagMinutes |
+| --- | --- | --- | --- | --- | --- |
+| gc-day | 600.988 / 15068 / 25.07 | 0.4234 / 63.3563 | 3.8191 / 98.8772 / 16 | 68.1656 / 1466.9142 | 0.7866191864018219 |
+| gc-night | 600.673 / 16708 / 27.82 | 0.38 / 118.2388 | 2.6698 / 139.7778 / 2 | 45.2048 / 1158.5734 | 1.0 |
+| street | 605.379 / 2583 / 4.27 | 4.9955 / 269.979 | 23.2135 / 387.9724 / 108 | 899.4064 / 6621.1226 | 1.0 |
+
+MaximumLagMinutes is the session maximum and includes untimed speed-20 setup. Final lag/caught-up state is reported separately below.
+
+14j street: UpdateCity 3.7732 ms, union 3.8197 ms, 8.13 fps, three spikes 70.2369/30.9771/33.2070 ms. 14b street: 5.5170/5.5824 ms, 5.61 fps, four spikes.
+
+The nominal waits were 600 s; actual timed spans include command/readback dispatch and are authoritative in the table. Street native clock waiting reached 433.847 s; final lag=0.111 game minutes, caughtUpToTarget=false, refused=false, stoppedAfterAccountingFailure=false.
+
+14k street union vs 14j: +19.3938 ms (+507.7%). Strict union <5 ms not met. Exact inclusive UpdateCity delta unavailable under the component split.
+
+| Window | Unity frame | mod-work ms | dominant self component | whole-frame ms | top self components ms |
+| --- | --- | --- | --- | --- | --- |
+| gc-day | 5090 | 98.8772 | updatecity | 144.742 | updatecity=63.3563; body_instantiate=16.4223; advance=8.0741; physical=6.462; body_dress=2.3368; body_acquire=1.8998 |
+| gc-day | 10095 | 40.4293 | body_instantiate | 166.5232 | body_instantiate=30.578; physical=4.5698; updatecity=2.569; advance=1.8759; prepare=0.2528; NativeCityClock.AccountingPrefix=0.2034 |
+| gc-day | 11483 | 39.6167 | body_acquire | 93.3502 | body_acquire=14.2983; prepare=13.5775; body_dress=5.3176; advance=2.8753; physical=2.4443; updatecity=0.968 |
+| gc-day | 16269 | 30.6313 | physical | 286.8034 | physical=15.8542; updatecity=7.9927; advance=3.9978; prepare=1.3638; NativeCityClock.AccountingPrefix=1.151; PopulationRuntime.Update=0.0786 |
+| gc-day | 16396 | 32.7795 | physical | 202.319 | physical=23.1956; advance=5.416; updatecity=3.4274; prepare=0.288; NativeCityClock.AccountingPrefix=0.2861; PopulationRuntime.Update=0.0576 |
+| gc-day | 16526 | 66.3271 | physical | 205.7908 | physical=27.8439; body_acquire=12.3925; updatecity=11.5046; body_dress=10.7138; advance=3.241; prepare=0.2654 |
+| gc-day | 17118 | 33.4014 | body_instantiate | 102.6016 | body_instantiate=26.6952; advance=5.0353; physical=0.9077; updatecity=0.5696; body_acquire=0.0632; prepare=0.0429 |
+| gc-day | 17301 | 49.2285 | physical | 154.5323 | physical=28.0427; prepare=6.38; body_dress=5.8946; updatecity=3.4652; body_acquire=2.9804; advance=2.0708 |
+| gc-day | 17358 | 62.9492 | body_instantiate | 178.318 | body_instantiate=56.1125; physical=2.899; advance=2.6209; updatecity=1.1185; body_acquire=0.0646; prepare=0.0628 |
+| gc-day | 17373 | 59.8352 | body_dress | 218.9851 | body_dress=40.5386; body_acquire=15.9226; physical=1.8584; updatecity=1.4126; prepare=0.033; NativeCityClock.AccountingPrefix=0.0198 |
+| gc-day | 17391 | 57.7255 | physical | 110.8249 | physical=24.2028; body_acquire=18.3099; body_dress=12.538; updatecity=1.346; advance=1.2423; prepare=0.033 |
+| gc-day | 17405 | 65.8161 | body_instantiate | 128.9681 | body_instantiate=49.7429; physical=13.8988; updatecity=1.3245; advance=0.6319; body_acquire=0.0823; prepare=0.0566 |
+| gc-day | 17407 | 51.9825 | physical | 218.8943 | physical=26.1501; updatecity=9.7912; body_acquire=8.2832; body_dress=5.5267; prepare=0.8672; advance=0.6093 |
+| gc-day | 17491 | 30.3692 | updatecity | 111.0859 | updatecity=28.6766; prepare=1.05; physical=0.5767; advance=0.0209; NativeCityClock.AccountingPrefix=0.0145; inspector=0.0089 |
+| gc-day | 17492 | 42.0883 | body_instantiate | 137.6511 | body_instantiate=34.6246; physical=3.1335; body_acquire=2.3849; prepare=1.0637; updatecity=0.7883; NativeCityClock.AccountingPrefix=0.0244 |
+| gc-day | 17727 | 48.4438 | body_instantiate | 105.5592 | body_instantiate=44.2604; advance=1.565; physical=1.0938; body_acquire=1.0314; updatecity=0.4059; prepare=0.0321 |
+| gc-night | 26129 | 139.7778 | updatecity | 274.3695 | updatecity=118.2388; advance=6.809; physical=5.9871; body_instantiate=4.8419; body_dress=1.8484; body_acquire=1.3078 |
+| gc-night | 39311 | 30.896 | updatecity | 68.7367 | updatecity=29.6228; prepare=1.0582; physical=0.1541; advance=0.0139; NativeCityClock.AccountingPrefix=0.0134; inspector=0.0112 |
+| street | 50298 | 272.5144 | updatecity | 393.655 | updatecity=269.979; prepare=2.5003; NativeCityClock.AccountingPrefix=0.0145; ResidentInspector.UiRaycastPrefix=0.0064; physical=0.0048; PopulationRuntime.Update=0.0034 |
+| street | 50352 | 39.6271 | prepare | 71.7974 | prepare=38.2664; updatecity=1.3163; PopulationRuntime.Update=0.0204; NativeCityClock.AccountingPrefix=0.0116; ResidentInspector.UiRaycastPrefix=0.0053; ResidentInspector.MouseRunPrefix=0.0015 |
+| street | 50402 | 71.2955 | updatecity | 104.1166 | updatecity=53.1768; advance=6.8178; body_instantiate=4.275; physical=4.0817; body_dress=1.5605; body_acquire=1.1084 |
+| street | 51999 | 74.4791 | physical | 2083.0537 | physical=38.6554; updatecity=27.3742; prepare=2.7778; advance=2.7152; NativeCityClock.AccountingPrefix=2.3225; NativeCityClock.TickPrefix=0.2217 |
+| street | 52000 | 57.2924 | physical | 1665.1822 | physical=25.4016; updatecity=15.0222; advance=8.1429; prepare=7.5327; NativeCityClock.AccountingPrefix=0.6629; ResidentInspector.MouseRunPrefix=0.1655 |
+| street | 52004 | 42.6555 | physical | 2549.6287 | physical=34.2959; updatecity=6.7726; advance=0.7534; prepare=0.308; NativeCityClock.AccountingPrefix=0.2378; PopulationRuntime.LateUpdate=0.0893 |
+| street | 52005 | 45.6479 | physical | 1633.4054 | physical=30.4979; updatecity=10.4702; advance=3.1751; prepare=0.968; NativeCityClock.AccountingPrefix=0.2889; inspector=0.1049 |
+| street | 52006 | 34.9193 | physical | 1255.0898 | physical=21.9824; updatecity=8.9995; advance=2.4855; NativeCityClock.AccountingPrefix=0.7507; prepare=0.4031; ResidentInspector.MouseRunPrefix=0.1038 |
+| street | 52007 | 34.9595 | physical | 1513.4191 | physical=21.1574; updatecity=9.3278; advance=2.6096; NativeCityClock.AccountingPrefix=1.0298; prepare=0.4378; PopulationRuntime.Update=0.1293 |
+| street | 52008 | 77.001 | updatecity | 1414.3722 | updatecity=53.9639; physical=18.6431; advance=2.0384; prepare=1.7572; NativeCityClock.AccountingPrefix=0.3394; NativeFoodOwnership.AfterNativeTick=0.0646 |
+| street | 52009 | 36.3526 | physical | 1365.1843 | physical=21.0994; updatecity=12.5195; prepare=1.6793; NativeCityClock.AccountingPrefix=0.7042; advance=0.1067; ResidentInspector.MouseRunPrefix=0.054 |
+| street | 52012 | 35.1351 | physical | 1504.0187 | physical=22.9207; updatecity=7.6865; prepare=2.2667; NativeCityClock.AccountingPrefix=1.702; ResidentInspector.MouseRunPrefix=0.19; PopulationRuntime.Update=0.0868 |
+| street | 52014 | 37.5512 | physical | 1537.5573 | physical=28.5301; updatecity=5.3109; prepare=2.01; NativeCityClock.AccountingPrefix=1.2496; advance=0.1615; ResidentInspector.MouseRunPrefix=0.0995 |
+| street | 52015 | 34.8557 | physical | 1619.5215 | physical=23.1679; updatecity=8.4282; prepare=1.4693; NativeCityClock.AccountingPrefix=0.9094; advance=0.5063; PopulationRuntime.Update=0.1555 |
+| street | 52019 | 44.1765 | physical | 1874.4061 | physical=27.2785; updatecity=9.9627; advance=3.8515; prepare=1.5658; NativeCityClock.AccountingPrefix=1.0896; inspector=0.1323 |
+| street | 52020 | 30.0645 | physical | 1121.1033 | physical=13.2718; updatecity=8.3038; advance=5.2584; prepare=1.4543; NativeCityClock.AccountingPrefix=0.8821; PopulationRuntime.Update=0.4239 |
+| street | 52022 | 30.1564 | physical | 1426.2693 | physical=22.4235; updatecity=4.7463; prepare=1.3333; NativeCityClock.AccountingPrefix=0.8329; ResidentInspector.MouseRunPrefix=0.3916; advance=0.1786 |
+| street | 52023 | 59.3145 | updatecity | 1662.2998 | updatecity=35.4283; physical=16.7315; advance=4.8845; prepare=1.4327; NativeCityClock.AccountingPrefix=0.2974; AmbientPedestrians.SetActivePrefix=0.1653 |
+| street | 52024 | 43.1328 | physical | 1387.7137 | physical=24.1459; updatecity=11.3417; advance=5.6768; prepare=1.3159; NativeCityClock.AccountingPrefix=0.3235; NativeTravelPace.ObserveTickPostfix=0.1308 |
+| street | 52025 | 39.5447 | physical | 1658.8328 | physical=23.9414; updatecity=8.892; advance=4.1344; prepare=1.4034; NativeCityClock.AccountingPrefix=0.8636; ResidentInspector.MouseRunPrefix=0.0809 |
+| street | 52026 | 44.967 | physical | 1552.0231 | physical=27.1476; updatecity=8.0358; advance=7.9416; prepare=1.386; NativeCityClock.AccountingPrefix=0.2853; inspector=0.0517 |
+| street | 52030 | 31.5307 | physical | 1314.136 | physical=14.7889; updatecity=7.4606; advance=2.8761; NativeCityClock.AccountingPrefix=2.5144; NativeCityClock.TickPrefix=1.393; prepare=1.3078 |
+| street | 52032 | 90.7907 | updatecity | 1594.1625 | updatecity=61.3185; physical=22.7539; prepare=2.8371; advance=2.8035; NativeCityClock.AccountingPrefix=0.897; inspector=0.0423 |
+| street | 52043 | 32.5013 | physical | 1167.4115 | physical=25.5053; advance=4.3958; updatecity=1.2287; prepare=1.2042; ResidentInspector.UiRaycastPrefix=0.0661; inspector=0.0345 |
+| street | 52046 | 40.6142 | physical | 953.2037 | physical=24.5474; updatecity=9.824; prepare=3.0426; advance=2.6256; NativeCityClock.AccountingPrefix=0.3647; NativeFoodOwnership.AfterNativeTick=0.0457 |
+| street | 52069 | 62.9893 | physical | 819.2982 | physical=54.2806; updatecity=3.6044; advance=2.3523; prepare=1.4118; NativeCityClock.AccountingPrefix=1.1265; ResidentInspector.MouseRunPrefix=0.0768 |
+| street | 52089 | 58.2051 | physical | 537.1635 | physical=42.2739; updatecity=7.4963; advance=5.296; prepare=1.6258; NativeCityClock.AccountingPrefix=1.4625; inspector=0.0235 |
+| street | 52119 | 38.0723 | physical | 768.8061 | physical=27.2002; updatecity=4.547; advance=3.0839; NativeCityClock.AccountingPrefix=2.0864; ResidentInspector.MouseRunPrefix=0.6122; prepare=0.3385 |
+| street | 52128 | 33.1687 | physical | 486.1929 | physical=13.5707; updatecity=7.687; advance=6.0548; prepare=5.4036; NativeCityClock.AccountingPrefix=0.2266; PopulationRuntime.Update=0.1041 |
+| street | 52141 | 30.9297 | advance | 609.1096 | advance=21.8601; physical=8.1489; updatecity=0.7807; prepare=0.0567; NativeCityClock.AccountingPrefix=0.0269; PopulationRuntime.LateUpdate=0.0172 |
+| street | 52159 | 48.3188 | physical | 1296.2685 | physical=36.9652; updatecity=7.3693; advance=2.3845; prepare=1.2675; PopulationRuntime.Update=0.119; NativeCityClock.AccountingPrefix=0.0924 |
+| street | 52184 | 59.5188 | updatecity | 597.038 | updatecity=36.879; physical=18.0462; advance=3.0889; prepare=1.2908; NativeCityClock.AccountingPrefix=0.1214; PopulationRuntime.Update=0.0304 |
+| street | 52203 | 51.2016 | updatecity | 723.8093 | updatecity=22.3202; prepare=16.2354; physical=10.0359; advance=2.1007; PopulationRuntime.Update=0.3822; NativeCityClock.AccountingPrefix=0.073 |
+| street | 52205 | 46.6671 | physical | 739.9105 | physical=27.4741; updatecity=15.1779; prepare=1.8493; advance=1.4326; NativeCityClock.AccountingPrefix=0.3892; PopulationRuntime.Update=0.1008 |
+| street | 52212 | 37.1554 | physical | 675.3426 | physical=24.3921; updatecity=7.77; advance=3.4847; ResidentInspector.MouseRunPrefix=0.5215; prepare=0.3716; NativeCityClock.AccountingPrefix=0.3067 |
+| street | 52358 | 33.9052 | physical | 371.565 | physical=30.1603; advance=1.3587; prepare=1.1049; updatecity=1.0447; NativeCityClock.AccountingPrefix=0.1038; PopulationRuntime.LateUpdate=0.0617 |
+| street | 52383 | 36.2511 | updatecity | 386.8748 | updatecity=33.9068; advance=1.6914; physical=0.5603; prepare=0.0344; NativeCityClock.AccountingPrefix=0.0189; ResidentInspector.UiRaycastPrefix=0.0155 |
+| street | 52384 | 42.603 | physical | 561.4432 | physical=32.6393; updatecity=4.7186; advance=4.3105; NativeCityClock.AccountingPrefix=0.594; prepare=0.1544; ResidentInspector.UiRaycastPrefix=0.1229 |
+| street | 52387 | 53.6516 | physical | 1108.6623 | physical=36.2036; updatecity=12.298; advance=2.4327; prepare=1.0319; NativeCityClock.AccountingPrefix=0.8962; ResidentInspector.UiRaycastPrefix=0.4167 |
+| street | 52390 | 69.4839 | physical | 1423.4665 | physical=30.918; updatecity=20.2094; prepare=12.757; advance=5.0538; NativeCityClock.AccountingPrefix=0.2442; inspector=0.1062 |
+| street | 52391 | 49.9962 | physical | 1647.0498 | physical=38.361; updatecity=6.7945; prepare=2.9221; advance=1.3441; NativeCityClock.AccountingPrefix=0.2992; PopulationRuntime.LateUpdate=0.0644 |
+| street | 52392 | 40.9347 | physical | 815.6728 | physical=31.3877; updatecity=5.8417; advance=2.8996; prepare=0.3588; NativeCityClock.AccountingPrefix=0.2975; inspector=0.0353 |
+| street | 52394 | 36.5689 | physical | 1370.0403 | physical=25.4305; updatecity=7.0595; advance=3.1886; prepare=0.3469; NativeCityClock.AccountingPrefix=0.2964; NativeCityClock.TickPrefix=0.1212 |
+| street | 52395 | 74.7541 | physical | 1746.6154 | physical=44.5458; updatecity=18.9962; advance=4.5437; prepare=3.6629; NativeCityClock.AccountingPrefix=1.9076; ResidentInspector.MouseRunPrefix=0.3519 |
+| street | 52396 | 52.5366 | physical | 1755.2548 | physical=39.4988; updatecity=8.1952; advance=2.4979; prepare=1.4692; NativeCityClock.AccountingPrefix=0.5217; inspector=0.1375 |
+| street | 52397 | 66.1695 | physical | 1961.8113 | physical=53.5309; updatecity=7.38; advance=3.8363; prepare=0.4749; NativeCityClock.AccountingPrefix=0.2599; PopulationRuntime.LateUpdate=0.2301 |
+| street | 52398 | 36.8622 | physical | 1617.3093 | physical=21.5383; updatecity=11.6424; advance=2.7621; prepare=0.3784; NativeCityClock.AccountingPrefix=0.2909; PopulationRuntime.LateUpdate=0.0661 |
+| street | 52399 | 74.9377 | updatecity | 1657.9734 | updatecity=59.421; physical=9.5268; prepare=4.0385; advance=0.9799; NativeCityClock.AccountingPrefix=0.2947; NativeFoodOwnership.AfterNativeTick=0.2441 |
+| street | 52400 | 43.8616 | physical | 1386.7293 | physical=22.274; updatecity=10.1679; prepare=6.1033; advance=2.7446; NativeCityClock.AccountingPrefix=1.0959; NativeFoodOwnership.AfterNativeTick=1.009 |
+| street | 52401 | 42.3524 | physical | 1520.9839 | physical=27.2973; updatecity=12.4197; prepare=1.4496; advance=0.6048; NativeCityClock.AccountingPrefix=0.3389; PopulationRuntime.Update=0.0468 |
+| street | 52402 | 42.6162 | physical | 1966.4081 | physical=28.6034; updatecity=9.639; advance=2.287; prepare=1.5125; NativeCityClock.AccountingPrefix=0.2782; PopulationRuntime.LateUpdate=0.0807 |
+| street | 52403 | 55.5318 | physical | 1688.584 | physical=34.1187; updatecity=13.0429; advance=4.641; prepare=1.9403; NativeCityClock.AccountingPrefix=1.4664; PopulationRuntime.Update=0.0972 |
+| street | 52404 | 36.9968 | physical | 1405.5906 | physical=19.8434; updatecity=11.1866; advance=2.4698; prepare=2.2058; NativeCityClock.AccountingPrefix=0.7676; ResidentInspector.MouseRunPrefix=0.1939 |
+| street | 52405 | 49.3202 | updatecity | 1713.7155 | updatecity=22.8264; physical=20.3533; advance=2.3985; prepare=1.9977; NativeCityClock.AccountingPrefix=1.1198; ResidentInspector.UiRaycastPrefix=0.1855 |
+| street | 52406 | 57.6927 | physical | 1506.5843 | physical=40.4515; updatecity=10.493; advance=3.4989; prepare=1.5051; NativeCityClock.AccountingPrefix=1.3088; ResidentInspector.MouseRunPrefix=0.1722 |
+| street | 52407 | 40.456 | physical | 1727.6446 | physical=24.4926; updatecity=9.4424; advance=2.7435; prepare=2.3805; NativeCityClock.AccountingPrefix=0.8042; PopulationRuntime.LateUpdate=0.2546 |
+| street | 52408 | 32.893 | physical | 1231.2911 | physical=21.5677; updatecity=5.6284; advance=2.9773; prepare=1.8369; NativeCityClock.AccountingPrefix=0.5738; PopulationRuntime.Update=0.1014 |
+| street | 52409 | 41.8842 | physical | 1597.4762 | physical=28.6244; updatecity=6.5563; advance=3.9817; prepare=2.1251; NativeCityClock.AccountingPrefix=0.2704; inspector=0.1659 |
+| street | 52410 | 57.0009 | physical | 1302.9116 | physical=29.0452; updatecity=14.1055; advance=9.8593; prepare=2.861; NativeCityClock.AccountingPrefix=0.6882; inspector=0.1069 |
+| street | 52416 | 43.2323 | physical | 1534.482 | physical=26.745; updatecity=5.0603; prepare=4.7014; advance=3.6525; ResidentInspector.MouseRunPrefix=1.3788; NativeCityClock.AccountingPrefix=1.1763 |
+| street | 52417 | 87.3877 | physical | 1491.6774 | physical=51.8977; updatecity=22.9367; advance=6.7794; prepare=4.1818; NativeCityClock.AccountingPrefix=1.2854; ResidentInspector.MouseRunPrefix=0.1431 |
+| street | 52418 | 49.492 | physical | 1639.0521 | physical=25.1325; updatecity=17.0389; advance=4.3234; prepare=2.3845; NativeCityClock.AccountingPrefix=0.3438; PopulationRuntime.Update=0.0746 |
+| street | 52419 | 34.9736 | physical | 1107.5603 | physical=17.8597; updatecity=9.5331; advance=4.2515; prepare=1.5136; NativeCityClock.AccountingPrefix=1.4661; ResidentInspector.MouseRunPrefix=0.0817 |
+| street | 52420 | 45.655 | physical | 555.1228 | physical=24.5574; updatecity=10.7585; advance=7.8599; prepare=1.4602; NativeCityClock.AccountingPrefix=0.6409; ResidentInspector.MouseRunPrefix=0.103 |
+| street | 52422 | 75.5374 | physical | 1564.8005 | physical=60.2704; updatecity=8.8369; advance=3.6924; prepare=2.0989; NativeCityClock.AccountingPrefix=0.2509; inspector=0.1151 |
+| street | 52423 | 85.3571 | updatecity | 3393.5119 | updatecity=56.4529; physical=22.5448; advance=3.631; prepare=1.8967; NativeCityClock.AccountingPrefix=0.3089; PopulationRuntime.LateUpdate=0.2411 |
+| street | 52424 | 51.1842 | physical | 1590.872 | physical=33.5098; advance=5.7665; updatecity=5.4401; prepare=4.7153; NativeCityClock.AccountingPrefix=1.3429; ResidentInspector.MouseRunPrefix=0.1388 |
+| street | 52425 | 51.5042 | physical | 1561.1156 | physical=31.4412; updatecity=14.1761; advance=2.9418; prepare=1.6521; NativeCityClock.AccountingPrefix=0.845; inspector=0.1193 |
+| street | 52426 | 52.0875 | physical | 1165.4068 | physical=34.7796; updatecity=10.8715; prepare=2.7832; advance=2.284; NativeCityClock.AccountingPrefix=0.933; ResidentInspector.MouseRunPrefix=0.1025 |
+| street | 52427 | 65.1053 | physical | 2543.1285 | physical=44.2806; updatecity=12.1298; advance=3.636; prepare=3.3838; NativeCityClock.AccountingPrefix=1.0017; NativeCityClock.TickPrefix=0.2803 |
+| street | 52428 | 116.9942 | updatecity | 1867.2504 | updatecity=70.0823; physical=38.4047; advance=3.7542; prepare=2.1184; NativeCityClock.AccountingPrefix=1.8766; NativeFoodOwnership.AfterNativeTick=0.5242 |
+| street | 52429 | 121.1725 | physical | 1720.3656 | physical=98.0953; updatecity=13.4878; advance=7.2504; prepare=1.7177; NativeCityClock.AccountingPrefix=0.344; inspector=0.1299 |
+| street | 52430 | 51.0121 | physical | 1773.5216 | physical=30.6546; updatecity=13.235; advance=3.6778; prepare=2.9366; NativeCityClock.AccountingPrefix=0.3134; inspector=0.049 |
+| street | 52431 | 56.1135 | physical | 2397.1273 | physical=30.3069; prepare=11.1194; updatecity=7.9807; advance=6.0135; NativeCityClock.AccountingPrefix=0.2866; PopulationRuntime.Update=0.1464 |
+| street | 52434 | 276.741 | physical | 6621.1226 | physical=259.5299; updatecity=11.3692; advance=2.0356; prepare=1.487; PopulationRuntime.LateUpdate=1.1479; NativeCityClock.AccountingPrefix=0.7157 |
+| street | 52435 | 387.9724 | physical | 4650.0313 | physical=230.6636; updatecity=142.6508; prepare=11.9835; advance=2.2011; NativeCityClock.AccountingPrefix=0.2565; inspector=0.0488 |
+| street | 52436 | 34.5212 | physical | 1228.8399 | physical=21.6533; advance=6.0212; updatecity=5.0079; prepare=1.4084; NativeCityClock.AccountingPrefix=0.2223; inspector=0.0522 |
+| street | 52476 | 50.9713 | updatecity | 762.5587 | updatecity=44.8384; physical=2.51; advance=2.3351; prepare=1.2254; NativeCityClock.AccountingPrefix=0.0166; inspector=0.0145 |
+| street | 52483 | 63.4459 | physical | 1268.192 | physical=46.7059; updatecity=8.6435; advance=5.7246; prepare=1.3663; PopulationRuntime.Update=0.5397; NativeCityClock.AccountingPrefix=0.2439 |
+| street | 52492 | 43.0119 | physical | 1778.4066 | physical=26.6258; updatecity=9.15; advance=3.6701; prepare=2.6093; PopulationRuntime.Update=0.5413; NativeCityClock.AccountingPrefix=0.2636 |
+| street | 52493 | 43.2188 | physical | 1520.4689 | physical=23.0833; updatecity=12.8507; advance=5.0265; prepare=1.6847; NativeCityClock.AccountingPrefix=0.2999; PopulationRuntime.Update=0.1004 |
+| street | 52494 | 30.2504 | physical | 1388.585 | physical=21.7624; updatecity=5.6189; NativeCityClock.AccountingPrefix=1.3665; advance=0.6922; prepare=0.351; ResidentInspector.MouseRunPrefix=0.1558 |
+| street | 52495 | 34.0295 | physical | 1700.6031 | physical=21.0389; updatecity=8.8824; advance=1.9462; prepare=1.5728; NativeCityClock.AccountingPrefix=0.2988; PopulationRuntime.Update=0.0723 |
+| street | 52497 | 55.7549 | physical | 1367.5902 | physical=42.1676; updatecity=8.6284; advance=2.1036; NativeCityClock.AccountingPrefix=1.3654; prepare=0.7908; ResidentInspector.MouseRunPrefix=0.3241 |
+| street | 52498 | 40.9364 | physical | 1318.2603 | physical=27.3606; updatecity=8.4882; advance=2.7977; prepare=1.6553; NativeCityClock.AccountingPrefix=0.3942; ResidentInspector.UiRaycastPrefix=0.0674 |
+| street | 52499 | 34.656 | physical | 630.2087 | physical=20.695; updatecity=8.391; advance=3.8183; prepare=1.3035; NativeCityClock.AccountingPrefix=0.2655; inspector=0.0418 |
+| street | 52515 | 30.1553 | physical | 1047.1921 | physical=14.7797; updatecity=9.0266; prepare=2.627; NativeCityClock.AccountingPrefix=2.0804; advance=1.2193; ResidentInspector.MouseRunPrefix=0.1114 |
+| street | 52516 | 38.4923 | physical | 709.1675 | physical=27.0612; advance=5.8913; updatecity=4.4099; prepare=1.0553; NativeCityClock.AccountingPrefix=0.0228; inspector=0.0175 |
+| street | 52522 | 44.409 | physical | 531.776 | physical=39.4107; updatecity=2.4504; prepare=1.5015; advance=0.9517; inspector=0.0481; NativeCityClock.AccountingPrefix=0.0166 |
+| street | 52663 | 37.4035 | updatecity | 564.903 | updatecity=29.1177; physical=6.8022; prepare=1.103; advance=0.244; NativeCityClock.AccountingPrefix=0.0826; inspector=0.0189 |
+| street | 52674 | 41.9129 | physical | 799.7057 | physical=23.4792; advance=8.3144; updatecity=6.0931; prepare=3.557; NativeCityClock.AccountingPrefix=0.266; inspector=0.0843 |
+| street | 52680 | 41.641 | physical | 457.5378 | physical=37.3549; updatecity=1.747; advance=1.2225; prepare=1.1254; NativeCityClock.AccountingPrefix=0.1049; inspector=0.0191 |
+| street | 52720 | 34.3468 | physical | 571.7182 | physical=24.7333; updatecity=5.0432; advance=2.8018; NativeCityClock.AccountingPrefix=1.0587; prepare=0.3098; ResidentInspector.MouseRunPrefix=0.1134 |
+| street | 52723 | 35.2148 | updatecity | 608.9113 | updatecity=31.511; advance=1.942; prepare=1.0661; physical=0.5978; NativeCityClock.AccountingPrefix=0.0638; ResidentInspector.UiRaycastPrefix=0.0102 |
+| street | 52726 | 35.8368 | physical | 409.0721 | physical=15.8381; updatecity=12.4446; advance=4.1167; prepare=2.8966; NativeCityClock.AccountingPrefix=0.3668; PopulationRuntime.Update=0.0431 |
+| street | 52728 | 46.1448 | physical | 547.9342 | physical=36.1683; updatecity=6.4539; prepare=2.1725; advance=0.8296; NativeCityClock.AccountingPrefix=0.3248; PopulationRuntime.Update=0.0678 |
+| street | 52733 | 32.7313 | updatecity | 636.6769 | updatecity=27.4991; advance=2.6117; prepare=1.5069; physical=1.0023; PopulationRuntime.Update=0.0379; NativeCityClock.AccountingPrefix=0.0243 |
+| street | 52735 | 82.4642 | physical | 967.7 | physical=66.3581; updatecity=8.3544; advance=3.3129; prepare=2.3887; NativeCityClock.AccountingPrefix=1.4695; ResidentInspector.MouseRunPrefix=0.1689 |
+| street | 52741 | 38.6103 | physical | 1838.4415 | physical=24.6646; updatecity=7.2661; advance=2.5373; NativeCityClock.AccountingPrefix=1.8464; prepare=1.3497; ResidentInspector.UiRaycastPrefix=0.6076 |
+| street | 52742 | 30.539 | physical | 1005.9267 | physical=17.702; updatecity=5.8487; advance=5.0164; prepare=1.4736; NativeCityClock.AccountingPrefix=0.2868; inspector=0.0515 |
+| street | 52753 | 54.1311 | physical | 1488.4953 | physical=28.0818; advance=13.8855; updatecity=10.2398; prepare=1.462; NativeCityClock.AccountingPrefix=0.2571; inspector=0.0783 |
+| street | 52766 | 37.4511 | physical | 981.2701 | physical=30.0869; updatecity=3.3287; prepare=2.696; NativeCityClock.AccountingPrefix=0.409; advance=0.4034; inspector=0.3042 |
+| street | 52769 | 59.0912 | updatecity | 1073.7471 | updatecity=57.5424; prepare=1.0562; advance=0.2709; physical=0.1737; NativeCityClock.AccountingPrefix=0.0153; ResidentInspector.UiRaycastPrefix=0.0102 |
+| street | 52785 | 31.3038 | physical | 1076.2269 | physical=15.8516; updatecity=7.1967; advance=5.4199; NativeCityClock.AccountingPrefix=2.2665; prepare=0.4063; inspector=0.0473 |
+| street | 52788 | 32.5683 | physical | 1348.2906 | physical=23.6001; advance=3.592; updatecity=3.4336; inspector=1.1985; prepare=0.3293; NativeCityClock.AccountingPrefix=0.2948 |
+| street | 52803 | 30.1877 | physical | 429.8891 | physical=22.4396; updatecity=6.2984; advance=0.5145; prepare=0.3256; NativeCityClock.AccountingPrefix=0.2578; ResidentInspector.MouseRunPrefix=0.1535 |
+| street | 52809 | 78.2395 | physical | 1515.0675 | physical=46.7799; updatecity=27.5099; advance=2.3459; prepare=1.1518; NativeCityClock.AccountingPrefix=0.2598; inspector=0.0552 |
+| street | 52810 | 88.1387 | physical | 1100.8403 | physical=65.2234; updatecity=13.9137; advance=7.1642; prepare=1.3125; NativeCityClock.AccountingPrefix=0.2608; inspector=0.0918 |
+
+Every exported mod-work spike is listed (126 rows: day 16, night 2, street 108). The compact JSON keeps three largest spike examples per window; complete frame/component lists are in this table and the hash-indexed raw end replies. The dominant self component attributes the measured mod work; it does not establish an allocating method or GC cause. `pc gc stop` exposes aggregate GC pause counts/percentiles but no per-pause Unity frame IDs; those pauses cannot be assigned exact frames from its response. Spikes are reported, not chased. Whole-frame spikes remain separate from mod-work; complete raw whole-frame records are in the stage.
+
+gc-day: coverage.complete=True, validity={"off_main_thread_calls":0,"cross_frame_scopes":0,"unbalanced_exits":0,"depth_overflow":0,"frames_dropped":0,"valid":true,"invalid_reasons":[]}; save_activity={"attempts":10081,"allowed":0,"refused":10081,"native_saving_frames":0,"clean":true,"invalid_reasons":[]}; NativeCityClock final={"policy":"minute-epoch-drain-v1","configuredCalendarFactor":0.3333333333333333,"nativeMinute":3960.9490726590157,"logicalMinute":3960.9490726590157,"caughtUpToTarget":true,"lagMinutes":0.0,"maxLagMinutes":0.7866191864018219,"supportedMaxLagMinutes":1.0,"heldOrdinaryTicks":3497,"heldSkipTicks":0,"boundaryClips":180,"withheldGameMinutes":123.5844794174991,"waitingSeconds":0.0,"maxRecoverySeconds":12.1572111,"refused":false,"pacingAffected":true,"stoppedAfterAccountingFailure":false,"historicalClockMisses":0}.
+gc-night: coverage.complete=True, validity={"off_main_thread_calls":0,"cross_frame_scopes":0,"unbalanced_exits":0,"depth_overflow":0,"frames_dropped":0,"valid":true,"invalid_reasons":[]}; save_activity={"attempts":16722,"allowed":0,"refused":16722,"native_saving_frames":0,"clean":true,"invalid_reasons":[]}; NativeCityClock final={"policy":"minute-epoch-drain-v1","configuredCalendarFactor":0.3333333333333333,"nativeMinute":4562.857531547546,"logicalMinute":4562.857531547546,"caughtUpToTarget":true,"lagMinutes":0.0,"maxLagMinutes":1.0,"supportedMaxLagMinutes":1.0,"heldOrdinaryTicks":8623,"heldSkipTicks":0,"boundaryClips":782,"withheldGameMinutes":1229.0320480729472,"waitingSeconds":0.0,"maxRecoverySeconds":15.5762799,"refused":false,"pacingAffected":true,"stoppedAfterAccountingFailure":false,"historicalClockMisses":0}.
+street: coverage.complete=True, validity={"off_main_thread_calls":0,"cross_frame_scopes":0,"unbalanced_exits":0,"depth_overflow":0,"frames_dropped":0,"valid":true,"invalid_reasons":[]}; save_activity={"attempts":2591,"allowed":0,"refused":2591,"native_saving_frames":0,"clean":true,"invalid_reasons":[]}; NativeCityClock final={"policy":"minute-epoch-drain-v1","configuredCalendarFactor":0.3333333333333333,"nativeMinute":5280.111106872559,"logicalMinute":5280.0,"caughtUpToTarget":false,"lagMinutes":0.11110687255859375,"maxLagMinutes":1.0,"supportedMaxLagMinutes":1.0,"heldOrdinaryTicks":13861,"heldSkipTicks":0,"boundaryClips":1500,"withheldGameMinutes":2384.727051503306,"waitingSeconds":433.8469514,"maxRecoverySeconds":41.3219146,"refused":false,"pacingAffected":true,"stoppedAfterAccountingFailure":false,"historicalClockMisses":0}.
+
+### Host load and memory pressure at each boundary
+
+| Window | Boundary UTC | uptime load | memory_pressure -Q |
+| --- | --- | --- | --- |
+| gc-day | 2026-11-14T22:01:18Z | 23:01  up 1 day,  4:39, 1 user, load averages: 13.12 7.96 5.92 | System-wide memory free percentage: 46% |
+| gc-day | 2026-11-14T22:11:22Z | 23:11  up 1 day,  4:49, 1 user, load averages: 12.17 14.52 11.64 | System-wide memory free percentage: 78% |
+| gc-night | 2026-11-14T22:15:18Z | 23:15  up 1 day,  4:53, 1 user, load averages: 22.75 16.79 13.19 | System-wide memory free percentage: 71% |
+| gc-night | 2026-11-14T22:25:21Z | 23:25  up 1 day,  5:03, 1 user, load averages: 3.98 8.02 10.21 | System-wide memory free percentage: 76% |
+| street | 2026-11-14T22:29:46Z | 23:29  up 1 day,  5:07, 1 user, load averages: 8.10 6.44 8.79 | System-wide memory free percentage: 77% |
+| street | 2026-11-14T22:39:53Z | 23:39  up 1 day,  5:18, 1 user, load averages: 90.45 61.07 35.49 | System-wide memory free percentage: 45% |
+
+Street load rose from 8.10/6.44/8.79 to 90.45/61.07/35.49, and memory free fell 77%→45%. This severe shared-host load qualifies the street regression; it is not isolated production-code attribution. All 108 street spikes were exported: 89 physical, 17 UpdateCity self, 1 advance and 1 prepare dominant.
+
+`vm_stat` snapshots are retained with each boundary. Another harness session may have been building/testing; no other session was inspected, stopped or changed. These loads qualify noise; they do not prove which process caused it.
+
+### Traffic observations and Player.log excerpts
+
+GC sampler was stopped for the street window. Nine look_at pans at x=197/215/233 and z=0/12 completed; player stayed x=215,z=0. Headless rendering cannot show whether traffic/arrivals look identical to 14j. Periodic population logs and route-progress counters are retained as operational evidence, not forecast equality proof.
+
+| Last periodic street snapshot | pedestrians | cars | acquired | released | journeyIndexMismatches | journeyIndexFallback |
+| --- | --- | --- | --- | --- | --- | --- |
+| 14j | 18 | 0 | 163 | 145 | 0 | False |
+| 14k | 7 | 0 | 29 | 22 | 0 | False |
+
+These cumulative physical counts show ongoing acquisition/release, not native shop-arrival or forecast equality. The snapshots occur at different achieved cadences and are not a paired behavioural proof.
+
+```text
+[Mod:RealLifeOverhaul] Real Life Overhaul 1.0.6 initialised.
+[Mod:PersistentCity] Persistent population active: 1000 residents, 2000 visitors, 1683 places. Native-pace walking, subway and car journeys; physical population preflight follows road initialization. Ctrl+F8 opens food business feedback.
+[Mod:FoodTrucks] Test bridge: console 'pc gc population' (1 lines).
+[Mod:FoodTrucks] Test bridge: console 'pc gc population' (1 lines).
+[Mod:FoodTrucks] Test bridge: running the clock at speed 20 until day 2 15:30.
+[Mod:FoodTrucks] Test bridge: run_until day 2 15:30 reached at day 2 15:30; paused, speed 1.
+[Mod:FoodTrucks] Test bridge: console 'pc gc start' (1 lines).
+[Mod:FoodTrucks] Test bridge: console 'pc gc stop' (2 lines).
+[Mod:FoodTrucks] Test bridge: running the clock at speed 20 until day 3 01:00.
+[Mod:FoodTrucks] Test bridge: run_until day 3 01:00 reached at day 3 01:00; paused, speed 1.
+[Mod:FoodTrucks] Test bridge: console 'pc gc start' (1 lines).
+[Mod:FoodTrucks] Test bridge: console 'pc gc stop' (2 lines).
+[Mod:FoodTrucks] Test bridge: console 'pc gc stop' (2 lines).
+[Mod:FoodTrucks] Test bridge: running the clock at speed 20 until day 3 15:30.
+[Mod:FoodTrucks] Test bridge: run_until day 3 15:30 reached at day 3 15:30; paused, speed 1.
+[Mod:FoodTrucks] Test bridge: console 'pc gc population' (1 lines).
+[Mod:FoodTrucks] Test bridge: console 'pc gc population' (1 lines).
+```
+
+Explicit speed=1 replies are retained before every window. No RLO toggle occurred. The first gc population read immediately after native load said `Warning: [Persistent City] gc population refused: no active city.` The next read confirmed 3000/1000/2000 after asynchronous activation; no window was opened before confirmation. No ops_load_* failure or runtime stop occurred.
+
+### NOT RUN grouped and tooling gaps
+
+- **Look stability (#266 check 4):** excluded, completed in 14j as far as tooling allows.
+- **GR-5 60 fps street/busy-shop arms:** excluded; Mac about 5 fps at this population; PC throwaway time/perf/modwork fix agent-rig #90 not merged for this request. No PC contact.
+- **GR-5 save latency:** excluded, owner decision pending; SaveCostDiagnostics off, no save profiling.
+- **#262 checks 4–5 and #246 check 4 full proof:** excluded, Rig bot fixture/observation gaps.
+- **Everything else:** outside the explicitly requested A checks; no release, Workshop, version/changelog, production, schema or price/household-weight change.
+
+Tooling gaps within performed checks: exact inclusive UpdateCity p95 under nested self-time instrumentation; GC-pause frame IDs absent from the successful `pc gc stop` response; rendered traffic/arrival/forecast equality in the required headless process; no finer advance allocation sub-segments or commit-stamped build log. No op was invoked to bypass these limits. Invoked rig ops had no errors; the startup population warning is quoted above.
+
+### Cleanup and offline validation
+
+Stopped only owned PID 74916 normally. Restored the full PersistentCity folder and exact receipt from the printed backup, stopped and leased; preserved staged candidate in `<stage>/staged-candidate-restored-out`. Restored isolated preferences/config, plist, PlayerSettings and original absent paths. Verified 35 original file hashes, 3 absent paths, exact PersistentCity file set and 53 RLO hashes; mismatches=[]. AgentRigOps unchanged. install.json SHA-256 `dea36ce03586cc53d3b2c7e5cd0fda6d9a54e61c670a21d0676ad18feee54a95`. Original autosave settings restored; process suppression ends at stop. Disposable fixture unchanged; no new save. Final running=False, lease held=False, pending=0; owned PID and caffeinate gone.
+
+Build passed. Compact JSON parses and is under 20 KB; docs-links, markdown-ban and diff checks recorded with this docs-only change. No test sources changed, no focused classes or full/regression suite. Evidence committed and pushed; PR remains unmerged, no reviewers. The isolated worktree is removed after opening the PR.
+
+Refs #268
