@@ -8,6 +8,7 @@ Detailed specs: [F8 §7](https://github.com/PeterHartwieg/big-ambitions-persiste
 
 ## Latest evidence
 
+- **14 November j, Mac, build `50f52c18`:** 2 passed / 2 partial / 0 failed / 5 NOT RUN groups. Day/night gen0 7/6, pause p95 28.581/32.902 ms; street p95 3.7732/3.8197 ms with three spikes; night pool 16/16; look identity partial; restored ([14j results](#rig-results--14-november-2026-j-mac-gr-5-gc-recheck-after-266-at-50f52c18)).
 - **14 November i, Mac, build `65b41db5`:** 1 passed / 1 partial / 0 failed / 4 NOT RUN groups. Five unrentable fixture subjects, rig tally 3 housed / 1 unreadable / 1 empty; PC applied Home evidence not observable in-load; restored ([14i results](#rig-results--14-november-2026-i-mac-246-checks-4-5-with-unrentable_fixture-at-65b41db5)).
 - **14 November h, PC, candidate `650fc893`:** 0 passed / 0 partial / 0 failed / 9 NOT RUN. Local staging/windowed start worked; throwaway time/perf/modwork FT guards and fixture population blocked all four windows; exact restoration, lease free ([14h results](#rig-results--14-november-2026-h-pc-gr-5-60-fps-streetbusy-shop--gc-vs-mac-14g-at-650fc893)).
 - **14 November g, Mac, build `7ff6a87a`:** 2 passed / 2 partial / 1 failed / 4 NOT RUN groups. Appearance 62.2/26.1 MB, gen0 7/6, pause p95 67.048/141.801 ms; street p95 5.2988/5.3683 ms; look/refill partial; restored ([14g results](#rig-results--14-november-2026-g-mac-gr-5-gc-recheck-after-262-at-7ff6a87a)).
@@ -2716,3 +2717,219 @@ Lease released; final running=false, process=null, held=false, pending=0. Owned 
 Offline validation: candidate build passed. Docs-links, markdown-ban and whitespace checks are recorded in the PR. No test source changed, no focused classes, no full suite. Final fetch left the candidate tip unchanged at `65b41db5`.
 
 Refs #246
+
+## Rig results — 14 November 2026 j, Mac (GR-5 GC recheck after #266 at 50f52c18)
+
+**RESULT: DONE. Counts: 2 passed / 2 partial / 0 failed / 5 NOT RUN groups.** Day GC meets #266's allocation/count/heap expectation; night heap and pool shrink. Street **UpdateCity / mod-work p95 = 3.7732 / 3.8197 ms**, both below 5 ms, with **three >=30 ms spikes**. Their body-growth attribution is unverified, so the street check is partial. Look stability is partial through the resident-reacquire tooling gap. In-game proof gates no merge; no merge was performed.
+
+Role `rig_test`, where `mac`, isolated `agentmac`, owner `persistent-city-rig-2026-11-14j-mac`. `<stage>` = `<home>/HART-Builds/persistent-city-rig-2026-11-14j-mac`. [Complete GC reports and compact evidence](perf/gr5-2026-11-14j-mac.json): **15,640 bytes**, SHA-256 `67f6d43e6a734ffbc1b8f350a3e508423e42b676ae5437f37f53d99f048ca1dc`. Raw command replies, logs, scripts, nine inspected PNGs and backups stay in `<stage>`. Raw manifest SHA-256 `267c207a05ed25b04db202ba2788216f0a7d8840d0f62a598f8ba0f115d00629`. Report copy: `<home>/Coding_Projects/.agent-logs/persistent-city-rig-2026-11-14j-mac.md`.
+
+### Build and rig
+
+| Item | Evidence |
+| --- | --- |
+| Candidate | `50f52c18a840260daa7dec1ae47b51199d7db712`, initial and final fetched `origin/codex/persistent-city` agree; #266 included. |
+| Worktree / branch | New `rig-2026-11-14j-mac-evidence` / `codex/mac-rig-2026-11-14j`; one isolated worktree served build and evidence. Original checkout unchanged. |
+| Official agent-rig HEAD | `17ff9f86ef07a8c071a90886fa76ed2e98f56c57`; clean; fetch and ff-only pull already current. No tooling edit, build or overlay update. |
+| Live AgentRigOps SHA-256 | `d3188b0e837188aec8be85535846953170da99807ad22914ccf4a3c38d77ed3c`; pre-start, loaded health and cleanup agree. |
+| Build | `PATH=/opt/homebrew/bin:$PATH`, `DOTNET_ROOT` from Homebrew dotnet; `python3 tools/build.py --game-managed "<home>/Library/Application Support/BigAmbitionsMCP/dll-import-shim/Big Ambitions_Data/Managed"`, exit 0. |
+| PersistentCity DLL SHA-256 | `d1114d9094da71bb18f4137a6a446211c0654c235a7ca14d81f3514e0590247d`. Staged package contains no RLO or game DLL. |
+| Loaded build identity | Candidate module ID `598a81ab-915b-4c39-a889-0f06c6c69325` matches loaded health. Receipt-validated starts accepted the staged hashes. No commit-stamped build line is emitted; the exact activation line is quoted below. A brief local module-ID inspection ran during the street window; shared-host cadence is observational. |
+| Stage | `python3 scripts/install-mac.py --stage-mod PersistentCity <stage>/package`; stopped and leased. Receipt backup `<home>/Library/Application Support/BigAmbitionsAgentTestsMac/receipt-backups/20261114T201646Z`; refreshed 28 scoped receipt entries. |
+| Starts | One successful headless `start --mode headless --rig-test`, PID 41540; one successful cold windowed `start --mode windowed --rig-test`, PID 50499. No forced stop or load failure. |
+| B frame cap | Isolated `agent-frame-cap.json` = `{"fps":30,"vsync":0}`; final applied=true, target=30, vSync=0; final short reading 5.72 fps. This is visual evidence, not a 30/60 fps performance arm. |
+| RLO | `[Mod:RealLifeOverhaul] Real Life Overhaul 1.0.6 initialised.` living_population stored absent/live=true; social_media=1/true; social_media_notices=0/false. No option toggle; no RLO file edit. |
+| Autosave / SaveCost | Original native 5 minutes / 3 saves, prevent_autosave=false. #70 guard enabled and suppressed before/after each window and after both bounded loads. All window allowed saves and native saving frames = 0. SaveCostDiagnostics requested=false, writerSchema=1, save=null, activation=null; native save profiler installed=false. No manual save or save-latency measurement. |
+| Lease / resources | Free at inspection; acquired 20:15:50.794588 UTC. Initial resources 62.9 GiB disk / 85% memory free; before B 62.8 GiB / 77%. No takeover, resource refusal, PC contact, other-session intervention or bot message. |
+
+Printed rollback, path-sanitized:
+
+```sh
+rm -rf "<home>/Library/Application Support/com.hovgaardgames.bigambitions.agenttests.mac/ModsLocal/PersistentCity" && cp -Rp "<home>/Library/Application Support/BigAmbitionsAgentTestsMac/receipt-backups/20261114T201646Z/mod" "<home>/Library/Application Support/com.hovgaardgames.bigambitions.agenttests.mac/ModsLocal/PersistentCity" && cp "<home>/Library/Application Support/BigAmbitionsAgentTestsMac/receipt-backups/20261114T201646Z/install.json" "<home>/Library/Application Support/BigAmbitionsAgentTestsMac/install.json"
+```
+
+Cleanup used the stopped, leased equivalent that retains the candidate in `<stage>/staged-candidate-restored-out`, copies the complete backup mod into the empty live path and copies the exact backup receipt. No install receipt was hand-edited.
+
+### Per-check outcome against each Expected line
+
+| #266 check | Result | Expected, and observed |
+| --- | --- | --- |
+| 1. Day GC, 15:30 / 600 s | PASS | **Expected: advance clearly below 209 MB, gen0 at or below 7, and heap no higher than 14g. Met:** advance 107.466 MB, gen0=7, heap_after_gc 1,321,669,778 bytes, Mono heap 1,527,726,080 bytes; both heap readings below 14g. |
+| 2. Night GC, 01:00 / 600 s after speed 20 | PASS | **Expected: owned bodies falling toward 16 after about 2 minutes idle, trimmed rising, and a smaller heap than 14g. Met in the observed idle period:** owned peaks at 42, first recorded trim by snapshot 300 s, reaches 17 by 420 s and 16 by 540 s; trimmed 0→28; Mono heap 1,579,483,136 < 1,894,055,936. Individual-body idle ages are not exposed; the full sampled trajectory is below, rather than a claim that the pool reached 16 at wall-clock t=120 s. |
+| 3. Street / 600 s with pans | PARTIAL | **Expected: no spike >=30 ms from body growth; p95 under 5 ms at about 28 fps or more. At about 6 fps, p95 follows the reported build ms.** Strict <5 ms is met: 3.7732/3.8197 ms at 8.13 fps. Three UpdateCity spikes remain; no body-growth subcomponent was timed, so the no-growth-spike clause is **unverified**, not passed. Build estimates are 2.1–2.8 ms over the timed interval; the full-window p95 is compatible with build plus other UpdateCity work, but those summaries cannot prove per-frame correlation. Required 28+ fps is not reached. |
+| 4. Look stability / cold windowed | PARTIAL / tooling gap | **Expected: the same look before and after, no undressed or invisible bodies, and no “Appearance meshes unavailable” or “Empty appearance” in the log.** Same-resident comparison unverified: two native targets went stale on return in 11.55/11.47 s. 120.437 s pan completed; nine stills inspected. Visible bodies are dressed; sparse/occluded return views and still captures cannot prove no invisible body or brief flash. All four required error strings have zero matches in both logs. |
+
+The pass counts refer to the GC expectation lines, not every historical GR-5 target. The street p95 gate passes; its spike-source proof remains partial. No weaker numerical gate is substituted.
+
+### GC windows and every allocation segment
+
+Fixture **`FT GR5 13f Timing v1`**, confirmed 1,000 residents / 2,000 visitors / 1,683 places, person-target off, player x=215,z=0. No fallback was needed. Day Tuesday 15:30, night Wednesday 01:00. Speed=1 in each measurement; mod-work sampler unarmed. Untimed speed-20 advances occur outside windows. GC sampler incremental=true, max_generation=0; pause is cycle-ending frame excess, not all incremental collector work. Allocation counter=`boehm_total`; legacy frame allocation remains `heap_used`. MB/GB comparisons use decimal bytes; the logged KB scratch field is bytes/1024.
+
+| Window | Stored / dropped frames | gen0/1/2 | Pause p50 / p95 / max ms | heap_after_gc_bytes | mono_heap_bytes | Mod-work in GC frames p95 / max ms |
+| --- | --- | --- | --- | --- | --- | --- |
+| day | 16846 / 0 | 7/0/0 | 26.799/28.581/28.581 | 1321669778 | 1527726080 | 2.353 / 2.353 |
+| night | 17079 / 0 | 6/0/0 | 28.562/32.902/32.902 | 1372768256 | 1579483136 | 0.88 / 0.88 |
+
+| Reference / metric | 14b day / night | 14g day / night | 14j day / night |
+| --- | --- | --- | --- |
+| gen0 | 11 / 8 | 7 / 6 | 7 / 6 |
+| Pause p95 ms | 28.191 / 61.316 | 67.048 / 141.801 | 28.581 / 32.902 |
+| Physical+advance MB | 1,021.587 / 433.642 | 309.570 / 134.021 | 200.927 / 68.086 |
+| Advance MB | 236.448 / 72.746 | 209.051 / 71.735 | 107.466 / 33.489 |
+| Mono heap bytes | 1,535,655,936 / 1,578,450,944 | 1,629,356,032 / 1,894,055,936 | 1,527,726,080 / 1,579,483,136 |
+
+Day advance is 48.6% below 14g; night 53.3% below. Collection counts equal 14g and below 14b. Pause p95 day is 1.4% above 14b and 57.4% below 14g; night is 46.3% below 14b and 76.8% below 14g. These are measured comparisons, not controlled attribution across shared-host runs.
+
+Every measured allocation segment follows, **bytes / samples / skipped**. Randomize and bake overlap appearance and are not added again. Four advance children sum to advance.
+
+| Allocation segment | Day bytes / samples / skipped | Night bytes / samples / skipped |
+| --- | --- | --- |
+| mod | 315570912 / 16847 / 0 | 180623280 / 17080 / 0 |
+| advance | 107466400 / 16753 / 0 | 33488696 / 16995 / 0 |
+| physical | 93461016 / 16753 / 0 | 34597112 / 16995 / 0 |
+| physical_ambient | 3219792 / 16753 / 0 | 3266032 / 16995 / 0 |
+| physical_vehicles | 317664 / 16753 / 0 | 223296 / 16995 / 0 |
+| physical_bindings | 111456 / 534725 / 0 | 736 / 120755 / 0 |
+| physical_vendor_meals | 0 / 16753 / 0 | 0 / 16995 / 0 |
+| physical_fade | 0 / 16753 / 0 | 0 / 16995 / 0 |
+| physical_focus | 0 / 16753 / 0 | 0 / 16995 / 0 |
+| physical_observe | 84624 / 517682 / 0 | 58928 / 103656 / 0 |
+| physical_release | 7184 / 291 / 0 | 8112 / 132 / 0 |
+| physical_parked | 1966928 / 584 / 0 | 1501664 / 587 / 0 |
+| physical_index | 0 / 2198 / 0 | 80 / 2203 / 0 |
+| physical_queues | 8960 / 2198 / 0 | 17200 / 2203 / 0 |
+| physical_roster | 286800 / 2198 / 0 | 207808 / 2203 / 0 |
+| physical_selection | 597032 / 2690 / 0 | 750296 / 2376 / 0 |
+| physical_spawn_pedestrian | 30124416 / 829 / 0 | 13464480 / 230 / 0 |
+| physical_spawn_appearance | 56698832 / 1074 / 0 | 15030256 / 273 / 0 |
+| physical_spawn_check | 0 / 716 / 0 | 0 / 182 / 0 |
+| physical_spawn_vehicle | 37328 / 21 / 0 | 68224 / 34 / 0 |
+| physical_unattributed | 0 / 33506 / 0 | 0 / 33990 / 0 |
+| physical_spawn_randomize | 3179248 / 358 / 0 | 832256 / 91 / 0 |
+| physical_spawn_bake | 2659968 / 358 / 0 | 1578000 / 91 / 0 |
+| advance_planning | 52017312 / 9424 / 0 | 22199992 / 3947 / 0 |
+| advance_events | 55449088 / 21638 / 0 | 11288704 / 19875 / 0 |
+| advance_stops | 0 / 16753 / 0 | 0 / 16995 / 0 |
+| advance_other | 0 / 16753 / 0 | 0 / 16995 / 0 |
+
+| Other counter | Day | Night |
+| --- | --- | --- |
+| counter_frame_bytes | 1631773400 | 1533437240 |
+| counter_frames | 16846 | 17079 |
+| frame_alloc_bytes | 1133277184 | 946946048 |
+| max_mod_ms | 56.67 | 79.019 |
+| gc_spikes_30ms | 7 | 6 |
+| frame_spikes_30ms | 16834 | 17076 |
+
+GC `max_mod_ms` is 56.670/79.019 ms. `pc gc stop` exposes aggregate maxima/counts, no frame/component spike list, so no exact-frame rows can be recovered for those GC maxima. This is a sampler readback limit, not zero spikes. Every exported **street mod-work** spike is listed below. Whole-frame counts are separate from mod-work and reflect the low frame rate.
+
+### Residual and retained-state decision
+
+- **day:** largest disjoint parent advance = 107,466,400 bytes, 53.49% of physical+advance. Largest advance subsegment `advance_events` = 55,449,088 bytes (51.60% of advance). Largest physical child `physical_spawn_appearance` = 56,698,832 bytes (60.67% of physical). Appearance 56,698,832 bytes = **7.61% of 14b**; appearance excluding randomize and bake = 50,859,616; bake plus that remainder = 53,519,584 bytes = **7.18% of 14b appearance**. Both appearance readings are below ~10%.
+- **night:** largest disjoint parent physical = 34,597,112 bytes, 50.81% of physical+advance. Largest advance subsegment `advance_planning` = 22,199,992 bytes (66.29% of advance). Largest physical child `physical_spawn_appearance` = 15,030,256 bytes (43.44% of physical). Appearance 15,030,256 bytes = **4.59% of 14b**; appearance excluding randomize and bake = 12,620,000; bake plus that remainder = 14,198,000 bytes = **4.33% of 14b appearance**. Both appearance readings are below ~10%.
+
+For clarity, the broader physical+advance residual is **19.67% / 15.70% of 14b**, above 10%; that is not the appearance/combiner trigger. No cause inside advance_events/planning is inferred from the names alone. #266's unimplemented entry projection and native spawn activation remain possible follow-up subjects, not proven causes here.
+
+Bake scratch peaks at **45 sizes / 1,678 KB = 1.718 MB**, about **0.11% of the day Mono heap**. That is small against this heap and the model's 23 MB bake caches; the measured scratch does not support prioritizing a cap as the next slice. Scratch sizes/bytes reset when the physical population is recreated for speed mode; the report does not treat this as a process-wide permanent high-water mark.
+
+### AppearanceBuilds, AppearanceReuses, pool hit rate and pedestrianLooks
+
+Last periodic snapshots, not exact start-to-stop counter deltas. Pool hit rate is reused/(built+reused). GC randomize and bake each have **358 / 91 samples** day/night, giving the exact dressed-build counts inside those spans. The periodic logs are intentionally distinguished from those counts.
+
+| Window | AppearanceBuilds / AppearanceReuses | Pool hit % | Idle / owned | Grown / trimmed | Fitted / waited | ms build | bake sizes / KB bake scratch |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| day GC | 298 / 16 | 5.10 | 15 / 88 | 88 / 1 | 238 / 146 | 2.4 | 45 / 1678 |
+| night GC | 92 / 1 | 1.08 | 16 / 16 | 43 / 28 | 4 / 129 | 3.3 | 44 / 1634 |
+| street | 148 / 7 | 4.52 | 27 / 45 | 54 / 10 | 40 / 160 | 2.1 | 45 / 1678 |
+
+Night owned/idle over time: each row is the last periodic log seen in a snapshot taken at the stated wall-clock offset. Logs update about once a minute, so these are not exact event timestamps or per-body idle-age measurements.
+
+| Snapshot seconds | Owned | Idle | Trimmed | Grown |
+| --- | --- | --- | --- | --- |
+| 60 | 2 | 1 | 0 | 1 |
+| 120 | 28 | 15 | 0 | 27 |
+| 180 | 42 | 21 | 0 | 41 |
+| 240 | 42 | 35 | 0 | 41 |
+| 300 | 41 | 33 | 1 | 41 |
+| 360 | 29 | 24 | 13 | 41 |
+| 420 | 17 | 16 | 25 | 41 |
+| 480 | 18 | 16 | 26 | 43 |
+| 540 | 16 | 16 | 28 | 43 |
+| 600 | 16 | 16 | 28 | 43 |
+
+### Street timing and every mod-work spike >=30 ms
+
+Wednesday 15:30, same process/fixture after night and untimed advance; unlike 14g's corrective reload, no street reload was needed. GC sampler stopped, player x=215,z=0, nine camera pans successful. Native guard interval 601.677 s includes setup/end readback; timed mod-work interval below. No save allowed, no native saving frame. Coverage.complete=true, validity.valid=true, zero off-main-thread/cross-frame/unbalanced/depth-overflow/drop faults.
+
+| Window | Seconds / frames / achieved fps | UpdateCity p95 / max ms | Mod-work p95 / max ms / >=30 spikes | Whole-frame p95 / max ms / >=30 count |
+| --- | --- | --- | --- | --- |
+| 14j | 600.815 / 4887 / 8.13 | 3.7732 / 70.1801 | 3.8197 / 70.2369 / 3 | 176.7198 / 450.1921 / 4863 |
+| 14g | 600.399 / 3485 / 5.80 | 5.2988 / 64.7304 | 5.3683 / 64.7872 / 1 | 200.5798 / 506.5189 / 3485 |
+| 14b | 600.284 / 3370 / 5.61 | 5.5170 / 78.1533 | 5.5824 / 78.2031 / 4 | 238.9091 / 1002.2687 / 3370 |
+
+| Unity frame | Mod-work ms | UpdateCity ms | Dominant component / group | Whole-frame ms | Condition |
+| --- | --- | --- | --- | --- | --- |
+| 51358 | 70.2369 | 70.1801 | updatecity / updatecity | 103.8241 | speed=1|hour=15 |
+| 54091 | 30.9771 | 30.9255 | updatecity / updatecity | 314.6618 | speed=1|hour=16 |
+| 55161 | 33.2070 | 33.1629 | updatecity / updatecity | 200.2013 | speed=1|hour=17 |
+
+All three spikes are reported, not chased. UpdateCity is the measured component boundary, so body growth, dressing, advance or another inner source cannot be assigned from these rows. No clean no-body-growth-spike claim follows from the improved p95. UpdateCity p95 is 28.8% below 14g; mod-work p95 is 28.8% below. Achieved cadence and street day differ; no isolated causal claim is made. `NativeCityClock.MaximumLagMinutes=1.0` both during untimed setup and after the window; session maximum includes advances. Final lag=0, caughtUpToTarget=true, refused=false, stoppedAfterAccountingFailure=false, historicalClockMisses=0. No runtime stop occurred.
+
+### Look evidence, exact failures and tooling gaps
+
+Cold windowed rig-test start, same fixture Tuesday 15:30, player x=215,z=0. Two native walker targets were followed and photographed, camera pointed away for 8 s, then their positions and camera-follow were requested again. The returned screenshots occurred within 11.549/11.465 s of departure; both handles were stale. Exact failed operations:
+
+- `python3 scripts/mac-agent op screen_pos '{"action":"get","target":{"kind":"walker","id":"walker-09edc5be52bf4429b628df3fac486280"}}'` → `ops_view_stale_target`.
+- `python3 scripts/mac-agent op camera '{"action":"follow","target":{"kind":"walker","id":"walker-09edc5be52bf4429b628df3fac486280"},"offset":{"x":0,"y":4,"z":-6},"seconds":10}'` → `ops_view_stale_target`.
+- `python3 scripts/mac-agent op screen_pos '{"action":"get","target":{"kind":"walker","id":"walker-4e18f46e62c24da2b8bfbd748589e425"}}'` → `ops_view_stale_target`.
+- `python3 scripts/mac-agent op camera '{"action":"follow","target":{"kind":"walker","id":"walker-4e18f46e62c24da2b8bfbd748589e425"},"offset":{"x":0,"y":4,"z":-6},"seconds":10}'` → `ops_view_stale_target`.
+
+These are native walker handles, with no durable Persistent City resident identity or release/reacquire guarantee. No resident-reacquire op is advertised. No weaker same-look proof is substituted. Two before images show a yellow top/dark trousers and a blue top/shorts; return views contain other walkers or empty road. They are not an appearance-change failure. The 120.437 s pan used 24 camera operations and five additional images. All nine PNGs inspected; visible walkers are dressed, but empty/occluded views and sparse still sampling leave brief flashes/invisible bodies unproven. No refill benchmark was run; #262 dense-walker proof remains excluded.
+
+| Exact Player.log string | A matches | B matches |
+| --- | --- | --- |
+| Appearance meshes unavailable | 0 | 0 |
+| Empty appearance | 0 | 0 |
+| Merged body already has blendshapes | 0 | 0 |
+| Merged body vertex layout differs | 0 | 0 |
+
+Other observation: the first `call console '{"line":"pc gc population"}'` just after bounded load completion returned `Warning: [Persistent City] gc population refused: no active city.` The native load had completed before the mod's asynchronous activation. No window opened then; the next query confirmed reached=3000 / 1000 residents / 2000 visitors before positioning and sampling. No ops_load_* failure, replay, staging refusal or runtime stop occurred.
+
+Tooling limits within partial checks: durable resident reacquisition; body-growth attribution beneath the UpdateCity timing boundary; GC sampler frame/component lists for its aggregate maxima; no commit-stamped build log line. Exact invoked operations and available provenance are retained above. These omissions are not counted again as excluded groups.
+
+### Player.log excerpts: build, speed changes and toggles
+
+```text
+[Mod:RealLifeOverhaul] Real Life Overhaul 1.0.6 initialised.
+[Mod:PersistentCity] Persistent population active: 1000 residents, 2000 visitors, 1683 places. Native-pace walking, subway and car journeys; physical population preflight follows road initialization. Ctrl+F8 opens food business feedback.
+A [Mod:FoodTrucks] Test bridge: running the clock at speed 20 until day 2 15:30.
+A [Mod:FoodTrucks] Test bridge: run_until day 2 15:30 reached at day 2 15:30; paused, speed 1.
+A [Mod:FoodTrucks] Test bridge: running the clock at speed 20 until day 3 01:00.
+A [Mod:FoodTrucks] Test bridge: run_until day 3 01:00 reached at day 3 01:00; paused, speed 1.
+A [Mod:FoodTrucks] Test bridge: running the clock at speed 20 until day 3 15:30.
+A [Mod:FoodTrucks] Test bridge: run_until day 3 15:30 reached at day 3 15:30; paused, speed 1.
+B [Mod:FoodTrucks] Test bridge: running the clock at speed 20 until day 2 15:30.
+B [Mod:FoodTrucks] Test bridge: run_until day 2 15:30 reached at day 2 15:30; paused, speed 1.
+```
+
+Explicit speed=1 replies are retained before each measured window and the visual check. No RLO toggle occurred. Transient startup NotReady/Flare messages precede successful activation; they are not a runtime stop.
+
+### NOT RUN grouped
+
+1. **GR-5 60 fps arms:** excluded; Mac reaches about 5 fps at 1,000 residents, and the PC throwaway time/perf/modwork fix was not landed for this request. No Windows PC contact or start.
+2. **GR-5 save latency:** owner decision pending. SaveCostDiagnostics off, no save measurement or manual save.
+3. **#262 checks 4–5 full identity/dense-walker proof:** Rig bot fixtures pending. Check 4's limited visual attempt above does not replace stable identity or a 48–96-walker paired refill. Refill outcome: NOT RUN.
+4. **#246 check 4 full proof:** Rig bot in-load observation gap; excluded, not repeated here.
+5. **Everything outside A/B:** excluded by scope, including other food, footprint, P-D and RLO-toggle checks. No new fixture, throwaway world or unrelated acceptance arm.
+
+### Fixtures, restoration and validation
+
+Only **`FT GR5 13f Timing v1`** was loaded, twice via `python3 scripts/mac-agent load '{"name":"FT GR5 13f Timing v1"}'`; both bounded loads completed. `FT RLO 13d Food v1` was not needed or loaded. No fixture save was created, changed by a save command, overwritten or removed.
+
+Stopped only owned PIDs **41540 / 50499**, gracefully. While stopped and leased, restored full PersistentCity and exact install.json from receipt backup; imported this run's isolated preference backup and restored exact original file bytes, PlayerSettings, runtime configuration, persistent-city config and frame-cap absence. Native autosave remained 5 minutes / 3 saves; process-only suppression ended at stop. RLO live values matched their original stored/default values before stop; no original-saved toggle record. **32 original file hashes / 3 absent paths / exact PersistentCity file set / 53 RLO file hashes match; zero mismatches.** install.json SHA-256 `dea36ce03586cc53d3b2c7e5cd0fda6d9a54e61c670a21d0676ad18feee54a95`; AgentRigOps hash unchanged. All nine own helper PNGs copied/hash-verified into `<stage>` and removed only from their own helper output paths.
+
+Lease released: running=false, process=null, held=false, pending=0. Both owned PIDs and their caffeinate assertions are gone. Official agent-rig and original Persistent City checkout clean. Evidence/build worktree is removed after commit, push and opening the PR. No production code, RLO package, schema 1, FoodChoicePriceWeight (1.2), FoodChoiceHouseholdWeight, version/changelog, release, Workshop, issue, reviewers or merge changed.
+
+Validation: candidate build passed; compact JSON parses and is under 20 KB. Docs-links, markdown-ban and whitespace checks recorded with the PR. No test source changed; no focused test classes, full suite or regression suite. Final fetch left the candidate at 50f52c18. All long commands ran in the foreground and were awaited.
+
+Refs #266

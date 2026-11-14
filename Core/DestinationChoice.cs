@@ -11,7 +11,7 @@ namespace PersistentCity.Core
         {
             if (maximum < 1 || maximum > 16) throw new ArgumentOutOfRangeException(nameof(maximum));
             uint key = KeyState(choiceKey, seed);
-            var ranked = new List<(Place Place, double Score)>();
+            var ranked = new List<(Place Place, double Score)>(maximum + 1);
             foreach (var place in places)
             {
                 if (place.Kind != kind || place.Capacity <= 0) continue;
@@ -27,7 +27,9 @@ namespace PersistentCity.Core
                 ranked.Insert(index, (place, score));
                 if (ranked.Count > maximum) ranked.RemoveAt(maximum);
             }
-            return ranked.Select(x => x.Place).ToArray();
+            var shortlist = new Place[ranked.Count];
+            for (int i = 0; i < shortlist.Length; i++) shortlist[i] = ranked[i].Place;
+            return shortlist;
         }
 
         public static string Choose(IEnumerable<Place> places, Place origin, PlaceKind kind,

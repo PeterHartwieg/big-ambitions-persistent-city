@@ -501,7 +501,6 @@ namespace PersistentCity.Runtime
             private readonly double departureMinute, maximumEstimatedMinutes;
             private TransportRoadGraph.RoadSearch? search;
             private int generation;
-            private int[]? path;
             private Route? begin, end;
             private Dictionary<int, TrafficLinkForecast>? captured;
             private Dictionary<int, double>? entryDelays;
@@ -534,67 +533,17 @@ namespace PersistentCity.Runtime
                 owner.searchGeneration++;
                 generation = owner.searchGeneration;
                 owner.trafficBuilder?.BeginQuery();
-                path = null;
                 begin = owner.Connector(from.Position, nodes[from.Node].Position);
                 end = owner.Connector(nodes[to.Node].Position, to.Position);
                 double roadCeiling = TransportComposition.RemainingSearchMinutes(maximumEstimatedMinutes, begin.Minutes + end.Minutes);
-                var forecast = owner.trafficForecast;
-                var trafficEntryForecast = owner.trafficEntryForecast;
                 var scratch = this.scratch ??= owner.planScratch.Count > 0 ? owner.planScratch.Pop() : new PlanScratch();
                 scratch.Clear();
-                var captured = this.captured = scratch.Captured;
-                var entryDelays = this.entryDelays = scratch.EntryDelays;
-                var network = this.network = owner.TrafficNetwork;
-                var sectionPace = scratch.SectionPace;
-                double entryMinute = departureMinute + begin.Minutes;
-                double Traversal(int a, int b, double baseline)
-                {
-                    if (!speeds.HasOverrides) return baseline;
-                    if (!network.TryGetEdge(a, b, out var edge)) return double.NaN;
-                    if (!sectionPace.TryGetValue(edge.LinkId, out double factor))
-                    {
-                        var indices = network.NativeNodes(edge.LinkId);
-                        double effective = 0; bool changed = false;
-                        for (int i = 1; i < indices.Count; i++)
-                        {
-                            int fromNode = indices[i - 1];
-                            if (!network.TryGetEdge(fromNode, indices[i], out var part)) return double.NaN;
-                            double original = Math.Min(40, speeds.Canonical(waypoints[fromNode]));
-                            double current = Math.Min(40, speeds.Effective(waypoints[fromNode]));
-                            changed |= original != current;
-                            effective += part.FreeFlowMinutes * (original / current);
-                        }
-                        factor = changed ? Math.Max(1, effective / network.Links[edge.LinkId].FreeFlowMinutes) : 1;
-                        sectionPace.Add(edge.LinkId, factor);
-                    }
-                    return baseline * factor;
-                }
-                double Extra(int a, int b)
-                {
-                    if (!network.TryGetEdge(a, b, out var edge)) return 1e15;
-                    if (forecast == null) return 0;
-                    double entryDelay = 0;
-                    if (a == from.Node && edge.StartLinkFraction > 0 && trafficEntryForecast != null)
-                    {
-                        if (!entryDelays.TryGetValue(edge.LinkId, out entryDelay))
-                        {
-                            double endFraction = 1;
-                            var sectionNodes = network.NativeNodes(edge.LinkId);
-                            for (int i = 1; i < sectionNodes.Count; i++)
-                                if (sectionNodes[i] == to.Node && network.TryGetEdge(sectionNodes[i - 1], to.Node, out var final)
-                                    && final.EndLinkFraction > edge.StartLinkFraction)
-                                { endFraction = final.EndLinkFraction; break; }
-                            entryDelay = trafficEntryForecast(edge.LinkId, entryMinute, edge.StartLinkFraction, endFraction - edge.StartLinkFraction);
-                            entryDelays.Add(edge.LinkId, entryDelay);
-                        }
-                        if (!Position.Finite(entryDelay) || entryDelay < 0) return 1e15;
-                    }
-                    if (!captured.TryGetValue(edge.LinkId, out var value)) { value = forecast(edge.LinkId, entryMinute); captured.Add(edge.LinkId, value); }
-                    if (value.Closed || !Position.Finite(value.DelayMinutes)) return 1e15;
-                    return entryDelay + value.DelayMinutes * edge.FreeFlowMinutes / network.Links[edge.LinkId].FreeFlowMinutes;
-                }
-                search = owner.graph.BeginSearch(from.Node, to.Node, owner.SearchDisabled, owner.access.ClearSegment, Traversal,
-                    pathFound: found => path = found, extraMinutes: Extra, maximumEstimatedMinutes: roadCeiling);
+                captured = scratch.Captured;
+                entryDelays = scratch.EntryDelays;
+                network = owner.TrafficNetwork;
+                scratch.Begin(speeds, waypoints, network, owner.trafficForecast, owner.trafficEntryForecast, from.Node, to.Node, departureMinute + begin.Minutes);
+                search = owner.graph.BeginSearch(from.Node, to.Node, owner.disabledSearch ??= owner.SearchDisabled, owner.ClearSegment(), scratch.Traversal,
+                    pathFound: scratch.PathFound, extraMinutes: scratch.Extra, maximumEstimatedMinutes: roadCeiling);
             }
 
             public bool Continue(long deadlineTimestamp)
@@ -622,7 +571,7 @@ namespace PersistentCity.Runtime
 
             private void Complete()
             {
-                var owner = this.owner; var road = search!.Result; var path = this.path; var network = this.network!;
+                var owner = this.owner; var road = search!.Result; var path = scratch?.Path; var network = this.network!;
                 if (road == null || path == null || !owner.NativePathValid(path)) { Finish(null); return; }
                 if (owner.TopologyId.Length != 64 || road.Legs.Count != path.Length - 1) { Finish(null); return; }
                 for (int i = 0; i < road.Legs.Count; i++)
@@ -676,7 +625,87 @@ namespace PersistentCity.Runtime
             public readonly Dictionary<int, TrafficLinkForecast> Captured = new Dictionary<int, TrafficLinkForecast>();
             public readonly Dictionary<int, double> EntryDelays = new Dictionary<int, double>();
             public readonly Dictionary<int, double> SectionPace = new Dictionary<int, double>();
-            public void Clear() { Captured.Clear(); EntryDelays.Clear(); SectionPace.Clear(); }
+            public readonly Func<int, int, double, double> Traversal;
+            public readonly Func<int, int, double> Extra;
+            public readonly Action<int[]> PathFound;
+            public int[]? Path;
+            private NativeRoadSpeeds? speeds;
+            private Waypoint[]? waypoints;
+            private TrafficNetwork? network;
+            private Func<int, double, TrafficLinkForecast>? forecast;
+            private Func<int, double, double, double, double>? entryForecast;
+            private int fromNode, toNode;
+            private double entryMinute;
+
+            public PlanScratch()
+            {
+                Traversal = TraversalMinutes;
+                Extra = ExtraMinutes;
+                PathFound = found => Path = found;
+            }
+
+            public void Begin(NativeRoadSpeeds speeds, Waypoint[] waypoints, TrafficNetwork network, Func<int, double, TrafficLinkForecast>? forecast,
+                Func<int, double, double, double, double>? entryForecast, int fromNode, int toNode, double entryMinute)
+            {
+                this.speeds = speeds; this.waypoints = waypoints; this.network = network; this.forecast = forecast; this.entryForecast = entryForecast;
+                this.fromNode = fromNode; this.toNode = toNode; this.entryMinute = entryMinute;
+            }
+
+            public void Clear()
+            {
+                Captured.Clear(); EntryDelays.Clear(); SectionPace.Clear();
+                Path = null; speeds = null; waypoints = null; network = null; forecast = null; entryForecast = null;
+            }
+
+            private double TraversalMinutes(int a, int b, double baseline)
+            {
+                var speeds = this.speeds!; var network = this.network!; var waypoints = this.waypoints!;
+                if (!speeds.HasOverrides) return baseline;
+                if (!network.TryGetEdge(a, b, out var edge)) return double.NaN;
+                if (!SectionPace.TryGetValue(edge.LinkId, out double factor))
+                {
+                    var indices = network.NativeNodes(edge.LinkId);
+                    double effective = 0; bool changed = false;
+                    for (int i = 1; i < indices.Count; i++)
+                    {
+                        int fromNode = indices[i - 1];
+                        if (!network.TryGetEdge(fromNode, indices[i], out var part)) return double.NaN;
+                        double original = Math.Min(40, speeds.Canonical(waypoints[fromNode]));
+                        double current = Math.Min(40, speeds.Effective(waypoints[fromNode]));
+                        changed |= original != current;
+                        effective += part.FreeFlowMinutes * (original / current);
+                    }
+                    factor = changed ? Math.Max(1, effective / network.Links[edge.LinkId].FreeFlowMinutes) : 1;
+                    SectionPace.Add(edge.LinkId, factor);
+                }
+                return baseline * factor;
+            }
+
+            private double ExtraMinutes(int a, int b)
+            {
+                var network = this.network!;
+                if (!network.TryGetEdge(a, b, out var edge)) return 1e15;
+                if (forecast == null) return 0;
+                double entryDelay = 0;
+                if (a == fromNode && edge.StartLinkFraction > 0 && entryForecast != null)
+                {
+                    if (!EntryDelays.TryGetValue(edge.LinkId, out entryDelay))
+                    {
+                        double endFraction = 1;
+                        var sectionNodes = network.NativeNodes(edge.LinkId);
+                        for (int i = 1; i < sectionNodes.Count; i++)
+                            if (sectionNodes[i] == toNode && network.TryGetEdge(sectionNodes[i - 1], toNode, out var final)
+                                && final.EndLinkFraction > edge.StartLinkFraction)
+                            { endFraction = final.EndLinkFraction; break; }
+                        entryDelay = entryForecast(edge.LinkId, entryMinute, edge.StartLinkFraction, endFraction - edge.StartLinkFraction);
+                        EntryDelays.Add(edge.LinkId, entryDelay);
+                    }
+                    if (!Position.Finite(entryDelay) || entryDelay < 0) return 1e15;
+                }
+                if (!Captured.TryGetValue(edge.LinkId, out var value)) { value = forecast(edge.LinkId, entryMinute); Captured.Add(edge.LinkId, value); }
+                if (value.Closed || !Position.Finite(value.DelayMinutes)) return 1e15;
+                return entryDelay + value.DelayMinutes * edge.FreeFlowMinutes / network.Links[edge.LinkId].FreeFlowMinutes;
+            }
         }
         private readonly Stack<PlanScratch> planScratch = new Stack<PlanScratch>();
 
@@ -770,6 +799,14 @@ namespace PersistentCity.Runtime
             for (int i = 0; i < captured.Length; i++)
                 if (!comparer.Equals(current[i], captured[i])) return false;
             return true;
+        }
+        private Func<int, bool>? disabledSearch;
+        private Func<Position, Position, bool>? clearSegment;
+        private PublicRoadAccess? clearSegmentAccess;
+        private Func<Position, Position, bool> ClearSegment()
+        {
+            if (clearSegment == null || !ReferenceEquals(clearSegmentAccess, access)) { clearSegment = access.ClearSegment; clearSegmentAccess = access; }
+            return clearSegment;
         }
         private bool SearchDisabled(int index)
         {

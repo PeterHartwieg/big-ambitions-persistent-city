@@ -113,10 +113,10 @@ namespace PersistentCity.Core
 
     internal readonly struct RoadTag
     {
-        private RoadTag(RoadTagKind kind, int topologyStart, int topologyLength, int from, int to)
-        { Kind = kind; TopologyStart = topologyStart; TopologyLength = topologyLength; From = from; To = to; }
+        private RoadTag(RoadTagKind kind, int topologyLength, int from, int to)
+        { Kind = kind; TopologyLength = topologyLength; From = from; To = to; }
         public RoadTagKind Kind { get; }
-        public int TopologyStart { get; }
+        public int TopologyStart => Kind == RoadTagKind.V1 ? Prefix.Length + 3 : Prefix.Length + 10;
         public int TopologyLength { get; }
         public int From { get; }
         public int To { get; }
@@ -141,7 +141,7 @@ namespace PersistentCity.Core
                     System.Globalization.CultureInfo.InvariantCulture, out int from)
                 || !int.TryParse(service.AsSpan(fromEnd + 1), System.Globalization.NumberStyles.None,
                     System.Globalization.CultureInfo.InvariantCulture, out int to)) return default;
-            return new RoadTag(kind, kindEnd + 1, topologyEnd - kindEnd - 1, from, to);
+            return new RoadTag(kind, topologyEnd - kindEnd - 1, from, to);
         }
 
         internal bool IsTopology(string service, string? topology) => Kind != RoadTagKind.None && topology != null
@@ -179,8 +179,10 @@ namespace PersistentCity.Core
     public sealed class Route
     {
         private double? estimatedMinutes;
-        private RouteLegs legs = new RouteLegs();
+        private RouteLegs legs;
         private double committedMinutes;
+        public Route() { legs = new RouteLegs(); }
+        internal Route(RouteLegs legs) { this.legs = legs ?? throw new ArgumentNullException(nameof(legs)); }
         public RouteLegs Legs
         {
             get => legs;

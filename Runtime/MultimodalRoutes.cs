@@ -500,8 +500,8 @@ namespace PersistentCity.Runtime
                     }
                     case Stage.Finish:
                         if (best == null) owner.Metrics.NoFeasibleRoute++;
-                        else if (best.Legs.Any(leg => leg.Mode == TravelMode.Car)) owner.Metrics.SelectedCar++;
-                        else if (best.Legs.Any(leg => leg.Mode == TravelMode.Subway)) owner.Metrics.SelectedSubway++;
+                        else if (Uses(best, TravelMode.Car)) owner.Metrics.SelectedCar++;
+                        else if (Uses(best, TravelMode.Subway)) owner.Metrics.SelectedSubway++;
                         else owner.Metrics.SelectedWalking++;
                         Result = best;
                         stage = Stage.Done;
@@ -512,6 +512,12 @@ namespace PersistentCity.Runtime
             }
 
             private TravelPreferences Preferences => person!.Preferences;
+
+            private static bool Uses(Route route, TravelMode mode)
+            {
+                foreach (var leg in route.Legs) if (leg.Mode == mode) return true;
+                return false;
+            }
 
             private void AfterModes()
             {
@@ -622,7 +628,17 @@ namespace PersistentCity.Runtime
             int compare = distance.CompareTo(otherDistance);
             return compare != 0 ? compare < 0 : StringComparer.Ordinal.Compare(station.Id, other.Id) < 0;
         }
+        private readonly Dictionary<(Station From, Station To), Route> trains = new Dictionary<(Station From, Station To), Route>();
+        private List<Station>? trainStations;
+        private SubwaySystem? trainSubway;
         private Route? Train(Station from, Station to)
+        {
+            if (!ReferenceEquals(trainStations, stations) || !ReferenceEquals(trainSubway, subway))
+            { trains.Clear(); trainStations = stations; trainSubway = subway; }
+            if (!trains.TryGetValue((from, to), out Route? route)) { route = BuildTrain(from, to); if (route != null) trains.Add((from, to), route); }
+            return route;
+        }
+        private Route? BuildTrain(Station from, Station to)
         {
             var points = new List<Position> { from.Entrance.Position, from.Platform };
             if (IndustrySide(from.District) != IndustrySide(to.District))
