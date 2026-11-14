@@ -65,7 +65,7 @@
     "total_memory_kib": 66938060,
     "free_memory_kib": 26516228
   },
-  "raw_evidence": "C:\\Users\\Peter\\HART-Builds\\persistent-city-rig-2026-11-14d-pc",
+  "raw_evidence": "<stage>",
   "restore": {
     "files": [
       {
@@ -81,27 +81,27 @@
         "verified": true
       },
       {
-        "path": "C:\\Users\\Peter\\AppData\\LocalLow\\Hovgaard Games\\Big Ambitions Agent Tests\\PlayerSettings.json",
+        "path": "%USERPROFILE%\\AppData\\LocalLow\\Hovgaard Games\\Big Ambitions Agent Tests\\PlayerSettings.json",
         "verified": true
       },
       {
-        "path": "C:\\Users\\Peter\\AppData\\LocalLow\\Hovgaard Games\\Big Ambitions Agent Tests\\persistent-city.json",
+        "path": "%USERPROFILE%\\AppData\\LocalLow\\Hovgaard Games\\Big Ambitions Agent Tests\\persistent-city.json",
         "verified": true
       },
       {
-        "path": "C:\\Users\\Peter\\AppData\\LocalLow\\Hovgaard Games\\Big Ambitions Agent Tests\\agent-frame-cap.json",
+        "path": "%USERPROFILE%\\AppData\\LocalLow\\Hovgaard Games\\Big Ambitions Agent Tests\\agent-frame-cap.json",
         "verified": true
       },
       {
-        "path": "C:\\Users\\Peter\\AppData\\LocalLow\\Hovgaard Games\\Big Ambitions Agent Tests\\agent-save-mode.json",
+        "path": "%USERPROFILE%\\AppData\\LocalLow\\Hovgaard Games\\Big Ambitions Agent Tests\\agent-save-mode.json",
         "verified": true
       },
       {
-        "path": "C:\\Users\\Peter\\AppData\\LocalLow\\Hovgaard Games\\Big Ambitions Agent Tests\\agent-runtime.json",
+        "path": "%USERPROFILE%\\AppData\\LocalLow\\Hovgaard Games\\Big Ambitions Agent Tests\\agent-runtime.json",
         "verified": true
       },
       {
-        "path": "C:\\Users\\Peter\\AppData\\LocalLow\\Hovgaard Games\\Big Ambitions Agent Tests\\tracked_commands.json",
+        "path": "%USERPROFILE%\\AppData\\LocalLow\\Hovgaard Games\\Big Ambitions Agent Tests\\tracked_commands.json",
         "verified": true
       }
     ],

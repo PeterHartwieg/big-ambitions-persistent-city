@@ -1286,10 +1286,10 @@ Role `rig_test`, where `pc`, isolated `agent1`. **Counts: 0 passed / 0 partial /
 | Lease | Owner `pc-rig-2026-11-14d`. Initially held by an overlay-update role; no takeover. Acquired after status became free at 14:02:53 UTC; released after verified restoration. |
 | Build | `python tools/build.py --game-managed "C:\Program Files (x86)\Steam\steamapps\common\Big Ambitions\Big Ambitions_Data\Managed"`, exit 0. PATH prefixed with `%LOCALAPPDATA%\Microsoft\dotnet`; requested wait helper ran first. No offline tests. |
 | PersistentCity DLL | Built, packaged and staged SHA-256 `087fe9aa8c506c3d2fa43df62fec0f08450095ca415f7c3ffebf64bfd28bde29`. Package contains no RLO or game DLLs. No startup build line was available because launch was refused. |
-| Package / raw evidence | `C:\Users\Peter\HART-Builds\persistent-city-rig-2026-11-14d-pc`; package at `package\PersistentCity`. Full backups, build/start output, machine inventory, restore checks and SHA-256 manifest remain outside Git. |
+| Package / raw evidence | `<stage>` = `%USERPROFILE%\HART-Builds\persistent-city-rig-2026-11-14d-pc`; package at `<stage>\package\PersistentCity`. Full backups, build/start output, machine inventory, restore checks and SHA-256 manifest remain outside Git. |
 | Staging command | Python `shutil.copytree(package, profile / 'ModsLocal/PersistentCity', dirs_exist_ok=True)`, then compare SHA-256 for every package file. This is the authorized copy fallback; no receipt hand-edit. |
-| Backup / rollback source | `C:\Users\Peter\HART-Builds\persistent-city-rig-2026-11-14d-pc\pre-stage-backup`. Entire original mod folder, receipt/run files, profile configuration and complete isolated registry export, with original bytes or absence in `manifest.json`. Restoration used this run's backup only. |
-| Frame-cap file | `C:\Users\Peter\AppData\LocalLow\Hovgaard Games\Big Ambitions Agent Tests\agent-frame-cap.json`; staged exactly `{"fps":60,"vsync":0}` (20 bytes, no newline). Original absence restored. |
+| Backup / rollback source | `<stage>\pre-stage-backup`. Entire original mod folder, receipt/run files, profile configuration and complete isolated registry export, with original bytes or absence in `manifest.json`. Restoration used this run's backup only. |
+| Frame-cap file | `%USERPROFILE%\AppData\LocalLow\Hovgaard Games\Big Ambitions Agent Tests\agent-frame-cap.json`; staged exactly `{"fps":60,"vsync":0}` (20 bytes, no newline). Original absence restored. |
 | Autosave / configuration | Original runtime autosave setting unavailable without a running player; complete preferences/configuration preserved and hash-verified. No setting changed or measured window started. Candidate package has SaveCostDiagnostics=false. No claim of live suppression. |
 | RLO / Food Trucks | No current-run version log: no player launched. Owner-provided Food Trucks 0.10.2 was accepted as a run input, not independently verified. Neither mod was installed, updated or edited. |
 | Machine load | Post-cleanup preparation inventory at 14:04:53 UTC: CPU 51%; used RAM 38.55 / 63.84 GiB, free 25.29 GiB. Notable working sets: other game 7.00 GiB, memory compression 5.94 GiB, WSL 4.53 GiB, browser processes, compiler server 0.40 GiB and other agent sessions. This is not a measurement-start sample. No timing numbers exist to label; any later timings on this host need **provisional (PC shared)**. |
@@ -1318,7 +1318,7 @@ No city was created. Planned fixture `RIGTMP-GR5-14d` remains uncreated; there w
 
 The Windows launch CLI needs a supported PC-local route carrying `RigTest` before these arms can run through the prescribed command. A second staging limitation was found: the only scoped package refresh discovered is `install-mac.py --stage-mod`, which targets the Mac. The Windows `rig_modset.ModSet` transaction replaces the complete DLL set, including RLO/Food Trucks; this run did not use it because those files were outside scope. The authorized copy fallback verified the package but deliberately left `agent-install.json` byte-identical. Its existing PersistentCity entries therefore still described the old package while staged. Launch receipt validation was not reached, so a receipt refusal is a potential next blocker, not an observed error. Both gaps need a reviewed tooling path; no production or rig tooling change was made here.
 
-**Launch-blocked (2 NOT RUN):** street-60 and busy-shop-60, exact parser error above. The missing timing/GC values are nulls, not zeros, in [compact evidence](perf/gr5-2026-11-14d-pc.json) (3572 bytes; SHA-256 `899263210c4b1738ca6264a1f91b1a485ca5c1895b9a80f885dbdd65292ae61a`).
+**Launch-blocked (2 NOT RUN):** street-60 and busy-shop-60, exact parser error above. The missing timing/GC values are nulls, not zeros, in [compact evidence](perf/gr5-2026-11-14d-pc.json) (3382 bytes; SHA-256 `5c3fb29d4fed6179d9f7d147684e214e7595340d6901393a0cc76008ef9a8635`).
 
 **Excluded by this run request (7 NOT RUN):**
 
@@ -1338,6 +1338,6 @@ Before copying, SHA-256 backup covered the full isolated PersistentCity tree, `a
 
 No process was launched by this run, so no game stop or force-stop was needed. Process inventory confirmed the isolated player closed before staging and after cleanup. Agent1 lease status was free with pending=0 after release. Original cap absence restored; overlay DLL hash unchanged. No new fixture save exists. No process started by this run remains.
 
-Validation: build passed; compact JSON parsed; documentation diff checked; no offline test suite. Build worktree is removed after evidence commit, and evidence worktree after PR creation. Report copy: `C:\Users\Peter\Coding_Projects\.agent-logs\persistent-city-rig-2026-11-14d-pc.md`.
+Validation: build passed; compact JSON parsed; documentation diff checked; no offline test suite. Build worktree is removed after evidence commit, and evidence worktree after PR creation. Report copy: `%USERPROFILE%\Coding_Projects\.agent-logs\persistent-city-rig-2026-11-14d-pc.md`.
 
 **RESULT: BLOCKED.**
