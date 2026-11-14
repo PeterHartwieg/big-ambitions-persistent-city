@@ -162,7 +162,7 @@ namespace PersistentCity.Runtime
                 if ((!car && !person) || (car ? cars >= vehicleLimit : people >= pedestrianLimit)) continue;
                 if (!car && (dressScans >= DressScanLimit || pedestrians.WouldDefer(citizen.Identity)))
                 {
-                    if (dressScans < DressScanLimit) dressScans++;
+                    if (dressScans < DressScanLimit) { dressScans++; pedestrians.NoteDeferred(); }
                     continue;
                 }
                 if (++attempts > 4) break;

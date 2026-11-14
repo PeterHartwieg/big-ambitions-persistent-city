@@ -291,6 +291,8 @@ namespace PersistentCity.Runtime
         internal bool LastDeferred => false;
         internal static Func<CitizenIdentity, bool>? Defer;
         internal int DeferChecks, AcquireCalls;
+        internal long AppearanceDeferred { get; private set; }
+        internal void NoteDeferred() => AppearanceDeferred++;
         internal bool WouldDefer(CitizenIdentity identity) { DeferChecks++; return Defer?.Invoke(identity) == true; }
         internal bool Visible(Position at) => VisiblePoint?.Invoke(at) == true;
         internal bool TryAcquire(CitizenIdentity identity, Position position, out PhysicalPedestrianBody? body, bool immediate = false)

@@ -62,13 +62,16 @@ public sealed class DeferredDressSelectionTests
             for (int i = 0; i < 60; i++)
             {
                 int checks = pool.DeferChecks;
+                long deferred = pool.AppearanceDeferred;
                 minute += 0.3 / 60; city.AdvanceTo(minute); Time.Next(0.3f);
                 bodies.Update();
                 int scanned = pool.DeferChecks - checks;
+                Assert.Equal(scanned, pool.AppearanceDeferred - deferred);
                 Assert.InRange(scanned, 0, PhysicalPopulation.DressScanLimit);
                 if (scanned > 0) passes++;
             }
             Assert.True(passes >= 30);
+            Assert.True(pool.AppearanceDeferred >= passes);
             Assert.Equal(preflight, pool.AcquireCalls);
             Assert.Empty(pool.Active);
 

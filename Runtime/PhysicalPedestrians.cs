@@ -23,7 +23,9 @@ namespace PersistentCity.Runtime
         private readonly HashSet<AppearanceSetter> baked = new HashSet<AppearanceSetter>();
         public long AppearanceBuilds { get; private set; }
         public long AppearanceReuses { get; private set; }
-        public long AppearanceDeferred => budget.Deferred;
+        private long deferredBeforeAcquire;
+        public long AppearanceDeferred => budget.Deferred + deferredBeforeAcquire;
+        public void NoteDeferred() => deferredBeforeAcquire++;
         public bool LastDeferred { get; private set; }
         public string LookDiagnostics => AppearanceBuilds + " built/" + AppearanceReuses + " reused/" + AppearanceDeferred + " deferred/"
             + idle.Count + " idle/" + all.Count + " owned/" + BlendshapeBake.Bakes + " baked";
