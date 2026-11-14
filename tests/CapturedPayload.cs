@@ -11,13 +11,13 @@ internal static class CapturedPayload
 {
     private static readonly Regex Decimal = new Regex(@"(?<![\w.])\d+\.\d+(?![\w.])", RegexOptions.CultureInvariant);
 
-    public static string Load(string path) => Normalize(Extract(System.IO.File.ReadAllText(path)));
+    public static string Load(string path) => Normalize(Extract(System.IO.File.ReadAllText(path), path));
 
-    public static string Extract(string text)
+    public static string Extract(string text, string source = "the input")
     {
         if (text.StartsWith(SaveCodec.BodyPrefix, StringComparison.Ordinal)) return text;
         var wrapper = JObject.Parse(text);
-        return (string?)wrapper["values"]?[SaveCodec.StateKey] ?? throw new InvalidOperationException("No Persistent City payload in " + nameof(text) + ".");
+        return (string?)wrapper["values"]?[SaveCodec.StateKey] ?? throw new InvalidOperationException("No Persistent City payload in " + source + ".");
     }
 
     public static string Normalize(string payload) => Decimal.Replace(payload, match =>
