@@ -8,6 +8,7 @@ Detailed specs: [F8 §7](https://github.com/PeterHartwieg/big-ambitions-persiste
 
 ## Latest evidence
 
+- **14 November h, PC, candidate `650fc893`:** 0 passed / 0 partial / 0 failed / 9 NOT RUN. Local staging/windowed start worked; throwaway time/perf/modwork FT guards and fixture population blocked all four windows; exact restoration, lease free ([14h results](#rig-results--14-november-2026-h-pc-gr-5-60-fps-streetbusy-shop--gc-vs-mac-14g-at-650fc893)).
 - **14 November g, Mac, build `7ff6a87a`:** 2 passed / 2 partial / 1 failed / 4 NOT RUN groups. Appearance 62.2/26.1 MB, gen0 7/6, pause p95 67.048/141.801 ms; street p95 5.2988/5.3683 ms; look/refill partial; restored ([14g results](#rig-results--14-november-2026-g-mac-gr-5-gc-recheck-after-262-at-7ff6a87a)).
 - **14 November f, Mac, build `2f5e72eb`:** 4 passed / 1 partial / 0 failed / 5 NOT RUN; ordinary-save refusal verified, food sales at speed 1 checked, footprint fixture gap; restored ([14f results](#rig-results--14-november-2026-f-mac-244-p-d-7--246-checks-4-5--260-checks-1-3-at-2f5e72eb)).
 - **14 November f, PC, candidate `0795aa2c`:** 0 passed / 0 partial / 0 failed / 11 not run. Windows scoped receipt-safe staging missing; installed-player PowerShell probe succeeded; restored, lease free ([14f PC results](#rig-results--14-november-2026-f-pc-244-p-d-7--246-check-4-footprint--gr-5-60-fps-arms-at-0795aa2c)).
@@ -2477,3 +2478,106 @@ Lease released: final running=false, process=null, held=false, pending=0. Both o
 Offline validation: candidate build passed; compact JSON parses and is under 20 KB. Docs-links passed (20 files, 0 broken relative links); markdown-ban and `git diff --check` passed for this docs-only change. No test files changed, so no focused classes; no full suite or regression suite. Only this existing checklist and the compact JSON are changed.
 
 Refs #262
+
+## Rig results ? 14 November 2026 h, PC (GR-5 60 fps street/busy-shop + GC vs Mac 14g at 650fc893)
+
+**RESULT: BLOCKED. Counts: 0 passed / 0 partial / 0 failed / 9 NOT RUN.** Four required measurement arms were blocked during setup; five excluded groups are counted separately below. No 600 s window began. The Windows baseline, allocation/GC comparison and strict UpdateCity / mod-work p95 <5 ms gates remain unverified. In-game proof gates no merge.
+
+Role `rig_test`, where `pc`, owner `pc-rig-2026-11-14h`, isolated `agent1`. All observed cadence values below are **PC 60 fps windowed, provisional (PC shared)**. A configured cap is verified; sustained 60 fps is not. The Mac was not contacted, started or used. The seventh-fix branch and other sessions were untouched.
+
+[Compact evidence](perf/gr5-2026-11-14h-pc.json) contains explicit null measurement fields, cap/guard readbacks, machine-load snapshot, Mac reference values and restoration results. Raw evidence and this run's backups: `C:\Users\Peter\HART-Builds\persistent-city-rig-2026-11-14h-pc`. The raw manifest records file sizes and SHA-256 values; no logs, binaries, credentials or saves are committed. Report copy: `C:\Users\Peter\Coding_Projects\.agent-logs\persistent-city-rig-2026-11-14h-pc.md`.
+
+### Build and rig
+
+| Item | Evidence |
+| --- | --- |
+| Candidate | `650fc893d0119921e2b37576ac42b115d20e5ed8`; initial and final fetch agree. Same production code as Mac 14g's `7ff6a87a`; #264 added only results. Seventh fix absent. |
+| Worktrees | New results branch `codex/pc-rig-2026-11-14h`, evidence `rig-2026-11-14h-pc-evidence`; separate detached build `rig-2026-11-14h-pc`. Original checkout unchanged. |
+| Official agent-rig | `e77831929bd4d347ba064e02f485c056d523107e`; clean before/after, fetch and ff-only pull already current. No edits, commits, push or overlay update. |
+| AgentRigOps SHA-256 | `1e9c612a3a96fa1f967553ddc0af466dd9e2819f59692cdf5a7766228a85d673`; live hash, ready health and cleanup agree. |
+| Build | Windows Steam-Managed build: `python tools/build.py --game-managed "C:\Program Files (x86)\Steam\steamapps\common\Big Ambitions\Big Ambitions_Data\Managed"`, exit 0. PATH prefixed with `%LOCALAPPDATA%\Microsoft\dotnet`; required wait helper printed `dotnet lock removed 2026-11-10; continuing`. No offline dotnet suite. |
+| PersistentCity DLL SHA-256 | `a0a1ef89db96420ce375100a09f6236c13d47b10f3856f9c1963079b0613341b`, identical to Mac 14g. Built package copied into this run's stage; receipt-validated start accepted it. No RLO/game DLL packaged. |
+| Staging / rollback | Official #87 scoped stage succeeded. Backup `C:\BigAmbitions-AgentTests\receipt-backups\20261114T183607Z`; 1 added, 41 existing package receipt paths rehashed, 42 pinned entries. What-if preceded the real stage. Other mod receipt entries left unchanged. |
+| Start / stop | One `python scripts\agent start --mode windowed --rig-test`, successful first attempt, isolated PID 4596. Official `status` and `health` succeeded locally. One graceful `scripts\agent stop`; no force, no other process stopped. |
+| Food Trucks | Health `mod_version=0.10.2`; unchanged. |
+| RLO, exact log | `[Mod:RealLifeOverhaul] Real Life Overhaul 0.45.0 initialised.` Mac 14g used 1.0.6. This run did not install/update/edit RLO. PC activated; no RLO incompatibility is inferred. All 48 original RLO file hashes match at cleanup. |
+| PC activation, exact log | `[Mod:PersistentCity] Persistent population active: 957 residents, 957 visitors, 1081 places. Native-pace walking, subway and car journeys; physical population preflight follows road initialization. Ctrl+F8 opens food business feedback.` No commit-stamped build line is emitted; deterministic DLL identity and successful receipt validation establish the build. |
+| Autosave / SaveCost | Original native autosave 5 minutes / 3 saves, prevent_autosave=false. Rig-test guard enabled=true, autosave_disabled=true, save_specific=false, allow=[], error=null. SaveCostDiagnostics requested=false, save=null, activation=null; native profiler installed=false. Read before stop: no save attempts/allowed/refused/native save activity, no perf window active. No save or save-latency probe. |
+| Lease | Acquired free at 18:34:33 UTC. Initial release followed stop/rollback; cleanup audit required reacquisition at 18:39:38 UTC under the same owner, then final release after exact verification. No takeover, other owner or pending work. |
+| Machine load | Setup snapshot 18:38:24 UTC: Intel i5-13600KF, CPU 64%, total RAM 63.84 GiB, free 22.57 GiB. Notable resident processes: isolated player 5.49 GiB, PathOfExileSteam 4.93 GiB, vmmemWSL 2.85 GiB, Path of Building 1.34 GiB, browser and another CLI session. These are working sets, not attributed CPU rates. No measured window started, so no per-window load readings exist. |
+
+Exact stage command, stopped and leased, preceded by the same command with `--what-if`:
+
+```text
+python scripts\stage_mod_windows.py --stage-mod PersistentCity C:\Users\Peter\HART-Builds\persistent-city-rig-2026-11-14h-pc\package
+```
+
+Printed rollback, executed stopped and leased:
+
+```text
+python scripts\stage_mod_windows.py --rollback "C:\BigAmbitions-AgentTests\receipt-backups\20261114T183607Z" PersistentCity
+```
+
+### Cap health and fixture
+
+Staged exactly `{"fps":60,"vsync":0}` in the isolated profile's `agent-frame-cap.json`; original absence restored. Initial menu readback: requested=60, applied=true, vsync_count=0, target_frame_rate=60, measured_fps=56.46, window_s=2.00, error=null. Loaded-city observations ranged 46.42?49.61 fps in retained setup snapshots. Last pre-stop readback: requested=60, applied=true, vsync_count=0, target_frame_rate=60, measured_fps=49.61, window_s=2.02, error=null. These are **PC 60 fps windowed, provisional (PC shared)** setup observations, not a 600 s measurement. The applied cap stayed present; sustained 51?66 fps qualification was not established. No cold restart was needed for cap loss.
+
+Neither `FT RLO 13d Food v1` nor the Mac fallback `FT GR5 13f Timing v1` exists in this isolated PC SaveGames inventory. Used the authorized fallback:
+
+```text
+new_game {"name":"RIGTMP-GR5-14h","throwaway":true}
+```
+
+It completed with load.status=done, Monday 08:00, speed 1, unpaused, player x=215,z=0. Last live manifest: **957 residents / 957 visitors**, 20 portals, person-target unchanged; no `pc gc population 3000` command. Census resident_target=957, commuter_target=1914 and persisted_persons=2871 are census plans, not evidence of a live 1,000/2,000 city. Load tally: `[Persistent City] unrentable homes housed=0 beds=0 unreadable=0 empty=0`. No busy-shop fixture was created. The throwaway city was never saved; native creation left only its portrait JPEG, with no `.hsg`/city save. No undocumented deletion was attempted.
+
+### Required arms and comparison
+
+| Arm, in requested order | Result | PC 60 fps windowed evidence |
+| --- | --- | --- |
+| C day, 15:30, 600 s | NOT RUN / tooling and fixture gaps | `time` positioning refused the non-FT city; `perf begin` refused it. Required population/cadence unverified. |
+| C night, 01:00, 600 s | NOT RUN / same setup gate | No valid day window or supported time positioning in this city. |
+| A street, 600 s | NOT RUN / same setup gate | `modwork arm` refused the non-FT city. No UpdateCity or mod-work timing. |
+| B busy-shop, 600 s | NOT RUN / same setup gate | Same city has no established busy-shop fixture; scoped mutation guard and required population/cadence prevent qualification. |
+
+For all four arms, measured fps, whole-frame p95/p99, gen0, pause p95, heap, UpdateCity/mod-work p95 and >=30 ms spike counts/frames/components are **unavailable**, not zero. No GC sampler was started; `pc gc report` confirmed `gc measurement not started`. Consequently there is no complete GC report or allocation-segment/sample-count/pedestrianLooks/pool-hit comparison to publish. All physical_spawn_* segments, physical_unattributed and counter_frame_bytes remain unavailable. Randomize and bake remain children of appearance and must not be added to it.
+
+Reference only, from [Mac 14g](#rig-results--14-november-2026-g-mac-gr-5-gc-recheck-after-262-at-7ff6a87a) and [its complete JSON](perf/gr5-2026-11-14g-mac.json):
+
+| Metric | Mac 14g day / night | Mac 14b day / night | PC 60 fps windowed |
+| --- | --- | --- | --- |
+| gen0 | 7 / 6 | 11 / 8 | unavailable |
+| Pause p95 ms | 67.048 / 141.801 | 28.191 / 61.316 | unavailable |
+| Mono heap bytes | 1,629,356,032 / 1,894,055,936 | see 14b full report | unavailable |
+| Appearance MB / samples | 62.155 / 1,203; 26.120 / 492 | 745.426 / 1,281; 327.776 / 561 | unavailable |
+| Physical + advance MB | 309.570 / 134.021 | 1,021.6 / 433.6 | unavailable |
+| Street UpdateCity / mod-work p95 ms | 5.2988 / 5.3683 | 5.5170 / 5.5824 | unavailable |
+| Street >=30 ms mod-work spikes | 1, max 64.7872 ms | 4, max 78.2031 ms | unavailable |
+
+Mac 14g GC windows were headless at about 30 Hz; this PC was windowed with a 60 fps target. They are not like-for-like frame-time comparisons. The required GC pause/gen0/heap/allocation comparison remains blocked by absent PC samples. No improvement, regression, <5 ms pass or product failure is inferred from this run.
+
+### Exact op failures and tooling gaps
+
+1. Day positioning, `time {"run_until":{"day":1,"time":"15:30"},"speed":20,"keep_needs":true}`: `time changes the save, and the loaded save 'RIGTMP-GR5-14h' doesn't start with FT: load an FT save first.` No time mutation occurred.
+2. `perf {"action":"begin","label":"gc-day"}`: `ops_ft_save_required`. No window opened; subsequent perf read confirmed active=false.
+3. `modwork {"action":"arm","components":[{"name":"updatecity","type":"PersistentCity.Runtime.PopulationRuntime","method":"UpdateCity"}]}`: `ops_ft_save_required`. Subsequent status confirmed armed=false, bound=0, no open window.
+4. Preparatory `help {}` at the menu: `help works in the city only; the game is at the menu now.` Switched to documented commands and direct isolated inventory; no gameplay effect.
+
+The #87 local lifecycle and scoped staging paths both worked; the earlier CLI/staging blockers did not recur. The remaining gap is that the authorized non-FT throwaway supports console but retains FT-only time/perf/mod-work mutation guards. No guard bypass, tooling edit, unrelated FT fallback or production fix was attempted. Fresh-world housing/population differs from the requested fixture, and RLO differs from Mac 14g. Those observations do not establish a code cause.
+
+### Excluded NOT RUN groups
+
+1. #246 checks 4?5, unrentable footprint/tally: Rig bot fixture still in flight, run `20261114-192649-rig-unrentable-residential`.
+2. #262 checks 4?5, look stability/burst-refill: no stable resident identity through release/reacquire and no dense-walkers fixture; queue resident-reacquire=14g gap 1, dense-walkers=14g gap 2.
+3. GR-5 check 2, save latency: owner save-route decision pending via Spock. No save profiling.
+4. P-D 7 and #260 food checks: covered by Mac 14f; outside this run.
+5. Seventh fix: still in flight on the Mac; later recheck. Its branch, worktree, lease, compiler and game were not used or disturbed.
+
+### Restoration and validation
+
+Gracefully stopped only owned PID 4596. Official status showed running=false, health=null, pid=null; process inventory found no Big Ambitions process. Executed this run's printed rollback. Full PersistentCity file inventory matches, all **45 original file hashes and four absences** match, and all **48 RLO files** match. No RLO files or overlay were restored/edited by the tester. Exact isolated registry preference export matches; PlayerSettings, persistent-city config, original autosave preferences and frame-cap absence are restored.
+
+The scoped rollback reserialized/reordered `agent-install.json`, so its first post-rollback whole-file hash differed despite identical top-level data and complete path-to-entry maps. After verifying those maps, restored the exact original receipt backup bytes under the documented stopped-player/lifecycle reservation. No receipt entries were hand-edited or refreshed. Final receipt SHA-256 `4ace1ba1365a2dababda6861be7ce27bbe72c0fba4f48122a5af5cb08c9b5111` matches the pre-stage manifest. Registry export discrepancies in the first audit were resolved by importing this run's original export. Final audit: zero mismatches. AgentRigOps hash unchanged. Final lease free, pending=0; no owned process remains. The unsaved throwaway portrait is retained because no documented removal operation was used.
+
+Build passed; compact JSON parsed; docs-links, markdown ban and whitespace checks recorded with the evidence commit. No offline test suite or regression suite. Only this checklist and the compact JSON changed. No production code, RLO, schema 1, food weights, version/changelog, release, Workshop, GitHub issue or merge. Build worktree removed after commit; evidence worktree removed after PR creation. All steps ran in the foreground and were awaited.
+
+**RESULT: BLOCKED.**
