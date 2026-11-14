@@ -8,6 +8,7 @@ Detailed specs: [F8 §7](https://github.com/PeterHartwieg/big-ambitions-persiste
 
 ## Latest evidence
 
+- **14 November e, PC, build `2448bc40`:** 0 passed / 0 partial / 0 failed / 9 not run. Default start failed with SSH `homepc` resolution error; P-D 7 tooling gap; restored, lease free ([14e results](#rig-results--14-november-2026-e-pc-244-p-d-check-7-at-2448bc40)).
 - **14 November c, Mac, build `1d5d1b76`:** 1 passed / 1 partial / 1 failed / 6 NOT RUN groups. #255 runtime retime passed; rush-hour continuous visual proof partial; off/on paid receipts absent; restored ([14c results](#rig-results--14-november-2026-c-mac-255-retime-checks-1-3-at-1d5d1b76)).
 - **14 November b, Mac, build `eb38a061`:** 0 passed / 0 partial / 3 failed / 7 not run. Day/night GC 11/8 gen0, pause p95 28.191/61.316 ms; physical+advance 1,021.6/433.6 MB; street UpdateCity p95 5.5170 ms; appearance/footprint/actual 60 fps proof blocked; restored ([14b results](#rig-results--14-november-2026-b-mac-gr-5-gc-254-footprint-60-fps-at-eb38a061)).
 - **14 November a, Mac, build `b3d58a6a`:** 1 passed / 0 partial / 4 failed / 1 not run. Day/night GC 11/9 gen0, pause p95 103.863/70.122 ms; street UpdateCity p95 5.2683 ms; Living-off passed, toggle repeat stopped, P-D console blocked; restored ([14a results](#rig-results--14-november-2026-a-mac-gr-5-gc-rlo-p-d-7-at-b3d58a6a)).
@@ -1860,3 +1861,77 @@ The execution layer rejected the printed rollback before executing it: `rm -f st
 
 
 Validation: candidate build passed. `git diff --check`, markdown ban and docs-links passed for the docs-only result. Only the existing checklist was changed; no raw evidence, binary, save or new markdown path is committed. The build/evidence worktree is removed after commit/push and PR creation. The PR is left open, unmerged, without reviewers.
+
+## Rig results — 14 November 2026 e, PC (#244 P-D check 7 at 2448bc40)
+
+**RESULT: BLOCKED.** Counts: **0 passed / 0 partial / 0 failed / 9 NOT RUN arms**. The required P-D check 7 is NOT RUN: the single default Windows start failed before launching a player. The other eight arms were excluded by the run scope. This is no in-game proof and gates no merge.
+
+### Build and rig
+
+| Item | Evidence |
+|---|---|
+| Role / instance | rig_test, Windows PC, agent1; owner `pc-rig-2026-11-14e` throughout. No Mac contacted. |
+| Candidate | `2448bc40f47c67c0a84813e0e4f6a9b5c58dd9fe`, fetched `origin/codex/persistent-city`. Moved from requested minimum `913abd7d` by docs-only PR #258. |
+| Worktrees | New branch `codex/pc-rig-2026-11-14e` in `rig-2026-11-14e-pc-evidence`; detached build in `rig-2026-11-14e-pc`. Original checkout stayed clean. |
+| Agent-rig | Official checkout `4bcf80aa04431f3b54cac19335c9c4cbb57a4b48`; clean before fetch and `git pull --ff-only` (`Already up to date.`). No checkout edit or overlay update. |
+| Live AgentRigOps.dll SHA-256 | `fe4c40c1ba70512eb0b14704e275c1fa4842e98100ba563cc2d559a13be6bf6a`; unchanged after cleanup. |
+| Build | `python tools/build.py --game-managed "C:\Program Files (x86)\Steam\steamapps\common\Big Ambitions\Big Ambitions_Data\Managed"` passed. PATH prefixed with `%LOCALAPPDATA%\Microsoft\dotnet`; wait-other-dotnet helper printed `dotnet lock removed 2026-11-10; continuing`. No offline test suite. |
+| PersistentCity.dll SHA-256 | `087fe9aa8c506c3d2fa43df62fec0f08450095ca415f7c3ffebf64bfd28bde29`; built package and copied candidate matched. No loaded-build line: player never started. |
+| Package / raw evidence | `C:\Users\Peter\HART-Builds\persistent-city-rig-2026-11-14e-pc`, package under `package\PersistentCity`. Build/start output, pre-stage manifest, backups, retained candidate and restore verification stay outside Git. No RLO package files copied. |
+| Staging command | `python C:/Users/Peter/HART-Builds/persistent-city-rig-2026-11-14e-pc/backup-and-stage.py`: full pre-copy backup, then hash-verified `shutil.copytree(package, isolated ModsLocal/PersistentCity, dirs_exist_ok=True)`. Windows scoped receipt-refresh helper was not found; used the authorized copy fallback. No receipt hand-edit. |
+| Backup / rollback source | `C:\Users\Peter\HART-Builds\persistent-city-rig-2026-11-14e-pc\pre-stage-backup`. Restoration used this run's `PersistentCity` folder and independently backed-up bytes, via `python C:/Users/Peter/HART-Builds/persistent-city-rig-2026-11-14e-pc/restore.py`. |
+| RLO version / PC startup | NOT OBSERVED: no player launched and no current startup lines exist. Prior log contents are not evidence for this build. |
+| Machine load | Setup observation: CPU 32%; physical memory 66,938,060 KiB total / 25,647,708 KiB free (about 63.84 / 24.46 GiB). No game process observed. Owner-reported live harness `20261114-144821-pc-fix-gr5-spawn-appearance` remained independent; no wait for load, cancellation, debugging or access to its branch/files. |
+| Cap health | Local launcher status after cleanup: `running=false`, `pid=null`, `health=null`. No frame-cap health readback was available. Background default was requested; no windowed/60-fps start or frame-cap file change. |
+
+### P-D check 7 and exact tooling errors
+
+Read PR #244 and PR #246 through REST and the prior 14a / 14b / 13g results. The intended fixture was unsaved non-FT `RIGTMP-PD7-14e`. Agent1 was free and acquired without takeover at `2026-11-14T14:35:54.7615080Z`.
+
+The single start attempt in the official agent-rig checkout, with `BA_LOCK_OWNER=pc-rig-2026-11-14e`, was:
+
+```text
+python scripts/agent start
+ssh: Could not resolve hostname homepc: No such host is known.
+START_EXIT_CODE=1
+```
+
+The CLI uses its SSH transport for lifecycle operations. Its earlier read-only `python scripts/agent status` produced the same exact hostname error. No SSH configuration or CLI was changed. No retry, `--rig-test` start, direct launch or FT fallback was attempted after the failed start, as required by the one-attempt rule.
+
+| P-D 7 evidence | Result |
+|---|---|
+| `call new_game {"name":"RIGTMP-PD7-14e","throwaway":true}` | NOT ATTEMPTED: no player. No new_game refusal is claimed. |
+| `call console {"line":"pc gc population"}` | NOT ATTEMPTED. Exact mod console output unavailable. |
+| `call console {"line":"pc gc population 3000"}` | NOT ATTEMPTED. Expected substring `refused: measurement mode needs a disposable FT city` was not observed. No `MEASUREMENT MODE` output is claimed. |
+| Persons before / immediately after / after one in-game hour | Unavailable / unavailable / unavailable. No city ran; no hour elapsed. |
+| Matching Player-agent.log lines | None for this run. Existing log stayed 86,702 bytes with last write `2026-11-14T14:01:58.840534Z`, before the lease/start. No stale startup/refusal lines substituted. |
+| Autosave | Complete original isolated preference/config bytes backed up and matched after cleanup. Numeric native autosave setting was not identified from offline settings; runtime OFF could not be verified because startup failed. No city or timed window ran and no autosave setting was changed. |
+
+### Findings and tooling gaps
+
+The observed blocker is default PC CLI transport, not a measurement-mode refusal in the mod. Agent-rig #85 is present in the official checkout and the live Ops hash is recorded, but this run did not exercise its RIGTMP console guard.
+
+There is also a staging limitation: the Windows checkout has no scoped package/receipt refresh comparable to the Mac helper. The authorized copy fallback verified all six package files, but left the original receipt unchanged. The copied `PersistentCity.dll`, `persistent-city.json` and `README.md` differ from the original pinned receipt. A receipt-validated local launch was not attempted after the transport failure; this is a pending staging requirement, not a second observed launch error. No receipt protection was bypassed.
+
+The documentation still requires a rig-test launch for throwaway `new_game` and console acceptance. This run obeyed the default-start-only instruction and did not retry the previously reported unsupported flag. The earlier `agent: error: unrecognized arguments: --rig-test` is background from rig 14d, not an error reproduced here.
+
+### NOT RUN grouped
+
+Nine counted arms, with no product FAIL recorded:
+
+1. **Required P-D 7 (one arm):** default start failed with the exact SSH hostname error above; console refusal and unchanged-person proof unavailable.
+2. **GR-5 60 fps (two arms: street / busy shop):** excluded; rig 14d / PR #257 found Windows CLI refuses `--rig-test` and no Windows scoped package stage exists. Rig bot request pending. No timing or cap proof attempted.
+3. **GR-5 check 4 footprint (one arm):** excluded; previous building op `ops_game_api_unavailable`, Rig bot fix pending. Not retried here.
+4. **#254 check 4 appearance (one arm):** excluded; no stable resident identity through release and reacquire. No appearance attempt.
+5. **GR-5 check 2 save latency (one arm):** excluded; owner save-route decision pending. No save or save profiling.
+6. **#255 checks 1–3 (three arms):** excluded; covered by Mac rig 14c / PR #258. The zero-receipt finding has a fix run. No rerun or Mac contact.
+
+### Fixtures, restoration and validation
+
+Created fixtures: **none**. `RIGTMP-PD7-14e` was planned but never created; no save, checkpoint, fixture removal or existing save overwrite. No game process was started, so no stop/force-stop was needed and no owned game process remains.
+
+The candidate folder was moved intact into this run's `retained-staged-PersistentCity`; the original folder was copied back from this run's pre-stage backup. Original receipt, preferences and configuration were preserved or restored only from this run's manifest. Cleanup verified **101 checks, zero mismatches**: 47 original file hashes, two expected absences (`agent-frame-cap.json` and root `persistent-city.json`), the isolated registry export, complete 41-file PersistentCity set, 48 RLO hashes read-only, unchanged Ops hash and unchanged log length. Registry export SHA-256: `8adb52a0d6a12694aa30f2ae209f94149e519240f3b32d97c11e2d6b389f9e4c`. RLO, Food Trucks and the overlay were never written.
+
+Released with `python scripts/local_lock.py release`. Final local lease status: `held=false`, `owner=null`, `pending=0`. Direct read-only installed-launcher status: `installed=true`, `running=false`, `pid=null`, `health=null`. No other session's process was stopped. No normal game/profile or bridge ownership was used.
+
+Only this existing checklist is changed. Build passed; docs-links, markdown-ban and whitespace checks are recorded in the results PR. Report copy: `C:\Users\Peter\Coding_Projects\.agent-logs\persistent-city-rig-2026-11-14e-pc.md`. Build worktree is removed after commit; evidence worktree after opening the unmerged docs-only results PR. No production change, issue, release, version/changelog change or merge.
