@@ -13,7 +13,7 @@ namespace PersistentCity.Core
         {
             int count = 0;
             foreach (var part in parts) if (part != null) count += part.Legs.Count;
-            var result = new Route { Legs = new RouteLegs(Math.Min(count, MaximumLegs)) };
+            var result = new Route(new RouteLegs(Math.Min(count, MaximumLegs)));
             double extraMinutes = 0;
             foreach (var part in parts)
             {
@@ -295,7 +295,7 @@ namespace PersistentCity.Core
                         path.Add(cursor);
                     }
                     path.Reverse();
-                    var route = new Route { Legs = new RouteLegs(path.Count - 1) };
+                    var route = new Route(new RouteLegs(path.Count - 1));
                     for (int k = 1; k < path.Count; k++)
                     {
                         var a = nodes[path[k - 1]]; var b = nodes[path[k]];
