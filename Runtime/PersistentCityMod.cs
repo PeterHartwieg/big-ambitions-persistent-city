@@ -131,7 +131,9 @@ namespace PersistentCity.Runtime
         public object RivalFoodDiagnostics => new { Core=simulation?.DumpRivalFood(), RefreshUnits=foodMarket?.RivalRefreshUnits ?? 0, DetailReads=foodMarket?.RivalDetailReads ?? 0, Unavailable=foodMarket?.RivalUnavailable ?? "" };
         public object FoodDiagnostics => new { active = foodMarket != null, hourlyCustomerBatchesSuppressed = foodMarket?.SuppressedBatches ?? 0,
             nativeDrawsSuppressed = foodMarket?.SuppressedDraws ?? 0, nativePurchasesThisSession = foodMarket?.NativePurchases ?? 0,
-            travelClockRate = simulation?.State.TravelClockRate ?? 0, walkingMetresPerGameMinute = routes?.WalkingMetresPerMinute ?? 0 };
+            travelClockRate = simulation?.State.TravelClockRate ?? 0, walkingMetresPerGameMinute = routes?.WalkingMetresPerMinute ?? 0,
+            lunchReachMetres = routes == null ? 0 : FoodClockReach.LunchReachMetres(routes.WalkingMetresPerMinute),
+            mealOutcomes = FoodClockReach.Outcomes(simulation?.State.Food, 8).Select(o => new { outcome = o.Outcome, count = o.Count }).ToArray() };
 
         public FoodRoutineRecorder ObserveFoodRoutines()
         {
@@ -301,6 +303,7 @@ namespace PersistentCity.Runtime
                         log?.Info("Clock retime degraded " + degraded.ToString(System.Globalization.CultureInfo.InvariantCulture)
                             + " journeys: each keeps its old pace on its current road edge or drives outside traffic until its next road section.");
                     var retimedRoutes = new MultimodalRoutes(simulation.State.Places, NativeTravelPace.WalkingMetresPerSecond / clockRate, clockRate, dependency, routeObjects);
+                    if (foodMarket != null) log?.Info(FoodClockReach.RetimeLine(clockRate, retimedRoutes.WalkingMetresPerMinute));
                     if (routes != null) retimedRoutes.ReuseRoadSceneForRetiming(routes);
                     routes = retimedRoutes;
                     seenRoadSnapshots = 0; clockRetimingRoutes = true;
