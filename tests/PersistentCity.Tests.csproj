@@ -16,6 +16,7 @@
     <Compile Include="../Runtime/FoodContractHooks.cs" Link="FoodContractHooks.cs" />
     <Compile Include="../Runtime/OrdinaryOwnershipIndex.cs" Link="OrdinaryOwnershipIndex.cs" />
     <Compile Include="../Runtime/DwellSpots.cs" Link="DwellSpots.cs" />
+    <Compile Include="../Runtime/NativeRoadSpeeds.cs" Link="NativeRoadSpeeds.cs" />
     <Compile Include="../Runtime/PhysicalPopulation.cs" Link="PhysicalPopulation.cs" />
     <Compile Include="../Runtime/PhysicalPopulation.Following.cs" Link="PhysicalPopulation.Following.cs" />
     <Compile Include="../Runtime/PhysicalPopulation.Queues.cs" Link="PhysicalPopulation.Queues.cs" />
