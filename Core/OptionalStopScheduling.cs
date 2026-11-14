@@ -136,7 +136,7 @@ namespace PersistentCity.Core
         {
             if (stopEnvironment == null) return;
             PruneActiveStops();
-            stopScratch.Clear(); stopScratch.AddRange(activeStops);
+            stopScratch.Clear(); foreach (var active in activeStops) stopScratch.Add(active);
             foreach (var person in stopScratch)
             {
                 var stop = person.OptionalStop!;
@@ -149,16 +149,23 @@ namespace PersistentCity.Core
             {
                 var stop = person.OptionalStop;
                 if (stop == null || stop.Cancelled || State.Minute >= stop.EndMinute || stop.Kind != DwellKind.ChatOutsideVenue) continue;
-                if (stop.Members.Any(id => !citizenEvents.TryGetValue(id, out var item)
-                    || !CurrentCitizenSlot(item, item.Citizen) || item.Citizen.OptionalStop == null
-                    || item.Citizen.OptionalStop.Cancelled || item.Citizen.OptionalStop.TargetId != stop.TargetId
-                    || item.Citizen.OptionalStop.StartMinute != stop.StartMinute)) stop.Cancelled = true;
+                if (!MembersAligned(stop)) stop.Cancelled = true;
             }
             stopScratch.Clear();
         }
+        private bool MembersAligned(OptionalStopState stop)
+        {
+            foreach (var id in stop.Members)
+                if (!citizenEvents.TryGetValue(id, out var item)
+                    || !CurrentCitizenSlot(item, item.Citizen) || item.Citizen.OptionalStop == null
+                    || item.Citizen.OptionalStop.Cancelled || item.Citizen.OptionalStop.TargetId != stop.TargetId
+                    || item.Citizen.OptionalStop.StartMinute != stop.StartMinute) return false;
+            return true;
+        }
         private static bool StopActive(CitizenState c, double minute)
             => c.OptionalStop != null && !c.OptionalStop.Cancelled && minute < c.OptionalStop.EndMinute;
-        private void PruneActiveStops() => activeStops.RemoveWhere(c => !StopActive(c, State.Minute));
+        private Predicate<CitizenState>? inactiveStop;
+        private void PruneActiveStops() => activeStops.RemoveWhere(inactiveStop ??= c => !StopActive(c, State.Minute));
         public void CancelOptionalStop(string citizenId)
         {
             if (!citizenEvents.TryGetValue(citizenId, out var item) || item.Citizen.OptionalStop == null) return;

@@ -75,7 +75,7 @@ namespace PersistentCity.Runtime
             bindingSnapshot = null;
             try
             {
-                snapshot.AddRange(bindings.Values);
+                foreach (var value in bindings.Values) snapshot.Add(value);
                 int keptPeople = 0, keptCars = 0;
                 foreach (var binding in snapshot)
                 {

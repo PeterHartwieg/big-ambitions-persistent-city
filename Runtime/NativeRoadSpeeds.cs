@@ -14,7 +14,9 @@ namespace PersistentCity.Runtime
     {
         private readonly Func<IReadOnlyDictionary<object, (int Original, int Effective)>>? capture;
         private readonly Dictionary<object, int> canonical = new Dictionary<object, int>(References.Instance);
-        private IReadOnlyDictionary<object, (int Original, int Effective)> overrides =
+        private Dictionary<object, (int Original, int Effective)> overrides =
+            new Dictionary<object, (int Original, int Effective)>(References.Instance);
+        private Dictionary<object, (int Original, int Effective)> spare =
             new Dictionary<object, (int Original, int Effective)>(References.Instance);
 
         private readonly Func<Exception, string?>? transient;
@@ -38,7 +40,8 @@ namespace PersistentCity.Runtime
             catch (Exception error) when (transient?.Invoke(error) is string waiting) { Waiting = waiting; Verified = false; return; }
             catch (Exception error) { Waiting = null; Verified = false; LastRefusal = error.Message; throw; }
             Waiting = null;
-            var detached = new Dictionary<object, (int Original, int Effective)>(References.Instance);
+            var detached = spare;
+            detached.Clear();
             foreach (var pair in next)
             {
                 if (pair.Key is not Waypoint lane || pair.Value.Original <= 0 || pair.Value.Effective <= 0
@@ -50,7 +53,7 @@ namespace PersistentCity.Runtime
                 }
                 detached.Add(lane, pair.Value);
             }
-            overrides = detached; Verified = true; LastRefusal = null;
+            spare = overrides; overrides = detached; Verified = true; LastRefusal = null;
         }
 
         public int Canonical(Waypoint lane) => Resolve(lane).Original;

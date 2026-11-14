@@ -33,6 +33,8 @@ namespace PersistentCity.Runtime
         private readonly FieldInfo? movementHandler;
         private readonly FieldInfo? pathTryCount;
         private readonly HashSet<Pedestrian> held = new HashSet<Pedestrian>();
+        private readonly List<Pedestrian> departingScratch = new List<Pedestrian>();
+        private Predicate<Pedestrian>? heldGone;
         private readonly Dictionary<Pedestrian, float> resumeAt = new Dictionary<Pedestrian, float>();
         private readonly Dictionary<Pedestrian, Departure> departing = new Dictionary<Pedestrian, Departure>();
         private readonly Dictionary<Pedestrian, int> failedSearches = new Dictionary<Pedestrian, int>();
@@ -317,16 +319,21 @@ namespace PersistentCity.Runtime
             if (disposed) return;
             RefreshReservations();
             if (!Active || spawner!.activePedestrians == null) return;
-            held.RemoveWhere(pedestrian => pedestrian == null || !pedestrian.gameObject.activeInHierarchy
+            held.RemoveWhere(heldGone ??= pedestrian => pedestrian == null || !pedestrian.gameObject.activeInHierarchy
                 || !InActivePool(spawner.activePedestrians, pedestrian));
             if (resumeAt.Count > held.Count)
                 foreach (var gone in new List<Pedestrian>(resumeAt.Keys)) if (!held.Contains(gone)) resumeAt.Remove(gone);
             if (departing.Count > 0)
-                foreach (var gone in new List<Pedestrian>(departing.Keys))
+            {
+                departingScratch.Clear();
+                foreach (var key in departing.Keys) departingScratch.Add(key);
+                foreach (var gone in departingScratch)
                 {
                     if (gone == null || !gone.gameObject.activeInHierarchy || !InActivePool(spawner.activePedestrians, gone)) { departing.Remove(gone!); continue; }
                     if (Time.time >= departing[gone].Until) { departing.Remove(gone); if (IsOrdinaryUnreserved(gone)) Hold(gone); }
                 }
+                departingScratch.Clear();
+            }
             if (failedSearches.Count > held.Count)
                 foreach (var gone in new List<Pedestrian>(failedSearches.Keys)) if (!held.Contains(gone)) failedSearches.Remove(gone);
             if (resumedFrame != Time.frameCount)
