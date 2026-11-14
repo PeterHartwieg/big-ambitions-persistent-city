@@ -179,19 +179,20 @@ namespace PersistentCity.Core
     public sealed class Route
     {
         private double? estimatedMinutes;
-        private RouteLegs? legs;
+        private RouteLegs legs;
         private double committedMinutes;
+        public Route() { legs = new RouteLegs(); }
+        internal Route(RouteLegs legs) { this.legs = legs ?? throw new ArgumentNullException(nameof(legs)); }
         public RouteLegs Legs
         {
-            get => legs ??= new RouteLegs();
-            set { if (legs?.IsReadOnly == true) throw new InvalidOperationException("A committed route is immutable."); legs = value ?? throw new ArgumentNullException(nameof(value)); }
+            get => legs;
+            set { if (legs.IsReadOnly) throw new InvalidOperationException("A committed route is immutable."); legs = value ?? throw new ArgumentNullException(nameof(value)); }
         }
-        public double Minutes => Legs.IsReadOnly ? committedMinutes : Sum();
-        private double Sum() { double total = 0; foreach (var leg in Legs) total += leg.Minutes; return total; }
-        public bool IsCommitted => Legs.IsReadOnly;
+        public double Minutes => legs.IsReadOnly ? committedMinutes : Sum();
+        private double Sum() { double total = 0; foreach (var leg in legs) total += leg.Minutes; return total; }
+        public bool IsCommitted => legs.IsReadOnly;
         internal Route Commit()
         {
-            var legs = Legs;
             if (legs.IsReadOnly) return this;
             foreach (var leg in legs) if (leg == null) throw new InvalidOperationException("A committed route has a null leg.");
             foreach (var leg in legs) leg.Freeze();
