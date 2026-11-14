@@ -54,8 +54,10 @@ public sealed class UpdateCityFrameModelTests
             double build = 0;
             if (waiting >= 1 && dress.TryTake(f, now))
             {
-                build = 4 + dice.NextDouble() * 4 + (dice.NextDouble() < 0.04 ? 10 + dice.NextDouble() * 15 : 0);
-                waiting -= 1; builds++;
+                bool grow = dice.NextDouble() < GrowShare;
+                double instantiate = grow ? 10 + dice.NextDouble() * 12 : 0, dressing = 4 + dice.NextDouble() * 4;
+                if (grow && bounded) build = instantiate;
+                else { build = instantiate + dressing; waiting -= 1; builds++; }
                 gate?.Observe(build);
             }
             frame.ObservePhysical(physical);
@@ -72,7 +74,7 @@ public sealed class UpdateCityFrameModelTests
         };
     }
 
-    private const double BaseAdvanceMillisecondsPerSecond = 1, BurstsPerSecond = 0.2, BuildsWantedPerSecond = 0.55;
+    private const double BaseAdvanceMillisecondsPerSecond = 1, BurstsPerSecond = 0.2, BuildsWantedPerSecond = 0.55, GrowShare = 0.04;
 
     private string Line(string label, double fps, Outcome o) => string.Format(CultureInfo.InvariantCulture,
         "{0} {1:0.0} fps: UpdateCity p50/p95/p99/max {2:0.00}/{3:0.00}/{4:0.00}/{5:0.00} ms, spikes>=30 {6}; advance {7:0.0}/{8:0.0} ms per s (backlog {9:0.0} ms); builds {10:0.00}/{11:0.00} per s (waiting {12:0})",
@@ -91,10 +93,11 @@ public sealed class UpdateCityFrameModelTests
         Assert.True(after.P95 <= 4.5, Line("after", fps, after));
         Assert.True(after.P95 < before.P95 || before.P95 <= 4.5);
         Assert.Equal(0, after.Spikes);
+        Assert.True(after.Spikes <= before.Spikes);
         Assert.True(after.AdvancePerSecond >= after.DemandPerSecond * 0.99, "advance falls behind");
         Assert.True(after.EndBacklog < 50, "advance backlog grows");
         if (fps >= 28) Assert.True(after.BuildsPerSecond >= after.RequestsPerSecond * 0.98, "bodies fall behind at " + fps + " fps");
-        else Assert.True(after.BuildsPerSecond >= fps / DressFrameGate.DefaultMaximumFrames * 0.95);
+        else Assert.True(after.BuildsPerSecond >= fps / DressFrameGate.DefaultMaximumFrames * (1 - GrowShare) * 0.95);
     }
 
     [Fact]
