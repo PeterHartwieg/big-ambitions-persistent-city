@@ -622,7 +622,7 @@ namespace PersistentCity.Runtime
             int compare = distance.CompareTo(otherDistance);
             return compare != 0 ? compare < 0 : StringComparer.Ordinal.Compare(station.Id, other.Id) < 0;
         }
-                private Route? Train(Station from, Station to)
+        private Route? Train(Station from, Station to)
         {
             var points = new List<Position> { from.Entrance.Position, from.Platform };
             if (IndustrySide(from.District) != IndustrySide(to.District))

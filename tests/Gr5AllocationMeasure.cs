@@ -74,6 +74,41 @@ public sealed class Gr5AllocationMeasure
         return state;
     }
 
+    internal const int RigPlaces = 1683;
+
+    internal static CityState RigCity()
+    {
+        const string Nightlife = "ba:businesstype_nightclub";
+        int seed = RepresentativeFixture.Seed;
+        Position At(string id) => new Position(StableRandom.Hash(id + ":x", seed) % 2400, 0, StableRandom.Hash(id + ":z", seed) % 2400);
+        var places = new List<Place>();
+        void Add(string id, PlaceKind kind, int capacity, string type = "", int open = 0, int close = 1440)
+        {
+            var at = At(id);
+            places.Add(new Place { Id = id, Name = id, Kind = kind, Capacity = capacity, Position = at, BusinessType = type, OpenMinute = open, CloseMinute = close,
+                District = (at.X < 1200 ? "a" : "b") + (at.Z < 1200 ? "n" : "s") });
+        }
+        for (int i = 0; i < 557; i++) Add("home-" + i, PlaceKind.Home, i % 4 == 3 ? 4 : 3);
+        for (int i = 0; i < 577; i++) Add("work-" + i, PlaceKind.Work, 11, i % 29 == 0 ? Nightlife : "");
+        Add("school", PlaceKind.Study, 20);
+        for (int i = 1; i <= 350; i++) Add("shop-" + i, PlaceKind.Shop, 1, "", 480, 1260);
+        for (int i = 0; i < 178; i++) Add("leisure-" + i, PlaceKind.Leisure, 1, i % 12 == 0 ? Nightlife : "", i % 12 == 0 ? 0 : 600, i % 12 == 0 ? 1440 : 1380);
+        var identities = Enumerable.Range(0, CityBalance.CityResidentTotal).Select(i => new CitizenIdentity
+        {
+            Id = "rlo:rig:c" + i.ToString("D5"), Name = "Citizen " + i, Age = 20 + i % 50,
+            District = (i % 4 < 2 ? "a" : "b") + (i % 2 == 0 ? "n" : "s"), Persona = (Persona)(i % 8), AppearanceSeed = i + 1,
+        });
+        var state = Population.Create(identities, places, "gr5-rig-scale", "0.41.1", seed, 1440 + 300);
+        PortalPlaces.Add(state, Enumerable.Range(0, 20).Select(i => new PortalStation("subway:rig-" + i.ToString("D2"), At("subway-" + i))));
+        VisitorSchedules.Create(state, 2 * CityBalance.CityResidentTotal);
+        state.Food = new FoodCommerceState { MealRhythmVersion = MealRhythm.PolicyVersion, HouseholdFinanceVersion = HouseholdFinance.PolicyVersion,
+            Shops = Enumerable.Range(1, 3).Select(i => new FoodScope { PlaceId = "shop-" + i, BusinessId = "b" + i, ProductId = FoodProducts.Croissant }).ToList() };
+        Assert.Equal(RigPlaces, state.Places.Count);
+        Assert.Equal(CityBalance.CityResidentTotal, state.Citizens.Count);
+        Assert.Equal(2 * CityBalance.CityResidentTotal, state.Visitors.Count);
+        return state;
+    }
+
     [Fact]
     public void MeasureDayAndNightHourAllocation()
     {
@@ -298,17 +333,17 @@ public sealed class Gr5AllocationMeasure
         string? path = PerfGate.Variable("PC_GR5_ALLOC");
         if (string.IsNullOrEmpty(path)) return;
         string label = PerfGate.Variable("PC_GR5_ALLOC_LABEL") ?? "";
-        const int fps = 30;
+        const int fps = 90;
         using var types = new AllocationTypes();
         for (int run = 1; run <= 3; run++)
         {
-            var state = City();
+            var state = RigCity();
             var grid = new RoadGrid(state.Places);
             var simulator = new CitySimulator(state, grid);
             simulator.AttachFoodMarket(new VisitorRoutineTests.Market { Shops = F5gPopulationFillTests.Shops(state) });
             simulator.AttachOptionalStops(new StopSpots(), OptionalStopPolicy.ApprovedChoicePercentage);
             double day = Math.Floor(state.Minute / 1440) * 1440 + 1440;
-            foreach (var (window, start) in new[] { ("night-01:00", day + 60), ("day-15:30", day + 15.5 * 60) })
+            foreach (var (window, start, minutes) in new[] { ("night-01:00", day + 60, 190), ("day-15:30", day + 15.5 * 60, 174) })
             {
                 simulator.AdvanceTo(start - 30, int.MaxValue);
                 for (double minute = start - 30; minute < start; minute += 1.0 / fps) Frame(simulator, minute);
@@ -318,17 +353,18 @@ public sealed class Gr5AllocationMeasure
                 long searches = grid.Searches;
                 int gen0 = GC.CollectionCount(0), frames = 0;
                 long allocated = GC.GetAllocatedBytesForCurrentThread();
-                for (double minute = start; minute < start + 60; minute += 1.0 / fps) { Frame(simulator, minute); frames++; }
+                for (double minute = start; minute < start + minutes; minute += 1.0 / fps) { Frame(simulator, minute); frames++; }
                 allocated = GC.GetAllocatedBytesForCurrentThread() - allocated;
                 types.Recording = false;
                 Record(path, new
                 {
                     label, run, component = "CitySimulator.AdvanceFrameSlice+RoadGrid", window, residents = state.Citizens.Count, visitors = state.Visitors.Count,
                     places = state.Places.Count, roadNodes = grid.Nodes, roadSearches = grid.Searches - searches,
-                    gameMinutes = 60, frames, allocatedBytes = allocated, bytesPerGameMinute = allocated / 60, bytesPerFrame = allocated / frames,
+                    gameMinutes = minutes, frames, allocatedBytes = allocated, bytesPerGameMinute = allocated / minutes, bytesPerFrame = allocated / frames,
                     gen0 = GC.CollectionCount(0) - gen0,
                     topTypes = run == 3 ? Top(types) : null,
                 });
+                if (window.StartsWith("day", StringComparison.Ordinal)) Assert.True(grid.Searches - searches > 0, window + " made no road searches.");
             }
         }
     }
