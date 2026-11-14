@@ -101,6 +101,7 @@ namespace PersistentCity.Runtime
             }
             finally { snapshot.Clear(); bindingSnapshot = snapshot; }
             PhysicalAllocation.Charge(GcAllocationSegment.PhysicalBindings);
+            if (pedestrians.TrimIdle(Time.unscaledTime)) PhysicalAllocation.Charge(GcAllocationSegment.PhysicalRelease);
             if (!interior && Time.unscaledTime >= nextParked)
             {
                 nextParked = Time.unscaledTime + ParkedRefreshSeconds; ShowParked(focus, radius, vehicleLimit);

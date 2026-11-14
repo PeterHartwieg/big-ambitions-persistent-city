@@ -19,7 +19,10 @@ namespace PersistentCity.Runtime
         private readonly int maximum;
         private readonly List<ThirdPersonCharacter> all = new List<ThirdPersonCharacter>();
         private readonly DressedBodyPool<ThirdPersonCharacter> idle = new DressedBodyPool<ThirdPersonCharacter>();
-        private readonly DressBuildBudget budget = new DressBuildBudget();
+        private readonly DressBuildBudget budget = new DressBuildBudget(gate: new DressFrameGate(UpdateCityClock.Elapsed));
+        public const double TrimSeconds = 5, TrimIdleSeconds = 120;
+        private double nextTrim;
+        public long Trimmed { get; private set; }
         private readonly HashSet<AppearanceSetter> baked = new HashSet<AppearanceSetter>();
         public long AppearanceBuilds { get; private set; }
         public long AppearanceReuses { get; private set; }
@@ -28,7 +31,9 @@ namespace PersistentCity.Runtime
         public void NoteDeferred() => deferredBeforeAcquire++;
         public bool LastDeferred { get; private set; }
         public string LookDiagnostics => AppearanceBuilds + " built/" + AppearanceReuses + " reused/" + AppearanceDeferred + " deferred/"
-            + idle.Count + " idle/" + all.Count + " owned/" + BlendshapeBake.Bakes + " baked";
+            + idle.Count + " idle/" + all.Count + " owned/" + BlendshapeBake.Bakes + " baked/" + Instantiated + " grown/" + Trimmed + " trimmed/"
+            + budget.Gate!.Fitted + " fitted/" + budget.Gate.Waited + " waited/"
+            + budget.Gate.EstimateMilliseconds.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture) + " ms build";
         private readonly Dictionary<string, PhysicalPedestrianBody> active = new Dictionary<string, PhysicalPedestrianBody>(StringComparer.Ordinal);
         private long generation;
         private bool disposed;
@@ -71,30 +76,22 @@ namespace PersistentCity.Runtime
                 if (choice == BodyChoice.Full) return false;
                 if (choice == BodyChoice.Deferred) { LastDeferred = true; return false; }
                 bool dressed = choice == BodyChoice.Hit;
+                long buildStarted = dressed ? 0 : System.Diagnostics.Stopwatch.GetTimestamp();
                 if (choice != BodyChoice.Grow) character = pooled;
                 else
                 {
-                    var staging = new GameObject("PersistentCity character staging");
-                    staging.SetActive(false); staging.transform.SetParent(parent, false);
-                    try
+                    character = Instantiate();
+                    if (character == null) return false;
+                    if (!immediate)
                     {
-                        GameObject prefab = PrefabHelper.LoadPrefabAssetByName("Characters/HumanDefinitionLow");
-                        if (prefab == null || prefab.GetComponent<ThirdPersonCharacter>() == null) return false;
-                        GameObject instance = UnityEngine.Object.Instantiate(prefab, staging.transform);
-                        character = instance.GetComponent<ThirdPersonCharacter>();
-                        if (character == null || character.navmeshAgent == null || character.capsuleCollider == null
-                            || character.appearanceSetter == null || character.animator == null || character.animator.runtimeAnimatorController == null
-                            || instance.GetComponentInChildren<Streets.Pedestrians.Pedestrian>(true) != null)
-                        {
-                            UnityEngine.Object.Destroy(instance); character = null; return false;
-                        }
-                        character.gameObject.SetActive(false);
-                        character.isPlayer = false; character.updatePlayerPos = false;
-                        character.transform.SetParent(parent, false);
-                        all.Add(character);
-                        if (BlendshapeBake.Adopt(character.appearanceSetter.meshCombiner)) baked.Add(character.appearanceSetter);
+                        idle.Return(character, default, Time.unscaledTime);
+                        character = null;
+                        double instantiateMilliseconds = (System.Diagnostics.Stopwatch.GetTimestamp() - buildStarted) * 1000.0 / System.Diagnostics.Stopwatch.Frequency;
+                        UpdateCityClock.AddBuild(instantiateMilliseconds);
+                        budget.Gate!.Observe(instantiateMilliseconds);
+                        Instantiated++;
+                        LastDeferred = true; return false;
                     }
-                    finally { UnityEngine.Object.Destroy(staging); }
                 }
                 character.isPlayer = false; character.updatePlayerPos = false;
                 character.navmeshAgent.enabled = false;
@@ -120,7 +117,13 @@ namespace PersistentCity.Runtime
                     if (appearance.data?.elements == null || appearance.data.elements.Count == 0) throw new InvalidOperationException("Empty appearance");
                     AppearanceReuses++;
                 }
-                else Dress(appearance, identity, daysPerYear);
+                else
+                {
+                    Dress(appearance, identity, daysPerYear);
+                    double buildMilliseconds = (System.Diagnostics.Stopwatch.GetTimestamp() - buildStarted) * 1000.0 / System.Diagnostics.Stopwatch.Frequency;
+                    UpdateCityClock.AddBuild(buildMilliseconds);
+                    if (!immediate) budget.Gate!.Observe(buildMilliseconds);
+                }
                 character.ToggleVisibility(true, includePhysics: false);
                 character.OnVisibleChanged(true);
                 character.animator.enabled = true;
@@ -139,6 +142,34 @@ namespace PersistentCity.Runtime
                 body = null; return false;
             }
             finally { UnityEngine.Random.state = dice; }
+        }
+
+        public long Instantiated { get; private set; }
+
+        private ThirdPersonCharacter? Instantiate()
+        {
+            var staging = new GameObject("PersistentCity character staging");
+            staging.SetActive(false); staging.transform.SetParent(parent, false);
+            try
+            {
+                GameObject prefab = PrefabHelper.LoadPrefabAssetByName("Characters/HumanDefinitionLow");
+                if (prefab == null || prefab.GetComponent<ThirdPersonCharacter>() == null) return null;
+                GameObject instance = UnityEngine.Object.Instantiate(prefab, staging.transform);
+                var character = instance.GetComponent<ThirdPersonCharacter>();
+                if (character == null || character.navmeshAgent == null || character.capsuleCollider == null
+                    || character.appearanceSetter == null || character.animator == null || character.animator.runtimeAnimatorController == null
+                    || instance.GetComponentInChildren<Streets.Pedestrians.Pedestrian>(true) != null)
+                {
+                    UnityEngine.Object.Destroy(instance); return null;
+                }
+                character.gameObject.SetActive(false);
+                character.isPlayer = false; character.updatePlayerPos = false;
+                character.transform.SetParent(parent, false);
+                all.Add(character);
+                if (BlendshapeBake.Adopt(character.appearanceSetter.meshCombiner)) baked.Add(character.appearanceSetter);
+                return character;
+            }
+            finally { UnityEngine.Object.Destroy(staging); }
         }
 
         private void Dress(AppearanceSetter appearance, CitizenIdentity identity, int daysPerYear)
@@ -203,7 +234,16 @@ namespace PersistentCity.Runtime
             NotifyRemoved(character);
             character.navmeshAgent.enabled = false; character.capsuleCollider.enabled = false;
             character.gameObject.SetActive(false);
-            idle.Return(character, body.Dressing);
+            idle.Return(character, body.Dressing, Time.unscaledTime);
+        }
+
+        public bool TrimIdle(double seconds)
+        {
+            if (disposed || seconds < nextTrim || UpdateCityClock.BuildMilliseconds > 0 || !idle.TryTrim(seconds, TrimIdleSeconds, out var character)) return false;
+            nextTrim = seconds + TrimSeconds;
+            DestroyOwned(character);
+            Trimmed++;
+            return true;
         }
 
         private static void NotifyRemoved(ThirdPersonCharacter character)

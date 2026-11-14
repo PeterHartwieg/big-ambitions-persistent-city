@@ -608,16 +608,14 @@ namespace PersistentCity.Runtime
                 var owner = this.owner; var road = search!.Result; var path = this.path; var network = this.network!;
                 if (road == null || path == null || !owner.NativePathValid(path)) { Finish(null); return; }
                 if (owner.TopologyId.Length != 64 || road.Legs.Count != path.Length - 1) { Finish(null); return; }
-                string tagPrefix = "native:road:v1:" + owner.TopologyId + ":";
                 for (int i = 0; i < road.Legs.Count; i++)
                 {
                     if (!network.TryGetEdge(path[i], path[i + 1], out var edge)
                         || captured!.TryGetValue(edge.LinkId, out var value) && (value.Closed || !Position.Finite(value.DelayMinutes))
                         || i == 0 && entryDelays!.TryGetValue(edge.LinkId, out var entryDelay) && (!Position.Finite(entryDelay) || entryDelay < 0)) { Finish(null); return; }
-                    road.Legs[i].ServiceId = string.Concat(tagPrefix, path[i].ToString(CultureInfo.InvariantCulture),
-                        ":", path[i + 1].ToString(CultureInfo.InvariantCulture));
+                    road.Legs[i].ServiceId = owner.EdgeTag(path[i], path[i + 1]);
                 }
-                Finish(TransportComposition.Join(begin!, road, end!));
+                Finish(TransportComposition.Join(TransportComposition.Shared(begin!), TransportComposition.Shared(road), TransportComposition.Shared(end!)));
             }
 
             private void Finish(Route? result)
@@ -641,6 +639,19 @@ namespace PersistentCity.Runtime
                 owner.planScratch.Push(scratch);
                 scratch = null; captured = null; entryDelays = null;
             }
+        }
+
+        private readonly Dictionary<long, string> edgeTags = new Dictionary<long, string>();
+        private string edgeTagTopology = "";
+        internal int EdgeTags => edgeTags.Count;
+        private string EdgeTag(int from, int to)
+        {
+            if (!string.Equals(edgeTagTopology, TopologyId, StringComparison.Ordinal)) { edgeTags.Clear(); edgeTagTopology = TopologyId; }
+            long key = (long)from << 32 | (uint)to;
+            if (edgeTags.TryGetValue(key, out var tag)) return tag;
+            tag = string.Concat("native:road:v1:", TopologyId, ":", from.ToString(CultureInfo.InvariantCulture) + ":" + to.ToString(CultureInfo.InvariantCulture));
+            edgeTags.Add(key, tag);
+            return tag;
         }
 
         private sealed class PlanScratch

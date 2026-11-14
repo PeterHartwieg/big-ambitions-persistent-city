@@ -11,7 +11,9 @@ namespace PersistentCity.Core
         public const double CarParkingMinutes = 2;
         public static Route? Join(params Route[] parts)
         {
-            var result = new Route();
+            int count = 0;
+            foreach (var part in parts) if (part != null) count += part.Legs.Count;
+            var result = new Route { Legs = new RouteLegs(Math.Min(count, MaximumLegs)) };
             double extraMinutes = 0;
             foreach (var part in parts)
             {
@@ -21,7 +23,7 @@ namespace PersistentCity.Core
                     if (leg == null || !leg.From.IsFinite || !leg.To.IsFinite || !Position.Finite(leg.Minutes) || leg.Minutes <= 0
                         || !Enum.IsDefined(typeof(TravelMode), leg.Mode) || result.Legs.Count >= MaximumLegs) return null;
                     if (result.Legs.Count != 0 && Position.Distance(result.Legs[result.Legs.Count - 1].To, leg.From) > 0.001) return null;
-                    result.Legs.Add(new RouteLeg { From = leg.From, To = leg.To, Minutes = leg.Minutes, Mode = leg.Mode, ServiceId = leg.ServiceId });
+                    result.Legs.Add(leg.Frozen ? leg : new RouteLeg { From = leg.From, To = leg.To, Minutes = leg.Minutes, Mode = leg.Mode, ServiceId = leg.ServiceId });
                 }
                 if (!Position.Finite(part.EstimatedMinutes) || part.EstimatedMinutes < part.Minutes) return null;
                 extraMinutes += part.EstimatedMinutes - part.Minutes;
@@ -29,6 +31,17 @@ namespace PersistentCity.Core
             }
             if (result.Legs.Count == 0 || !Position.Finite(result.Minutes + extraMinutes)) return null;
             return result.WithEstimate(result.Minutes + extraMinutes);
+        }
+
+        public static Route Shared(Route route)
+        {
+            if (route == null) throw new ArgumentNullException(nameof(route));
+            foreach (var leg in route.Legs)
+            {
+                if (leg == null) throw new InvalidOperationException("A shared route has a null leg.");
+                leg.Freeze();
+            }
+            return route;
         }
 
         public static bool Valid(Route route, Position from, Position to, TravelPreferences preferences, Position? parked = null)

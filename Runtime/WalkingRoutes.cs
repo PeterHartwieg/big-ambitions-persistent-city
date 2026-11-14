@@ -82,13 +82,9 @@ namespace PersistentCity.Runtime
                 if (path.Route == null) Metrics.WalkingNegativeCacheHits++;
             }
             if (path.Route == null || path.Metres > preferences.WalkingToleranceMetres) return null;
-            var result = new Route();
-            foreach (var leg in path.Route.Legs)
-            {
-                if (publicSegment != null && !publicSegment(leg.From, leg.To)) return null;
-                result.Legs.Add(new RouteLeg { From = leg.From, To = leg.To, Minutes = leg.Minutes, Mode = TravelMode.Walk });
-            }
-            return result;
+            var legs = path.Route.Legs;
+            if (publicSegment != null) foreach (var leg in legs) if (!publicSegment(leg.From, leg.To)) return null;
+            return new Route { Legs = new RouteLegs(legs) };
         }
 
         private CachedPath Observe(Position from, Position to)
@@ -116,7 +112,7 @@ namespace PersistentCity.Runtime
             {
                 var stationary = new Route();
                 stationary.Legs.Add(new RouteLeg { From = from, To = to, Minutes = 0.01, Mode = TravelMode.Walk });
-                return new CachedPath(stationary, 0);
+                return new CachedPath(TransportComposition.Shared(stationary), 0);
             }
             Metrics.NavMeshPathQueries++;
             bool calculated;
@@ -157,7 +153,7 @@ namespace PersistentCity.Runtime
                 }
             }
             if (route.Legs.Count == 0 || route.Legs.Count > MaxLegs || !Position.Finite(metres) || !Position.Finite(route.Minutes)) return new CachedPath(null, 0);
-            return new CachedPath(route, metres);
+            return new CachedPath(TransportComposition.Shared(route), metres);
         }
 
         public bool IsWalkingQuoteValid(Place from, Place to, Route route, TravelPreferences preferences)

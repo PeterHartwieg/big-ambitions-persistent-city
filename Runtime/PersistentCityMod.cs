@@ -223,6 +223,7 @@ namespace PersistentCity.Runtime
 
         private void UpdateCity()
         {
+            UpdateCityClock.Begin();
             try
             {
                 if (!PrepareAccountingSaveChange()) return;
@@ -358,8 +359,10 @@ namespace PersistentCity.Runtime
                     }
                 }
                 PhysicalAllocation.Begin(gcSampler);
+                double physicalStarted = UpdateCityClock.Elapsed();
                 try { RunPhysical(physicalUpdate ??= () => physical?.Update()); }
                 finally { PhysicalAllocation.End(); }
+                if (physical != null) frameBudget.ObservePhysical(UpdateCityClock.Elapsed() - physicalStarted - UpdateCityClock.BuildMilliseconds);
                 UpdateInspector();
                 if (Time.unscaledTime >= nextSummary)
                 {
@@ -439,9 +442,10 @@ namespace PersistentCity.Runtime
                 if (elapsed - unitStarted > slowestUnit) { slowestUnit = elapsed - unitStarted; slowestKind = kind; }
                 unitStarted = elapsed;
             }
-            var budget = new PopulationFrameBudget(Time.unscaledDeltaTime, NativeCityClock.ProcessingEconomySkip);
+            bool hiddenSkip = NativeCityClock.ProcessingEconomySkip;
+            var budget = new PopulationFrameBudget(Time.unscaledDeltaTime, hiddenSkip);
             int citizenLimit = budget.CitizenEvents;
-            double timeBudget = budget.Milliseconds;
+            double timeBudget = hiddenSkip ? budget.Milliseconds : frameBudget.Advance(budget.Milliseconds, UpdateCityClock.Elapsed());
             bool pendingAtEnd = false;
             try
             {
@@ -513,6 +517,7 @@ namespace PersistentCity.Runtime
         }
 
         private Action? physicalBeforeAdvance, physicalUpdate, physicalCatchLoads;
+        private readonly UpdateCityBudget frameBudget = new UpdateCityBudget();
 
         private void RunPhysical(Action action)
         {

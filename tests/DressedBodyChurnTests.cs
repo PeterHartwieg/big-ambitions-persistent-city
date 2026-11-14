@@ -32,7 +32,7 @@ public sealed class DressedBodyChurnTests
 
     private sealed class ChurnResult
     {
-        public int Acquisitions, Builds, Hits, Deferred, Failed, PeakActive, MaxBuildsInFrame, Owned;
+        public int Acquisitions, Builds, Hits, Deferred, Failed, PeakActive, MaxBuildsInFrame, Owned, PeakOwned, Grown, Trimmed, NightOwned, NightActive;
         public double HitRate => Acquisitions == 0 ? 0 : (double)Hits / Acquisitions;
     }
 
@@ -87,7 +87,8 @@ public sealed class DressedBodyChurnTests
     private static CitizenIdentity Identity(int i) => new CitizenIdentity
     { Id = "p" + i.ToString(CultureInfo.InvariantCulture), Name = "N" + i.ToString(CultureInfo.InvariantCulture), Age = 20 + i % 60, Female = i % 2 == 0, AppearanceSeed = 1 + i * 7 };
 
-    private static ChurnResult Churn(bool lru, int maximum, double flap, int persons = 3000, double seconds = 600, int seed = 0x6E5)
+    private static ChurnResult Churn(bool lru, int maximum, double flap, int persons = 3000, double seconds = 600, int seed = 0x6E5,
+        int spare = DressedBodyPool<Body>.DefaultSpare, bool trim = false, double night = double.PositiveInfinity)
     {
         var dice = new Random(seed);
         var people = new Person[persons];
@@ -96,32 +97,42 @@ public sealed class DressedBodyChurnTests
             var identity = Identity(i);
             people[i] = new Person { Identity = identity, Dressing = new PersonDressing(identity, 60), Until = dice.NextDouble() * 4000 };
         }
-        var pool = new DressedBodyPool<Body>();
+        var pool = new DressedBodyPool<Body>(spare);
         var budget = lru ? new DressBuildBudget() : null;
         var result = new ChurnResult();
         int owned = 0, active = 0, frame = 0;
         const double step = 1.0 / 30;
         var selectAt = 0.0;
+        double nextTrim = 0;
         var waiting = new List<Person>();
         for (double now = 0; now < seconds; now += step, frame++)
         {
             int builtThisFrame = 0;
+            bool dark = now >= night;
             foreach (var p in people)
             {
                 if (now < p.Until) continue;
                 switch (p.State)
                 {
-                    case 0: p.State = 1; p.Until = now + 20 + dice.NextDouble() * 70; break;
+                    case 0:
+                        if (dark && dice.NextDouble() < 0.95) { p.Until = double.PositiveInfinity; break; }
+                        p.State = 1; p.Until = now + 20 + dice.NextDouble() * 70; break;
                     case 1:
-                        if (p.Body != null) { pool.Return(p.Body, p.Body.Dressing); p.Body = null; active--; }
+                        if (p.Body != null) { pool.Return(p.Body, p.Body.Dressing, now); p.Body = null; active--; }
+                        if (dark && dice.NextDouble() < 0.95) { p.State = 0; p.Until = double.PositiveInfinity; break; }
                         double roll = dice.NextDouble();
                         if (roll < flap) { p.State = 2; p.Until = now + 2 + dice.NextDouble() * 8; }
                         else if (roll < 0.6) { p.State = 2; p.Until = now + 60 + dice.NextDouble() * 540; }
                         else { p.State = 0; p.Until = now + 600 + dice.NextDouble() * 3400; }
                         break;
-                    case 2: p.State = 1; p.Until = now + 20 + dice.NextDouble() * 70; break;
+                    case 2:
+                        if (dark && dice.NextDouble() < 0.95) { p.State = 0; p.Until = double.PositiveInfinity; break; }
+                        p.State = 1; p.Until = now + 20 + dice.NextDouble() * 70; break;
                 }
             }
+            if (trim && builtThisFrame == 0 && now >= nextTrim && pool.TryTrim(now, 120, out _)) { owned--; result.Trimmed++; nextTrim = now + 5; }
+            result.PeakOwned = Math.Max(result.PeakOwned, owned);
+            if (dark) { result.NightOwned = owned; result.NightActive = active; }
             if (now < selectAt) continue;
             selectAt = now + 0.25;
             waiting.Clear();
@@ -138,7 +149,7 @@ public sealed class DressedBodyChurnTests
                     var choice = pool.Choose(p.Dressing, owned, maximum, budget, frame, now, out body);
                     if (choice == BodyChoice.Full) { result.Failed++; continue; }
                     if (choice == BodyChoice.Deferred) { result.Deferred++; attempts--; continue; }
-                    if (choice == BodyChoice.Grow) { body = new Body(); owned++; }
+                    if (choice == BodyChoice.Grow) { body = new Body(); owned++; result.Grown++; }
                     built = choice != BodyChoice.Hit;
                 }
                 else
@@ -147,7 +158,7 @@ public sealed class DressedBodyChurnTests
                     if (built && !pool.TryTakeOldest(out body))
                     {
                         if (owned >= maximum) { result.Failed++; continue; }
-                        body = new Body(); owned++;
+                        body = new Body(); owned++; result.Grown++;
                     }
                 }
                 if (built)
@@ -192,6 +203,53 @@ public sealed class DressedBodyChurnTests
         Assert.True(before.MaxBuildsInFrame > 1);
         Assert.InRange(after.Acquisitions, before.Acquisitions * 9 / 10, before.Acquisitions * 11 / 10);
         Assert.True(after.Builds * ModelledBakedBytesPerBuild * 6 <= before.Builds * RigBytesPerBuild);
+    }
+
+    [Theory]
+    [InlineData(96, 0.0)]
+    [InlineData(96, 0.2)]
+    public void TheIdleSpareBoundsRetainedBodiesAndTrimsThemAtNight(int maximum, double flap)
+    {
+        const double day = 900, seconds = 1800;
+        var grown = Churn(lru: true, maximum, flap, seconds: seconds, spare: int.MaxValue, night: day);
+        var bounded = Churn(lru: true, maximum, flap, seconds: seconds, trim: true, night: day);
+        foreach (var (label, r) in new[] { ("grow-to-maximum (#262)", grown), ("spare 16 + trim", bounded) })
+            output.WriteLine(string.Format(CultureInfo.InvariantCulture,
+                "max={0} flap={1:P0} {2}: acquisitions={3} builds={4} hits={5} hitRate={6:P1} peakActive={7} grown={8} peakOwned={9} trimmed={10} night active/owned={11}/{12}",
+                maximum, flap, label, r.Acquisitions, r.Builds, r.Hits, r.HitRate, r.PeakActive, r.Grown, r.PeakOwned, r.Trimmed, r.NightActive, r.NightOwned));
+        Assert.Equal(maximum, grown.PeakOwned);
+        Assert.Equal(maximum, grown.NightOwned);
+        Assert.True(bounded.PeakOwned <= bounded.PeakActive + DressedBodyPool<Body>.DefaultSpare + 1);
+        Assert.True(bounded.NightOwned <= bounded.NightActive + DressedBodyPool<Body>.DefaultSpare);
+        Assert.True(bounded.Trimmed > 0 && bounded.NightOwned < grown.NightOwned);
+        Assert.True(bounded.Grown <= grown.Grown + bounded.Trimmed);
+        Assert.InRange(bounded.Acquisitions, grown.Acquisitions * 9 / 10, grown.Acquisitions * 11 / 10);
+        Assert.True(bounded.Builds <= grown.Builds * 11 / 10);
+        Assert.Equal(1, bounded.MaxBuildsInFrame);
+    }
+
+    [Fact]
+    public void AnUndressedBodyIsDressedBeforeTheBodyCountGrows()
+    {
+        var pool = new DressedBodyPool<Body>(spare: 4);
+        var a = new PersonDressing(Identity(1), 60);
+        var fresh = new Body();
+        pool.Return(new Body { Dressing = a }, a, 0);
+        pool.Return(fresh, default, 1);
+        Assert.Equal(BodyChoice.Redress, pool.Choose(new PersonDressing(Identity(2), 60), 2, 8, null, 0, 0, out var taken));
+        Assert.Same(fresh, taken);
+        Assert.Equal(BodyChoice.Hit, pool.Choose(a, 2, 8, null, 0, 0, out _));
+        Assert.Equal(BodyChoice.Grow, pool.Choose(new PersonDressing(Identity(3), 60), 2, 8, null, 0, 0, out _));
+        for (int i = 0; i < 4; i++) pool.Return(new Body(), new PersonDressing(Identity(10 + i), 60), 10 + i);
+        Assert.Equal(BodyChoice.Redress, pool.Choose(new PersonDressing(Identity(4), 60), 6, 8, null, 0, 0, out _));
+        pool.Return(new Body(), new PersonDressing(Identity(20), 60), 20);
+        pool.Return(new Body(), new PersonDressing(Identity(21), 60), 21);
+        Assert.Equal(5, pool.Count);
+        Assert.False(pool.TryTrim(100, 120, out _));
+        Assert.True(pool.TryTrim(131, 120, out _));
+        Assert.Equal(4, pool.Count);
+        Assert.False(pool.TryTrim(1000, 120, out _));
+        Assert.Throws<ArgumentOutOfRangeException>(() => new DressedBodyPool<Body>(-1));
     }
 
     [Fact]

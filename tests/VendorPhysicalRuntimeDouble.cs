@@ -295,6 +295,8 @@ namespace PersistentCity.Runtime
         internal void NoteDeferred() => AppearanceDeferred++;
         internal bool WouldDefer(CitizenIdentity identity) { DeferChecks++; return Defer?.Invoke(identity) == true; }
         internal bool Visible(Position at) => VisiblePoint?.Invoke(at) == true;
+        internal int TrimCalls;
+        internal bool TrimIdle(double seconds) { TrimCalls++; return false; }
         internal bool TryAcquire(CitizenIdentity identity, Position position, out PhysicalPedestrianBody? body, bool immediate = false)
         {
             body = null; AcquireCalls++;

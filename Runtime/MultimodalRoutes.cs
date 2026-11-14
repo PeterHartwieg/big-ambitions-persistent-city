@@ -643,7 +643,7 @@ namespace PersistentCity.Runtime
                 if (length > 0.000001) route.Legs.Add(new RouteLeg { From = previous, To = points[i], Mode = TravelMode.Subway, Minutes = length / subwayMetresPerMinute, ServiceId = "native:subway" });
                 previous = points[i];
             }
-            return route;
+            return TransportComposition.Shared(route);
         }
         private static bool IndustrySide(string district) => district == "ba:neighborhood_industrycity" || district == "ba:neighborhood_thehamptons";
         private static Place At(Position position) => new Place { Position = position };
@@ -653,10 +653,12 @@ namespace PersistentCity.Runtime
             foreach (var leg in route.Legs) metres += Position.Distance(leg.From, leg.To);
             return metres;
         }
-        private static Route Pause(Position position, double minutes) => new Route
+        private static Route Pause(Position position, double minutes)
         {
-            Legs = new List<RouteLeg> { new RouteLeg { From = position, To = position, Mode = TravelMode.Car, Minutes = minutes } }
-        };
+            var route = new Route { Legs = new RouteLegs(1) };
+            route.Legs.Add(new RouteLeg { From = position, To = position, Mode = TravelMode.Car, Minutes = minutes });
+            return TransportComposition.Shared(route);
+        }
         private static Position Point(Vector3 p) => new Position(p.x, p.y, p.z);
     }
 }
