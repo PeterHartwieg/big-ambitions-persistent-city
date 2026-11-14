@@ -296,10 +296,10 @@ namespace PersistentCity.Runtime
                 {
                     physical?.Dispose(); physical = null;
                     simulation.State.PrepareForSave();
-                    TravelTiming.Apply(simulation.State, NativeTravelPace.WalkingMetresPerSecond, clockRate, out int keptPace);
-                    if (keptPace > 0)
-                        log?.Info("Clock retime kept the old pace on the current edge of " + keptPace.ToString(System.Globalization.CultureInfo.InvariantCulture)
-                            + " full-length journeys; their later legs use the new rate.");
+                    TravelTiming.Apply(simulation.State, NativeTravelPace.WalkingMetresPerSecond, clockRate, out int degraded);
+                    if (degraded > 0)
+                        log?.Info("Clock retime degraded " + degraded.ToString(System.Globalization.CultureInfo.InvariantCulture)
+                            + " journeys: each keeps its old pace on its current road edge or drives outside traffic until its next road section.");
                     var retimedRoutes = new MultimodalRoutes(simulation.State.Places, NativeTravelPace.WalkingMetresPerSecond / clockRate, clockRate, dependency, routeObjects);
                     if (routes != null) retimedRoutes.ReuseRoadSceneForRetiming(routes);
                     routes = retimedRoutes;

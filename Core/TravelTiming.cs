@@ -16,6 +16,7 @@ namespace PersistentCity.Core
             internal double EventMinute;
             internal double Elapsed;
             internal double? MealStayUntil;
+            internal double? DepartureMinute;
         }
         private sealed class NominalMap
         {
@@ -52,9 +53,9 @@ namespace PersistentCity.Core
         public static bool Apply(CityState state, double nativeWalkMetresPerSecond, double clockRate)
             => Apply(state, nativeWalkMetresPerSecond, clockRate, out _);
 
-        public static bool Apply(CityState state, double nativeWalkMetresPerSecond, double clockRate, out int keptPace)
+        public static bool Apply(CityState state, double nativeWalkMetresPerSecond, double clockRate, out int degraded)
         {
-            keptPace = 0;
+            degraded = 0;
             if (state == null) throw new ArgumentNullException(nameof(state));
             Rate(nativeWalkMetresPerSecond, nameof(nativeWalkMetresPerSecond)); Rate(clockRate, nameof(clockRate));
             Rate(state.TravelClockRate, nameof(state.TravelClockRate));
@@ -119,20 +120,35 @@ namespace PersistentCity.Core
                     && !MergeCompletedLegs(replacement, completed, elapsed, trafficOwned ? trafficRoutes[citizen.Identity.Id] : null))
                 {
                     replacement = Retime(route, elapsed, legacy, nativeWalkMetresPerSecond, clockRate, ratio, true, out map, out _);
-                    keptPace++;
+                    degraded++;
                     if (trafficOwned) { evicted.Add(citizen.Identity.Id); trafficOwned = false; }
+                }
+                else if (trafficOwned && TrafficCannotFollow(trafficRoutes[citizen.Identity.Id], map, elapsed, ratio))
+                {
+                    degraded++;
+                    evicted.Add(citizen.Identity.Id); trafficOwned = false;
                 }
                 maps.Add(citizen.Identity.Id, map);
                 ValidateCommittedRoute(replacement, origin.Position, destination.Position, citizen);
-                if (!trafficOwned)
+                double departure = citizen.DepartureMinute;
+                if (evicted.Contains(citizen.Identity.Id))
+                {
+                    double resumed = map.Map(elapsed);
+                    departure = state.Minute - resumed;
+                    if (!Position.Finite(departure) || departure < 0 || departure > state.Minute)
+                        throw new ArgumentException("Invalid journey departure.", nameof(state));
+                    ValidateSampledPose(citizen, replacement, elapsed, resumed);
+                }
+                else if (!trafficOwned)
                     ValidateSampledPose(citizen, replacement, elapsed,
                         CitySimulator.NormalizeJourneyElapsed(rawElapsed, replacement.Minutes, state.Minute));
-                double arrival = citizen.DepartureMinute + replacement.Minutes;
+                double arrival = departure + replacement.Minutes;
                 if (arrival < state.Minute && state.Minute - arrival <= CitySimulator.JourneyClockTolerance(state.Minute, replacement.Minutes))
                     arrival = state.Minute;
                 if (!Position.Finite(arrival) || arrival < state.Minute || arrival > MaxMinute)
                     throw new ArgumentException("Retimed arrival exceeds the supported clock.", nameof(state));
-                var change = new Change { Citizen = citizen, Route = replacement, EventMinute = arrival, Elapsed = elapsed };
+                var change = new Change { Citizen = citizen, Route = replacement, EventMinute = arrival, Elapsed = elapsed,
+                    DepartureMinute = departure == citizen.DepartureMinute ? (double?)null : departure };
                 if (citizen.MealOuting != null && !citizen.MealOuting.Returning)
                 {
                     double until = citizen.ActivityUntilMinute + arrival - citizen.NextEventMinute;
@@ -160,19 +176,6 @@ namespace PersistentCity.Core
                     double elapsed = kernel.GetPermission(vehicle.VehicleId).NominalMinutes;
                     if (Math.Abs(elapsed - (state.Minute - citizen.DepartureMinute)) > 1e-7)
                         throw new ArgumentException("Traffic and journey progress disagree.", nameof(state));
-                    if (vehicle.RouteIndex >= 0 && !vehicle.Completed)
-                    {
-                        double observed = kernel.GetPermission(vehicle.VehicleId).NominalMinutes;
-                        double endpoint = vehicle.Route[vehicle.RouteIndex].EndNominalMinutes;
-                        var mapping = maps[vehicle.VehicleId];
-                        if (observed < endpoint && mapping.Map(endpoint) <= mapping.Map(observed))
-                            throw new ArgumentException("Cannot collapse an unreported occupied traffic section endpoint during clock retiming.");
-                    }
-                    double observedNominal = kernel.GetPermission(vehicle.VehicleId).NominalMinutes;
-                    var nominalMap = maps[vehicle.VehicleId];
-                    if (ratio != 1 && !vehicle.Completed
-                        && nominalMap.HasFutureUnscaledTrafficPrefix(nominalMap.Map(observedNominal), vehicle.Route))
-                        throw new ArgumentException("Cannot retain an unscaled native prefix ahead of actual traffic progress during clock retiming.");
                 }
                 var rescaled = kernel.RescaleTime(ratio, (id, value) => maps.TryGetValue(id, out var mapping)
                     ? mapping.Map(value) : throw new ArgumentException("Missing traffic geometry map.", nameof(state)));
@@ -214,6 +217,7 @@ namespace PersistentCity.Core
             foreach (var change in changes)
             {
                 if (change.Route != null) change.Citizen.Journey = change.Route.Commit();
+                if (change.DepartureMinute.HasValue) change.Citizen.DepartureMinute = change.DepartureMinute.Value;
                 change.Citizen.NextEventMinute = change.EventMinute;
                 if (change.MealStayUntil.HasValue) change.Citizen.ActivityUntilMinute = change.MealStayUntil.Value;
             }
@@ -243,6 +247,17 @@ namespace PersistentCity.Core
                 CitySimulator.ValidateCarRoute(route, citizen);
             }
             catch (InvalidOperationException e) { throw new ArgumentException("Invalid committed route.", nameof(route), e); }
+        }
+
+        private static bool TrafficCannotFollow(TrafficVehicleState vehicle, NominalMap map, double observed, double ratio)
+        {
+            if (vehicle.Completed) return false;
+            if (vehicle.RouteIndex >= 0)
+            {
+                double endpoint = vehicle.Route[vehicle.RouteIndex].EndNominalMinutes;
+                if (observed < endpoint && map.Map(endpoint) <= map.Map(observed)) return true;
+            }
+            return ratio != 1 && map.HasFutureUnscaledTrafficPrefix(map.Map(observed), vehicle.Route);
         }
 
         private static bool MergeCompletedLegs(Route route, int completed, double elapsed, TrafficVehicleState? traffic)
@@ -357,7 +372,9 @@ namespace PersistentCity.Core
                         throw new ArgumentException("A partial route cannot preserve its measured timing interval.");
                     if (keepCurrent || (sampledEndpoint && RetainsFixedMinutes(leg)))
                     {
-                        AddUnscaledCarPrefix(leg, leg.From, leg.To, leg.Minutes, leg.ServiceId, leg.Minutes);
+                        string kept = keepCurrent && leg.Mode == TravelMode.Car
+                            && leg.ServiceId.StartsWith("native:road:", StringComparison.Ordinal) ? "" : leg.ServiceId;
+                        AddUnscaledCarPrefix(leg, leg.From, leg.To, leg.Minutes, kept, leg.Minutes);
                     }
                     else
                     {

@@ -296,10 +296,10 @@ public sealed class TravelTimingMaximumRouteTests
     {
         public const string Topology = "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc";
         public TrafficNetwork? TrafficNetwork { get; }
-        public LongRoad(double rate) => TrafficNetwork = new TrafficNetwork(Topology, Enumerable.Range(0, CarLegs + 1).Select(i => new TrafficNetworkNode
+        public LongRoad(double rate, int edges = CarLegs) => TrafficNetwork = new TrafficNetwork(Topology, Enumerable.Range(0, edges + 1).Select(i => new TrafficNetworkNode
         {
             Id = i, Position = new Position(i, 0, 0), KilometresPerHour = 36, AllowsCar = true, Boundary = i % 127 == 0,
-            Successors = i < CarLegs ? new[] { i + 1 } : Array.Empty<int>()
+            Successors = i < edges ? new[] { i + 1 } : Array.Empty<int>()
         }).ToArray(), rate);
         public void SetTrafficForecast(Func<int, double, TrafficLinkForecast>? forecast) { }
         public bool IsTrafficLinkClosed(int id) => false;
@@ -352,5 +352,59 @@ public sealed class TravelTimingMaximumRouteTests
         engine.AdvanceTo(engine.State.Minute + 2000);
         Assert.All(engine.State.Citizens, c => Assert.Equal(1, c.CompletedJourneys));
         Assert.Equal(SaveReadStatus.Loaded, SaveWire.Read(SaveCodec.Write(engine.State)).Status);
+    }
+    [Theory]
+    [InlineData(1, 20, 1, 510, 1, 0.37)] [InlineData(20, 1, 1, 510, 1, 0.37)]
+    [InlineData(1, 20, 1, 509, 2, 127.37)] [InlineData(20, 1, 1, 509, 2, 127.37)]
+    public void SimulatedCarWithNoMergeableLegsStaysOutOfTrafficUntilItsNextEdgeAndCompletes(double from, double to, int approach, int edges, int departure, double edge)
+    {
+        var state = Population.Create(new[] { new CitizenIdentity { Id = "fallback", Name = "Fallback", Age = 30, AppearanceSeed = 1, Persona = Persona.Commuter } }, new[]
+        {
+            new Place { Id = "home", Name = "Home", Kind = PlaceKind.Home, Capacity = 1, Position = new Position(-4, 0, 0) },
+            new Place { Id = "work", Name = "Work", Kind = PlaceKind.Work, Capacity = 1, Position = new Position(edges + 4, 0, 0) }
+        }, "fallback-road", "0.40.4", 7, Departure);
+        state.TravelClockRate = from;
+        var c = state.Citizens[0];
+        c.PlaceId = c.HomeId = "home"; c.DayPlaceId = "work"; c.Phase = CitizenPhase.Travelling;
+        c.DestinationId = "work"; c.DestinationActivity = Activity.Work; c.ActivityUntilMinute = 9000;
+        c.DepartureMinute = Departure; c.Preferences.OwnsCar = true;
+        c.Car = new CarState { Id = c.Identity.Id + ":car", ParkedPosition = new Position(0, 0, 0) };
+        var legs = new List<RouteLeg>();
+        for (int i = 0; i < approach; i++) legs.Add(Leg(-4 + 4.0 * i / approach, -4 + 4.0 * (i + 1) / approach, 2.0 / approach, TravelMode.Walk, ""));
+        for (int e = 0; e < edges; e++) legs.Add(Leg(e, e + 1, 0.1 * from, TravelMode.Car, "native:road:v1:" + LongRoad.Topology + ":" + e + ":" + (e + 1)));
+        for (int i = 0; i < departure; i++) legs.Add(Leg(edges + 4.0 * i / departure, edges + 4.0 * (i + 1) / departure, 2.0 / departure, TravelMode.Walk, ""));
+        Assert.Equal(512, legs.Count);
+        c.Journey = new Route { Legs = legs }; c.NextEventMinute = c.DepartureMinute + c.Journey.Minutes;
+        var engine = new CitySimulator(state, new LongRoad(from, edges));
+        engine.AdvanceTo(Departure + 2 + edge * 0.1 * from);
+        Assert.Equal(1, engine.Traffic!.VehicleCount);
+        engine.State.PrepareForSave();
+        var before = engine.SampleJourney(c);
+
+        Assert.True(TravelTiming.Apply(engine.State, 2, to, out int degraded));
+
+        Assert.Equal(1, degraded);
+        Assert.Empty(engine.State.Traffic!.Vehicles);
+        Assert.Equal(512, c.Journey!.Legs.Count);
+        Assert.Equal(c.DepartureMinute + c.Journey.Minutes, c.NextEventMinute, 9);
+        var reloaded = SaveWire.Read(SaveCodec.Write(engine.State));
+        Assert.Equal(SaveReadStatus.Loaded, reloaded.Status);
+        foreach (var city in new[] { engine.State, reloaded.State! })
+        {
+            var citizen = city.Citizens[0];
+            var rebound = new CitySimulator(city, new LongRoad(to, edges));
+            Assert.InRange(Position.Distance(before.Position, rebound.SampleJourney(citizen).Position), 0, 1e-9);
+            rebound.AdvanceTo(city.Minute + 0.001);
+            rebound.State.PrepareForSave();
+            Assert.Empty(rebound.State.Traffic!.Vehicles);
+            rebound = new CitySimulator(city, new LongRoad(to, edges));
+            double nextEdge = city.Minute + (1 - (edge - Math.Floor(edge))) * 0.1 * from + 0.05 * to;
+            rebound.AdvanceTo(nextEdge);
+            rebound.State.PrepareForSave();
+            Assert.Single(rebound.State.Traffic!.Vehicles);
+            rebound = new CitySimulator(SaveWire.Read(SaveCodec.Write(city)).State!, new LongRoad(to, edges));
+            rebound.AdvanceTo(nextEdge + 2000 * to);
+            Assert.Equal(1, rebound.State.Citizens[0].CompletedJourneys);
+        }
     }
 }
