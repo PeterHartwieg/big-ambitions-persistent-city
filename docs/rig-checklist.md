@@ -2722,7 +2722,7 @@ Refs #246
 
 **RESULT: DONE. Counts: 2 passed / 2 partial / 0 failed / 5 NOT RUN groups.** Day GC meets #266's allocation/count/heap expectation; night heap and pool shrink. Street **UpdateCity / mod-work p95 = 3.7732 / 3.8197 ms**, both below 5 ms, with **three >=30 ms spikes**. Their body-growth attribution is unverified, so the street check is partial. Look stability is partial through the resident-reacquire tooling gap. In-game proof gates no merge; no merge was performed.
 
-Role `rig_test`, where `mac`, isolated `agentmac`, owner `persistent-city-rig-2026-11-14j-mac`. `<stage>` = `/Users/peterhartwieg/HART-Builds/persistent-city-rig-2026-11-14j-mac`. [Complete GC reports and compact evidence](perf/gr5-2026-11-14j-mac.json): **15,640 bytes**, SHA-256 `67f6d43e6a734ffbc1b8f350a3e508423e42b676ae5437f37f53d99f048ca1dc`. Raw command replies, logs, scripts, nine inspected PNGs and backups stay in `<stage>`. Raw manifest SHA-256 `267c207a05ed25b04db202ba2788216f0a7d8840d0f62a598f8ba0f115d00629`. Report copy: `/Users/peterhartwieg/Coding_Projects/.agent-logs/persistent-city-rig-2026-11-14j-mac.md`.
+Role `rig_test`, where `mac`, isolated `agentmac`, owner `persistent-city-rig-2026-11-14j-mac`. `<stage>` = `<home>/HART-Builds/persistent-city-rig-2026-11-14j-mac`. [Complete GC reports and compact evidence](perf/gr5-2026-11-14j-mac.json): **15,640 bytes**, SHA-256 `67f6d43e6a734ffbc1b8f350a3e508423e42b676ae5437f37f53d99f048ca1dc`. Raw command replies, logs, scripts, nine inspected PNGs and backups stay in `<stage>`. Raw manifest SHA-256 `267c207a05ed25b04db202ba2788216f0a7d8840d0f62a598f8ba0f115d00629`. Report copy: `<home>/Coding_Projects/.agent-logs/persistent-city-rig-2026-11-14j-mac.md`.
 
 ### Build and rig
 
@@ -2732,20 +2732,20 @@ Role `rig_test`, where `mac`, isolated `agentmac`, owner `persistent-city-rig-20
 | Worktree / branch | New `rig-2026-11-14j-mac-evidence` / `codex/mac-rig-2026-11-14j`; one isolated worktree served build and evidence. Original checkout unchanged. |
 | Official agent-rig HEAD | `17ff9f86ef07a8c071a90886fa76ed2e98f56c57`; clean; fetch and ff-only pull already current. No tooling edit, build or overlay update. |
 | Live AgentRigOps SHA-256 | `d3188b0e837188aec8be85535846953170da99807ad22914ccf4a3c38d77ed3c`; pre-start, loaded health and cleanup agree. |
-| Build | `PATH=/opt/homebrew/bin:$PATH`, `DOTNET_ROOT` from Homebrew dotnet; `python3 tools/build.py --game-managed "/Users/peterhartwieg/Library/Application Support/BigAmbitionsMCP/dll-import-shim/Big Ambitions_Data/Managed"`, exit 0. |
+| Build | `PATH=/opt/homebrew/bin:$PATH`, `DOTNET_ROOT` from Homebrew dotnet; `python3 tools/build.py --game-managed "<home>/Library/Application Support/BigAmbitionsMCP/dll-import-shim/Big Ambitions_Data/Managed"`, exit 0. |
 | PersistentCity DLL SHA-256 | `d1114d9094da71bb18f4137a6a446211c0654c235a7ca14d81f3514e0590247d`. Staged package contains no RLO or game DLL. |
 | Loaded build identity | Candidate module ID `598a81ab-915b-4c39-a889-0f06c6c69325` matches loaded health. Receipt-validated starts accepted the staged hashes. No commit-stamped build line is emitted; the exact activation line is quoted below. A brief local module-ID inspection ran during the street window; shared-host cadence is observational. |
-| Stage | `python3 scripts/install-mac.py --stage-mod PersistentCity /Users/peterhartwieg/HART-Builds/persistent-city-rig-2026-11-14j-mac/package`; stopped and leased. Receipt backup `/Users/peterhartwieg/Library/Application Support/BigAmbitionsAgentTestsMac/receipt-backups/20261114T201646Z`; refreshed 28 scoped receipt entries. |
+| Stage | `python3 scripts/install-mac.py --stage-mod PersistentCity <stage>/package`; stopped and leased. Receipt backup `<home>/Library/Application Support/BigAmbitionsAgentTestsMac/receipt-backups/20261114T201646Z`; refreshed 28 scoped receipt entries. |
 | Starts | One successful headless `start --mode headless --rig-test`, PID 41540; one successful cold windowed `start --mode windowed --rig-test`, PID 50499. No forced stop or load failure. |
 | B frame cap | Isolated `agent-frame-cap.json` = `{"fps":30,"vsync":0}`; final applied=true, target=30, vSync=0; final short reading 5.72 fps. This is visual evidence, not a 30/60 fps performance arm. |
 | RLO | `[Mod:RealLifeOverhaul] Real Life Overhaul 1.0.6 initialised.` living_population stored absent/live=true; social_media=1/true; social_media_notices=0/false. No option toggle; no RLO file edit. |
 | Autosave / SaveCost | Original native 5 minutes / 3 saves, prevent_autosave=false. #70 guard enabled and suppressed before/after each window and after both bounded loads. All window allowed saves and native saving frames = 0. SaveCostDiagnostics requested=false, writerSchema=1, save=null, activation=null; native save profiler installed=false. No manual save or save-latency measurement. |
 | Lease / resources | Free at inspection; acquired 20:15:50.794588 UTC. Initial resources 62.9 GiB disk / 85% memory free; before B 62.8 GiB / 77%. No takeover, resource refusal, PC contact, other-session intervention or bot message. |
 
-Printed rollback, verbatim:
+Printed rollback, path-sanitized:
 
 ```sh
-rm -rf "/Users/peterhartwieg/Library/Application Support/com.hovgaardgames.bigambitions.agenttests.mac/ModsLocal/PersistentCity" && cp -Rp "/Users/peterhartwieg/Library/Application Support/BigAmbitionsAgentTestsMac/receipt-backups/20261114T201646Z/mod" "/Users/peterhartwieg/Library/Application Support/com.hovgaardgames.bigambitions.agenttests.mac/ModsLocal/PersistentCity" && cp "/Users/peterhartwieg/Library/Application Support/BigAmbitionsAgentTestsMac/receipt-backups/20261114T201646Z/install.json" "/Users/peterhartwieg/Library/Application Support/BigAmbitionsAgentTestsMac/install.json"
+rm -rf "<home>/Library/Application Support/com.hovgaardgames.bigambitions.agenttests.mac/ModsLocal/PersistentCity" && cp -Rp "<home>/Library/Application Support/BigAmbitionsAgentTestsMac/receipt-backups/20261114T201646Z/mod" "<home>/Library/Application Support/com.hovgaardgames.bigambitions.agenttests.mac/ModsLocal/PersistentCity" && cp "<home>/Library/Application Support/BigAmbitionsAgentTestsMac/receipt-backups/20261114T201646Z/install.json" "<home>/Library/Application Support/BigAmbitionsAgentTestsMac/install.json"
 ```
 
 Cleanup used the stopped, leased equivalent that retains the candidate in `<stage>/staged-candidate-restored-out`, copies the complete backup mod into the empty live path and copies the exact backup receipt. No install receipt was hand-edited.
