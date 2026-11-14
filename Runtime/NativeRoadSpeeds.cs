@@ -30,6 +30,15 @@ namespace PersistentCity.Runtime
         public bool Verified { get; private set; }
         public string? LastRefusal { get; private set; }
         internal static IEqualityComparer<object> ReferenceComparer => References.Instance;
+        private static readonly IReadOnlyDictionary<object, (int Original, int Effective)> NoOverrides =
+            new Dictionary<object, (int Original, int Effective)>(References.Instance);
+        internal static IReadOnlyDictionary<object, (int Original, int Effective)> Copy<T>(IReadOnlyDictionary<object, T> source, Func<T, (int, int)> limits)
+        {
+            if (source.Count == 0) return NoOverrides;
+            var copy = new Dictionary<object, (int Original, int Effective)>(source.Count, References.Instance);
+            foreach (var pair in source) copy.Add(pair.Key, limits(pair.Value));
+            return copy;
+        }
 
         public bool WaitsAfterRefresh() { Refresh(); return Waiting != null; }
         private int refreshedFrame = int.MinValue;

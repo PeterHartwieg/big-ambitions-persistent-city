@@ -75,9 +75,8 @@ namespace PersistentCity.Runtime
             else
             {
                 var reviewed = new RloRoadSpeedOverrides(dependency);
-                roadSpeeds = new NativeRoadSpeeds(() => reviewed.Capture().ToDictionary(pair => pair.Key,
-                    pair => (pair.Value.OriginalKilometresPerHour, pair.Value.EffectiveKilometresPerHour),
-                    NativeRoadSpeeds.ReferenceComparer), error => error is RloRoadSpeedsNotReadyException ? error.Message : null);
+                roadSpeeds = new NativeRoadSpeeds(() => NativeRoadSpeeds.Copy(reviewed.Capture(), pair => (pair.OriginalKilometresPerHour, pair.EffectiveKilometresPerHour)),
+                    error => error is RloRoadSpeedsNotReadyException ? error.Message : null);
             }
             walking = new WalkingRoutes(walkingMetresPerMinute, (from, to) => access != null && access.ClearSegment(from, to));
             foreach (var place in places) this.places[place.Id] = place;
