@@ -29,7 +29,8 @@ namespace PersistentCity.Core
                 return c == 0 ? a.LinkId.CompareTo(b.LinkId) : c;
             }
         }
-        private readonly SortedDictionary<int, Link> links = new SortedDictionary<int, Link>();
+        private readonly Dictionary<int, Link> links = new Dictionary<int, Link>();
+        private readonly List<Link> orderedLinks = new List<Link>();
         private readonly SortedSet<int> activeLinks = new SortedSet<int>();
         private readonly SortedSet<int> closedLinks = new SortedSet<int>();
         private readonly Dictionary<string, TrafficVehicleState> vehicles = new Dictionary<string, TrafficVehicleState>(StringComparer.Ordinal);
@@ -89,12 +90,17 @@ namespace PersistentCity.Core
             RequireTime(initialClock, nameof(initialClock));
             if (network == null) throw new ArgumentNullException(nameof(network));
             Clock = RequestedTime = initialClock;
+            bool ascending = true;
             foreach (TrafficLinkDefinition definition in network)
             {
                 ValidateDefinition(definition);
                 if (links.ContainsKey(definition.Id)) throw new ArgumentException("Duplicate traffic link ID.", nameof(network));
-                links.Add(definition.Id, new Link(CopyDefinition(definition)));
+                var link = new Link(CopyDefinition(definition));
+                links.Add(definition.Id, link);
+                if (orderedLinks.Count > 0 && orderedLinks[orderedLinks.Count - 1].Definition.Id > definition.Id) ascending = false;
+                orderedLinks.Add(link);
             }
+            if (!ascending) orderedLinks.Sort((a, b) => a.Definition.Id.CompareTo(b.Definition.Id));
         }
 
         public void Enqueue(string vehicleId, IReadOnlyList<TrafficRouteLeg> route)
@@ -395,7 +401,7 @@ namespace PersistentCity.Core
             foreach (int id in selected)
                 foreach (var vehicle in links[id].Queue)
                     projection.links[id].Queue.AddLast(projection.vehicles[vehicle.VehicleId]);
-            foreach (Link copy in projection.links.Values) projection.Reconsider(copy);
+            foreach (Link copy in projection.orderedLinks) projection.Reconsider(copy);
             return projection;
         }
 
@@ -651,7 +657,7 @@ namespace PersistentCity.Core
             {
                 Clock = Clock, RequestedTime = RequestedTime, NextEventOrder = nextEventOrder, NextVehicleOrder = nextVehicleOrder
             };
-            foreach (Link link in links.Values)
+            foreach (Link link in orderedLinks)
             {
                 state.Definitions.Add(CopyDefinition(link.Definition));
                 var queuedIds = new List<string>(link.Queue.Count);
@@ -674,7 +680,7 @@ namespace PersistentCity.Core
             TrafficKernelState state = Capture();
             if (state.Vehicles.RemoveAll(v => exclude(v.VehicleId)) == 0) return state;
             var rebased = new Dictionary<string, double>(StringComparer.Ordinal);
-            foreach (Link link in links.Values)
+            foreach (Link link in orderedLinks)
             {
                 bool behind = false;
                 double previous = 0;
@@ -807,9 +813,9 @@ namespace PersistentCity.Core
                 link.Event = item;
                 kernel.events.Add(item);
             }
-            foreach (Link link in kernel.links.Values) kernel.UpdateActivity(link);
+            foreach (Link link in kernel.orderedLinks) kernel.UpdateActivity(link);
             if (rebuildWakeups)
-                foreach (Link link in kernel.links.Values) kernel.Reconsider(link);
+                foreach (Link link in kernel.orderedLinks) kernel.Reconsider(link);
             kernel.ValidateRequiredWakeups();
             return kernel;
         }
@@ -912,7 +918,7 @@ namespace PersistentCity.Core
 
         private void ValidateRequiredWakeups()
         {
-            foreach (Link link in links.Values)
+            foreach (Link link in orderedLinks)
             {
                 if (link.Queue.First != null)
                 {

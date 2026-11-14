@@ -213,6 +213,34 @@ public sealed class Gr5SaveMeasure
     }
 
     [Fact]
+    public void MeasureSimulationAllocationOfCapturedPayload()
+    {
+        string? path = PerfGate.Variable("PC_GR5_MEASURE");
+        string? source = PerfGate.Variable("PC_GR5_PAYLOAD");
+        if (string.IsNullOrEmpty(path) || string.IsNullOrEmpty(source)) return;
+        var read = SaveCodec.Read(System.IO.File.ReadAllText(source));
+        Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
+        var state = read.State!;
+        var simulator = new CitySimulator(state, new FreshCityTraceTests.Walk());
+        simulator.AttachFoodMarket(new VisitorRoutineTests.Market { Shops = F5gPopulationFillTests.Shops(state) });
+        double day = Math.Floor(state.Minute / 1440) * 1440;
+        foreach (double start in new[] { state.Minute, day + 1440 + 60, day + 1440 + 8 * 60, day + 1440 + 12 * 60 })
+        {
+            simulator.AdvanceTo(start, int.MaxValue);
+            long allocated = GC.GetAllocatedBytesForCurrentThread();
+            int frames = 0;
+            for (double minute = start; minute < start + 60; minute += 1.0 / 30) { simulator.AdvanceFrameSlice(minute, 32); frames++; }
+            allocated = GC.GetAllocatedBytesForCurrentThread() - allocated;
+            System.IO.File.AppendAllText(path, JsonConvert.SerializeObject(new
+            {
+                source = System.IO.Path.GetFileName(source), kind = "simulation-allocation", startHour = Math.Round(start % 1440 / 60, 2),
+                residents = state.Citizens.Count, visitors = state.Visitors.Count, gameMinutes = 60, frames,
+                allocatedBytes = allocated, bytesPerGameMinute = allocated / 60, bytesPerFrame = allocated / frames,
+            }) + Environment.NewLine);
+        }
+    }
+
+    [Fact]
     public void MeasureSaveEncodeOfCapturedPayload()
     {
         string? path = PerfGate.Variable("PC_GR5_MEASURE");
