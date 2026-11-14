@@ -213,6 +213,8 @@ namespace PersistentCity.Runtime
         private readonly Func<string, int, Waypoint?> resolve;
         private readonly Dictionary<string, PhysicalVehicleBody> bodies = new Dictionary<string, PhysicalVehicleBody>(StringComparer.Ordinal);
         private readonly Dictionary<string, ParkedCarBody> parked = new Dictionary<string, ParkedCarBody>(StringComparer.Ordinal);
+        private readonly List<PhysicalVehicleBody> bodyScratch = new List<PhysicalVehicleBody>();
+        private readonly List<ParkedCarBody> parkedScratch = new List<ParkedCarBody>();
         private readonly OwnCarPool<OwnCarInstance> pool;
         private readonly int maximum;
         private GameObject? holder;
@@ -541,7 +543,9 @@ namespace PersistentCity.Runtime
             if (!Active) return;
             AssertHealthy();
             float seconds = Time.deltaTime;
-            foreach (var body in bodies.Values.ToArray())
+            bodyScratch.Clear();
+            foreach (var value in bodies.Values) bodyScratch.Add(value);
+            foreach (var body in bodyScratch)
             {
                 if (!body.Valid) { Release(body); continue; }
                 try { Drive(body, seconds); }
@@ -551,6 +555,7 @@ namespace PersistentCity.Runtime
                     throw;
                 }
             }
+            bodyScratch.Clear();
             FadeParked(seconds);
             if (!TrafficManager.IsInitialized || !TrafficManager.HasInstance) return;
             KeepNativeAmbientHeld();
@@ -769,7 +774,9 @@ namespace PersistentCity.Runtime
 
         private void FadeParked(float seconds)
         {
-            foreach (var car in parked.Values.ToArray())
+            parkedScratch.Clear();
+            foreach (var value in parked.Values) parkedScratch.Add(value);
+            foreach (var car in parkedScratch)
             {
                 if (!car.Instance.Live) { parked.Remove(car.CarId); continue; }
                 if (!double.IsNaN(car.FadeOut))

@@ -363,7 +363,7 @@ namespace PersistentCity.Runtime
 
         private bool PrepareNodes()
         {
-            var watch = Stopwatch.StartNew();
+            long watchStarted = Stopwatch.GetTimestamp();
             int startedAt = copiedNodes;
             int stop = Math.Min(waypoints.Length, copiedNodes + 2048);
             while (copiedNodes < stop)
@@ -390,7 +390,7 @@ namespace PersistentCity.Runtime
                     if (!cells.TryGetValue(key, out var list)) { list = new List<int>(); cells.Add(key, list); }
                     list.Add(i);
                 }
-                if ((copiedNodes & 31) == 0 && watch.Elapsed.TotalMilliseconds >= 2) break;
+                if ((copiedNodes & 31) == 0 && ((Stopwatch.GetTimestamp() - watchStarted) * 1000.0 / Stopwatch.Frequency) >= 2) break;
             }
             if (copiedNodes != waypoints.Length) return false;
             if (TopologyId.Length == 0)
@@ -401,7 +401,7 @@ namespace PersistentCity.Runtime
                 topologyWriter.Dispose();
             }
             if (Ready) return IsCurrent;
-            double remaining = 2 - watch.Elapsed.TotalMilliseconds;
+            double remaining = 2 - ((Stopwatch.GetTimestamp() - watchStarted) * 1000.0 / Stopwatch.Frequency);
             int remainingUnits = 2048 - (copiedNodes - startedAt);
             if (remaining <= 0 || remainingUnits <= 0) return false;
             if (trafficBuilder == null) trafficBuilder = new TrafficRoadNetwork(TopologyId, nodes, waypoints, scene, access, clockRate, SnapshotNodeCurrent);

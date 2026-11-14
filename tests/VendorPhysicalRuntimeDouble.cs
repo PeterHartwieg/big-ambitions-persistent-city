@@ -83,6 +83,10 @@ namespace Buildings
     public sealed class Controller { public readonly List<Door> entranceDoors = new(); }
     public sealed class Door { public readonly Transform doorTransform = new(); }
 }
+namespace GleyTrafficSystem
+{
+    public sealed class Waypoint { public int maxSpeed; }
+}
 namespace BAModAPI
 {
     public interface IModLogger { void Info(string value); void Warn(string value); }

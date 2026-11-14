@@ -13,7 +13,7 @@ namespace PersistentCity.Runtime
     {
         private void LateUpdate()
         {
-            if (physical != null) RunPhysical(() => physical?.CatchNativeLoads());
+            if (physical != null) RunPhysical(physicalCatchLoads ??= () => physical?.CatchNativeLoads());
         }
     }
 }

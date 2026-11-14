@@ -113,13 +113,19 @@ namespace PersistentCity.Runtime
         private bool OptionalVisible(CitizenState citizen) => citizen.Phase == CitizenPhase.AtPlace
             && citizen.OptionalStop != null && citizen.OptionalStop.ActiveAt(simulation.View.Minute);
 
+        private bool QueueSpotNear(Position position)
+        {
+            foreach (var b in bindings.Values)
+                if (b.Queue.HasValue && b.Line != null && b.Slot >= 0 && Position.Distance(b.Line.Spots[b.Slot], position) < 0.65) return true;
+            return false;
+        }
+
         private bool TryJoinOptional(Binding binding)
         {
             if (binding.Person == null || !OptionalVisible(binding.Citizen)
                 || simulation.OptionalStopStatus(binding.Citizen.OptionalStop!) != OptionalStopAvailability.Ready) return false;
             var stop = binding.Citizen.OptionalStop!;
-            bool shortOfSpot = bindings.Values.Any(b => b.Queue.HasValue && b.Line != null && b.Slot >= 0
-                && Position.Distance(b.Line.Spots[b.Slot], stop.Position) < 0.65)
+            bool shortOfSpot = QueueSpotNear(stop.Position)
                 || !binding.Person.SetPathTarget(stop.Position, NativeTravelPace.WalkingMetresPerSecond);
             binding.AwaitingArrival = false; binding.AwaitJourney = null; binding.Journey = null; binding.Tail = false;
             binding.Optional = stop; binding.OptionalReturning = false; binding.OptionalStandsShort = shortOfSpot; binding.StepWalked = 0;

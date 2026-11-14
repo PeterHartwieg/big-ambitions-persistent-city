@@ -290,7 +290,7 @@ namespace PersistentCity.Runtime
                 foodMarket?.RefreshRoutineHours(target);
                 RefreshBusinessTypes(simulation.State.Places, target, "hour");
                 simulation.RefreshOptionalStops();
-                RunPhysical(() => physical?.BeforeAdvance());
+                RunPhysical(physicalBeforeAdvance ??= () => physical?.BeforeAdvance());
                 double clockRate = NativeTravelPace.ClockRate;
                 if (Math.Abs(clockRate - simulation.State.TravelClockRate) > .000001)
                 {
@@ -324,7 +324,7 @@ namespace PersistentCity.Runtime
                         + ", scene searches in this planner=" + routes.RoadSceneSearches + ".");
                 }
                 seenRoadSnapshots = snapshots;
-                if (!prepared) { RecordRoutingFrame(prepareElapsed, 0, false); waitingFrames++; RunPhysical(() => physical?.Update()); inspector.Suspend(); return; }
+                if (!prepared) { RecordRoutingFrame(prepareElapsed, 0, false); waitingFrames++; RunPhysical(physicalUpdate ??= () => physical?.Update()); inspector.Suspend(); return; }
                 long closureStarted = Stopwatch.GetTimestamp();
                 simulation.RefreshTrafficClosures();
                 double closureElapsed = (Stopwatch.GetTimestamp() - closureStarted) * MillisecondsPerTimestamp;
@@ -332,7 +332,9 @@ namespace PersistentCity.Runtime
                 maxClosureMilliseconds = Math.Max(maxClosureMilliseconds, closureElapsed);
                 RecordRoutingFrame(prepareElapsed, closureElapsed, true);
                 if (!NativeCityClock.CheckInputEpoch(target, simulation.State.Minute)) { StopAccounting(); return; }
+                var advanceHeap = GcAllocationBegin();
                 AdvancePopulation(HoldReplayLimit(Math.Max(AccountingClock.Target(target), simulation.State.Minute)));
+                GcAllocationEnd(GcAllocationSegment.Advance, advanceHeap);
                 if (simulation.PurchaseFault is string purchaseFault)
                 {
                     log?.Warn("Need purchase native restore failed; the uncertain receipt is kept: " + purchaseFault);
@@ -349,7 +351,9 @@ namespace PersistentCity.Runtime
                         log?.Warn("Physical population unavailable; ordinary spawning restored, persistent background simulation remains active: " + error);
                     }
                 }
-                RunPhysical(() => physical?.Update());
+                var physicalHeap = GcAllocationBegin();
+                RunPhysical(physicalUpdate ??= () => physical?.Update());
+                GcAllocationEnd(GcAllocationSegment.Physical, physicalHeap);
                 UpdateInspector();
                 if (Time.unscaledTime >= nextSummary)
                 {
@@ -501,6 +505,8 @@ namespace PersistentCity.Runtime
                 log?.Warn("Resident inspector stopped; the city continues unchanged: " + error);
             }
         }
+
+        private Action? physicalBeforeAdvance, physicalUpdate, physicalCatchLoads;
 
         private void RunPhysical(Action action)
         {

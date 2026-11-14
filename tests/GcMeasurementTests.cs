@@ -111,7 +111,9 @@ public sealed class GcMeasurementTests
         string[] keys = { "policy", "mode", "running", "residents", "visitors", "persons", "person_target", "max_generation", "incremental",
             "frames", "frames_stored", "frames_dropped", "collection_frames", "gen0", "gen1", "gen2",
             "heap_start_bytes", "heap_end_bytes", "heap_peak_bytes", "heap_before_gc_bytes", "heap_after_gc_bytes", "mono_heap_bytes", "mono_used_bytes",
-            "frame_ms_gc", "frame_ms_plain", "pause_ms", "mod_ms_gc", "mod_ms_plain", "gc_spikes_30ms", "frame_spikes_30ms", "max_frame_ms", "max_mod_ms" };
+            "frame_ms_gc", "frame_ms_plain", "pause_ms", "mod_ms_gc", "mod_ms_plain", "gc_spikes_30ms", "frame_spikes_30ms", "max_frame_ms", "max_mod_ms", "alloc_frames", "frame_alloc_bytes",
+            "mod_alloc_bytes", "mod_alloc_samples", "mod_alloc_skipped", "advance_alloc_bytes", "advance_alloc_samples", "advance_alloc_skipped",
+            "physical_alloc_bytes", "physical_alloc_samples", "physical_alloc_skipped" };
         foreach (string json in new[] { empty, full })
         {
             Assert.DoesNotContain('\n', json);
@@ -129,6 +131,35 @@ public sealed class GcMeasurementTests
         Assert.Equal(16.25, root.GetProperty("frame_ms_plain").GetProperty("p50").GetDouble());
         Assert.Equal(JsonValueKind.Null, JsonDocument.Parse(empty).RootElement.GetProperty("person_target").ValueKind);
         Assert.Contains("diagnostic only", sampler.ReportHuman(Context()));
+    }
+
+    [Fact]
+    public void AllocationSplitCountsPlainFramesAndSkipsCollections()
+    {
+        var sampler = new GcPauseSampler(64);
+        sampler.Allocated(GcAllocationSegment.Mod, 0, 500, false);
+        Assert.Equal(0, sampler.SegmentBytes(GcAllocationSegment.Mod));
+        sampler.Start(1000);
+        sampler.Observe(0, 0, 0, 0, 1000);
+        sampler.Observe(16, 0, 0, 0, 1400);
+        sampler.Observe(32, 1, 0, 0, 200);
+        sampler.Observe(48, 1, 0, 0, 500);
+        Assert.Equal(2, sampler.AllocationFrames); Assert.Equal(700, sampler.FrameAllocatedBytes);
+        sampler.Allocated(GcAllocationSegment.Mod, 1000, 1300, false);
+        sampler.Allocated(GcAllocationSegment.Physical, 1000, 1100, false);
+        sampler.Allocated(GcAllocationSegment.Physical, 1000, 2000, true);
+        sampler.Allocated(GcAllocationSegment.Advance, 1000, 900, false);
+        Assert.Equal(300, sampler.SegmentBytes(GcAllocationSegment.Mod)); Assert.Equal(1, sampler.SegmentSamples(GcAllocationSegment.Mod));
+        Assert.Equal(100, sampler.SegmentBytes(GcAllocationSegment.Physical)); Assert.Equal(1, sampler.SegmentSkipped(GcAllocationSegment.Physical));
+        Assert.Equal(0, sampler.SegmentBytes(GcAllocationSegment.Advance)); Assert.Equal(1, sampler.SegmentSkipped(GcAllocationSegment.Advance));
+        using var report = JsonDocument.Parse(sampler.ReportJson(Context()));
+        Assert.Equal(700, report.RootElement.GetProperty("frame_alloc_bytes").GetInt64());
+        Assert.Equal(300, report.RootElement.GetProperty("mod_alloc_bytes").GetInt64());
+        sampler.Start(1);
+        Assert.Equal(0, sampler.FrameAllocatedBytes); Assert.Equal(0, sampler.SegmentSamples(GcAllocationSegment.Mod));
+        long before = GC.GetAllocatedBytesForCurrentThread();
+        for (int i = 0; i < 4096; i++) sampler.Allocated((GcAllocationSegment)(i % GcPauseSampler.Segments), i, i + 8, (i & 3) == 0);
+        Assert.Equal(before, GC.GetAllocatedBytesForCurrentThread());
     }
 
     [Fact]

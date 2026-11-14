@@ -1,4 +1,5 @@
 using System;
+using PersistentCity.Core;
 using PersistentCity.Persistence;
 
 namespace PersistentCity.Runtime
@@ -20,10 +21,12 @@ namespace PersistentCity.Runtime
         private void Update()
         {
             long gcFrame = GcFrameBegin();
+            var gcHeap = GcAllocationBegin();
             saveEpochUnits++;
             try { UpdateCity(); }
             finally
             {
+                GcAllocationEnd(GcAllocationSegment.Mod, gcHeap);
                 GcFrameEnd(gcFrame);
                 saveEpochUnits--;
                 if (saveEpochStopPending && saveEpochUnits == 0) FinishDeferredSaveEpochStop();
