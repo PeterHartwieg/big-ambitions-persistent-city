@@ -22,6 +22,7 @@
     <Compile Include="../Runtime/PhysicalPopulation.Queues.cs" Link="PhysicalPopulation.Queues.cs" />
     <Compile Include="../Runtime/PhysicalPopulation.Selection.cs" Link="PhysicalPopulation.Selection.cs" />
     <Compile Include="../Runtime/PlayerContact.cs" Link="PlayerContact.cs" />
+    <Compile Include="../Runtime/GcAllocationCounter.cs" Link="GcAllocationCounter.cs" />
     <Compile Include="../Runtime/FoodMarkets.cs" Link="FoodMarkets.cs" />
     <Compile Include="../Runtime/StreetFoodVendorMarket.cs" Link="StreetFoodVendorMarket.cs" />
     <Compile Include="../Runtime/PrototypeSettings.cs" Link="PrototypeSettings.cs" />

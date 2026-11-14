@@ -47,8 +47,22 @@ namespace PersistentCity.Runtime
         private bool NativeTargetPermission(PhysicalVehicleBody body, int nativeTarget)
         {
             if (!CarCommand(body, out _, out var own, out double cap)) return false;
-            return own.ServiceId.EndsWith(":" + nativeTarget.ToString(CultureInfo.InvariantCulture), StringComparison.Ordinal)
-                && PhysicalTrafficCornerPermission.CanReachEndpoint(own, cap);
+            return EndsWithTarget(own.ServiceId, nativeTarget) && PhysicalTrafficCornerPermission.CanReachEndpoint(own, cap);
+        }
+        internal static bool EndsWithTarget(string serviceId, int target)
+        {
+            if (serviceId == null) return false;
+            int at = serviceId.Length;
+            long value = target;
+            bool negative = value < 0;
+            if (negative) value = -value;
+            do
+            {
+                if (--at < 0 || serviceId[at] != (char)('0' + value % 10)) return false;
+                value /= 10;
+            } while (value > 0);
+            if (negative && (--at < 0 || serviceId[at] != '-')) return false;
+            return --at >= 0 && serviceId[at] == ':';
         }
 
         private bool Observe(Binding binding)

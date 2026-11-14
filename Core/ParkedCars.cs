@@ -46,18 +46,36 @@ namespace PersistentCity.Core
         {
             var chosen = new List<ParkedCar>();
             if (maximum <= 0 || !focus.IsFinite) return chosen;
-            foreach (var car in cars)
-            {
-                double distance = Position.Distance(car.At, focus);
-                if (distance <= radius) chosen.Add(new ParkedCar(car.CarId, car.OwnerId, car.At, distance));
-            }
-            chosen.Sort((a, b) =>
-            {
-                int order = a.Distance.CompareTo(b.Distance);
-                return order != 0 ? order : string.CompareOrdinal(a.CarId, b.CarId);
-            });
+            foreach (var car in cars) Consider(chosen, car, focus, radius);
+            return Trim(chosen, maximum);
+        }
+
+        public static List<ParkedCar> Nearest(IReadOnlyList<ParkedCar> cars, Position focus, double radius, int maximum, List<ParkedCar> chosen)
+        {
+            if (chosen == null) throw new ArgumentNullException(nameof(chosen));
+            chosen.Clear();
+            if (maximum <= 0 || !focus.IsFinite) return chosen;
+            for (int i = 0; i < cars.Count; i++) Consider(chosen, cars[i], focus, radius);
+            return Trim(chosen, maximum);
+        }
+
+        private static void Consider(List<ParkedCar> chosen, ParkedCar car, Position focus, double radius)
+        {
+            double distance = Position.Distance(car.At, focus);
+            if (distance <= radius) chosen.Add(new ParkedCar(car.CarId, car.OwnerId, car.At, distance));
+        }
+
+        private static List<ParkedCar> Trim(List<ParkedCar> chosen, int maximum)
+        {
+            chosen.Sort(ByDistance);
             if (chosen.Count > maximum) chosen.RemoveRange(maximum, chosen.Count - maximum);
             return chosen;
         }
+
+        private static readonly Comparison<ParkedCar> ByDistance = (a, b) =>
+        {
+            int order = a.Distance.CompareTo(b.Distance);
+            return order != 0 ? order : string.CompareOrdinal(a.CarId, b.CarId);
+        };
     }
 }

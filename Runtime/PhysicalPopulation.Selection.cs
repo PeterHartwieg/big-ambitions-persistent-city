@@ -56,16 +56,16 @@ namespace PersistentCity.Runtime
             followDelta = simulation.View.Minute > followMinute ? Time.unscaledDeltaTime : 0;
             followClock += followDelta;
             followMinute = simulation.View.Minute;
+            PhysicalAllocation.Charge(GcAllocationSegment.PhysicalUnattributed);
             RefreshVendorMeals();
-            var sampler = AllocationSampler;
-            long heap = sampler != null ? GC.GetTotalMemory(false) : -1;
-            int collections = sampler != null ? GC.CollectionCount(0) : 0;
+            PhysicalAllocation.Charge(GcAllocationSegment.PhysicalVendorMeals);
             ambient.Update();
-            if (sampler != null) Sample(sampler, GcAllocationSegment.PhysicalAmbient, ref heap, ref collections);
+            PhysicalAllocation.Charge(GcAllocationSegment.PhysicalAmbient);
             if (!ambient.Active) throw new InvalidOperationException("Pedestrian ownership guard failed: " + ambient.LastError);
             vehicles.Update();
-            if (sampler != null) Sample(sampler, GcAllocationSegment.PhysicalVehicles, ref heap, ref collections);
+            PhysicalAllocation.Charge(GcAllocationSegment.PhysicalVehicles);
             FadeLeaving(all: false);
+            PhysicalAllocation.Charge(GcAllocationSegment.PhysicalFade);
             if (NativeTravelPace.HiddenTravel) { SuspendBeforeNativeFastForward(); return; }
             Position focus = NativeTravelPace.Focus;
             if (!focus.IsFinite) { Suspend(); return; }
@@ -76,6 +76,7 @@ namespace PersistentCity.Runtime
             bool interior = NativeInteriorCityView.State.Active;
             var playerPose = default(PlayerPose);
             bool player = !interior && PlayerContact.TryReadPlayer(out playerPose);
+            PhysicalAllocation.Charge(GcAllocationSegment.PhysicalFocus);
             var snapshot = bindingSnapshot ?? new List<Binding>(bindings.Count);
             bindingSnapshot = null;
             try
@@ -84,18 +85,25 @@ namespace PersistentCity.Runtime
                 int keptPeople = 0, keptCars = 0;
                 foreach (var binding in snapshot)
                 {
-                    if (ambient.IsReserved(binding.Citizen.Identity.Id)) { Release(binding); continue; }
-                    if (!Observe(binding)) { Release(binding); continue; }
+                    if (ambient.IsReserved(binding.Citizen.Identity.Id)) { ReleaseCharged(binding); continue; }
+                    PhysicalAllocation.Charge(GcAllocationSegment.PhysicalBindings);
+                    bool observed = Observe(binding);
+                    PhysicalAllocation.Charge(GcAllocationSegment.PhysicalObserve);
+                    if (!observed) { ReleaseCharged(binding); continue; }
                     Position position = binding.Person?.Position ?? binding.Car!.Position;
-                    if (Position.Distance(position, focus) > releaseRadius) { Release(binding); continue; }
-                    if (interior && (binding.Person != null ? ++keptPeople > pedestrianLimit : ++keptCars > vehicleLimit)) { Release(binding); continue; }
+                    if (Position.Distance(position, focus) > releaseRadius) { ReleaseCharged(binding); continue; }
+                    if (interior && (binding.Person != null ? ++keptPeople > pedestrianLimit : ++keptCars > vehicleLimit)) { ReleaseCharged(binding); continue; }
                     if (player) ObservePlayerContact(binding, playerPose);
                     FadeIn(binding);
                 }
             }
             finally { snapshot.Clear(); bindingSnapshot = snapshot; }
-            if (sampler != null) Sample(sampler, GcAllocationSegment.PhysicalBindings, ref heap, ref collections);
-            if (!interior && Time.unscaledTime >= nextParked) { nextParked = Time.unscaledTime + ParkedRefreshSeconds; ShowParked(focus, radius, vehicleLimit); }
+            PhysicalAllocation.Charge(GcAllocationSegment.PhysicalBindings);
+            if (!interior && Time.unscaledTime >= nextParked)
+            {
+                nextParked = Time.unscaledTime + ParkedRefreshSeconds; ShowParked(focus, radius, vehicleLimit);
+                PhysicalAllocation.Charge(GcAllocationSegment.PhysicalParked);
+            }
             if (Time.unscaledTime < nextSelection || !routes.ReadyForPopulation) return;
             nextSelection = Time.unscaledTime + .25f;
             int people = personBindings, cars = bindings.Count - people;
@@ -106,8 +114,10 @@ namespace PersistentCity.Runtime
                 CheckJourneyIndex();
                 PruneFadeRestrictions();
             }
+            PhysicalAllocation.Charge(GcAllocationSegment.PhysicalIndex);
             PlanQueues(focus, radius);
             PlanVendorQueues(focus, radius);
+            PhysicalAllocation.Charge(GcAllocationSegment.PhysicalQueues);
             candidates.Clear();
             var roster = journeyIndexFallback ? simulation.View.ResidentList : simulation.ActiveJourneys.Grid.Query(focus, radius, nearby);
             for (int index = 0; index < roster.Count; index++)
@@ -137,6 +147,7 @@ namespace PersistentCity.Runtime
                     tried ? lastAttempt : float.NegativeInfinity, distance, candidates.Count));
             }
             candidates.Sort(SelectionCandidate.ByPriority);
+            PhysicalAllocation.Charge(GcAllocationSegment.PhysicalRoster);
             foreach (var candidate in candidates)
             {
                 var citizen = candidate.Citizen;
@@ -171,14 +182,19 @@ namespace PersistentCity.Runtime
                 {
                     if (faultAcquirePercent > 0 && faultDice.Next(100) < faultAcquirePercent)
                     { failedAcquisitions++; Telemetry.FaultedAcquisitions++; continue; }
+                    PhysicalAllocation.Charge(GcAllocationSegment.PhysicalSelection);
                     if (car)
                     {
-                        if (!vehicles.TryAcquire(citizen, road, out var body)) { failedAcquisitions++; continue; }
+                        bool taken = vehicles.TryAcquire(citizen, road, out var body);
+                        PhysicalAllocation.Charge(GcAllocationSegment.PhysicalSpawnVehicle);
+                        if (!taken) { failedAcquisitions++; continue; }
                         binding.Car = body;
                     }
                     else
                     {
-                        if (!pedestrians.TryAcquire(citizen.Identity, at, out var body)) { failedAcquisitions++; continue; }
+                        bool taken = pedestrians.TryAcquire(citizen.Identity, at, out var body);
+                        PhysicalAllocation.Charge(GcAllocationSegment.PhysicalSpawnPedestrian);
+                        if (!taken) { failedAcquisitions++; continue; }
                         binding.Person = body;
                     }
                     Bind(binding); bound = true; acquired++;
@@ -198,14 +214,14 @@ namespace PersistentCity.Runtime
                 var ids = new HashSet<string>(view.ResidentList.Concat(view.VisitorRoutineList).Select(c => c.Id), StringComparer.Ordinal);
                 foreach (var id in attempted.Keys.Where(id => !ids.Contains(id)).ToArray()) attempted.Remove(id);
             }
+            PhysicalAllocation.Charge(GcAllocationSegment.PhysicalSelection);
         }
 
-        internal static GcPauseSampler? AllocationSampler { get; set; }
-        private static void Sample(GcPauseSampler sampler, GcAllocationSegment segment, ref long heap, ref int collections)
+        private void ReleaseCharged(Binding binding)
         {
-            long after = GC.GetTotalMemory(false); int now = GC.CollectionCount(0);
-            sampler.Allocated(segment, heap, after, now != collections);
-            heap = after; collections = now;
+            PhysicalAllocation.Charge(GcAllocationSegment.PhysicalBindings);
+            Release(binding);
+            PhysicalAllocation.Charge(GcAllocationSegment.PhysicalRelease);
         }
 
         private void BeginFadeIn(Binding binding)
@@ -253,10 +269,11 @@ namespace PersistentCity.Runtime
                     parkedStates[car.Id] = car;
                 }
             }
-            var shown = ParkedCars.Nearest(parkedCandidates, focus, radius, limit);
+            var shown = ParkedCars.Nearest(parkedCandidates, focus, radius, limit, parkedShown);
             vehicles.ShowParked(shown, parkedState ??= id => parkedStates.TryGetValue(id, out var state) ? state : null);
-            parkedCandidates.Clear(); parkedStates.Clear();
+            parkedCandidates.Clear(); parkedStates.Clear(); parkedShown.Clear();
         }
+        private readonly List<ParkedCar> parkedShown = new List<ParkedCar>();
         private readonly Dictionary<string, CarState> parkedStates = new Dictionary<string, CarState>(StringComparer.Ordinal);
         private Func<string, CarState?>? parkedState;
 
@@ -330,6 +347,7 @@ namespace PersistentCity.Runtime
             queuers.Clear();
             double now = simulation.View.Minute;
             var planned = plannedQueues;
+            foreach (var line in planned.Values) { line.Dwells.Clear(); dwellLists.Push(line.Dwells); }
             planned.Clear();
             var roster = journeyIndexFallback ? simulation.View.ResidentList : simulation.ActiveJourneys.Grid.Query(focus, radius, nearby);
             for (int index = 0; index < roster.Count; index++)
@@ -339,17 +357,26 @@ namespace PersistentCity.Runtime
                     || Position.Distance(place.Position, focus) > radius) continue;
                 var dwell = QueueDwell(Entity(citizen), place, now);
                 if (!dwell.HasValue || !dwell.Value.ActiveAt(now) || GaveUp(dwell.Value)) continue;
-                string key = DwellSpots.KeyOf(place);
-                if (!planned.TryGetValue(key, out var line)) planned.Add(key, line = (place, new List<Dwell>()));
+                string key = spots.Key(place);
+                if (!planned.TryGetValue(key, out var line)) planned.Add(key, line = (place, dwellLists.Count > 0 ? dwellLists.Pop() : new List<Dwell>()));
                 line.Dwells.Add(dwell.Value);
             }
             if (planned.Count == 0) return;
-            foreach (var pair in planned.OrderBy(p => Position.Distance(p.Value.Place.Position, focus)).ThenBy(p => p.Key, StringComparer.Ordinal))
+            plannedOrder.Clear();
+            foreach (var pair in planned) plannedOrder.Add(new PlannedLine(pair.Key, Position.Distance(pair.Value.Place.Position, focus)));
+            plannedOrder.Sort(PlannedLine.ByDistance);
+            foreach (var entry in plannedOrder)
             {
-                if (!TryLine(pair.Value.Place, out var found)) continue;
-                var inLine = bindings.Values.Where(b => b.Line != null && b.Line.Key == found.Key && b.Queue.HasValue
-                    && b.Step != QueueStep.Entering && b.Person != null).OrderBy(b => b.Slot).ToList();
-                var occupied = new HashSet<int>(Standing(found).Select(b => b.Value));
+                var value = planned[entry.Key];
+                if (!TryLine(value.Place, out var found)) continue;
+                var inLine = inLineScratch;
+                inLine.Clear();
+                foreach (var b in bindings.Values)
+                    if (b.Line != null && b.Line.Key == found.Key && b.Queue.HasValue && b.Step != QueueStep.Entering && b.Person != null) inLine.Add(b);
+                SortBySlot(inLine);
+                var occupied = occupiedScratch;
+                occupied.Clear();
+                foreach (var standing in Standing(found)) occupied.Add(standing.Value);
                 foreach (var bound in inLine)
                 {
                     int? ahead = DwellPlanner.MoveUp(occupied, bound.Slot);
@@ -357,10 +384,41 @@ namespace PersistentCity.Runtime
                     occupied.Remove(bound.Slot); occupied.Add(ahead.Value);
                     bound.Slot = ahead.Value; bound.Step = QueueStep.Approaching; bound.StepWalked = 0;
                 }
-                var slots = DwellPlanner.AssignQueueSlots(Standing(found), pair.Value.Dwells, found.Spots.Count);
-                foreach (var dwell in pair.Value.Dwells)
+                var slots = DwellPlanner.AssignQueueSlots(Standing(found), value.Dwells, found.Spots.Count);
+                foreach (var dwell in value.Dwells)
                     if (slots.TryGetValue(dwell.CitizenId, out int slot))
                         queuers[dwell.CitizenId] = new QueuePlanEntry { Dwell = dwell, Line = found, Slot = slot };
+            }
+            inLineScratch.Clear(); plannedOrder.Clear();
+        }
+
+        private readonly Stack<List<Dwell>> dwellLists = new Stack<List<Dwell>>();
+        private readonly List<PlannedLine> plannedOrder = new List<PlannedLine>();
+        private readonly List<Binding> inLineScratch = new List<Binding>();
+        private readonly HashSet<int> occupiedScratch = new HashSet<int>();
+        private readonly struct PlannedLine
+        {
+            public PlannedLine(string key, double distance) { Key = key; Distance = distance; }
+            public string Key { get; }
+            public double Distance { get; }
+            public static readonly IComparer<PlannedLine> ByDistance = new Order();
+            private sealed class Order : IComparer<PlannedLine>
+            {
+                public int Compare(PlannedLine a, PlannedLine b)
+                {
+                    int order = a.Distance.CompareTo(b.Distance);
+                    return order != 0 ? order : StringComparer.Ordinal.Compare(a.Key, b.Key);
+                }
+            }
+        }
+        private static void SortBySlot(List<Binding> list)
+        {
+            for (int i = 1; i < list.Count; i++)
+            {
+                var item = list[i];
+                int j = i - 1;
+                while (j >= 0 && list[j].Slot > item.Slot) { list[j + 1] = list[j]; j--; }
+                list[j + 1] = item;
             }
         }
 

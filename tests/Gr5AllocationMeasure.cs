@@ -227,7 +227,7 @@ public sealed class Gr5AllocationMeasure
             var pool = PhysicalPedestrians.Last!;
             double minute = now;
             var split = run == 2 ? new GcPauseSampler(64) : null;
-            split?.Start(GC.GetTotalMemory(false));
+            split?.Start(GC.GetTotalMemory(false), GcAllocationCounter.Probe());
             long allocated = 0;
             int gen0 = 0;
             void Move(float seconds)
@@ -248,13 +248,13 @@ public sealed class Gr5AllocationMeasure
                 }
                 Move(frame); minute += frame / 3.0; city.AdvanceTo(minute); Time.Next(frame);
                 if (!measure) { bodies.Update(); return; }
-                PhysicalPopulation.AllocationSampler = split;
                 int before = GC.CollectionCount(0);
                 types.Recording = run == 3;
                 long start = GC.GetAllocatedBytesForCurrentThread();
+                PhysicalAllocation.Begin(split);
                 bodies.Update();
+                PhysicalAllocation.End();
                 allocated += GC.GetAllocatedBytesForCurrentThread() - start;
-                PhysicalPopulation.AllocationSampler = null;
                 types.Recording = false;
                 gen0 += GC.CollectionCount(0) - before;
             }
@@ -268,11 +268,9 @@ public sealed class Gr5AllocationMeasure
                 label, run, component = "PhysicalPopulation.Update", walkers, optionalWalkers = walkers / 2, frames = measured,
                 boundBodies = pool.Active.Count,
                 allocatedBytes = allocated, bytesPerFrame = allocated / measured, gen0,
-                split = split == null ? null : new
-                {
-                    ambient = split.SegmentBytes(GcAllocationSegment.PhysicalAmbient), vehicles = split.SegmentBytes(GcAllocationSegment.PhysicalVehicles),
-                    bindings = split.SegmentBytes(GcAllocationSegment.PhysicalBindings), samples = split.SegmentSamples(GcAllocationSegment.PhysicalBindings),
-                },
+                split = split == null ? null : Enumerable.Range((int)GcAllocationSegment.Physical, GcPauseSampler.Segments - (int)GcAllocationSegment.Physical)
+                    .Select(i => (GcAllocationSegment)i).ToDictionary(segment => segment.ToString(), segment => split.SegmentBytes(segment)),
+                counter = split?.AllocationCounter,
                 topTypes = run == 3 ? Top(types) : null,
             });
         }

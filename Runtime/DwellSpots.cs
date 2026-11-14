@@ -27,7 +27,7 @@ namespace PersistentCity.Runtime
             return TryQueue(place, ref sampled, out queue);
         }
         public void Invalidate(Place place)
-        { string key = KeyOf(place); queues.Remove(key); retryAt.Remove(key); }
+        { string key = Key(place); queues.Remove(key); retryAt.Remove(key); }
         private const float DoorMatchMetres = 2.5f, WallOffset = 0.6f, FirstGap = 1.1f, Spacing = 0.75f;
         private const float SampleRadius = 0.6f, LateralTolerance = 0.45f, OtherDoorClearance = 1.2f, RetrySeconds = 60f;
         private readonly Dictionary<string, DoorQueue> queues = new Dictionary<string, DoorQueue>(StringComparer.Ordinal);
@@ -35,9 +35,25 @@ namespace PersistentCity.Runtime
 
         public static string KeyOf(Place place) => VendorNames.IsVendorPlace(place.Id) ? place.Id : DwellPlanner.DoorKey(place.Position);
 
+        private sealed class PlaceReference : IEqualityComparer<Place>
+        {
+            public bool Equals(Place? a, Place? b) => ReferenceEquals(a, b);
+            public int GetHashCode(Place place) => System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(place);
+        }
+        private readonly Dictionary<Place, (string Id, Position At, string Key)> keys = new Dictionary<Place, (string, Position, string)>(new PlaceReference());
+        public string Key(Place place)
+        {
+            var at = place.Position;
+            if (keys.TryGetValue(place, out var known) && ReferenceEquals(known.Id, place.Id) && known.At.X.Equals(at.X) && known.At.Y.Equals(at.Y) && known.At.Z.Equals(at.Z))
+                return known.Key;
+            string key = KeyOf(place);
+            keys[place] = (place.Id, at, key);
+            return key;
+        }
+
         public bool TryQueue(Place place, ref bool sampledThisCall, out DoorQueue? queue)
         {
-            string key = KeyOf(place);
+            string key = Key(place);
             if (VendorNames.IsVendorPlace(place.Id)) { queue = null; return false; }
             if (queues.TryGetValue(key, out var cached)) { queue = cached; return true; }
             queue = null;
@@ -52,7 +68,7 @@ namespace PersistentCity.Runtime
 
         public bool Unsampled(Place place)
         {
-            string key = KeyOf(place);
+            string key = Key(place);
             return !queues.ContainsKey(key) && !(retryAt.TryGetValue(key, out float retry) && Time.unscaledTime < retry);
         }
 

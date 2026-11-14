@@ -108,15 +108,18 @@ public sealed class GcMeasurementTests
         sampler.Start(1000);
         for (int i = 0; i < 20; i++) sampler.Frame(16.25, 0.5, i % 7 == 0 ? 1 : 0, 0, 0, 1000 + i);
         string full = sampler.ReportJson(Context(3000));
-        string[] keys = { "policy", "mode", "running", "residents", "visitors", "persons", "person_target", "max_generation", "incremental",
+        string[] keys = new[] { "policy", "mode", "running", "residents", "visitors", "persons", "person_target", "max_generation", "incremental",
             "frames", "frames_stored", "frames_dropped", "collection_frames", "gen0", "gen1", "gen2",
             "heap_start_bytes", "heap_end_bytes", "heap_peak_bytes", "heap_before_gc_bytes", "heap_after_gc_bytes", "mono_heap_bytes", "mono_used_bytes",
-            "frame_ms_gc", "frame_ms_plain", "pause_ms", "mod_ms_gc", "mod_ms_plain", "gc_spikes_30ms", "frame_spikes_30ms", "max_frame_ms", "max_mod_ms", "alloc_frames", "frame_alloc_bytes",
+            "frame_ms_gc", "frame_ms_plain", "pause_ms", "mod_ms_gc", "mod_ms_plain", "gc_spikes_30ms", "frame_spikes_30ms", "max_frame_ms", "max_mod_ms", "alloc_frames", "frame_alloc_bytes", "alloc_counter",
             "mod_alloc_bytes", "mod_alloc_samples", "mod_alloc_skipped", "advance_alloc_bytes", "advance_alloc_samples", "advance_alloc_skipped",
             "physical_alloc_bytes", "physical_alloc_samples", "physical_alloc_skipped",
             "physical_ambient_alloc_bytes", "physical_ambient_alloc_samples", "physical_ambient_alloc_skipped",
             "physical_vehicles_alloc_bytes", "physical_vehicles_alloc_samples", "physical_vehicles_alloc_skipped",
-            "physical_bindings_alloc_bytes", "physical_bindings_alloc_samples", "physical_bindings_alloc_skipped" };
+            "physical_bindings_alloc_bytes", "physical_bindings_alloc_samples", "physical_bindings_alloc_skipped" }
+            .Concat(new[] { "physical_vendor_meals", "physical_fade", "physical_focus", "physical_observe", "physical_release", "physical_parked", "physical_index",
+                "physical_queues", "physical_roster", "physical_selection", "physical_spawn_pedestrian", "physical_spawn_appearance", "physical_spawn_check",
+                "physical_spawn_vehicle", "physical_unattributed" }.SelectMany(n => new[] { n + "_alloc_bytes", n + "_alloc_samples", n + "_alloc_skipped" })).ToArray();
         foreach (string json in new[] { empty, full })
         {
             Assert.DoesNotContain('\n', json);
