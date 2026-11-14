@@ -1271,7 +1271,7 @@ Final status: running=false, process=null, lease held=false, pending=0. All six 
 
 Validation for this docs-only result: candidate build passed; compact JSON parses and is under 20 KB; docs-links, markdown ban and diff whitespace checks are run before commit. No full unit or regression suite. Only this existing checklist and the compact JSON are changed. The build/evidence worktree is removed after commit, push and opening the one unmerged docs-only PR. No issue or merge is created.
 
-## Rig results ? 14 November 2026 d, PC (GR-5 60 fps arms at 913abd7d)
+## Rig results — 14 November 2026 d, PC (GR-5 60 fps arms at 913abd7d)
 
 Role `rig_test`, where `pc`, isolated `agent1`. **Counts: 0 passed / 0 partial / 0 failed / 9 NOT RUN. RESULT: BLOCKED.** Counts cover the two requested 60 fps arms and seven excluded rows below; the launch tooling failure is not a measured performance failure. The pre-fix baseline was built and staged, but the required start command was refused before a game process launched. No 600-second window ran. In-game proof gates no merge.
 
