@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace PersistentCity.Core
 {
-    public readonly struct PersonDressing : IEquatable<PersonDressing>
+    public readonly struct PersonDressing
     {
         public PersonDressing(CitizenIdentity identity, int daysPerYear)
         {
@@ -19,13 +19,9 @@ namespace PersistentCity.Core
         public int DaysPerYear { get; }
         public bool Dressed => Id != null;
 
-        public bool Equals(PersonDressing other) => Id != null && string.Equals(Id, other.Id, StringComparison.Ordinal)
+        public bool Matches(PersonDressing other) => Id != null && string.Equals(Id, other.Id, StringComparison.Ordinal)
             && string.Equals(Name, other.Name, StringComparison.Ordinal) && Age == other.Age && Female == other.Female
             && AppearanceSeed == other.AppearanceSeed && DaysPerYear == other.DaysPerYear;
-
-        public override bool Equals(object? obj) => obj is PersonDressing other && Equals(other);
-
-        public override int GetHashCode() => Id == null ? 0 : StringComparer.Ordinal.GetHashCode(Id) ^ AppearanceSeed;
     }
 
     public sealed class DressedBodyPool<T> where T : class
@@ -47,7 +43,7 @@ namespace PersistentCity.Core
             if (items.Count == 0) return false;
             int at = 0;
             for (int i = items.Count - 1; i >= 0; i--)
-                if (dressings[i].Equals(wanted)) { at = i; dressed = true; break; }
+                if (dressings[i].Matches(wanted)) { at = i; dressed = true; break; }
             item = items[at];
             items.RemoveAt(at); dressings.RemoveAt(at);
             return true;

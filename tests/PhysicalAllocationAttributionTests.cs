@@ -96,6 +96,7 @@ public sealed class PhysicalAllocationAttributionTests
         sampler.Start(1, "boehm_total");
         using var report = System.Text.Json.JsonDocument.Parse(sampler.ReportJson(new GcReportContext(1, 1, null, 0, false, 1, 1)));
         Assert.Equal("boehm_total", report.RootElement.GetProperty("alloc_counter").GetString());
+        Assert.Equal("heap_used", report.RootElement.GetProperty("frame_alloc_counter").GetString());
         foreach (string name in new[] { "physical_unattributed", "physical_spawn_appearance", "physical_spawn_check", "physical_spawn_pedestrian", "physical_spawn_vehicle",
             "physical_vendor_meals", "physical_fade", "physical_focus", "physical_observe", "physical_release", "physical_parked", "physical_index",
             "physical_queues", "physical_roster", "physical_selection" })
@@ -122,7 +123,8 @@ public sealed class PhysicalAllocationAttributionTests
         Assert.True(pool.TryTake(default, out body, out dressed));
         Assert.Equal("body-c", body); Assert.False(dressed);
         Assert.Equal(0, pool.Count);
-        Assert.False(default(PersonDressing).Equals(default(PersonDressing)));
+        Assert.False(default(PersonDressing).Matches(default(PersonDressing)));
+        Assert.True(new PersonDressing(Person("a"), 60).Matches(new PersonDressing(Person("a"), 60)));
     }
 
     [Fact]
@@ -175,5 +177,28 @@ public sealed class PhysicalAllocationAttributionTests
         Assert.NotEqual(first, spots.Key(place));
         var vendor = new Place { Id = VendorNames.PlacePrefix + "v1", Position = place.Position };
         Assert.Equal(vendor.Id, spots.Key(vendor));
+    }
+
+    [Fact]
+    public void CounterFramesSumMonotonicDeltasAndSkipCollections()
+    {
+        var sampler = new GcPauseSampler(64);
+        sampler.CounterFrame(10, 0);
+        sampler.Start(1, "thread");
+        sampler.CounterFrame(100, 0);
+        sampler.CounterFrame(400, 0);
+        sampler.CounterFrame(450, 1);
+        sampler.CounterFrame(500, 1);
+        sampler.CounterFrame(480, 1);
+        sampler.Rebaseline();
+        sampler.CounterFrame(9000, 1);
+        sampler.CounterFrame(9010, 1);
+        Assert.Equal(3, sampler.CounterFrames);
+        Assert.Equal(360, sampler.CounterFrameBytes);
+        using var report = System.Text.Json.JsonDocument.Parse(sampler.ReportJson(new GcReportContext(1, 1, null, 0, false, 1, 1)));
+        Assert.Equal(360, report.RootElement.GetProperty("counter_frame_bytes").GetInt64());
+        long before = GC.GetAllocatedBytesForCurrentThread();
+        for (int i = 0; i < 1000; i++) sampler.CounterFrame(10000 + i, 1);
+        Assert.Equal(before, GC.GetAllocatedBytesForCurrentThread());
     }
 }

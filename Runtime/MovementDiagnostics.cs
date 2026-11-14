@@ -23,6 +23,7 @@ namespace PersistentCity.Runtime
             var sampler = gcSampler;
             if (sampler == null || !sampler.Running) return 0;
             long now = System.Diagnostics.Stopwatch.GetTimestamp();
+            sampler.CounterFrame(GcAllocationCounter.Read(), GcAllocationCounter.Collections);
             sampler.Observe(now * GcMillisecondsPerTimestamp, GcCount(0), GcCount(1), GcCount(2), GC.GetTotalMemory(false));
             return now;
         }

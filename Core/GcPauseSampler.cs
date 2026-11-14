@@ -68,6 +68,8 @@ namespace PersistentCity.Core
         private readonly long[] segmentSkipped = new long[Segments];
         private readonly long[] pendingBytes = new long[Segments];
         private readonly int[] pendingSpans = new int[Segments];
+        private long lastCounter = -1, counterFrameBytes, counterFrames;
+        private int lastCounterCollections;
         private bool nested, nestedValid;
         private long nestedMark;
         private int nestedCollections;
@@ -95,7 +97,7 @@ namespace PersistentCity.Core
         public void Start(long heapBytes, string allocationCounter = "heap_used")
         {
             AllocationCounter = allocationCounter ?? "heap_used";
-            nested = false;
+            nested = false; lastCounter = -1; counterFrameBytes = counterFrames = 0;
             Array.Clear(collections, 0, collections.Length);
             stored = 0; Frames = 0; CollectionFrames = 0; heapBeforeSum = heapAfterSum = heapPairs = 0;
             MaxFrameMs = MaxModMs = 0; collectionSpikes = frameSpikes = 0;
@@ -131,6 +133,16 @@ namespace PersistentCity.Core
             if (collected || heapAfter < heapBefore) { segmentSkipped[index]++; return; }
             segmentBytes[index] += heapAfter - heapBefore; segmentSamples[index]++;
         }
+
+        public void CounterFrame(long counter, int collections)
+        {
+            if (!Running) return;
+            if (lastCounter >= 0 && counter >= lastCounter && collections == lastCounterCollections) { counterFrameBytes += counter - lastCounter; counterFrames++; }
+            lastCounter = counter; lastCounterCollections = collections;
+        }
+
+        public long CounterFrames => counterFrames;
+        public long CounterFrameBytes => counterFrameBytes;
 
         public bool Nested => nested;
 
@@ -180,7 +192,7 @@ namespace PersistentCity.Core
         public long SegmentSamples(GcAllocationSegment segment) => segmentSamples[(int)segment];
         public long SegmentSkipped(GcAllocationSegment segment) => segmentSkipped[(int)segment];
 
-        public void Rebaseline() { baselined = false; pendingModMs = 0; }
+        public void Rebaseline() { baselined = false; pendingModMs = 0; lastCounter = -1; }
 
         public void Frame(double frameMilliseconds, double modMilliseconds, int gen0, int gen1, int gen2, long heapBytes)
         {
@@ -259,7 +271,9 @@ namespace PersistentCity.Core
             text.Append(",\"gc_spikes_30ms\":").Append(N(CollectionSpikes())).Append(",\"frame_spikes_30ms\":").Append(N(FrameSpikes()))
                 .Append(",\"max_frame_ms\":").Append(D(MaxFrameMs)).Append(",\"max_mod_ms\":").Append(D(MaxModMs))
                 .Append(",\"alloc_frames\":").Append(N(allocationFrames)).Append(",\"frame_alloc_bytes\":").Append(N(frameAllocatedBytes))
-                .Append(",\"alloc_counter\":\"").Append(AllocationCounter).Append('"');
+                .Append(",\"frame_alloc_counter\":\"heap_used\"")
+                .Append(",\"alloc_counter\":\"").Append(AllocationCounter).Append('"')
+                .Append(",\"counter_frames\":").Append(N(counterFrames)).Append(",\"counter_frame_bytes\":").Append(N(counterFrameBytes));
             for (int i = 0; i < Segments; i++)
             {
                 string name = SegmentNames[i];
