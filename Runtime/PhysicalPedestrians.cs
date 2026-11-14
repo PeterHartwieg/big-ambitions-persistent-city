@@ -239,7 +239,7 @@ namespace PersistentCity.Runtime
 
         public bool TrimIdle(double seconds)
         {
-            if (disposed || seconds < nextTrim || UpdateCityClock.BuildMilliseconds > 0 || !idle.TryTrim(seconds, TrimIdleSeconds, out var character)) return false;
+            if (disposed || seconds < nextTrim || !idle.TryTrim(seconds, TrimIdleSeconds, out var character)) return false;
             nextTrim = seconds + TrimSeconds;
             DestroyOwned(character);
             Trimmed++;

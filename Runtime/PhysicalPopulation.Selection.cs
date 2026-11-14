@@ -101,13 +101,16 @@ namespace PersistentCity.Runtime
             }
             finally { snapshot.Clear(); bindingSnapshot = snapshot; }
             PhysicalAllocation.Charge(GcAllocationSegment.PhysicalBindings);
-            if (pedestrians.TrimIdle(Time.unscaledTime)) PhysicalAllocation.Charge(GcAllocationSegment.PhysicalRelease);
             if (!interior && Time.unscaledTime >= nextParked)
             {
                 nextParked = Time.unscaledTime + ParkedRefreshSeconds; ShowParked(focus, radius, vehicleLimit);
                 PhysicalAllocation.Charge(GcAllocationSegment.PhysicalParked);
             }
-            if (Time.unscaledTime < nextSelection || !routes.ReadyForPopulation) return;
+            if (Time.unscaledTime < nextSelection || !routes.ReadyForPopulation)
+            {
+                if (pedestrians.TrimIdle(Time.unscaledTime)) PhysicalAllocation.Charge(GcAllocationSegment.PhysicalRelease);
+                return;
+            }
             nextSelection = Time.unscaledTime + .25f;
             int people = personBindings, cars = bindings.Count - people;
             int attempts = 0, dressScans = 0;

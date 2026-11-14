@@ -407,6 +407,98 @@ public sealed class Gr5AllocationMeasure
             visitors = state.Visitors.Count, places = state.Places.Count, stateBytes = built - empty, windows = rows };
     }
 
+    private sealed class StandInBody { }
+
+    [Fact]
+    public void MeasureRetainedPoolAndBakeAtTheCap()
+    {
+        string? path = PerfGate.Variable("PC_GR5_ALLOC");
+        if (string.IsNullOrEmpty(path)) return;
+        string label = PerfGate.Variable("PC_GR5_ALLOC_LABEL") ?? "";
+        for (int run = 1; run <= 3; run++)
+        {
+            Record(path, PoolOnce(label, run));
+        }
+    }
+
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
+    private static object PoolOnce(string label, int run)
+    {
+        const int maximum = 96, persons = 3000;
+        const double step = 1.0 / 30, day = 900, seconds = 1800;
+        var pool = new DressedBodyPool<StandInBody>();
+        var timedReturn = typeof(DressedBodyPool<StandInBody>).GetMethod("Return", new[] { typeof(StandInBody), typeof(PersonDressing), typeof(double) });
+        var trim = typeof(DressedBodyPool<StandInBody>).GetMethod("TryTrim");
+        var dice = new Random(0x6E5 + run);
+        var dressings = new PersonDressing[persons];
+        var until = new double[persons];
+        var phase = new int[persons];
+        var bodies = new StandInBody?[persons];
+        for (int i = 0; i < persons; i++)
+        {
+            dressings[i] = new PersonDressing(new CitizenIdentity { Id = "p" + i, Name = "N" + i, Age = 20 + i % 60, Female = i % 2 == 0, AppearanceSeed = 1 + i * 7 }, 60);
+            until[i] = dice.NextDouble() * 4000;
+        }
+        int owned = 0, active = 0, frame = 0, dayOwned = 0, dayActive = 0, nightOwned = 0, nightActive = 0;
+        double nextTrim = 0, selectAt = 0;
+        for (double now = 0; now < seconds; now += step, frame++)
+        {
+            bool dark = now >= day;
+            for (int i = 0; i < persons; i++)
+            {
+                if (now < until[i]) continue;
+                if (phase[i] == 1)
+                {
+                    if (bodies[i] != null)
+                    {
+                        if (timedReturn != null) timedReturn.Invoke(pool, new object[] { bodies[i]!, dressings[i], now }); else pool.Return(bodies[i]!, dressings[i]);
+                        bodies[i] = null; active--;
+                    }
+                    phase[i] = 0; until[i] = dark && dice.NextDouble() < 0.95 ? double.PositiveInfinity : now + 60 + dice.NextDouble() * 900;
+                }
+                else if (dark && dice.NextDouble() < 0.95) until[i] = double.PositiveInfinity;
+                else { phase[i] = 1; until[i] = now + 20 + dice.NextDouble() * 70; }
+            }
+            if (trim != null && now >= nextTrim)
+            {
+                var args = new object?[] { now, 120.0, null };
+                if ((bool)trim.Invoke(pool, args)!) { owned--; nextTrim = now + 5; }
+            }
+            if (now >= selectAt)
+            {
+                selectAt = now + 0.25;
+                int attempts = 0;
+                for (int i = 0; i < persons && active < maximum && attempts < 4; i++)
+                {
+                    if (phase[i] != 1 || bodies[i] != null) continue;
+                    attempts++;
+                    var choice = pool.Choose(dressings[i], owned, maximum, null, frame, now, out var body);
+                    if (choice == BodyChoice.Full) continue;
+                    if (choice == BodyChoice.Grow) { body = new StandInBody(); owned++; }
+                    bodies[i] = body; active++;
+                }
+            }
+            if (Math.Abs(now - (day - step)) < step / 2) { dayOwned = owned; dayActive = active; }
+        }
+        nightOwned = owned; nightActive = active;
+        int idle = pool.Count;
+        var plan = new BlendshapeBakePlan();
+        long planEmpty = GC.GetTotalMemory(true);
+        int vertices = 0;
+        for (int source = 0; source < 9; source++)
+        {
+            plan.AddSource(1200 + source * 150);
+            vertices += 1200 + source * 150;
+            for (int shape = 0; shape < 12; shape++) plan.AddShape("shape" + shape, shape % 3 == 0 ? 0 : 25 + shape);
+        }
+        plan.Build(vertices, 1);
+        long planBytes = GC.GetTotalMemory(true) - planEmpty;
+        GC.KeepAlive(pool); GC.KeepAlive(bodies); GC.KeepAlive(plan); GC.KeepAlive(dressings);
+        return new { label, run, component = "DressedBodyPool rig-shaped churn, 96 maximum, 3,000 persons, day 900 s then night 900 s; stand-in bodies",
+            trims = trim != null, dayActive, dayOwned, dayIdle = dayOwned - dayActive, nightActive, nightOwned, nightIdle = nightOwned - nightActive,
+            nightPoolIdle = idle, bakePlanBytes = planBytes, bakeSteps = plan.Steps.Count };
+    }
+
     [Fact]
     public void ASteadyStateAdvanceTickAtTheCapAllocatesNothing()
     {
@@ -419,8 +511,8 @@ public sealed class Gr5AllocationMeasure
         simulator.AdvanceTo(start - 20, int.MaxValue);
         const int fps = 90;
         for (double minute = start - 20; minute < start; minute += 1.0 / fps) Frame(simulator, minute);
-        int idle = 0, busy = 0;
-        long idleBytes = 0;
+        int idle = 0, busy = 0, events = 0;
+        long idleBytes = 0, busyBytes = 0;
         for (double minute = start; minute < start + 20; minute += 1.0 / fps)
         {
             long before = GC.GetAllocatedBytesForCurrentThread();
@@ -428,8 +520,12 @@ public sealed class Gr5AllocationMeasure
             var result = simulator.AdvanceFrameSlice(minute, 32);
             long bytes = GC.GetAllocatedBytesForCurrentThread() - before;
             if (result.Events == 0 && !result.PlanningPending) { idle++; idleBytes += bytes; }
-            else busy++;
+            else { busy++; busyBytes += bytes; events += result.Events; }
         }
+        string? path = PerfGate.Variable("PC_GR5_ALLOC");
+        if (!string.IsNullOrEmpty(path))
+            Record(path, new { label = PerfGate.Variable("PC_GR5_ALLOC_LABEL") ?? "", component = "advance ticks 15:10-15:30", idleTicks = idle, idleBytes,
+                busyTicks = busy, events, busyBytes, bytesPerEvent = events == 0 ? 0 : busyBytes / events, roadSearches = grid.Searches });
         Assert.Equal(CityBalance.CityResidentTotal, state.Citizens.Count);
         Assert.True(idle >= 200, "only " + idle + " idle ticks");
         Assert.True(busy > 0);

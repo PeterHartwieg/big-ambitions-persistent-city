@@ -132,7 +132,7 @@ namespace PersistentCity.Core
             double available = tokens;
             if (!double.IsNaN(lastSeconds) && seconds > lastSeconds) available = Math.Min(burst, tokens + (seconds - lastSeconds) * perSecond);
             int built = frame != this.frame ? 0 : builtThisFrame;
-            return built < perFrame && available >= 1 && (Gate == null || Gate.Allows(frame));
+            return built < perFrame && available >= 1 && (Gate == null || Gate.Allows(frame, seconds));
         }
 
         public bool TryTake(int frame, double seconds)
@@ -141,9 +141,9 @@ namespace PersistentCity.Core
             if (!double.IsNaN(lastSeconds) && seconds > lastSeconds) tokens = Math.Min(burst, tokens + (seconds - lastSeconds) * perSecond);
             if (double.IsNaN(lastSeconds) || seconds > lastSeconds) lastSeconds = seconds;
             if (frame != this.frame) { this.frame = frame; builtThisFrame = 0; }
-            if (builtThisFrame >= perFrame || tokens < 1 || Gate != null && !Gate.Allows(frame)) { Deferred++; return false; }
+            if (builtThisFrame >= perFrame || tokens < 1 || Gate != null && !Gate.Allows(frame, seconds)) { Deferred++; return false; }
             builtThisFrame++; tokens -= 1; Granted++;
-            Gate?.Built(frame);
+            Gate?.Built(frame, seconds);
             return true;
         }
     }
@@ -154,15 +154,20 @@ namespace PersistentCity.Core
         public const int DefaultMaximumFrames = 30;
         public const double DefaultTargetMilliseconds = 4;
         public const double DefaultEstimateMilliseconds = 4;
+        public const double DefaultMaximumSeconds = 1.25;
         private readonly Func<double> elapsed;
         private readonly int quietFrames, maximumFrames;
-        private readonly double target;
+        private readonly double target, maximumSeconds;
         private int lastBuild;
+        private double lastSeconds = double.NaN;
         private bool built;
 
         public DressFrameGate(Func<double> elapsedMilliseconds, int quietFrames = DefaultQuietFrames, int maximumFrames = DefaultMaximumFrames,
-            double targetMilliseconds = DefaultTargetMilliseconds, double estimateMilliseconds = DefaultEstimateMilliseconds)
+            double targetMilliseconds = DefaultTargetMilliseconds, double estimateMilliseconds = DefaultEstimateMilliseconds,
+            double maximumSeconds = DefaultMaximumSeconds)
         {
+            if (!(maximumSeconds > 0) || double.IsInfinity(maximumSeconds)) throw new ArgumentOutOfRangeException(nameof(maximumSeconds));
+            this.maximumSeconds = maximumSeconds;
             elapsed = elapsedMilliseconds ?? throw new ArgumentNullException(nameof(elapsedMilliseconds));
             if (quietFrames < 1) throw new ArgumentOutOfRangeException(nameof(quietFrames));
             if (maximumFrames < quietFrames) throw new ArgumentOutOfRangeException(nameof(maximumFrames));
@@ -175,24 +180,27 @@ namespace PersistentCity.Core
         public long Waited { get; private set; }
         public long Fitted { get; private set; }
 
-        public bool Allows(int frame)
+        public bool Allows(int frame, double seconds = double.NaN)
         {
             if (!built) return true;
             long gap = (long)frame - lastBuild;
-            if (gap < 0 || gap >= maximumFrames) return true;
+            if (gap < 0 || gap >= maximumFrames || Overdue(seconds)) return true;
             if (gap < quietFrames) return false;
             double now = elapsed();
             return !double.IsNaN(now) && !double.IsInfinity(now) && now + EstimateMilliseconds <= target;
         }
 
-        internal void Built(int frame)
+        private bool Overdue(double seconds) => !double.IsNaN(seconds) && !double.IsInfinity(seconds) && !double.IsNaN(lastSeconds) && seconds - lastSeconds >= maximumSeconds;
+
+        internal void Built(int frame, double seconds = double.NaN)
         {
             if (built)
             {
                 long gap = (long)frame - lastBuild;
-                if (gap >= 0 && gap < maximumFrames) Fitted++; else Waited++;
+                if (gap >= 0 && gap < maximumFrames && !Overdue(seconds)) Fitted++; else Waited++;
             }
             built = true; lastBuild = frame;
+            lastSeconds = double.IsInfinity(seconds) ? double.NaN : seconds;
         }
 
         public void Observe(double milliseconds)

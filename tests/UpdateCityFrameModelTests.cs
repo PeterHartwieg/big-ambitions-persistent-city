@@ -14,20 +14,21 @@ public sealed class UpdateCityFrameModelTests
 
     private sealed class Outcome
     {
-        public double P50, P95, P99, Max, AdvancePerSecond, DemandPerSecond, BuildsPerSecond, RequestsPerSecond, EndBacklog, EndWaiting;
+        public double P50, P95, P99, Max, AdvancePerSecond, DemandPerSecond, BuildsPerSecond, RequestsPerSecond, EndBacklog, EndWaiting, PeakBacklog, DrainedAt = double.NaN;
         public int Spikes;
     }
 
     private static double Rank(List<double> sorted, double fraction) => sorted[Math.Max(0, Math.Min(sorted.Count - 1, (int)Math.Ceiling(fraction * sorted.Count) - 1))];
 
-    private static Outcome Run(bool bounded, double fps, double seconds = 600, int seed = 0x14A)
+    private static Outcome Run(bool bounded, double fps, double seconds = 600, int seed = 0x14A,
+        double sustainedPerSecond = 0, double sustainedFrom = 0, double sustainedFor = 0)
     {
         var dice = new Random(seed);
         var frame = new UpdateCityBudget();
         double elapsed = 0;
         var gate = bounded ? new DressFrameGate(() => elapsed) : null;
         var dress = new DressBuildBudget(gate: gate);
-        double step = 1 / fps, backlog = 0, demand = 0, done = 0, waiting = 0, requests = 0, nextBurst = 0;
+        double step = 1 / fps, backlog = 0, demand = 0, done = 0, waiting = 0, requests = 0, nextBurst = 0, peak = 0, drained = double.NaN;
         int builds = 0, frames = (int)(seconds * fps), spikes = 0;
         var samples = new List<double>(frames);
         for (int f = 0; f < frames; f++)
@@ -37,6 +38,7 @@ public sealed class UpdateCityFrameModelTests
             elapsed = pre;
             double arriving = BaseAdvanceMillisecondsPerSecond * step;
             while (nextBurst <= now) { arriving += 5 + dice.NextDouble() * 20; nextBurst += -Math.Log(1 - dice.NextDouble()) / BurstsPerSecond; }
+            if (now >= sustainedFrom && now < sustainedFrom + sustainedFor) arriving += sustainedPerSecond * step;
             backlog += arriving; demand += arriving;
             var native = new PopulationFrameBudget(step, false);
             double budget = bounded ? frame.Advance(native.Milliseconds, elapsed) : native.Milliseconds;
@@ -49,6 +51,8 @@ public sealed class UpdateCityFrameModelTests
             }
             done += advance;
             elapsed += advance;
+            peak = Math.Max(peak, backlog);
+            if (sustainedFor > 0 && double.IsNaN(drained) && now >= sustainedFrom + sustainedFor && backlog < 1) drained = now - sustainedFrom - sustainedFor;
             double physical = 0.35 + dice.NextDouble() * 0.5;
             waiting += BuildsWantedPerSecond * step; requests += BuildsWantedPerSecond * step;
             double build = 0;
@@ -70,7 +74,7 @@ public sealed class UpdateCityFrameModelTests
         {
             P50 = Rank(samples, .5), P95 = Rank(samples, .95), P99 = Rank(samples, .99), Max = samples[samples.Count - 1], Spikes = spikes,
             AdvancePerSecond = done / seconds, DemandPerSecond = demand / seconds, BuildsPerSecond = builds / seconds,
-            RequestsPerSecond = requests / seconds, EndBacklog = backlog, EndWaiting = waiting,
+            RequestsPerSecond = requests / seconds, EndBacklog = backlog, EndWaiting = waiting, PeakBacklog = peak, DrainedAt = drained,
         };
     }
 
@@ -90,14 +94,33 @@ public sealed class UpdateCityFrameModelTests
         var after = Run(bounded: true, fps);
         output.WriteLine(Line("before", fps, before));
         output.WriteLine(Line("after ", fps, after));
-        Assert.True(after.P95 <= 4.5, Line("after", fps, after));
-        Assert.True(after.P95 < before.P95 || before.P95 <= 4.5);
+        double buildFrames = BuildsWantedPerSecond * (1 + GrowShare) / fps;
+        if (buildFrames < 0.04) Assert.True(after.P95 <= 4.5, Line("after", fps, after));
+        else Assert.True(after.P95 <= before.P95 + 0.5, Line("after", fps, after));
         Assert.Equal(0, after.Spikes);
         Assert.True(after.Spikes <= before.Spikes);
         Assert.True(after.AdvancePerSecond >= after.DemandPerSecond * 0.99, "advance falls behind");
         Assert.True(after.EndBacklog < 50, "advance backlog grows");
-        if (fps >= 28) Assert.True(after.BuildsPerSecond >= after.RequestsPerSecond * 0.98, "bodies fall behind at " + fps + " fps");
-        else Assert.True(after.BuildsPerSecond >= fps / DressFrameGate.DefaultMaximumFrames * (1 - GrowShare) * 0.95);
+        Assert.True(after.BuildsPerSecond >= after.RequestsPerSecond * 0.98, "bodies fall behind at " + fps + " fps");
+        Assert.True(after.EndWaiting < 5, "pedestrian backlog grows at " + fps + " fps");
+    }
+
+    [Theory]
+    [InlineData(30, 80)]
+    [InlineData(30, 110)]
+    [InlineData(5.8, 20)]
+    public void ASustainedRushDrainsAfterItEnds(double fps, double rushPerSecond)
+    {
+        const double from = 120, length = 60;
+        var before = Run(bounded: false, fps, seconds: 600, sustainedPerSecond: rushPerSecond, sustainedFrom: from, sustainedFor: length);
+        var after = Run(bounded: true, fps, seconds: 600, sustainedPerSecond: rushPerSecond, sustainedFrom: from, sustainedFor: length);
+        foreach (var (label, o) in new[] { ("before", before), ("after ", after) })
+            output.WriteLine(string.Format(CultureInfo.InvariantCulture,
+                "{0} {1:0.0} fps, {2:0} ms/s of advance work for {3:0} s: peak backlog {4:0} ms, drained {5:0.0} s after the rush, UpdateCity p95 {6:0.00} ms",
+                label, fps, rushPerSecond, length, o.PeakBacklog, o.DrainedAt, o.P95));
+        Assert.False(double.IsNaN(after.DrainedAt), "the backlog never drains");
+        Assert.True(after.DrainedAt <= 120, "drains in " + after.DrainedAt + " s");
+        Assert.True(after.EndBacklog < 50);
     }
 
     [Fact]
@@ -159,6 +182,10 @@ public sealed class UpdateCityFrameModelTests
         Assert.True(budget.TryTake(DressFrameGate.DefaultMaximumFrames, 100));
         Assert.Equal(1, gate.Waited);
         Assert.False(budget.TryTake(DressFrameGate.DefaultMaximumFrames + 1, 101));
+        Assert.False(budget.CanTake(DressFrameGate.DefaultMaximumFrames + 2, 100 + DressFrameGate.DefaultMaximumSeconds - 0.01));
+        Assert.True(budget.TryTake(DressFrameGate.DefaultMaximumFrames + 2, 100 + DressFrameGate.DefaultMaximumSeconds));
+        Assert.Equal(2, gate.Waited);
+        Assert.Throws<ArgumentOutOfRangeException>(() => new DressFrameGate(() => 0, maximumSeconds: 0));
         Assert.Throws<ArgumentOutOfRangeException>(() => new DressFrameGate(() => 0, quietFrames: 0));
         Assert.Throws<ArgumentOutOfRangeException>(() => new DressFrameGate(() => 0, quietFrames: 9, maximumFrames: 8));
         long allocated = GC.GetAllocatedBytesForCurrentThread();
