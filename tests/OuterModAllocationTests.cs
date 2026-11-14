@@ -88,5 +88,36 @@ namespace PersistentCity.Tests
             Assert.True(now <= 64, now.ToString());
             Assert.True(now * 2 < old);
         }
+
+        [Fact]
+        public void TheCoreCallsOutsideAdvanceStayCheapPerFrameAtTheCap()
+        {
+            var state = Gr5AllocationMeasure.City();
+            var simulator = new CitySimulator(state, new FreshCityTraceTests.Walk());
+            simulator.AttachFoodMarket(new VisitorRoutineTests.Market { Shops = F5gPopulationFillTests.Shops(state) });
+            double day = Math.Floor(state.Minute / 1440) * 1440 + 1440, start = day + 15.5 * 60;
+            simulator.AdvanceTo(start - 10, int.MaxValue);
+            const int fps = 28;
+            long observe = 0, stops = 0, closures = 0;
+            int frames = 0;
+            for (double minute = start - 10; minute < start + 20; minute += 0.333 / fps)
+            {
+                bool counted = minute >= start;
+                long t0 = GC.GetAllocatedBytesForCurrentThread();
+                simulator.BeginAccountingObservations(minute);
+                long t1 = GC.GetAllocatedBytesForCurrentThread();
+                simulator.RefreshOptionalStops();
+                long t2 = GC.GetAllocatedBytesForCurrentThread();
+                simulator.RefreshTrafficClosures();
+                long t3 = GC.GetAllocatedBytesForCurrentThread();
+                simulator.AdvanceFrameSlice(minute, 32);
+                if (!counted) continue;
+                observe += t1 - t0; stops += t2 - t1; closures += t3 - t2; frames++;
+            }
+            output.WriteLine("1,000 residents / 2,000 visitors, day 15:30, " + frames + " frames: BeginAccountingObservations " + observe / frames
+                + " B/frame, RefreshOptionalStops " + stops / frames + " B/frame, RefreshTrafficClosures " + closures / frames + " B/frame; per 600 s at 28 fps "
+                + (observe + stops + closures) / frames * 16800 / 1000 + " KB");
+            Assert.True((observe + stops + closures) / frames < 1024, observe + "/" + stops + "/" + closures);
+        }
     }
 }

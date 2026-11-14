@@ -180,6 +180,8 @@ namespace PersistentCity.Runtime
                 if (appearance.lastMergedMeshRenderer != null) appearance.lastMergedMeshRenderer.enabled = true;
                 if (character.shadowCaster != null) character.shadowCaster.enabled = true;
                 body = new PhysicalPedestrianBody(character, identity.Id, checked(++generation)) { Dressing = dressing };
+                if (dressed && fades.TryGetValue(character, out bool fade)) body.KnownFade = fade;
+                else fades.Remove(character);
                 var relay = character.capsuleCollider.gameObject.GetComponent<PhysicalPedestrianCrosswalk>();
                 if (relay == null) relay = character.capsuleCollider.gameObject.AddComponent<PhysicalPedestrianCrosswalk>();
                 relay.Body = body;
@@ -291,8 +293,11 @@ namespace PersistentCity.Runtime
             NotifyRemoved(character);
             character.navmeshAgent.enabled = false; character.capsuleCollider.enabled = false;
             character.gameObject.SetActive(false);
+            if (body.KnownFade is bool fade) fades[character] = fade;
             idle.Return(character, body.Dressing, Time.unscaledTime, wantedMinute);
         }
+
+        private readonly Dictionary<ThirdPersonCharacter, bool> fades = new Dictionary<ThirdPersonCharacter, bool>();
 
         public bool TrimIdle(double seconds)
         {
@@ -311,7 +316,7 @@ namespace PersistentCity.Runtime
 
         private void DestroyOwned(ThirdPersonCharacter character)
         {
-            all.Remove(character);
+            all.Remove(character); fades.Remove(character);
             if (character != null && character.appearanceSetter != null) baked.Remove(character.appearanceSetter);
             if (character != null)
             {
@@ -348,7 +353,7 @@ namespace PersistentCity.Runtime
                 foreach (var entry in reserve) if (ReferenceEquals(entry.Character, character)) { kept = true; break; }
                 if (!kept) DestroyCharacter(character);
             }
-            active.Clear(); idle.Clear(); baked.Clear(); BlendshapeBake.Clear(); all.Clear();
+            active.Clear(); idle.Clear(); baked.Clear(); fades.Clear(); BlendshapeBake.Clear(); all.Clear();
             if (staging != null) { UnityEngine.Object.Destroy(staging); staging = null; }
         }
     }
@@ -425,6 +430,7 @@ namespace PersistentCity.Runtime
         }
         public bool CanFade => canFade ??= ProbeFade();
         private bool? canFade;
+        internal bool? KnownFade { get => canFade; set => canFade = value; }
         private bool ProbeFade()
         {
             if (Character == null) return false;
