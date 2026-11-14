@@ -8,6 +8,7 @@ Detailed specs: [F8 §7](https://github.com/PeterHartwieg/big-ambitions-persiste
 
 ## Latest evidence
 
+- **14 November i, Mac, build `65b41db5`:** 1 passed / 1 partial / 0 failed / 4 NOT RUN groups. Five unrentable fixture subjects, rig tally 3 housed / 1 unreadable / 1 empty; PC applied Home evidence not observable in-load; restored ([14i results](#rig-results--14-november-2026-i-mac-246-checks-4-5-with-unrentable_fixture-at-65b41db5)).
 - **14 November h, PC, candidate `650fc893`:** 0 passed / 0 partial / 0 failed / 9 NOT RUN. Local staging/windowed start worked; throwaway time/perf/modwork FT guards and fixture population blocked all four windows; exact restoration, lease free ([14h results](#rig-results--14-november-2026-h-pc-gr-5-60-fps-streetbusy-shop--gc-vs-mac-14g-at-650fc893)).
 - **14 November g, Mac, build `7ff6a87a`:** 2 passed / 2 partial / 1 failed / 4 NOT RUN groups. Appearance 62.2/26.1 MB, gen0 7/6, pause p95 67.048/141.801 ms; street p95 5.2988/5.3683 ms; look/refill partial; restored ([14g results](#rig-results--14-november-2026-g-mac-gr-5-gc-recheck-after-262-at-7ff6a87a)).
 - **14 November f, Mac, build `2f5e72eb`:** 4 passed / 1 partial / 0 failed / 5 NOT RUN; ordinary-save refusal verified, food sales at speed 1 checked, footprint fixture gap; restored ([14f results](#rig-results--14-november-2026-f-mac-244-p-d-7--246-checks-4-5--260-checks-1-3-at-2f5e72eb)).
@@ -2581,3 +2582,137 @@ The scoped rollback reserialized/reordered `agent-install.json`, so its first po
 Build passed; compact JSON parsed; docs-links, markdown ban and whitespace checks recorded with the evidence commit. No offline test suite or regression suite. Only this checklist and the compact JSON changed. No production code, RLO, schema 1, food weights, version/changelog, release, Workshop, GitHub issue or merge. Build worktree removed after commit; evidence worktree removed after PR creation. All steps ran in the foreground and were awaited.
 
 **RESULT: BLOCKED.**
+
+## Rig results — 14 November 2026 i, Mac (#246 checks 4-5 with unrentable_fixture at 65b41db5)
+
+**RESULT: DONE. Counts: 1 passed / 1 partial / 0 failed / 4 NOT RUN groups.** #246 check 4 is partial; check 5 passes the explicitly documented rig-classification fallback. Persistent City's applied-state Home evidence and tally are **not observable in-load**. No PC mismatch is claimed. In-game proof gates no merge.
+
+Role `rig_test`, where `mac`, isolated `agentmac`, owner `persistent-city-rig-2026-11-14i-mac`. `<stage>` means `<home>/HART-Builds/persistent-city-rig-2026-11-14i-mac`; report copy `<home>/Coding_Projects/.agent-logs/persistent-city-rig-2026-11-14i-mac.md`. Raw replies, both Player logs and nine screenshots stay outside Git. Raw evidence manifest `<stage>/raw-evidence-manifest.json`, SHA-256 `3d3e3839a60a8e6e53090a2ffda47957e2cbbcf399af2a678b4767ba11c4ab65`.
+
+### Build and rig
+
+| Item | Evidence |
+| --- | --- |
+| Candidate | `65b41db5a9567a1c79aa5cb972232800d0710b59`; initial and final fetched origin/codex/persistent-city tip, unchanged. |
+| Branch / worktree | New `codex/mac-rig-2026-11-14i` / `rig-2026-11-14i-mac-evidence`; one isolated worktree served build and evidence. Other sessions and the original checkout were untouched. |
+| Build | `python3 tools/build.py --game-managed "<home>/Library/Application Support/BigAmbitionsMCP/dll-import-shim/Big Ambitions_Data/Managed"`, exit 0, Homebrew PATH and DOTNET_ROOT. No test sources changed; no full suite or regression suite. |
+| PersistentCity DLL SHA-256 | `a0a1ef89db96420ce375100a09f6236c13d47b10f3856f9c1963079b0613341b`; built, package and live staged DLL matched. Both starts validated the receipt. |
+| Official agent-rig HEAD | `17ff9f86ef07a8c071a90886fa76ed2e98f56c57`, clean; fetch / ff-only pull already current. Includes agent-rig #89. No checkout edit, commit, push or overlay update. |
+| Live AgentRigOps SHA-256 | `d3188b0e837188aec8be85535846953170da99807ad22914ccf4a3c38d77ed3c`; live binary contains `unrentable_fixture`, loaded health reports the same hash, unchanged at cleanup. First in-game fixture use recorded below. |
+| RLO Player.log | `[Mod:RealLifeOverhaul] Real Life Overhaul 1.0.6 initialised.` All 53 package files hash unchanged; no RLO file installation, edit or restoration. |
+| PC Player.log | `[Mod:PersistentCity] Persistent population active: 1000 residents, 2000 visitors, 1683 places.` The full line is below. No commit-stamped build line is emitted; matching DLL hashes and the validated receipt establish binary identity. |
+| Lease / resources | Free/stopped initially; acquired `2026-11-14T19:16:55.201839Z`. Pre-stage 64.0 GiB disk / 77% reported free memory; after filter timeout 61.0 GiB / 44%. No resource refusal, takeover or other-process termination. |
+| Starts / loads / stops | Two windowed rig-test processes, PIDs 26504 and 26861; one attempt per start, both successful. Cold source load 51.5 s, disposable load 65.5 s. Two graceful stops; no force. Temporary frame cap 30/vsync 0 restored to original absence; no performance window. |
+| Autosave / saves | Original native 5 minutes / 3 saves, prevent_autosave=false; #70 suppression confirmed before and after both loads and at finish. One explicit save created only `FT RIGTMP-GR5-14i`, before apply. In the applied-state process, guard attempts/default_allowed/armed_allowed/unrestricted all 0; native save/compression idle. No save after apply, including after revert. |
+| RLO options | Before/after equal: living_population stored=null, live=true; social_media stored=1, live=true; social_media_notices stored=0, live=false; original_saved=false for all. No option mutation. All saved RLO preference values backed up and restored with the isolated plist. |
+
+Exact staging command, game stopped and lease held, from official agent-rig:
+
+```sh
+python3 scripts/install-mac.py --stage-mod PersistentCity <stage>/package
+```
+
+Receipt backup `<home>/Library/Application Support/BigAmbitionsAgentTestsMac/receipt-backups/20261114T191747Z`. Package contains no RLO files. Printed rollback, verbatim apart from `<home>` path substitution:
+
+```sh
+rm -rf "<home>/Library/Application Support/com.hovgaardgames.bigambitions.agenttests.mac/ModsLocal/PersistentCity" && cp -Rp "<home>/Library/Application Support/BigAmbitionsAgentTestsMac/receipt-backups/20261114T191747Z/mod" "<home>/Library/Application Support/com.hovgaardgames.bigambitions.agenttests.mac/ModsLocal/PersistentCity" && cp "<home>/Library/Application Support/BigAmbitionsAgentTestsMac/receipt-backups/20261114T191747Z/install.json" "<home>/Library/Application Support/BigAmbitionsAgentTestsMac/install.json"
+```
+
+Automatic command review rejected that shell command before execution: `rm -f style commands are not permitted. Use a safer approach`. The stopped, leased restore retained the candidate folder in raw evidence, copied the entire backup mod into the empty live path, then copied back the backup receipt. No receipt was hand-edited.
+
+### Per-check results
+
+| Check | Result | Evidence |
+| --- | --- | --- |
+| #246 item 4, unrentable Home footprint | PARTIAL | All three required housed subjects exist, including rotated and yard/sidewalk cases. Their native geometry and rig-policy floors were read. PC reads places before ops run and has no documented reload route that preserves this fixture, so applied PC area evidence/floors and PC-to-visible ratios are not observable in-load. Screenshots show roof/ground context; facade occlusion prevents a reliable independent storey count. |
+| #246 item 5, unreadable / empty tally | PASS, documented fallback | All 5 unrentable rows have pc_home_candidate=true: housed=3, unreadable=1, empty=1. Both class filters match 1. Empty's sole enabled collider has height 0, floors 0, capacity 0; it is empty, not unreadable. PC's own line and omitted-places warning for the applied state are not observable in-load. This is rig `UnrentableHome` evidence under agent-rig's prescribed fallback, not a nonzero PC runtime tally. |
+
+Followed agent-rig `docs/rig-fixtures.md` “Unrentable residential subjects” and `docs/rig-ops.md` building contract. Loaded `FT GR5 13f Timing v1`, paused, saved the new name `FT RIGTMP-GR5-14i`, stopped and cold-loaded that disposable copy. Status before apply: applied=false, subjects=[], missing=[]. Apply's `after`: applied=true, 5 subjects, **missing=[]**. Each subject had size `agentrig:unrentable_fixture`, rentable_interior=false and the role's expected class. Original sizes: `ba:buildingsize_l` for rotated/plain, `ba:buildingsize_b` for yard, `ba:buildingsize_n` for unreadable/empty.
+
+| Role / place | Rotated | Yard / sidewalk | Rig world footprint / policy floors (height) | PC Home area evidence / floors | PC-to-visible ratio |
+| --- | --- | --- | --- | --- | --- |
+| housed_rotated / `address:ba%3Astreet_firststreet:22:home` | true | false | 1488.514 m² / 13 (48.719 m high) | not observable in-load | not observable in-load |
+| housed_yard / `address:ba%3Astreet_fifthavenue:25:home` | false | true | 426.709 m² / 5 (18.389 m high) | not observable in-load | not observable in-load |
+| housed_plain / `address:ba%3Astreet_broadwaystreet:2:home` | false | false | 3826.156 m² / 11 (40.332 m high) | not observable in-load | not observable in-load |
+| unreadable / `address:ba%3Astreet_broadwaystreet:13:home` | false | false | unavailable / unavailable | not observable in-load | not observable in-load |
+| empty / `address:ba%3Astreet_broadwaystreet:23:home` | false | false | 2528.192 m² / 0 (0.000 m high) | not observable in-load | not observable in-load |
+
+For the housed subjects only, the geometry proxy comparison is below. Local collider area removes yaw; renderer AABB is a visible-bounds envelope that can include roof structures and parts. These are not measured ground polygons or independent storey counts. All world/local ratios are below 1.5; this alone does not pass check 4. The last column is **rig input arithmetic**, world footprint × policy floors × 0.6, not a Home value observed from Persistent City.
+
+| Role | Local collider area m² | Visible renderer AABB area m² | Visible envelope height m | World / local area | World / renderer AABB area | Rig implied usable area m² |
+| --- | --- | --- | --- | --- | --- | --- |
+| housed_rotated | 1431.112 | 1493.488 | 49.920 | 1.040 | 0.997 | 11610.409 |
+| housed_yard | 426.709 | 437.253 | 23.514 | 1.000 | 0.976 | 1280.127 |
+| housed_plain | 3826.154 | 3826.155 | 47.418 | 1.000 | 1.000 | 25252.630 |
+
+Rotated yaw is 268.953°. Yard ground/bottom plane extends beyond the collider envelope (outside_footprint=true); its part is present but active=false at readback, so the fixture's “yard/sidewalk” selector establishes geometric overlap, not an active yard visual. Nine independent camera PNGs from the windowed rig-test start are retained only in `<stage>`. All were opened for inspection. The top views retain roofs/street context. First facade views are partly blocked by neighbouring buildings; the rotated/yard close views are inside solid geometry and the plain close view is obscured by a tree. None is used to invent a visible-storey count.
+
+### Tally, exact operations and tooling gaps
+
+`building {"action":"list","rentable":false}`: residential=585, matched=5, total=5, housed=3, unreadable=1, empty=1. Every matched row is a PC Home candidate. `rotated:true` matches only 22 1st Street. The original `meets_yard_or_sidewalk:true` request's eventual reply matches only 25 5th Avenue. The class selectors unreadable and empty each match their respective Broadway address. No missing role or `ops_building_fixture_no_native_subject` occurred.
+
+Exact in-game operation errors:
+
+```text
+python3 scripts/mac-agent op building '{"action":"list","rentable":false,"meets_yard_or_sidewalk":true}'
+{"error":"ops_timeout_do_not_retry"}
+```
+
+The 30 s client deadline expired while the hook reported `ops_heartbeat_stalled`. No request replay. The hook later resumed naturally; the original response `62034df8a23d444f9e96b693ce3833ab.json` was read and copied to raw evidence with ok=true, matched=1 and the expected filters. Thus the selected yard subject is established, while the client timeout remains a tooling failure. No cause inside the rig is asserted.
+
+```text
+python3 scripts/mac-agent op building '{"action":"read","place":"address:ba%3Astreet_broadwaystreet:13:home"}'
+{"error":"ops_building_bounds_unavailable"}
+```
+
+This is the deliberately collider-free unreadable subject. Its detailed geometry is NOT RUN / tooling gap; the successful class/list replies establish the fallback tally. `read` for the empty subject succeeded. Every successful geometry read returns storeys=null / `ops_building_storeys_not_native`, the documented native-storey limitation, not another dispatch error. PC Home evidence, applied PC tally and applied PC warning are not observable in-load: the docs explicitly prohibit saving this applied fixture and state that reload would lose the disabled-collider part. No applied-state reload/save was attempted.
+
+### Player.log excerpts and observed durations
+
+Both loads log:
+
+```text
+[Mod:RealLifeOverhaul] Real Life Overhaul 1.0.6 initialised.
+[Persistent City] unrentable homes housed=0 beds=0 unreadable=0 empty=0
+[Mod:PersistentCity] Persistent population active: 1000 residents, 2000 visitors, 1683 places. Native-pace walking, subway and car journeys; physical population preflight follows road initialization. Ctrl+F8 opens food business feedback.
+```
+
+The zero tally describes the city at load, before apply. It is **not observable in-load** for the applied state and is not a mismatch. Temporary load-time hook warnings (`ops_heartbeat_stalled` in A, `ops_pump_missing` in B) recovered with `ops_pump_resumed`; both bounded loads completed. The yard-filter interval additionally logs:
+
+```text
+[AgentTests] Rig ops: disabled (ops_heartbeat_stalled)
+[AgentTests] Rig ops: ready (ops_pump_resumed)
+```
+
+No perf, GC, modwork or save-profiler measurement was armed. Already-emitted PC log observations at or above 30 ms are listed below; component durations are not whole-frame measurements, and cumulative totals are not spikes.
+
+| Process / log evidence | Observed single-call / maximum durations >=30 ms |
+| --- | --- |
+| A, source fixture, Slow routing frames 775 / 860 | preparation_ms=130.646 / 77.051 |
+| A, Population observation | maximum advance 160.440; slowest unit food-continuation 160.394; historical planner scene-search maximum 121.085 (overlaps preparation evidence) |
+| B, disposable fixture, Slow routing frames 868 / 1019 | preparation_ms=215.592; closure_ms=46.749 |
+| B, first Population observation | maximum advance 178.292; slowest unit food-continuation 178.027; historical planner scene-search maximum 185.771 (overlaps preparation evidence) |
+| B, next Population observation | maximum advance 154.314; slowest unit food-continuation 154.264 |
+
+These logs do not establish event-by-event spike counts or p95. No extra timing window was run and no performance investigation followed the spikes.
+
+### NOT RUN grouped
+
+1. **GR-5 GC/street re-checks:** excluded; the seventh fix, pause/advance/street, is still in progress on this Mac; recheck follows its merge. Other session/worktree untouched.
+2. **#262 checks 4–5:** excluded; no stable walker resident identity across reacquire, and no dense-street 48–96 walker fixture with paired refill. Rig bot gaps.
+3. **GR-5 60 fps arms:** excluded, Windows-only; PC rig profile lacks FT fixtures, a Rig bot gap. Windows was not contacted or started.
+4. **GR-5 save latency:** excluded; owner decision pending. The single disposable-copy save was setup only, with no save latency measurement.
+
+Partial-check omissions are not counted again: PC's applied Home evidence/tally/warning, independent visible storeys and unreadable subject detailed geometry remain unverified as described above. No production changes, release, Workshop upload, version/changelog update, issue, reviewers, bot messages or merge. Schema stays 1; FoodChoicePriceWeight and FoodChoiceHouseholdWeight unchanged.
+
+### Fixtures, restoration and validation
+
+Reused source `FT GR5 13f Timing v1`; created only disposable copy **`FT RIGTMP-GR5-14i`** before mutation. The source fixture's four matching save/metadata file hashes are unchanged. Applied fixture was reverted under the lease; after.applied=false, subjects=[], missing=[], and a fresh unrentable list reports matched=0 / all class counts 0. Quit without saving. The disposable save remains in the isolated profile; no undocumented removal.
+
+Independent pre-stage backup covered 35 files and 4 absent paths: whole PC package, receipt, isolated root configuration/preferences, PlayerSettings, persistent-city.json and isolated plist. Original native autosave and RLO options were recorded. After graceful stop, the whole original package/receipt was restored through the non-destructive equivalent above; isolated preference cache was imported from the backup, then original file bytes restored. Original frame-cap absence restored. All **35 original file hashes / 4 absent paths / exact PC file set / 53 RLO file hashes / 4 source fixture file hashes match; zero mismatches**. install.json SHA-256 `dea36ce03586cc53d3b2c7e5cd0fda6d9a54e61c670a21d0676ad18feee54a95`. AgentRigOps hash unchanged. All three RLO option readbacks match. Nine helper PNGs were copied/hash-verified to raw evidence and removed from their own helper output paths while stopped.
+
+Lease released; final running=false, process=null, held=false, pending=0. Owned PIDs 26504/26861 and their caffeinate assertions are gone. Official agent-rig and original PC checkout clean. Build/evidence worktree is removed after commit, push and opening the unmerged docs-only PR. Only this existing checklist changes; raw evidence and report copy stay outside Git.
+
+Offline validation: candidate build passed. Docs-links, markdown-ban and whitespace checks are recorded in the PR. No test source changed, no focused classes, no full suite. Final fetch left the candidate tip unchanged at `65b41db5`.
+
+Refs #246
