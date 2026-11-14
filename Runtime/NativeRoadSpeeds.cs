@@ -51,18 +51,23 @@ namespace PersistentCity.Runtime
             Waiting = null;
             var detached = spare;
             detached.Clear();
-            foreach (var pair in next)
-            {
-                if (pair.Key is not Waypoint lane || pair.Value.Original <= 0 || pair.Value.Effective <= 0
-                    || pair.Value.Effective > pair.Value.Original || lane.maxSpeed != pair.Value.Effective
-                    || canonical.TryGetValue(lane, out int old) && old != pair.Value.Original)
-                {
-                    Verified = false; LastRefusal = "RLO road speed override disagrees with its canonical native lane.";
-                    throw new InvalidOperationException(LastRefusal);
-                }
-                detached.Add(lane, pair.Value);
-            }
+            if (next is Dictionary<object, (int Original, int Effective)> concrete)
+                foreach (var pair in concrete) Accept(detached, pair.Key, pair.Value);
+            else
+                foreach (var pair in next) Accept(detached, pair.Key, pair.Value);
             spare = overrides; overrides = detached; Verified = true; LastRefusal = null;
+        }
+
+        private void Accept(Dictionary<object, (int Original, int Effective)> detached, object key, (int Original, int Effective) value)
+        {
+            if (key is not Waypoint lane || value.Original <= 0 || value.Effective <= 0
+                || value.Effective > value.Original || lane.maxSpeed != value.Effective
+                || canonical.TryGetValue(lane, out int old) && old != value.Original)
+            {
+                Verified = false; LastRefusal = "RLO road speed override disagrees with its canonical native lane.";
+                throw new InvalidOperationException(LastRefusal);
+            }
+            detached.Add(lane, value);
         }
 
         public int Canonical(Waypoint lane) => Resolve(lane).Original;

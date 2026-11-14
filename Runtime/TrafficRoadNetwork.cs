@@ -230,7 +230,7 @@ namespace PersistentCity.Runtime
         {
             var captured = junctions[id]; var native = captured.Native;
             if (native == null || !ReferenceEquals(NativeJunction(id), native)) return Invalid("junction-identity", id);
-            if (native.name != captured.Name) return Invalid("junction-name", id);
+            if (NameDue(id) && native.name != captured.Name) return Invalid("junction-name", id);
             if (!Same(native.exitWaypoints, captured.Exits)) return Invalid("junction-exits", id);
             var groups = native.GetWaypoints();
             if (groups.Count != captured.Groups.Length) return Invalid("junction-groups", id);
@@ -238,6 +238,17 @@ namespace PersistentCity.Runtime
                 if (!Same(groups[group]?.roadWaypoints, captured.Groups[group])) return Invalid("junction-groups", id);
             if (native is TrafficLightsIntersection lights && (lights.greenLightTime != captured.Green || lights.yellowLightTime != captured.Yellow))
                 return Invalid("signal-timing", id);
+            return true;
+        }
+        internal const int JunctionNameFrames = 30;
+        private int[] junctionNameFrame = Array.Empty<int>();
+        private bool NameDue(int id)
+        {
+            int frame = UnityEngine.Time.frameCount;
+            if (junctionNameFrame.Length != junctions.Count) junctionNameFrame = new int[junctions.Count];
+            int last = junctionNameFrame[id];
+            if (last != 0 && frame >= last && frame - last < JunctionNameFrames) return false;
+            junctionNameFrame[id] = frame == 0 ? 1 : frame;
             return true;
         }
         private static int Flags(Waypoint native) => (native.enter ? 1 : 0) | (native.exit ? 2 : 0) | (native.giveWay ? 4 : 0);

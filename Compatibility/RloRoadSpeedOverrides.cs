@@ -102,17 +102,21 @@ namespace PersistentCity.Compatibility
             { throw Invalid("could not capture the reviewed fault speed snapshot", error); }
         }
 
+        private static readonly IReadOnlyDictionary<object, RloRoadSpeedOverride> Empty =
+            new ReadOnlyDictionary<object, RloRoadSpeedOverride>(new Dictionary<object, RloRoadSpeedOverride>(References.Instance));
+
         private IReadOnlyDictionary<object, RloRoadSpeedOverride> CaptureThroughApi(RloBridge api)
         {
             try
             {
-                var result = new Dictionary<object, RloRoadSpeedOverride>(References.Instance);
                 RloBridge.Status status = api.ReadSlowedLanes(lanes, originals, currents);
-                if (status == RloBridge.Status.Off) return new ReadOnlyDictionary<object, RloRoadSpeedOverride>(result);
+                if (status == RloBridge.Status.Off) return Empty;
                 if (status == RloBridge.Status.NotYet || status == RloBridge.Status.Refreshing)
                     throw new RloRoadSpeedsNotReadyException("RLO road speed overrides: ReadSlowedLanes: " + RloBridge.Describe(status));
                 if (status != RloBridge.Status.Ready) throw Invalid("ReadSlowedLanes: " + RloBridge.Describe(status));
                 if (originals.Count != lanes.Count || currents.Count != lanes.Count) throw Invalid("ReadSlowedLanes returned lists of different lengths");
+                if (lanes.Count == 0) return Empty;
+                var result = new Dictionary<object, RloRoadSpeedOverride>(References.Instance);
                 for (int i = 0; i < lanes.Count; i++)
                 {
                     object? point = lanes[i];

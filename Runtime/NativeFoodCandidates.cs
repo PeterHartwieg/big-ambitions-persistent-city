@@ -91,7 +91,7 @@ namespace PersistentCity.Runtime
                 registrations.TryGetValue(place, out var known);
                 registrations[place] = reg; shopControllers[place] = controller; IndexContractKey(place, reg, known);
                 VisitContract(place, reg);
-                var authority = NativeFoodOwnership.Observe(reg, SupportedMenu(reg) && GamePlaces.BuildingAccessible(controller));
+                var authority = NativeFoodOwnership.Observe(reg, SupportedMenu(reg) && GamePlaces.BuildingAccessible(controller), place);
                 if (authority.CanServe) { ActivateScope(authority, reg); Candidate(authority.BusinessId,true); }
                 else { Candidate(authority.BusinessId,false); if (!authority.Managed && scopesByPlace.TryGetValue(authority.PlaceId, out var retired)) changeJournal?.Clear(retired.BusinessId); }
             }

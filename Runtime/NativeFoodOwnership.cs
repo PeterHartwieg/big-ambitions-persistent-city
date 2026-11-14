@@ -182,17 +182,19 @@ namespace PersistentCity.Runtime
                 if (records.TryGetValue(place, out var row) && row.Managed && !row.Desired) observed[place] = reg;
             }
         }
-        internal static FoodAuthority Observe(BuildingRegistration reg, bool eligible)
+        internal static FoodAuthority Observe(BuildingRegistration reg, bool eligible) => Observe(reg, eligible, null);
+        internal static FoodAuthority Observe(BuildingRegistration reg, bool eligible, string? knownPlace)
         {
             EnsureSave();
             if (Error.Length > 0) throw new InvalidOperationException(Error);
             if (StandDown != null) throw new InvalidOperationException(SaveCodec.DevelopmentSchemaMessage);
-            string place = NativeFoodMarket.PlaceId(reg);
+            string place = knownPlace ?? NativeFoodMarket.PlaceId(reg);
             if (!records.TryGetValue(place, out var row)) records.Add(place, row = new FoodAuthority { PlaceId = place });
             bool replacement = observed.TryGetValue(place, out var previous) && !ReferenceEquals(previous, reg);
-            if (replacement || row.Signature.Length > 0 && row.Signature != FoodBusinessCatalogue.BusinessIdentity(reg)) DrainOldWork();
+            string identity = FoodBusinessCatalogue.BusinessIdentity(reg);
+            if (replacement || row.Signature.Length > 0 && row.Signature != identity) DrainOldWork();
             observed[place] = reg; addresses[reg.Address] = reg;
-            if (row.Observe(FoodBusinessCatalogue.BusinessIdentity(reg), eligible, Hour, replacement)) Persist();
+            if (row.Observe(identity, eligible, Hour, replacement)) Persist();
             return row;
         }
         internal static void Retire(string place)

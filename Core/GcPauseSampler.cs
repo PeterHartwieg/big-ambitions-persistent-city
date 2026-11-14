@@ -36,11 +36,13 @@ namespace PersistentCity.Core
         PhysicalRoster, PhysicalSelection, PhysicalSpawnPedestrian, PhysicalSpawnAppearance, PhysicalSpawnCheck, PhysicalSpawnVehicle, PhysicalUnattributed,
         PhysicalSpawnRandomize, PhysicalSpawnBake,
         AdvancePlanning, AdvanceEvents, AdvanceStops, AdvanceOther,
+        PhysicalSpawnGrow, ModPrelude, ModRlo, ModFood, ModOptionalStops, ModRoutes, ModClosures, ModHoldReplay, ModPhysicalSetup,
+        ModInspector, ModSummary, ModOther,
     }
 
     public sealed class GcPauseSampler
     {
-        public const int Segments = 27;
+        public const int Segments = 39;
         private static readonly string[] SegmentNames =
         {
             "mod", "advance", "physical", "physical_ambient", "physical_vehicles", "physical_bindings",
@@ -48,7 +50,16 @@ namespace PersistentCity.Core
             "physical_roster", "physical_selection", "physical_spawn_pedestrian", "physical_spawn_appearance", "physical_spawn_check", "physical_spawn_vehicle", "physical_unattributed",
             "physical_spawn_randomize", "physical_spawn_bake",
             "advance_planning", "advance_events", "advance_stops", "advance_other",
+            "physical_spawn_grow", "mod_prelude", "mod_rlo", "mod_food", "mod_optional_stops", "mod_routes", "mod_closures", "mod_hold_replay", "mod_physical_setup",
+            "mod_inspector", "mod_summary", "mod_other",
         };
+
+        public static string SegmentName(GcAllocationSegment segment) => SegmentNames[(int)segment];
+
+        public static bool IsOuter(GcAllocationSegment segment) => segment >= GcAllocationSegment.ModPrelude;
+
+        public static bool IsParent(GcAllocationSegment segment) =>
+            segment == GcAllocationSegment.Mod || segment == GcAllocationSegment.Physical || segment == GcAllocationSegment.Advance;
         public const string PolicyId = "gc-sampler-v1";
         public const int Generations = 3;
         public const int DefaultCapacity = 65536;
@@ -106,6 +117,7 @@ namespace PersistentCity.Core
             stored = 0; Frames = 0; CollectionFrames = 0; heapBeforeSum = heapAfterSum = heapPairs = 0;
             MaxFrameMs = MaxModMs = 0; collectionSpikes = frameSpikes = 0;
             frameAllocatedBytes = allocationFrames = 0;
+            FrameRecorder.Reset();
             Array.Clear(segmentBytes, 0, Segments); Array.Clear(segmentSamples, 0, Segments); Array.Clear(segmentSkipped, 0, Segments);
             HeapStart = HeapEnd = HeapPeak = lastHeap = heapBytes;
             baselined = false; pendingModMs = 0;
@@ -159,7 +171,18 @@ namespace PersistentCity.Core
         }
 
         public static bool IsDetail(GcAllocationSegment segment) =>
-            segment == GcAllocationSegment.PhysicalSpawnRandomize || segment == GcAllocationSegment.PhysicalSpawnBake || segment >= GcAllocationSegment.AdvancePlanning;
+            segment == GcAllocationSegment.PhysicalSpawnRandomize || segment == GcAllocationSegment.PhysicalSpawnBake
+            || segment >= GcAllocationSegment.AdvancePlanning && segment <= GcAllocationSegment.PhysicalSpawnGrow;
+
+        public ModFrameRecorder FrameRecorder { get; } = new ModFrameRecorder();
+
+        public void Outer(GcAllocationSegment segment, long bytes, bool valid)
+        {
+            if (!Running || !IsOuter(segment)) return;
+            int index = (int)segment;
+            if (!valid || bytes < 0) { segmentSkipped[index]++; return; }
+            segmentBytes[index] += bytes; segmentSamples[index]++;
+        }
 
         public void Charge(GcAllocationSegment segment, long counter, int collections)
         {
@@ -205,7 +228,7 @@ namespace PersistentCity.Core
             long total = 0;
             for (int i = 0; i < Segments; i++)
             {
-                if (pendingSpans[i] == 0) continue;
+                if (pendingSpans[i] == 0 || IsOuter((GcAllocationSegment)i)) continue;
                 segmentBytes[i] += pendingBytes[i]; segmentSamples[i] += pendingSpans[i];
                 if (!IsDetail((GcAllocationSegment)i)) total += pendingBytes[i];
             }
@@ -321,6 +344,7 @@ namespace PersistentCity.Core
                     .Append(",\"").Append(name).Append("_alloc_samples\":").Append(N(segmentSamples[i]))
                     .Append(",\"").Append(name).Append("_alloc_skipped\":").Append(N(segmentSkipped[i]));
             }
+            FrameRecorder.AppendJson(text.Append(','));
             text.Append('}');
             return text.ToString();
         }

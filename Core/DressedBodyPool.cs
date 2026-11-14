@@ -29,9 +29,14 @@ namespace PersistentCity.Core
     public sealed class DressedBodyPool<T> where T : class
     {
         public const int DefaultSpare = 16;
+        public const int StreetSpare = 32;
+        public const double TrimEverySeconds = 5, TrimIdleSeconds = 120;
+        public const double StaleMinutes = 15;
+        public static int Ceiling(int activeMaximum) => checked(activeMaximum + StreetSpare);
         private readonly List<T> items = new List<T>();
         private readonly List<PersonDressing> dressings = new List<PersonDressing>();
         private readonly List<double> returned = new List<double>();
+        private readonly List<double> wanted = new List<double>();
         private readonly int spare;
 
         public DressedBodyPool(int spare = DefaultSpare)
@@ -42,20 +47,67 @@ namespace PersistentCity.Core
 
         public int Count => items.Count;
         public int Spare => spare;
+        public double Minute { get; set; } = double.NaN;
+
+        public T this[int index] => items[index];
+        public PersonDressing DressingAt(int index) => dressings[index];
+        public double WantedAt(int index) => wanted[index];
 
         public void Return(T item, PersonDressing dressing) => Return(item, dressing, double.NegativeInfinity);
 
-        public void Return(T item, PersonDressing dressing, double seconds)
+        public void Return(T item, PersonDressing dressing, double seconds) => Return(item, dressing, seconds, double.NaN);
+
+        public void Return(T item, PersonDressing dressing, double seconds, double wantedMinute)
         {
             if (item == null) throw new ArgumentNullException(nameof(item));
             items.Add(item); dressings.Add(dressing); returned.Add(double.IsNaN(seconds) ? double.NegativeInfinity : seconds);
+            wanted.Add(dressing.Dressed ? wantedMinute : double.NaN);
+        }
+
+        public bool Expendable(int index)
+        {
+            double at = wanted[index];
+            if (double.IsNaN(at)) return false;
+            return double.IsPositiveInfinity(at) || !double.IsNaN(Minute) && at + StaleMinutes < Minute;
+        }
+
+        private double Score(int index)
+        {
+            if (Expendable(index)) return double.PositiveInfinity;
+            double at = wanted[index];
+            return double.IsNaN(at) ? double.PositiveInfinity : at;
+        }
+
+        private int Victim()
+        {
+            int best = -1;
+            double score = double.NegativeInfinity;
+            for (int i = 0; i < items.Count; i++)
+            {
+                double s = Score(i);
+                if (best < 0 || s > score) { best = i; score = s; }
+            }
+            return best;
+        }
+
+        private int OldestExpendable()
+        {
+            for (int i = 0; i < items.Count; i++) if (Expendable(i)) return i;
+            return -1;
+        }
+
+        private T TakeAt(int index)
+        {
+            T item = items[index];
+            items.RemoveAt(index); dressings.RemoveAt(index); returned.RemoveAt(index); wanted.RemoveAt(index);
+            return item;
         }
 
         public bool TryTakeDressed(in PersonDressing wanted, out T item)
         {
             item = null!;
             for (int i = items.Count - 1; i >= 0; i--)
-                if (dressings[i].Matches(wanted)) { item = items[i]; items.RemoveAt(i); dressings.RemoveAt(i); returned.RemoveAt(i); return true; }
+                if (dressings[i].Matches(wanted)) { item = TakeAt(i); return true; }
             return false;
         }
 
@@ -63,7 +115,7 @@ namespace PersistentCity.Core
         {
             item = null!;
             for (int i = 0; i < items.Count; i++)
-                if (!dressings[i].Dressed) { item = items[i]; items.RemoveAt(i); dressings.RemoveAt(i); returned.RemoveAt(i); return true; }
+                if (!dressings[i].Dressed) { item = TakeAt(i); return true; }
             return false;
         }
 
@@ -71,8 +123,24 @@ namespace PersistentCity.Core
         {
             item = null!;
             if (items.Count == 0) return false;
-            item = items[0];
-            items.RemoveAt(0); dressings.RemoveAt(0); returned.RemoveAt(0);
+            item = TakeAt(0);
+            return true;
+        }
+
+        public bool TryTakeVictim(out T item)
+        {
+            item = null!;
+            int at = Victim();
+            if (at < 0) return false;
+            item = TakeAt(at);
+            return true;
+        }
+
+        public bool TryTakeAny(out T item)
+        {
+            item = null!;
+            if (items.Count == 0) return false;
+            item = TakeAt(items.Count - 1);
             return true;
         }
 
@@ -91,18 +159,26 @@ namespace PersistentCity.Core
             if (owned >= maximum && items.Count == 0) return BodyChoice.Full;
             if (budget != null && !budget.TryTake(frame, seconds)) return BodyChoice.Deferred;
             if (TryTakeUndressed(out item)) return BodyChoice.Redress;
+            int expendable = OldestExpendable();
+            if (expendable >= 0) { item = TakeAt(expendable); return BodyChoice.Redress; }
             if (owned < maximum && items.Count < spare) return BodyChoice.Grow;
-            if (TryTakeOldest(out item)) return BodyChoice.Redress;
+            if (TryTakeVictim(out item)) return BodyChoice.Redress;
             return BodyChoice.Grow;
         }
 
         public bool TryTrim(double seconds, double idleSeconds, out T item)
         {
             item = null!;
-            return items.Count > spare && returned[0] <= seconds - idleSeconds && TryTakeOldest(out item);
+            if (items.Count <= spare) return false;
+            double before = seconds - idleSeconds;
+            for (int i = 0; i < items.Count; i++)
+                if (returned[i] <= before && (Expendable(i) || !dressings[i].Dressed)) { item = TakeAt(i); return true; }
+            if (returned[0] > before) return false;
+            item = TakeAt(0);
+            return true;
         }
 
-        public void Clear() { items.Clear(); dressings.Clear(); returned.Clear(); }
+        public void Clear() { items.Clear(); dressings.Clear(); returned.Clear(); wanted.Clear(); }
     }
 
     public sealed class DressBuildBudget

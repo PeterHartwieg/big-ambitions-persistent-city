@@ -39,7 +39,7 @@ namespace PersistentCity.Compatibility
         {
             if (Status != RloReadStatus.Ready || state.PopulationKey != PopulationKey || state.Seed != CitySeed || state.SourceIdentities.Count != Identities.Count)
                 return false;
-            var expected = new Dictionary<string, CitizenIdentity>(StringComparer.Ordinal);
+            var expected = new Dictionary<string, CitizenIdentity>(Identities.Count, StringComparer.Ordinal);
             foreach (var identity in Identities) expected.Add(identity.Id, identity);
             foreach (var actual in state.SourceIdentities)
             {
@@ -265,9 +265,12 @@ namespace PersistentCity.Compatibility
 
         internal RloReadResult ReadBridge(RloBridge bridge, string version)
         {
+            bool shared = false;
             try
             {
-                var read = new List<RloBridgeCitizen>(ReviewedPopulation);
+                shared = !bridgeBuffersBusy;
+                bridgeBuffersBusy = true;
+                var read = shared ? bridgeRead : new List<RloBridgeCitizen>(ReviewedPopulation);
                 RloBridge.Status status = bridge.ReadCitizens(read, out int seed);
                 if (status == RloBridge.Status.Failed) return Failure(new ContractException(RloBridge.Describe(status)), version, DonorReadReason.Failed);
                 if (status != RloBridge.Status.Ready) return NotReady(Reason(status), RloBridge.Describe(status), version);
@@ -275,13 +278,15 @@ namespace PersistentCity.Compatibility
                 if (seed == 0) return NotReady(DonorReadReason.NotYet, "Flare has no initialized city seed yet.", version);
                 if (read.Count != ReviewedPopulation) throw new ContractException("Citizens must contain the reviewed 400 identities; found " + read.Count + ".");
                 var identities = new List<CitizenIdentity>(ReviewedPopulation);
-                var ids = new HashSet<int>();
+                var ids = shared ? bridgeSeen : new bool[ReviewedPopulation];
+                Array.Clear(ids, 0, ids.Length);
                 foreach (var c in read)
                 {
-                    if (c.Index < 0 || c.Index >= ReviewedPopulation || !ids.Add(c.Index)) throw new ContractException("Citizens has a duplicate or out-of-range Index.");
+                    if (c.Index < 0 || c.Index >= ReviewedPopulation || ids[c.Index]) throw new ContractException("Citizens has a duplicate or out-of-range Index.");
                     if (string.IsNullOrWhiteSpace(c.First) || string.IsNullOrWhiteSpace(c.Last)) throw new ContractException("A citizen has no complete RLO name.");
                     if (c.Age < 1 || c.Age > 130 || !RloBridge.TryPersona(c.Persona, out Persona character)) throw new ContractException("A citizen has an invalid age or persona.");
                     if (c.AppearanceSeed == 0) throw new ContractException("A citizen has no appearance seed.");
+                    ids[c.Index] = true;
                     identities.Add(new CitizenIdentity { Id = "c" + c.Index.ToString(CultureInfo.InvariantCulture), Name = c.First + " " + c.Last,
                         District = c.District ?? "", Age = c.Age, Female = c.Female, Persona = character, AppearanceSeed = c.AppearanceSeed });
                 }
@@ -290,18 +295,23 @@ namespace PersistentCity.Compatibility
                     PopulationHash(seed, identities), seed, identities.AsReadOnly());
             }
             catch (Exception e) { return Failure(e, version); }
+            finally { if (shared) { bridgeRead.Clear(); bridgeBuffersBusy = false; } }
         }
+
+        private bool bridgeBuffersBusy;
+        private readonly List<RloBridgeCitizen> bridgeRead = new List<RloBridgeCitizen>(ReviewedPopulation);
+        private readonly bool[] bridgeSeen = new bool[ReviewedPopulation];
 
         private static string PopulationHash(int seed, List<CitizenIdentity> identities)
         {
-            using var bytes = new MemoryStream();
+            using var bytes = new MemoryStream(64 + identities.Count * 64);
             using (var writer = new BinaryWriter(bytes, Encoding.UTF8, true))
             {
                 writer.Write("persistentcity:rlo-population:v1"); writer.Write(seed); writer.Write(identities.Count);
                 foreach (var c in identities) { writer.Write(c.Id); writer.Write(c.Name); writer.Write(c.District); writer.Write(c.Age); writer.Write(c.Female); writer.Write((int)c.Persona); writer.Write(c.AppearanceSeed); }
             }
             using var hash = SHA256.Create();
-            return "rlo:0.40.4:" + BitConverter.ToString(hash.ComputeHash(bytes.ToArray())).Replace("-", "").ToLowerInvariant();
+            return "rlo:0.40.4:" + BitConverter.ToString(hash.ComputeHash(bytes.GetBuffer(), 0, (int)bytes.Length)).Replace("-", "").ToLowerInvariant();
         }
 
         private static Type RequiredType(Assembly assembly, string name)

@@ -253,6 +253,7 @@ namespace PersistentCity.Runtime
                 foodMarket?.RefreshDiscovery();
                 routeObjects?.Step(preparingPausedCity: Time.timeScale == 0);
                 RloOverrules.Poll(Time.unscaledTime, log);
+                ModFrames.Charge(GcAllocationSegment.ModPrelude);
                 if (Time.unscaledTime >= nextDependencyCheck)
                 {
                     long checkStarted = Stopwatch.GetTimestamp();
@@ -283,17 +284,20 @@ namespace PersistentCity.Runtime
                     nextStationScan = float.PositiveInfinity;
                     routes?.RefreshStations();
                 }
+                ModFrames.Charge(GcAllocationSegment.ModRlo);
                 double target = Now();
                 if (target < simulation.State.Minute - 0.001)
                 {
                     Fail("Game clock moved behind the population snapshot. Reload the matching save; no state was overwritten.");
                     return;
                 }
-                if (vendorMarket?.Prepare((long)target) == true) return;
+                if (vendorMarket?.Prepare((long)target) == true) { ModFrames.Charge(GcAllocationSegment.ModFood); return; }
                 foodMarket?.RefreshRoutineHours(target);
                 RefreshBusinessTypes(simulation.State.Places, target, "hour");
+                ModFrames.Charge(GcAllocationSegment.ModFood);
                 simulation.RefreshOptionalStops();
                 RunPhysical(physicalBeforeAdvance ??= () => physical?.BeforeAdvance());
+                ModFrames.Charge(GcAllocationSegment.ModOptionalStops);
                 double clockRate = NativeTravelPace.ClockRate;
                 if (Math.Abs(clockRate - simulation.State.TravelClockRate) > .000001)
                 {
@@ -331,6 +335,7 @@ namespace PersistentCity.Runtime
                         + ", scene searches in this planner=" + routes.RoadSceneSearches + ".");
                 }
                 seenRoadSnapshots = snapshots;
+                ModFrames.Charge(GcAllocationSegment.ModRoutes);
                 if (!prepared) { RecordRoutingFrame(prepareElapsed, 0, false); waitingFrames++; RunPhysical(physicalUpdate ??= () => physical?.Update()); inspector.Suspend(); return; }
                 long closureStarted = Stopwatch.GetTimestamp();
                 simulation.RefreshTrafficClosures();
@@ -339,6 +344,7 @@ namespace PersistentCity.Runtime
                 maxClosureMilliseconds = Math.Max(maxClosureMilliseconds, closureElapsed);
                 RecordRoutingFrame(prepareElapsed, closureElapsed, true);
                 if (!NativeCityClock.CheckInputEpoch(target, simulation.State.Minute)) { StopAccounting(); return; }
+                ModFrames.Charge(GcAllocationSegment.ModClosures);
                 var advanceHeap = GcAllocationBegin();
                 AdvanceAllocation.Begin(gcSampler);
                 try { AdvancePopulation(HoldReplayLimit(Math.Max(AccountingClock.Target(target), simulation.State.Minute))); }
@@ -350,22 +356,26 @@ namespace PersistentCity.Runtime
                     StopAccounting("Need purchase native restore failed: " + purchaseFault); return;
                 }
                 ApplyHoldReplay();
+                ModFrames.Charge(GcAllocationSegment.ModHoldReplay);
                 if (settings.PhysicalEnabled && !physicalFailed && physical == null && !BuildingManager.IsInsideBuilding && !NativeTravelPace.HiddenTravel)
                 {
                     try { physical = new PhysicalPopulation(transform, simulation, routes!, dependency!, log!, settings.MaximumPedestrians, settings.MaximumVehicles, settings.PhysicalRadiusMetres, dwellSpots, settings.MovementFaultAcquirePercent); }
                     catch (Exception error)
                     {
                         physicalFailed = true;
+                        PhysicalPedestrians.DestroyReserve();
                         if (NativeInteriorCityView.Configured) NativeInteriorCityView.FailClosed();
                         log?.Warn("Physical population unavailable; ordinary spawning restored, persistent background simulation remains active: " + error);
                     }
                 }
+                ModFrames.Charge(GcAllocationSegment.ModPhysicalSetup);
                 PhysicalAllocation.Begin(gcSampler);
                 double physicalStarted = UpdateCityClock.Elapsed();
                 try { RunPhysical(physicalUpdate ??= () => physical?.Update()); }
                 finally { PhysicalAllocation.End(); }
                 if (physical != null) frameBudget.ObservePhysical(UpdateCityClock.Elapsed() - physicalStarted - UpdateCityClock.BuildMilliseconds);
                 UpdateInspector();
+                ModFrames.Charge(GcAllocationSegment.ModInspector);
                 if (Time.unscaledTime >= nextSummary)
                 {
                     nextSummary = Time.unscaledTime + 60;
@@ -424,6 +434,7 @@ namespace PersistentCity.Runtime
                             + simulation.Traffic.PendingEventCount + " scheduled road events, " + simulation.Traffic.LinkCount + " road sections.");
                     ResetAdvanceDiagnostics();
                 }
+                ModFrames.Charge(GcAllocationSegment.ModSummary);
             }
             catch (Exception error) { Fail(error.ToString()); }
         }
@@ -532,7 +543,7 @@ namespace PersistentCity.Runtime
                 physicalFailed = true;
                 if (NativeInteriorCityView.Configured) NativeInteriorCityView.FailClosed();
                 try { physical?.Dispose(); }
-                finally { physical = null; }
+                finally { physical = null; PhysicalPedestrians.DestroyReserve(); }
                 log?.Warn("Physical population stopped; ordinary spawning restored and background simulation continues: " + error);
             }
         }
@@ -886,7 +897,7 @@ namespace PersistentCity.Runtime
             try { NativeSalePath.Unpatch(); } catch (Exception error) { log?.Warn("Sale path unpatch failed: " + error.Message); }
             inspector.Detach();
             try { physical?.Dispose(); }
-            finally { physical = null; routeObjects?.Dispose(); routeObjects = null; NativeCityClock.Stop(); NativeTravelPace.StopObservation(); }
+            finally { physical = null; PhysicalPedestrians.DestroyReserve(); routeObjects?.Dispose(); routeObjects = null; NativeCityClock.Stop(); NativeTravelPace.StopObservation(); }
             if (!subscribed) return;
             GlobalEvents.onSaveGame -= Save;
             GlobalEvents.onGameUnloaded -= Shutdown;

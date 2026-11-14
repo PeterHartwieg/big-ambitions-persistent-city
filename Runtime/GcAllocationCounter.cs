@@ -75,18 +75,21 @@ namespace PersistentCity.Runtime
         {
             var current = sampler;
             if (current != null) current.Charge(segment, GcAllocationCounter.Read(), GcAllocationCounter.Collections);
+            ModFrames.Charge(segment);
         }
 
         public static void Mark()
         {
             var current = sampler;
             if (current != null) current.Mark(GcAllocationCounter.Read(), GcAllocationCounter.Collections);
+            ModFrames.MarkDetail();
         }
 
         public static void Detail(GcAllocationSegment segment)
         {
             var current = sampler;
             if (current != null) current.Detail(segment, GcAllocationCounter.Read(), GcAllocationCounter.Collections);
+            ModFrames.Detail(segment);
         }
 
         public static void End()
@@ -94,6 +97,7 @@ namespace PersistentCity.Runtime
             var current = sampler;
             sampler = null;
             current?.EndNested(GcAllocationSegment.Physical, GcAllocationSegment.PhysicalUnattributed, GcAllocationCounter.Read(), GcAllocationCounter.Collections);
+            ModFrames.Charge(GcAllocationSegment.PhysicalUnattributed);
         }
     }
 
@@ -113,6 +117,7 @@ namespace PersistentCity.Runtime
         {
             var current = sampler;
             if (current != null) current.Detail(segment, GcAllocationCounter.Read(), GcAllocationCounter.Collections);
+            ModFrames.Charge(segment);
         }
 
         public static void End()
@@ -120,6 +125,49 @@ namespace PersistentCity.Runtime
             var current = sampler;
             sampler = null;
             current?.EndDetails(GcAllocationSegment.AdvanceOther, GcAllocationCounter.Read(), GcAllocationCounter.Collections);
+            ModFrames.Charge(GcAllocationSegment.AdvanceOther);
+        }
+    }
+
+    internal static class ModFrames
+    {
+        private static ModFrameRecorder? recorder;
+        private static GcPauseSampler? owner;
+
+        public static bool Begin(GcPauseSampler? sampler, long frame)
+        {
+            recorder = null; owner = null;
+            var candidate = sampler?.FrameRecorder;
+            if (candidate == null || !candidate.Armed) return false;
+            recorder = candidate; owner = sampler;
+            candidate.Begin(frame, System.Diagnostics.Stopwatch.GetTimestamp(), GcAllocationCounter.Read(), GC.CollectionCount(0));
+            return true;
+        }
+
+        public static void Charge(GcAllocationSegment segment)
+        {
+            var current = recorder;
+            if (current != null) current.Charge(segment, System.Diagnostics.Stopwatch.GetTimestamp(), GcAllocationCounter.Read(), GC.CollectionCount(0));
+        }
+
+        public static void Detail(GcAllocationSegment segment)
+        {
+            var current = recorder;
+            if (current != null) current.Detail(segment, System.Diagnostics.Stopwatch.GetTimestamp(), GcAllocationCounter.Read(), GC.CollectionCount(0));
+        }
+
+        public static void MarkDetail()
+        {
+            var current = recorder;
+            if (current != null) current.MarkDetail(System.Diagnostics.Stopwatch.GetTimestamp(), GcAllocationCounter.Read(), GC.CollectionCount(0));
+        }
+
+        public static void End()
+        {
+            var current = recorder;
+            var sampler = owner;
+            recorder = null; owner = null;
+            current?.End(System.Diagnostics.Stopwatch.GetTimestamp(), GcAllocationCounter.Read(), GC.CollectionCount(0), sampler);
         }
     }
 }
