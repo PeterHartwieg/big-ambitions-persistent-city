@@ -1027,7 +1027,7 @@ Role `rig_test`, where `mac`, isolated `agentmac`. **Counts: 0 passed / 0 partia
 
 All performance numbers are **provisional on the shared Mac**. Every command and all five 600-second windows ran in the foreground. Other sessions were left alone. No Windows PC, Steam app, ordinary profile, normal bridge instance or ordinary save was used. No production code, schema, food weights, release, version/changelog or Workshop change was made.
 
-Raw evidence: `/Users/peterhartwieg/HART-Builds/persistent-city-rig-2026-11-14b-mac`. [Complete GC reports and compact frame evidence](perf/gr5-2026-11-14b-mac.json): **16,790 bytes**, SHA-256 `c205b1ff6d070a0d03e6095641f0e0a0edc61143d204ee1ccdb290a718dbed80`. Both full GC JSON objects retain every allocation key and sample/skipped count. The raw filename/hash manifest is `raw-evidence-manifest.json` there (SHA-256 `44cddecdb4b5b4d8dc587d03e7a1388b36ee53214539620cd8096f0a1c21d60d`). Logs, requests, two body screenshots, obstructed captures, backups and scripts remain outside Git. Report copy: `/Users/peterhartwieg/Coding_Projects/.agent-logs/persistent-city-rig-2026-11-14b-mac.md`.
+`<stage>` is the rig stage folder `persistent-city-rig-2026-11-14b-mac`; `<app-support>` is the rig user's `Library/Application Support`; `<agent-logs>` is the agent report folder. Raw evidence: `<stage>`. [Complete GC reports and compact frame evidence](perf/gr5-2026-11-14b-mac.json): **16,572 bytes**, SHA-256 `6442f6a2b6c21fd5965fa3597cc1821cf6df37fadbca92742b5ec4c46bd4707f`. Both full GC JSON objects retain every allocation key and sample/skipped count. The raw filename/hash manifest is `raw-evidence-manifest.json` there (SHA-256 `44cddecdb4b5b4d8dc587d03e7a1388b36ee53214539620cd8096f0a1c21d60d`). Logs, requests, two body screenshots, obstructed captures, backups and scripts remain outside Git. Report copy: `<agent-logs>/persistent-city-rig-2026-11-14b-mac.md`.
 
 ### Build and rig
 
@@ -1035,7 +1035,7 @@ Raw evidence: `/Users/peterhartwieg/HART-Builds/persistent-city-rig-2026-11-14b-
 |---|---|
 | Tested candidate | `eb38a061200ff2469d4bc5a568c0046144494686` (#254), exactly the remote tip at initial fetch. Final fetch moved to `1d5d1b765218974d41e848926f17137609bf4a58` (#255); that later code was not built or tested here. |
 | Branch/worktree | New `codex/mac-rig-2026-11-14b`, based on the tested tip, in `rig-2026-11-14b-mac-evidence`. One isolated worktree served build and evidence; original checkout stayed clean. |
-| Build | `python3 tools/build.py --game-managed "/Users/peterhartwieg/Library/Application Support/BigAmbitionsMCP/dll-import-shim/Big Ambitions_Data/Managed"`, passed; Homebrew PATH and DOTNET_ROOT used. |
+| Build | `python3 tools/build.py --game-managed "<app-support>/BigAmbitionsMCP/dll-import-shim/Big Ambitions_Data/Managed"`, passed; Homebrew PATH and DOTNET_ROOT used. |
 | PersistentCity DLL SHA-256 | `296f4d44ed7f0ac61e79bd99e883b66485ffb011f1b61e65f3fc736640f83f6c`; built/package/staged hashes match, and each start validated the receipt. |
 | Agent-rig HEAD | `2b8553606426f3e3e94f8a876dd58d935768732d`, clean before and after; fetch and ff-only pull were already current. No edits, commits or pushes to that checkout. |
 | AgentRigOps SHA-256 | `dd11e3fdea78c1c0a25ce33e0168ffbce6e785950d9e10caed55015254d748f8`, unchanged at cleanup; ops ready in the loaded city. |
@@ -1050,7 +1050,7 @@ Staged once, stopped and leased, from the official agent-rig checkout. Package c
 
 | Exact staging command | Receipt backup |
 |---|---|
-| `python3 scripts/install-mac.py --stage-mod PersistentCity /Users/peterhartwieg/HART-Builds/persistent-city-rig-2026-11-14b-mac/package` | `/Users/peterhartwieg/Library/Application Support/BigAmbitionsAgentTestsMac/receipt-backups/20261114T115729Z` |
+| `python3 scripts/install-mac.py --stage-mod PersistentCity <stage>/package` | `<app-support>/BigAmbitionsAgentTestsMac/receipt-backups/20261114T115729Z` |
 
 ### Per-check outcomes
 
@@ -1225,7 +1225,7 @@ The windowed client started with `agent-frame-cap.json` containing `{"fps":60,"v
 | Operation | Exact result / consequence |
 |---|---|
 | `op building {"action":"list"}` | `ops_game_api_unavailable`; retained full failed reply in `footprint-error.json`. A read-only repeat returned the same error. No building data was guessed. |
-| `cua.getApp("/Users/peterhartwieg/Library/Application Support/BigAmbitionsAgentTestsMac/Big Ambitions Agent Tests Mac.app")` | `Computer Use server error -10005: cgWindowNotFound` |
+| `cua.getApp("<app-support>/BigAmbitionsAgentTestsMac/Big Ambitions Agent Tests Mac.app")` | `Computer Use server error -10005: cgWindowNotFound` |
 | `call ui {"op":"escape"}` | `Nothing is open to close (Esc would open the pause menu).` Native panels were subsequently closed through their listed buttons. |
 | `call walk {"x":215,"z":0}` (return, op 29) | `Operation 29 is still pending: use tools/ft op 29; do not repeat the command`. Polled the existing operation, without replay. Final status done, arrived=false, x=230.57,z=-10.04, from_goal=18.53 m, waited_for_traffic_s=30. |
 | Street cap verification | applied=true, target_frame_rate=60, vsync_count=0, error=null; measured 5.58, 5.71, 5.32, 5.71, 4.96, 5.58, 5.54 fps. Required 51–66 not reached. |
@@ -1259,7 +1259,7 @@ Fixtures: requested `FT RLO 13d Food v1` existed but loaded 1,611 residents / 1,
 An independent pre-stage manifest backed up the original PersistentCity folder, isolated root preference/config files, plist and install receipt, and recorded four absent request/config paths. RLO hashes and its original living_population values were recorded without changing them. The helper printed this rollback verbatim:
 
 ```sh
-rm -rf "/Users/peterhartwieg/Library/Application Support/com.hovgaardgames.bigambitions.agenttests.mac/ModsLocal/PersistentCity" && cp -Rp "/Users/peterhartwieg/Library/Application Support/BigAmbitionsAgentTestsMac/receipt-backups/20261114T115729Z/mod" "/Users/peterhartwieg/Library/Application Support/com.hovgaardgames.bigambitions.agenttests.mac/ModsLocal/PersistentCity" && cp "/Users/peterhartwieg/Library/Application Support/BigAmbitionsAgentTestsMac/receipt-backups/20261114T115729Z/install.json" "/Users/peterhartwieg/Library/Application Support/BigAmbitionsAgentTestsMac/install.json"
+rm -rf "<app-support>/com.hovgaardgames.bigambitions.agenttests.mac/ModsLocal/PersistentCity" && cp -Rp "<app-support>/BigAmbitionsAgentTestsMac/receipt-backups/20261114T115729Z/mod" "<app-support>/com.hovgaardgames.bigambitions.agenttests.mac/ModsLocal/PersistentCity" && cp "<app-support>/BigAmbitionsAgentTestsMac/receipt-backups/20261114T115729Z/install.json" "<app-support>/BigAmbitionsAgentTestsMac/install.json"
 ```
 
 With the game stopped and lease held, the non-destructive equivalent moved the staged mod intact to the raw evidence folder, copied the helper’s original mod folder into the empty path, restored the unchanged receipt, then restored independent preference/config bytes and original frame-cap absence. RLO files were checked read-only.
