@@ -232,6 +232,7 @@ namespace PersistentCity.Runtime
                 foreach (var id in attempted.Keys.Where(id => !ids.Contains(id)).ToArray()) attempted.Remove(id);
             }
             PhysicalAllocation.Charge(GcAllocationSegment.PhysicalSelection);
+            if (pedestrians.TrimIdle(Time.unscaledTime)) PhysicalAllocation.Charge(GcAllocationSegment.PhysicalRelease);
         }
 
         private void ReleaseCharged(Binding binding)

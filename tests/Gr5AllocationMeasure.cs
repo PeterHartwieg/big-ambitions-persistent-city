@@ -407,7 +407,57 @@ public sealed class Gr5AllocationMeasure
             visitors = state.Visitors.Count, places = state.Places.Count, stateBytes = built - empty, windows = rows };
     }
 
-    private sealed class StandInBody { }
+    private delegate void TimedReturn(StandInBody item, PersonDressing dressing, double seconds);
+    private delegate bool Trim(double seconds, double idleSeconds, out StandInBody item);
+
+    private sealed class BodyPart
+    {
+        public BodyPart? Next;
+        public string Name = "";
+        public float[] Data = Array.Empty<float>();
+    }
+
+    private sealed class StandInBody
+    {
+        public const int Parts = 400, FloatsPerPart = 48;
+        public readonly BodyPart[] Parts_ = new BodyPart[Parts];
+        public StandInBody(int seed)
+        {
+            BodyPart? previous = null;
+            for (int i = 0; i < Parts; i++) previous = Parts_[i] = new BodyPart { Next = previous, Name = "part" + (seed + i), Data = new float[FloatsPerPart] };
+        }
+    }
+
+    private sealed class BakeCaches
+    {
+        public readonly Dictionary<object, string[]> Names = new Dictionary<object, string[]>();
+        public readonly Dictionary<int, float[][]> Scratch = new Dictionary<int, float[][]>();
+        public readonly List<(float, float, float)> Vertices = new List<(float, float, float)>(), Normals = new List<(float, float, float)>();
+        public readonly List<(float, float, float, float)> Tangents = new List<(float, float, float, float)>();
+        public readonly BlendshapeBakePlan Plan = new BlendshapeBakePlan();
+
+        public BakeCaches(int meshes, int shapesPerMesh, int mergedVertices)
+        {
+            for (int mesh = 0; mesh < meshes; mesh++)
+            {
+                var shapes = new string[shapesPerMesh];
+                for (int j = 0; j < shapes.Length; j++) shapes[j] = "blendshape_" + j;
+                Names.Add(new object(), shapes);
+                int length = 500 + mesh * 20;
+                if (!Scratch.ContainsKey(length)) Scratch.Add(length, new[] { new float[3 * length], new float[3 * length], new float[3 * length] });
+            }
+            for (int i = 0; i < mergedVertices; i++) { Vertices.Add(default); Normals.Add(default); Tangents.Add(default); }
+            Vertices.Clear(); Normals.Clear(); Tangents.Clear();
+            int vertices = 0;
+            for (int source = 0; source < 9; source++)
+            {
+                Plan.AddSource(mergedVertices / 9);
+                vertices += mergedVertices / 9;
+                for (int shape = 0; shape < shapesPerMesh; shape++) Plan.AddShape("blendshape_" + shape, shape % 3 == 0 ? 0 : 25 + shape);
+            }
+            Plan.Build(vertices, 1);
+        }
+    }
 
     [Fact]
     public void MeasureRetainedPoolAndBakeAtTheCap()
@@ -415,20 +465,36 @@ public sealed class Gr5AllocationMeasure
         string? path = PerfGate.Variable("PC_GR5_ALLOC");
         if (string.IsNullOrEmpty(path)) return;
         string label = PerfGate.Variable("PC_GR5_ALLOC_LABEL") ?? "";
-        for (int run = 1; run <= 3; run++)
-        {
-            Record(path, PoolOnce(label, run));
-        }
+        for (int run = 1; run <= 3; run++) Record(path, PoolOnce(label, run));
+    }
+
+    private static long Retained()
+    {
+        GC.Collect(); GC.WaitForPendingFinalizers(); GC.Collect();
+        return GC.GetTotalMemory(true);
     }
 
     [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
     private static object PoolOnce(string label, int run)
     {
-        const int maximum = 96, persons = 3000;
+        const int maximum = 96, persons = 3000, wardrobeMeshes = 150, shapesPerMesh = 12, mergedVertices = 12000;
         const double step = 1.0 / 30, day = 900, seconds = 1800;
         var pool = new DressedBodyPool<StandInBody>();
-        var timedReturn = typeof(DressedBodyPool<StandInBody>).GetMethod("Return", new[] { typeof(StandInBody), typeof(PersonDressing), typeof(double) });
-        var trim = typeof(DressedBodyPool<StandInBody>).GetMethod("TryTrim");
+        var timedMethod = typeof(DressedBodyPool<StandInBody>).GetMethod("Return", new[] { typeof(StandInBody), typeof(PersonDressing), typeof(double) });
+        var trimMethod = typeof(DressedBodyPool<StandInBody>).GetMethod("TryTrim");
+        var timedReturn = timedMethod == null ? null : (TimedReturn)Delegate.CreateDelegate(typeof(TimedReturn), pool, timedMethod);
+        var trim = trimMethod == null ? null : (Trim)Delegate.CreateDelegate(typeof(Trim), pool, trimMethod);
+        long baseline = Retained();
+        long bodyBytes;
+        {
+            long empty = Retained();
+            var one = new StandInBody(-1);
+            bodyBytes = Retained() - empty;
+            GC.KeepAlive(one);
+        }
+        baseline = Retained();
+        var bake = new BakeCaches(wardrobeMeshes, shapesPerMesh, mergedVertices);
+        long bakeBytes = Retained() - baseline;
         var dice = new Random(0x6E5 + run);
         var dressings = new PersonDressing[persons];
         var until = new double[persons];
@@ -439,7 +505,9 @@ public sealed class Gr5AllocationMeasure
             dressings[i] = new PersonDressing(new CitizenIdentity { Id = "p" + i, Name = "N" + i, Age = 20 + i % 60, Female = i % 2 == 0, AppearanceSeed = 1 + i * 7 }, 60);
             until[i] = dice.NextDouble() * 4000;
         }
-        int owned = 0, active = 0, frame = 0, dayOwned = 0, dayActive = 0, nightOwned = 0, nightActive = 0;
+        long personBytes = Retained() - baseline - bakeBytes;
+        int owned = 0, active = 0, frame = 0, dayOwned = 0, dayActive = 0, dayIdle = 0;
+        long dayBytes = 0;
         double nextTrim = 0, selectAt = 0;
         for (double now = 0; now < seconds; now += step, frame++)
         {
@@ -451,7 +519,7 @@ public sealed class Gr5AllocationMeasure
                 {
                     if (bodies[i] != null)
                     {
-                        if (timedReturn != null) timedReturn.Invoke(pool, new object[] { bodies[i]!, dressings[i], now }); else pool.Return(bodies[i]!, dressings[i]);
+                        if (timedReturn != null) timedReturn(bodies[i]!, dressings[i], now); else pool.Return(bodies[i]!, dressings[i]);
                         bodies[i] = null; active--;
                     }
                     phase[i] = 0; until[i] = dark && dice.NextDouble() < 0.95 ? double.PositiveInfinity : now + 60 + dice.NextDouble() * 900;
@@ -459,11 +527,7 @@ public sealed class Gr5AllocationMeasure
                 else if (dark && dice.NextDouble() < 0.95) until[i] = double.PositiveInfinity;
                 else { phase[i] = 1; until[i] = now + 20 + dice.NextDouble() * 70; }
             }
-            if (trim != null && now >= nextTrim)
-            {
-                var args = new object?[] { now, 120.0, null };
-                if ((bool)trim.Invoke(pool, args)!) { owned--; nextTrim = now + 5; }
-            }
+            if (trim != null && now >= nextTrim && trim(now, 120, out _)) { owned--; nextTrim = now + 5; }
             if (now >= selectAt)
             {
                 selectAt = now + 0.25;
@@ -474,29 +538,17 @@ public sealed class Gr5AllocationMeasure
                     attempts++;
                     var choice = pool.Choose(dressings[i], owned, maximum, null, frame, now, out var body);
                     if (choice == BodyChoice.Full) continue;
-                    if (choice == BodyChoice.Grow) { body = new StandInBody(); owned++; }
+                    if (choice == BodyChoice.Grow) { body = new StandInBody(i); owned++; }
                     bodies[i] = body; active++;
                 }
             }
-            if (Math.Abs(now - (day - step)) < step / 2) { dayOwned = owned; dayActive = active; }
+            if (Math.Abs(now - (day - step)) < step / 2) { dayOwned = owned; dayActive = active; dayIdle = pool.Count; dayBytes = Retained() - baseline; }
         }
-        nightOwned = owned; nightActive = active;
-        int idle = pool.Count;
-        var plan = new BlendshapeBakePlan();
-        long planEmpty = GC.GetTotalMemory(true);
-        int vertices = 0;
-        for (int source = 0; source < 9; source++)
-        {
-            plan.AddSource(1200 + source * 150);
-            vertices += 1200 + source * 150;
-            for (int shape = 0; shape < 12; shape++) plan.AddShape("shape" + shape, shape % 3 == 0 ? 0 : 25 + shape);
-        }
-        plan.Build(vertices, 1);
-        long planBytes = GC.GetTotalMemory(true) - planEmpty;
-        GC.KeepAlive(pool); GC.KeepAlive(bodies); GC.KeepAlive(plan); GC.KeepAlive(dressings);
-        return new { label, run, component = "DressedBodyPool rig-shaped churn, 96 maximum, 3,000 persons, day 900 s then night 900 s; stand-in bodies",
-            trims = trim != null, dayActive, dayOwned, dayIdle = dayOwned - dayActive, nightActive, nightOwned, nightIdle = nightOwned - nightActive,
-            nightPoolIdle = idle, bakePlanBytes = planBytes, bakeSteps = plan.Steps.Count };
+        long nightBytes = Retained() - baseline;
+        GC.KeepAlive(pool); GC.KeepAlive(bodies); GC.KeepAlive(bake); GC.KeepAlive(dressings);
+        return new { label, run, component = "pool + bake caches + per-person dressing, rig-shaped churn, 96 maximum, 3,000 persons, day 900 s then night 900 s",
+            trims = trim != null, standInBodyBytes = bodyBytes, bakeCacheBytes = bakeBytes, personDressingBytes = personBytes,
+            dayActive, dayOwned, dayIdle, dayRetainedBytes = dayBytes, nightActive = active, nightOwned = owned, nightIdle = pool.Count, nightRetainedBytes = nightBytes };
     }
 
     [Fact]

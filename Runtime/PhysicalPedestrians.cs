@@ -31,7 +31,8 @@ namespace PersistentCity.Runtime
         public void NoteDeferred() => deferredBeforeAcquire++;
         public bool LastDeferred { get; private set; }
         public string LookDiagnostics => AppearanceBuilds + " built/" + AppearanceReuses + " reused/" + AppearanceDeferred + " deferred/"
-            + idle.Count + " idle/" + all.Count + " owned/" + BlendshapeBake.Bakes + " baked/" + Instantiated + " grown/" + Trimmed + " trimmed/"
+            + idle.Count + " idle/" + all.Count + " owned/" + BlendshapeBake.Bakes + " baked/" + BlendshapeBake.ScratchSizes + " bake sizes/"
+            + BlendshapeBake.ScratchBytes / 1024 + " KB bake scratch/" + Instantiated + " grown/" + Trimmed + " trimmed/"
             + budget.Gate!.Fitted + " fitted/" + budget.Gate.Waited + " waited/"
             + budget.Gate.EstimateMilliseconds.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture) + " ms build";
         private readonly Dictionary<string, PhysicalPedestrianBody> active = new Dictionary<string, PhysicalPedestrianBody>(StringComparer.Ordinal);
@@ -239,7 +240,7 @@ namespace PersistentCity.Runtime
 
         public bool TrimIdle(double seconds)
         {
-            if (disposed || seconds < nextTrim || !idle.TryTrim(seconds, TrimIdleSeconds, out var character)) return false;
+            if (disposed || seconds < nextTrim || UpdateCityClock.BuildMilliseconds > 0 || !idle.TryTrim(seconds, TrimIdleSeconds, out var character)) return false;
             nextTrim = seconds + TrimSeconds;
             DestroyOwned(character);
             Trimmed++;
