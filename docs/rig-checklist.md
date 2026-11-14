@@ -8,6 +8,7 @@ Detailed specs: [F8 §7](https://github.com/PeterHartwieg/big-ambitions-persiste
 
 ## Latest evidence
 
+- **14 November g, Mac, build `37a150d3`:** 0 passed / 0 partial / 3 failed / 6 not run. Day/night GC 11/8 gen0, pause p95 56.671/104.551 ms; street UpdateCity p95 5.1413 ms, two spikes; restored, run complete ([14g results](#rig-results--14-november-2026-g-mac-gr-5-gc-at-37a150d3)).
 - **14 November f, Mac, build `d237f443`:** 1 passed / 2 partial / 2 failed / 1 not run. PC callback save p95 742.826 ms (recorded phases 301.027 ms); day/night GC 12/6 gen0, pause p95 65.028/31.977 ms; street mod-work p95 4.2557 ms; old-format reload passed ([14f results](#rig-results--14-november-2026-f-mac-gr-5-at-d237f443)).
 - **13 November e, Mac, build `5fe5eb23`:** GR-5: 0 passed / 1 partial / 3 failed / 1 not run. Save p95 731.144 ms; GC 10 gen0 / pause p95 66.260 ms; broader shop mod-work p95 5.0406 ms; 60 fps and footprint proof unavailable ([13e results](#rig-results--13-november-2026-e-mac-gr-5-at-5fe5eb23)).
 - **13 November d, Mac, build `f3e3d538` (code `83b6156e`):** P-D 5 passed / 1 partial / 1 not run; RLO 1.0.6 #239 1 passed / 3 partial / 2 not run; GR-9 2 partial / 8 not run. Three GC windows and background capture ran; Living ops remain blocked ([13d results](#rig-results--13-november-2026-d-mac-p-d-mono-gc-rlo-106-239-and-gr-9-at-f3e3d538)).
@@ -710,3 +711,151 @@ The execution layer rejected that shell before it ran. With the game stopped and
 Verification: **35 original-file hashes and 4 absent paths matched, zero mismatches; complete PersistentCity file set matched; all 53 RLO hashes matched.** Original preferences, persistent-city.json and autosave bytes match. install.json SHA-256 `35e1dccafc8fed62ef9406ec7834c6526a290abb07de6a0f5f912d03cc8144dc` matches both independent and helper backups. AgentRigOps stayed unchanged. All stops were graceful. Final status: running=false, process=null, held=false, pending=0. All six owned game PIDs (12298, 12988, 18392, 19657, 20303, 20539) and their caffeinate assertions are gone. The rig checkout remains clean at 0b18d38.
 
 Validation: candidate build passed; compact evidence JSON parses and is under 20 KB; report is appended to the existing checklist with no new markdown path. The diff contains only the checklist and the small evidence JSON. No full unit suite or regression suite was run for this docs-only result. The single build/evidence worktree is removed after commit/push and PR creation.
+
+## Rig results — 14 November 2026 g, Mac (GR-5 GC at 37a150d3)
+
+Role `rig_test`, where `mac`, isolated `agentmac`. **Counts: 0 passed / 0 partial / 3 failed / 6 NOT RUN.** The three failures are #250 checks 1–3; the six NOT RUN arms are enumerated below. Housing and optional capability readbacks are observations outside those verdict counts. **RESULT: DONE** means the run and restoration are complete; the performance targets did not pass. In-game proof gates no merge.
+
+Timings are **provisional on the shared Mac**: other coding-agent and desktop processes were live. None was contacted, stopped or inspected beyond the process inventory. All commands and three 600-second waits ran in the foreground.
+
+`<stage>` = the rig staging directory for this run. Raw command output, logs and backups remain there. Report copy: `<report-copy>/persistent-city-rig-2026-11-13g-mac.md`. [Compact evidence](perf/gr5-2026-11-13g-mac.json): **19,027 bytes**, SHA-256 `9a6b270848f81ee6f6e47cb47e2746643211a2c0a8461109756a0014b9be7c55`. It retains both complete `pc gc report` JSON/human lines, allocation sample counts, window/save guards, both street spikes, camera readbacks and a filename/hash manifest for larger raw records.
+
+### Build and rig
+
+| Item | Observation |
+|---|---|
+| Candidate | `37a150d330c294bb64943a39dc1eaa125618cc77` (#250). `origin/codex/persistent-city` was unchanged at initial and final fetch. |
+| Checkout | New `codex/mac-rig-2026-11-13g`, based on that tip, in `rig-2026-11-13g-mac-evidence`. One new isolated worktree served build and evidence. Original checkout stayed clean. |
+| Build | `python3 tools/build.py --game-managed "<managed-assemblies>"`, passed. PATH included `/opt/homebrew/bin`; DOTNET_ROOT was the Homebrew dotnet prefix plus `/libexec`. |
+| PersistentCity DLL SHA-256 | `5557daaed9fe142c12978f66add0de8831d822244bc4c8e42273a3391d9b1bdc`; built, packaged and live staged files matched. |
+| Agent-rig HEAD | `0b18d38ece6e8fe77c35ee5ea694849c7478d054`, clean before/after. `git fetch origin` and `git pull --ff-only` were already up to date. No checkout edits, commits or pushes. |
+| AgentRigOps SHA-256 | `5578f9f4657fa2269ee50aa86adfc6d699881fac7e102084918da625045cd59e`, unchanged at cleanup; live ops ready. |
+| RLO Player.log line | `[Mod:RealLifeOverhaul] Real Life Overhaul 1.0.6 initialised.` No RLO file or option was changed. |
+| PC Player.log identity | `[Mod:PersistentCity] Persistent population active: 1000 residents, 2000 visitors, 1683 places.` No commit-stamped PC build line is emitted; the matching DLL and validated receipt establish package identity. |
+| Lease / resources | Initially stopped/free; acquired `2026-11-14T04:41:23.7511250Z` for this run. 54.5 GiB disk / 78% memory free. No takeover or resource override. |
+| Start / stop | Two `python3 scripts/mac-agent start --mode headless --rig-test` launches, each successful on its first attempt. One process for day/night GC; one cold restart for street. Both stops graceful; no force. |
+| Autosave original | Native 5 minutes / 3 saves, `prevent_autosave=false`. #70 `autosave` readback confirmed `suppressed=true` after both loads and before/after every window. Original preference/config bytes restored; process-only suppression ended at stop. |
+| Config | SaveCostDiagnostics=false; native save profiler not installed. Physical caps 96/24, radius 120 m. FoodChoicePriceWeight/FoodChoiceHouseholdWeight stayed 1.2/1.0; writer schema 1. |
+
+Staged once, stopped and leased, from the official agent-rig checkout. The package contained no RLO files.
+
+| Exact staging command | Receipt backup |
+|---|---|
+| `python3 scripts/install-mac.py --stage-mod PersistentCity <stage>/package` | `<receipt-backups>/20261114T044216Z` |
+
+### Per-check outcomes
+
+| #250 check | Result | Observed versus expected |
+|---|---|---|
+| 1. Day GC, locked-PC | **FAIL** | 11 gen0, pause p95 56.671 ms versus <= about 5 / 36 ms. Reported Mono heap 1,366,654,976 bytes is below the about 1.47 GB target. Physical is the largest measured segment: 805,834,752 bytes. |
+| 2. Night GC, locked-PC | **FAIL** | 8 gen0, pause p95 104.551 ms versus <= 5 / about 36 ms. Physical is the largest measured segment: 379,510,784 bytes. |
+| 3. Street mod-work, input-only | **FAIL** | UpdateCity p95 5.1413 ms versus <5 ms. Broader mod-work p95 5.1897 ms. Two >=30 ms spikes, listed below. Nine camera pans succeeded. |
+
+These are observed threshold failures, with no operation exception ending a measured window. Both GC windows used `pc gc start`, 600 s without game input, then `pc gc report` and `pc gc stop`. Mod-work sampling was unarmed throughout GC. Street used a separate cold load with the GC sampler off. All three used the same `FT GR5 13f Timing v1` checkpoint, player x=215, z=0, 1,000 residents / 2,000 visitors / 1,683 runtime places. The census reports 1,663 native places plus 20 discovered stations; it is a separate projection.
+
+### GC and allocation results
+
+The day clock began at day 2 15:30 and ended 18:24. An untimed advance then reached day 3 01:00; night ended 04:10. Speed was 1 during measurement. Day and night native union windows were 600.636 / 600.799 s, with 0 allowed saves, 0 native-saving frames and `clean=true`. Automatic attempts were refused (11,600 / 17,054). No save latency was measured.
+
+| Window | Stored frames / dropped | gen0/1/2 | Pause p50 / p95 / max ms | Mono heap bytes | Sampled managed heap peak bytes | Whole-frame p95 / max ms |
+|---|---|---|---|---|---|---|
+| 14g day | 16868 / 0 | 11/0/0 | 25.904 / 56.671 / 56.671 | 1,366,654,976 | 1,433,260,032 | 43.2988 / 484.8029 |
+| 14g night | 17048 / 0 | 8/0/0 | 29.953 / 104.551 / 104.551 | 1,465,794,560 | 1,689,186,304 | 37.8310 / 450.2231 |
+| 13f day, d237f443 | 16768 / 0 | 12/0/0 | 25.328 / 65.028 / 65.028 | 1,493,630,976 | 1,483,522,048 | 44.4502 / 236.0063 |
+| 13f night, d237f443 | 17076 / 0 | 6/0/0 | 17.381 / 31.977 / 31.977 | 1,491,255,296 | 1,414,967,296 | 37.7826 / 327.4926 |
+| 13d night reference, code 83b6156e | 16960 / 0 | 5/0/0 | 33.526 / 35.941 / 35.941 | 1,471,660,032 | 1,471,025,152 | plain-frame p95 38.354 |
+| #250 expectation | 600 s | day/night <= about 5 | p95 <= about 36 | day <= about 1.47 GB | — | separate from mod work |
+
+Reported Mono heap is the report-time value; the larger night managed-heap peak is retained separately. The 13d reference had 3,222 persons; 13f and this run have 3,000. Day collections fell 12→11 and pause p95 65.028→56.671 ms versus 13f; night rose 6→8 and 31.977→104.551 ms. Neither reaches the #250 GC targets. Incremental GC=true, max_generation=0; pause describes cycle-ending frame excess, not all incremental collection work.
+
+| Counter | Day bytes | Day samples / skipped | Night bytes | Night samples / skipped |
+|---|---:|---|---:|---|
+| frame_alloc_bytes | 1,787,936,768 | alloc_frames=16,857 | 1,241,608,192 | alloc_frames=17,040 |
+| mod_alloc_bytes | 1,091,997,696 | 16,868 / 1 | 517,779,456 | 17,048 / 1 |
+| advance_alloc_bytes | 219,332,608 | 16,775 / 0 | 91,938,816 | 16,955 / 0 |
+| physical_alloc_bytes | 805,834,752 | 16,774 / 1 | 379,510,784 | 16,954 / 1 |
+| mod minus advance minus physical | 66,830,336 | derived total | 46,329,856 | derived total |
+
+These diagnostic counters sum observed heap growth and exclude segment calls that see a collection. Physical has the largest measured segment total in both windows; this identifies the segment, without a code root-cause claim.
+
+GC-only UpdateCity maxima >=30 ms: **day plain 94.984 ms, day GC 57.374 ms; night plain 86.925 ms, night GC 91.871 ms**. Day plain exceeds 13f's 65.605 ms. The GC operation exports maxima rather than individual spike frames/counts, so those four maxima cannot be expanded into a per-frame list with the available operation.
+
+### Street mod-work and whole-frame results
+
+Cold-reloaded the same checkpoint and settled outside timing to day 2 15:30; street ended 17:36. The camera initially looked at (215,1,0) from (215,4,-9). `op camera look_at` and `release` changed its target between x=210 and 220 every roughly 60 s (nine successful pans), retaining y=4 m. The initial movement readback had 7 followers. This is the 13f street location; no visual crowd-density or building comparison is claimed from headless readbacks.
+
+| Window | Native seconds / whole-frame samples / achieved fps | UpdateCity p95 / max ms | Broader mod-work p95 / max / >=30 ms | Whole-frame p95 / max / >=30 ms frames |
+|---|---|---|---|---|
+| 14g street | 600.184 / 3493 / 5.82 | 5.1413 / 66.8762 | 5.1897 / 66.9196 / 2 | 197.0065 / 541.8071 / 3493 |
+| 13f street | 600.215 / 16771 / 27.94 | 4.2071 / 74.0022 | 4.2557 / 74.0481 / 2 | 44.2859 / 343.1558 / 16428 |
+
+The mod-work recorder spans 601.020 s / 3,494 frames; the separate native union spans 600.184 s / 3,493 samples. Both bracket the full 600-second wait; their command boundaries differ. Coverage complete at 62 entry points, validity=true, no missing components, zero dropped frames, zero off-main-thread/cross-frame/unbalanced scopes and zero UpdateCity exceptions. Autosave suppression confirmed before/after, allowed=0, native_saving_frames=0, clean=true. Whole-frame counts include the rig's 30 FPS cap; this run achieved only 5.82 FPS. The shared-host and camera conditions limit causal comparisons with 13f.
+
+Every exported mod-work spike >=30 ms (2 listed / 2 total):
+
+| Unity frame | Mod-work ms | Dominant component / group | UpdateCity ms | Whole-frame ms in that row | Condition |
+|---|---|---|---|---|---|
+| 4282 | 66.9196 | updatecity / updatecity | 66.8762 | 224.4750 | hour=15 |
+| 7308 | 39.5754 | updatecity / updatecity | 39.5327 | 190.1125 | hour=17 |
+
+Full top-component maps are in the compact JSON. Spikes are reported without a follow-up code investigation.
+
+### Save latency and housing readback
+
+| Save-latency check | Samples | Result |
+|---|---:|---|
+| Native / Persistent City save latency | 0 | **NOT RUN**: explicitly deferred pending the owner's save-route decision. No save trigger, save profiling or measurement checkpoint in this run. |
+
+Player.log on both loads: `[Persistent City] unrentable homes housed=0 beds=0 unreadable=0 empty=0`. Recorded as requested; this reused checkpoint does not demonstrate new housing allocation. Census: 1,000 residents, 471 households, 557 homes, 1,791 beds, residents_without_home=0; household/job/student capacity checks=ok.
+
+### NOT RUN and tooling gaps
+
+The six counted NOT RUN arms: **save latency (1); GR-5 check 4 building bounds/storeys (1); both 60 FPS arms (2); optional #239 checks 2–3 (2)**.
+
+| Exact operation / discovery | Result | Coverage |
+|---|---|---|
+| `python3 scripts/mac-agent op ops '{}'`; `op pcstate '{"action":"list"}'` | No native Home bounds/storeys op; eight diagnostics projections, none for Home footprint/floors. | GR-5 4 rotated / ground-overlap / third-building comparison NOT RUN. No invented failing op. |
+| `op ops '{}'` and health frame_cap readback | No FPS-changing operation advertised; target_frame_rate=30. Agent-rig HEAD unchanged from 13f; supported Mac launcher modes remain headless/background. | Both 60 FPS arms NOT RUN. No frame-cap request file or launcher override was created. |
+| `python3 scripts/mac-agent op rlo_option '{"action":"read","name":"living_population"}'` | `ops_rlo_option_unavailable` | #239 2–3 NOT RUN. No option setter attempted; option left unchanged. |
+| `python3 scripts/mac-agent call drive '{"op":"status"}'`; `op ops '{}'` | running=false, phase=none; no physical ordinary-player-car control or walker/resident identity binding advertised. | Availability readback only. |
+| `python3 scripts/mac-agent call new_game '{"name":"GR5-NonFT-13g"}'` | `The bridge starts only games whose name starts with FT, not 'GR5-NonFT-13g'.` | Non-FT disposable city unavailable; guard not bypassed. |
+
+Additional readback limitations: Player.log lacks a commit-stamped PC build line; GC-only sampling lacks individual mod-work spike rows. Neither has been invented.
+
+Setup command errors, all outside measurement and corrected before the relevant window:
+
+| Request | Exact error / correction |
+|---|---|
+| `call move {"x":215,"z":0}` | `Unknown command 'move'. Commands: state, console, debug, time, money, teleport, walk, drive, vehicle, commissary, crew, route, price, marketing, use, taxi, phone, call, eat, floorplan, place, drop, pickup, handtruck, fixture, logistics, parks, day_summary, places, map, ui, shoot, save, load, new_game, quit, op.` Used documented teleport. |
+| `call teleport {"x":215,"z":0}` | `Missing "who": "player" or a food vehicle's id.` Corrected to `{"who":"player","x":215,"z":0}`. |
+| `call console {"line":"pc inspect"}` | `Warning: ERROR: 'pc' doesn't take 1 parameter(s). Available command(s):` followed by the signatures retained in `<stage>/inspect.json`. Used supported census/movement/pcstate readbacks. |
+| `call time {"run_until":{"time":"01:00"},"speed":20,"keep_needs":true}` | `day 2 01:00 has passed already: it is day 2 18:24.` Corrected to `day:"+1"`; paused exactly at day 3 01:00. |
+
+Exact `pc inspect` response:
+
+```text
+Warning: ERROR: 'pc' doesn't take 1 parameter(s). Available command(s):
+    - <b>pc [String area] [String action]</b>: pc population census | pc gc start|report|stop | pc vendor status | pc vendor sales | pc food decisions | pc food contract | pc probe status | pc probe businesses
+    - <b>pc [String area] [String action] [String detail]</b>: pc population person <id> | pc gc population <persons|off> (FT cities only, measurement) | pc vendor withdraw <vehicle> | pc food contract <status|capabilities|hints|stamps|catalogue> (FT cities only)
+    - <b>pc [String area] [String action] [String detail] [String value]</b>: pc movement corrections since <seq> | pc probe <resident> <place> <ceiling cents> (FT cities only)
+```
+
+The first early population read returned `[Persistent City] gc population refused: no active city.` after native load completion but before PC activation. A later read confirmed all 3,000 persons before sampling. No command was replayed after an ambiguous timeout.
+
+### Findings, fixtures and restoration
+
+At the 1,000-resident cap, these observed day/night GC windows exceed the requested collection/pause targets, and the panning street UpdateCity p95 exceeds 5 ms. The report-time Mono heaps are lower than 13f, while the night sampled managed peak is higher. This run does not establish the cap against those performance targets. Save latency is unmeasured here. No code cause or lower-cap result is inferred.
+
+Reused fixture: `FT-GR5-13f`, loaded checkpoint `FT GR5 13f Timing v1`. No new city or checkpoint was created and no existing fixture save was overwritten. `GR5-NonFT-13g` was refused. Disposable saves remain in the isolated profile.
+
+Before staging, an independent SHA-256 manifest and originals covered all original PersistentCity files, isolated root preferences/configuration, plist, install.json and four absent request paths. RLO files were hashed read-only. The helper printed this rollback, shown here with paths replaced by placeholders:
+
+```sh
+rm -rf "<isolated-profile>/ModsLocal/PersistentCity" && cp -Rp "<receipt-backups>/20261114T044216Z/mod" "<isolated-profile>/ModsLocal/PersistentCity" && cp "<receipt-backups>/20261114T044216Z/install.json" "<agent-tests-root>/install.json"
+```
+
+Restoration used the helper's original `mod/` and unchanged install.json with the game stopped and lease held. The staged folder was moved intact to `<stage>/retained-staged-mod` instead of deleted, then the helper's original mod folder copied into the empty live path and its receipt copied back. This is the non-destructive equivalent of the printed folder-replacement rollback; no receipt was hand-edited. Changed original agent-runtime.json, tracked_commands.json and isolated plist were restored from the independent backup. RLO files were never rewritten.
+
+Verification: **35 original file hashes and 4 absent paths matched; complete PersistentCity file set matched; all 53 RLO hashes matched; zero mismatches**. Preferences, persistent-city.json and original autosave bytes match. install.json SHA-256 `35e1dccafc8fed62ef9406ec7834c6526a290abb07de6a0f5f912d03cc8144dc` matches both backups. AgentRigOps hash unchanged. Final status running=false, process=null, held=false, pending=0. Both owned game PIDs (39439, 45325) and their caffeinate assertions are gone. No Windows PC, Steam app, normal profile or other session's workspace was used.
+
+Validation: candidate build passed; compact JSON parses and is under 20 KB; only this existing checklist and the small JSON are changed. No full unit or regression suite was run for docs-only evidence. The isolated build/evidence worktree is removed after commit, push and opening the one unmerged docs-only PR.
