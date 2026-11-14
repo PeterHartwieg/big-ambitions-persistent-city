@@ -105,7 +105,7 @@ namespace PersistentCity.Runtime
         private IReadOnlyList<OptionalStopSpot> ReadSpots(Place place, DwellKind kind)
         {
             if (kind == DwellKind.Audience) return Audience(place);
-            string key = place.Id + ":" + kind;
+            string key = SpotKey(place, kind);
             if (kind == DwellKind.Resting)
                 return cached.TryGetValue(key, out var park) ? park : ParkEdge(place, key);
             if (!NativeDoorPresent(place, kind) || !doors.TryQueue(place, out var line) || line == null)
@@ -115,6 +115,14 @@ namespace PersistentCity.Runtime
                 TargetId = place.Id, Position = p, Facing = kind == DwellKind.WindowShopping ? line.Door
                     : new Position(2 * p.X - line.Door.X, p.Y, 2 * p.Z - line.Door.Z) }).ToArray();
             cached[key] = result; return result;
+        }
+        private readonly Dictionary<(string, DwellKind), string> spotKeys = new Dictionary<(string, DwellKind), string>();
+        private string SpotKey(Place place, DwellKind kind)
+        {
+            if (spotKeys.TryGetValue((place.Id, kind), out var key)) return key;
+            key = place.Id + ":" + kind;
+            spotKeys.Add((place.Id, kind), key);
+            return key;
         }
         private bool NativeDoorPresent(Place place, DwellKind kind)
         {
@@ -136,7 +144,7 @@ namespace PersistentCity.Runtime
         }
         private void InvalidateFrontage(Place place, DwellKind kind)
         {
-            string key = place.Id + ":" + kind;
+            string key = SpotKey(place, kind);
             if (cached.TryGetValue(key, out var old)) foreach (var spot in old) validatedSpots.Remove(spot.Id);
             cached.Remove(key);
         }
@@ -376,7 +384,7 @@ namespace PersistentCity.Runtime
             {
                 if (!performers.Available(stop.TargetId, stop.Facing)) return OptionalStopAvailability.Unavailable;
             }
-            if (stop.Kind == DwellKind.Resting && !targets.ContainsKey(stop.TargetId)) ParkEdge(place, place.Id + ":" + stop.Kind);
+            if (stop.Kind == DwellKind.Resting && !targets.ContainsKey(stop.TargetId)) ParkEdge(place, SpotKey(place, stop.Kind));
             if (ScanDue(stop.Kind)) return OptionalStopAvailability.Deferred;
             if (stop.Kind == DwellKind.Resting && (!targets.TryGetValue(stop.TargetId, out var target) || target == null
                 || !parkActivity.Admit(stop.TargetId, target.gameObject.activeInHierarchy, false))) return OptionalStopAvailability.Unavailable;

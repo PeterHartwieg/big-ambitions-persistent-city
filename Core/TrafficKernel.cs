@@ -12,7 +12,7 @@ namespace PersistentCity.Core
             internal readonly TrafficLinkState State;
             internal readonly LinkedList<TrafficVehicleState> Queue = new LinkedList<TrafficVehicleState>();
             internal readonly Queue<string> Sources = new Queue<string>();
-            internal readonly SortedSet<int> Incoming = new SortedSet<int>();
+            internal readonly SortedIds Incoming = new SortedIds();
             internal TrafficEventState? Event;
             internal Link(TrafficLinkDefinition definition)
             { Definition = definition; State = new TrafficLinkState { LinkId = definition.Id }; }
@@ -31,8 +31,8 @@ namespace PersistentCity.Core
         }
         private readonly Dictionary<int, Link> links = new Dictionary<int, Link>();
         private readonly List<Link> orderedLinks = new List<Link>();
-        private readonly SortedSet<int> activeLinks = new SortedSet<int>();
-        private readonly SortedSet<int> closedLinks = new SortedSet<int>();
+        private readonly SortedIds activeLinks = new SortedIds();
+        private readonly SortedIds closedLinks = new SortedIds();
         private readonly Dictionary<string, TrafficVehicleState> vehicles = new Dictionary<string, TrafficVehicleState>(StringComparer.Ordinal);
         private readonly SortedSet<TrafficEventState> events = new SortedSet<TrafficEventState>(new EventComparer());
         private const int ForecastMaximumLinks = 32;

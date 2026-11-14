@@ -433,13 +433,16 @@ namespace PersistentCity.Runtime
             trafficBuilder?.BeginQuery();
             if (!Ready || !position.IsFinite || Math.Abs(position.X) > 1000000 || Math.Abs(position.Z) > 1000000
                 || !Position.Finite(radius) || radius < 0 || radius > 100 || limit < 1 || limit > 2) return new List<Curb>();
-            var nearby = new List<int>();
+            var nearby = nearbyNodes;
+            nearby.Clear();
             var cell = Cell(position); int reach = (int)Math.Ceiling(radius / 50);
             for (int x = cell.X - reach; x <= cell.X + reach; x++)
                 for (int z = cell.Z - reach; z <= cell.Z + reach; z++)
                     if (cells.TryGetValue((x, z), out var indices))
                         foreach (int index in indices) if (!Disabled(index) && Position.Distance(position, nodes[index].Position) <= radius) nearby.Add(index);
-            nearby.Sort((a, b) => { int order = Position.Distance(position, nodes[a].Position).CompareTo(Position.Distance(position, nodes[b].Position)); return order != 0 ? order : a.CompareTo(b); });
+            var order = nearbyOrder ??= new NearbyOrder(nodes);
+            order.Origin = position;
+            nearby.Sort(order);
             var result = new List<Curb>();
             int attempts = 0;
             foreach (int index in nearby)
@@ -454,6 +457,20 @@ namespace PersistentCity.Runtime
                 result.Add(new Curb { Node = index, Position = curb });
             }
             return result;
+        }
+
+        private readonly List<int> nearbyNodes = new List<int>();
+        private NearbyOrder? nearbyOrder;
+        private sealed class NearbyOrder : IComparer<int>
+        {
+            private readonly List<TransportRoadNode> nodes;
+            internal Position Origin;
+            internal NearbyOrder(List<TransportRoadNode> nodes) { this.nodes = nodes; }
+            public int Compare(int a, int b)
+            {
+                int order = Position.Distance(Origin, nodes[a].Position).CompareTo(Position.Distance(Origin, nodes[b].Position));
+                return order != 0 ? order : a.CompareTo(b);
+            }
         }
 
         public List<Curb> AtParked(Position parked)
@@ -507,7 +524,7 @@ namespace PersistentCity.Runtime
             {
                 var owner = this.owner; var from = this.from; var to = this.to;
                 var speeds = owner.speeds; var nodes = owner.nodes; var waypoints = owner.waypoints;
-                speeds.Refresh();
+                speeds.RefreshForFrame(Time.frameCount);
                 if (speeds.Waiting != null) { WaitingForSpeeds = true; return; }
                 WaitingForSpeeds = false;
                 if (!owner.Ready || owner.TrafficNetwork == null || !Position.Finite(departureMinute) || departureMinute < 0

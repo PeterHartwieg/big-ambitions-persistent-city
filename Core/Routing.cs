@@ -51,7 +51,7 @@ namespace PersistentCity.Core
                 if (edge == null || string.IsNullOrWhiteSpace(edge.Id) || !ids.Add(edge.Id)
                     || edge.FromNodeId == null || !this.nodes.ContainsKey(edge.FromNodeId)
                     || edge.ToNodeId == null || !this.nodes.ContainsKey(edge.ToNodeId)
-                    || !Enum.IsDefined(typeof(TravelMode), edge.Mode)
+                    || (uint)edge.Mode > (uint)TravelMode.Car
                     || !Position.Finite(edge.Minutes) || edge.Minutes <= 0
                     || !NonnegativeFinite(edge.Fare) || !NonnegativeFinite(edge.HeadwayMinutes)
                     || (Transit(edge.Mode) && string.IsNullOrWhiteSpace(edge.ServiceId))

@@ -32,9 +32,18 @@ namespace PersistentCity.Runtime
         internal static IEqualityComparer<object> ReferenceComparer => References.Instance;
 
         public bool WaitsAfterRefresh() { Refresh(); return Waiting != null; }
+        private int refreshedFrame = int.MinValue;
+        public long Captures { get; private set; }
+        public void RefreshForFrame(int frame)
+        {
+            if (frame == refreshedFrame && Waiting == null && Verified) return;
+            Refresh();
+            refreshedFrame = Waiting == null && Verified ? frame : int.MinValue;
+        }
         public void Refresh()
         {
             if (capture == null) return;
+            Captures++;
             IReadOnlyDictionary<object, (int Original, int Effective)> next;
             try { next = capture() ?? throw new InvalidOperationException("RLO road speed snapshot is absent."); }
             catch (Exception error) when (transient?.Invoke(error) is string waiting) { Waiting = waiting; Verified = false; return; }

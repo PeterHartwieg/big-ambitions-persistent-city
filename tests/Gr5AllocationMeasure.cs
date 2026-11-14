@@ -368,6 +368,35 @@ public sealed class Gr5AllocationMeasure
     }
 
     [Fact]
+    public void ASteadyStateAdvanceTickAtTheCapAllocatesNothing()
+    {
+        var state = RigCity();
+        var grid = new RoadGrid(state.Places);
+        var simulator = new CitySimulator(state, grid);
+        simulator.AttachFoodMarket(new VisitorRoutineTests.Market { Shops = F5gPopulationFillTests.Shops(state) });
+        simulator.AttachOptionalStops(new StopSpots(), OptionalStopPolicy.ApprovedChoicePercentage);
+        double start = Math.Floor(state.Minute / 1440) * 1440 + 15.5 * 60;
+        simulator.AdvanceTo(start - 20, int.MaxValue);
+        const int fps = 90;
+        for (double minute = start - 20; minute < start; minute += 1.0 / fps) Frame(simulator, minute);
+        int idle = 0, busy = 0;
+        long idleBytes = 0;
+        for (double minute = start; minute < start + 20; minute += 1.0 / fps)
+        {
+            long before = GC.GetAllocatedBytesForCurrentThread();
+            simulator.RefreshOptionalStops();
+            var result = simulator.AdvanceFrameSlice(minute, 32);
+            long bytes = GC.GetAllocatedBytesForCurrentThread() - before;
+            if (result.Events == 0 && !result.PlanningPending) { idle++; idleBytes += bytes; }
+            else busy++;
+        }
+        Assert.Equal(CityBalance.CityResidentTotal, state.Citizens.Count);
+        Assert.True(idle >= 200, "only " + idle + " idle ticks");
+        Assert.True(busy > 0);
+        Assert.Equal(0, idleBytes);
+    }
+
+    [Fact]
     public void MeasureNativeRoadSpeedsRefreshAllocation()
     {
         string? path = PerfGate.Variable("PC_GR5_ALLOC");
