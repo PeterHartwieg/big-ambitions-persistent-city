@@ -278,7 +278,7 @@ public sealed class Gr5AllocationMeasure
         }
     }
 
-    private sealed class RoadGrid : IRoutePlanner
+    private sealed class RoadGrid : ICommuteTimingPlanner
     {
         private const double Spacing = 40;
         private readonly TransportRoadGraph graph;
@@ -364,7 +364,7 @@ public sealed class Gr5AllocationMeasure
                     gen0 = GC.CollectionCount(0) - gen0,
                     topTypes = run == 3 ? Top(types) : null,
                 });
-                if (window.StartsWith("day", StringComparison.Ordinal)) Assert.True(grid.Searches - searches > 0, window + " made no road searches.");
+                Assert.True(grid.Searches - searches > 0, window + " made no road searches.");
             }
         }
     }
