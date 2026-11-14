@@ -5,6 +5,7 @@ namespace PersistentCity.Core
 {
     internal sealed class RoadSearchWorkspace
     {
+        internal readonly List<int> Path = new List<int>();
         private struct NodeState
         {
             public double Distance;

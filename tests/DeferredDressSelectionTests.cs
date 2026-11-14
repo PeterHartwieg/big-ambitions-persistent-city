@@ -87,4 +87,30 @@ public sealed class DeferredDressSelectionTests
         }
         finally { PhysicalPedestrians.Defer = null; }
     }
+
+    [Fact]
+    public void IdleTrimmingIsTriedOnEveryFrameEvenWhenEveryFrameRunsSelection()
+    {
+        StreetFoodHooks.Reset(); NavMesh.Reset(); AmbientPedestrians.Reserved.Clear(); PhysicalPedestrians.VisiblePoint = null;
+        const double now = 1440 + 600;
+        var ids = Enumerable.Range(0, 8).Select(i => new CitizenIdentity { Id = "t" + i, Name = "T" + i, Age = 30, AppearanceSeed = i + 1 }).ToList();
+        var places = new List<Place> { new Place { Id = "work", Name = "Work", Kind = PlaceKind.Work, Capacity = 8, Position = new Position(100, 0, 0) } };
+        for (int i = 0; i < 8; i++)
+            places.Add(new Place { Id = "home" + i, Name = "Home", Kind = PlaceKind.Home, Capacity = 1, Position = new Position(100 + 40 * Math.Cos(i), 0, 40 * Math.Sin(i)) });
+        var state = Population.Create(ids, places, "trim-at-4fps", "0.40.4", 3, now);
+        var city = new CitySimulator(state, new Walk());
+        NativeTravelPace.Focus = new Position(100, 0, 0); Time.Next(3);
+        using var bodies = new PhysicalPopulation(new Transform { Component = new PopulationRuntime() }, city, new MultimodalRoutes(),
+            typeof(DeferredDressSelectionTests).Assembly, new VendorBodyTests.Log(), 96, 8, 120, new DwellSpots());
+        var pool = PhysicalPedestrians.Last!;
+        double minute = now;
+        const int frames = 40;
+        int before = pool.TrimCalls;
+        for (int i = 0; i < frames; i++)
+        {
+            minute += 0.25 / 60; city.AdvanceTo(minute); Time.Next(0.25f);
+            bodies.Update();
+        }
+        Assert.Equal(frames, pool.TrimCalls - before);
+    }
 }

@@ -152,6 +152,7 @@ namespace PersistentCity.Core
     {
         private readonly List<RouteLeg> items;
         public RouteLegs() { items = new List<RouteLeg>(); }
+        public RouteLegs(int capacity) { items = new List<RouteLeg>(capacity); }
         public RouteLegs(IEnumerable<RouteLeg> legs) { items = new List<RouteLeg>(legs); }
         public static implicit operator RouteLegs(List<RouteLeg> legs) => new RouteLegs(legs ?? throw new ArgumentNullException(nameof(legs)));
 

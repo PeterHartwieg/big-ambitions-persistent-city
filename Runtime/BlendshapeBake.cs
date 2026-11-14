@@ -14,6 +14,8 @@ namespace PersistentCity.Runtime
         private static readonly List<Vector3> vertices = new List<Vector3>(), normals = new List<Vector3>();
         private static readonly List<Vector4> tangents = new List<Vector4>();
         public static long Bakes { get; private set; }
+        public static long ScratchBytes { get; private set; }
+        public static int ScratchSizes => scratch.Count;
         public static long Steps { get; private set; }
 
         internal static bool Adopt(SkinnedMeshCombiner? combiner)
@@ -93,9 +95,10 @@ namespace PersistentCity.Runtime
             if (scratch.TryGetValue(length, out var buffer)) return buffer;
             buffer = new[] { new Vector3[length], new Vector3[length], new Vector3[length] };
             scratch.Add(length, buffer);
+            ScratchBytes += 36L * length;
             return buffer;
         }
 
-        internal static void Clear() { names.Clear(); scratch.Clear(); plan.Clear(); }
+        internal static void Clear() { names.Clear(); scratch.Clear(); plan.Clear(); ScratchBytes = 0; }
     }
 }

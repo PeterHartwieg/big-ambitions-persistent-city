@@ -106,7 +106,11 @@ namespace PersistentCity.Runtime
                 nextParked = Time.unscaledTime + ParkedRefreshSeconds; ShowParked(focus, radius, vehicleLimit);
                 PhysicalAllocation.Charge(GcAllocationSegment.PhysicalParked);
             }
-            if (Time.unscaledTime < nextSelection || !routes.ReadyForPopulation) return;
+            if (Time.unscaledTime < nextSelection || !routes.ReadyForPopulation)
+            {
+                if (pedestrians.TrimIdle(Time.unscaledTime)) PhysicalAllocation.Charge(GcAllocationSegment.PhysicalRelease);
+                return;
+            }
             nextSelection = Time.unscaledTime + .25f;
             int people = personBindings, cars = bindings.Count - people;
             int attempts = 0, dressScans = 0;
@@ -228,6 +232,7 @@ namespace PersistentCity.Runtime
                 foreach (var id in attempted.Keys.Where(id => !ids.Contains(id)).ToArray()) attempted.Remove(id);
             }
             PhysicalAllocation.Charge(GcAllocationSegment.PhysicalSelection);
+            if (pedestrians.TrimIdle(Time.unscaledTime)) PhysicalAllocation.Charge(GcAllocationSegment.PhysicalRelease);
         }
 
         private void ReleaseCharged(Binding binding)

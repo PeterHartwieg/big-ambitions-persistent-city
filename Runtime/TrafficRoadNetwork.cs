@@ -123,7 +123,7 @@ namespace PersistentCity.Runtime
                             if (!JunctionCurrent(validationCursor++)) { Stale = true; return false; }
                             units++; break;
                         }
-                        stage = Stage.ValidateNodes; validationCursor = 0; BeginQuery(); continue;
+                        stage = Stage.ValidateNodes; validationCursor = 0; ForgetQueries(); continue;
                     case Stage.ValidateNodes:
                         if (validationCursor < waypoints.Length)
                         {
@@ -136,10 +136,18 @@ namespace PersistentCity.Runtime
                     default: return true;
                 }
             }
-            BeginQuery(); return stage == Stage.Complete;
+            ForgetQueries(); return stage == Stage.Complete;
         }
 
-        public void BeginQuery() => junctionQueryResults.Clear();
+        private int queryFrame = int.MinValue;
+        public void BeginQuery()
+        {
+            int frame = UnityEngine.Time.frameCount;
+            if (frame == queryFrame) return;
+            queryFrame = frame;
+            junctionQueryResults.Clear();
+        }
+        public void ForgetQueries() { queryFrame = int.MinValue; junctionQueryResults.Clear(); }
         public int JunctionCount => junctions.Count;
         public bool JunctionCurrentAt(int id) => ReferencesCurrent && id >= 0 && id < junctions.Count && JunctionCurrent(id);
         public bool NodeCurrent(int index)
