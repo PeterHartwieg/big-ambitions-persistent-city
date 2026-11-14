@@ -191,6 +191,8 @@ public sealed class Gr5AllocationMeasure
                 typeof(Gr5AllocationMeasure).Assembly, new VendorBodyTests.Log(), 64, 8, 120, new DwellSpots());
             var pool = PhysicalPedestrians.Last!;
             double minute = now;
+            var split = run == 2 ? new GcPauseSampler(64) : null;
+            split?.Start(GC.GetTotalMemory(false));
             long allocated = 0;
             int gen0 = 0;
             void Move(float seconds)
@@ -211,11 +213,13 @@ public sealed class Gr5AllocationMeasure
                 }
                 Move(frame); minute += frame / 3.0; city.AdvanceTo(minute); Time.Next(frame);
                 if (!measure) { bodies.Update(); return; }
+                PhysicalPopulation.AllocationSampler = split;
                 int before = GC.CollectionCount(0);
                 types.Recording = run == 3;
                 long start = GC.GetAllocatedBytesForCurrentThread();
                 bodies.Update();
                 allocated += GC.GetAllocatedBytesForCurrentThread() - start;
+                PhysicalPopulation.AllocationSampler = null;
                 types.Recording = false;
                 gen0 += GC.CollectionCount(0) - before;
             }
@@ -229,8 +233,103 @@ public sealed class Gr5AllocationMeasure
                 label, run, component = "PhysicalPopulation.Update", walkers, optionalWalkers = walkers / 2, frames = measured,
                 boundBodies = pool.Active.Count,
                 allocatedBytes = allocated, bytesPerFrame = allocated / measured, gen0,
+                split = split == null ? null : new
+                {
+                    ambient = split.SegmentBytes(GcAllocationSegment.PhysicalAmbient), vehicles = split.SegmentBytes(GcAllocationSegment.PhysicalVehicles),
+                    bindings = split.SegmentBytes(GcAllocationSegment.PhysicalBindings), samples = split.SegmentSamples(GcAllocationSegment.PhysicalBindings),
+                },
                 topTypes = run == 3 ? Top(types) : null,
             });
+        }
+    }
+
+    private sealed class RoadGrid : IRoutePlanner
+    {
+        private const double Spacing = 40;
+        private readonly TransportRoadGraph graph;
+        private readonly double minX, minZ;
+        private readonly int columns, rows;
+        public long Searches;
+
+        public RoadGrid(IReadOnlyList<Place> places)
+        {
+            minX = places.Min(p => p.Position.X) - Spacing; minZ = places.Min(p => p.Position.Z) - Spacing;
+            columns = (int)Math.Ceiling((places.Max(p => p.Position.X) + Spacing - minX) / Spacing) + 1;
+            rows = (int)Math.Ceiling((places.Max(p => p.Position.Z) + Spacing - minZ) / Spacing) + 1;
+            var nodes = new TransportRoadNode[columns * rows];
+            for (int x = 0; x < columns; x++)
+                for (int z = 0; z < rows; z++)
+                {
+                    var next = new List<int>(4);
+                    if (x > 0) next.Add(Index(x - 1, z)); if (x + 1 < columns) next.Add(Index(x + 1, z));
+                    if (z > 0) next.Add(Index(x, z - 1)); if (z + 1 < rows) next.Add(Index(x, z + 1));
+                    nodes[Index(x, z)] = new TransportRoadNode { Position = new Position(minX + x * Spacing, 0, minZ + z * Spacing), Successors = next.ToArray(),
+                        KilometresPerHour = 30 + (x * 7 + z * 3) % 3 * 10, AllowsCar = true };
+                }
+            graph = new TransportRoadGraph(nodes);
+            Nodes = nodes.Length;
+        }
+
+        public int Nodes { get; }
+        private int Index(int x, int z) => x * rows + z;
+        private int Nearest(Position p) => Index(Math.Clamp((int)Math.Round((p.X - minX) / Spacing), 0, columns - 1), Math.Clamp((int)Math.Round((p.Z - minZ) / Spacing), 0, rows - 1));
+
+        public Route Plan(Place a, Place b, double at, TravelPreferences p)
+        {
+            int start = Nearest(a.Position), goal = Nearest(b.Position);
+            Route? road = null;
+            if (start != goal)
+            {
+                Searches++;
+                road = graph.PlanWithTraversal(start, goal, _ => false, (_, _) => true, (_, _, baseline) => baseline * 1.1, 30000, null, (_, _) => 0.05, null);
+            }
+            if (road == null) return Legs(a.Position, b.Position);
+            var route = new Route { Legs = new() };
+            Position previous = a.Position;
+            foreach (var leg in road.Legs) { route.Legs.Add(new RouteLeg { From = previous, To = leg.To, Mode = TravelMode.Walk, Minutes = Math.Max(0.01, leg.Minutes) }); previous = leg.To; }
+            route.Legs.Add(new RouteLeg { From = previous, To = b.Position, Mode = TravelMode.Walk, Minutes = Math.Max(0.01, Position.Distance(previous, b.Position) / 80) });
+            return route;
+        }
+    }
+
+    [Fact]
+    public void MeasureRigScaleAdvanceAllocation()
+    {
+        string? path = PerfGate.Variable("PC_GR5_ALLOC");
+        if (string.IsNullOrEmpty(path)) return;
+        string label = PerfGate.Variable("PC_GR5_ALLOC_LABEL") ?? "";
+        const int fps = 30;
+        using var types = new AllocationTypes();
+        for (int run = 1; run <= 3; run++)
+        {
+            var state = City();
+            var grid = new RoadGrid(state.Places);
+            var simulator = new CitySimulator(state, grid);
+            simulator.AttachFoodMarket(new VisitorRoutineTests.Market { Shops = F5gPopulationFillTests.Shops(state) });
+            simulator.AttachOptionalStops(new StopSpots(), OptionalStopPolicy.ApprovedChoicePercentage);
+            double day = Math.Floor(state.Minute / 1440) * 1440 + 1440;
+            foreach (var (window, start) in new[] { ("night-01:00", day + 60), ("day-15:30", day + 15.5 * 60) })
+            {
+                simulator.AdvanceTo(start - 30, int.MaxValue);
+                for (double minute = start - 30; minute < start; minute += 1.0 / fps) Frame(simulator, minute);
+                GC.Collect(); GC.WaitForPendingFinalizers(); GC.Collect();
+                lock (types.Bytes) types.Bytes.Clear();
+                types.Recording = run == 3;
+                long searches = grid.Searches;
+                int gen0 = GC.CollectionCount(0), frames = 0;
+                long allocated = GC.GetAllocatedBytesForCurrentThread();
+                for (double minute = start; minute < start + 60; minute += 1.0 / fps) { Frame(simulator, minute); frames++; }
+                allocated = GC.GetAllocatedBytesForCurrentThread() - allocated;
+                types.Recording = false;
+                Record(path, new
+                {
+                    label, run, component = "CitySimulator.AdvanceFrameSlice+RoadGrid", window, residents = state.Citizens.Count, visitors = state.Visitors.Count,
+                    places = state.Places.Count, roadNodes = grid.Nodes, roadSearches = grid.Searches - searches,
+                    gameMinutes = 60, frames, allocatedBytes = allocated, bytesPerGameMinute = allocated / 60, bytesPerFrame = allocated / frames,
+                    gen0 = GC.CollectionCount(0) - gen0,
+                    topTypes = run == 3 ? Top(types) : null,
+                });
+            }
         }
     }
 

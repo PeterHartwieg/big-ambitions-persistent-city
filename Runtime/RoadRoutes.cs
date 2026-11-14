@@ -488,6 +488,7 @@ namespace PersistentCity.Runtime
             private Route? begin, end;
             private Dictionary<int, TrafficLinkForecast>? captured;
             private Dictionary<int, double>? entryDelays;
+            private PlanScratch? scratch;
             private TrafficNetwork? network;
             public bool Finished { get; private set; }
             public Route? Result { get; private set; }
@@ -522,10 +523,12 @@ namespace PersistentCity.Runtime
                 double roadCeiling = TransportComposition.RemainingSearchMinutes(maximumEstimatedMinutes, begin.Minutes + end.Minutes);
                 var forecast = owner.trafficForecast;
                 var trafficEntryForecast = owner.trafficEntryForecast;
-                var captured = this.captured = new Dictionary<int, TrafficLinkForecast>();
-                var entryDelays = this.entryDelays = new Dictionary<int, double>();
+                var scratch = this.scratch ??= owner.planScratch.Count > 0 ? owner.planScratch.Pop() : new PlanScratch();
+                scratch.Clear();
+                var captured = this.captured = scratch.Captured;
+                var entryDelays = this.entryDelays = scratch.EntryDelays;
                 var network = this.network = owner.TrafficNetwork;
-                var sectionPace = new Dictionary<int, double>();
+                var sectionPace = scratch.SectionPace;
                 double entryMinute = departureMinute + begin.Minutes;
                 double Traversal(int a, int b, double baseline)
                 {
@@ -621,14 +624,33 @@ namespace PersistentCity.Runtime
             {
                 Finished = true; Result = result;
                 search?.Dispose(); search = null;
+                ReturnScratch();
             }
 
             public void Dispose()
             {
                 if (!Finished) { Finished = true; Result = null; }
                 search?.Dispose(); search = null;
+                ReturnScratch();
+            }
+
+            private void ReturnScratch()
+            {
+                if (scratch == null) return;
+                scratch.Clear();
+                owner.planScratch.Push(scratch);
+                scratch = null; captured = null; entryDelays = null;
             }
         }
+
+        private sealed class PlanScratch
+        {
+            public readonly Dictionary<int, TrafficLinkForecast> Captured = new Dictionary<int, TrafficLinkForecast>();
+            public readonly Dictionary<int, double> EntryDelays = new Dictionary<int, double>();
+            public readonly Dictionary<int, double> SectionPace = new Dictionary<int, double>();
+            public void Clear() { Captured.Clear(); EntryDelays.Clear(); SectionPace.Clear(); }
+        }
+        private readonly Stack<PlanScratch> planScratch = new Stack<PlanScratch>();
 
         private bool ConnectorClear(Position curb, Position road) => curb.IsFinite && road.IsFinite
             && Position.Distance(curb, road) <= ConnectorMetres && Math.Abs(curb.Y - road.Y) <= 1.5

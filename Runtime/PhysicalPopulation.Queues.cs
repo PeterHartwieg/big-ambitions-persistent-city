@@ -217,6 +217,9 @@ namespace PersistentCity.Runtime
 
         private void PlanVendorQueues(Position focus, double radius)
         {
+            bool vendorBound = false;
+            foreach (var b in bindings.Values) if (b.VendorOpening > 0 && b.Step != QueueStep.Entering) { vendorBound = true; break; }
+            if (vendorBound)
             foreach (var bound in bindings.Values.Where(b => b.VendorOpening > 0 && b.Step != QueueStep.Entering).OrderBy(b => b.Slot))
             {
                 if (!VendorWaiting(bound.Citizen, out _, out var vehicle) || vehicle.OpeningId != bound.VendorOpening) continue;
@@ -224,6 +227,7 @@ namespace PersistentCity.Runtime
                 if (!ahead.HasValue || !bound.Person!.SetPathTarget(bound.Line!.Spots[ahead.Value], NativeTravelPace.WalkingMetresPerSecond)) continue;
                 bound.Slot = ahead.Value; bound.Step = QueueStep.Approaching; bound.StepWalked = 0;
             }
+            if (vendorWaiters.Count == 0) return;
             foreach (var citizen in vendorWaiters.Values.OrderBy(c => vendorMeals.TryGetValue(c.Id, out var m) ? m.ServiceAt : double.MaxValue)
                 .ThenBy(c => c.Id, StringComparer.Ordinal))
             {

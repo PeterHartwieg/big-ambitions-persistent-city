@@ -29,11 +29,12 @@ namespace PersistentCity.Core
         public double Max { get; }
     }
 
-    public enum GcAllocationSegment { Mod, Advance, Physical }
+    public enum GcAllocationSegment { Mod, Advance, Physical, PhysicalAmbient, PhysicalVehicles, PhysicalBindings }
 
     public sealed class GcPauseSampler
     {
-        public const int Segments = 3;
+        public const int Segments = 6;
+        private static readonly string[] SegmentNames = { "mod", "advance", "physical", "physical_ambient", "physical_vehicles", "physical_bindings" };
         public const string PolicyId = "gc-sampler-v1";
         public const int Generations = 3;
         public const int DefaultCapacity = 65536;
@@ -199,7 +200,7 @@ namespace PersistentCity.Core
                 .Append(",\"alloc_frames\":").Append(N(allocationFrames)).Append(",\"frame_alloc_bytes\":").Append(N(frameAllocatedBytes));
             for (int i = 0; i < Segments; i++)
             {
-                string name = ((GcAllocationSegment)i).ToString().ToLowerInvariant();
+                string name = SegmentNames[i];
                 text.Append(",\"").Append(name).Append("_alloc_bytes\":").Append(N(segmentBytes[i]))
                     .Append(",\"").Append(name).Append("_alloc_samples\":").Append(N(segmentSamples[i]))
                     .Append(",\"").Append(name).Append("_alloc_skipped\":").Append(N(segmentSkipped[i]));

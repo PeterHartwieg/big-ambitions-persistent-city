@@ -31,6 +31,34 @@ public sealed class RoadSearchSlicingTests
             + "|" + (path == null ? "" : string.Join(",", path)) + "|" + string.Join(";", calls);
 
     [Fact]
+    public void ReusedCostWorkspaceMatchesFreshGraphPerQuery()
+    {
+        var random = new Random(9127);
+        for (int sample = 0; sample < 12; sample++)
+        {
+            var nodes = RandomGrid(random);
+            var shared = new TransportRoadGraph(nodes);
+            for (int query = 0; query < 40; query++)
+            {
+                int start = random.Next(100), goal = random.Next(100), other = random.Next(100);
+                double Slow(int a, int b, double nominal) => nominal * (1 + (a * 5 + b + query) % 4);
+                double Extra(int a, int b) => (a + b * 3 + query) % 5;
+                bool Clear(Position a, Position b) => true;
+                int[]? freshPath = null, reusedPath = null;
+                var fresh = new TransportRoadGraph(nodes).PlanWithTraversal(start, goal, _ => false, Clear, Slow, pathFound: p => freshPath = p, extraMinutes: Extra);
+                using var held = shared.BeginSearch(other, goal, _ => false, Clear, (a, b, n) => n * 7, extraMinutes: (a, b) => 11);
+                held.Advance(3);
+                var reused = shared.PlanWithTraversal(start, goal, _ => false, Clear, Slow, pathFound: p => reusedPath = p, extraMinutes: Extra);
+                held.Advance(int.MaxValue);
+                var again = shared.PlanWithTraversal(start, goal, _ => false, Clear, Slow, extraMinutes: Extra);
+                var empty = new List<string>();
+                Assert.Equal(Describe(fresh, freshPath, empty), Describe(reused, reusedPath, empty));
+                Assert.Equal(Describe(fresh, null, empty), Describe(again, null, empty));
+            }
+        }
+    }
+
+    [Fact]
     public void SlicedSearchMatchesOneShotOnThirtyRandomGraphs()
     {
         var random = new Random(7319);

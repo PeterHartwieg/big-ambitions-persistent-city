@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>Exe</OutputType><TargetFramework>net10.0</TargetFramework>
-    <Nullable>enable</Nullable><ImplicitUsings>disable</ImplicitUsings><TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <Nullable>enable</Nullable><ImplicitUsings>disable</ImplicitUsings><TreatWarningsAsErrors>true</TreatWarningsAsErrors><LangVersion>13</LangVersion>
     <SourceRoot Condition="'$(SourceRoot)' == ''">../..</SourceRoot>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     <NoWarn>$(NoWarn);xUnit1013;xUnit1026;xUnit2013;CS8600;CS8601;CS8602;CS8603;CS8604;CS8619;CS8620;CS8625</NoWarn>
@@ -21,6 +21,7 @@
     <Compile Include="../../Runtime/FoodContractHooks.cs" />
     <Compile Include="../../Runtime/OrdinaryOwnershipIndex.cs" />
     <Compile Include="../../Runtime/DwellSpots.cs" />
+    <Compile Include="../../Runtime/NativeRoadSpeeds.cs" />
     <Compile Include="../../Runtime/PhysicalPopulation.cs" />
     <Compile Include="../../Runtime/PhysicalPopulation.Following.cs" />
     <Compile Include="../../Runtime/PhysicalPopulation.Queues.cs" />
