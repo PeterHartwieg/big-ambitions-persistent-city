@@ -2089,7 +2089,7 @@ Validation: build passed; docs-links, markdown-ban and `git diff --check` run fo
 
 **RESULT: DONE. Counts: 4 passed / 1 partial / 0 failed / 5 NOT RUN.** Six required checks: 4 passed, 1 partial, 0 failed and 1 NOT RUN. Four owner-excluded groups are also NOT RUN, giving five NOT RUN report items. In-game proof gates no merge; this is an unmerged docs-only evidence PR.
 
-Role `rig_test`, instance `agentmac`, where `mac`; owner `persistent-city-rig-2026-11-14f-mac`. Raw evidence and independent backups: `/Users/peterhartwieg/HART-Builds/persistent-city-rig-2026-11-14f-mac`. Report copy: `/Users/peterhartwieg/Coding_Projects/.agent-logs/persistent-city-rig-2026-11-14f-mac.md`. All commands ran in the foreground and were awaited. No Windows connection, ordinary profile, Steam app, ordinary save, other session, release, merge, version/changelog or production-code change. Schema remains 1; FoodChoicePriceWeight 1.2 and FoodChoiceHouseholdWeight unchanged.
+Role `rig_test`, instance `agentmac`, where `mac`; owner `persistent-city-rig-2026-11-14f-mac`. Raw evidence and independent backups: `<stage>` = `<home>/HART-Builds/persistent-city-rig-2026-11-14f-mac`. Report copy: `<home>/Coding_Projects/.agent-logs/persistent-city-rig-2026-11-14f-mac.md`. All commands ran in the foreground and were awaited. No Windows connection, ordinary profile, Steam app, ordinary save, other session, release, merge, version/changelog or production-code change. Schema remains 1; FoodChoicePriceWeight 1.2 and FoodChoiceHouseholdWeight unchanged.
 
 ### Build and rig
 
@@ -2097,7 +2097,7 @@ Role `rig_test`, instance `agentmac`, where `mac`; owner `persistent-city-rig-20
 | --- | --- |
 | Candidate | `2f5e72eb5b51ad2449bfb692983ff7ce9cf062db`, exactly origin/codex/persistent-city at initial fetch. Final remote tip is recorded below. |
 | Worktree | New `codex/mac-rig-2026-11-14f` in `rig-2026-11-14f-mac-evidence`; one isolated worktree served build and evidence. Original checkout stayed clean. |
-| Build | `python3 tools/build.py --game-managed "/Users/peterhartwieg/Library/Application Support/BigAmbitionsMCP/dll-import-shim/Big Ambitions_Data/Managed"`, exit 0, Homebrew PATH and DOTNET_ROOT. No full test suite. |
+| Build | `python3 tools/build.py --game-managed "<home>/Library/Application Support/BigAmbitionsMCP/dll-import-shim/Big Ambitions_Data/Managed"`, exit 0, Homebrew PATH and DOTNET_ROOT. No full test suite. |
 | PersistentCity DLL SHA-256 | `bc3a0bac4357d8c4e9435b8e506fc4c839d013440202fddb5c61c523a09b3e2f`; built, packaged and staged hashes match. Every start validated the install receipt. |
 | Official agent-rig HEAD | `022630f7d6df8c533a230ac218413a68b181ed95`, clean; fetch and ff-only pull were already up to date. No edits, commit, push or overlay update. Includes #85 and #86. |
 | Live AgentRigOps SHA-256 | `154be3036954c314d3bd9eb4409da98f6a9b3a508748f2b1811c457abce07955`, unchanged while running and at cleanup. Live ops ready. |
@@ -2111,13 +2111,13 @@ Role `rig_test`, instance `agentmac`, where `mac`; owner `persistent-city-rig-20
 Exact staging command, game stopped and lease held, official agent-rig checkout:
 
 ```sh
-python3 scripts/install-mac.py --stage-mod PersistentCity /Users/peterhartwieg/HART-Builds/persistent-city-rig-2026-11-14f-mac/package
+python3 scripts/install-mac.py --stage-mod PersistentCity <stage>/package
 ```
 
-Receipt backup: `/Users/peterhartwieg/Library/Application Support/BigAmbitionsAgentTestsMac/receipt-backups/20261114T155326Z`. Package contains no RLO files. The rollback printed by staging is recorded verbatim below. Automatic command review rejected its removal command (`rm -f style commands are not permitted. Use a safer approach`). Stopped and leased, restoration instead renamed the staged folder into the raw evidence folder, copied back the entire backup mod folder and then copied back install.json. No receipt was edited; hashes and the exact file set were verified:
+Receipt backup: `<home>/Library/Application Support/BigAmbitionsAgentTestsMac/receipt-backups/20261114T155326Z`. Package contains no RLO files. The rollback printed by staging is recorded below with paths redacted. Automatic command review rejected its removal command (`rm -f style commands are not permitted. Use a safer approach`). Stopped and leased, restoration instead renamed the staged folder into the raw evidence folder, copied back the entire backup mod folder and then copied back install.json. No receipt was edited; hashes and the exact file set were verified:
 
 ```sh
-rm -rf "/Users/peterhartwieg/Library/Application Support/com.hovgaardgames.bigambitions.agenttests.mac/ModsLocal/PersistentCity" && cp -Rp "/Users/peterhartwieg/Library/Application Support/BigAmbitionsAgentTestsMac/receipt-backups/20261114T155326Z/mod" "/Users/peterhartwieg/Library/Application Support/com.hovgaardgames.bigambitions.agenttests.mac/ModsLocal/PersistentCity" && cp "/Users/peterhartwieg/Library/Application Support/BigAmbitionsAgentTestsMac/receipt-backups/20261114T155326Z/install.json" "/Users/peterhartwieg/Library/Application Support/BigAmbitionsAgentTestsMac/install.json"
+rm -rf "<home>/Library/Application Support/com.hovgaardgames.bigambitions.agenttests.mac/ModsLocal/PersistentCity" && cp -Rp "<home>/Library/Application Support/BigAmbitionsAgentTestsMac/receipt-backups/20261114T155326Z/mod" "<home>/Library/Application Support/com.hovgaardgames.bigambitions.agenttests.mac/ModsLocal/PersistentCity" && cp "<home>/Library/Application Support/BigAmbitionsAgentTestsMac/receipt-backups/20261114T155326Z/install.json" "<home>/Library/Application Support/BigAmbitionsAgentTestsMac/install.json"
 ```
 
 ### Per-check outcomes
