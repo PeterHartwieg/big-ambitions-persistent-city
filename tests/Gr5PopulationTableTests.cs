@@ -218,7 +218,7 @@ public sealed class Gr5SaveMeasure
         string? path = PerfGate.Variable("PC_GR5_MEASURE");
         string? source = PerfGate.Variable("PC_GR5_PAYLOAD");
         if (string.IsNullOrEmpty(path) || string.IsNullOrEmpty(source)) return;
-        var read = SaveCodec.Read(System.IO.File.ReadAllText(source));
+        var read = SaveCodec.Read(CapturedPayload.Load(source));
         Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
         var state = read.State!;
         var simulator = new CitySimulator(state, new FreshCityTraceTests.Walk());
@@ -246,7 +246,7 @@ public sealed class Gr5SaveMeasure
         string? path = PerfGate.Variable("PC_GR5_MEASURE");
         string? source = PerfGate.Variable("PC_GR5_PAYLOAD");
         if (string.IsNullOrEmpty(path) || string.IsNullOrEmpty(source)) return;
-        var read = SaveCodec.Read(System.IO.File.ReadAllText(source));
+        var read = SaveCodec.Read(CapturedPayload.Load(source));
         Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
         var state = read.State!;
         string payload = SaveCodec.Write(state);

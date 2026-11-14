@@ -144,4 +144,19 @@ public sealed class TrafficWireTests
         Assert.Contains("\"Z\":12.25", payload);
         Assert.Equal(SaveReadStatus.Loaded, SaveCodec.Read(payload).Status);
     }
+
+    [Fact]
+    public void CapturedMonoSpellingsNormalizeWithoutChangingValues()
+    {
+        static string Shortest(string mono) => double.Parse(mono, System.Globalization.CultureInfo.InvariantCulture).ToString("R", System.Globalization.CultureInfo.InvariantCulture);
+        Assert.Equal(Shortest("69.383535500870565"), CapturedPayload.Normalize("69.383535500870565"));
+        Assert.NotEqual("69.383535500870565", Shortest("69.383535500870565"));
+        Assert.Equal("[3856.0,0.6000000167127065,12.5]", CapturedPayload.Normalize("[3856.0,0.6000000167127065,12.5]"));
+        Assert.Equal("\"1|3900|" + Shortest("3528.8271746817823") + "|x\"", CapturedPayload.Normalize("\"1|3900|3528.8271746817823|x\""));
+        var state = TrafficPersistenceTests.QueuedCity();
+        string payload = SaveCodec.Write(state);
+        Assert.Equal(payload, CapturedPayload.Normalize(payload));
+        string wrapped = new Newtonsoft.Json.Linq.JObject { ["values"] = new Newtonsoft.Json.Linq.JObject { [SaveCodec.StateKey] = payload } }.ToString();
+        Assert.Equal(payload, CapturedPayload.Extract(wrapped));
+    }
 }
