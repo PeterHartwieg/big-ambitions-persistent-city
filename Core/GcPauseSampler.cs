@@ -34,16 +34,18 @@ namespace PersistentCity.Core
         Mod, Advance, Physical, PhysicalAmbient, PhysicalVehicles, PhysicalBindings,
         PhysicalVendorMeals, PhysicalFade, PhysicalFocus, PhysicalObserve, PhysicalRelease, PhysicalParked, PhysicalIndex, PhysicalQueues,
         PhysicalRoster, PhysicalSelection, PhysicalSpawnPedestrian, PhysicalSpawnAppearance, PhysicalSpawnCheck, PhysicalSpawnVehicle, PhysicalUnattributed,
+        PhysicalSpawnRandomize, PhysicalSpawnBake,
     }
 
     public sealed class GcPauseSampler
     {
-        public const int Segments = 21;
+        public const int Segments = 23;
         private static readonly string[] SegmentNames =
         {
             "mod", "advance", "physical", "physical_ambient", "physical_vehicles", "physical_bindings",
             "physical_vendor_meals", "physical_fade", "physical_focus", "physical_observe", "physical_release", "physical_parked", "physical_index", "physical_queues",
             "physical_roster", "physical_selection", "physical_spawn_pedestrian", "physical_spawn_appearance", "physical_spawn_check", "physical_spawn_vehicle", "physical_unattributed",
+            "physical_spawn_randomize", "physical_spawn_bake",
         };
         public const string PolicyId = "gc-sampler-v1";
         public const int Generations = 3;

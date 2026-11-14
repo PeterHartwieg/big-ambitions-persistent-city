@@ -119,7 +119,7 @@ public sealed class GcMeasurementTests
             "physical_bindings_alloc_bytes", "physical_bindings_alloc_samples", "physical_bindings_alloc_skipped" }
             .Concat(new[] { "physical_vendor_meals", "physical_fade", "physical_focus", "physical_observe", "physical_release", "physical_parked", "physical_index",
                 "physical_queues", "physical_roster", "physical_selection", "physical_spawn_pedestrian", "physical_spawn_appearance", "physical_spawn_check",
-                "physical_spawn_vehicle", "physical_unattributed" }.SelectMany(n => new[] { n + "_alloc_bytes", n + "_alloc_samples", n + "_alloc_skipped" })).ToArray();
+                "physical_spawn_vehicle", "physical_unattributed", "physical_spawn_randomize", "physical_spawn_bake" }.SelectMany(n => new[] { n + "_alloc_bytes", n + "_alloc_samples", n + "_alloc_skipped" })).ToArray();
         foreach (string json in new[] { empty, full })
         {
             Assert.DoesNotContain('\n', json);

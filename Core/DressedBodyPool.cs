@@ -24,6 +24,8 @@ namespace PersistentCity.Core
             && AppearanceSeed == other.AppearanceSeed && DaysPerYear == other.DaysPerYear;
     }
 
+    public enum BodyChoice { Hit, Grow, Redress, Deferred, Full }
+
     public sealed class DressedBodyPool<T> where T : class
     {
         private readonly List<T> items = new List<T>();
@@ -37,18 +39,65 @@ namespace PersistentCity.Core
             items.Add(item); dressings.Add(dressing);
         }
 
-        public bool TryTake(in PersonDressing wanted, out T item, out bool dressed)
+        public bool TryTakeDressed(in PersonDressing wanted, out T item)
         {
-            item = null!; dressed = false;
-            if (items.Count == 0) return false;
-            int at = 0;
+            item = null!;
             for (int i = items.Count - 1; i >= 0; i--)
-                if (dressings[i].Matches(wanted)) { at = i; dressed = true; break; }
-            item = items[at];
-            items.RemoveAt(at); dressings.RemoveAt(at);
+                if (dressings[i].Matches(wanted)) { item = items[i]; items.RemoveAt(i); dressings.RemoveAt(i); return true; }
+            return false;
+        }
+
+        public bool TryTakeOldest(out T item)
+        {
+            item = null!;
+            if (items.Count == 0) return false;
+            item = items[0];
+            items.RemoveAt(0); dressings.RemoveAt(0);
             return true;
         }
 
+        public BodyChoice Choose(in PersonDressing wanted, int owned, int maximum, DressBuildBudget? budget, int frame, double seconds, out T item)
+        {
+            if (TryTakeDressed(wanted, out item)) return BodyChoice.Hit;
+            if (owned >= maximum && items.Count == 0) return BodyChoice.Full;
+            if (budget != null && !budget.TryTake(frame, seconds)) return BodyChoice.Deferred;
+            if (owned < maximum) return BodyChoice.Grow;
+            TryTakeOldest(out item);
+            return BodyChoice.Redress;
+        }
+
         public void Clear() { items.Clear(); dressings.Clear(); }
+    }
+
+    public sealed class DressBuildBudget
+    {
+        public const int DefaultPerFrame = 1;
+        public const double DefaultPerSecond = 4;
+        private readonly int perFrame;
+        private readonly double perSecond, burst;
+        private double tokens, lastSeconds = double.NaN;
+        private int frame = int.MinValue, builtThisFrame;
+
+        public DressBuildBudget(int perFrame = DefaultPerFrame, double perSecond = DefaultPerSecond, double burst = DefaultPerSecond)
+        {
+            if (perFrame < 1) throw new ArgumentOutOfRangeException(nameof(perFrame));
+            if (!(perSecond > 0) || double.IsInfinity(perSecond)) throw new ArgumentOutOfRangeException(nameof(perSecond));
+            if (!(burst >= 1) || double.IsInfinity(burst)) throw new ArgumentOutOfRangeException(nameof(burst));
+            this.perFrame = perFrame; this.perSecond = perSecond; this.burst = burst; tokens = burst;
+        }
+
+        public long Granted { get; private set; }
+        public long Deferred { get; private set; }
+
+        public bool TryTake(int frame, double seconds)
+        {
+            if (double.IsNaN(seconds) || double.IsInfinity(seconds)) { Deferred++; return false; }
+            if (!double.IsNaN(lastSeconds) && seconds > lastSeconds) tokens = Math.Min(burst, tokens + (seconds - lastSeconds) * perSecond);
+            if (double.IsNaN(lastSeconds) || seconds > lastSeconds) lastSeconds = seconds;
+            if (frame != this.frame) { this.frame = frame; builtThisFrame = 0; }
+            if (builtThisFrame >= perFrame || tokens < 1) { Deferred++; return false; }
+            builtThisFrame++; tokens -= 1; Granted++;
+            return true;
+        }
     }
 }

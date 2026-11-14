@@ -99,30 +99,39 @@ public sealed class PhysicalAllocationAttributionTests
         Assert.Equal("heap_used", report.RootElement.GetProperty("frame_alloc_counter").GetString());
         foreach (string name in new[] { "physical_unattributed", "physical_spawn_appearance", "physical_spawn_check", "physical_spawn_pedestrian", "physical_spawn_vehicle",
             "physical_vendor_meals", "physical_fade", "physical_focus", "physical_observe", "physical_release", "physical_parked", "physical_index",
-            "physical_queues", "physical_roster", "physical_selection" })
+            "physical_queues", "physical_roster", "physical_selection", "physical_spawn_randomize", "physical_spawn_bake" })
             Assert.Equal(0, report.RootElement.GetProperty(name + "_alloc_bytes").GetInt64());
     }
 
     private static CitizenIdentity Person(string id, int seed = 7) => new CitizenIdentity { Id = id, Name = "N " + id, Age = 31, AppearanceSeed = seed };
 
     [Fact]
-    public void IdleBodiesGoBackToTheSamePersonAndOtherwiseTheOldestIsRedressed()
+    public void IdleBodiesGoBackToTheSamePersonGrowToTheMaximumAndOnlyThenRedressTheOldest()
     {
         var pool = new DressedBodyPool<string>();
-        Assert.False(pool.TryTake(new PersonDressing(Person("a"), 60), out _, out _));
+        Assert.Equal(BodyChoice.Grow, pool.Choose(new PersonDressing(Person("a"), 60), 0, 3, null, 0, 0, out _));
         pool.Return("body-a", new PersonDressing(Person("a"), 60));
         pool.Return("body-b", new PersonDressing(Person("b"), 60));
-        pool.Return("body-fresh", default);
-        Assert.True(pool.TryTake(new PersonDressing(Person("b"), 60), out var body, out bool dressed));
-        Assert.Equal("body-b", body); Assert.True(dressed);
-        Assert.True(pool.TryTake(new PersonDressing(Person("a", 8), 60), out body, out dressed));
-        Assert.Equal("body-a", body); Assert.False(dressed);
+        Assert.Equal(BodyChoice.Hit, pool.Choose(new PersonDressing(Person("b"), 60), 2, 3, null, 0, 0, out var body));
+        Assert.Equal("body-b", body);
+        Assert.Equal(BodyChoice.Grow, pool.Choose(new PersonDressing(Person("c"), 60), 2, 3, null, 0, 0, out body));
+        Assert.Null(body);
         pool.Return("body-c", new PersonDressing(Person("c"), 60));
-        Assert.True(pool.TryTake(new PersonDressing(Person("c"), 61), out body, out dressed));
-        Assert.Equal("body-fresh", body); Assert.False(dressed);
-        Assert.True(pool.TryTake(default, out body, out dressed));
-        Assert.Equal("body-c", body); Assert.False(dressed);
+        Assert.Equal(BodyChoice.Redress, pool.Choose(new PersonDressing(Person("a", 8), 60), 3, 3, null, 0, 0, out body));
+        Assert.Equal("body-a", body);
+        Assert.Equal(BodyChoice.Redress, pool.Choose(new PersonDressing(Person("c"), 61), 3, 3, null, 0, 0, out body));
+        Assert.Equal("body-c", body);
         Assert.Equal(0, pool.Count);
+        Assert.Equal(BodyChoice.Full, pool.Choose(new PersonDressing(Person("d"), 60), 3, 3, null, 0, 0, out _));
+        var budget = new DressBuildBudget(1, 1, 1);
+        pool.Return("body-e", new PersonDressing(Person("e"), 60));
+        Assert.Equal(BodyChoice.Redress, pool.Choose(new PersonDressing(Person("f"), 60), 3, 3, budget, 1, 0, out _));
+        pool.Return("body-f", new PersonDressing(Person("f"), 60));
+        Assert.Equal(BodyChoice.Hit, pool.Choose(new PersonDressing(Person("f"), 60), 3, 3, budget, 1, 0, out body));
+        Assert.Equal("body-f", body);
+        pool.Return("body-f", new PersonDressing(Person("f"), 60));
+        Assert.Equal(BodyChoice.Deferred, pool.Choose(new PersonDressing(Person("g"), 60), 3, 3, budget, 2, 0.5, out _));
+        Assert.Equal(1, pool.Count);
         Assert.False(default(PersonDressing).Matches(default(PersonDressing)));
         Assert.True(new PersonDressing(Person("a"), 60).Matches(new PersonDressing(Person("a"), 60)));
     }

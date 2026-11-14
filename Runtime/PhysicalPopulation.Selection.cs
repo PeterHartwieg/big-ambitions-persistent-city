@@ -194,6 +194,13 @@ namespace PersistentCity.Runtime
                     {
                         bool taken = pedestrians.TryAcquire(citizen.Identity, at, out var body);
                         PhysicalAllocation.Charge(GcAllocationSegment.PhysicalSpawnPedestrian);
+                        if (!taken && pedestrians.LastDeferred)
+                        {
+                            attempts--;
+                            if (float.IsNegativeInfinity(candidate.LastAttempt)) attempted.Remove(citizen.Identity.Id);
+                            else attempted[citizen.Identity.Id] = candidate.LastAttempt;
+                            continue;
+                        }
                         if (!taken) { failedAcquisitions++; continue; }
                         binding.Person = body;
                     }
