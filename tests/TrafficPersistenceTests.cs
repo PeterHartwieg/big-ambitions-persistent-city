@@ -85,7 +85,13 @@ public sealed class TrafficPersistenceTests
         var traffic = (JObject)wire["Traffic"]!;
         if (defect == "clock") traffic["Clock"] = state.Minute + 1;
         if (defect == "identity") traffic["Vehicles"]![0]!["VehicleId"] = "unowned";
-        if (defect == "duplicate-occupant") ((JArray)traffic["Links"]![0]!["WaitingSources"]!).Add("c0");
+        if (defect == "duplicate-occupant")
+        {
+            int records = 0;
+            var links = SaveCodec.ReadTrafficLinks((string)traffic["Links"]!, ref records);
+            links[0].WaitingSources.Add("c0");
+            traffic["Links"] = SaveCodec.TrafficLinksWire(links);
+        }
         if (defect == "missing-event") traffic["Events"] = new JArray();
         if (defect == "wrong-progress") wire["Citizens"]![0]!["DepartureMinute"] = 1441;
         if (defect == "wrong-progress") wire["Citizens"]![0]!["NextEventMinute"] = 1459;
@@ -171,7 +177,7 @@ public sealed class TrafficPersistenceTests
         Assert.Equal(1, state.TravelClockRate);
     }
 
-    private static CityState QueuedCity()
+    internal static CityState QueuedCity()
     {
         var state = Population.Create(Enumerable.Range(0, 2).Select(i => new CitizenIdentity
         { Id = "c" + i, Name = "Queue Citizen " + i, Age = 30, Persona = Persona.Commuter }), new[]
