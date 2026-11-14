@@ -11,6 +11,7 @@ namespace PersistentCity.Tests;
 public sealed class DressedBodyChurnTests
 {
     private const long RigBytesPerBuild = 745426168L / 427;
+    private static readonly long ModelledBakedBytesPerBuild = BakedBytes(new BodyShape());
     private readonly ITestOutputHelper output;
     public DressedBodyChurnTests(ITestOutputHelper output) { this.output = output; }
 
@@ -33,8 +34,55 @@ public sealed class DressedBodyChurnTests
     {
         public int Acquisitions, Builds, Hits, Deferred, Failed, PeakActive, MaxBuildsInFrame, Owned;
         public double HitRate => Acquisitions == 0 ? 0 : (double)Hits / Acquisitions;
-        public long Bytes => Builds * RigBytesPerBuild;
     }
+
+    private sealed class BodyShape
+    {
+        public int Sources = 9, BonesPerSource = 65, SubMeshesPerSource = 1, ElementTypes = 11, VariantsPerType = 24, NameLength = 24;
+        public int Bones => Sources * BonesPerSource;
+    }
+
+    private const long Header = 32, Reference = 8, Bindpose = 64, Combine = 88, ListObject = 40, SmallObject = 48;
+
+    private static long ArrayBytes(long count, long element) => Header + count * element;
+
+    private static long ListOf(long count, long element)
+    {
+        long capacity = 4, bytes = ListObject;
+        while (capacity < count) capacity *= 2;
+        for (long c = 4; c <= capacity; c *= 2) bytes += ArrayBytes(c, element);
+        return bytes;
+    }
+
+    private static long EnabledMergeBytes(BodyShape b)
+    {
+        long materials = ArrayBytes(b.SubMeshesPerSource, Reference);
+        long validate = b.Sources * 5 * materials + ListOf(b.Sources, Reference) + ArrayBytes(b.Sources, Reference);
+        long gather = ArrayBytes(b.Sources, Reference) + 2 * ListOf(b.Sources, Reference) + ArrayBytes(b.Sources, Reference);
+        long sort = b.Sources * b.SubMeshesPerSource * (3 * materials + SmallObject) + b.Sources * (ListOf(1, Reference) + 2 * SmallObject);
+        long perSource = 2 * ArrayBytes(b.BonesPerSource, Reference) + ArrayBytes(b.BonesPerSource, Bindpose);
+        long perMaterial = ArrayBytes(1, Combine) + ArrayBytes(b.BonesPerSource, Bindpose) + ArrayBytes(b.BonesPerSource, Reference)
+            + ArrayBytes(b.BonesPerSource, Reference) + ArrayBytes(b.BonesPerSource, Bindpose) + 3 * SmallObject;
+        long final = ArrayBytes(b.Sources, Combine) + ArrayBytes(b.Bones, Reference) + ArrayBytes(b.Bones, Bindpose) + ArrayBytes(b.Sources, Reference);
+        long objects = 8 * SmallObject + 2 * (Header + 2 * (160 + b.NameLength)) + 4 * SmallObject;
+        return validate + gather + sort + b.Sources * perSource + b.Sources * perMaterial + final + objects;
+    }
+
+    private static long DressScriptBytes(BodyShape b)
+    {
+        long variants = ListOf(b.VariantsPerType, Reference) + 3 * SmallObject;
+        long randomize = 280 + b.ElementTypes * (variants + 4 * SmallObject) + 2 * variants;
+        long visuals = b.ElementTypes * (variants + 3 * SmallObject) + 2 * SmallObject;
+        return randomize + visuals;
+    }
+
+    private static long BlendshapeBytes(long mergedVertices, long names, long sourceVertices, long sources) =>
+        names * (6 * ArrayBytes(mergedVertices, 12) + SmallObject) + sources * 3 * ArrayBytes(sourceVertices, 12);
+
+    private static long FullSupportBytes(BodyShape b, long mergedVertices, long names) =>
+        EnabledMergeBytes(b) + DressScriptBytes(b) + BlendshapeBytes(mergedVertices, names, mergedVertices / b.Sources, b.Sources);
+
+    private static long BakedBytes(BodyShape b) => EnabledMergeBytes(b) + DressScriptBytes(b);
 
     private static CitizenIdentity Identity(int i) => new CitizenIdentity
     { Id = "p" + i.ToString(CultureInfo.InvariantCulture), Name = "N" + i.ToString(CultureInfo.InvariantCulture), Age = 20 + i % 60, Female = i % 2 == 0, AppearanceSeed = 1 + i * 7 };
@@ -130,11 +178,11 @@ public sealed class DressedBodyChurnTests
         var before = Churn(lru: false, maximum, flap);
         var after = Churn(lru: true, maximum, flap);
         output.WriteLine(string.Format(CultureInfo.InvariantCulture,
-            "max={0} flap={1:P0}: before acquisitions={2} builds={3} hits={4} hitRate={5:P1} maxBuildsPerFrame={6} owned={7} modelledBytes={8:0.0} MB",
-            maximum, flap, before.Acquisitions, before.Builds, before.Hits, before.HitRate, before.MaxBuildsInFrame, before.Owned, before.Bytes / 1e6));
+            "max={0} flap={1:P0}: before acquisitions={2} builds={3} hits={4} hitRate={5:P1} maxBuildsPerFrame={6} owned={7} modelledSpawnAppearance={8:0.0} MB",
+            maximum, flap, before.Acquisitions, before.Builds, before.Hits, before.HitRate, before.MaxBuildsInFrame, before.Owned, before.Builds * RigBytesPerBuild / 1e6));
         output.WriteLine(string.Format(CultureInfo.InvariantCulture,
-            "max={0} flap={1:P0}: after  acquisitions={2} builds={3} hits={4} hitRate={5:P1} maxBuildsPerFrame={6} owned={7} deferred={8} modelledBytes={9:0.0} MB",
-            maximum, flap, after.Acquisitions, after.Builds, after.Hits, after.HitRate, after.MaxBuildsInFrame, after.Owned, after.Deferred, after.Bytes / 1e6));
+            "max={0} flap={1:P0}: after  acquisitions={2} builds={3} hits={4} hitRate={5:P1} maxBuildsPerFrame={6} owned={7} deferred={8} modelledSpawnAppearance={9:0.0} MB",
+            maximum, flap, after.Acquisitions, after.Builds, after.Hits, after.HitRate, after.MaxBuildsInFrame, after.Owned, after.Deferred, after.Builds * ModelledBakedBytesPerBuild / 1e6));
         Assert.InRange(before.Acquisitions, 300, 1500);
         Assert.True(after.Builds <= before.Builds);
         Assert.True(after.HitRate >= before.HitRate);
@@ -143,6 +191,27 @@ public sealed class DressedBodyChurnTests
         Assert.Equal(1, after.MaxBuildsInFrame);
         Assert.True(before.MaxBuildsInFrame > 1);
         Assert.InRange(after.Acquisitions, before.Acquisitions * 9 / 10, before.Acquisitions * 11 / 10);
+        Assert.True(after.Builds * ModelledBakedBytesPerBuild * 6 <= before.Builds * RigBytesPerBuild);
+    }
+
+    [Fact]
+    public void TheBakeRemovesTheCombinersBlendshapeArraysFromEveryBuild()
+    {
+        var shape = new BodyShape();
+        long merged = 1, names = 3;
+        while (FullSupportBytes(shape, merged + 1, names) <= RigBytesPerBuild) merged++;
+        long before = FullSupportBytes(shape, merged, names), after = BakedBytes(shape);
+        output.WriteLine(string.Format(CultureInfo.InvariantCulture,
+            "rig 14b measured {0:N0} B/build; FullSupport model {1:N0} B at {2:N0} merged vertices and {3} shape names; baked model {4:N0} B/build ({5:0.0}x less): merge {6:N0} B, dress scripts {7:N0} B",
+            RigBytesPerBuild, before, merged, names, after, (double)before / after, EnabledMergeBytes(shape), DressScriptBytes(shape)));
+        foreach (int bones in new[] { 40, 65, 90 })
+        {
+            var s = new BodyShape { BonesPerSource = bones };
+            output.WriteLine(string.Format(CultureInfo.InvariantCulture, "bones per source {0}: baked {1:N0} B/build, {2:0.0}x less than measured",
+                bones, BakedBytes(s), (double)RigBytesPerBuild / BakedBytes(s)));
+        }
+        Assert.True(after * 6 <= before);
+        Assert.True(BlendshapeBytes(merged, names, merged / shape.Sources, shape.Sources) > 4 * after);
     }
 
     [Fact]
