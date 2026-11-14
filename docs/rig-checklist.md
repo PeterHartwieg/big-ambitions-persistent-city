@@ -8,6 +8,7 @@ Detailed specs: [F8 §7](https://github.com/PeterHartwieg/big-ambitions-persiste
 
 ## Latest evidence
 
+- **14 November f, Mac, build `2f5e72eb`:** 4 passed / 1 partial / 0 failed / 5 NOT RUN; ordinary-save refusal verified, food sales at speed 1 checked, footprint fixture gap; restored ([14f results](#rig-results--14-november-2026-f-mac-244-p-d-7--246-checks-4-5--260-checks-1-3-at-2f5e72eb)).
 - **14 November f, PC, candidate `0795aa2c`:** 0 passed / 0 partial / 0 failed / 11 not run. Windows scoped receipt-safe staging missing; installed-player PowerShell probe succeeded; restored, lease free ([14f PC results](#rig-results--14-november-2026-f-pc-244-p-d-7--246-check-4-footprint--gr-5-60-fps-arms-at-0795aa2c)).
 - **14 November e, PC, build `2448bc40`:** 0 passed / 0 partial / 0 failed / 9 not run. Default start failed with SSH `homepc` resolution error; P-D 7 tooling gap; restored, lease free ([14e results](#rig-results--14-november-2026-e-pc-244-p-d-check-7-at-2448bc40)).
 - **14 November d, PC, build `913abd7d`:** 0 passed / 0 partial / 0 failed / 9 not run. Windows CLI refused `--rig-test`; neither 60 fps window started. Files/hash/lease restored ([14d results](#rig-results--14-november-2026-d-pc-gr-5-60-fps-arms-at-913abd7d)).
@@ -2083,3 +2084,200 @@ Final launcher status: **installed=true, running=false, pid=null, health=null**.
 Validation: build passed; docs-links, markdown-ban and `git diff --check` run for this existing-file-only docs change. No offline dotnet tests or regression suites. Report copy: `<home>\Coding_Projects\.agent-logs\persistent-city-rig-2026-11-14f-pc.md`. Raw evidence/backups stay outside Git. No issue, merge, release, Workshop upload, version/changelog or production code change. Schema 1 and both food-choice weights unchanged.
 
 **RESULT: BLOCKED.**
+
+## Rig results — 14 November 2026 f, Mac (#244 P-D 7 + #246 checks 4-5 + #260 checks 1-3 at 2f5e72eb)
+
+**RESULT: DONE. Counts: 4 passed / 1 partial / 0 failed / 5 NOT RUN.** Six required checks: 4 passed, 1 partial, 0 failed and 1 NOT RUN. Four owner-excluded groups are also NOT RUN, giving five NOT RUN report items. In-game proof gates no merge; this is an unmerged docs-only evidence PR.
+
+Role `rig_test`, instance `agentmac`, where `mac`; owner `persistent-city-rig-2026-11-14f-mac`. Raw evidence and independent backups: `/Users/peterhartwieg/HART-Builds/persistent-city-rig-2026-11-14f-mac`. Report copy: `/Users/peterhartwieg/Coding_Projects/.agent-logs/persistent-city-rig-2026-11-14f-mac.md`. All commands ran in the foreground and were awaited. No Windows connection, ordinary profile, Steam app, ordinary save, other session, release, merge, version/changelog or production-code change. Schema remains 1; FoodChoicePriceWeight 1.2 and FoodChoiceHouseholdWeight unchanged.
+
+### Build and rig
+
+| Item | Evidence |
+| --- | --- |
+| Candidate | `2f5e72eb5b51ad2449bfb692983ff7ce9cf062db`, exactly origin/codex/persistent-city at initial fetch. Final remote tip is recorded below. |
+| Worktree | New `codex/mac-rig-2026-11-14f` in `rig-2026-11-14f-mac-evidence`; one isolated worktree served build and evidence. Original checkout stayed clean. |
+| Build | `python3 tools/build.py --game-managed "/Users/peterhartwieg/Library/Application Support/BigAmbitionsMCP/dll-import-shim/Big Ambitions_Data/Managed"`, exit 0, Homebrew PATH and DOTNET_ROOT. No full test suite. |
+| PersistentCity DLL SHA-256 | `bc3a0bac4357d8c4e9435b8e506fc4c839d013440202fddb5c61c523a09b3e2f`; built, packaged and staged hashes match. Every start validated the install receipt. |
+| Official agent-rig HEAD | `022630f7d6df8c533a230ac218413a68b181ed95`, clean; fetch and ff-only pull were already up to date. No edits, commit, push or overlay update. Includes #85 and #86. |
+| Live AgentRigOps SHA-256 | `154be3036954c314d3bd9eb4409da98f6a9b3a508748f2b1811c457abce07955`, unchanged while running and at cleanup. Live ops ready. |
+| RLO startup | `[Mod:RealLifeOverhaul] Real Life Overhaul 1.0.6 initialised.` All 53 RLO package files hashed unchanged. No RLO install/edit. |
+| PC log identity | A: `Persistent population active: 1000 residents, 1000 visitors, 1686 places.` B: `1000 residents, 2000 visitors, 1683 places.` C: `1611 residents, 1611 visitors, 1685 places.` Full lines below. No commit-stamped build line is emitted; the matching live DLL hash and validated receipt establish binary identity. |
+| Lease / resources | Initially stopped/free, acquired `2026-11-14T15:52:58.0952490Z`. Startup resources 67.9 GiB disk / 76% reported memory free; vm_stat free+inactive+speculative about 6.76 GiB. No resource refusal, takeover or other-process termination. |
+| Starts / stops | Three cold processes, one attempt each: A headless, B windowed, C headless, all with `--rig-test`. All starts succeeded. All stops graceful, no force. |
+| Autosave | Native original 5 minutes / 3 saves, prevent_autosave=false. #70 process suppression confirmed after each load and before/after sales intervals. Preferences and configs restored byte for byte; suppression ends with the process. No save or checkpoint created. Final guard attempts/refused=20185/20185, default_allowed=0, armed_allowed=0, unrestricted=0; in_progress=false and compress_thread_alive=false. |
+| Frame cap / backup | Temporary B `agent-frame-cap.json` fps=30, vsync=0, removed for C and restored to original absence. Independent pre-stage manifest covers 38 file/absence entries, including the whole PC folder, install receipt, isolated root preferences/config and plist. |
+
+Exact staging command, game stopped and lease held, official agent-rig checkout:
+
+```sh
+python3 scripts/install-mac.py --stage-mod PersistentCity /Users/peterhartwieg/HART-Builds/persistent-city-rig-2026-11-14f-mac/package
+```
+
+Receipt backup: `/Users/peterhartwieg/Library/Application Support/BigAmbitionsAgentTestsMac/receipt-backups/20261114T155326Z`. Package contains no RLO files. The rollback printed by staging is recorded verbatim below. Automatic command review rejected its removal command (`rm -f style commands are not permitted. Use a safer approach`). Stopped and leased, restoration instead renamed the staged folder into the raw evidence folder, copied back the entire backup mod folder and then copied back install.json. No receipt was edited; hashes and the exact file set were verified:
+
+```sh
+rm -rf "/Users/peterhartwieg/Library/Application Support/com.hovgaardgames.bigambitions.agenttests.mac/ModsLocal/PersistentCity" && cp -Rp "/Users/peterhartwieg/Library/Application Support/BigAmbitionsAgentTestsMac/receipt-backups/20261114T155326Z/mod" "/Users/peterhartwieg/Library/Application Support/com.hovgaardgames.bigambitions.agenttests.mac/ModsLocal/PersistentCity" && cp "/Users/peterhartwieg/Library/Application Support/BigAmbitionsAgentTestsMac/receipt-backups/20261114T155326Z/install.json" "/Users/peterhartwieg/Library/Application Support/BigAmbitionsAgentTestsMac/install.json"
+```
+
+### Per-check outcomes
+
+| Required check | Result | Evidence |
+| --- | --- | --- |
+| A, #244 item 7, ordinary saves refused | PASS | Unsaved throwaway `RIGTMP-PD7-14f`. Both status and target calls reached the mod and returned its disposable-FT refusal. Live manifest: 2,000 persons before, immediately after and after more than one game hour. |
+| B, #246 item 4, unrentable footprint | NOT RUN / fixture gap | Fixed `building list` succeeds: 585 residential rows, all rentable_interior=true, zero unrentable subjects. No eligible three-building sample, Home footprint/floor comparison or screenshot proof. |
+| B, #246 item 5, unreadable/empty tally | PARTIAL | Exact load tally recorded: housed=0 beds=0 unreadable=0 empty=0. No unreadable or empty unrentable subjects, so the classification and omitted-warning behavior are unexercised. |
+| C, #260 item 1, speed 20 then speed 1 sales | PASS | 10:30–12:30 adds 21 paid $5 receipts, matching native purchases and paid shop_log units, revenue and stock. Raw log purchase counter also includes free bags, detailed below. |
+| C, #260 item 2, Living off/on | PASS | Off adds 21 paid receipts; on adds 29. Exactly 2 transition lines, active runtime, original option restored. |
+| C, #260 item 3, reach / outcomes | PASS | Exactly 2 reach lines for the two clock-rate changes; 5.85 / ~117 m readbacks. Missed dominates at 10:30; paid native outcome present by 12:30. |
+
+### A — ordinary-save refusal
+
+Fresh headless process; #70 suppression true. `call new_game {"name":"RIGTMP-PD7-14f","throwaway":true}` succeeded, load.status done. The throwaway city was never saved or removed. Exact console calls and outputs, including the confirmed repeat after load settled:
+
+```text
+call console {"line":"pc gc population"}
+Warning: [Persistent City] gc population refused: measurement mode needs a disposable FT city.
+call console {"line":"pc gc population 3000"}
+Warning: [Persistent City] gc population refused: measurement mode needs a disposable FT city.
+```
+
+Matching Player.log lines (the same two lines occur in the initial attempt and the settled repeat):
+
+```text
+[Persistent City] gc population refused: measurement mode needs a disposable FT city.
+[Mod:FoodTrucks] Test bridge: console 'pc gc population' (1 lines).
+[Persistent City] gc population refused: measurement mode needs a disposable FT city.
+[Mod:FoodTrucks] Test bridge: console 'pc gc population 3000' (1 lines).
+```
+
+No `MEASUREMENT MODE` line was emitted: neither rejected command entered that mode. Exact read-only manifest counts:
+
+| Observation | City minute / clock | Residents | Visitors | Persons | Fill created |
+| --- | --- | --- | --- | --- | --- |
+| Before settled refusal | 1922.044656 / 08:02 | 1000 | 1000 | 2000 | 0 |
+| Immediately after | 1922.155444 / 08:02 | 1000 | 1000 | 2000 | 0 |
+| After one hour | 1990.115011 / 09:10 | 1000 | 1000 | 2000 | 0 |
+
+The early census computation first reported persisted_persons=1000 while stations were pending, then a planned total of 3000 after station discovery. Those are census targets, not the live count; the `pc population manifest` replies above measure the actual persons. Each is retained in the raw evidence. No time mutation was sent to the non-FT city; the hour elapsed naturally.
+
+### B — footprint subjects and load tally
+
+Cold windowed rig-test process, `FT GR5 13f Timing v1`, the 14a/14b cap fixture, paused after load. Exact operation `op building {"action":"list"}` succeeded: residential=585, rentable=585, unrentable=0, pc_home_candidate=557, rotated=3. Three individual `read` calls also succeeded; these are tooling observations, not eligible check-4 evidence:
+
+| Place / address | Yaw | Interior area m² | PC candidate | Eligibility |
+| --- | --- | --- | --- | --- |
+| `address:ba%3Astreet_broadwaystreet:2:home` / 2 Broadway | 0° | 204 | true | rentable, excluded |
+| `address:ba%3Astreet_firststreet:22:home` / 22 1st Street | 268.953° | 204 | true | rentable, excluded |
+| `address:ba%3Astreet_hovgaardlane:1:home` / 1 Hovgaard Lane | 315° | 8496 | false | rentable, blocked Hamptons villa, excluded |
+
+`storeys=null`, `storeys_error=ops_building_storeys_not_native` is the documented readback, not an op failure. No floor count or visible ground area is guessed. There is no eligible rotated or yard/sidewalk subject to compare with footprint × floors × 0.6. No screenshots were needed or claimed. The existing fixture was extracted read-only to raw evidence; it was not saved or overwritten.
+
+Exact post-load Player.log:
+
+```text
+[Persistent City] unrentable homes housed=0 beds=0 unreadable=0 empty=0
+```
+
+The previous `ops_game_api_unavailable` failure did not recur. No missing rig capability blocked the list/read calls; the remaining check-4 gap is the requested fixture's lack of unrentable subjects.
+
+### C — speed-1 sales and Living transitions
+
+Cold headless rig-test process; fixture `FT RLO 13d Food v1` loaded at 08:00; `shop_log start` filtered to `ba:street_fourthavenue#19`, capacity 10000. Ready=true, croissant $5, stock 100 and free bags 300, revenue $0. Speed 20 was used only for the 08:00–10:30 positioning advance. An explicit unpause at 08:34 cleared run_until; it was re-armed at 09:22 for the same 10:30 target, without changing speed. It arrived paused at 10:30.01. Both sales windows used `time {"speed":1,"pause":false,"keep_needs":true}`, ordinary clock polling and a pause at their endpoint. No sales window used run_until or speed 20.
+
+| Readback | Living | Paid receipt total | New receipts | Native purchase total | Paid shop_log units | Raw purchase lines | Revenue | Croissants / bags |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 10:30 | on | 0 | 0 | 0 | 0 | 0 | $0 | 100 / 300 |
+| 12:30 | off | 21 | 21 | 21 | 21 | 42 | $105 | 79 / 279 |
+| 14:30 | on | 50 | 29 | 50 | 50 | 100 | $250 | 50 / 250 |
+
+All receipt keys match the exact 138-character paid receipt value for the observed BusinessId and croissant. Its UTF-8 SHA-256 is `ca326c1e66a05d6ebcc0df039620e1dd3892881a12db58244853f8ff960bb517`. `pcstate keys` exposes hashes and lengths; comparison with the expected `paid|500|<escaped business>|ba%3Aitemname_croissant` proves their status and price without a save. No pending or conflicting receipt hash appeared. BusinessId: `business:ba%3Astreet_fourthavenue:19:1:ba%3Abusinesstype_coffeeshop:player:generation:1`.
+
+Every paid croissant has one native visit, one paid product line and one $0 paper-bag line. Thus raw shop_log `purchases` is twice the paid receipt count; paid product lines and distinct orders equal receipts. All log snapshots have dropped=0, lost=false, hook_faults=0. Shop readiness and FoodDiagnostics.active remain true. Final accounting_stop_present=false. Revenue changes are $5 per new receipt; both croissants and bags decrease by that count. No probe fabricated a sale.
+
+Original living_population: stored=null, live=true, original_saved=false. Off setter: stored=0/live=false; on setter: stored=1/live=true; restore and independent read: stored=null/live=true/original_saved=false. No RLO file changed. Exact Player.log speed-change/toggle excerpts, in process order (line numbers refer to C-final.log):
+
+```text
+2421: [Mod:PersistentCity] Food reach at clock rate 6.667 game minutes per second: walking covers 0.3 m per game minute, so a 60-minute lunch break with 20 minutes eating and 1 minute service reaches food shops within 6 m one way.
+2792: [Mod:PersistentCity] RLO Living population on -> Living population off during play; Persistent City keeps owning its shops, crowds and traffic.
+2831: [Mod:PersistentCity] Food reach at clock rate 0.333 game minutes per second: walking covers 6.0 m per game minute, so a 60-minute lunch break with 20 minutes eating and 1 minute service reaches food shops within 117 m one way.
+3500: [Mod:PersistentCity] RLO Living population off -> Living population on during play; Persistent City keeps owning its shops, crowds and traffic.
+```
+
+FoodDiagnostics readbacks:
+
+| Clock | Clock rate | Walking m/game minute | Lunch reach m | Top settled outcome / paid outcome |
+| --- | --- | --- | --- | --- |
+| 10:30 | 6.66666667 | 0.3 | 5.85 | 1208 × `Missed: No suitable stop in the meal window`; paid=0 |
+| 12:30 | 0.333333343 | 5.99999983 | 116.999997 | 1191 × `Declined: Prefers the paid household food basket to the observed purchase options; no shop spend or stock consumed; household food basket is funded`; paid=21 |
+| 14:30 | 0.333333343 | 5.99999983 | 116.999997 | 1436 × `Declined: Prefers the paid household food basket to the observed purchase options; no shop spend or stock consumed; household food basket is funded`; paid=50 |
+
+The exact paid outcome reason in this runtime is `Paid: Native product, bag and completed order confirmed; daily settlement remains native`, rather than the shorter `Paid: Native purchase` wording in #260. It is backed by the matching paid receipts and native orders above. At 10:30 the miss count is 1208, exceeding the 1064 household-basket declines. The speed-1 reach also reads 116.999996731 m in the mid-window read.
+
+### Runtime / logged spikes
+
+Persistent City runtime stop: none. No TravelTiming.Apply stop, activation refusal or op failure. An unrelated mod logged this stop verbatim:
+
+```text
+[Bakery] HelpSystem was not created within 120 seconds; Help patch stopped to avoid permanent background polling.
+```
+
+No performance sampler, GC window or save profiler was armed. The following existing PC log warnings and observation maxima are >=30 ms; these are component observations, not a whole-mod p95 or an exhaustive per-frame export. Repeated maxima can refer to the same warning. Whole-frame timing was not measured. Full source lines remain in logged-spikes.json outside Git.
+
+| Log:line | Kind / clock | Observed ms |
+| --- | --- | --- |
+| A-final.log:2564 | routing warning | preparation_ms=132.826, closure_ms=0.0 |
+| A-final.log:2637 | routing warning | preparation_ms=1.202, closure_ms=47.742 |
+| A-final.log:2642 | observation maximum / 1920.0 | advance=146.405, closure_refresh=47.742, preparation_frame=132.826 |
+| A-final.log:2813 | observation maximum / 1926.3 | advance=140.178 |
+| B-final.log:1702 | routing warning | preparation_ms=132.976, closure_ms=0.0 |
+| B-final.log:1726 | observation maximum / 3780.0 | advance=147.673, preparation_frame=132.976 |
+| C-final.log:2552 | routing warning | preparation_ms=127.809, closure_ms=0.0 |
+| C-final.log:2576 | observation maximum / 1920.0 | advance=144.229, preparation_frame=127.809 |
+| C-final.log:2728 | observation maximum / 2009.4 | advance=135.177 |
+| C-final.log:2841 | routing warning | preparation_ms=0.256, closure_ms=162.199 |
+| C-final.log:2882 | observation maximum / 2074.0 | closure_refresh=162.199 |
+| C-final.log:3059 | observation maximum / 2104.0 | advance=141.141 |
+| C-final.log:3131 | observation maximum / 2118.4 | advance=128.399 |
+| C-final.log:3216 | observation maximum / 2135.9 | advance=131.71 |
+| C-final.log:3290 | observation maximum / 2154.1 | advance=129.631 |
+| C-final.log:3381 | observation maximum / 2171.1 | advance=130.721 |
+| C-final.log:3463 | observation maximum / 2190.0 | advance=130.443 |
+| C-final.log:3578 | observation maximum / 2207.8 | advance=132.387 |
+| C-final.log:3673 | observation maximum / 2225.4 | advance=138.127 |
+| C-final.log:3764 | observation maximum / 2244.9 | advance=132.295 |
+| C-final.log:3851 | observation maximum / 2262.7 | advance=135.229 |
+| C-final.log:3915 | observation maximum / 2278.5 | advance=136.171 |
+| C-final.log:3994 | observation maximum / 2293.8 | advance=321.675 |
+
+### NOT RUN groups / tooling gaps
+
+1. **Required #246 item 4:** fixture gap, all 585 residential buildings expose a rentable interior; no eligible three-home comparison. Building list/read now work.
+2. **GR-5 GC/street re-checks:** excluded; spawn_appearance fix still in progress at run authorization; recheck follows its merge. No performance window in this run.
+3. **#254 item 4 appearance:** excluded; resident identity through reacquire is a Rig bot gap.
+4. **GR-5 60 fps arms:** excluded; Mac reaches about 5 fps in prior runs, Windows CLI lacks --rig-test, both Rig bot gaps. Neither arm measured here; Windows untouched.
+5. **GR-5 save latency:** excluded; owner decision pending. No save profiling.
+
+Exact in-game op failures in this run: none. The printed shell rollback was rejected before execution with `rm -f style commands are not permitted. Use a safer approach`; the verified rename/copy restoration completed cleanup without that removal command. Building read returns the documented `ops_building_storeys_not_native` field; visible-storey comparison remains unavailable because there are no eligible subjects. The zero tally is partial evidence, not proof of nonzero empty/unreadable classification. No issue was opened and no bot was contacted.
+
+### Fixtures and cleanup
+
+Created unsaved throwaway: `RIGTMP-PD7-14f`. Reused only `FT GR5 13f Timing v1` and `FT RLO 13d Food v1`. No new fixture save/checkpoint, overwrite or removal. Existing disposable fixture saves stay in the isolated profile.
+
+Cleanup: three graceful stops; no --force. The safer equivalent restore returned the whole PC folder and install.json; the candidate folder was retained outside the profile. Isolated preference cache was restored from this run's own backup, then original bytes copied back. All 38 manifest entries match=true, exact PC file set matches=true, all 53 RLO files unchanged=true. Frame-cap and absent-config entries restored. living_population restored through its op before stop. Original autosave readback at cleanup remained 5 minutes / 3 saves, prevent_autosave=false; guard confirms no allowed save. Lease released; final status running=false, held=false, no process started by this run remains. Agent-rig and original PC checkout clean.
+
+`[Mod:PersistentCity] Persistent population active: 1000 residents, 1000 visitors, 1686 places. Native-pace walking, subway and car journeys; physical population preflight follows road initialization. Ctrl+F8 opens food business feedback.`
+
+`[Mod:PersistentCity] Persistent population active: 1000 residents, 2000 visitors, 1683 places. Native-pace walking, subway and car journeys; physical population preflight follows road initialization. Ctrl+F8 opens food business feedback.`
+
+`[Mod:PersistentCity] Persistent population active: 1611 residents, 1611 visitors, 1685 places. Native-pace walking, subway and car journeys; physical population preflight follows road initialization. Ctrl+F8 opens food business feedback.`
+
+Final origin/codex/persistent-city: `7ff6a87acf75e35a3a56d41abd842a43980c19d7`; candidate binary remains the SHA recorded above.
+
+The evidence branch was fast-forwarded to the final tip after testing to preserve the intervening checklist entries. #262 (the appearance fix) merged during the run; its production code was not built or tested here. GC/street re-checks remain excluded.
+
+Offline verification: candidate build passed; docs-links, markdown-ban and git diff --check recorded in the PR. No test source changed, no focused classes, no full suite. Raw evidence filename/hash manifest: `raw-evidence-manifest.json` in the stage. Build/evidence worktree removed after this evidence commit and PR creation.
+
+Refs #244
+Refs #246
+Refs #260
