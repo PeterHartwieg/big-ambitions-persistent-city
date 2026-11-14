@@ -29,8 +29,11 @@ namespace PersistentCity.Core
         public double Max { get; }
     }
 
+    public enum GcAllocationSegment { Mod, Advance, Physical }
+
     public sealed class GcPauseSampler
     {
+        public const int Segments = 3;
         public const string PolicyId = "gc-sampler-v1";
         public const int Generations = 3;
         public const int DefaultCapacity = 65536;
@@ -48,6 +51,10 @@ namespace PersistentCity.Core
         private double lastStampMs, pendingModMs;
         private bool baselined;
         private int collectionSpikes, frameSpikes;
+        private long frameAllocatedBytes, allocationFrames;
+        private readonly long[] segmentBytes = new long[Segments];
+        private readonly long[] segmentSamples = new long[Segments];
+        private readonly long[] segmentSkipped = new long[Segments];
 
         public GcPauseSampler(int capacity = DefaultCapacity)
         {
@@ -72,6 +79,8 @@ namespace PersistentCity.Core
             Array.Clear(collections, 0, collections.Length);
             stored = 0; Frames = 0; CollectionFrames = 0; heapBeforeSum = heapAfterSum = heapPairs = 0;
             MaxFrameMs = MaxModMs = 0; collectionSpikes = frameSpikes = 0;
+            frameAllocatedBytes = allocationFrames = 0;
+            Array.Clear(segmentBytes, 0, Segments); Array.Clear(segmentSamples, 0, Segments); Array.Clear(segmentSkipped, 0, Segments);
             HeapStart = HeapEnd = HeapPeak = lastHeap = heapBytes;
             baselined = false; pendingModMs = 0;
             Running = true;
@@ -95,6 +104,20 @@ namespace PersistentCity.Core
 
         public void ModWork(double milliseconds) { if (Running && baselined) pendingModMs = milliseconds; }
 
+        public void Allocated(GcAllocationSegment segment, long heapBefore, long heapAfter, bool collected)
+        {
+            if (!Running || heapBefore < 0 || heapAfter < 0) return;
+            int index = (int)segment;
+            if (collected || heapAfter < heapBefore) { segmentSkipped[index]++; return; }
+            segmentBytes[index] += heapAfter - heapBefore; segmentSamples[index]++;
+        }
+
+        public long AllocationFrames => allocationFrames;
+        public long FrameAllocatedBytes => frameAllocatedBytes;
+        public long SegmentBytes(GcAllocationSegment segment) => segmentBytes[(int)segment];
+        public long SegmentSamples(GcAllocationSegment segment) => segmentSamples[(int)segment];
+        public long SegmentSkipped(GcAllocationSegment segment) => segmentSkipped[(int)segment];
+
         public void Rebaseline() { baselined = false; pendingModMs = 0; }
 
         public void Frame(double frameMilliseconds, double modMilliseconds, int gen0, int gen1, int gen2, long heapBytes)
@@ -110,6 +133,7 @@ namespace PersistentCity.Core
                 CollectionFrames++;
                 if (lastHeap >= 0 && heapBytes >= 0) { heapBeforeSum += lastHeap; heapAfterSum += heapBytes; heapPairs++; }
             }
+            else if (lastHeap >= 0 && heapBytes >= lastHeap) { frameAllocatedBytes += heapBytes - lastHeap; allocationFrames++; }
             if (heapBytes > HeapPeak) HeapPeak = heapBytes;
             if (heapBytes >= 0) { lastHeap = heapBytes; HeapEnd = heapBytes; }
             if (frameMilliseconds >= SpikeMilliseconds) { frameSpikes++; if (gc) collectionSpikes++; }
@@ -171,7 +195,16 @@ namespace PersistentCity.Core
             S(text, "mod_ms_gc", ModSpread(true));
             S(text, "mod_ms_plain", ModSpread(false));
             text.Append(",\"gc_spikes_30ms\":").Append(N(CollectionSpikes())).Append(",\"frame_spikes_30ms\":").Append(N(FrameSpikes()))
-                .Append(",\"max_frame_ms\":").Append(D(MaxFrameMs)).Append(",\"max_mod_ms\":").Append(D(MaxModMs)).Append('}');
+                .Append(",\"max_frame_ms\":").Append(D(MaxFrameMs)).Append(",\"max_mod_ms\":").Append(D(MaxModMs))
+                .Append(",\"alloc_frames\":").Append(N(allocationFrames)).Append(",\"frame_alloc_bytes\":").Append(N(frameAllocatedBytes));
+            for (int i = 0; i < Segments; i++)
+            {
+                string name = ((GcAllocationSegment)i).ToString().ToLowerInvariant();
+                text.Append(",\"").Append(name).Append("_alloc_bytes\":").Append(N(segmentBytes[i]))
+                    .Append(",\"").Append(name).Append("_alloc_samples\":").Append(N(segmentSamples[i]))
+                    .Append(",\"").Append(name).Append("_alloc_skipped\":").Append(N(segmentSkipped[i]));
+            }
+            text.Append('}');
             return text.ToString();
         }
 

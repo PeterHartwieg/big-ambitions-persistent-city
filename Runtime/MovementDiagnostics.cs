@@ -32,6 +32,26 @@ namespace PersistentCity.Runtime
             if (started != 0) gcSampler?.ModWork((System.Diagnostics.Stopwatch.GetTimestamp() - started) * GcMillisecondsPerTimestamp);
         }
 
+        private readonly struct GcHeapMark
+        {
+            public GcHeapMark(long heap, int collections) { Heap = heap; Collections = collections; }
+            public long Heap { get; }
+            public int Collections { get; }
+        }
+
+        private GcHeapMark GcAllocationBegin()
+        {
+            var sampler = gcSampler;
+            if (sampler == null || !sampler.Running) return new GcHeapMark(-1, 0);
+            return new GcHeapMark(GC.GetTotalMemory(false), GC.CollectionCount(0));
+        }
+
+        private void GcAllocationEnd(GcAllocationSegment segment, GcHeapMark mark)
+        {
+            if (mark.Heap < 0) return;
+            gcSampler?.Allocated(segment, mark.Heap, GC.GetTotalMemory(false), GC.CollectionCount(0) != mark.Collections);
+        }
+
         private static int GcCount(int generation) => generation > GC.MaxGeneration ? 0 : GC.CollectionCount(generation);
 
         private void GcCommand(string action, string detail)
