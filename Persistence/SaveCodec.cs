@@ -69,9 +69,9 @@ namespace PersistentCity.Persistence
             if (snapshot == null) throw new SaveValidationException("Snapshot is null.");
             var state = snapshot.Wire;
             cost?.Enter(SaveCostPhase.Validate);
-            Validate(state);
+            Validate(state, cost);
             cost?.Enter(SaveCostPhase.Encode);
-            string json = WriteBody(state);
+            string json = WriteBody(state, cost);
             Require(json.Length <= MaxInputCharacters, "Serialized state exceeds the input size limit.");
             if (cost != null || json.Length > MaxInputCharacters / 3)
             {
@@ -91,9 +91,14 @@ namespace PersistentCity.Persistence
         private static SaveReadResult RetiredCompactRefusal() => new SaveReadResult(SaveReadStatus.DevelopmentSchema, null,
             DevelopmentSchemaMessage + " (schema " + CityState.CurrentSchema.ToString(CultureInfo.InvariantCulture) + ", retired compact format)", CityState.CurrentSchema);
 
+        private static readonly long NegativeZero = BitConverter.DoubleToInt64Bits(-0.0);
+
+        internal static bool IntegralNumber(double value) => value == Math.Floor(value) && value > -1e15 && value < 1e15
+            && BitConverter.DoubleToInt64Bits(value) != NegativeZero;
+
         [ThreadStatic] private static System.Text.StringBuilder? bodyBuffer;
 
-        private static string WriteBody(CityState state)
+        private static string WriteBody(CityState state, SaveCostRecorder? cost = null)
         {
             var serializer = JsonSerializer.CreateDefault(Settings(WireContext.FromState(state)));
             serializer.Formatting = Formatting.None;
@@ -102,8 +107,9 @@ namespace PersistentCity.Persistence
             try
             {
                 using (var text = new StringWriter(buffer, CultureInfo.InvariantCulture))
-                using (var writer = new BodyWriter(text))
+                using (var writer = new BodyWriter(text, cost))
                     serializer.Serialize(writer, state);
+                cost?.EndSections();
                 return buffer.ToString();
             }
             finally { buffer.Clear(); }
@@ -111,7 +117,39 @@ namespace PersistentCity.Persistence
 
         private sealed class BodyWriter : JsonTextWriter
         {
-            public BodyWriter(TextWriter text) : base(text) { Formatting = Formatting.None; }
+            private readonly TextWriter text;
+            private readonly SaveCostRecorder? cost;
+            public BodyWriter(TextWriter text, SaveCostRecorder? cost) : base(text) { this.text = text; this.cost = cost; Formatting = Formatting.None; }
+            public override void WritePropertyName(string name)
+            {
+                if (cost != null && Top == 1) cost.Section(SectionOf(name));
+                base.WritePropertyName(name);
+            }
+            public override void WritePropertyName(string name, bool escape)
+            {
+                if (cost != null && Top == 1) cost.Section(SectionOf(name));
+                base.WritePropertyName(name, escape);
+            }
+            private static SaveCostSection SectionOf(string name) => name switch
+            {
+                "Places" => SaveCostSection.Places,
+                "Citizens" or "SourceIdentities" => SaveCostSection.Residents,
+                "Visitors" or "VisitorRoutines" => SaveCostSection.Visitors,
+                "Traffic" => SaveCostSection.Traffic,
+                "Food" => SaveCostSection.Food,
+                "Economy" or "Research" or "Vendors" => SaveCostSection.Economy,
+                _ => SaveCostSection.Header,
+            };
+            public override void WriteValue(double value)
+            {
+                if (IntegralNumber(value)) { base.WriteValue((long)value); text.Write(".0"); }
+                else base.WriteValue(value);
+            }
+            public override void WriteValue(double? value)
+            {
+                if (value.HasValue && IntegralNumber(value.GetValueOrDefault())) WriteValue(value.GetValueOrDefault());
+                else base.WriteValue(value);
+            }
             public override void WriteRaw(string? json) => Fail("Raw JSON is not part of the save body.");
             public override void WriteRawValue(string? json) => Fail("Raw JSON is not part of the save body.");
             public override void WriteStartConstructor(string name) => Fail("Constructors are not part of the save body.");
@@ -394,6 +432,7 @@ namespace PersistentCity.Persistence
                 Require(reader.TokenType == JsonToken.EndObject && components == 7, "Missing position field.");
                 return;
             }
+            if (CheckTrafficWire(reader, type, text, ref records)) return;
             var contract = resolver.ResolveContract(type);
             if (contract is JsonArrayContract array)
             {
@@ -497,6 +536,7 @@ namespace PersistentCity.Persistence
             settings.Converters.Add(new EconomicConverter(context));
             settings.Converters.Add(new ObservationConverter(context));
             settings.Converters.Add(new ProductSales25Converter(context));
+            settings.Converters.Add(new TrafficConverter());
             var table = new ConverterTable(settings.Converters.ToArray());
             settings.Converters.Clear();
             settings.Converters.Add(table);
@@ -594,8 +634,17 @@ namespace PersistentCity.Persistence
         private static int StreamingOnlyRecords(CityState state) => state.Citizens.Sum(c => c.OptionalStop?.Members.Count ?? 0)
             + (state.Food?.Shops.Sum(s => s.AdditionalProductIds.Count) ?? 0);
 
-        private static int Validate(CityState state)
+        private static int Validate(CityState state) => Validate(state, null);
+
+        private static int Validate(CityState state, SaveCostRecorder? cost)
         {
+            try { return ValidateSections(state, cost); }
+            finally { cost?.EndValidateSections(); }
+        }
+
+        private static int ValidateSections(CityState state, SaveCostRecorder? cost)
+        {
+            cost?.ValidateSection(SaveCostSection.Header);
             Require(state != null, "State is null.");
             Require(state.Schema == CityState.CurrentSchema, "Unsupported state schema.");
             Require(state.PlayerHoldSequence >= 0 && state.PlayerHoldSequence < long.MaxValue, "Invalid player hold sequence.");
@@ -603,11 +652,13 @@ namespace PersistentCity.Persistence
             Require(state.WeatherStartsDay>=0 && state.WeatherStartsDay<=(int)(state.Minute/1440)+1,"Invalid weather activation day.");
             Require(state.Capabilities != null, "Missing population capabilities.");
             ValidateCapabilities(state.Capabilities);
+            cost?.ValidateSection(SaveCostSection.Food);
             int vendorRecords = 0;
             var vendors = ValidateVendors30(state, ref vendorRecords);
             int embeddedRecords = 1 + vendorRecords + ValidateFood(state, vendors);
             ValidatePlans(state); ValidateNeeds(state);
             embeddedRecords += ValidateNames25(state);
+            cost?.ValidateSection(SaveCostSection.Places);
             Require(state.TravelTimingVersion == 0 || state.TravelTimingVersion == 1, "Invalid travel timing version.");
             Bounded(state.TravelClockRate, 0.01, 1000, "Travel clock rate");
             Text(state.PopulationKey, "Population key", 256);
@@ -641,6 +692,7 @@ namespace PersistentCity.Persistence
             }
             foreach (var vendorPlace in vendors.FoodPlaces) places.Add(vendorPlace.Id, vendorPlace);
             ValidateExpansion(state);
+            cost?.ValidateSection(SaveCostSection.Residents);
             var ids = new HashSet<string>(StringComparer.Ordinal);
             var citizens = new Dictionary<string, CitizenState>(StringComparer.Ordinal);
             foreach (var citizen in state.Citizens!)
@@ -695,9 +747,11 @@ namespace PersistentCity.Persistence
             }
             int personRecords = ValidatePersons27(state, places, assigned, ref embeddedRecords);
             embeddedRecords += personRecords;
+            cost?.ValidateSection(SaveCostSection.Economy);
             embeddedRecords += ValidateResearch29(state);
             embeddedRecords += ValidateEconomy(state);
             Require(embeddedRecords <= MaxEmbeddedRecords, "Too many opening, route and visit records.");
+            cost?.ValidateSection(SaveCostSection.Traffic);
             int totalRecords = ValidateTraffic(state, embeddedRecords);
             int streamingOnly = StreamingOnlyRecords(state);
             Require(totalRecords + streamingOnly <= MaxEmbeddedRecords, "Too many embedded records in the streaming count.");

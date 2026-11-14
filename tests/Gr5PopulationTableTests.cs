@@ -184,7 +184,7 @@ public sealed class Gr5SaveMeasure
     {
         string? path = PerfGate.Variable("PC_GR5_MEASURE");
         if (string.IsNullOrEmpty(path)) return;
-        foreach (int residents in new[] { 957, CityBalance.CityResidentTotal, 3500 })
+        foreach (int residents in new[] { 957, CityBalance.CityResidentTotal, 1074, 3500 })
         {
             var state = EconomyScenario.Create(residents, RepresentativeFixture.Seed);
             PortalPlaces.Add(state, RepresentativeFixture.Portals);
@@ -210,5 +210,48 @@ public sealed class Gr5SaveMeasure
                 payloadChars = payload.Length, encodeMedianMs = times[10], encodeP95Ms = times[19], encodeMaxMs = times[20], allocatedBytes = allocated
             }) + Environment.NewLine);
         }
+    }
+
+    [Fact]
+    public void MeasureSaveEncodeOfCapturedPayload()
+    {
+        string? path = PerfGate.Variable("PC_GR5_MEASURE");
+        string? source = PerfGate.Variable("PC_GR5_PAYLOAD");
+        if (string.IsNullOrEmpty(path) || string.IsNullOrEmpty(source)) return;
+        var read = SaveCodec.Read(System.IO.File.ReadAllText(source));
+        Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
+        var state = read.State!;
+        string payload = SaveCodec.Write(state);
+        var times = new List<double>();
+        var phases = new double[SaveCostRecorder.PhaseCount];
+        var encoded = new double[SaveCostRecorder.SectionCount];
+        var validated = new double[SaveCostRecorder.SectionCount];
+        var cost = new SaveCostRecorder();
+        for (int i = 0; i < 21; i++)
+        {
+            cost.Begin();
+            payload = SaveCodec.Write(state, cost);
+            cost.End(true, "");
+            times.Add(cost.TotalMilliseconds);
+            for (int phase = 0; phase < phases.Length; phase++) phases[phase] += cost.Milliseconds((SaveCostPhase)phase) / 21;
+            for (int section = 0; section < encoded.Length; section++)
+            {
+                encoded[section] += cost.SectionMilliseconds((SaveCostSection)section) / 21;
+                validated[section] += cost.ValidateSectionMilliseconds((SaveCostSection)section) / 21;
+            }
+        }
+        times.Sort();
+        long allocated = GC.GetAllocatedBytesForCurrentThread();
+        SaveCodec.Write(state);
+        allocated = GC.GetAllocatedBytesForCurrentThread() - allocated;
+        System.IO.File.AppendAllText(path, JsonConvert.SerializeObject(new
+        {
+            source = System.IO.Path.GetFileName(source), residents = state.Citizens.Count, visitors = state.Visitors.Count, places = state.Places.Count,
+            trafficLinks = state.Traffic?.Links.Count ?? 0, payloadChars = payload.Length,
+            encodeMedianMs = times[10], encodeP95Ms = times[19], encodeMaxMs = times[20], allocatedBytes = allocated,
+            meanPhaseMs = Enumerable.Range(0, phases.Length).ToDictionary(i => ((SaveCostPhase)i).ToString(), i => Math.Round(phases[i], 3)),
+            meanEncodeSectionMs = Enumerable.Range(0, encoded.Length).ToDictionary(i => ((SaveCostSection)i).ToString(), i => Math.Round(encoded[i], 3)),
+            meanValidateSectionMs = Enumerable.Range(0, validated.Length).ToDictionary(i => ((SaveCostSection)i).ToString(), i => Math.Round(validated[i], 3)),
+        }) + Environment.NewLine);
     }
 }

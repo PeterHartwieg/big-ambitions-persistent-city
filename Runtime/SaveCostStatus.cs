@@ -34,6 +34,19 @@ namespace PersistentCity.Runtime
                         captureMs = cost.Milliseconds(SaveCostPhase.Capture),
                         validateMs = cost.Milliseconds(SaveCostPhase.Validate), encodeMs = cost.Milliseconds(SaveCostPhase.Encode),
                         publishMs = cost.Milliseconds(SaveCostPhase.Publish), totalMs = cost.TotalMilliseconds,
+                        encodeSectionsMs = new
+                        {
+                            header = cost.SectionMilliseconds(SaveCostSection.Header), places = cost.SectionMilliseconds(SaveCostSection.Places),
+                            residents = cost.SectionMilliseconds(SaveCostSection.Residents), visitors = cost.SectionMilliseconds(SaveCostSection.Visitors),
+                            traffic = cost.SectionMilliseconds(SaveCostSection.Traffic), food = cost.SectionMilliseconds(SaveCostSection.Food),
+                            economy = cost.SectionMilliseconds(SaveCostSection.Economy)
+                        },
+                        validateSectionsMs = new
+                        {
+                            header = cost.ValidateSectionMilliseconds(SaveCostSection.Header), places = cost.ValidateSectionMilliseconds(SaveCostSection.Places),
+                            residents = cost.ValidateSectionMilliseconds(SaveCostSection.Residents), food = cost.ValidateSectionMilliseconds(SaveCostSection.Food),
+                            traffic = cost.ValidateSectionMilliseconds(SaveCostSection.Traffic), economy = cost.ValidateSectionMilliseconds(SaveCostSection.Economy)
+                        },
                         atLeast30Ms = cost.TotalMilliseconds >= 30,
                         payloadCharacters = cost.PayloadCharacters, payloadUtf8Bytes = cost.PayloadUtf8Bytes, payloadUtf16Bytes = cost.PayloadUtf16Bytes,
                         streamingRecords = cost.StreamingRecords, semanticRecords = cost.SemanticRecords,

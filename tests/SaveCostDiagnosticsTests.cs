@@ -89,11 +89,41 @@ public sealed class SaveCostDiagnosticsTests
         Assert.Same(original, data[SaveCodec.StateKey]);
     }
 
+    private static readonly SaveCostSection[] Sections = Enum.GetValues<SaveCostSection>();
+
+    [Fact]
+    public void SectionTimersSplitEncodeAndValidateWithoutChangingBytes()
+    {
+        var city = RepresentativeFixture.Build(60).State;
+        var cost = new SaveCostRecorder();
+        for (int save = 0; save < 2; save++)
+        {
+            cost.Begin();
+            string payload = SaveCodec.Write(city, cost);
+            cost.End(true, "");
+            Assert.Equal(SaveCodec.Write(city), payload);
+            Assert.InRange(Sections.Sum(section => cost.SectionTicks(section)), 1, cost.PhaseTicks(SaveCostPhase.Encode));
+            Assert.InRange(Sections.Sum(section => cost.ValidateSectionTicks(section)), 1, cost.PhaseTicks(SaveCostPhase.Validate));
+            foreach (var section in new[] { SaveCostSection.Places, SaveCostSection.Residents, SaveCostSection.Visitors, SaveCostSection.Food })
+                Assert.True(cost.SectionTicks(section) > 0, section + " encode not timed");
+            foreach (var section in new[] { SaveCostSection.Places, SaveCostSection.Residents, SaveCostSection.Food, SaveCostSection.Traffic })
+                Assert.True(cost.ValidateSectionTicks(section) > 0, section + " validation not timed");
+        }
+        cost.Begin();
+        Assert.All(Sections, section => Assert.Equal(0, cost.SectionTicks(section) + cost.ValidateSectionTicks(section)));
+    }
+
     [Fact]
     public void RecorderBookkeepingAllocatesNothing()
     {
         var cost = new SaveCostRecorder();
-        void Cycle() { cost.Begin(); foreach (var phase in Phases) cost.Enter(phase); cost.End(true, ""); cost.Counts(1, 1, 0); }
+        void Cycle()
+        {
+            cost.Begin(); foreach (var phase in Phases) cost.Enter(phase);
+            foreach (var section in Sections) { cost.Section(section); cost.ValidateSection(section); }
+            cost.EndSections(); cost.EndValidateSections();
+            cost.End(true, ""); cost.Counts(1, 1, 0);
+        }
         Cycle();
         long before = GC.GetAllocatedBytesForCurrentThread();
         for (int i = 0; i < 1000; i++) Cycle();
