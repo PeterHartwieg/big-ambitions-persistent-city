@@ -2287,7 +2287,7 @@ Refs #260
 
 **RESULT: DONE. Counts: 2 passed / 2 partial / 1 failed / 4 NOT RUN groups.** The five #262 checks count once each; the four excluded groups below are additional NOT RUN items. Day/night pass #262's allocation and collection-count expectations. The street <5 ms gate fails. Neither visual check is a full pass. This does not establish the overall GR-5 GC/street gates: sampler pause p95 regressed. In-game proof gates no merge.
 
-Role `rig_test`, where `mac`, isolated `agentmac`, owner `persistent-city-rig-2026-11-14g-mac`. Raw evidence `<stage>` = `/Users/peterhartwieg/HART-Builds/persistent-city-rig-2026-11-14g-mac`. Report copy: `/Users/peterhartwieg/Coding_Projects/.agent-logs/persistent-city-rig-2026-11-14g-mac.md`. [Complete GC reports and compact window/visual evidence](perf/gr5-2026-11-14g-mac.json): **17,069 bytes**, SHA-256 `0244af1a5674dca5850cd85c41cf781cc922f8487d5ef340f17802725b91a8cf`. Every GC allocation key, sample/skipped count, counter_frame_bytes and human report is retained. Larger records and screenshot hashes are in `<stage>/raw-evidence-manifest.json`, SHA-256 `2c9fa0a5a2ee8928e7c32c6aa23657955f7cee36310ff071a23dab4af0a04643`.
+Role `rig_test`, where `mac`, isolated `agentmac`, owner `persistent-city-rig-2026-11-14g-mac`. Raw evidence `<stage>` = `<home>/HART-Builds/persistent-city-rig-2026-11-14g-mac`. Report copy: `<home>/Coding_Projects/.agent-logs/persistent-city-rig-2026-11-14g-mac.md`. [Complete GC reports and compact window/visual evidence](perf/gr5-2026-11-14g-mac.json): **17,069 bytes**, SHA-256 `0244af1a5674dca5850cd85c41cf781cc922f8487d5ef340f17802725b91a8cf`. Every GC allocation key, sample/skipped count, counter_frame_bytes and human report is retained. Larger records and screenshot hashes are in `<stage>/raw-evidence-manifest.json`, SHA-256 `2c9fa0a5a2ee8928e7c32c6aa23657955f7cee36310ff071a23dab4af0a04643`.
 
 All performance observations are provisional on the shared Mac. Every command and measurement ran in the foreground and was awaited. No Windows contact, other-session intervention, Steam/ordinary profile or ordinary save access, production change, RLO file change, schema/weight/version/changelog change, issue creation, release, Workshop upload or merge. Schema stays 1; FoodChoicePriceWeight 1.2 and FoodChoiceHouseholdWeight 1.0.
 
@@ -2297,7 +2297,7 @@ All performance observations are provisional on the shared Mac. Every command an
 | --- | --- |
 | Tested candidate | `7ff6a87acf75e35a3a56d41abd842a43980c19d7`, exactly the initial origin/codex/persistent-city tip and requested #262 merge. Final fetch moved to `844ce2b95b23a53431ce18de26cf09fe44966159` (#263, 14f docs only). The results branch was fast-forwarded to that docs-only tip before appending this section; tested production code is unchanged. |
 | Branch / worktree | New `codex/mac-rig-2026-11-14g`, `rig-2026-11-14g-mac-evidence`, serving both build and evidence. Original checkout stayed clean. |
-| Build | `python3 tools/build.py --game-managed "/Users/peterhartwieg/Library/Application Support/BigAmbitionsMCP/dll-import-shim/Big Ambitions_Data/Managed"`, exit 0; Homebrew PATH and DOTNET_ROOT. |
+| Build | `python3 tools/build.py --game-managed "<home>/Library/Application Support/BigAmbitionsMCP/dll-import-shim/Big Ambitions_Data/Managed"`, exit 0; Homebrew PATH and DOTNET_ROOT. |
 | PersistentCity DLL SHA-256 | `a0a1ef89db96420ce375100a09f6236c13d47b10f3856f9c1963079b0613341b`; built, package and live staged DLL matched; both starts validated the receipt. |
 | Official agent-rig HEAD | `022630f7d6df8c533a230ac218413a68b181ed95`, clean before/after. Fetch/ff-only pull already current. No edits, commit or push. |
 | Live AgentRigOps SHA-256 | `154be3036954c314d3bd9eb4409da98f6a9b3a508748f2b1811c457abce07955`, matched live ready health and cleanup. |
@@ -2311,13 +2311,13 @@ All performance observations are provisional on the shared Mac. Every command an
 Exact staging command from official agent-rig, stopped and leased:
 
 ```sh
-python3 scripts/install-mac.py --stage-mod PersistentCity /Users/peterhartwieg/HART-Builds/persistent-city-rig-2026-11-14g-mac/package
+python3 scripts/install-mac.py --stage-mod PersistentCity <stage>/package
 ```
 
-Receipt backup: `/Users/peterhartwieg/Library/Application Support/BigAmbitionsAgentTestsMac/receipt-backups/20261114T162033Z`. Package contains no RLO files. Printed rollback, verbatim:
+Receipt backup: `<home>/Library/Application Support/BigAmbitionsAgentTestsMac/receipt-backups/20261114T162033Z`. Package contains no RLO files. Printed rollback, path-sanitized (`<home>` replaces the user home directory):
 
 ```sh
-rm -rf "/Users/peterhartwieg/Library/Application Support/com.hovgaardgames.bigambitions.agenttests.mac/ModsLocal/PersistentCity" && cp -Rp "/Users/peterhartwieg/Library/Application Support/BigAmbitionsAgentTestsMac/receipt-backups/20261114T162033Z/mod" "/Users/peterhartwieg/Library/Application Support/com.hovgaardgames.bigambitions.agenttests.mac/ModsLocal/PersistentCity" && cp "/Users/peterhartwieg/Library/Application Support/BigAmbitionsAgentTestsMac/receipt-backups/20261114T162033Z/install.json" "/Users/peterhartwieg/Library/Application Support/BigAmbitionsAgentTestsMac/install.json"
+rm -rf "<home>/Library/Application Support/com.hovgaardgames.bigambitions.agenttests.mac/ModsLocal/PersistentCity" && cp -Rp "<home>/Library/Application Support/BigAmbitionsAgentTestsMac/receipt-backups/20261114T162033Z/mod" "<home>/Library/Application Support/com.hovgaardgames.bigambitions.agenttests.mac/ModsLocal/PersistentCity" && cp "<home>/Library/Application Support/BigAmbitionsAgentTestsMac/receipt-backups/20261114T162033Z/install.json" "<home>/Library/Application Support/BigAmbitionsAgentTestsMac/install.json"
 ```
 
 ### Per-check outcomes
