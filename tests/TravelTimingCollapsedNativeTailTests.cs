@@ -133,34 +133,38 @@ public sealed class TravelTimingCollapsedNativeTailTests
     }
 
     [Fact]
-    public void UnreportedTerminalResidualRefusesAtomicallyAndOriginalNetworkStillBinds()
+    public void UnreportedTerminalResidualLeavesTrafficAndCompletes()
     {
         var (state, citizen, raw) = Captured(terminal: true);
-        string before = SaveCodec.Write(state); Route route = citizen.Journey!; var traffic = state.Traffic;
-        Assert.Throws<ArgumentException>(() => TravelTiming.Apply(state, 2, 2));
-        Assert.Same(route, citizen.Journey); Assert.Same(traffic, state.Traffic);
-        Assert.Equal(before, SaveCodec.Write(state));
-        Assert.Equal(1, state.TravelClockRate); Assert.Equal(raw, state.Minute);
-        var rebound = new CitySimulator(state, new Planner());
-        Assert.Equal(raw, rebound.Traffic!.GetPermission("car").NominalMinutes);
-        Assert.False(rebound.Traffic.GetPermission("car").IsCompleted);
+        AssertLeavesTrafficAndCompletes(state, citizen, raw, 2, () => new Planner(2));
     }
     [Fact]
-    public void UnreportedInternalSectionResidualRefusesAtomicallyAndOriginalNetworkStillBinds()
+    public void UnreportedInternalSectionResidualLeavesTrafficAndCompletes()
     {
         var (state, citizen, raw) = Captured(sectionBoundary: true);
-        string before = SaveCodec.Write(state); Route route = citizen.Journey!; var traffic = state.Traffic;
-        Assert.Equal(2, traffic!.Definitions.Count); Assert.Equal(0, traffic.Vehicles.Single().RouteIndex);
-        Assert.Throws<ArgumentException>(() => TravelTiming.Apply(state, 2, 2));
-        Assert.Same(route, citizen.Journey); Assert.Same(traffic, state.Traffic);
-        Assert.Equal(before, SaveCodec.Write(state));
-        Assert.Equal(1, state.TravelClockRate); Assert.Equal(raw, state.Minute);
-        var rebound = new CitySimulator(state, new Planner(sectionBoundary: true));
-        var permission = rebound.Traffic!.GetPermission("car");
-        Assert.Equal(raw, permission.NominalMinutes); Assert.Equal(0, permission.RouteIndex);
-        Assert.False(permission.IsCompleted); Assert.Equal(1, rebound.Traffic.VehicleCount);
-        Assert.Equal(new[] { "car" }, rebound.Traffic.Capture().Links.Single(link => link.LinkId == 0).Vehicles);
-        Assert.Empty(rebound.Traffic.Capture().Links.Single(link => link.LinkId == 1).Vehicles);
+        Assert.Equal(2, state.Traffic!.Definitions.Count); Assert.Equal(0, state.Traffic.Vehicles.Single().RouteIndex);
+        AssertLeavesTrafficAndCompletes(state, citizen, raw, 2, () => new Planner(2, sectionBoundary: true));
+    }
+
+    private static void AssertLeavesTrafficAndCompletes(CityState state, CitizenState citizen, double raw, double rate, Func<IRoutePlanner> planner)
+    {
+        var before = new CitySimulator(state, new UnmappedPlanner()).SampleJourney(citizen, raw);
+        Assert.True(TravelTiming.Apply(state, 2, rate, out int degraded));
+        Assert.Equal(1, degraded); Assert.Empty(state.Traffic!.Vehicles); Assert.Equal(rate, state.TravelClockRate);
+        var after = new CitySimulator(state, new UnmappedPlanner()).SampleJourney(citizen);
+        Assert.InRange(Position.Distance(before.Position, after.Position), 0, 1e-9);
+        Assert.Equal(before.Mode, after.Mode);
+        Assert.Equal(citizen.DepartureMinute + citizen.Journey!.Minutes, citizen.NextEventMinute, 9);
+        var reloaded = SaveWire.Read(SaveCodec.Write(state));
+        Assert.Equal(SaveReadStatus.Loaded, reloaded.Status);
+        foreach (var city in new[] { state, reloaded.State! })
+        {
+            var rebound = new CitySimulator(city, planner());
+            rebound.AdvanceTo(city.Minute + 0.001);
+            rebound.AdvanceTo(city.Minute + 100);
+            Assert.Equal(1, city.Citizens[0].CompletedJourneys);
+            Assert.Equal(SaveReadStatus.Loaded, SaveWire.Read(SaveCodec.Write(city)).Status);
+        }
     }
 
     [Theory]
@@ -214,28 +218,20 @@ public sealed class TravelTimingCollapsedNativeTailTests
 
     [Theory]
     [InlineData(false)] [InlineData(true)]
-    public void SlopedNearEndSamplesPreserveTheCornerOrRefuseAnUnreportedSectionEndpoint(bool sectionBoundary)
+    public void SlopedNearEndSamplesPreserveTheCornerOrLeaveTrafficAtAnUnreportedSectionEndpoint(bool sectionBoundary)
     {
         for (int ulps = 1; ulps <= 32; ulps++)
         {
             var (state, citizen, raw) = Captured(sectionBoundary: sectionBoundary, sloped: true, ulps: ulps);
             Position pose = citizen.Journey!.PositionAt(raw); Assert.False(pose.Equals(citizen.Journey.Legs[0].To));
-            if (sectionBoundary)
-            {
-                string before = SaveCodec.Write(state); var route = citizen.Journey; var traffic = state.Traffic;
-                Assert.Throws<ArgumentException>(() => TravelTiming.Apply(state, 2, 2));
-                Assert.Same(route, citizen.Journey); Assert.Same(traffic, state.Traffic); Assert.Equal(before, SaveCodec.Write(state));
-                var rebound = new CitySimulator(state, new Planner(sectionBoundary: true, rise: .5));
-                Assert.Equal(raw, rebound.Traffic!.GetPermission("car").NominalMinutes);
-                Assert.Equal(pose, citizen.Journey!.PositionAt(raw));
-            }
+            if (sectionBoundary) AssertLeavesTrafficAndCompletes(state, citizen, raw, 2, () => new Planner(2, true, .5));
             else AssertRetimedCapture(state, raw, 2, new Planner(2, rise: .5), rawPositionUnchanged: false);
         }
     }
 
     [Theory]
     [InlineData(false)] [InlineData(true)]
-    public void RepeatedRetimeUsesTheSameSampledNativeCornerWithoutGrantingASectionEndpoint(bool sectionBoundary)
+    public void RepeatedRetimeUsesTheSameSampledNativeCornerAndLeavesTrafficBeforeASectionEndpoint(bool sectionBoundary)
     {
         var (state, citizen, _) = Captured(gap: .5, sectionBoundary: sectionBoundary, sloped: true);
         Assert.True(TravelTiming.Apply(state, 2, 2));
@@ -247,15 +243,7 @@ public sealed class TravelTimingCollapsedNativeTailTests
         Assert.StartsWith("native:road:fragment1:", citizen.Journey.Legs[1].ServiceId);
         planner.TrafficNetwork.ValidateRemainingMapping(citizen.Journey, state.Traffic!.Vehicles[0].Route, raw);
         Position pose = citizen.Journey.PositionAt(raw); Assert.False(pose.Equals(citizen.Journey.Legs[1].To));
-        if (sectionBoundary)
-        {
-            string before = SaveCodec.Write(state); var route = citizen.Journey; var traffic = state.Traffic;
-            Assert.Throws<ArgumentException>(() => TravelTiming.Apply(state, 2, 4));
-            Assert.Same(route, citizen.Journey); Assert.Same(traffic, state.Traffic); Assert.Equal(before, SaveCodec.Write(state));
-            var rebound = new CitySimulator(state, new Planner(2, true, .5));
-            Assert.Equal(raw, rebound.Traffic!.GetPermission("car").NominalMinutes);
-            Assert.Equal(pose, citizen.Journey.PositionAt(raw));
-        }
+        if (sectionBoundary) AssertLeavesTrafficAndCompletes(state, citizen, raw, 4, () => new Planner(4, true, .5));
         else AssertRetimedCapture(state, raw, 4, new Planner(4, rise: .5), rawPositionUnchanged: false);
     }
 
@@ -499,15 +487,10 @@ public sealed class TravelTimingCollapsedNativeTailTests
 
     [Theory]
     [InlineData(false, false)] [InlineData(false, true)] [InlineData(true, false)] [InlineData(true, true)]
-    public void SamplerNormalizationCannotCreditAnUnreportedTerminalOrInternalSectionEndpoint(bool sloped, bool terminal)
+    public void SamplerNormalizationAtAnUnreportedTerminalOrInternalSectionEndpointLeavesTrafficAndCompletes(bool sloped, bool terminal)
     {
         var (state, citizen, raw) = Captured(terminal: terminal, gap: 5e-13, sectionBoundary: true, sloped: sloped);
-        string before = SaveCodec.Write(state); var route = citizen.Journey; var traffic = state.Traffic;
-        var error = Assert.Throws<ArgumentException>(() => TravelTiming.Apply(state, 2, 2));
-        Assert.Contains("unreported occupied traffic section endpoint", error.Message);
-        Assert.Same(route, citizen.Journey); Assert.Same(traffic, state.Traffic); Assert.Equal(before, SaveCodec.Write(state));
-        var rebound = new CitySimulator(SaveWire.Read(before).State!, new Planner(sectionBoundary: true, rise: sloped ? .5 : 0));
-        Assert.Equal(raw, rebound.Traffic!.GetPermission("car").NominalMinutes); Assert.False(rebound.Traffic.GetPermission("car").IsCompleted);
+        AssertLeavesTrafficAndCompletes(state, citizen, raw, 2, () => new Planner(2, sectionBoundary: true, rise: sloped ? .5 : 0));
     }
 
     [Theory]
@@ -679,8 +662,8 @@ public sealed class TravelTimingCollapsedNativeTailTests
         var state = UnownedCanonicalWalkingRoute(x, elapsed); var citizen = state.Citizens[0]; var route = citizen.Journey!;
         var simulation = new CitySimulator(state, new UnmappedPlanner()); var before = simulation.SampleJourney(citizen);
         var retime = typeof(TravelTiming).GetMethod("Retime", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic)!;
-        object?[] arguments = { route, elapsed, false, 2d, 1d, .5d, null };
-        var replacement = (Route)retime.Invoke(null, arguments)!; var map = arguments[^1]!;
+        object?[] arguments = { route, elapsed, false, 2d, 1d, .5d, false, null, null };
+        var replacement = (Route)retime.Invoke(null, arguments)!; var map = arguments[^2]!;
         double mapped = (double)map.GetType().GetMethod("Map", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!
             .Invoke(map, new object[] { elapsed })!;
         Assert.NotEqual(elapsed, mapped); citizen.Journey = replacement;

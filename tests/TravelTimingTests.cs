@@ -275,7 +275,7 @@ public sealed class TravelTimingTests
     [Theory]
     [InlineData("v1")]
     [InlineData("fragment1")]
-    public void UnownedMaximumSizeNativeCurrentEdgeCannotKeepOldPaceDuringClockConversion(string version)
+    public void UnownedMaximumSizeNativeFirstEdgeKeepsItsOldPaceInsteadOfStoppingTheCity(string version)
     {
         var state = City(TravelMode.Car, now: 1440.5); var citizen = state.Citizens[0];
         state.TravelTimingVersion = 1; citizen.DepartureMinute = 1440;
@@ -286,12 +286,15 @@ public sealed class TravelTimingTests
         }).ToList();
         citizen.NextEventMinute = 1440 + 512;
         Assert.Null(state.Traffic);
-        string wire = SaveCodec.Write(state);
-        Route original = citizen.Journey;
-        Assert.Throws<ArgumentException>(() => TravelTiming.Apply(state, 2, 2));
-        Assert.Same(original, citizen.Journey);
-        Assert.Equal(wire, SaveCodec.Write(state));
-        Assert.Equal(1, state.TravelClockRate);
+        var before = Position(state);
+        Assert.True(TravelTiming.Apply(state, 2, 2, out int keptPace));
+        Assert.Equal(1, keptPace);
+        Assert.Equal(512, citizen.Journey.Legs.Count);
+        Assert.Equal(before.X, Position(state).X);
+        Assert.Equal(1, citizen.Journey.Legs[0].Minutes);
+        Assert.Equal(2, citizen.Journey.Legs[1].Minutes);
+        Assert.Equal(2, state.TravelClockRate);
+        Assert.Equal(SaveReadStatus.Loaded, SaveWire.Read(SaveCodec.Write(state)).Status);
     }
 
 

@@ -1025,7 +1025,7 @@ namespace PersistentCity.Core
             foreach (var leg in route.Legs)
             {
                 if (!leg.From.IsFinite || !leg.To.IsFinite || !Position.Finite(leg.Minutes) || leg.Minutes <= 0
-                    || Position.Distance(previous, leg.From) > 0.1 || !Enum.IsDefined(typeof(TravelMode), leg.Mode))
+                    || Position.Distance(previous, leg.From) > 0.1 || (uint)leg.Mode > (uint)TravelMode.Car)
                     throw new InvalidOperationException("A route is nonfinite, discontinuous or has invalid time/mode.");
                 previous = leg.To;
             }
