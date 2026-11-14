@@ -2027,7 +2027,7 @@ Role `rig_test`, where `pc`, isolated `agent1`. **Counts: 0 passed / 0 partial /
 | Installed PersistentCity DLL SHA-256 | `6e0e5b58776a5a4430b4b585e03f7233d1dc5dedfd94200cb7f603a44ea55de1`, mtime 11 November 2026 16:53:38 local. Matches its existing receipt entry; too old for all four required arms. |
 | Installed receipt SHA-256 | `agent-install.json`: `7f4f73e05d6ee2eb70c31987f6a3f6c70ece33f4119f5fe61ad0e57aebad1761`, matching launch input and post-cleanup backup. |
 | Staged DLL / staging command | **None / skipped.** One search after official fetch/pull found scoped stage/refresh only in Mac `install-mac.py`, documented in `docs/MAC.md`. Windows has no documented scoped receipt-safe helper. The whole-modset transaction is not a PersistentCity-only receipt refresh. No manual copy fallback, receipt hand-edit or unmerged tooling branch was used. Waiting on `20261114-154927-rig-windows-pc-cli-stage`. |
-| Stage / backup | `<stage>` = `C:\Users\Peter\HART-Builds\persistent-city-rig-2026-11-14f-pc`; package in `<stage>\package\PersistentCity`, this run's exact-byte backup in `<stage>\pre-stage-backup`, independent manifest `<stage>\manifest.json`. |
+| Stage / backup | Package in `<stage>\package\PersistentCity`, this run's exact-byte backup in `<stage>\pre-stage-backup`, independent manifest `<stage>\manifest.json`. |
 | RLO probe log | `[Mod:RealLifeOverhaul] Real Life Overhaul 0.45.0 initialised.` This is the installed probe's observed version. RLO was not changed. |
 | PC probe log identity | No Persistent City build/activation line emitted during the menu-only probe. Health includes the loaded `PersistentCity` assembly; the installed DLL hash and launch receipt establish binary identity. No candidate or city activation is claimed. |
 | Food Trucks | Health `mod_version=0.10.2`, bridge version 1. No update. |
@@ -2080,6 +2080,6 @@ Before startup, this run backed up the entire isolated PersistentCity file set, 
 
 Final launcher status: **installed=true, running=false, pid=null, health=null**. PID 25848 no longer exists. Final agent1 lease **held=false, owner=null, pending=0**; no process started by this run remains. Release followed post-exit re-verification. Build worktree removed after the evidence commit; evidence worktree removed after PR creation.
 
-Validation: build passed; docs-links, markdown-ban and `git diff --check` run for this existing-file-only docs change. No offline dotnet tests or regression suites. Report copy: `C:\Users\Peter\Coding_Projects\.agent-logs\persistent-city-rig-2026-11-14f-pc.md`. Raw evidence/backups stay outside Git. No issue, merge, release, Workshop upload, version/changelog or production code change. Schema 1 and both food-choice weights unchanged.
+Validation: build passed; docs-links, markdown-ban and `git diff --check` run for this existing-file-only docs change. No offline dotnet tests or regression suites. Report copy: `<home>\Coding_Projects\.agent-logs\persistent-city-rig-2026-11-14f-pc.md`. Raw evidence/backups stay outside Git. No issue, merge, release, Workshop upload, version/changelog or production code change. Schema 1 and both food-choice weights unchanged.
 
 **RESULT: BLOCKED.**
