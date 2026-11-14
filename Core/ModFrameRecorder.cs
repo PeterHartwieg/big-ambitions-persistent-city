@@ -33,7 +33,7 @@ namespace PersistentCity.Core
         private readonly ModFrameRow[] spikes = new ModFrameRow[SpikeCapacity];
         private int topCount, spikeCount;
         private long frame, began, mark, detailMark, counterMark, detailCounterMark;
-        private int collectionsMark, detailCollectionsMark;
+        private int collectionsMark, detailCollectionsMark, epochMark;
         private bool open, countersValid;
         private double ticksPerMillisecond = 1;
 
@@ -66,33 +66,41 @@ namespace PersistentCity.Core
             topCount = spikeCount = 0; Frames = Spikes = 0; open = false;
         }
 
-        public void Begin(long frameNumber, long timestamp, long counter, int collections)
+        public void Begin(long frameNumber, long timestamp, long counter, int collections) => Begin(frameNumber, timestamp, counter, collections, 0);
+
+        public void Begin(long frameNumber, long timestamp, long counter, int collections, int counterEpoch)
         {
             if (!Armed) return;
             frame = frameNumber; open = true;
             began = mark = detailMark = timestamp;
-            counterMark = detailCounterMark = counter; countersValid = counter >= 0;
+            counterMark = detailCounterMark = counter; countersValid = counter >= 0; epochMark = counterEpoch;
             collectionsMark = detailCollectionsMark = collections;
             Array.Clear(ticks, 0, Segments); Array.Clear(bytes, 0, Segments);
             for (int i = 0; i < Segments; i++) gcAt[i] = 0;
         }
 
-        public void Charge(GcAllocationSegment segment, long timestamp, long counter, int collections)
+        public void Charge(GcAllocationSegment segment, long timestamp, long counter, int collections) => Charge(segment, timestamp, counter, collections, 0);
+
+        public void Charge(GcAllocationSegment segment, long timestamp, long counter, int collections, int counterEpoch)
         {
             if (!open) return;
             int index = (int)segment;
-            if (Overlaps(segment)) { Detail(segment, timestamp, counter, collections); return; }
+            if (Overlaps(segment)) { Detail(segment, timestamp, counter, collections, counterEpoch); return; }
             if (timestamp > mark) ticks[index] += timestamp - mark;
+            if (counterEpoch != epochMark) countersValid = false;
             if (countersValid && counter >= counterMark) bytes[index] += counter - counterMark; else countersValid = false;
             if (collections > collectionsMark) gcAt[index] += collections - collectionsMark;
             mark = detailMark = timestamp; counterMark = detailCounterMark = counter; collectionsMark = detailCollectionsMark = collections;
         }
 
-        public void Detail(GcAllocationSegment segment, long timestamp, long counter, int collections)
+        public void Detail(GcAllocationSegment segment, long timestamp, long counter, int collections) => Detail(segment, timestamp, counter, collections, 0);
+
+        public void Detail(GcAllocationSegment segment, long timestamp, long counter, int collections, int counterEpoch)
         {
             if (!open) return;
             int index = (int)segment;
             if (timestamp > detailMark) ticks[index] += timestamp - detailMark;
+            if (counterEpoch != epochMark) countersValid = false;
             if (countersValid && counter >= detailCounterMark) bytes[index] += counter - detailCounterMark;
             detailMark = timestamp; detailCounterMark = counter; detailCollectionsMark = collections;
         }
@@ -103,11 +111,13 @@ namespace PersistentCity.Core
             detailMark = timestamp; detailCounterMark = counter; detailCollectionsMark = collections;
         }
 
-        public void End(long timestamp, long counter, int collections, GcPauseSampler? sampler)
+        public void End(long timestamp, long counter, int collections, GcPauseSampler? sampler) => End(timestamp, counter, collections, 0, sampler);
+
+        public void End(long timestamp, long counter, int collections, int counterEpoch, GcPauseSampler? sampler)
         {
             if (!open) return;
             double modMilliseconds = (timestamp - began) / ticksPerMillisecond;
-            Charge(GcAllocationSegment.ModOther, timestamp, counter, collections);
+            Charge(GcAllocationSegment.ModOther, timestamp, counter, collections, counterEpoch);
             open = false;
             var row = new ModFrameRow { Frame = frame, ModMs = modMilliseconds, Phase = -1, Detail = -1, GcPhase = -1, AllocPhase = -1 };
             long phaseTicks = 0, detailTicks = 0;

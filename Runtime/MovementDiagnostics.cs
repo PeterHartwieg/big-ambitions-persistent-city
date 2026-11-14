@@ -70,6 +70,11 @@ namespace PersistentCity.Runtime
             {
                 gcSampler ??= new GcPauseSampler();
                 var frames = gcSampler.FrameRecorder;
+                if ((detail == "start" || detail == "stop") && gcSampler.Running)
+                {
+                    Debug.LogWarning("[Persistent City] pc gc frames " + detail + " refused: a gc measurement is running and its mod_* segments come from the frame recorder. Use pc gc frames for a readout or pc gc stop first.");
+                    return;
+                }
                 if (detail == "start")
                 {
                     string counter = GcAllocationCounter.Probe();

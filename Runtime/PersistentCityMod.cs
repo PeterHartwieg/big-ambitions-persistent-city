@@ -336,7 +336,14 @@ namespace PersistentCity.Runtime
                 }
                 seenRoadSnapshots = snapshots;
                 ModFrames.Charge(GcAllocationSegment.ModRoutes);
-                if (!prepared) { RecordRoutingFrame(prepareElapsed, 0, false); waitingFrames++; RunPhysical(physicalUpdate ??= () => physical?.Update()); inspector.Suspend(); return; }
+                if (!prepared)
+                {
+                    RecordRoutingFrame(prepareElapsed, 0, false); waitingFrames++;
+                    PhysicalAllocation.Begin(gcSampler);
+                    try { RunPhysical(physicalUpdate ??= () => physical?.Update()); }
+                    finally { PhysicalAllocation.End(); }
+                    inspector.Suspend(); return;
+                }
                 long closureStarted = Stopwatch.GetTimestamp();
                 simulation.RefreshTrafficClosures();
                 double closureElapsed = (Stopwatch.GetTimestamp() - closureStarted) * MillisecondsPerTimestamp;
@@ -359,6 +366,7 @@ namespace PersistentCity.Runtime
                 ModFrames.Charge(GcAllocationSegment.ModHoldReplay);
                 if (settings.PhysicalEnabled && !physicalFailed && physical == null && !BuildingManager.IsInsideBuilding && !NativeTravelPace.HiddenTravel)
                 {
+                    PhysicalAllocation.Begin(gcSampler);
                     try { physical = new PhysicalPopulation(transform, simulation, routes!, dependency!, log!, settings.MaximumPedestrians, settings.MaximumVehicles, settings.PhysicalRadiusMetres, dwellSpots, settings.MovementFaultAcquirePercent); }
                     catch (Exception error)
                     {
@@ -367,6 +375,7 @@ namespace PersistentCity.Runtime
                         if (NativeInteriorCityView.Configured) NativeInteriorCityView.FailClosed();
                         log?.Warn("Physical population unavailable; ordinary spawning restored, persistent background simulation remains active: " + error);
                     }
+                    finally { PhysicalAllocation.End(); }
                 }
                 ModFrames.Charge(GcAllocationSegment.ModPhysicalSetup);
                 PhysicalAllocation.Begin(gcSampler);

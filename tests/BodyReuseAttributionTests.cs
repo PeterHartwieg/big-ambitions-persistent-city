@@ -497,3 +497,153 @@ public sealed class BodyReuseAttributionTests
         }
     }
 }
+
+public sealed class BodyLeaseAndScopeTests
+{
+    private sealed class Character { }
+
+    private sealed class Lease : IBodyLease
+    {
+        public readonly Character Body;
+        public Lease(Character body) { Body = body; }
+        public readonly Dictionary<object, int> Crossings = new();
+        public readonly List<object> Departed = new(), Faded = new(), Probe = new();
+        public readonly List<(int, float)> Originals = new();
+        public string Id = "";
+        public long Generation;
+        public PersonDressing Dressing;
+        public bool Valid;
+        public bool? CanFade;
+        public void Renew(string identityId, long generation, PersonDressing dressing, bool sameLook)
+        {
+            Id = identityId; Generation = generation; Dressing = dressing; Valid = true;
+            Crossings.Clear(); Departed.Clear();
+            if (!sameLook) CanFade = null;
+        }
+        public void Invalidate() { Valid = false; Crossings.Clear(); Departed.Clear(); }
+    }
+
+    private static CitizenIdentity Identity(int i) => new CitizenIdentity
+    { Id = "q" + i.ToString(CultureInfo.InvariantCulture), Name = "Q" + i.ToString(CultureInfo.InvariantCulture), Age = 30, AppearanceSeed = 1 + i };
+
+    [Fact]
+    public void AWarmedPooledAcquisitionWithItsLeaseAndScratchAllocatesNothingAndNewLeasesInvalidateOldOnes()
+    {
+        var pool = new DressedBodyPool<Character>(DressedBodyPool<Character>.StreetSpare);
+        var leases = new BodyLeases<Character, Lease>(body => new Lease(body));
+        var dressings = Enumerable.Range(0, 64).Select(i => new PersonDressing(Identity(i), 60)).ToArray();
+        var ids = dressings.Select(d => d.Id!).ToArray();
+        var active = new Dictionary<string, Lease>(StringComparer.Ordinal);
+        var held = new Lease?[dressings.Length];
+        int owned = 0;
+        for (int i = 0; i < 40; i++) { pool.Return(new Character(), dressings[i], i, double.PositiveInfinity); owned++; }
+        long frame = 0;
+        void Cycle(int rounds, bool check)
+        {
+            for (int round = 0; round < rounds; round++)
+                for (int i = round % 3; i < dressings.Length; i += 3)
+                {
+                    frame++;
+                    pool.Minute = frame / 30.0;
+                    var lease = held[i];
+                    if (lease != null)
+                    {
+                        active.Remove(lease.Id); lease.Crossings[lease] = 1; lease.Departed.Add(lease);
+                        lease.Invalidate();
+                        pool.Return(lease.Body, lease.Dressing, frame, pool.Minute + 5);
+                        held[i] = null;
+                        continue;
+                    }
+                    if (active.Count >= 32) continue;
+                    var choice = pool.Choose(dressings[i], owned, DressedBodyPool<Character>.Ceiling(32), null, (int)frame, frame, out var body);
+                    if (choice != BodyChoice.Hit && choice != BodyChoice.Redress) continue;
+                    long before = leases.Generation;
+                    var next = leases.Lease(body, ids[i], dressings[i], choice == BodyChoice.Hit);
+                    if (check) { Assert.True(next.Valid); Assert.Equal(before + 1, next.Generation); Assert.Equal(ids[i], next.Id); Assert.Empty(next.Crossings); }
+                    if (choice == BodyChoice.Hit) next.CanFade ??= true;
+                    active.Add(ids[i], next);
+                    held[i] = next;
+                }
+        }
+        Cycle(30, true);
+        long allocated = GC.GetAllocatedBytesForCurrentThread();
+        Cycle(600, false);
+        Assert.Equal(0, GC.GetAllocatedBytesForCurrentThread() - allocated);
+        Assert.Equal(40, leases.Count);
+
+        var a = leases.Lease(new Character(), "x", dressings[0], false);
+        long first = a.Generation;
+        a.Invalidate();
+        var again = leases.Lease(a.Body, "y", dressings[1], false);
+        Assert.Same(a, again);
+        Assert.NotEqual(first, again.Generation);
+        Assert.Null(again.CanFade);
+        leases.Forget(a.Body);
+        Assert.False(a.Valid);
+    }
+
+    [Fact]
+    public void SetupAndUnpreparedPhysicalScopesReconcileWithTheModParent()
+    {
+        GcAllocationCounter.Probe();
+        var sampler = new GcPauseSampler(64);
+        sampler.Start(1, GcAllocationCounter.Probe());
+        sampler.FrameRecorder.Arm(System.Diagnostics.Stopwatch.Frequency);
+        object? keep = null;
+        for (int frame = 0; frame < 8; frame++)
+        {
+            long modStart = GcAllocationCounter.Read();
+            ModFrames.Begin(sampler, frame);
+            keep = new byte[1000]; ModFrames.Charge(GcAllocationSegment.ModRoutes);
+            if (frame % 2 == 0)
+            {
+                PhysicalAllocation.Begin(sampler);
+                keep = new byte[50_000]; PhysicalAllocation.Charge(GcAllocationSegment.PhysicalAmbient);
+                PhysicalAllocation.End();
+                ModFrames.End();
+                sampler.Allocated(GcAllocationSegment.Mod, modStart, GcAllocationCounter.Read(), false);
+                continue;
+            }
+            keep = new byte[2000]; ModFrames.Charge(GcAllocationSegment.ModHoldReplay);
+            PhysicalAllocation.Begin(sampler);
+            keep = new byte[400_000]; PhysicalAllocation.Charge(GcAllocationSegment.PhysicalSpawnAppearance);
+            keep = new byte[3000];
+            PhysicalAllocation.End();
+            ModFrames.Charge(GcAllocationSegment.ModPhysicalSetup);
+            PhysicalAllocation.Begin(sampler);
+            keep = new byte[7000]; PhysicalAllocation.Charge(GcAllocationSegment.PhysicalBindings);
+            PhysicalAllocation.End();
+            ModFrames.End();
+            sampler.Allocated(GcAllocationSegment.Mod, modStart, GcAllocationCounter.Read(), false);
+        }
+        GC.KeepAlive(keep);
+        long outer = 0;
+        for (int i = (int)GcAllocationSegment.ModPrelude; i < GcPauseSampler.Segments; i++) outer += sampler.SegmentBytes((GcAllocationSegment)i);
+        long mod = sampler.SegmentBytes(GcAllocationSegment.Mod), physical = sampler.SegmentBytes(GcAllocationSegment.Physical);
+        Assert.True(sampler.SegmentBytes(GcAllocationSegment.PhysicalSpawnAppearance) >= 4 * 400_000);
+        Assert.Equal(mod, outer + physical + sampler.SegmentBytes(GcAllocationSegment.Advance));
+        Assert.True(physical >= 4 * 460_000);
+    }
+
+    [Fact]
+    public void AHeapCounterSampleAcrossACollectionIsSkippedEvenWhenTheHeapEndsHigher()
+    {
+        var sampler = new GcPauseSampler(64);
+        sampler.Start(1000, "heap_used");
+        sampler.FrameRecorder.Arm(1000);
+        sampler.FrameRecorder.Begin(1, 0, 1000, 0, 0);
+        sampler.FrameRecorder.Charge(GcAllocationSegment.ModPrelude, 1, 1500, 1, 1);
+        sampler.FrameRecorder.End(2, 1600, 1, 1, sampler);
+        sampler.Allocated(GcAllocationSegment.Mod, 1000, 1600, true);
+        Assert.Equal(0, sampler.SegmentBytes(GcAllocationSegment.Mod));
+        Assert.Equal(1, sampler.SegmentSkipped(GcAllocationSegment.Mod));
+        Assert.Equal(0, sampler.SegmentBytes(GcAllocationSegment.ModPrelude));
+        Assert.Equal(1, sampler.SegmentSkipped(GcAllocationSegment.ModPrelude));
+
+        sampler.FrameRecorder.Begin(2, 10, 5000, 3, 0);
+        sampler.FrameRecorder.Charge(GcAllocationSegment.ModPrelude, 11, 5500, 4, 0);
+        sampler.FrameRecorder.End(12, 5600, 4, 0, sampler);
+        Assert.Equal(500, sampler.SegmentBytes(GcAllocationSegment.ModPrelude));
+        Assert.Equal(1, sampler.FrameRecorder.Top(0).Collections);
+    }
+}

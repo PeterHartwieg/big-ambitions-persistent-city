@@ -181,6 +181,43 @@ namespace PersistentCity.Core
         public void Clear() { items.Clear(); dressings.Clear(); returned.Clear(); wanted.Clear(); }
     }
 
+    public interface IBodyLease
+    {
+        void Renew(string identityId, long generation, PersonDressing dressing, bool sameLook);
+        void Invalidate();
+    }
+
+    public sealed class BodyLeases<TBody, TLease> where TBody : class where TLease : class, IBodyLease
+    {
+        private readonly Dictionary<TBody, TLease> leases = new Dictionary<TBody, TLease>();
+        private readonly Func<TBody, TLease> create;
+        private long generation;
+
+        public BodyLeases(Func<TBody, TLease> create) { this.create = create ?? throw new ArgumentNullException(nameof(create)); }
+
+        public int Count => leases.Count;
+        public long Generation => generation;
+
+        public TLease Lease(TBody body, string identityId, in PersonDressing dressing, bool sameLook)
+        {
+            if (body == null) throw new ArgumentNullException(nameof(body));
+            if (!leases.TryGetValue(body, out var lease)) { leases.Add(body, lease = create(body)); sameLook = false; }
+            lease.Renew(identityId, checked(++generation), dressing, sameLook);
+            return lease;
+        }
+
+        public void Forget(TBody body)
+        {
+            if (body != null && leases.TryGetValue(body, out var lease)) { lease.Invalidate(); leases.Remove(body); }
+        }
+
+        public void Clear()
+        {
+            foreach (var lease in leases.Values) lease.Invalidate();
+            leases.Clear();
+        }
+    }
+
     public sealed class DressBuildBudget
     {
         public const int DefaultPerFrame = 1;

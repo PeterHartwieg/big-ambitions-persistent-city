@@ -140,20 +140,20 @@ namespace PersistentCity.Runtime
             var candidate = sampler?.FrameRecorder;
             if (candidate == null || !candidate.Armed) return false;
             recorder = candidate; owner = sampler;
-            candidate.Begin(frame, System.Diagnostics.Stopwatch.GetTimestamp(), GcAllocationCounter.Read(), GC.CollectionCount(0));
+            candidate.Begin(frame, System.Diagnostics.Stopwatch.GetTimestamp(), GcAllocationCounter.Read(), GC.CollectionCount(0), GcAllocationCounter.Collections);
             return true;
         }
 
         public static void Charge(GcAllocationSegment segment)
         {
             var current = recorder;
-            if (current != null) current.Charge(segment, System.Diagnostics.Stopwatch.GetTimestamp(), GcAllocationCounter.Read(), GC.CollectionCount(0));
+            if (current != null) current.Charge(segment, System.Diagnostics.Stopwatch.GetTimestamp(), GcAllocationCounter.Read(), GC.CollectionCount(0), GcAllocationCounter.Collections);
         }
 
         public static void Detail(GcAllocationSegment segment)
         {
             var current = recorder;
-            if (current != null) current.Detail(segment, System.Diagnostics.Stopwatch.GetTimestamp(), GcAllocationCounter.Read(), GC.CollectionCount(0));
+            if (current != null) current.Detail(segment, System.Diagnostics.Stopwatch.GetTimestamp(), GcAllocationCounter.Read(), GC.CollectionCount(0), GcAllocationCounter.Collections);
         }
 
         public static void MarkDetail()
@@ -167,7 +167,7 @@ namespace PersistentCity.Runtime
             var current = recorder;
             var sampler = owner;
             recorder = null; owner = null;
-            current?.End(System.Diagnostics.Stopwatch.GetTimestamp(), GcAllocationCounter.Read(), GC.CollectionCount(0), sampler);
+            current?.End(System.Diagnostics.Stopwatch.GetTimestamp(), GcAllocationCounter.Read(), GC.CollectionCount(0), GcAllocationCounter.Collections, sampler);
         }
     }
 }
