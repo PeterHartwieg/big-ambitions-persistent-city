@@ -16,14 +16,17 @@ namespace PersistentCity.Core
     {
         public const int LunchBreakMinutes = 60;
 
-        public static double LunchReachMetres(double walkingMetresPerGameMinute)
-            => Math.Max(0, LunchBreakMinutes - MealRhythm.QueueMinutes(MealKind.Lunch, Activity.Work)) / 2.0 * walkingMetresPerGameMinute;
+        public const double ServiceMinutes = 1;
+
+        public static double LunchReachMetres(double walkingMetresPerGameMinute, double serviceMinutes = ServiceMinutes)
+            => Math.Max(0, LunchBreakMinutes - MealRhythm.EatingMinutes(MealKind.Lunch) - Math.Max(0, serviceMinutes)) / 2.0 * walkingMetresPerGameMinute;
 
         public static string RetimeLine(double clockRate, double walkingMetresPerGameMinute)
             => "Food reach at clock rate " + clockRate.ToString("0.000", CultureInfo.InvariantCulture)
                 + " game minutes per second: walking covers " + walkingMetresPerGameMinute.ToString("0.0", CultureInfo.InvariantCulture)
                 + " m per game minute, so a " + LunchBreakMinutes.ToString(CultureInfo.InvariantCulture)
-                + "-minute lunch break reaches food shops within "
+                + "-minute lunch break with " + MealRhythm.EatingMinutes(MealKind.Lunch).ToString(CultureInfo.InvariantCulture)
+                + " minutes eating and " + ServiceMinutes.ToString("0", CultureInfo.InvariantCulture) + " minute service reaches food shops within "
                 + Math.Round(LunchReachMetres(walkingMetresPerGameMinute)).ToString("0", CultureInfo.InvariantCulture) + " m one way.";
 
         public static MealOutcomeCount[] Outcomes(FoodCommerceState? food, int top)

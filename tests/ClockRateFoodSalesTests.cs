@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using PersistentCity.Core;
+using PersistentCity.Persistence;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -41,15 +42,22 @@ public sealed class ClockRateFoodSalesTests
         public IReadOnlyList<FoodBusiness> Read(double at) => new[] { new FoodBusiness { Id = Id, PlaceId = "shop:owned", Name = "FT RLO 13d Food v1",
             MealsPerHour = 60, Hours = Hours,
             Offers = new() { new FoodOffer { ProductId = FoodProducts.Croissant, Price = Money.FromCents(500), Units = Stock } } } };
+        public readonly Dictionary<string, string> Receipts = new(StringComparer.Ordinal);
         public FoodSale Buy(ResidentMeal meal, double at)
         {
-            if (RloOverrule.CheckoutRefusal(null, Living) is string refusal) return new(false, refusal);
+            if (FoodSaleReceipts.AlreadyPaid(Receipts, meal)) return new(true, "Native purchase");
+            FoodSaleReceipts.Begin(Receipts, meal);
+            if (RloOverrule.CheckoutRefusal(null, Living) is string refusal)
+            { FoodSaleReceipts.Cancel(Receipts, meal); return new(false, refusal); }
             if (meal.BusinessId != Id || meal.ProductId != FoodProducts.Croissant || meal.Price != Money.FromCents(500) || Stock <= 0)
-                return new(false, "Price or stock changed");
+            { FoodSaleReceipts.Cancel(Receipts, meal); return new(false, "Price or stock changed"); }
             Assert.DoesNotContain(meal.IntentId, Orders);
             Orders.Add(meal.IntentId); Times.Add(at); Stock--;
+            FoodSaleReceipts.Confirm(Receipts, meal);
             return new(true, "Native purchase");
         }
+        public string[] PaidReceiptIntents => Receipts.Where(p => p.Value.StartsWith("paid|", StringComparison.Ordinal))
+            .Select(p => p.Key.Substring(FoodSaleReceipts.Prefix.Length)).OrderBy(id => id, StringComparer.Ordinal).ToArray();
         public int Between(double from, double to) => Times.Count(t => t >= from && t < to);
     }
 
@@ -95,6 +103,10 @@ public sealed class ClockRateFoodSalesTests
         Assert.Equal(market.Orders.Count, market.Orders.Distinct().Count());
         Assert.Equal(market.Orders.Count, city.State.Food!.Residents.Sum(m => m.Purchases));
         Assert.Equal(100 - market.Stock, market.Orders.Count);
+        Assert.Equal(market.Orders.OrderBy(id => id, StringComparer.Ordinal).ToArray(), market.PaidReceiptIntents);
+        Assert.DoesNotContain(market.Receipts.Values, v => v.StartsWith("pending|", StringComparison.Ordinal));
+        var paidMeals = city.State.Food!.Residents.Where(m => FoodSaleReceipts.ReadStatus(market.Receipts, m) == FoodReceiptStatus.Paid);
+        Assert.All(paidMeals, m => Assert.Contains(m.IntentId, market.Orders));
     }
 
     private void Tally(string label, CitySimulator city)
@@ -116,8 +128,11 @@ public sealed class ClockRateFoodSalesTests
         var (city, market, routes) = RigScale();
         city = Retime(city, routes, Speed20);
         Advance(city, TenThirty);
+        AssertReceiptsMatchNativePurchases(city, market);
+        Assert.Empty(market.PaidReceiptIntents);
         city = Retime(city, routes, Speed1);
         Advance(city, TwelveThirty);
+        Assert.NotEmpty(market.PaidReceiptIntents);
         int window = market.Between(TenThirty, TwelveThirty);
         output.WriteLine("speed 20 08:00-10:30: " + market.Between(Eight, TenThirty) + " sales; speed 1 10:30-12:30: " + window + " sales");
         Tally("12:30", city);
@@ -132,10 +147,14 @@ public sealed class ClockRateFoodSalesTests
         city = Retime(city, routes, Speed20);
         Advance(city, TenThirty);
         city = Retime(city, routes, Speed1);
+        AssertReceiptsMatchNativePurchases(city, market);
         market.Living = new RloLivingReading(RloLivingState.Off);
         Advance(city, TwelveThirty);
+        AssertReceiptsMatchNativePurchases(city, market);
+        int offReceipts = market.PaidReceiptIntents.Length;
         market.Living = new RloLivingReading(RloLivingState.On);
         Advance(city, FourteenThirty);
+        Assert.True(market.PaidReceiptIntents.Length > offReceipts);
         int off = market.Between(TenThirty, TwelveThirty), on = market.Between(TwelveThirty, FourteenThirty);
         output.WriteLine("Living off 10:30-12:30: " + off + " sales; Living on 12:30-14:30: " + on + " sales");
         Assert.True(off > 0);
@@ -153,6 +172,7 @@ public sealed class ClockRateFoodSalesTests
             + FoodClockReach.LunchReachMetres(routes.WalkingMetresPerMinute) + " m");
         Tally("14:30", city);
         Assert.Empty(market.Orders);
+        Assert.Empty(market.PaidReceiptIntents);
         Assert.Equal(0, city.State.Food!.Residents.Sum(m => m.Purchases));
         double nearestWork = city.State.Places.Where(p => p.Kind == PlaceKind.Work).Min(p => Position.Distance(p.Position, new Position(0, 0, 0)));
         Assert.True(FoodClockReach.LunchReachMetres(routes.WalkingMetresPerMinute) < nearestWork);
@@ -161,8 +181,8 @@ public sealed class ClockRateFoodSalesTests
     }
 
     [Theory]
-    [InlineData(1.0 / 3, "Food reach at clock rate 0.333 game minutes per second: walking covers 6.0 m per game minute, so a 60-minute lunch break reaches food shops within 150 m one way.")]
-    [InlineData(20.0 / 3, "Food reach at clock rate 6.667 game minutes per second: walking covers 0.3 m per game minute, so a 60-minute lunch break reaches food shops within 8 m one way.")]
+    [InlineData(1.0 / 3, "Food reach at clock rate 0.333 game minutes per second: walking covers 6.0 m per game minute, so a 60-minute lunch break with 20 minutes eating and 1 minute service reaches food shops within 117 m one way.")]
+    [InlineData(20.0 / 3, "Food reach at clock rate 6.667 game minutes per second: walking covers 0.3 m per game minute, so a 60-minute lunch break with 20 minutes eating and 1 minute service reaches food shops within 6 m one way.")]
     public void RetimeLineNamesTheWalkingReach(double rate, string expected)
         => Assert.Equal(expected, FoodClockReach.RetimeLine(rate, WalkMetresPerSecond / rate));
 
