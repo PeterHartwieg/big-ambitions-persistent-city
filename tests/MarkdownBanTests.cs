@@ -1,6 +1,7 @@
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using Xunit;
 
 namespace PersistentCity.Tests;
@@ -97,7 +98,7 @@ public sealed class MarkdownBanTests : IDisposable
         string fake = Path.Combine(bin, "gh.py");
         string labels = Path.Combine(bin, "labels");
         File.WriteAllText(fake, "import sys\nif sys.argv[1] == 'pr':\n    sys.stdout.write(open(r'" + labels + "').read())\nelse:\n    print('added\\tdocs/new.md\\t')\n    print('modified\\tdocs/old.md\\t')\n");
-        string gh = "python3 '" + fake + "'";
+        string gh = PythonInterpreter.Shell + " '" + fake + "'";
 
         File.WriteAllText(labels, "bug\n");
         var (code, output) = Run(repo, "base", "--pr", "7", gh);
@@ -157,7 +158,8 @@ public sealed class MarkdownBanTests : IDisposable
         var args = pr == null
             ? new[] { script, "--root", root, "--base", @base }
             : new[] { script, "--root", root, "--base", @base, pr, number! };
-        return Exec("python3", root, gh, args);
+        var python = PythonInterpreter.Command;
+        return Exec(python[0], root, gh, python.Skip(1).Concat(args).ToArray());
     }
 
     static (int, string) Exec(string file, string cwd, string? gh, string[] args)

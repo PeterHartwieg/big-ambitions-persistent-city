@@ -34,16 +34,18 @@ namespace PersistentCity.Core
         Mod, Advance, Physical, PhysicalAmbient, PhysicalVehicles, PhysicalBindings,
         PhysicalVendorMeals, PhysicalFade, PhysicalFocus, PhysicalObserve, PhysicalRelease, PhysicalParked, PhysicalIndex, PhysicalQueues,
         PhysicalRoster, PhysicalSelection, PhysicalSpawnPedestrian, PhysicalSpawnAppearance, PhysicalSpawnCheck, PhysicalSpawnVehicle, PhysicalUnattributed,
+        PhysicalSpawnRandomize, PhysicalSpawnBake,
     }
 
     public sealed class GcPauseSampler
     {
-        public const int Segments = 21;
+        public const int Segments = 23;
         private static readonly string[] SegmentNames =
         {
             "mod", "advance", "physical", "physical_ambient", "physical_vehicles", "physical_bindings",
             "physical_vendor_meals", "physical_fade", "physical_focus", "physical_observe", "physical_release", "physical_parked", "physical_index", "physical_queues",
             "physical_roster", "physical_selection", "physical_spawn_pedestrian", "physical_spawn_appearance", "physical_spawn_check", "physical_spawn_vehicle", "physical_unattributed",
+            "physical_spawn_randomize", "physical_spawn_bake",
         };
         public const string PolicyId = "gc-sampler-v1";
         public const int Generations = 3;
@@ -71,7 +73,7 @@ namespace PersistentCity.Core
         private long lastCounter = -1, counterFrameBytes, counterFrames;
         private int lastCounterCollections;
         private bool nested, nestedValid;
-        private long nestedMark;
+        private long nestedMark, detailMark;
         private int nestedCollections;
 
         public GcPauseSampler(int capacity = DefaultCapacity)
@@ -151,17 +153,38 @@ namespace PersistentCity.Core
             nested = false;
             if (!Running || counter < 0) return;
             Array.Clear(pendingBytes, 0, Segments); Array.Clear(pendingSpans, 0, Segments);
-            nested = nestedValid = true; nestedMark = counter; nestedCollections = collections;
+            nested = nestedValid = true; nestedMark = detailMark = counter; nestedCollections = collections;
         }
+
+        public static bool IsDetail(GcAllocationSegment segment) =>
+            segment == GcAllocationSegment.PhysicalSpawnRandomize || segment == GcAllocationSegment.PhysicalSpawnBake;
 
         public void Charge(GcAllocationSegment segment, long counter, int collections)
         {
             if (!nested) return;
+            if (IsDetail(segment)) { Detail(segment, counter, collections); return; }
             int index = (int)segment;
             if (counter < 0 || counter < nestedMark || collections != nestedCollections) nestedValid = false;
             else pendingBytes[index] += counter - nestedMark;
             pendingSpans[index]++;
-            nestedMark = counter; nestedCollections = collections;
+            nestedMark = detailMark = counter; nestedCollections = collections;
+        }
+
+        public void Mark(long counter, int collections)
+        {
+            if (!nested) return;
+            if (counter < 0 || counter < detailMark || collections != nestedCollections) nestedValid = false;
+            detailMark = counter;
+        }
+
+        public void Detail(GcAllocationSegment segment, long counter, int collections)
+        {
+            if (!nested) return;
+            int index = (int)segment;
+            if (counter < 0 || counter < detailMark || collections != nestedCollections) nestedValid = false;
+            else pendingBytes[index] += counter - detailMark;
+            pendingSpans[index]++;
+            detailMark = counter;
         }
 
         public void EndNested(GcAllocationSegment parent, GcAllocationSegment remainder, long counter, int collections)
@@ -181,7 +204,8 @@ namespace PersistentCity.Core
             for (int i = 0; i < Segments; i++)
             {
                 if (pendingSpans[i] == 0) continue;
-                segmentBytes[i] += pendingBytes[i]; segmentSamples[i] += pendingSpans[i]; total += pendingBytes[i];
+                segmentBytes[i] += pendingBytes[i]; segmentSamples[i] += pendingSpans[i];
+                if (!IsDetail((GcAllocationSegment)i)) total += pendingBytes[i];
             }
             segmentBytes[index] += total; segmentSamples[index]++;
         }

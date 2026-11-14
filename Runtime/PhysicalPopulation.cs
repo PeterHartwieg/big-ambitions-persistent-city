@@ -130,7 +130,7 @@ namespace PersistentCity.Runtime
                 bool tested = false;
                 foreach (var resident in view.ResidentList.Take(64))
                 {
-                    if (!pedestrians.TryAcquire(Entity(resident).Identity, places[resident.HomeId].Position, out var body)) continue;
+                    if (!pedestrians.TryAcquire(Entity(resident).Identity, places[resident.HomeId].Position, out var body, immediate: true)) continue;
                     pedestrians.Release(body!); tested = true; break;
                 }
                 if (!tested) throw new InvalidOperationException("No native pedestrian body passed appearance/NavMesh preflight.");
@@ -150,7 +150,7 @@ namespace PersistentCity.Runtime
             + ", queueing=" + queueBindings + ", queued=" + queued + ", walkersResumed=" + ambient.Resumed
             + ", journeyIndex=" + simulation.ActiveJourneys.Count + ", journeyIndexWithheldVisitors=" + simulation.ActiveJourneys.WithheldVisitors
             + ", journeyIndexChecks=" + journeyIndexChecks + ", journeyIndexMismatches=" + journeyIndexMismatches + ", journeyIndexFallback=" + journeyIndexFallback
-            + ", leaving=" + leaving.Count + ", pedestrianLooks=" + pedestrians.AppearanceBuilds + " built/" + pedestrians.AppearanceReuses + " reused, " + vehicles.OwnershipDiagnostics
+            + ", leaving=" + leaving.Count + ", pedestrianLooks=" + pedestrians.LookDiagnostics + ", " + vehicles.OwnershipDiagnostics
             + ", carAdmission=" + vehicles.LastAdmissionResident + ":" + vehicles.LastAdmissionStage + ":" + vehicles.LastAdmissionError;
         public void ObserveForSave()
         {

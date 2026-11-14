@@ -1,8 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
-using System.IO;
-using System.Text;
 using BigAmbitions.Characters;
 using BigAmbitions.Characters.Appearance;
 using Extensions;
@@ -10,7 +7,6 @@ using Helpers;
 using Character;
 using UI;
 using UI.Load;
-using Newtonsoft.Json;
 using PersistentCity.Core;
 using UnityEngine;
 using UnityEngine.AI;
@@ -23,8 +19,16 @@ namespace PersistentCity.Runtime
         private readonly int maximum;
         private readonly List<ThirdPersonCharacter> all = new List<ThirdPersonCharacter>();
         private readonly DressedBodyPool<ThirdPersonCharacter> idle = new DressedBodyPool<ThirdPersonCharacter>();
+        private readonly DressBuildBudget budget = new DressBuildBudget();
+        private readonly HashSet<AppearanceSetter> baked = new HashSet<AppearanceSetter>();
         public long AppearanceBuilds { get; private set; }
         public long AppearanceReuses { get; private set; }
+        private long deferredBeforeAcquire;
+        public long AppearanceDeferred => budget.Deferred + deferredBeforeAcquire;
+        public void NoteDeferred() => deferredBeforeAcquire++;
+        public bool LastDeferred { get; private set; }
+        public string LookDiagnostics => AppearanceBuilds + " built/" + AppearanceReuses + " reused/" + AppearanceDeferred + " deferred/"
+            + idle.Count + " idle/" + all.Count + " owned/" + BlendshapeBake.Bakes + " baked";
         private readonly Dictionary<string, PhysicalPedestrianBody> active = new Dictionary<string, PhysicalPedestrianBody>(StringComparer.Ordinal);
         private long generation;
         private bool disposed;
@@ -39,9 +43,19 @@ namespace PersistentCity.Runtime
 
         public Action? BeforeNavigation { get; set; }
 
-        public bool TryAcquire(CitizenIdentity identity, Position position, out PhysicalPedestrianBody? body)
+        private static int DaysPerYear()
         {
-            body = null;
+            int days = SaveGameManager.Current?.gameVariables.daysPerYear ?? 60;
+            return days < 8 ? 60 : days;
+        }
+
+        public bool WouldDefer(CitizenIdentity identity) =>
+            !disposed && identity != null && identity.AppearanceSeed != 0
+            && idle.WouldDefer(new PersonDressing(identity, DaysPerYear()), all.Count, maximum, budget, Time.frameCount, Time.unscaledTimeAsDouble);
+
+        public bool TryAcquire(CitizenIdentity identity, Position position, out PhysicalPedestrianBody? body, bool immediate = false)
+        {
+            body = null; LastDeferred = false;
             if (disposed || identity == null || string.IsNullOrEmpty(identity.Id) || identity.AppearanceSeed == 0
                 || active.ContainsKey(identity.Id) || !PhysicalPedestrianBody.Fits(position)) return false;
             var filter = WalkingRoutes.DryFilter;
@@ -51,13 +65,15 @@ namespace PersistentCity.Runtime
             UnityEngine.Random.State dice = UnityEngine.Random.state;
             try
             {
-                int daysPerYear = SaveGameManager.Current?.gameVariables.daysPerYear ?? 60;
-                if (daysPerYear < 8) daysPerYear = 60;
+                int daysPerYear = DaysPerYear();
                 var dressing = new PersonDressing(identity, daysPerYear);
-                if (idle.TryTake(dressing, out var pooled, out bool dressed)) character = pooled;
+                var choice = idle.Choose(dressing, all.Count, maximum, immediate ? null : budget, Time.frameCount, Time.unscaledTimeAsDouble, out var pooled);
+                if (choice == BodyChoice.Full) return false;
+                if (choice == BodyChoice.Deferred) { LastDeferred = true; return false; }
+                bool dressed = choice == BodyChoice.Hit;
+                if (choice != BodyChoice.Grow) character = pooled;
                 else
                 {
-                    if (all.Count >= maximum) return false;
                     var staging = new GameObject("PersistentCity character staging");
                     staging.SetActive(false); staging.transform.SetParent(parent, false);
                     try
@@ -76,6 +92,7 @@ namespace PersistentCity.Runtime
                         character.isPlayer = false; character.updatePlayerPos = false;
                         character.transform.SetParent(parent, false);
                         all.Add(character);
+                        if (BlendshapeBake.Adopt(character.appearanceSetter.meshCombiner)) baked.Add(character.appearanceSetter);
                     }
                     finally { UnityEngine.Object.Destroy(staging); }
                 }
@@ -131,51 +148,43 @@ namespace PersistentCity.Runtime
             var look = PersonAppearance.For(identity);
             var gender = identity.Female ? Gender.Female : Gender.Male;
             var skin = SkinColorHelper.GetRandom(identity.AppearanceSeed);
-            UnityEngine.Random.InitState(look.Seed);
-            appearance.RandomizeElements(gender, skin, new[] { Tag(look.Wardrobe) }, look.Seed);
-            if (look.Wardrobe != Wardrobe.Casual && (appearance.data.elements == null || appearance.data.elements.Count == 0))
+            int empty = (identity.Female ? 4 : 0) + (int)look.Wardrobe;
+            if (look.Wardrobe == Wardrobe.Casual || !emptyWardrobe[empty])
             {
                 UnityEngine.Random.InitState(look.Seed);
-                appearance.RandomizeElements(gender, skin, new[] { AppearanceTag.Casual }, look.Seed);
+                appearance.RandomizeElements(gender, skin, Tags[(int)look.Wardrobe], look.Seed);
+            }
+            if (look.Wardrobe != Wardrobe.Casual && (appearance.data.elements == null || appearance.data.elements.Count == 0))
+            {
+                emptyWardrobe[empty] = true;
+                UnityEngine.Random.InitState(look.Seed);
+                appearance.RandomizeElements(gender, skin, Tags[(int)Wardrobe.Casual], look.Seed);
             }
             appearance.data.fatness = Mathf.Min(appearance.data.fatness, 0.55f);
             if (appearance.data.elements == null || appearance.data.elements.Count == 0) throw new InvalidOperationException("Empty appearance");
+            PhysicalAllocation.Detail(PersistentCity.Core.GcAllocationSegment.PhysicalSpawnRandomize);
             PhysicalAllocation.Charge(PersistentCity.Core.GcAllocationSegment.PhysicalSpawnAppearance);
-            Snapshot(appearance.data, expectedAppearance);
+            proof.Capture(appearance.data);
             PhysicalAllocation.Charge(PersistentCity.Core.GcAllocationSegment.PhysicalSpawnCheck);
             appearance.UpdateVisuals();
+            var merged = appearance.lastMergedMeshRenderer;
+            if (merged == null || appearance.meshCombiner == null || !appearance.meshCombiner.isMeshesCombined()) throw new InvalidOperationException("Appearance meshes unavailable");
+            PhysicalAllocation.Mark();
+            if (baked.Contains(appearance)) BlendshapeBake.Apply(appearance.meshCombiner, merged);
+            PhysicalAllocation.Detail(PersistentCity.Core.GcAllocationSegment.PhysicalSpawnBake);
             PhysicalAllocation.Charge(PersistentCity.Core.GcAllocationSegment.PhysicalSpawnAppearance);
-            Snapshot(appearance.data, actualAppearance);
-            bool same = SameText(expectedAppearance, actualAppearance);
+            bool same = proof.Same(appearance.data);
             PhysicalAllocation.Charge(PersistentCity.Core.GcAllocationSegment.PhysicalSpawnCheck);
             if (!same || appearance.GetSelectedMeshRenderers().Count == 0) throw new InvalidOperationException("Appearance meshes unavailable");
             PhysicalAllocation.Charge(PersistentCity.Core.GcAllocationSegment.PhysicalSpawnAppearance);
             AppearanceBuilds++;
         }
 
-        private static JsonSerializer? appearanceSerializer;
-        private static readonly StringBuilder expectedAppearance = new StringBuilder(8192), actualAppearance = new StringBuilder(8192);
-        private static void Snapshot(CharacterData data, StringBuilder into)
+        private static readonly AppearanceProof proof = new AppearanceProof();
+        private static readonly bool[] emptyWardrobe = new bool[8];
+        private static readonly AppearanceTag[][] Tags =
         {
-            into.Length = 0;
-            appearanceSerializer ??= JsonSerializer.CreateDefault();
-            using var writer = new StringWriter(into, CultureInfo.InvariantCulture);
-            using var json = new JsonTextWriter(writer) { Formatting = Formatting.None };
-            appearanceSerializer.Serialize(json, data);
-        }
-        private static bool SameText(StringBuilder a, StringBuilder b)
-        {
-            if (a.Length != b.Length) return false;
-            for (int i = 0; i < a.Length; i++) if (a[i] != b[i]) return false;
-            return true;
-        }
-
-        private static AppearanceTag Tag(Wardrobe wardrobe) => wardrobe switch
-        {
-            Wardrobe.Formal => AppearanceTag.Formal,
-            Wardrobe.Sport => AppearanceTag.Sport,
-            Wardrobe.Party => AppearanceTag.Party,
-            _ => AppearanceTag.Casual,
+            new[] { AppearanceTag.Casual }, new[] { AppearanceTag.Formal }, new[] { AppearanceTag.Sport }, new[] { AppearanceTag.Party },
         };
 
         public void Release(PhysicalPedestrianBody body)
@@ -206,6 +215,7 @@ namespace PersistentCity.Runtime
         private void DestroyOwned(ThirdPersonCharacter character)
         {
             all.Remove(character);
+            if (character != null && character.appearanceSetter != null) baked.Remove(character.appearanceSetter);
             if (character != null)
             {
                 NotifyRemoved(character);
@@ -221,7 +231,7 @@ namespace PersistentCity.Runtime
             disposed = true;
             BeforeNavigation = null; NavigationHook.Detach(this);
             foreach (var body in active.Values) body.Invalidate();
-            active.Clear(); idle.Clear();
+            active.Clear(); idle.Clear(); baked.Clear(); BlendshapeBake.Clear();
             foreach (var character in all) if (character != null)
             {
                 NotifyRemoved(character);
