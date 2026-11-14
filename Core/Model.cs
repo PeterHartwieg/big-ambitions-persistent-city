@@ -95,6 +95,16 @@ namespace PersistentCity.Core
         }
         internal RoadTag RoadTag { get; private set; }
         internal bool Frozen { get; private set; }
+        internal RouteLeg CopyAs(Position from, Position to, double minutes, string service)
+        {
+            if (Frozen && from.X == this.from.X && from.Y == this.from.Y && from.Z == this.from.Z
+                && to.X == this.to.X && to.Y == this.to.Y && to.Z == this.to.Z && minutes == this.minutes
+                && string.Equals(service, serviceId, StringComparison.Ordinal)) return this;
+            var copy = new RouteLeg { from = from, to = to, mode = mode, minutes = minutes };
+            if (string.Equals(service, serviceId, StringComparison.Ordinal)) { copy.serviceId = serviceId; copy.RoadTag = RoadTag; }
+            else copy.ServiceId = service;
+            return copy;
+        }
         internal void Freeze() => Frozen = true;
         private void Mutable() { if (Frozen) throw new InvalidOperationException("A committed route leg is immutable."); }
     }

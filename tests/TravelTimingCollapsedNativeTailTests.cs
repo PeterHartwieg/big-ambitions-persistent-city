@@ -679,8 +679,8 @@ public sealed class TravelTimingCollapsedNativeTailTests
         var state = UnownedCanonicalWalkingRoute(x, elapsed); var citizen = state.Citizens[0]; var route = citizen.Journey!;
         var simulation = new CitySimulator(state, new UnmappedPlanner()); var before = simulation.SampleJourney(citizen);
         var retime = typeof(TravelTiming).GetMethod("Retime", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic)!;
-        object?[] arguments = { route, elapsed, false, 2d, 1d, .5d, null };
-        var replacement = (Route)retime.Invoke(null, arguments)!; var map = arguments[^1]!;
+        object?[] arguments = { route, elapsed, false, 2d, 1d, .5d, false, null, null };
+        var replacement = (Route)retime.Invoke(null, arguments)!; var map = arguments[^2]!;
         double mapped = (double)map.GetType().GetMethod("Map", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!
             .Invoke(map, new object[] { elapsed })!;
         Assert.NotEqual(elapsed, mapped); citizen.Journey = replacement;

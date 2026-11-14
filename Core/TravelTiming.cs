@@ -50,7 +50,11 @@ namespace PersistentCity.Core
         }
 
         public static bool Apply(CityState state, double nativeWalkMetresPerSecond, double clockRate)
+            => Apply(state, nativeWalkMetresPerSecond, clockRate, out _);
+
+        public static bool Apply(CityState state, double nativeWalkMetresPerSecond, double clockRate, out int keptPace)
         {
+            keptPace = 0;
             if (state == null) throw new ArgumentNullException(nameof(state));
             Rate(nativeWalkMetresPerSecond, nameof(nativeWalkMetresPerSecond)); Rate(clockRate, nameof(clockRate));
             Rate(state.TravelClockRate, nameof(state.TravelClockRate));
@@ -62,11 +66,14 @@ namespace PersistentCity.Core
             if (!legacy && state.TravelClockRate == clockRate) return false;
             double ratio = clockRate / state.TravelClockRate;
             TrafficKernel? savedTraffic = null;
+            var trafficRoutes = new Dictionary<string, TrafficVehicleState>(StringComparer.Ordinal);
+            var evicted = new HashSet<string>(StringComparer.Ordinal);
             if (state.Traffic != null)
             {
                 if (legacy || state.Traffic.Clock != state.Minute)
                     throw new ArgumentException("Traffic needs native timing at the city clock.");
                 savedTraffic = TrafficKernel.Restore(state.Traffic);
+                foreach (var vehicle in state.Traffic.Vehicles) trafficRoutes[vehicle.VehicleId] = vehicle;
             }
             var changes = new List<Change>();
             var maps = new Dictionary<string, NominalMap>(StringComparer.Ordinal);
@@ -107,9 +114,14 @@ namespace PersistentCity.Core
                     ? Math.Max(1e-7, CitySimulator.JourneyClockTolerance(state.Minute, route.Minutes)) : 1e-7;
                 if (elapsed > route.Minutes || arrivalDifference > arrivalTolerance)
                     throw new ArgumentException("Journey clock does not match its route.", nameof(state));
-                if (route.Legs.Count == MaxLegs && (legacy || ratio != 1) && IsPartialNativeRoadMovement(route, elapsed))
-                    throw new ArgumentException("Cannot retime a maximum-size native car route without splitting its current edge.", nameof(state));
-                var replacement = Retime(route, elapsed, legacy, nativeWalkMetresPerSecond, clockRate, ratio, out var map);
+                var replacement = Retime(route, elapsed, legacy, nativeWalkMetresPerSecond, clockRate, ratio, false, out var map, out int completed);
+                if (replacement.Legs.Count > MaxLegs
+                    && !MergeCompletedLegs(replacement, completed, elapsed, trafficOwned ? trafficRoutes[citizen.Identity.Id] : null))
+                {
+                    replacement = Retime(route, elapsed, legacy, nativeWalkMetresPerSecond, clockRate, ratio, true, out map, out _);
+                    keptPace++;
+                    if (trafficOwned) { evicted.Add(citizen.Identity.Id); trafficOwned = false; }
+                }
                 maps.Add(citizen.Identity.Id, map);
                 ValidateCommittedRoute(replacement, origin.Position, destination.Position, citizen);
                 if (!trafficOwned)
@@ -137,10 +149,12 @@ namespace PersistentCity.Core
                 if (legacy || state.Traffic.Clock != state.Minute)
                     throw new ArgumentException("Traffic needs native timing at the city clock.", nameof(state));
                 var kernel = TrafficKernel.Restore(state.Traffic);
+                if (evicted.Count > 0) kernel = TrafficKernel.Restore(kernel.Capture(evicted.Contains));
                 var citizens = new Dictionary<string, CitizenState>(StringComparer.Ordinal);
                 foreach (var citizen in state.Citizens) citizens.Add(citizen.Identity.Id, citizen);
                 foreach (var vehicle in state.Traffic.Vehicles)
                 {
+                    if (evicted.Contains(vehicle.VehicleId)) continue;
                     if (!citizens.TryGetValue(vehicle.VehicleId, out var citizen) || citizen.Journey == null
                         || !maps.ContainsKey(vehicle.VehicleId)) throw new ArgumentException("Traffic owner has no committed journey.", nameof(state));
                     double elapsed = kernel.GetPermission(vehicle.VehicleId).NominalMinutes;
@@ -154,11 +168,6 @@ namespace PersistentCity.Core
                         if (observed < endpoint && mapping.Map(endpoint) <= mapping.Map(observed))
                             throw new ArgumentException("Cannot collapse an unreported occupied traffic section endpoint during clock retiming.");
                     }
-                    // The ordinary 512-leg fallback intentionally retains one partial leg's old pace.
-                    // That would require a piecewise current-section motion model in the traffic kernel.
-                    if (citizen.Journey.Legs.Count == MaxLegs && IsPartialMovement(citizen.Journey, elapsed)
-                        && ratio != 1 && vehicle.RouteIndex >= 0 && !vehicle.Completed)
-                        throw new ArgumentException("Cannot retime an occupied maximum-size route without splitting its current section.", nameof(state));
                     double observedNominal = kernel.GetPermission(vehicle.VehicleId).NominalMinutes;
                     var nominalMap = maps[vehicle.VehicleId];
                     if (ratio != 1 && !vehicle.Completed
@@ -236,36 +245,60 @@ namespace PersistentCity.Core
             catch (InvalidOperationException e) { throw new ArgumentException("Invalid committed route.", nameof(route), e); }
         }
 
-        private static bool IsPartialMovement(Route route, double elapsed)
+        private static bool MergeCompletedLegs(Route route, int completed, double elapsed, TrafficVehicleState? traffic)
         {
-            double offset = 0;
-            foreach (var leg in route.Legs)
+            var legs = route.Legs;
+            int best = -1;
+            double bestDeviation = double.PositiveInfinity, bestMinutes = 0, start = 0;
+            for (int i = 0; i + 1 < completed; i++)
             {
-                double end = offset + leg.Minutes;
-                if (elapsed > offset && elapsed < end) return Position.Distance(leg.From, leg.To) > 0.000001;
-                offset = end;
+                RouteLeg first = legs[i], second = legs[i + 1];
+                double middle = start + first.Minutes, end = middle + second.Minutes, minutes = end - start;
+                if (first.Mode == second.Mode && (first.Mode == TravelMode.Car || first.Mode == TravelMode.Walk || first.ServiceId == second.ServiceId)
+                    && minutes > 0 && minutes <= MaxLegMinutes && start + minutes == end && !OverlapsRetainedTraffic(traffic, start, end, elapsed))
+                {
+                    double deviation = SegmentDistance(first.To, first.From, second.To);
+                    if (deviation < bestDeviation) { best = i; bestDeviation = deviation; bestMinutes = minutes; }
+                }
+                start = middle;
+            }
+            if (best < 0) return false;
+            RouteLeg a = legs[best], b = legs[best + 1];
+            string service = a.ServiceId == b.ServiceId && !a.ServiceId.StartsWith("native:road:", StringComparison.Ordinal) ? a.ServiceId
+                : a.Mode == TravelMode.Car || a.Mode == TravelMode.Walk ? "" : a.ServiceId;
+            legs[best] = new RouteLeg { From = a.From, To = b.To, Minutes = bestMinutes, Mode = a.Mode, ServiceId = service };
+            legs.RemoveAt(best + 1);
+            return true;
+        }
+
+        private static bool OverlapsRetainedTraffic(TrafficVehicleState? vehicle, double start, double end, double elapsed)
+        {
+            if (vehicle == null) return false;
+            bool active = vehicle.RouteIndex >= 0 && !vehicle.Completed && elapsed < vehicle.Route[vehicle.RouteIndex].EndNominalMinutes;
+            for (int i = 0; i < vehicle.Route.Count; i++)
+            {
+                if (active && i == vehicle.RouteIndex) continue;
+                var span = vehicle.Route[i];
+                if (span.StartNominalMinutes < end && span.EndNominalMinutes > start) return true;
             }
             return false;
         }
 
-        private static bool IsPartialNativeRoadMovement(Route route, double elapsed)
+        private static double SegmentDistance(Position point, Position from, Position to)
         {
-            double offset = 0;
-            foreach (RouteLeg leg in route.Legs)
-            {
-                double end = offset + leg.Minutes;
-                if (elapsed > offset && elapsed < end)
-                    return leg.Mode == TravelMode.Car && leg.ServiceId.StartsWith("native:road:", StringComparison.Ordinal)
-                        && Position.Distance(leg.From, leg.To) > 0;
-                offset = end;
-            }
-            return false;
+            double x = to.X - from.X, y = to.Y - from.Y, z = to.Z - from.Z;
+            double square = x * x + y * y + z * z;
+            double t = square > 0 ? ((point.X - from.X) * x + (point.Y - from.Y) * y + (point.Z - from.Z) * z) / square : 0;
+            return Position.Distance(point, Position.Lerp(from, to, Math.Max(0, Math.Min(1, t))));
         }
 
-        private static Route Retime(Route original, double elapsed, bool legacy, double walkSpeed, double rate, double ratio, out NominalMap map)
+        private static Route Retime(Route original, double elapsed, bool legacy, double walkSpeed, double rate, double ratio,
+            bool keepCurrent, out NominalMap map, out int completed)
         {
             var route = new Route();
             var mapping = new NominalMap(); map = mapping;
+            mapping.Segments.Capacity = original.Legs.Count + 2;
+            completed = 0;
             double oldOffset = 0, newOffset = 0;
             void Add(RouteLeg leg, Position from, Position to, double minutes, string service, double oldMinutes, double? oldEnd = null)
             {
@@ -285,6 +318,7 @@ namespace PersistentCity.Core
             {
                 foreach (var leg in original.Legs)
                     AddUnscaledCarPrefix(leg, leg.From, leg.To, leg.Minutes, leg.ServiceId, leg.Minutes);
+                completed = route.Legs.Count;
                 return route;
             }
             double remainingElapsed = elapsed;
@@ -300,6 +334,7 @@ namespace PersistentCity.Core
                 {
                     AddUnscaledCarPrefix(leg, leg.From, leg.To, leg.Minutes, leg.ServiceId, leg.Minutes);
                     remainingElapsed -= leg.Minutes;
+                    completed = route.Legs.Count;
                     continue;
                 }
                 if (!reachedPresent && elapsed > oldOffset)
@@ -320,7 +355,7 @@ namespace PersistentCity.Core
                     }
                     if (remainingElapsed <= 0 || (remainingElapsed > leg.Minutes && !sampledEndpoint))
                         throw new ArgumentException("A partial route cannot preserve its measured timing interval.");
-                    if (original.Legs.Count == MaxLegs || (sampledEndpoint && RetainsFixedMinutes(leg)))
+                    if (keepCurrent || (sampledEndpoint && RetainsFixedMinutes(leg)))
                     {
                         AddUnscaledCarPrefix(leg, leg.From, leg.To, leg.Minutes, leg.ServiceId, leg.Minutes);
                     }
@@ -331,6 +366,7 @@ namespace PersistentCity.Core
                             && splitService.StartsWith("native:road:fragment1:", StringComparison.Ordinal);
                         var point = sampledEndpoint ? leg.To : Position.Lerp(leg.From, leg.To, remainingElapsed / leg.Minutes);
                         AddUnscaledCarPrefix(leg, leg.From, point, remainingElapsed, splitService, remainingElapsed, elapsed);
+                        completed = route.Legs.Count;
                         double oldTail = leg.Minutes - remainingElapsed;
                         if (sampledEndpoint || (nativeTail && point.Equals(leg.To)))
                         {
@@ -376,6 +412,7 @@ namespace PersistentCity.Core
         private static bool RetainsFixedMinutes(RouteLeg leg)
         {
             double distance = Position.Distance(leg.From, leg.To);
+            if (distance > 0.000001) return false;
             bool nativeMovement = leg.Mode == TravelMode.Car && leg.ServiceId.StartsWith("native:road:", StringComparison.Ordinal)
                 && distance > 0 && SplitService(leg).Length != 0;
             return distance <= 0.000001 && !nativeMovement;
@@ -404,8 +441,8 @@ namespace PersistentCity.Core
             return "";
         }
 
-        private static RouteLeg Copy(RouteLeg source, Position from, Position to, double minutes, string service) => new RouteLeg
-        { From = from, To = to, Minutes = minutes, Mode = source.Mode, ServiceId = service };
+        private static RouteLeg Copy(RouteLeg source, Position from, Position to, double minutes, string service)
+            => source.CopyAs(from, to, minutes, service);
 
         private static void Rate(double value, string name)
         {

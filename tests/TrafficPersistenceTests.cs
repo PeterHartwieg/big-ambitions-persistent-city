@@ -162,7 +162,7 @@ public sealed class TrafficPersistenceTests
     }
 
     [Fact]
-    public void OccupiedMaximumSizePartialRouteCannotBeHalfRetimed()
+    public void OccupiedMaximumSizePartialRouteRetimesByMergingCompletedLegs()
     {
         var state = QueuedCity(); var citizen = state.Citizens[0];
         var legs = new List<RouteLeg> { Leg(0, 10, 2, TravelMode.Walk), Leg(10, 10, 2, TravelMode.Car) };
@@ -170,11 +170,17 @@ public sealed class TrafficPersistenceTests
             legs.Add(Leg(10 + 100.0 * i / 508, 10 + 100.0 * (i + 1) / 508, 10.0 / 508, TravelMode.Car));
         legs.Add(Leg(110, 110, 2, TravelMode.Car)); legs.Add(Leg(110, 120, 2, TravelMode.Walk));
         citizen.Journey!.Legs = legs; citizen.NextEventMinute = citizen.DepartureMinute + citizen.Journey.Minutes;
-        var route = citizen.Journey; var traffic = state.Traffic;
-        var exception = Assert.Throws<ArgumentException>(() => TravelTiming.Apply(state, 2, 2));
-        Assert.Contains("maximum-size", exception.Message);
-        Assert.Same(route, citizen.Journey); Assert.Same(traffic, state.Traffic);
-        Assert.Equal(1, state.TravelClockRate);
+        double progress = TrafficKernel.Restore(state.Traffic!).GetPermission("c0").NominalMinutes;
+        double before = citizen.Journey.PositionAt(progress).X;
+        Assert.True(TravelTiming.Apply(state, 2, 2, out int keptPace));
+        Assert.Equal(0, keptPace);
+        Assert.Equal(512, citizen.Journey!.Legs.Count);
+        Assert.Equal(2, state.Traffic!.Vehicles.Count);
+        double after = TrafficKernel.Restore(state.Traffic).GetPermission("c0").NominalMinutes;
+        Assert.Equal(state.Minute - citizen.DepartureMinute, after, 7);
+        Assert.Equal(before, citizen.Journey.PositionAt(after).X, 9);
+        Assert.Equal(2, state.TravelClockRate);
+        Assert.Equal(SaveReadStatus.Loaded, DevelopmentChain.Read(DevelopmentChain.Write(state)).Status);
     }
 
     internal static CityState QueuedCity()

@@ -42,8 +42,6 @@ Core/ThirdPartyInteriorGuard.cs	imperfect-choice	// Deliberately small rule lang
 Core/ThirdPartyInteriorGuard.cs	imperfect-choice	// No regex, type loading, foreign API calls, or foreign implementation knowledge.
 Core/TransportComposition.cs	imperfect-choice	/// <summary>Intersection with one bounded conservative gate region; an unknown gate never denies
 Core/TransportComposition.cs	imperfect-choice	/// unrelated city coordinates. Touching its boundary is conservatively treated as a crossing.</summary>
-Core/TravelTiming.cs	imperfect-choice	// The ordinary 512-leg fallback intentionally retains one partial leg's old pace.
-Core/TravelTiming.cs	imperfect-choice	// That would require a piecewise current-section motion model in the traffic kernel.
 Core/WeatherPolicy.cs	imperfect-choice	// unknown is deliberately neutral, including for this frame's other boundaries
 Persistence/NameWire25.cs	imperfect-choice	// Complete coherent saves rebuild every wire-local reference together. The in-memory graph
 Persistence/NameWire25.cs	imperfect-choice	// contains names only; catalogue removal/order is deliberately not an input to this method.
