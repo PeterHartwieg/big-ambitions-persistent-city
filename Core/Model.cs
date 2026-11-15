@@ -350,6 +350,8 @@ namespace PersistentCity.Core
         public EconomicLedger Economy { get; set; } = new EconomicLedger();
         internal Action? SnapshotSynchronizer;
         internal Func<int, IEnumerator<bool>>? SnapshotSteps;
+        internal TrafficKernel? TrafficSource;
+        internal TrafficKernelState? TrafficSourceState;
         public void PrepareForSave()
         {
             SnapshotSynchronizer?.Invoke();

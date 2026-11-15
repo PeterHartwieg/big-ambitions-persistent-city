@@ -74,4 +74,52 @@ public sealed class Gr5RetimeSnapshotTests
         output.WriteLine($"unsliced PrepareForSave {whole:0.0} ms; sliced into {updates.Count} updates, slowest {updates.Max():0.0} ms, began update {updates[^1]:0.0} ms (.NET)");
         PerfGate.Under(updates.Max(), 30, "slowest retime snapshot update at 13,965 links");
     }
+
+    private static IEnumerator<bool> Forgetting(IEnumerator<bool> steps, CityState state)
+    {
+        while (steps.MoveNext())
+        {
+            if (steps.Current) { state.TrafficSource = null; state.TrafficSourceState = null; }
+            yield return steps.Current;
+        }
+    }
+
+    private static (string Hash, long Bytes) RetimeTwice(bool live)
+    {
+        var (state, _) = TravelTimingMaximumRouteTests.RigScaleCity(TravelTimingMaximumRouteTests.FixtureLinks);
+        var simulator = new CitySimulator(state, new NoRoutes());
+        foreach (var rate in new[] { 3.0, 1 })
+        {
+            var driver = new ClockRetimeDriver();
+            if (!live)
+            {
+                var original = state.SnapshotSteps!;
+                state.SnapshotSteps = links => Forgetting(original(links), state);
+            }
+            long before = GC.GetAllocatedBytesForCurrentThread();
+            while (true)
+            {
+                var outcome = driver.Update(state, rate, false, 2, ClockRetimeStages.SliceMilliseconds);
+                if (outcome != ClockRetimeOutcome.Committed) continue;
+                simulator = simulator.RebuildRoutes(new NoRoutes(), driver.TakeRetimedTraffic());
+                break;
+            }
+            if (rate != 1) continue;
+            before = GC.GetAllocatedBytesForCurrentThread() - before;
+            simulator.AdvanceTo(state.Minute + 0.5, int.MaxValue);
+            state.PrepareForSave();
+            return (RushSpikeReplay.Sha(SaveCodec.Write(state)), before);
+        }
+        throw new InvalidOperationException();
+    }
+
+    [Fact]
+    public void RetimingFromTheLiveKernelMatchesRetimingFromARestoredCopy()
+    {
+        var (liveHash, liveBytes) = RetimeTwice(live: true);
+        var (restoredHash, restoredBytes) = RetimeTwice(live: false);
+        output.WriteLine($"retime 3 -> 1 at 13,965 links: restored copy {restoredBytes / 1e6:0.0} MB, live kernel {liveBytes / 1e6:0.0} MB (.NET)");
+        Assert.Equal(restoredHash, liveHash);
+        Assert.True(liveBytes + 4_000_000 < restoredBytes, liveBytes + " vs " + restoredBytes);
+    }
 }

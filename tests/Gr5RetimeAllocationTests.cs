@@ -54,7 +54,7 @@ public sealed class Gr5RetimeAllocationTests
     {
         var (_, bytes) = RetimeThroughRates(committed: true);
         output.WriteLine("committed journeys, MB per retime: " + string.Join(", ", bytes.Select(b => (b / 1e6).ToString("0.0"))));
-        PerfGate.Under(bytes.Skip(1).Max() / 1e6, 70, "MB allocated by one retime at 13,965 links (.NET)");
+        PerfGate.Under(bytes.Skip(1).Max() / 1e6, 60, "MB allocated by one retime at 13,965 links (.NET)");
     }
 
     [Fact]
