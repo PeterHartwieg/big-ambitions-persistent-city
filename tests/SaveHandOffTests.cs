@@ -160,9 +160,10 @@ public sealed class SaveHandOffTests
 
         SaveHandOff.Expect(first, "temp");
         SaveHandOff.Expect(second, "temp");
-        Assert.Null(SaveHandOff.Claim("other"));
         Assert.Same(second, SaveHandOff.Claim("temp"));
         Assert.Null(SaveHandOff.Claim("temp"));
+        Assert.True(second.Claimed);
+        Assert.False(first.Claimed);
 
         var firstFile = Odin(("other", "x"), (SaveStore.StateKey, first.PayloadToken), (SaveEpochStore.Key, first.MarkerToken));
         var spliced = new MemoryStream();
@@ -229,6 +230,15 @@ public sealed class SaveHandOffTests
             Assert.NotNull(save.Settle(pending));
             Assert.Same(previous, save.Data[SaveStore.StateKey]);
             Assert.Equal(file[SaveEpochStore.Key], save.Data[SaveEpochStore.Key]);
+            var refusedSync = new Dictionary<string, string>(StringComparer.Ordinal) { [SaveStore.StateKey] = previous };
+            var owner = new object();
+            var syncBinding = new SaveEpochBinding(owner, refusedSync, 0);
+            var ticket = syncBinding.Begin(owner, refusedSync, false)!;
+            syncBinding.Fail(ticket, "refused");
+            Assert.True(AccountingStopStore.IsStopped(file));
+            Assert.True(AccountingStopStore.IsStopped(refusedSync));
+            Assert.False(file.ContainsKey(AccountingStopStore.Key));
+            Assert.Equal(AccountingStopStore.Cause(refusedSync), AccountingStopStore.Cause(file));
         }
         finally { File.Delete(temp); File.Delete(output); }
     }
@@ -272,7 +282,153 @@ public sealed class SaveHandOffTests
         Assert.Equal(SaveEpochResult.Refused, result);
         Assert.Same(previous, save.Data[SaveStore.StateKey]);
         Assert.True(queued!.Aborted);
+        Assert.Null(save.Session.InFlight);
         Assert.DoesNotContain(save.Data.Values, v => v.StartsWith(PendingSave.TokenPrefix, StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void AWaitingCompressorStaysRunningSoTheNativeJoinGuardStillWaitsForIt()
+    {
+        var city = City();
+        var save = new Save(city);
+        save.Gate.Reset();
+        var (_, pending) = save.Begin(city);
+        string temp = TempFile(Odin((SaveStore.StateKey, pending!.PayloadToken), (SaveEpochStore.Key, pending.MarkerToken)));
+        string output = temp + ".out";
+        try
+        {
+            SaveHandOff.Expect(pending, temp);
+            Assert.Same(pending, SaveHandOff.Claim(temp));
+            var compressor = new Thread(() => SaveHandOff.Compress(temp, output, pending)) { Name = "SaveGame Compress Thread" };
+            compressor.Start();
+            Thread.Sleep(50);
+            for (int i = 0; i < 20; i++) { Assert.Equal(ThreadState.Running, compressor.ThreadState & ~ThreadState.Background); Thread.Sleep(5); }
+            var releaser = new Thread(() => { Thread.Sleep(150); save.Gate.Set(); });
+            releaser.Start();
+            if (compressor.ThreadState == ThreadState.Running) compressor.Join();
+            Assert.True(pending.SpliceDone);
+            Assert.Equal(pending.Payload, ReadOdin(Gunzip(output))[SaveStore.StateKey]);
+            releaser.Join();
+        }
+        finally { File.Delete(temp); File.Delete(output); SaveHandOff.Clear(); }
+    }
+
+    [Fact]
+    public void TheNextSaveAndShutdownWaitForAnInFlightCompressionBeforeTheTemporaryFileIsReused()
+    {
+        var city = City();
+        var save = new Save(city);
+        save.Gate.Reset();
+        var (_, first) = save.Begin(city);
+        string temp = TempFile(Odin((SaveStore.StateKey, first!.PayloadToken), (SaveEpochStore.Key, first.MarkerToken)));
+        string output = temp + ".out", second = temp + ".second";
+        try
+        {
+            SaveHandOff.Expect(first, temp);
+            var compressor = new Thread(() => { var claimed = SaveHandOff.Claim(temp); if (claimed != null) SaveHandOff.Compress(temp, output, claimed); });
+            compressor.Start();
+            SaveHandOff.MarkSerialized();
+            Assert.True(first.WaitClaimed(Wait));
+            bool awaited = false;
+            var nextSave = new Thread(() => { SaveHandOff.AwaitCompression(first); awaited = true; });
+            nextSave.Start();
+            Assert.False(nextSave.Join(200));
+            Assert.False(awaited);
+            save.Gate.Set();
+            Assert.True(nextSave.Join(Wait));
+            Assert.True(first.SpliceDone);
+            Assert.Null(first.FileRefusal);
+            Assert.Null(save.Settle(first));
+            File.WriteAllBytes(temp, Odin((SaveStore.StateKey, "persistentcity:pending-state-next"), ("other", "next save")));
+            var read = ReadOdin(Gunzip(output));
+            Assert.Equal(first.Payload, read[SaveStore.StateKey]);
+            Assert.Equal(first.Marker, read[SaveEpochStore.Key]);
+            compressor.Join();
+            SaveHandOff.AwaitCompression(first);
+        }
+        finally { File.Delete(temp); File.Delete(output); File.Delete(second); SaveHandOff.Clear(); }
+    }
+
+    [Fact]
+    public void ACompressionThatNeverTookTheHandOffIsARefusalAndAnUnwrittenSaveIsNot()
+    {
+        var city = City();
+        var save = new Save(city);
+        var (_, unwritten) = save.Begin(city);
+        Assert.Null(save.Settle(unwritten!));
+        SaveHandOff.AwaitCompression(unwritten!, 50, 50);
+        Assert.False(unwritten!.SpliceDone);
+        Assert.Null(unwritten.FileRefusal);
+
+        var (_, unclaimed) = save.Begin(city);
+        Assert.Null(save.Settle(unclaimed!));
+        SaveHandOff.Expect(unclaimed!, "temp");
+        SaveHandOff.MarkSerialized();
+        SaveHandOff.Clear();
+        SaveHandOff.AwaitCompression(unclaimed!, 50, 50);
+        Assert.Equal(SaveSpliceOutcome.Absent, unclaimed!.Splice);
+        Assert.NotNull(unclaimed.FileRefusal);
+
+        var (_, misdirected) = save.Begin(city);
+        Assert.Null(save.Settle(misdirected!));
+        SaveHandOff.Expect(misdirected!, "temp");
+        Assert.Null(SaveHandOff.Claim("another temp"));
+        Assert.Null(SaveHandOff.Claim("temp"));
+        Assert.Equal(SaveSpliceOutcome.Failed, misdirected!.Splice);
+        Assert.NotNull(misdirected.FileRefusal);
+    }
+
+    [Theory]
+    [InlineData("write")]
+    [InlineData("dispose")]
+    [InlineData("partial")]
+    public void AFailedSpliceNeverReplacesTheDestinationOrReportsSuccess(string fault)
+    {
+        var city = City();
+        var save = new Save(city);
+        var (_, pending) = save.Begin(city);
+        Assert.True(pending!.Wait(Wait));
+        string temp = TempFile(fault == "partial" ? Odin((SaveStore.StateKey, pending.PayloadToken), ("k", "v"))
+            : Odin((SaveStore.StateKey, pending.PayloadToken), (SaveEpochStore.Key, pending.MarkerToken)));
+        string output = temp + ".out";
+        byte[] previous = { 1, 2, 3, 4 };
+        File.WriteAllBytes(output, previous);
+        try
+        {
+            Func<string, Stream> open = fault == "partial" ? File.Create : path => new FaultyStream(File.Create(path), fault == "write");
+            Assert.False(SaveHandOff.Compress(temp, output, pending, Wait, open));
+            Assert.Equal(previous, File.ReadAllBytes(output));
+            Assert.False(File.Exists(output + SaveHandOff.StagingSuffix));
+            Assert.NotEqual(SaveSpliceOutcome.Spliced, pending.Splice);
+            Assert.NotNull(pending.FileRefusal);
+        }
+        finally { File.Delete(temp); File.Delete(output); File.Delete(output + SaveHandOff.StagingSuffix); }
+    }
+
+    private sealed class FaultyStream : Stream
+    {
+        private readonly Stream inner;
+        private readonly bool failWrite;
+        public FaultyStream(Stream inner, bool failWrite) { this.inner = inner; this.failWrite = failWrite; }
+        public override bool CanRead => false;
+        public override bool CanSeek => false;
+        public override bool CanWrite => true;
+        public override long Length => inner.Length;
+        public override long Position { get => inner.Position; set => throw new NotSupportedException(); }
+        public override void Flush() => inner.Flush();
+        public override int Read(byte[] buffer, int offset, int count) => throw new NotSupportedException();
+        public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
+        public override void SetLength(long value) => throw new NotSupportedException();
+        public override void Write(byte[] buffer, int offset, int count)
+        {
+            if (failWrite) throw new IOException("injected write failure");
+            inner.Write(buffer, offset, count);
+        }
+        protected override void Dispose(bool disposing)
+        {
+            inner.Dispose();
+            if (disposing && !failWrite) throw new IOException("injected disposal failure");
+        }
     }
 
     [Theory]

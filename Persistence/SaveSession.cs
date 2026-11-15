@@ -107,13 +107,18 @@ namespace PersistentCity.Persistence
                     if (!ReferenceEquals(validatedDictionary, modData))
                         return new SaveWriteResult(false, "Stored state changed during validation.");
                 }
-                pending = new PendingSave(snapshot, modData, writer, hasPayload, existingPayload, writerCost, writerCost != null);
+                pending = new PendingSave(snapshot, modData, writer, hasPayload, existingPayload, writerCost, writerCost != null) { Owner = this };
                 snapshot.Published = true;
                 modData[SaveStore.StateKey] = pending.PayloadToken;
                 InFlight = pending;
                 return new SaveWriteResult(true, "");
             }
             catch (SaveValidationException exception) { pending = null; return new SaveWriteResult(false, exception.Message); }
+        }
+
+        internal void Forget(PendingSave pending)
+        {
+            if (ReferenceEquals(InFlight, pending)) InFlight = null;
         }
 
         public SaveWriteResult Settle(PendingSave pending)

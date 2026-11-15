@@ -19,7 +19,7 @@ namespace PersistentCity.Persistence
         private readonly SaveHandOffWriter writer;
         private readonly bool countRecords;
         private bool resolved, started;
-        private int spliceDone;
+        private int spliceDone, serialized, claimed;
 
         internal PendingSave(SaveSnapshot snapshot, IDictionary<string, string> target, SaveHandOffWriter writer,
             bool hadPreviousPayload, string? previousPayload, SaveCostRecorder? cost, bool countRecords)
@@ -52,6 +52,34 @@ namespace PersistentCity.Persistence
         public double CompressWaitMilliseconds { get; private set; }
         public double CompressMilliseconds { get; private set; }
         public bool SpliceDone => Volatile.Read(ref spliceDone) != 0;
+        public bool Serialized => Volatile.Read(ref serialized) != 0;
+        public bool Claimed => Volatile.Read(ref claimed) != 0;
+        internal SaveSession? Owner { get; set; }
+
+        public string? FileRefusal => !SpliceDone ? null : Splice == SaveSpliceOutcome.Spliced ? null
+            : "The native save file was not replaced because the Persistent City hand-off failed (" + Splice
+                + (SpliceError.Length > 0 ? ": " + SpliceError : "") + "); the previous file in that slot is kept.";
+
+        internal void MarkSerialized() => Volatile.Write(ref serialized, 1);
+        internal void MarkClaimed() { lock (gate) { claimed = 1; Monitor.PulseAll(gate); } }
+
+        public bool WaitClaimed(int milliseconds) => WaitFor(milliseconds, () => claimed != 0 || spliceDone != 0);
+        public bool WaitSpliced(int milliseconds) => WaitFor(milliseconds, () => spliceDone != 0);
+
+        private bool WaitFor(int milliseconds, Func<bool> done)
+        {
+            long deadline = Stopwatch.GetTimestamp() + (long)(milliseconds * (double)Stopwatch.Frequency / 1000);
+            lock (gate)
+            {
+                while (!done())
+                {
+                    long remaining = (deadline - Stopwatch.GetTimestamp()) * 1000 / Stopwatch.Frequency;
+                    if (remaining <= 0) return false;
+                    Monitor.Wait(gate, (int)Math.Min(remaining, int.MaxValue));
+                }
+                return true;
+            }
+        }
 
         public bool Resolved { get { lock (gate) return resolved; } }
 
@@ -95,6 +123,7 @@ namespace PersistentCity.Persistence
         public void Abandon()
         {
             Abort("The background save was abandoned before it started.");
+            Owner?.Forget(this);
             if (Target.TryGetValue(SaveStore.StateKey, out var current) && ReferenceEquals(current, PayloadToken))
             {
                 if (HadPreviousPayload) Target[SaveStore.StateKey] = PreviousPayload!;
@@ -165,10 +194,16 @@ namespace PersistentCity.Persistence
             }
         }
 
-        internal void Spliced(SaveSpliceOutcome outcome, string error, double waited, double compressed)
+        internal bool Spliced(SaveSpliceOutcome outcome, string error, double waited, double compressed)
         {
-            Splice = outcome; SpliceError = error ?? ""; CompressWaitMilliseconds = waited; CompressMilliseconds = compressed;
-            Volatile.Write(ref spliceDone, 1);
+            lock (gate)
+            {
+                if (spliceDone != 0) return false;
+                Splice = outcome; SpliceError = error ?? ""; CompressWaitMilliseconds = waited; CompressMilliseconds = compressed;
+                Volatile.Write(ref spliceDone, 1);
+                Monitor.PulseAll(gate);
+                return true;
+            }
         }
     }
 
@@ -226,62 +261,114 @@ namespace PersistentCity.Persistence
     public static class SaveHandOff
     {
         public const int CompressWaitMilliseconds = 120000;
+        public const int ClaimWaitMilliseconds = 2000;
+        public const string StagingSuffix = ".persistentcity-staging";
         private static readonly object gate = new object();
-        private static PendingSave? expected;
+        private static PendingSave? expected, latest;
         private static string? expectedPath;
 
         public static void Expect(PendingSave save, string? tempPath)
         {
-            lock (gate) { expected = save ?? throw new ArgumentNullException(nameof(save)); expectedPath = tempPath; }
+            lock (gate) { expected = latest = save ?? throw new ArgumentNullException(nameof(save)); expectedPath = tempPath; }
         }
 
         public static void Clear()
         {
-            lock (gate) { expected = null; expectedPath = null; }
+            lock (gate) { expected = latest = null; expectedPath = null; }
+        }
+
+        public static void MarkSerialized()
+        {
+            lock (gate) { latest?.MarkSerialized(); latest = null; }
         }
 
         public static PendingSave? Claim(string? path)
         {
+            PendingSave? save, misdirected = null;
             lock (gate)
             {
-                var save = expected;
-                if (save == null || expectedPath != null && !string.Equals(path, expectedPath, StringComparison.Ordinal)) return null;
-                expected = null; expectedPath = null;
-                return save;
+                save = expected;
+                if (save == null) return null;
+                expected = null;
+                if (expectedPath != null && !string.Equals(path, expectedPath, StringComparison.Ordinal)) { misdirected = save; save = null; }
+                expectedPath = null;
             }
+            if (misdirected != null)
+            {
+                misdirected.MarkClaimed();
+                misdirected.Spliced(SaveSpliceOutcome.Failed, "native compression read another temporary file", 0, 0);
+                return null;
+            }
+            save!.MarkClaimed();
+            return save;
+        }
+
+        public static void AwaitCompression(PendingSave save, int claimMilliseconds = ClaimWaitMilliseconds,
+            int spliceMilliseconds = CompressWaitMilliseconds + 10000)
+        {
+            if (save == null) throw new ArgumentNullException(nameof(save));
+            if (save.SpliceDone || !save.Serialized && !save.Claimed) return;
+            if (!save.WaitClaimed(claimMilliseconds))
+            {
+                save.Spliced(SaveSpliceOutcome.Absent, "native compression never took the hand-off", 0, 0);
+                return;
+            }
+            if (!save.WaitSpliced(spliceMilliseconds))
+                save.Spliced(SaveSpliceOutcome.Failed, "native compression did not finish within "
+                    + (spliceMilliseconds / 1000).ToString(System.Globalization.CultureInfo.InvariantCulture) + " s", 0, 0);
         }
 
         public static bool Compress(string path, string outputPath, PendingSave save, int waitMilliseconds = CompressWaitMilliseconds)
+            => Compress(path, outputPath, save, waitMilliseconds, File.Create);
+
+        internal static bool Compress(string path, string outputPath, PendingSave save, int waitMilliseconds, Func<string, Stream> open)
         {
             long started = Stopwatch.GetTimestamp();
-            save.WaitOrAbort(waitMilliseconds, "The background save writer did not finish within "
-                + (waitMilliseconds / 1000).ToString(System.Globalization.CultureInfo.InvariantCulture) + " s; the save carries a refusal marker.");
+            long deadline = started + (long)(waitMilliseconds * (double)Stopwatch.Frequency / 1000);
+            while (!save.Resolved)
+            {
+                if (Stopwatch.GetTimestamp() >= deadline)
+                {
+                    save.Abort("The background save writer did not finish within "
+                        + (waitMilliseconds / 1000).ToString(System.Globalization.CultureInfo.InvariantCulture) + " s; the save carries a refusal marker.");
+                    break;
+                }
+                if (!Thread.Yield()) Thread.SpinWait(64);
+            }
             long waited = Stopwatch.GetTimestamp();
             string[] tokens = { save.PayloadToken, save.MarkerToken };
             string[] values = { save.FilePayload, save.FileMarker };
             var outcome = SaveSpliceOutcome.Failed;
             string error = "";
-            bool written = true;
+            bool written = false;
+            string staging = outputPath + StagingSuffix;
             try
             {
                 using (var input = File.OpenRead(path))
-                using (var output = new GZipStream(File.Create(outputPath), CompressionLevel.Optimal))
+                using (var output = new GZipStream(open(staging), CompressionLevel.Optimal))
                     outcome = SaveSplice.Copy(input, output, tokens, values);
+                if (outcome != SaveSpliceOutcome.Spliced)
+                    throw new InvalidDataException("the native save did not hold both Persistent City tokens exactly once");
+                Publish(staging, outputPath);
+                written = true;
             }
             catch (Exception exception)
             {
                 error = exception.Message;
-                try
-                {
-                    using (var input = File.OpenRead(path))
-                    using (var output = new GZipStream(File.Create(outputPath), CompressionLevel.Optimal))
-                        input.CopyTo(output);
-                }
-                catch (Exception plain) { error += "; uncompressed copy failed: " + plain.Message; written = false; }
+                if (outcome == SaveSpliceOutcome.Spliced) outcome = SaveSpliceOutcome.Failed;
+                try { if (File.Exists(staging)) File.Delete(staging); }
+                catch (Exception cleanup) { error += "; staging file cleanup failed: " + cleanup.Message; }
             }
             long done = Stopwatch.GetTimestamp();
             save.Spliced(outcome, error, (waited - started) * 1000.0 / Stopwatch.Frequency, (done - waited) * 1000.0 / Stopwatch.Frequency);
             return written;
+        }
+
+        private static void Publish(string staging, string outputPath)
+        {
+            if (!File.Exists(outputPath)) { File.Move(staging, outputPath); return; }
+            try { File.Replace(staging, outputPath, null); }
+            catch (PlatformNotSupportedException) { File.Copy(staging, outputPath, true); File.Delete(staging); }
         }
     }
 

@@ -31,7 +31,7 @@ namespace PersistentCity.Runtime
         private void PollHandOff()
         {
             if (pendingSave != null && pendingSave.Resolved) SettlePendingSave(false);
-            if (splicingSave != null && splicingSave.SpliceDone) ReportSplice(splicingSave);
+            if (splicingSave != null && splicingSave.SpliceDone) ReportSplice(splicingSave, true);
         }
 
         private void SettlePendingSave(bool wait, bool stopOnRefusal = true)
@@ -66,7 +66,7 @@ namespace PersistentCity.Runtime
             catch (Exception error) { log?.Warn("Persistent City stop after a refused background save was contained: " + error); }
         }
 
-        private void ReportSplice(PendingSave spliced)
+        private void ReportSplice(PendingSave spliced, bool stopOnRefusal)
         {
             splicingSave = null;
             splicedSaves++;
@@ -74,21 +74,29 @@ namespace PersistentCity.Runtime
             lastSpliceError = spliced.SpliceError;
             lastCompressWaitMilliseconds = spliced.CompressWaitMilliseconds;
             lastCompressMilliseconds = spliced.CompressMilliseconds;
-            if (spliced.Splice == SaveSpliceOutcome.Spliced) return;
+            string? refusal = spliced.FileRefusal;
+            if (refusal == null) return;
             backgroundSaveDisabled = true;
-            backgroundSaveStatus = "The native save file did not take the background payload (" + spliced.Splice
-                + (spliced.SpliceError.Length > 0 ? ": " + spliced.SpliceError : "") + "); that file is refused on load and later saves write on the main thread.";
-            log?.Warn("Persistent City " + backgroundSaveStatus);
+            backgroundSaveStatus = refusal + " Later saves write on the main thread.";
+            log?.Warn("Persistent City save refused: " + backgroundSaveStatus);
+            if (!stopOnRefusal) return;
+            try { StopAfterSaveEpochFailure(refusal); }
+            catch (Exception error) { log?.Warn("Persistent City stop after a refused background save file was contained: " + error); }
+        }
+
+        private void AwaitSplice(bool stopOnRefusal)
+        {
+            var splicing = splicingSave;
+            if (splicing == null) return;
+            SaveHandOff.AwaitCompression(splicing);
+            if (splicing.SpliceDone) ReportSplice(splicing, stopOnRefusal);
+            else splicingSave = null;
         }
 
         private void BeginSaveHandOff()
         {
             SettlePendingSave(true);
-            if (splicingSave != null)
-            {
-                if (splicingSave.SpliceDone) ReportSplice(splicingSave);
-                else splicingSave = null;
-            }
+            AwaitSplice(true);
             SaveHandOff.Clear();
             queuedSave = null;
         }
@@ -122,7 +130,8 @@ namespace PersistentCity.Runtime
             try
             {
                 SettlePendingSave(true, false);
-                if (splicingSave != null && splicingSave.SpliceDone) ReportSplice(splicingSave);
+                AwaitSplice(false);
+                SaveHandOff.Clear();
             }
             catch (Exception error) { log?.Warn("Persistent City background save flush failed: " + error.Message); }
         }

@@ -8,10 +8,12 @@ namespace PersistentCity.Persistence
         private const string InputEpochLost = "input-epoch-lost";
         public const string SaveEpochFailed = "save-epoch-failed";
         public const string DetachedAfterSave = "detached-after-save";
-        public static bool IsStopped(IDictionary<string, string> data) => data.ContainsKey(Key);
+        public static bool IsStopped(IDictionary<string, string> data) => data.ContainsKey(Key) || FailedEpoch(data);
+        private static bool FailedEpoch(IDictionary<string, string> data) => data.TryGetValue(SaveEpochStore.Key, out var marker)
+            && marker != null && marker.StartsWith(SaveEpochStore.FailedPrefix, System.StringComparison.Ordinal);
         public static string Cause(IDictionary<string, string> data)
         {
-            data.TryGetValue(Key, out var value);
+            if (!data.TryGetValue(Key, out var value) && FailedEpoch(data)) value = SaveEpochFailed;
             switch (value)
             {
                 case SaveEpochFailed:

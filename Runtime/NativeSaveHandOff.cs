@@ -33,14 +33,14 @@ namespace PersistentCity.Runtime
                     new[] { typeof(string), typeof(string) });
                 if (compress == null || compress.ReturnType != typeof(bool) || !compress.IsStatic)
                 { Status = "SaveGameSerializationHelper.CompressBinaryData(string, string) is missing."; return; }
+                save = AccessTools.Method(typeof(SaveGameManager), nameof(SaveGameManager.Save),
+                    new[] { typeof(SaveGameManager.SaveType), typeof(string), typeof(string) });
+                if (save == null) { Status = "SaveGameManager.Save(SaveType, string, string) is missing."; return; }
                 string? contract = SelfTest();
                 if (contract != null) { Status = "Save hand-off contract check failed: " + contract; return; }
                 patches.Patch(compress, prefix: new HarmonyMethod(typeof(NativeSaveHandOff), nameof(CompressPrefix)) { priority = Priority.First });
-                save = AccessTools.Method(typeof(SaveGameManager), nameof(SaveGameManager.Save),
-                    new[] { typeof(SaveGameManager.SaveType), typeof(string), typeof(string) });
-                if (save != null)
-                    patches.Patch(save, prefix: new HarmonyMethod(typeof(NativeSaveHandOff), nameof(SavePrefix)) { priority = Priority.First },
-                        postfix: new HarmonyMethod(typeof(NativeSaveHandOff), nameof(SavePostfix)) { priority = Priority.Last });
+                patches.Patch(save, prefix: new HarmonyMethod(typeof(NativeSaveHandOff), nameof(SavePrefix)) { priority = Priority.First },
+                    postfix: new HarmonyMethod(typeof(NativeSaveHandOff), nameof(SavePostfix)) { priority = Priority.Last });
                 Installed = true;
                 Status = "";
             }
@@ -49,11 +49,15 @@ namespace PersistentCity.Runtime
 
         internal static string? Conflict()
         {
-            if (!Installed || compress == null) return Status.Length > 0 ? Status : "Save hand-off is not installed.";
-            var info = Harmony.GetPatchInfo(compress);
-            if (info == null) return "Save hand-off patch is missing.";
-            foreach (string owner in info.Owners)
-                if (!string.Equals(owner, PatchId, StringComparison.Ordinal)) return "Another mod patches the native save compression: " + owner + ".";
+            if (!Installed || compress == null || save == null) return Status.Length > 0 ? Status : "Save hand-off is not installed.";
+            foreach (var method in new[] { compress, save })
+            {
+                var info = Harmony.GetPatchInfo(method);
+                if (info == null || !info.Owners.Contains(PatchId)) return "Save hand-off patch is missing on " + method.Name + ".";
+                if (method == compress)
+                    foreach (string owner in info.Owners)
+                        if (!string.Equals(owner, PatchId, StringComparison.Ordinal)) return "Another mod patches the native save compression: " + owner + ".";
+            }
             return null;
         }
 
@@ -69,6 +73,7 @@ namespace PersistentCity.Runtime
 
         private static void SavePostfix()
         {
+            SaveHandOff.MarkSerialized();
             if (nativeStarted == 0) return;
             LastNativeSaveMilliseconds = (Stopwatch.GetTimestamp() - nativeStarted) * 1000.0 / Stopwatch.Frequency;
             NativeSaves++;
