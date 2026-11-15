@@ -20,7 +20,8 @@ namespace PersistentCity.Runtime
         private bool BackgroundSaveAvailable()
         {
             if (backgroundSaveDisabled) return false;
-            string? conflict = NativeSaveHandOff.Conflict();
+            string? conflict = SaveHandOff.RefusalOutstanding
+                ? "A cancelled save hand-off still waits for its native compressor." : NativeSaveHandOff.Conflict();
             if (conflict == null) return true;
             if (!string.Equals(conflict, backgroundSaveStatus, StringComparison.Ordinal))
                 log?.Warn("Persistent City writes this save on the main thread: " + conflict);

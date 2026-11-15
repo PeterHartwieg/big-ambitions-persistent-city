@@ -310,7 +310,7 @@ public sealed class SaveHandOffTests
             Assert.Equal(pending.Payload, ReadOdin(Gunzip(output))[SaveStore.StateKey]);
             releaser.Join();
         }
-        finally { File.Delete(temp); File.Delete(output); SaveHandOff.Clear(); }
+        finally { File.Delete(temp); File.Delete(output); SaveHandOff.Reset(); }
     }
 
     [Fact]
@@ -346,7 +346,7 @@ public sealed class SaveHandOffTests
             compressor.Join();
             SaveHandOff.AwaitCompression(first);
         }
-        finally { File.Delete(temp); File.Delete(output); File.Delete(second); SaveHandOff.Clear(); }
+        finally { File.Delete(temp); File.Delete(output); File.Delete(second); SaveHandOff.Reset(); }
     }
 
     [Fact]
@@ -373,6 +373,7 @@ public sealed class SaveHandOffTests
         Assert.True(AccountingStopStore.IsStopped(tokenFile));
         var refusedSync = new Dictionary<string, string> { [AccountingStopStore.Key] = AccountingStopStore.SaveEpochFailed };
         Assert.Equal(AccountingStopStore.Cause(refusedSync), AccountingStopStore.Cause(tokenFile));
+        SaveHandOff.Reset();
     }
 
     [Fact]
@@ -395,11 +396,13 @@ public sealed class SaveHandOffTests
             Assert.Contains("previous file in that slot is kept", misdirected.FileRefusal);
             Assert.Null(SaveHandOff.TryCompress(other, output));
         }
-        finally { File.Delete(other); File.Delete(output); SaveHandOff.Clear(); }
+        finally { File.Delete(other); File.Delete(output); SaveHandOff.Reset(); }
     }
 
-    [Fact]
-    public void ALateCompressorAfterTheClaimDeadlineIsRefusedAndNeverPublishes()
+    [Theory]
+    [InlineData("next save")]
+    [InlineData("shutdown")]
+    public void ALateCompressorAfterTheClaimDeadlineAndCleanupIsRefusedAndNeverPublishes(string cleanup)
     {
         var city = City();
         var save = new Save(city);
@@ -415,11 +418,61 @@ public sealed class SaveHandOffTests
             SaveHandOff.MarkSerialized();
             SaveHandOff.AwaitCompression(late, 50, 50);
             Assert.True(late.Cancelled);
+            Assert.True(late.CompressionSettled);
+            SaveHandOff.Clear();
+            Assert.True(SaveHandOff.RefusalOutstanding);
+            if (cleanup == "next save")
+            {
+                var (_, next) = save.Begin(city);
+                Assert.Null(save.Settle(next!));
+                Assert.Throws<InvalidOperationException>(() => SaveHandOff.Expect(next!, temp));
+            }
             Assert.False(SaveHandOff.TryCompress(temp, output));
             Assert.Equal(previous, File.ReadAllBytes(output));
             Assert.False(File.Exists(output + SaveHandOff.StagingSuffix));
+            Assert.False(SaveHandOff.RefusalOutstanding);
+            Assert.Null(SaveHandOff.TryCompress(temp, output));
         }
-        finally { File.Delete(temp); File.Delete(output); SaveHandOff.Clear(); }
+        finally { File.Delete(temp); File.Delete(output); SaveHandOff.Reset(); }
+    }
+
+    [Fact]
+    public void AnActivePublicationIsAwaitedPastTheSpliceDeadlineAndNeverOverlapsTheNextSave()
+    {
+        var city = City();
+        var save = new Save(city);
+        var (_, publishing) = save.Begin(city);
+        Assert.True(publishing!.Wait(Wait));
+        string temp = TempFile(Odin((SaveStore.StateKey, publishing.PayloadToken), (SaveEpochStore.Key, publishing.MarkerToken)));
+        string output = temp + ".out";
+        File.WriteAllBytes(output, new byte[] { 1 });
+        var hold = new ManualResetEventSlim(false);
+        var entered = new ManualResetEventSlim(false);
+        try
+        {
+            SaveHandOff.BeforePublish = () => { entered.Set(); hold.Wait(); };
+            SaveHandOff.Expect(publishing, temp);
+            bool? written = null;
+            var compressor = new Thread(() => written = SaveHandOff.TryCompress(temp, output));
+            compressor.Start();
+            SaveHandOff.MarkSerialized();
+            Assert.True(entered.Wait(Wait));
+            bool returned = false;
+            var nextSave = new Thread(() => { SaveHandOff.AwaitCompression(publishing, Wait, 50); returned = true; });
+            nextSave.Start();
+            Assert.False(nextSave.Join(400));
+            Assert.False(returned);
+            Assert.False(publishing.Cancelled);
+            hold.Set();
+            Assert.True(nextSave.Join(Wait));
+            Assert.True(compressor.Join(Wait));
+            Assert.True(written);
+            Assert.True(publishing.SpliceDone);
+            Assert.Null(publishing.FileRefusal);
+            Assert.Equal(publishing.Payload, ReadOdin(Gunzip(output))[SaveStore.StateKey]);
+            Assert.Null(save.Settle(publishing));
+        }
+        finally { hold.Set(); File.Delete(temp); File.Delete(output); SaveHandOff.Reset(); }
     }
 
     [Fact]
@@ -453,7 +506,7 @@ public sealed class SaveHandOffTests
             Assert.True(held.SpliceDone);
             Assert.NotEqual(SaveSpliceOutcome.Spliced, held.Splice);
         }
-        finally { save.Gate.Set(); File.Delete(temp); File.Delete(output); SaveHandOff.Clear(); }
+        finally { save.Gate.Set(); File.Delete(temp); File.Delete(output); SaveHandOff.Reset(); }
     }
 
     [Theory]

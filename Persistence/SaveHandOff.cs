@@ -73,6 +73,8 @@ namespace PersistentCity.Persistence
             }
         }
 
+        internal string? TempPath { get; set; }
+
         internal bool TryBeginPublish()
         {
             lock (gate)
@@ -107,6 +109,7 @@ namespace PersistentCity.Persistence
             {
                 while (!done())
                 {
+                    if (milliseconds < 0) { Monitor.Wait(gate); continue; }
                     long remaining = (deadline - Stopwatch.GetTimestamp()) * 1000 / Stopwatch.Frequency;
                     if (remaining <= 0) return false;
                     Monitor.Wait(gate, (int)Math.Min(remaining, int.MaxValue));
@@ -298,17 +301,30 @@ namespace PersistentCity.Persistence
         public const int ClaimWaitMilliseconds = 2000;
         public const string StagingSuffix = ".persistentcity-staging";
         private static readonly object gate = new object();
-        private static PendingSave? expected, latest;
+        private static PendingSave? expected, latest, refusing;
         private static string? expectedPath;
+
+        public static bool RefusalOutstanding { get { lock (gate) return refusing != null; } }
 
         public static void Expect(PendingSave save, string? tempPath)
         {
-            lock (gate) { expected = latest = save ?? throw new ArgumentNullException(nameof(save)); expectedPath = tempPath; }
+            if (save == null) throw new ArgumentNullException(nameof(save));
+            lock (gate)
+            {
+                if (refusing != null) throw new InvalidOperationException("A cancelled hand-off still waits for its compressor.");
+                expected = latest = save; expectedPath = tempPath; save.TempPath = tempPath;
+            }
         }
 
         public static void Clear()
         {
             lock (gate) { expected = latest = null; expectedPath = null; }
+        }
+
+        internal static void Reset()
+        {
+            lock (gate) { expected = latest = refusing = null; expectedPath = null; }
+            BeforePublish = null;
         }
 
         public static void MarkSerialized()
@@ -325,20 +341,27 @@ namespace PersistentCity.Persistence
             lock (gate)
             {
                 save = expected;
-                if (save == null) return null;
+                if (save == null)
+                {
+                    var cancelled = refusing;
+                    if (cancelled == null || cancelled.TempPath != null && !string.Equals(path, cancelled.TempPath, StringComparison.Ordinal)) return null;
+                    refusing = null;
+                    cancelled.MarkClaimed();
+                    refused = true;
+                    return null;
+                }
                 expected = null;
                 if (expectedPath != null && !string.Equals(path, expectedPath, StringComparison.Ordinal)) { misdirected = save; save = null; }
                 expectedPath = null;
+                (misdirected ?? save)!.MarkClaimed();
             }
             refused = true;
             if (misdirected != null)
             {
-                misdirected.MarkClaimed();
                 if (!misdirected.Cancelled) misdirected.Spliced(SaveSpliceOutcome.Failed, "native compression read another temporary file", 0, 0);
                 return null;
             }
-            save!.MarkClaimed();
-            if (save.Cancelled) return null;
+            if (save!.Cancelled) return null;
             refused = false;
             return save;
         }
@@ -355,20 +378,32 @@ namespace PersistentCity.Persistence
         {
             if (save == null) throw new ArgumentNullException(nameof(save));
             if (save.CompressionSettled || !save.Serialized && !save.Claimed) return;
-            if (!save.WaitClaimed(claimMilliseconds) && save.Cancel("native compression did not take the hand-off within "
+            if (!save.WaitClaimed(claimMilliseconds) && Refuse(save, "native compression did not take the hand-off within "
                 + Seconds(claimMilliseconds))) return;
             if (save.WaitSpliced(spliceMilliseconds)) return;
             if (save.Cancel("native compression did not finish within " + Seconds(spliceMilliseconds))) return;
-            save.WaitSpliced(PublishWaitMilliseconds);
+            save.WaitSpliced(Timeout.Infinite);
         }
 
-        private const int PublishWaitMilliseconds = 30000;
+        private static bool Refuse(PendingSave save, string reason)
+        {
+            lock (gate)
+            {
+                if (save.Claimed || !save.Cancel(reason)) return false;
+                if (ReferenceEquals(expected, save)) { expected = null; expectedPath = null; }
+                if (ReferenceEquals(latest, save)) latest = null;
+                refusing = save;
+                return true;
+            }
+        }
 
         private static string Seconds(int milliseconds) =>
             (milliseconds / 1000.0).ToString("0.###", System.Globalization.CultureInfo.InvariantCulture) + " s";
 
         public static bool Compress(string path, string outputPath, PendingSave save, int waitMilliseconds = CompressWaitMilliseconds)
             => Compress(path, outputPath, save, waitMilliseconds, File.Create);
+
+        internal static Action? BeforePublish { get; set; }
 
         internal static bool Compress(string path, string outputPath, PendingSave save, int waitMilliseconds, Func<string, Stream> open)
         {
@@ -400,6 +435,7 @@ namespace PersistentCity.Persistence
                     throw new InvalidDataException("the native save did not hold both Persistent City tokens exactly once");
                 if (!save.TryBeginPublish())
                     throw new OperationCanceledException("the hand-off was cancelled before publication: " + save.CancelReason);
+                BeforePublish?.Invoke();
                 Publish(staging, outputPath);
                 written = true;
             }
