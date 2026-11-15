@@ -334,6 +334,7 @@ namespace PersistentCity.Persistence
         {
             lock (gate) { expected = latest = refusing = publishing = null; expectedPath = null; }
             BeforePublish = null;
+            SameSlotWaitMilliseconds = PublishWaitMilliseconds;
         }
 
         public static void MarkSerialized(int compressorThreadId = 0)
@@ -383,10 +384,23 @@ namespace PersistentCity.Persistence
             if (refused) return false;
             PendingSave? earlier;
             lock (gate) earlier = publishing;
-            if (earlier != null && string.Equals(earlier.OutputPath, outputPath, StringComparison.Ordinal))
-                while (!earlier.SpliceDone) { if (!Thread.Yield()) Thread.SpinWait(64); }
+            if (earlier == null || !string.Equals(earlier.OutputPath, outputPath, StringComparison.Ordinal)) return null;
+            long deadline = Stopwatch.GetTimestamp() + (long)(SameSlotWaitMilliseconds * (double)Stopwatch.Frequency / 1000);
+            while (!earlier.SpliceDone)
+            {
+                if (Stopwatch.GetTimestamp() >= deadline)
+                {
+                    Interlocked.Increment(ref suppressedCompressions);
+                    return false;
+                }
+                if (!Thread.Yield()) Thread.SpinWait(64);
+            }
             return null;
         }
+
+        public static int SameSlotWaitMilliseconds { get; internal set; } = PublishWaitMilliseconds;
+        private static int suppressedCompressions;
+        public static int SuppressedCompressions => Volatile.Read(ref suppressedCompressions);
 
         public static PendingSave? TakeSettledPublication()
         {
@@ -487,6 +501,46 @@ namespace PersistentCity.Persistence
             if (!File.Exists(outputPath)) { File.Move(staging, outputPath); return; }
             try { File.Replace(staging, outputPath, null); }
             catch (PlatformNotSupportedException) { File.Copy(staging, outputPath, true); File.Delete(staging); }
+        }
+    }
+
+    public sealed class SaveHandOffTracker
+    {
+        public PendingSave? Splicing { get; private set; }
+        public PendingSave? Publishing { get; private set; }
+        public bool Active => Splicing != null || Publishing != null;
+
+        public void Track(PendingSave save) => Splicing = save ?? throw new ArgumentNullException(nameof(save));
+
+        public PendingSave? AfterAwait(PendingSave save)
+        {
+            if (save == null) throw new ArgumentNullException(nameof(save));
+            if (ReferenceEquals(Splicing, save)) Splicing = null;
+            if (save.CompressionSettled) return save;
+            if (save.Serialized || save.Claimed) Publishing = save;
+            return null;
+        }
+
+        public PendingSave? TakeSettledSplice()
+        {
+            var splicing = Splicing;
+            if (splicing == null || !splicing.CompressionSettled) return null;
+            Splicing = null;
+            return splicing;
+        }
+
+        public PendingSave? TakeSettledPublication()
+        {
+            var publishing = Publishing;
+            if (publishing == null || !publishing.CompressionSettled) return null;
+            Publishing = null;
+            SaveHandOff.TakeSettledPublication();
+            return publishing;
+        }
+
+        public void Drop(PendingSave save)
+        {
+            if (ReferenceEquals(Splicing, save)) Splicing = null;
         }
     }
 

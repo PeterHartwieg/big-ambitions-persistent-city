@@ -6,7 +6,9 @@ namespace PersistentCity.Runtime
     public sealed partial class PopulationRuntime
     {
         private const int SettleWaitMilliseconds = 30000;
-        private PendingSave? pendingSave, splicingSave, queuedSave, publishingSave;
+        private PendingSave? pendingSave, queuedSave;
+        private readonly SaveHandOffTracker handOffs = new SaveHandOffTracker();
+        private int reportedSuppressedCompressions;
         private SaveCostRecorder? writerCost;
         private bool backgroundSaveDisabled;
         private string backgroundSaveStatus = "";
@@ -32,16 +34,20 @@ namespace PersistentCity.Runtime
         private void PollHandOff()
         {
             if (pendingSave != null && pendingSave.Resolved) SettlePendingSave(false);
-            if (splicingSave != null && splicingSave.CompressionSettled) ReportSplice(splicingSave, true);
+            var spliced = handOffs.TakeSettledSplice();
+            if (spliced != null) ReportSplice(spliced, true);
             ReportPublication(true);
         }
 
         private void ReportPublication(bool stopOnRefusal)
         {
-            if (publishingSave == null || !publishingSave.CompressionSettled) return;
-            publishingSave = null;
-            var settled = SaveHandOff.TakeSettledPublication();
+            var settled = handOffs.TakeSettledPublication();
             if (settled != null) ReportSplice(settled, stopOnRefusal);
+            int suppressed = SaveHandOff.SuppressedCompressions;
+            if (suppressed == reportedSuppressedCompressions) return;
+            reportedSuppressedCompressions = suppressed;
+            log?.Warn("Persistent City kept the previous save file: a newer save to the same slot waited "
+                + SaveHandOff.SameSlotWaitMilliseconds / 1000 + " s for a stalled earlier publication and was not written. Save again.");
         }
 
         private void SettlePendingSave(bool wait, bool stopOnRefusal = true)
@@ -78,7 +84,7 @@ namespace PersistentCity.Runtime
 
         private void ReportSplice(PendingSave spliced, bool stopOnRefusal)
         {
-            splicingSave = null;
+            handOffs.Drop(spliced);
             splicedSaves++;
             lastSplice = spliced.Splice;
             lastSpliceError = spliced.SpliceError;
@@ -96,17 +102,13 @@ namespace PersistentCity.Runtime
 
         private void AwaitSplice(bool stopOnRefusal)
         {
-            var splicing = splicingSave;
+            var splicing = handOffs.Splicing;
             if (splicing == null) return;
             if (!SaveHandOff.AwaitCompression(splicing))
                 log?.Warn("Persistent City save publication did not finish within " + SaveHandOff.PublishWaitMilliseconds / 1000
                     + " s; it keeps its file and later saves write on the main thread until it finishes.");
-            if (splicing.CompressionSettled) ReportSplice(splicing, stopOnRefusal);
-            else
-            {
-                splicingSave = null;
-                if (SaveHandOff.PublicationOutstanding) publishingSave = splicing;
-            }
+            var settled = handOffs.AfterAwait(splicing);
+            if (settled != null) ReportSplice(settled, stopOnRefusal);
         }
 
         private void BeginSaveHandOff()
@@ -127,7 +129,8 @@ namespace PersistentCity.Runtime
             try { temp = SaveGamePathHelper.GetTempSavePath(); }
             catch (Exception error) { log?.Warn("Native temporary save path is unavailable; the next compression takes the payload: " + error.Message); }
             SaveHandOff.Expect(queued, temp);
-            pendingSave = splicingSave = queued;
+            pendingSave = queued;
+            handOffs.Track(queued);
         }
 
         private SaveEpochCapture BeginBackgroundWrite(SaveSession session, SaveCostRecorder? cost)

@@ -547,6 +547,98 @@ public sealed class SaveHandOffTests
     }
 
     [Fact]
+    public void ANewerSameSlotSaveGivesUpAfterTheBoundSoShutdownNeverHangsOnAStalledPublisher()
+    {
+        var city = City();
+        var save = new Save(city);
+        var (_, publishing) = save.Begin(city);
+        Assert.True(publishing!.Wait(Wait));
+        string temp = TempFile(Odin((SaveStore.StateKey, publishing.PayloadToken), (SaveEpochStore.Key, publishing.MarkerToken)));
+        string output = temp + ".out";
+        byte[] previous = { 2, 7, 1 };
+        File.WriteAllBytes(output, previous);
+        var hold = new ManualResetEventSlim(false);
+        var entered = new ManualResetEventSlim(false);
+        try
+        {
+            SaveHandOff.BeforePublish = () => { entered.Set(); hold.Wait(); };
+            SaveHandOff.SameSlotWaitMilliseconds = 150;
+            SaveHandOff.Expect(publishing, temp);
+            var compressor = new Thread(() => SaveHandOff.TryCompress(temp, output));
+            compressor.Start();
+            SaveHandOff.MarkSerialized(compressor.ManagedThreadId);
+            Assert.True(entered.Wait(Wait));
+            Assert.False(SaveHandOff.AwaitCompression(publishing, Wait, 50, 50));
+            SaveHandOff.Clear();
+            int suppressedBefore = SaveHandOff.SuppressedCompressions;
+            bool? newer = true;
+            var sameSlot = new Thread(() => newer = SaveHandOff.TryCompress(temp, output));
+            sameSlot.Start();
+            if (sameSlot.ThreadState == ThreadState.Running) Assert.True(sameSlot.Join(Wait));
+            Assert.True(sameSlot.Join(Wait));
+            Assert.False(newer);
+            Assert.Equal(suppressedBefore + 1, SaveHandOff.SuppressedCompressions);
+            Assert.Equal(previous, File.ReadAllBytes(output));
+            Assert.True(SaveHandOff.PublicationOutstanding);
+            hold.Set();
+            Assert.True(compressor.Join(Wait));
+            Assert.False(SaveHandOff.PublicationOutstanding);
+        }
+        finally { hold.Set(); File.Delete(temp); File.Delete(output); SaveHandOff.Reset(); }
+    }
+
+    [Fact]
+    public void TheTrackerKeepsATimedOutPublicationEvenIfItSettlesBeforeTheNextCheck()
+    {
+        var city = City();
+        var save = new Save(city);
+        var (_, late) = save.Begin(city);
+        Assert.Null(save.Settle(late!));
+        var tracker = new SaveHandOffTracker();
+        tracker.Track(late!);
+        SaveHandOff.Expect(late!, "temp");
+        SaveHandOff.MarkSerialized(1);
+        Assert.Null(tracker.AfterAwait(late!));
+        Assert.Same(late, tracker.Publishing);
+        Assert.Null(tracker.Splicing);
+        Assert.False(SaveHandOff.PublicationOutstanding);
+        Assert.Null(tracker.TakeSettledPublication());
+        late!.Spliced(SaveSpliceOutcome.Failed, "late publication failure", 0, 0);
+        var reported = tracker.TakeSettledPublication();
+        Assert.Same(late, reported);
+        Assert.Contains("late publication failure", reported!.FileRefusal);
+        Assert.False(tracker.Active);
+        SaveHandOff.Reset();
+    }
+
+    [Fact]
+    public void ReportingAnOldPublicationNeverDropsANewerSplice()
+    {
+        var city = City();
+        var save = new Save(city);
+        var (_, old) = save.Begin(city);
+        Assert.Null(save.Settle(old!));
+        var tracker = new SaveHandOffTracker();
+        tracker.Track(old!);
+        SaveHandOff.Expect(old!, "temp");
+        SaveHandOff.MarkSerialized(1);
+        Assert.Null(tracker.AfterAwait(old!));
+        SaveHandOff.Clear();
+        var (_, newer) = save.Begin(city);
+        Assert.Null(save.Settle(newer!));
+        tracker.Track(newer!);
+        old!.Spliced(SaveSpliceOutcome.Spliced, "", 0, 0);
+        var reported = tracker.TakeSettledPublication();
+        Assert.Same(old, reported);
+        tracker.Drop(reported!);
+        Assert.Same(newer, tracker.Splicing);
+        Assert.Null(tracker.TakeSettledSplice());
+        newer!.Spliced(SaveSpliceOutcome.Spliced, "", 0, 0);
+        Assert.Same(newer, tracker.TakeSettledSplice());
+        SaveHandOff.Reset();
+    }
+
+    [Fact]
     public void APublicationThatFailsAfterTheBoundedWaitIsStillReportedAsARefusal()
     {
         var city = City();
