@@ -26,6 +26,7 @@ namespace PersistentCity.Runtime
         private static readonly HashSet<SkinnedMeshCombiner> owned = new HashSet<SkinnedMeshCombiner>();
         private static readonly BodyMergePlan plan = new BodyMergePlan();
         private static readonly BodyMergeGate gate = new BodyMergeGate();
+        private static readonly BodyMergeFallbacks fallbacks = new BodyMergeFallbacks();
         private static readonly List<SkinnedMeshRenderer> found = new List<SkinnedMeshRenderer>();
         private static readonly List<SkinnedMeshRenderer> items = new List<SkinnedMeshRenderer>();
         private static readonly List<SkinnedMeshRenderer> sources = new List<SkinnedMeshRenderer>();
@@ -48,6 +49,8 @@ namespace PersistentCity.Runtime
         public static long Native { get; private set; }
         public static long Failed { get; private set; }
         public static string LastError { get; private set; } = "";
+        public static string LastCollectError { get; private set; } = "";
+        public static string Fallbacks => fallbacks.Describe();
         public static bool Hooked => hooked;
         public static bool Disabled => !gate.Allows;
         public static int Owned => owned.Count;
@@ -79,60 +82,68 @@ namespace PersistentCity.Runtime
         private static bool MergePrefix(SkinnedMeshCombiner __instance)
         {
             if (!owned.Contains(__instance)) return true;
-            if (!gate.Allows) { Native++; return true; }
+            if (!gate.Allows) return Fallback(BodyMergeFallback.FastOff);
             try
             {
-                bool collected;
-                try { collected = Collect(__instance); }
-                catch (Exception) { collected = false; }
-                if (!collected) { Native++; return true; }
+                BodyMergeFallback reason;
+                try { reason = Collect(__instance); }
+                catch (Exception error) { reason = BodyMergeFallback.CollectError; LastCollectError = error.GetType().Name + ": " + error.Message; }
+                if (reason != BodyMergeFallback.None) return Fallback(reason);
                 if (Merge(__instance)) return false;
-                Native++;
-                return true;
+                return Fallback(BodyMergeFallback.MergeError);
             }
             finally { Release(); }
         }
 
-        private static bool Collect(SkinnedMeshCombiner combiner)
+        private static bool Fallback(BodyMergeFallback reason)
+        {
+            Native++;
+            fallbacks.Count(reason);
+            return true;
+        }
+
+        private static BodyMergeFallback Collect(SkinnedMeshCombiner combiner)
         {
             Release();
-            if (!Application.isPlaying || combiner.resultMergeGameObject != null || combiner.resultMergeOriginalGameObjects != null || combiner.legacyAnimationSupport
-                || combiner.blendShapesSupport == SkinnedMeshCombiner.BlendShapesSupport.FullSupport
-                || combiner.mergeMethod != SkinnedMeshCombiner.MergeMethod.OneMeshPerMaterial
-                || combiner.gameObjectsToIgnore == null || combiner.gameObjectsToIgnore.Count != 0 || combiner.launchConsoleLogs
-                || combiner.oneMeshPerMaterialParams == null || combiner.GetComponent<Animator>() == null) return false;
+            var blendshapes = (BodyMergeBlendshapes)(int)combiner.blendShapesSupport;
+            List<GameObject>? ignore = combiner.gameObjectsToIgnore;
+            var parameters = combiner.oneMeshPerMaterialParams;
+            var reason = BodyMergeEligibility.Check(new BodyMergeSettings(Application.isPlaying, combiner.resultMergeGameObject != null, combiner.legacyAnimationSupport,
+                blendshapes, combiner.mergeMethod == SkinnedMeshCombiner.MergeMethod.OneMeshPerMaterial, ignore != null,
+                combiner.launchConsoleLogs, parameters != null, combiner.GetComponent<Animator>() != null));
+            if (reason != BodyMergeFallback.None || ignore == null || parameters == null) return reason;
             combiner.gameObject.GetComponentsInChildren(combiner.combineInactives, found);
             foreach (var renderer in found)
-                if (renderer.gameObject.GetComponent<CombinedMeshesManager>() == null) items.Add(renderer);
+                if (BodyMergeEligibility.Item(renderer.gameObject.GetComponent<CombinedMeshesManager>() != null, Ignored(ignore, renderer.gameObject)))
+                    items.Add(renderer);
             foreach (var item in items)
             {
                 var component = item.gameObject.GetComponent<SkinnedMeshRenderer>();
-                if (component == null || !component.enabled) continue;
-                var mesh = component.sharedMesh;
-                if (mesh == null) continue;
-                if (mesh.blendShapeCount > 0 && combiner.blendShapesSupport == SkinnedMeshCombiner.BlendShapesSupport.Disabled) continue;
-                component.GetSharedMaterials(materialScratch);
-                if (materialScratch.Count == 0 || materialScratch.Count != mesh.subMeshCount) continue;
+                bool present = component != null;
+                var mesh = present ? component!.sharedMesh : null;
+                bool hasMesh = mesh != null;
+                if (present) component!.GetSharedMaterials(materialScratch); else materialScratch.Clear();
                 bool nulls = false;
                 foreach (var material in materialScratch) if (material == null) nulls = true;
-                if (nulls) continue;
-                sources.Add(component);
+                var candidate = new BodyMergeSource(present, present && component!.enabled, hasMesh, hasMesh ? mesh!.blendShapeCount : 0,
+                    materialScratch.Count, hasMesh ? mesh!.subMeshCount : 0, nulls);
+                if (BodyMergeEligibility.Source(candidate, blendshapes)) sources.Add(component!);
             }
-            if (sources.Count < 1) return false;
+            if (sources.Count < 1) return BodyMergeFallback.NoSources;
             var rootBone = sources[0].rootBone;
             bool differentRoots = false;
             foreach (var source in sources) if (rootBone != source.rootBone) { differentRoots = true; break; }
-            if (differentRoots && combiner.oneMeshPerMaterialParams.mergeOnlyEqualRootBones) return false;
+            if (differentRoots && parameters.mergeOnlyEqualRootBones) return BodyMergeFallback.DifferentRootBones;
             for (int r = 0; r < sources.Count; r++)
             {
                 var source = sources[r];
                 var mesh = source.sharedMesh;
                 var rendererBones = source.bones;
-                if (rendererBones == null) return false;
+                if (rendererBones == null) return BodyMergeFallback.BonesMissing;
                 if (combiner.compatibilityMode)
                 {
                     mesh.GetBindposes(poseScratch);
-                    if (poseScratch.Count < rendererBones.Length) return false;
+                    if (poseScratch.Count < rendererBones.Length) return BodyMergeFallback.ShortBindposes;
                     for (int k = 0; k < rendererBones.Length; k++) sourcePoses.Add(poseScratch[k]);
                 }
                 sourceBones.Add(rendererBones);
@@ -141,7 +152,13 @@ namespace PersistentCity.Runtime
                 for (int j = 0; j < mesh.subMeshCount; j++) plan.AddSubmesh(r, j, MaterialKey(materialScratch[j]));
             }
             plan.Build();
-            return plan.Groups > 0;
+            return plan.Groups > 0 ? BodyMergeFallback.None : BodyMergeFallback.NoGroups;
+        }
+
+        private static bool Ignored(List<GameObject> ignore, GameObject candidate)
+        {
+            foreach (var item in ignore) if (item == candidate) return true;
+            return false;
         }
 
         private static int MaterialKey(Material material)
