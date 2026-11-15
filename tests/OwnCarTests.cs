@@ -145,11 +145,13 @@ public sealed class OwnCarTests
         using var bodies = new PhysicalPopulation(new Transform { Component = new PopulationRuntime() }, city, new MultimodalRoutes(),
             typeof(OwnCarTests).Assembly, new VendorBodyTests.Log(), 8, 4, 120, new DwellSpots());
         var vehicles = PhysicalVehicles.Last!;
-        vehicles.ParkedPlacementLimit = 2;
+        vehicles.ParkedPlacementLimit = 2; vehicles.ParkedAttemptLimit = 2;
         var blocked = expected.Keys.OrderBy(k => k, StringComparer.Ordinal).Take(2).ToList();
         foreach (var id in blocked) vehicles.Blocked.Add(id);
-        for (int frame = 0; frame < 4; frame++) { Time.Next(frame == 0 ? 2 : 0.11f); bodies.Update(); }
+        for (int frame = 0; frame < 6; frame++) { Time.Next(frame == 0 ? 2 : 0.11f); bodies.Update(); }
         Assert.Equal(expected.Keys.Except(blocked).OrderBy(k => k, StringComparer.Ordinal), vehicles.Parked.Keys.OrderBy(k => k, StringComparer.Ordinal));
+        Assert.Equal(2, vehicles.MaximumParkedAttempts);
+        Assert.Equal(2, vehicles.LastParkedAttempts);
     }
 
     [Fact]
