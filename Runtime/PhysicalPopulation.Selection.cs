@@ -48,6 +48,59 @@ namespace PersistentCity.Runtime
         {
             get { int count = 0; foreach (var binding in bindings.Values) if (binding.Car != null && binding.Journey != null) count++; return count; }
         }
+        private readonly List<Binding> retimeRelease = new List<Binding>();
+        private int retimeStage;
+        public int RetimeReleaseSteps { get; private set; }
+        public bool ReleasingForRetime => RetimeReleaseSteps > 0;
+        public bool ReleaseForRetime(long deadlineTimestamp)
+        {
+            if (disposed || retimeStage == 6) { retimeRelease.Clear(); return true; }
+            active = false;
+            RetimeReleaseSteps++;
+            if (retimeStage == 0)
+            {
+                Exception? failure = null;
+                while (bindings.Count != 0)
+                {
+                    if (retimeRelease.Count == 0) foreach (var binding in bindings.Values) retimeRelease.Add(binding);
+                    var next = retimeRelease[retimeRelease.Count - 1];
+                    retimeRelease.RemoveAt(retimeRelease.Count - 1);
+                    if (!Bound(next)) continue;
+                    try { Release(next); } catch (Exception error) { failure = error; }
+                    if (failure != null) { retimeRelease.Clear(); throw new InvalidOperationException("One or more physical bodies could not be released.", failure); }
+                    if (System.Diagnostics.Stopwatch.GetTimestamp() >= deadlineTimestamp) return false;
+                }
+                retimeStage = 1;
+            }
+            if (retimeStage == 1)
+            {
+                while (leaving.Count != 0)
+                {
+                    var body = leaving[leaving.Count - 1];
+                    leaving.RemoveAt(leaving.Count - 1);
+                    try { if (body.Person != null) pedestrians.Release(body.Person, body.Wanted); else if (body.Car != null) vehicles.Release(body.Car); }
+                    catch (Exception error) { throw new InvalidOperationException("A leaving body could not be released.", error); }
+                    if (System.Diagnostics.Stopwatch.GetTimestamp() >= deadlineTimestamp) return false;
+                }
+                retimeStage = 2;
+                if (System.Diagnostics.Stopwatch.GetTimestamp() >= deadlineTimestamp) return false;
+            }
+            if (retimeStage == 2)
+            {
+                if (!vehicles.ReleaseSome(deadlineTimestamp)) return false;
+                retimeStage = 3;
+                return false;
+            }
+            if (retimeStage == 3)
+            {
+                if (ambient.DisposeSome(deadlineTimestamp)) retimeStage = 4;
+                return false;
+            }
+            if (retimeStage == 4) { vehicles.Dispose(); retimeStage = 5; return false; }
+            pedestrians.Dispose();
+            retimeStage = 6;
+            return false;
+        }
         public void Suspend()
         {
             Exception? failure = null;

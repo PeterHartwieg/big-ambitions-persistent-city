@@ -191,7 +191,7 @@ namespace PersistentCity.Core
                     {
                         if (!pass.MoveNext()) throw new InvalidOperationException("Traffic retime pass ended without a result.");
                         worked = true;
-                        if (pass.Current != null) { FinishPass(pass.Current); pass = null; stage++; break; }
+                        if (pass.Current != null) { FinishPass(pass.Current); pass = null; stage = stage == 6 ? 8 : stage + 1; break; }
                         if (System.Diagnostics.Stopwatch.GetTimestamp() >= deadlineTimestamp) return false;
                     }
                 }
@@ -210,7 +210,6 @@ namespace PersistentCity.Core
                         return kernel!.RescaleTimeInSteps(ratio, (id, value) => maps.TryGetValue(id, out var mapping)
                             ? mapping.Map(value) : throw new ArgumentException("Missing traffic geometry map.", nameof(state)), LinksPerStep);
                     case 6: return rescaledKernel!.CaptureInSteps(LinksPerStep);
-                    case 7: return TrafficKernel.RestoreInSteps(traffic!, LinksPerStep);
                     default: throw new InvalidOperationException("Unknown traffic retime pass.");
                 }
             }
@@ -223,8 +222,7 @@ namespace PersistentCity.Core
                     case 2: excluded = (TrafficKernelState)result; break;
                     case 3: kernel = (TrafficKernel)result; excluded = null; break;
                     case 5: rescaledKernel = (TrafficKernel)result; kernel = null; break;
-                    case 6: traffic = (TrafficKernelState)result; break;
-                    case 7: restoredTraffic = new RetimedTraffic(traffic!, (TrafficKernel)result); break;
+                    case 6: traffic = (TrafficKernelState)result; restoredTraffic = new RetimedTraffic(traffic, rescaledKernel!); break;
                 }
             }
 
@@ -365,25 +363,26 @@ namespace PersistentCity.Core
                     ? Math.Max(1e-7, CitySimulator.JourneyClockTolerance(state.Minute, route.Minutes)) : 1e-7;
                 if (elapsed > route.Minutes || arrivalDifference > arrivalTolerance)
                     throw new ArgumentException("Journey clock does not match its route.", nameof(state));
-                var replacement = Retime(route, elapsed, legacy, walk, rate, ratio, false, out var map, out int completed);
+                bool mapped = trafficOwned;
+                var replacement = Retime(route, elapsed, legacy, walk, rate, ratio, false, mapped, out var map, out int completed);
                 if (replacement.Legs.Count > MaxLegs
                     && !MergeCompletedLegs(replacement, completed, elapsed, trafficOwned ? trafficRoutes[citizen.Identity.Id] : null))
                 {
-                    replacement = Retime(route, elapsed, legacy, walk, rate, ratio, true, out map, out _);
+                    replacement = Retime(route, elapsed, legacy, walk, rate, ratio, true, mapped, out map, out _);
                     Degraded++;
                     if (trafficOwned) { evicted.Add(citizen.Identity.Id); trafficOwned = false; }
                 }
-                else if (trafficOwned && TrafficCannotFollow(trafficRoutes[citizen.Identity.Id], map, elapsed, ratio))
+                else if (trafficOwned && TrafficCannotFollow(trafficRoutes[citizen.Identity.Id], map!, elapsed, ratio))
                 {
                     Degraded++;
                     evicted.Add(citizen.Identity.Id); trafficOwned = false;
                 }
-                maps.Add(citizen.Identity.Id, map);
+                if (map != null) maps.Add(citizen.Identity.Id, map);
                 ValidateCommittedRoute(replacement, origin.Position, destination.Position, citizen);
                 double departure = citizen.DepartureMinute;
                 if (evicted.Contains(citizen.Identity.Id))
                 {
-                    double resumed = map.Map(elapsed);
+                    double resumed = map!.Map(elapsed);
                     departure = state.Minute - resumed;
                     if (!Position.Finite(departure) || departure < 0 || departure > state.Minute)
                         throw new ArgumentException("Invalid journey departure.", nameof(state));
@@ -504,25 +503,26 @@ namespace PersistentCity.Core
         }
 
         private static Route Retime(Route original, double elapsed, bool legacy, double walkSpeed, double rate, double ratio,
-            bool keepCurrent, out NominalMap map, out int completed)
+            bool keepCurrent, bool mapped, out NominalMap? map, out int completed)
         {
-            var route = new Route();
-            var mapping = new NominalMap(); map = mapping;
-            mapping.Segments.Capacity = original.Legs.Count + 2;
+            var route = new Route(new RouteLegs(original.Legs.Count + 1));
+            NominalMap? mapping = null;
+            if (mapped) { mapping = new NominalMap(); mapping.Segments.Capacity = original.Legs.Count + 2; }
+            map = mapping;
             completed = 0;
             double oldOffset = 0, newOffset = 0;
             void Add(RouteLeg leg, Position from, Position to, double minutes, string service, double oldMinutes, double? oldEnd = null)
             {
                 route.Legs.Add(Copy(leg, from, to, minutes, service));
                 double end = oldEnd ?? oldOffset + oldMinutes;
-                mapping.Segments.Add((oldOffset, end, newOffset, newOffset + minutes));
+                mapping?.Segments.Add((oldOffset, end, newOffset, newOffset + minutes));
                 oldOffset = end; newOffset += minutes;
             }
             void AddUnscaledCarPrefix(RouteLeg leg, Position from, Position to, double minutes, string service, double oldMinutes, double? oldEnd = null)
             {
                 double start = newOffset;
                 Add(leg, from, to, minutes, service, oldMinutes, oldEnd);
-                if (leg.Mode == TravelMode.Car && Position.Distance(leg.From, leg.To) > 0)
+                if (mapping != null && leg.Mode == TravelMode.Car && Position.Distance(leg.From, leg.To) > 0)
                     mapping.UnscaledCarPrefixes.Add((start, newOffset));
             }
             if (elapsed == original.Minutes)
@@ -557,7 +557,7 @@ namespace PersistentCity.Core
                             && measuredSample.LegFraction == 1);
                     if (sampledStart)
                     {
-                        mapping.Segments.Add((oldOffset, elapsed, newOffset, newOffset));
+                        mapping?.Segments.Add((oldOffset, elapsed, newOffset, newOffset));
                         oldOffset = elapsed;
                         double duration = Duration(leg, leg.From, leg.To, leg.Minutes, legacy, walkSpeed, rate, ratio);
                         Add(leg, leg.From, leg.To, duration, leg.ServiceId, oldLegEnd - elapsed, oldLegEnd);
@@ -585,7 +585,7 @@ namespace PersistentCity.Core
                         {
                             if (!sampledEndpoint && oldTail > CitySimulator.JourneyClockTolerance(elapsed, leg.Minutes))
                                 throw new ArgumentException("A material native road tail lost its representable geometry.");
-                            mapping.Segments.Add((oldOffset, oldLegEnd, newOffset, newOffset));
+                            mapping?.Segments.Add((oldOffset, oldLegEnd, newOffset, newOffset));
                             oldOffset = oldLegEnd;
                         }
                         else

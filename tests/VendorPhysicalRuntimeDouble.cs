@@ -126,7 +126,8 @@ namespace PersistentCity.Runtime
     internal sealed class AmbientPedestrians : IDisposable
     {
         internal static readonly HashSet<string> Reserved = new();
-        internal AmbientPedestrians(Assembly _, object __) { }
+        internal static AmbientPedestrians? Last;
+        internal AmbientPedestrians(Assembly _, object __) { Last = this; }
         internal bool Active { get; private set; }
         internal bool Ready => true;
         internal string LastError => "";
@@ -134,6 +135,8 @@ namespace PersistentCity.Runtime
         internal bool IsReserved(string id) => Reserved.Contains(id);
         internal void Activate() { Active = true; }
         internal void Update() { }
+        internal int DisposeSlices, RestoreSlices = 1;
+        internal bool DisposeSome(long deadline) { DisposeSlices++; Active = false; return DisposeSlices >= RestoreSlices; }
         public void Dispose() { Active = false; }
     }
     internal sealed class MultimodalRoutes
@@ -235,6 +238,14 @@ namespace PersistentCity.Runtime
                 var at = corner?.Invoke(body);
                 if (at.HasValue && Position.Distance(body.Position, at.Value) <= 1e-6) body.Reach(at.Value);
             }
+        }
+        internal int ReleaseSlices;
+        internal bool ReleaseSome(long deadline)
+        {
+            ReleaseSlices++;
+            foreach (var body in Active.Values) body.Valid = false;
+            Active.Clear();
+            return true;
         }
         public void Dispose() { foreach (var body in Active.Values) body.Valid = false; Active.Clear(); }
     }

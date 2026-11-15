@@ -457,6 +457,28 @@ namespace PersistentCity.Runtime
             Return(body.Instance);
         }
 
+        internal bool ReleaseSome(long deadlineTimestamp)
+        {
+            active = false;
+            while (bodies.Count != 0 || parked.Count != 0)
+            {
+                if (bodies.Count != 0)
+                {
+                    PhysicalVehicleBody? body = null;
+                    foreach (var pair in bodies) { body = pair.Value; bodies.Remove(pair.Key); break; }
+                    if (body != null && !body.Released) { body.Released = true; Return(body.Instance); }
+                }
+                else
+                {
+                    ParkedCarBody? car = null;
+                    foreach (var pair in parked) { car = pair.Value; parked.Remove(pair.Key); break; }
+                    if (car != null) Return(car.Instance);
+                }
+                if (System.Diagnostics.Stopwatch.GetTimestamp() >= deadlineTimestamp) return bodies.Count == 0 && parked.Count == 0;
+            }
+            return true;
+        }
+
         private void ReleaseParked(ParkedCarBody car)
         {
             if (parked.TryGetValue(car.CarId, out var registered) && ReferenceEquals(registered, car)) parked.Remove(car.CarId);

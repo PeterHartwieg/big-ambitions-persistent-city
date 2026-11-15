@@ -48,16 +48,27 @@ namespace PersistentCity.Core
     {
         private FoodShopDay ShopDay(string place, string business, int day)
         {
-            state.History.RemoveAll(h => h.Day < day - 13);
-            var history = state.History.FirstOrDefault(h => h.Day == day && h.PlaceId == place && h.BusinessId == business);
-            if (history == null) { history = new FoodShopDay { Day = day, PlaceId = place, BusinessId = business }; state.History.Add(history); }
+            var rows = state.History;
+            int kept = 0;
+            for (int i = 0; i < rows.Count; i++)
+                if (!(rows[i].Day < day - 13)) { if (kept != i) rows[kept] = rows[i]; kept++; }
+            if (kept != rows.Count) rows.RemoveRange(kept, rows.Count - kept);
+            FoodShopDay? history = null;
+            foreach (var row in rows)
+                if (row.Day == day && row.PlaceId == place && row.BusinessId == business) { history = row; break; }
+            if (history == null) { history = new FoodShopDay { Day = day, PlaceId = place, BusinessId = business }; rows.Add(history); }
             return history;
+        }
+        private static FoodBusiness RecordedBusiness(IReadOnlyList<FoodBusiness> businesses, string id)
+        {
+            for (int i = 0; i < businesses.Count; i++) if (businesses[i].Id == id) return businesses[i];
+            throw new InvalidOperationException("Sequence contains no matching element");
         }
         private void RecordChoices(FoodIntent intent, IReadOnlyList<FoodBusiness> businesses, MealKind period)
         {
             foreach (var choice in intent.Choices)
             {
-                var shop = businesses.First(b => b.Id == choice.BusinessId);
+                var shop = RecordedBusiness(businesses, choice.BusinessId);
                 if (shop.AlternativeKind == FoodAlternativeKind.Rival) continue;
                 var row = ShopDay(shop.PlaceId, shop.Id, intent.Day); row.OffersConsidered++;
                 int cause = choice.Reason == "No staffed counter" ? 0 : choice.Reason.StartsWith("Out of stock", StringComparison.Ordinal) ? 1

@@ -271,7 +271,7 @@ namespace PersistentCity.Runtime
 
         public Route? Plan(Place from, Place to, double departureMinute, CitizenState person)
         {
-            using var job = new PlanningJob(this, from, to, departureMinute, person, person?.Preferences, preferenceOnly: false);
+            using var job = Job(from, to, departureMinute, person, person?.Preferences, preferenceOnly: false);
             job.Continue(double.PositiveInfinity);
             return job.Result;
         }
@@ -279,8 +279,18 @@ namespace PersistentCity.Runtime
         public IRoutePlanningJob Begin(RouteRequest request)
         {
             if (request == null) throw new ArgumentNullException(nameof(request));
-            return new PlanningJob(this, request.From, request.To, request.DepartureMinute, request.Citizen, request.Preferences,
+            return Job(request.From, request.To, request.DepartureMinute, request.Citizen, request.Preferences,
                 preferenceOnly: request.Citizen == null);
+        }
+
+        private PlanningJob? spareJob;
+        public long JobsReused { get; private set; }
+        private PlanningJob Job(Place? from, Place? to, double departureMinute, CitizenState? person, TravelPreferences? preferences, bool preferenceOnly)
+        {
+            var job = spareJob; spareJob = null;
+            if (job == null) job = new PlanningJob(this); else JobsReused++;
+            job.Start(from, to, departureMinute, person, preferences, preferenceOnly);
+            return job;
         }
 
         public int RoadSearchRestarts => roads?.SearchRestarts ?? 0;
@@ -308,16 +318,21 @@ namespace PersistentCity.Runtime
                 CarAccessWalk, CarStarts, CarEnds, CarEgressWalk, CarSearchBegin, CarSearch, Finish, Done
             }
             private readonly MultimodalRoutes owner;
-            private readonly Place? from, to;
-            private readonly double departureMinute;
-            private readonly CitizenState? person;
-            private readonly TravelPreferences? preferences;
-            private readonly bool preferenceOnly;
+            private Place? from, to;
+            private double departureMinute;
+            private CitizenState? person;
+            private TravelPreferences? preferences;
+            private bool preferenceOnly, pooled;
             private Stage stage;
             private RoadRoutes? roads;
             private PublicRoadAccess? access;
             private List<Station>? stationList;
-            private readonly bool roadsCurrentAtBegin;
+            private bool roadsCurrentAtBegin;
+            private readonly List<RoadRoutes.Curb> homeCurbList = new List<RoadRoutes.Curb>(2), startList = new List<RoadRoutes.Curb>(2), endList = new List<RoadRoutes.Curb>(2);
+            private readonly List<Station> originList = new List<Station>(2), destinationList = new List<Station>(2);
+            private readonly Dictionary<string, Route?> originWalkMap = new Dictionary<string, Route?>(StringComparer.Ordinal),
+                destinationWalkMap = new Dictionary<string, Route?>(StringComparer.Ordinal);
+            private readonly Place point = new Place();
             private Route? best;
             private double bestScore = double.PositiveInfinity;
             private Place? home;
@@ -334,11 +349,22 @@ namespace PersistentCity.Runtime
             public Route? Result { get; private set; }
             public bool Completed => stage == Stage.Done;
 
-            internal PlanningJob(MultimodalRoutes owner, Place? from, Place? to, double departureMinute, CitizenState? person,
+            internal PlanningJob(MultimodalRoutes owner) { this.owner = owner; }
+
+            internal void Start(Place? from, Place? to, double departureMinute, CitizenState? person,
                 TravelPreferences? preferences, bool preferenceOnly)
             {
-                this.owner = owner; this.from = from; this.to = to; this.departureMinute = departureMinute;
+                pooled = false;
+                this.from = from; this.to = to; this.departureMinute = departureMinute;
                 this.person = person; this.preferences = preferences; this.preferenceOnly = preferenceOnly;
+                stage = Stage.Validate; Result = null;
+                roads = null; access = null; stationList = null; roadsCurrentAtBegin = false;
+                best = null; bestScore = double.PositiveInfinity; home = null;
+                homeCurbs = null; homeCurbIndex = 0; origins = destinations = null; originWalks = destinationWalks = null; connectorIndex = 0;
+                accessWalk = egress = null; accessMetres = driveCeiling = 0; starts = ends = null;
+                endIndex = startIndex = searches = 0; drive = null;
+                homeCurbList.Clear(); startList.Clear(); endList.Clear(); originList.Clear(); destinationList.Clear();
+                originWalkMap.Clear(); destinationWalkMap.Clear(); point.Position = default;
                 if (!preferenceOnly)
                 {
                     owner.Metrics.CitizenPlanRequests++;
@@ -346,6 +372,8 @@ namespace PersistentCity.Runtime
                     roadsCurrentAtBegin = roads != null && roads.IsCurrent;
                 }
             }
+
+            private Place At(Position position) { point.Position = position; return point; }
 
             public bool Continue(double budgetMilliseconds)
             {
@@ -430,7 +458,7 @@ namespace PersistentCity.Runtime
                         else stage = Stage.DirectWalk;
                         return;
                     case Stage.HomeCurbs:
-                        homeCurbs = roads!.Near(home!.Position, 90); homeCurbIndex = 0;
+                        homeCurbs = roads!.Near(home!.Position, 90, 2, homeCurbList); homeCurbIndex = 0;
                         stage = homeCurbs.Count == 0 ? Stage.DirectWalk : Stage.HomeCurbWalk;
                         return;
                     case Stage.HomeCurbWalk:
@@ -453,8 +481,8 @@ namespace PersistentCity.Runtime
                         stationList = owner.stations;
                         if (owner.subway != null && owner.stations != null)
                         {
-                            origins = owner.Nearby(from!.Position); destinations = owner.Nearby(to!.Position);
-                            originWalks = new Dictionary<string, Route?>(); destinationWalks = new Dictionary<string, Route?>();
+                            origins = owner.Nearby(from!.Position, originList); destinations = owner.Nearby(to!.Position, destinationList);
+                            originWalks = originWalkMap; destinationWalks = destinationWalkMap;
                             connectorIndex = 0;
                             stage = origins.Count + destinations.Count > 0 ? Stage.SubwayConnector : Stage.SubwayCandidates;
                         }
@@ -488,11 +516,11 @@ namespace PersistentCity.Runtime
                         stage = Stage.CarStarts;
                         return;
                     case Stage.CarStarts:
-                        starts = roads!.AtParked(person!.Car!.ParkedPosition);
+                        starts = roads!.AtParked(person!.Car!.ParkedPosition, startList);
                         stage = Stage.CarEnds;
                         return;
                     case Stage.CarEnds:
-                        ends = roads!.Near(to!.Position, 90);
+                        ends = roads!.Near(to!.Position, 90, 2, endList);
                         endIndex = 0; searches = 0;
                         NextEnd();
                         return;
@@ -584,6 +612,14 @@ namespace PersistentCity.Runtime
             {
                 drive?.Dispose(); drive = null;
                 if (!Completed) { Result = null; stage = Stage.Done; }
+                if (pooled) return;
+                pooled = true;
+                homeCurbList.Clear(); startList.Clear(); endList.Clear(); originList.Clear(); destinationList.Clear();
+                originWalkMap.Clear(); destinationWalkMap.Clear();
+                homeCurbs = starts = ends = null; origins = destinations = null; originWalks = destinationWalks = null;
+                from = to = home = null; person = null; preferences = null; best = accessWalk = egress = null;
+                roads = null; access = null; stationList = null;
+                if (owner.spareJob == null) owner.spareJob = this;
             }
         }
 
@@ -629,7 +665,7 @@ namespace PersistentCity.Runtime
             }
             stations.Sort((a, b) => StringComparer.Ordinal.Compare(a.Id, b.Id));
         }
-        private List<Station> Nearby(Position position)
+        private List<Station> Nearby(Position position, List<Station> nearest)
         {
             Station? first = null, second = null;
             double firstDistance = 0, secondDistance = 0;
@@ -641,7 +677,7 @@ namespace PersistentCity.Runtime
                 else if (second == null || Closer(distance, station, secondDistance, second))
                 { second = station; secondDistance = distance; }
             }
-            var nearest = new List<Station>(2);
+            nearest.Clear();
             if (first != null) nearest.Add(first);
             if (second != null) nearest.Add(second);
             return nearest;
@@ -685,7 +721,6 @@ namespace PersistentCity.Runtime
             return TransportComposition.Shared(route);
         }
         private static bool IndustrySide(string district) => district == "ba:neighborhood_industrycity" || district == "ba:neighborhood_thehamptons";
-        private static Place At(Position position) => new Place { Position = position };
         private static double WalkMetres(Route route)
         {
             double metres = 0;
