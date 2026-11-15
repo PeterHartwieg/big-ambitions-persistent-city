@@ -8,6 +8,8 @@ Detailed specs: [F8 §7](https://github.com/PeterHartwieg/big-ambitions-persiste
 
 ## Latest evidence
 
+- **15 November d, Mac (planned 16a), build `564020b`:** 2 passed / 1 partial / 4 failed / 4 NOT RUN groups; #93 reload adoption verified; #246-4 floor mismatch; day/night gen0 6/5, pause p95 674.160/45.630 ms; timing PROVISIONAL (Mac shared); restored ([15d results](#rig-results--15-november-2026-d-mac-planned-16a-leftover-ft-rigtmp-gr5-15c-delete-246-check-4-via-agent-rig-93-277-checks-1-4-at-564020b)).
+
 - **15 November c, Mac, build `39bd8e0`:** 0 passed / 0 partial / 4 failed / 4 NOT RUN groups. #91 fixture reload failed; day/night gen0 6/4, pause p95 110.57/4651.381 ms; street fail; provisional (Mac shared), restored ([15c results](#rig-results--15-november-2026-c-mac-gr-5-246-check-4-via-91-then-gcstreet-after-275-at-39bd8e0)).
 - **15 November b, Mac, build `72b2bb51`:** 0 passed / 1 partial / 3 failed / 4 NOT RUN groups. Day/night gen0 7/6, pause p95 43.403/38.929 ms; street fail; restored ([15b results](#rig-results--15-november-2026-b-mac-gr-5-gcstreet-recheck-after-275-at-72b2bb51)).
 - **15 November a, Mac, build `7107f72e`:** 0 passed / 1 partial / 3 failed / 4 NOT RUN groups. Day/night gen0 8/6, pause p95 27.888/37.301 ms; street fail; restored ([15a results](#rig-results--15-november-2026-a-mac-gr-5-gcstreet-recheck-after-273-at-7107f72e)).
@@ -5235,3 +5237,623 @@ Refs #275
 Refs #246
 Refs #274
 Refs #276
+
+## Rig results — 15 November 2026 d, Mac (planned 16a; leftover FT RIGTMP-GR5-15c delete, #246 check 4 via agent-rig #93, #277 checks 1-4 at 564020b)
+
+**RESULT: DONE. Counts: 2 passed / 1 partial / 4 failed / 4 NOT RUN groups.** Order C0, D, day, night, street, look. Timing/GC/street numbers are **PROVISIONAL (Mac shared)**. The unresolved native proof gates apply to product changes. This docs-only results PR merges after current-head reviewer approval.
+
+Role `rig_test`, where `mac`, isolated `agentmac`. Run `persistent-city-rig-2026-11-15d-mac`, planned name Mac rig 16a. `<stage>` = `~/HART-Builds/persistent-city-rig-2026-11-15d-mac`; raw replies, logs, scripts, screenshots and backups remain there. Report copy `~/Coding_Projects/.agent-logs/persistent-city-rig-2026-11-15d-mac.md`. MB is decimal.
+
+[Compact GC/frame evidence](perf/gr5-2026-11-15d-mac.json): 12174 bytes, SHA-256 `def8f4091e00d8d461e870e1311f0b5c504799ff64a9d5f38ea439076fef39bc`.
+
+Raw evidence index `<stage>/raw-evidence-manifest.json`, SHA-256 `66b129a2e5c8f7dd2db5ddcb25f6b355b89145a010acd4369693e05a2933a49f`. Full GC JSON has per-source SHA-256 and stage-relative pointers in compact evidence; the tables below are the excerpt.
+
+### Build and rig
+
+| Item | Evidence |
+| --- | --- |
+| Candidate | `564020b73298ee2a268eb60f09c55bc99a69716f`; requested tip reverified and unchanged at build. Built in new `rig-2026-11-15d-mac-evidence` worktree, branch `codex/mac-rig-2026-11-15d`. |
+| agent-rig HEAD | `e3e62a200ae3438d56ff06432811d2c8778de762` (#93, includes #92); clean, fetch and ff-only pull current. No checkout edits, commits or pushes; no overlay update/rollback. |
+| Live AgentRigOps SHA-256 | `aa3481a680defffca4290069a29a0eb53332ff97ac95e5f9e94fb17aab13726e`; before start, loaded health and cleanup verification. |
+| PersistentCity DLL SHA-256 | `4d9adc4e98c23722cd370b08c4b6dc3a101ae37fc60afae12a52ec7bf8e02258`; built, packaged and staged. |
+| Build | `PATH=/opt/homebrew/bin:$PATH`; `DOTNET_ROOT` from Homebrew dotnet; `python3 tools/build.py --game-managed "~/Library/Application Support/BigAmbitionsMCP/dll-import-shim/Big Ambitions_Data/Managed"`, exit 0. Package contains no game/RLO assemblies. |
+| Stage | `python3 scripts/install-mac.py --stage-mod PersistentCity ~/HART-Builds/persistent-city-rig-2026-11-15d-mac/package`; stopped and lease held. Receipt backup `~/Library/Application Support/BigAmbitionsAgentTestsMac/receipt-backups/20261115T111514Z`; 28 entries refreshed. |
+| Headless processes | C0 PID 49403; D and all timing PID 50212. Restart between C0 and D to reach the menu for new_game. No ops_load_* failure. |
+| RLO | Real Life Overhaul 1.0.6 initialised. Options read: living_population stored absent/live=true; social_media=1/true; social_media_notices=0/false. No RLO changes. |
+| Autosave and SaveCost | Original native autosave 5 minutes / 3 saves, prevent_autosave=false. #70 suppression verified after loads and before/after all windows. SaveCostDiagnostics requested=false; writerSchema=1; save profiler installed=false. No save latency measurement. |
+| City names | `FT GR5 13f Timing v1`: 1,000 residents / 2,000 visitors / 1,683 places; no fallback. Fresh `FT RIGTMP-GR5-15d-mac`: 1,000 residents / 1,000 visitors; deleted after revert. Leftover `FT RIGTMP-GR5-15c` deleted; `FT RIGTMP-GR5-15c-mac` absent. |
+| Lease | Free/stopped at launch; acquired 2026-11-15T11:14:19.675102Z. No Windows contact or other-session intervention. |
+
+Stage and Player.log both record:
+
+```text
+[AgentRigOps] staged_mod name=PersistentCity version=absent informational=0.10.0-persistent-city-candidate sha256=4d9adc4e98c23722cd370b08c4b6dc3a101ae37fc60afae12a52ec7bf8e02258
+```
+
+The informational version contains no commit stamp; the staged DLL hash identifies the tested build. The same line is retained from the start logs. Persistent City activation lines and RLO version are retained in the raw Player logs.
+
+Printed rollback, verbatim apart from replacing the personal home prefix with `~` (quoted paths require expanding it before execution):
+
+```sh
+rm -rf "~/Library/Application Support/com.hovgaardgames.bigambitions.agenttests.mac/ModsLocal/PersistentCity" && cp -Rp "~/Library/Application Support/BigAmbitionsAgentTestsMac/receipt-backups/20261115T111514Z/mod" "~/Library/Application Support/com.hovgaardgames.bigambitions.agenttests.mac/ModsLocal/PersistentCity" && cp "~/Library/Application Support/BigAmbitionsAgentTestsMac/receipt-backups/20261115T111514Z/install.json" "~/Library/Application Support/BigAmbitionsAgentTestsMac/install.json"
+```
+
+Final fetched origin/codex/persistent-city tip: `1cbcc130335116dfc5968861983586d5a4e6531d`; moved after build; this run remains pinned to the tested candidate above.
+
+Own pre-stage manifest `<stage>/pre-stage-manifest.json`, SHA-256 `6d5b7f3e6a8cb4b9a9c396da588ba7e86fdac8e3af46a24922a0e50fed5566f5`; backups remain outside Git.
+
+### C0 leftover deletion
+
+**PASS.** Loaded `FT GR5 13f Timing v1` first. Every read/delete reply follows; deletion ran under the lease, with the target not loaded. No sidecar refusal or orphan-sidecar deletion. `FT RIGTMP-GR5-14i` and sealed saves were not deleted.
+
+`C0-read-FT RIGTMP-GR5-15c`: `{"name":"FT RIGTMP-GR5-15c","exists":true,"loaded":false,"files":[{"file":"Big Ambitions/ArZSVdJA8U6h1lAJnx221A==/FT RIGTMP-GR5-15c.hsg","bytes":3433184},{"file":"Big Ambitions/ArZSVdJA8U6h1lAJnx221A==/FT RIGTMP-GR5-15c.hsg.meta","bytes":5403},{"file":"Big Ambitions/ArZSVdJA8U6h1lAJnx221A==/FT RIGTMP-GR5-15c.jpg","bytes":4723}]}`
+
+`C0-delete-FT RIGTMP-GR5-15c`: `{"before":{"name":"FT RIGTMP-GR5-15c","exists":true,"loaded":false,"files":[{"file":"Big Ambitions/ArZSVdJA8U6h1lAJnx221A==/FT RIGTMP-GR5-15c.hsg","bytes":3433184},{"file":"Big Ambitions/ArZSVdJA8U6h1lAJnx221A==/FT RIGTMP-GR5-15c.hsg.meta","bytes":5403},{"file":"Big Ambitions/ArZSVdJA8U6h1lAJnx221A==/FT RIGTMP-GR5-15c.jpg","bytes":4723}]},"after":{"name":"FT RIGTMP-GR5-15c","exists":false,"loaded":false,"files":[]}}`
+
+`C0-read-FT RIGTMP-GR5-15c-mac`: `{"name":"FT RIGTMP-GR5-15c-mac","exists":false,"loaded":false,"files":[]}`
+
+### D: #246 check 4, fresh fixture and check-5 tally
+
+Check 4 Expected: "footprint within about 1.5x of the visible ground area and floors within one of the visible storeys." **FAIL:** the plain subject has collider-derived floors 11 versus renderer-derived visible storeys 13. The independent visible-storey field remains labelled derived; no native exterior floor count exists in this op. This is not a visual floor-count pass.
+
+Check 5 Expected: "buildings under one storey count as empty, not unreadable, and the omitted-places warning only counts unreadable ones." **PASS** on this load: rig/PC tally 3 housed / 1 unreadable / 1 empty; the empty subject has collider-derived storeys=0 and the omitted-place warning counts 1 unreadable, 0 undersized.
+
+1. Created exactly `FT RIGTMP-GR5-15d-mac`, no throwaway flag. Paused and verified autosave suppression.
+2. Apply: all five roles supplied, missing=[], applied=true, sidecar=true.
+3. In-load list: 585 residential / 5 unrentable, 3 housed / 1 unreadable / 1 empty, all five pc_home_candidate=true; 3 housed include rotated and yard rows. The earlier PC tally is not observable in-load after apply (0/0/0 before mutation).
+4. Default save only under the same loaded disposable name, overwrite=true; waited for compression to settle.
+5. Bounded load of that name completed; paused. Immediate status was the first fixture operation before any other mutation.
+6. Status applied=True, restored_on_load=True, adopted_at=`CityManager.InitCityBuildingControllers`, sidecar=True; load_hook.installed=True, error=None. Same place per role as apply; all-or-nothing adoption succeeded. Both load-hook seams have no error; the fallback reports already_adopted. Repeated list checks match apply. No late adoption used.
+7. Revert returned applied=false, sidecar=false; original sizes and colliders restored. Post-revert unrentable list is zero.
+8. Loaded sealed timing fixture, then disposable_save read/delete; after.exists=false. Both replies follow.
+
+`D-delete-read`: `{"name":"FT RIGTMP-GR5-15d-mac","exists":true,"loaded":false,"files":[{"file":"Big Ambitions/eEVpwA8U6E2gkY5YPHcsTg==/FT RIGTMP-GR5-15d-mac.hsg","bytes":2966714},{"file":"Big Ambitions/eEVpwA8U6E2gkY5YPHcsTg==/FT RIGTMP-GR5-15d-mac.hsg.meta","bytes":8595},{"file":"Big Ambitions/eEVpwA8U6E2gkY5YPHcsTg==/FT RIGTMP-GR5-15d-mac.jpg","bytes":4723}]}`
+
+`D-delete`: `{"before":{"name":"FT RIGTMP-GR5-15d-mac","exists":true,"loaded":false,"files":[{"file":"Big Ambitions/eEVpwA8U6E2gkY5YPHcsTg==/FT RIGTMP-GR5-15d-mac.hsg","bytes":2966714},{"file":"Big Ambitions/eEVpwA8U6E2gkY5YPHcsTg==/FT RIGTMP-GR5-15d-mac.hsg.meta","bytes":8595},{"file":"Big Ambitions/eEVpwA8U6E2gkY5YPHcsTg==/FT RIGTMP-GR5-15d-mac.jpg","bytes":4723}]},"after":{"name":"FT RIGTMP-GR5-15d-mac","exists":false,"loaded":false,"files":[]}}`
+
+| Role | Place | Original size | Apply / reload class |
+| --- | --- | --- | --- |
+| housed_rotated | `address:ba%3Astreet_firststreet:22:home` | ba:buildingsize_l | housed / housed |
+| housed_yard | `address:ba%3Astreet_fifthavenue:25:home` | ba:buildingsize_b | housed / housed |
+| housed_plain | `address:ba%3Astreet_broadwaystreet:2:home` | ba:buildingsize_l | housed / housed |
+| unreadable | `address:ba%3Astreet_broadwaystreet:13:home` | ba:buildingsize_n | unreadable / unreadable |
+| empty | `address:ba%3Astreet_broadwaystreet:23:home` | ba:buildingsize_n | empty / empty |
+
+after.missing at apply/reload: `[]` / `[]`.
+
+| Role / place | Reload class | PC-derived floors | Independent visible storeys | Independent footprint / gross / usable m² | world collider / visible AABB area |
+| --- | --- | --- | --- | --- | --- |
+| housed_rotated / `address:ba%3Astreet_firststreet:22:home` | housed | 13 | 14 | 1431.112 / 20035.568 / 12021.341 | 0.9967 |
+| housed_yard / `address:ba%3Astreet_fifthavenue:25:home` | housed | 5 | 6 | 426.709 / 2560.254 / 1536.152 | 0.9759 |
+| housed_plain / `address:ba%3Astreet_broadwaystreet:2:home` | housed | 11 | 13 | 3826.154 / 49740.002 / 29844.001 | 1.0 |
+
+Independent fields explicitly exclude BuildingSize, BuildingSizeHelper squareMeters, the fixture journal and sidecar. Housed rotated/yard/plain visible heights are 49.920 / 23.514 / 47.418 m; independent visible storeys 14 / 6 / 13; collider floors 13 / 5 / 11. Footprint ratios are within 1.5x; the plain floor difference is two. The independent per-Home usable areas above are geometry readbacks, not fixture-written BuildingSize or saved Home records. A separate saved-Home area extraction was not performed.
+
+Unreadable read fails closed with exact `ops_building_bounds_unavailable`, before and after reload; no count is invented. Empty list storeys=0; independent renderer storeys=8 and home_area follows its one retained collider (footprint=2528.194, gross=20225.552, usable=12135.331 m²), which is not evidence that PC houses it. No role is missing.
+
+| List | matched | geometry_reads / slices | timeout |
+| --- | --- | --- | --- |
+| D-list-all | 5 | 5 / 1 | 120 s |
+| D-list-yard | 1 | 5 / 1 | 120 s |
+| D-list-unreadable | 1 | 5 / 1 | 120 s |
+| D-list-empty | 1 | 5 / 1 | 120 s |
+| D-reloaded-list-all | 5 | 5 / 1 | 120 s |
+| D-reloaded-list-yard | 1 | 5 / 1 | 120 s |
+| D-reloaded-list-unreadable | 1 | 5 / 1 | 120 s |
+| D-reloaded-list-empty | 1 | 5 / 1 | 120 s |
+
+Player.log after fixture reload:
+
+```text
+[Persistent City] unrentable homes housed=0 beds=0 unreadable=0 empty=0
+[Persistent City] unrentable homes housed=3 beds=1270 unreadable=1 empty=1
+[Persistent City] Residential places omitted: 1 without a finite footprint or floor count; 0 below the household policy's minimum interior area.
+```
+
+### #277 Expected lines and per-check outcomes
+
+> 1. **Day GC window.** Setup: load the fixture, clock 15:30, idle camera. Steps: run a 600 s gc window. Expected: report gen0, pause p95, heap, mod, physical and advance, and every segment and sub-segment against rig 15b (mod 177.9 MB, gen0 7, pause p95 43.4 ms). `physical_parked` back near 15a (2.0 MB) with about 600 samples. Report `advance_events_food` bytes per call against 15b (about 28.7 KB).
+> 2. **Night GC window.** Same as check 1 at 01:00, against 15b night (78.7 MB, gen0 6, pause p95 38.9 ms; parked 8.8 MB). For every ≥30 ms spike report phase, detail, sub, `gc_phase` and `collections`.
+> 3. **Street window.** Setup: same fixture, daytime, pan the camera. Steps: run a 600 s street window. Expected: report UpdateCity self/union and mod-work p95 against 15b (6.80 / 6.96 ms), every ≥30 ms spike with phase, detail, sub and `gc_phase`, and whole-frame p95/max separately. No ≥30 ms frame from `physical_parked`, `physical_release` or `mod_routes_rebuild` outside the retime update; copy the `Clock retime:` Player.log line for any retime in the window.
+> 4. **Look stability.** Setup: same fixture, daytime street. Steps: follow 5 residents through body release and reacquire, change speed once (retime), then reload and find them again. Expected: dressed bodies and the same look per resident before and after; parked cars at their saved curbs; none of "Appearance meshes unavailable", "Empty appearance" or "Merged body" in Player.log.
+
+**gc-day: FAIL, PROVISIONAL (Mac shared).** gen0 6 (target <=5: not met), pause p95 674.160 ms (target <36: not met), mod 139.858 MB (target <=119: not met).
+
+**gc-night: FAIL, PROVISIONAL (Mac shared).** gen0 5 (target <=5: met), pause p95 45.630 ms (target <36: not met), mod 75.720 MB (target <=53: not met).
+
+**Street: FAIL, PROVISIONAL (Mac shared).** UpdateCity exclusive / inclusive p95 3.7571 / 3.7571 ms; mod-work union p95 3.8278 ms; 1 >=30 ms union spikes. Gate inclusive UpdateCity and union <5 ms: met; zero >=30 ms mod-work frames: not met.
+
+### GC totals and 15a/15b/15c comparisons
+
+Idle camera for GC, speed 1 inside windows; speed 20 advances outside, including the advance to 01:00. Player x=215,z=0. Each controller hold is 600 s; exported durations include begin/end command overhead. No save inside any window; perf save_activity and autosave replies below. `boehm_total` pause is cycle-ending frame excess, not all incremental collector work.
+
+| GC window (PROVISIONAL) | frames / dropped | gen0 / gen1 / gen2 | pause p50 / p95 / max ms | heap_after_gc_bytes / mono_heap_bytes | mod / physical / advance MB |
+| --- | --- | --- | --- | --- | --- |
+| gc-day | 15347 / 0 | 6 / 0 / 0 | 44.262 / 674.16 / 674.16 | 1485079893 / 1907130368 | 139.858 / 45.710 / 74.047 |
+| gc-night | 16999 / 0 | 5 / 0 / 0 | 42.606 / 45.63 / 45.63 | 1661009920 / 1822670848 | 75.720 / 22.489 / 34.783 |
+
+| day / night | 15a #274 | 15b #276 | 15c #278 PROVISIONAL, NOT a baseline | 15d PROVISIONAL |
+| --- | --- | --- | --- | --- |
+| mod MB | 295.628 / 151.470 | 177.883 / 78.728 | 272.206 / 66.856 | 139.858 / 75.720 |
+| physical MB | 112.167 / 36.201 | 64.263 / 32.291 | 59.968 / 24.582 | 45.710 / 22.489 |
+| advance MB | 97.634 / 30.515 | 95.208 / 29.369 | 87.318 / 26.937 | 74.047 / 34.783 |
+| gen0 | 8.000 / 6.000 | 7.000 / 6.000 | 6.000 / 4.000 | 6.000 / 5.000 |
+| pause p95 ms | 27.888 / 37.301 | 43.403 / 38.929 | 110.570 / 4651.381 | 674.160 / 45.630 |
+
+15a street self/union p95 6.5466/6.6550 ms, 37 spikes; 15b 6.80/6.96 ms, 28 spikes, including the 244 ms mod_routes_rebuild frame 95966. 15c 16.81/17.22 ms, 114 spikes; its night pause p95 4651 ms was a host-load artefact and all 15c timing is provisional, NOT a baseline. Shared-host differences do not establish a product regression or controlled A/B improvement.
+
+Profiler GC durations are reported separately from the PC sampler’s cycle-ending frame excess. A large shared-host frame excess is not asserted to be a GC.Collect marker duration.
+
+| Window PROVISIONAL | PC sampler pause p95 ms | rig marker rows / collection rows | collection-row duration p95 ms | all marker max / total ms |
+| --- | --- | --- | --- | --- |
+| gc-day | 674.16 | 13 / 6 | 36.7109 | 36.7109 / 225.9039 |
+| gc-night | 45.63 | 10 / 5 | 35.3608 | 35.3608 / 180.0405 |
+
+### Every allocation segment and sub-segment
+
+| Segment | 15b day / night bytes | 15d day bytes / samples / skipped | 15d night bytes / samples / skipped |
+| --- | --- | --- | --- |
+| frame | 1093959680 / 795942912 | 802836480 / not exported / not exported | 806047744 / not exported / not exported |
+| mod | 177882992 / 78728440 | 139857600 / 15348 / 0 | 75719880 / 17000 / 0 |
+| advance | 95207656 / 29369216 | 74046960 / 15335 / 0 | 34783168 / 16996 / 0 |
+| physical | 64262504 / 32290920 | 45710112 / 15349 / 0 | 22488520 / 17001 / 0 |
+| physical_ambient | 2179920 / 1953440 | 1966288 / 15335 / 0 | 2186960 / 16996 / 0 |
+| physical_vehicles | 1205504 / 462208 | 877120 / 15335 / 0 | 433344 / 16996 / 0 |
+| physical_bindings | 11872 / 11552 | 11408 / 336913 / 0 | 1520 / 197071 / 0 |
+| physical_vendor_meals | 0 / 144 | 0 / 15335 / 0 | 656 / 16996 / 0 |
+| physical_fade | 0 / 0 | 0 / 15335 / 0 | 32 / 16996 / 0 |
+| physical_focus | 0 / 0 | 0 / 15335 / 0 | 2192 / 16996 / 0 |
+| physical_observe | 314400 / 119712 | 388432 / 321350 / 0 | 277744 / 179903 / 0 |
+| physical_release | 7904 / 3296 | 5408 / 244 / 0 | 1584 / 234 / 0 |
+| physical_parked | 9590064 / 8823728 | 1797232 / 1190 / 0 | 1605056 / 1193 / 0 |
+| physical_index | 80 / 80 | 80 / 2130 / 0 | 80 / 2208 / 0 |
+| physical_queues | 8960 / 17264 | 9024 / 2130 / 0 | 17456 / 2208 / 0 |
+| physical_roster | 15024 / 29424 | 126832 / 2130 / 0 | 29392 / 2208 / 0 |
+| physical_selection | 1402928 / 901600 | 1289176 / 2591 / 0 | 553864 / 2386 / 0 |
+| physical_spawn_pedestrian | 3209472 / 424576 | 2682384 / 599 / 0 | 63560 / 250 / 0 |
+| physical_spawn_appearance | 43075248 / 16589824 | 33456448 / 624 / 0 | 14148608 / 291 / 0 |
+| physical_spawn_check | 32 / 0 | 0 / 416 / 0 | 0 / 194 / 0 |
+| physical_spawn_vehicle | 128624 / 82352 | 233248 / 70 / 0 | 41024 / 25 / 0 |
+| physical_unattributed | 3112472 / 2871720 | 2867032 / 30686 / 0 | 3125448 / 33999 / 0 |
+| physical_spawn_randomize | 2404336 / 875872 | 1869408 / 208 / 0 | 845360 / 97 / 0 |
+| physical_spawn_bake | 2775056 / 1691520 | 2127792 / 208 / 0 | 432 / 97 / 0 |
+| advance_planning | 45640960 / 19310992 | 38375672 / 9371 / 0 | 23007504 / 6608 / 0 |
+| advance_events | 47117976 / 7864096 | 33463048 / 18966 / 0 | 9324272 / 20782 / 0 |
+| advance_stops | 2448720 / 2194128 | 2208240 / 15335 / 0 | 2449712 / 16996 / 0 |
+| advance_other | 0 / 0 | 0 / 15335 / 0 | 1104 / 16996 / 0 |
+| physical_spawn_grow | 875744 / 32464 | 804608 / 155 / 0 | 0 / 0 / 0 |
+| mod_prelude | 2535600 / 2284992 | 2331440 / 15348 / 0 | 2587392 / 17000 / 0 |
+| mod_rlo | 3529184 / 3535808 | 3530176 / 15348 / 0 | 3541104 / 17000 / 0 |
+| mod_food | 1277184 / 856576 | 1278384 / 15348 / 0 | 1277760 / 17000 / 0 |
+| mod_optional_stops | 2450576 / 2194704 | 2232912 / 15348 / 0 | 2454032 / 17000 / 0 |
+| mod_routes | 5363584 / 4924048 | 7669584 / 15348 / 0 | 5283984 / 17000 / 0 |
+| mod_closures | 388480 / 713200 | 388864 / 15335 / 0 | 492544 / 16996 / 0 |
+| mod_hold_replay | 0 / 0 | 0 / 15335 / 0 | 224 / 16996 / 0 |
+| mod_physical_setup | 0 / 0 | 0 / 14576 / 0 | 0 / 13926 / 0 |
+| mod_inspector | 2488160 / 2197744 | 2296736 / 15335 / 0 | 2447552 / 16996 / 0 |
+| mod_summary | 362416 / 361104 | 364032 / 15311 / 0 | 362832 / 16954 / 0 |
+| mod_other | 3808 / 0 | 2720 / 15348 / 0 | 0 / 17000 / 0 |
+| mod_routes_speeds | 902080 / 845344 | 801472 / 12523 / 0 | 1034064 / 15874 / 0 |
+| mod_routes_nodes | 516096 / 447488 | 3160720 / 12523 / 0 | 432832 / 15874 / 0 |
+| mod_routes_sweep | 0 / 256 | 0 / 15335 / 0 | 80 / 16996 / 0 |
+| mod_routes_rebuild | 3945408 / 3630960 | 3706896 / 15348 / 0 | 3816400 / 17000 / 0 |
+| mod_closures_network | 229088 / 550080 | 229536 / 15335 / 0 | 331776 / 16996 / 0 |
+| mod_closures_links | 159392 / 159392 | 159328 / 15335 / 0 | 159936 / 16996 / 0 |
+| advance_events_traffic | 288496 / 225360 | 20672 / 1479 / 0 | 46688 / 850 / 0 |
+| advance_events_food | 28296576 / 3878448 | 20541984 / 788 / 0 | 3878496 / 410 / 0 |
+| advance_events_citizen | 13546712 / 2119344 | 7811560 / 3010 / 0 | 1912032 / 1917 / 0 |
+| advance_events_route_begin | 4986192 / 1640848 | 5088832 / 3489 / 0 | 3485280 / 3108 / 0 |
+| advance_events_other | 0 / 64 | 0 / 10200 / 0 | 1776 / 14497 / 0 |
+| advance_planning_slice | 29432344 / 11428080 | 24722968 / 5883 / 0 | 17071472 / 3500 / 0 |
+| advance_planning_finish | 16208616 / 7882912 | 13652704 / 3488 / 0 | 5936032 / 3108 / 0 |
+| physical_setup_places | 273928 / 273928 | 273992 / 1 / 0 | 273992 / 1 / 0 |
+| physical_setup_bodies | 180032 / 206128 | 180032 / 1 / 0 | 206128 / 1 / 0 |
+| physical_setup_vehicles | 15696 / 15616 | 15984 / 2 / 0 | 15904 / 2 / 0 |
+| physical_setup_ambient | 174192 / 174192 | 173776 / 2 / 0 | 174192 / 2 / 0 |
+| physical_setup_preflight | 2000 / 752 | 2000 / 1 / 0 | 752 / 1 / 0 |
+| physical_unattributed_setup | 4240 / 4240 | 3568 / 1 / 0 | 4240 / 1 / 0 |
+| physical_unattributed_update | 12944 / 2160 | 7568 / 15335 / 0 | 624 / 16996 / 0 |
+| physical_unattributed_waiting | 720 / 576 | 1872 / 13 / 0 | 576 / 4 / 0 |
+| physical_unattributed_entry | 2448720 / 2194128 | 2208240 / 15335 / 0 | 2448912 / 16996 / 0 |
+
+All 15d GC values are PROVISIONAL (Mac shared). Child segments overlap their parents; do not add them again. Baseline 15b bytes are shown for every exported segment; absent fields remain not exported.
+
+gc-day: physical_parked 1.797 MB / 1190 samples (Expected near 2.0 MB and about 600 samples); advance_events_food 20541984 bytes / 788 calls = 26068.5 B/call versus same-window 15b 28669.3 B/call (day Expected reference about 28.7 KB/call).
+
+gc-night: physical_parked 1.605 MB / 1193 samples (Expected near 2.0 MB and about 600 samples); advance_events_food 3878496 bytes / 410 calls = 9459.7 B/call versus same-window 15b 12120.1 B/call (day Expected reference about 28.7 KB/call).
+
+### Inclusive/exclusive timing, whole frames and every spike
+
+| Window PROVISIONAL | seconds / frames | UpdateCity self / inclusive p95 ms | union p95 / max ms / >=30 count | whole-frame p95 / max ms |
+| --- | --- | --- | --- | --- |
+| gc-day | 600.733 / 15353 | 0.3677 / 3.6083 | 3.6738 / 112.6671 / 12 | 60.5975 / 1930.4984 |
+| gc-night | 600.670 / 17009 | 0.2774 / 2.4411 | 2.4921 / 32.7752 / 1 | 39.3452 / 579.2371 |
+| street | 600.947 / 4754 | 3.7571 / 3.7571 | 3.8278 / 44.0253 / 1 | 202.3171 / 1254.2650 |
+
+**gc-day: every component, exclusive / inclusive.** Actual UpdateCity key: `components.updatecity`; inclusive p95 uses `components.updatecity.inclusive.p95_ms`.
+
+| Component | calls | exclusive p95 / max / total ms | inclusive p95 / max / total ms |
+| --- | --- | --- | --- |
+| advance | 15339 | 2.5223 / 44.3182 / 6921.9543 | 2.5223 / 44.3182 / 6921.9543 |
+| PopulationRuntime.LateUpdate | 15354 | 0.0042 / 0.9168 / 40.2165 | 0.0326 / 1.355 / 379.4641 |
+| PopulationRuntime.Update | 15354 | 0.0108 / 0.8426 / 130.1117 | 3.6153 / 111.7748 / 19060.2713 |
+| inspector | 15339 | 0.0083 / 0.3665 / 89.6653 | 0.0083 / 0.3665 / 89.6653 |
+| AmbientPedestrians.SetActivePrefix | 3 | 0.0 / 0.0191 / 0.0457 | 0.0 / 0.0191 / 0.0457 |
+| NativeCityClock.AccountingPrefix | 15354 | 0.0176 / 0.909 / 227.2464 | 0.0176 / 0.909 / 227.2464 |
+| NativeCityClock.RidePostfix | 15354 | 0.0006 / 0.0274 / 8.108 | 0.0006 / 0.0274 / 8.108 |
+| NativeCityClock.RidePrefix | 15354 | 0.0007 / 0.0155 / 8.3887 | 0.0007 / 0.0155 / 8.3887 |
+| NativeCityClock.TickPrefix | 15354 | 0.0012 / 0.0139 / 14.8219 | 0.0012 / 0.0139 / 14.8219 |
+| NativeFoodOwnership.AfterNativeTick | 15354 | 0.0008 / 0.8733 / 11.7326 | 0.0008 / 0.8733 / 11.7326 |
+| NativeTravelPace.ObserveTickPostfix | 15354 | 0.0018 / 0.0245 / 23.1392 | 0.0018 / 0.0245 / 23.1392 |
+| ResidentInspector.CameraInputPostfix | 30708 | 0.0011 / 0.0126 / 10.6363 | 0.0011 / 0.0126 / 10.6363 |
+| ResidentInspector.MouseRunPrefix | 15354 | 0.002 / 0.0532 / 24.0799 | 0.002 / 0.0532 / 24.0799 |
+| ResidentInspector.UiRaycastPrefix | 568098 | 0.0085 / 0.4217 / 115.3195 | 0.0085 / 0.4217 / 115.3195 |
+| physical | 46047 | 0.9797 / 51.698 / 7222.6452 | 0.9797 / 51.698 / 7222.6452 |
+| prepare | 15354 | 0.0502 / 3.4916 / 883.0983 | 0.0502 / 3.4916 / 883.0983 |
+| PhysicalPedestrianCrosswalk.OnTriggerEnter | 1102 | 0.0 / 1.4312 / 12.4013 | 0.0 / 1.4312 / 12.4013 |
+| PhysicalPedestrianCrosswalk.OnTriggerExit | 646 | 0.0 / 1.8063 / 7.6331 | 0.0 / 1.8063 / 7.6331 |
+| updatecity | 15354 | 0.3677 / 53.9274 / 4152.0441 | 3.6083 / 111.4937 / 18930.1596 |
+
+Spike retention: union 12 counted / 12 listed; PC phase recorder 11 counted / 11 spike rows; 0 union rows lack retained phase attribution. Rig gap 3 spike-row cap fix was not installed. The tested Core/ModFrameRecorder.cs has SpikeCapacity=64; rows beyond that cap can be absent. The rig union list has its own separately reported count; a 256-row phase capacity is not assumed. Missing rows/fields below are explicit.
+
+PC phase count/list truncation: none observed in this window. GC-pause row retention is reported by its count/listed/truncated fields below.
+
+| unity_frame | union ms | dominant | phase / ms | detail / ms | sub / ms | gc_phase | collections | whole-frame ms |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 22667 | 62.892 | updatecity | physical_spawn_pedestrian / 23.94 | physical_spawn_grow / 18.807 | physical_setup_ambient / 8.212 | none | 0 | 95.5404 |
+| 35133 | 32.7978 | physical | physical_spawn_pedestrian / 17.272 | physical_spawn_bake / 2.331 | mod_closures_links / 3.917 | none | 0 | 118.0647 |
+| 35162 | 42.0749 | physical | physical_index / 30.405 | physical_spawn_grow / 3.348 | advance_planning_slice / 5.427 | none | 0 | 133.3285 |
+| 35314 | 38.5543 | physical | physical_spawn_appearance / 6.69 | physical_spawn_bake / 0.618 | mod_closures_links / 2.448 | none | 0 | 128.1626 |
+| 35578 | 49.4453 | physical | physical_parked / 18.176 | physical_spawn_bake / 0.87 | advance_planning_slice / 1.812 | none | 0 | 121.8318 |
+| 35678 | 38.2745 | physical | physical_parked / 17.713 | none / 0 | mod_closures_links / 3.772 | none | 0 | 1930.4984 |
+| 35679 | 112.6671 | updatecity | mod_rlo / 45.77 | physical_spawn_bake / 2.022 | advance_planning_slice / 5.018 | none | 0 | 888.101 |
+| 35681 | 66.73 | physical | physical_parked / 19.592 | none / 0 | advance_events_route_begin / 7.239 | none | 0 | 816.0729 |
+| 35688 | 30.0071 | advance | advance_planning / 27.03 | none / 0 | advance_planning_slice / 27.028 | none | 0 | 71.8551 |
+| 35741 | 39.9277 | physical | physical_index / 24.654 | physical_spawn_grow / 10.672 | advance_planning_slice / 2.018 | none | 0 | 128.0054 |
+| 35743 | 31.2331 | physical | physical_parked / 6.834 | none / 0 | mod_closures_links / 5.284 | none | 0 | 142.1686 |
+| 36046 | 45.3821 | advance | advance_events / 44.283 | none / 0 | advance_events_citizen / 44.282 | none | 0 | 106.4 |
+
+Whole-frame exports are separate: perf p95/max 60.8784/2033.8661 ms; 14656 >=30 ms whole frames, 256 rows listed, truncated flag=False. Count/list differences mean later whole-frame rows are not all exported even when that flag is false; these are not mod-work spikes.
+
+coverage.complete=True; validity=`{"off_main_thread_calls":0,"cross_frame_scopes":0,"unbalanced_exits":0,"depth_overflow":0,"frames_dropped":0,"valid":true,"invalid_reasons":[]}`; save_activity=`{"attempts":15370,"allowed":0,"refused":15370,"native_saving_frames":0,"clean":true,"invalid_reasons":[]}`.
+
+`gc_pauses` from modwork end (unity_frame keyed): `{"format":"agent-rig-gc-pauses/1","frame_id":"UnityEngine.Time.frameCount","collection_source":"System.GC.CollectionCount","duration_source":"Unity.Profiling.ProfilerRecorder:GC.Collect","duration_unavailable_reason":null,"count":13,"listed":13,"truncated":false,"total_duration_ms":225.9039,"max_duration_ms":36.7109,"pauses":[{"unity_frame":24322,"duration_ms":4.279,"collections":0,"generation":null},{"unity_frame":24547,"duration_ms":6.9954,"collections":0,"generation":null},{"unity_frame":24551,"duration_ms":33.8563,"collections":1,"generation":0},{"unity_frame":27000,"duration_ms":2.998,"collections":0,"generation":null},{"unity_frame":27007,"duration_ms":30.3202,"collections":1,"generation":0},{"unity_frame":29508,"duration_ms":2.478,"collections":0,"generation":null},{"unity_frame":29568,"duration_ms":34.1421,"collections":1,"generation":0},{"unity_frame":32067,"duration_ms":3.0153,"collections":0,"generation":null},{"unity_frame":32171,"duration_ms":36.7109,"collections":1,"generation":0},{"unity_frame":34596,"duration_ms":2.067,"collections":0,"generation":null},{"unity_frame":34609,"duration_ms":31.157,"collections":1,"generation":0},{"unity_frame":37137,"duration_ms":3.0022,"collections":0,"generation":null},{"unity_frame":37192,"duration_ms":34.8825,"collections":1,"generation":0}]}`.
+
+`gc_pauses` from perf end (unity_frame keyed): `{"format":"agent-rig-gc-pauses/1","frame_id":"UnityEngine.Time.frameCount","collection_source":"System.GC.CollectionCount","duration_source":"Unity.Profiling.ProfilerRecorder:GC.Collect","duration_unavailable_reason":null,"count":13,"listed":13,"truncated":false,"total_duration_ms":225.9039,"max_duration_ms":36.7109,"pauses":[{"unity_frame":24322,"duration_ms":4.279,"collections":0,"generation":null},{"unity_frame":24547,"duration_ms":6.9954,"collections":0,"generation":null},{"unity_frame":24551,"duration_ms":33.8563,"collections":1,"generation":0},{"unity_frame":27000,"duration_ms":2.998,"collections":0,"generation":null},{"unity_frame":27007,"duration_ms":30.3202,"collections":1,"generation":0},{"unity_frame":29508,"duration_ms":2.478,"collections":0,"generation":null},{"unity_frame":29568,"duration_ms":34.1421,"collections":1,"generation":0},{"unity_frame":32067,"duration_ms":3.0153,"collections":0,"generation":null},{"unity_frame":32171,"duration_ms":36.7109,"collections":1,"generation":0},{"unity_frame":34596,"duration_ms":2.067,"collections":0,"generation":null},{"unity_frame":34609,"duration_ms":31.157,"collections":1,"generation":0},{"unity_frame":37137,"duration_ms":3.0022,"collections":0,"generation":null},{"unity_frame":37192,"duration_ms":34.8825,"collections":1,"generation":0}]}`.
+
+**gc-night: every component, exclusive / inclusive.** Actual UpdateCity key: `components.updatecity`; inclusive p95 uses `components.updatecity.inclusive.p95_ms`.
+
+| Component | calls | exclusive p95 / max / total ms | inclusive p95 / max / total ms |
+| --- | --- | --- | --- |
+| advance | 17001 | 1.6773 / 6.5914 / 3420.4939 | 1.6773 / 6.5914 / 3420.4939 |
+| PopulationRuntime.LateUpdate | 17010 | 0.003 / 0.0393 / 30.4153 | 0.0259 / 1.902 / 341.2655 |
+| PopulationRuntime.Update | 17010 | 0.0084 / 0.0688 / 120.646 | 2.4478 / 32.7315 / 10194.6656 |
+| inspector | 17001 | 0.0061 / 0.0134 / 78.4857 | 0.0061 / 0.0134 / 78.4857 |
+| AmbientPedestrians.SetActivePrefix | 3 | 0.0 / 0.0082 / 0.0201 | 0.0 / 0.0082 / 0.0201 |
+| NativeCityClock.AccountingPrefix | 17010 | 0.0149 / 0.496 / 222.9575 | 0.0149 / 0.496 / 222.9575 |
+| NativeCityClock.RidePostfix | 17010 | 0.0006 / 0.0059 / 8.7008 | 0.0006 / 0.0059 / 8.7008 |
+| NativeCityClock.RidePrefix | 17010 | 0.0006 / 0.0041 / 8.9001 | 0.0006 / 0.0041 / 8.9001 |
+| NativeCityClock.TickPrefix | 17010 | 0.0011 / 0.0087 / 15.7028 | 0.0011 / 0.0087 / 15.7028 |
+| NativeFoodOwnership.AfterNativeTick | 17010 | 0.0008 / 0.0219 / 11.237 | 0.0008 / 0.0219 / 11.237 |
+| NativeTravelPace.ObserveTickPostfix | 17010 | 0.0018 / 0.0184 / 25.8847 | 0.0018 / 0.0184 / 25.8847 |
+| ResidentInspector.CameraInputPostfix | 34020 | 0.0008 / 0.0099 / 9.9856 | 0.0008 / 0.0099 / 9.9856 |
+| ResidentInspector.MouseRunPrefix | 17010 | 0.0017 / 0.0094 / 24.3153 | 0.0017 / 0.0094 / 24.3153 |
+| ResidentInspector.UiRaycastPrefix | 629370 | 0.0083 / 0.0483 / 121.7221 | 0.0083 / 0.0483 / 121.7221 |
+| physical | 51021 | 0.641 / 7.4334 / 3750.4339 | 0.641 / 7.4334 / 3750.4339 |
+| prepare | 17010 | 0.0264 / 1.2667 / 604.8025 | 0.0264 / 1.2667 / 604.8025 |
+| PhysicalPedestrianCrosswalk.OnTriggerEnter | 769 | 0.0 / 0.0319 / 3.2114 | 0.0 / 0.0319 / 3.2114 |
+| PhysicalPedestrianCrosswalk.OnTriggerExit | 465 | 0.0 / 0.017 / 1.6812 | 0.0 / 0.017 / 1.6812 |
+| updatecity | 17010 | 0.2774 / 20.3614 / 2530.6538 | 2.4411 / 32.7177 / 10074.0196 |
+
+Spike retention: union 1 counted / 1 listed; PC phase recorder 1 counted / 1 spike rows; 0 union rows lack retained phase attribution. Rig gap 3 spike-row cap fix was not installed. The tested Core/ModFrameRecorder.cs has SpikeCapacity=64; rows beyond that cap can be absent. The rig union list has its own separately reported count; a 256-row phase capacity is not assumed. Missing rows/fields below are explicit.
+
+PC phase count/list truncation: none observed in this window. GC-pause row retention is reported by its count/listed/truncated fields below.
+
+| unity_frame | union ms | dominant | phase / ms | detail / ms | sub / ms | gc_phase | collections | whole-frame ms |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 44174 | 32.7752 | updatecity | mod_closures / 11.163 | physical_spawn_bake / 0.444 | mod_closures_network / 10.944 | none | 0 | 64.2971 |
+
+Whole-frame exports are separate: perf p95/max 39.5496/579.1862 ms; 16629 >=30 ms whole frames, 256 rows listed, truncated flag=False. Count/list differences mean later whole-frame rows are not all exported even when that flag is false; these are not mod-work spikes.
+
+coverage.complete=True; validity=`{"off_main_thread_calls":0,"cross_frame_scopes":0,"unbalanced_exits":0,"depth_overflow":0,"frames_dropped":0,"valid":true,"invalid_reasons":[]}`; save_activity=`{"attempts":17038,"allowed":0,"refused":17038,"native_saving_frames":0,"clean":true,"invalid_reasons":[]}`.
+
+`gc_pauses` from modwork end (unity_frame keyed): `{"format":"agent-rig-gc-pauses/1","frame_id":"UnityEngine.Time.frameCount","collection_source":"System.GC.CollectionCount","duration_source":"Unity.Profiling.ProfilerRecorder:GC.Collect","duration_unavailable_reason":null,"count":10,"listed":10,"truncated":false,"total_duration_ms":180.0405,"max_duration_ms":35.3608,"pauses":[{"unity_frame":46334,"duration_ms":3.0048,"collections":0,"generation":null},{"unity_frame":46369,"duration_ms":33.5925,"collections":1,"generation":0},{"unity_frame":49549,"duration_ms":2.8456,"collections":0,"generation":null},{"unity_frame":49607,"duration_ms":33.0618,"collections":1,"generation":0},{"unity_frame":52818,"duration_ms":3.0098,"collections":0,"generation":null},{"unity_frame":52847,"duration_ms":32.005,"collections":1,"generation":0},{"unity_frame":56057,"duration_ms":3.0216,"collections":0,"generation":null},{"unity_frame":56119,"duration_ms":35.3608,"collections":1,"generation":0},{"unity_frame":59363,"duration_ms":2.894,"collections":0,"generation":null},{"unity_frame":59383,"duration_ms":31.2446,"collections":1,"generation":0}]}`.
+
+`gc_pauses` from perf end (unity_frame keyed): `{"format":"agent-rig-gc-pauses/1","frame_id":"UnityEngine.Time.frameCount","collection_source":"System.GC.CollectionCount","duration_source":"Unity.Profiling.ProfilerRecorder:GC.Collect","duration_unavailable_reason":null,"count":11,"listed":11,"truncated":false,"total_duration_ms":228.7571,"max_duration_ms":48.7166,"pauses":[{"unity_frame":44165,"duration_ms":48.7166,"collections":1,"generation":0},{"unity_frame":46334,"duration_ms":3.0048,"collections":0,"generation":null},{"unity_frame":46369,"duration_ms":33.5925,"collections":1,"generation":0},{"unity_frame":49549,"duration_ms":2.8456,"collections":0,"generation":null},{"unity_frame":49607,"duration_ms":33.0618,"collections":1,"generation":0},{"unity_frame":52818,"duration_ms":3.0098,"collections":0,"generation":null},{"unity_frame":52847,"duration_ms":32.005,"collections":1,"generation":0},{"unity_frame":56057,"duration_ms":3.0216,"collections":0,"generation":null},{"unity_frame":56119,"duration_ms":35.3608,"collections":1,"generation":0},{"unity_frame":59363,"duration_ms":2.894,"collections":0,"generation":null},{"unity_frame":59383,"duration_ms":31.2446,"collections":1,"generation":0}]}`.
+
+**street: every component, exclusive / inclusive.** Actual UpdateCity key: `components.updatecity`; inclusive p95 uses `components.updatecity.inclusive.p95_ms`.
+
+| Component | calls | exclusive p95 / max / total ms | inclusive p95 / max / total ms |
+| --- | --- | --- | --- |
+| PopulationRuntime.LateUpdate | 4755 | 0.0262 / 0.1761 / 94.3592 | 0.0262 / 0.1761 / 94.3592 |
+| PopulationRuntime.Update | 4755 | 0.0087 / 4.699 / 38.4017 | 3.7645 / 43.9712 / 7334.8366 |
+| AmbientPedestrians.EndCyclePrefix | 1 | 0.0 / 2.0413 / 2.0413 | 0.0 / 2.0413 / 2.0413 |
+| AmbientPedestrians.SetActivePrefix | 2 | 0.0 / 0.0111 / 0.02 | 0.0 / 0.0111 / 0.02 |
+| NativeCityClock.AccountingPrefix | 4755 | 0.0156 / 0.0535 / 63.1242 | 0.0156 / 0.0535 / 63.1242 |
+| NativeCityClock.RidePostfix | 4755 | 0.0007 / 0.0042 / 2.5274 | 0.0007 / 0.0042 / 2.5274 |
+| NativeCityClock.RidePrefix | 4755 | 0.0007 / 0.005 / 2.6531 | 0.0007 / 0.005 / 2.6531 |
+| NativeCityClock.TickPrefix | 4755 | 0.0012 / 0.0121 / 4.874 | 0.0012 / 0.0121 / 4.874 |
+| NativeFoodOwnership.AfterNativeTick | 4755 | 0.0009 / 0.0241 / 3.5628 | 0.0009 / 0.0241 / 3.5628 |
+| NativeTravelPace.ObserveTickPostfix | 4755 | 0.0017 / 0.0362 / 6.8198 | 0.0017 / 0.0362 / 6.8198 |
+| ResidentInspector.CameraInputPostfix | 9510 | 0.0009 / 0.0112 / 3.1365 | 0.0009 / 0.0112 / 3.1365 |
+| ResidentInspector.MouseRunPrefix | 4755 | 0.0018 / 0.0538 / 7.3294 | 0.0018 / 0.0538 / 7.3294 |
+| ResidentInspector.UiRaycastPrefix | 175935 | 0.0086 / 0.1101 / 35.3507 | 0.0086 / 0.1101 / 35.3507 |
+| PhysicalPedestrianCrosswalk.OnTriggerEnter | 805 | 0.0049 / 0.0495 / 4.4848 | 0.0049 / 0.0495 / 4.4848 |
+| PhysicalPedestrianCrosswalk.OnTriggerExit | 479 | 0.002 / 0.0716 / 2.3155 | 0.002 / 0.0716 / 2.3155 |
+| updatecity | 4755 | 3.7571 / 43.9572 / 7296.4349 | 3.7571 / 43.9572 / 7296.4349 |
+
+Spike retention: union 1 counted / 1 listed; PC phase recorder 1 counted / 1 spike rows; 0 union rows lack retained phase attribution. Rig gap 3 spike-row cap fix was not installed. The tested Core/ModFrameRecorder.cs has SpikeCapacity=64; rows beyond that cap can be absent. The rig union list has its own separately reported count; a 256-row phase capacity is not assumed. Missing rows/fields below are explicit.
+
+PC phase count/list truncation: none observed in this window. GC-pause row retention is reported by its count/listed/truncated fields below.
+
+| unity_frame | union ms | dominant | phase / ms | detail / ms | sub / ms | gc_phase | collections | whole-frame ms |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 67921 | 44.0253 | updatecity | advance_events / 17.051 | physical_spawn_bake / 0.441 | advance_events_food / 17.049 | none | 0 | 99.2734 |
+
+Whole-frame exports are separate: perf p95/max 202.1755/1313.275 ms; 4741 >=30 ms whole frames, 256 rows listed, truncated flag=False. Count/list differences mean later whole-frame rows are not all exported even when that flag is false; these are not mod-work spikes.
+
+coverage.complete=True; validity=`{"off_main_thread_calls":0,"cross_frame_scopes":0,"unbalanced_exits":0,"depth_overflow":0,"frames_dropped":0,"valid":true,"invalid_reasons":[]}`; save_activity=`{"attempts":4770,"allowed":0,"refused":4770,"native_saving_frames":0,"clean":true,"invalid_reasons":[]}`.
+
+`gc_pauses` from modwork end (unity_frame keyed): `{"format":"agent-rig-gc-pauses/1","frame_id":"UnityEngine.Time.frameCount","collection_source":"System.GC.CollectionCount","duration_source":"Unity.Profiling.ProfilerRecorder:GC.Collect","duration_unavailable_reason":null,"count":5,"listed":5,"truncated":false,"total_duration_ms":106.8078,"max_duration_ms":35.6891,"pauses":[{"unity_frame":67980,"duration_ms":35.6891,"collections":1,"generation":0},{"unity_frame":70195,"duration_ms":2.9989,"collections":0,"generation":null},{"unity_frame":70226,"duration_ms":32.5404,"collections":1,"generation":0},{"unity_frame":71422,"duration_ms":3.016,"collections":0,"generation":null},{"unity_frame":71480,"duration_ms":32.5635,"collections":1,"generation":0}]}`.
+
+`gc_pauses` from perf end (unity_frame keyed): `{"format":"agent-rig-gc-pauses/1","frame_id":"UnityEngine.Time.frameCount","collection_source":"System.GC.CollectionCount","duration_source":"Unity.Profiling.ProfilerRecorder:GC.Collect","duration_unavailable_reason":null,"count":7,"listed":7,"truncated":false,"total_duration_ms":112.8419,"max_duration_ms":35.6891,"pauses":[{"unity_frame":67916,"duration_ms":3.0134,"collections":0,"generation":null},{"unity_frame":67980,"duration_ms":35.6891,"collections":1,"generation":0},{"unity_frame":70195,"duration_ms":2.9989,"collections":0,"generation":null},{"unity_frame":70226,"duration_ms":32.5404,"collections":1,"generation":0},{"unity_frame":71422,"duration_ms":3.016,"collections":0,"generation":null},{"unity_frame":71480,"duration_ms":32.5635,"collections":1,"generation":0},{"unity_frame":72671,"duration_ms":3.0207,"collections":0,"generation":null}]}`.
+
+Clock retime lines from measured headless process (window membership follows command times/raw before-and-after logs):
+
+```text
+[Mod:PersistentCity] Clock retime: body release 0.0 ms in the previous update, journey retime 125.8 ms, simulation rebuild 47.6 ms.
+[Mod:PersistentCity] Clock retime: body release 0.0 ms in the previous update, journey retime 124.5 ms, simulation rebuild 41.5 ms.
+[Mod:PersistentCity] Clock retime: body release 519.7 ms in the previous update, journey retime 249.2 ms, simulation rebuild 30.0 ms.
+[Mod:PersistentCity] Clock retime: body release 87.8 ms in the previous update, journey retime 171.9 ms, simulation rebuild 40.0 ms.
+[Mod:PersistentCity] Clock retime: body release 26.9 ms in the previous update, journey retime 174.3 ms, simulation rebuild 95.0 ms.
+[Mod:PersistentCity] Clock retime: body release 34.2 ms in the previous update, journey retime 82.7 ms, simulation rebuild 26.6 ms.
+[Mod:PersistentCity] Clock retime: body release 56.3 ms in the previous update, journey retime 100.6 ms, simulation rebuild 36.8 ms.
+```
+
+Street Clock retime lines between frames-start/stop log markers: none. The complete preparation/timing retime lines above are retained separately; no unkeyed log line is assigned an invented Unity frame.
+
+Street `physical_parked` tagged >=30 ms PC frames: none retained. Dominant phase rows alone do not establish the absence of this scope from every spike; the global zero-spike gate is assessed above.
+
+Street `physical_release` tagged >=30 ms PC frames: none retained. Dominant phase rows alone do not establish the absence of this scope from every spike; the global zero-spike gate is assessed above.
+
+Street `mod_routes_rebuild` tagged >=30 ms PC frames: none retained. Dominant phase rows alone do not establish the absence of this scope from every spike; the global zero-spike gate is assessed above.
+
+### Shared-host evidence at every window boundary
+
+**gc-day start 2026-11-15T11:33:06Z — PROVISIONAL (Mac shared).**
+
+```text
+12:33  up 1 day, 18:11, 1 user, load averages: 13.78 12.54 10.64
+The system has 17179869184 (1048576 pages with a page size of 16384).
+System-wide memory free percentage: 75%
+  PID  %CPU COMM
+49418  84.4 suggestd
+50220  48.1 com.apple.Virtualization.VirtualMachine
+50212  31.1 Big Ambitions Agent Tests Mac
+59297  29.7 node
+  444  11.1 coreaudiod
+59268  10.4 node
+52261   4.9 Python
+```
+
+Session statuses at this boundary: `20261115-110851-mac-fix-gr5-retime-appearance-planning` phase=review, finished=None; `20261115-115959-ux-insurgo-history-1970` phase=implement, finished=None; `20261115-121910-rig-player-car` phase=review, finished=None. This rig session/build: candidate `564020b`, agentmac headless PID 50212.
+
+Live build/process worktrees by PID: `{"54999":["~/Coding_Projects/big-ambitions/big-ambitions-persistent-city-worktrees/fix-gr5-retime-appearance-planning"],"55001":["~/Coding_Projects/big-ambitions/big-ambitions-persistent-city-worktrees/fix-gr5-retime-appearance-planning"],"55075":["~/Coding_Projects/big-ambitions/big-ambitions-persistent-city-worktrees/fix-gr5-retime-appearance-planning"],"55078":["~/Coding_Projects/big-ambitions/big-ambitions-persistent-city-worktrees/fix-gr5-retime-appearance-planning"],"55114":["~/Coding_Projects/big-ambitions/big-ambitions-persistent-city-worktrees/fix-gr5-retime-appearance-planning"],"55253":["~/Coding_Projects/big-ambitions/big-ambitions-persistent-city-worktrees/fix-gr5-retime-appearance-planning"],"55800":["~/Coding_Projects/work/MVP_project-worktrees/ux-insurgo-history-1970"],"55908":["~/Coding_Projects/work/MVP_project-worktrees/ux-insurgo-history-1970"],"55914":["~/Coding_Projects/work/MVP_project-worktrees/ux-insurgo-history-1970"],"55920":["~/Coding_Projects/big-ambitions/big-ambitions-agent-rig-worktrees/rig-player-car"],"55922":["~/Coding_Projects/big-ambitions/big-ambitions-agent-rig-worktrees/rig-player-car"],"55981":["~/Coding_Projects/big-ambitions/big-ambitions-agent-rig-worktrees/rig-player-car"],"55987":["~/Coding_Projects/big-ambitions/big-ambitions-agent-rig-worktrees/rig-player-car"],"56010":["~/Coding_Projects/big-ambitions/big-ambitions-agent-rig-worktrees/rig-player-car"],"56166":["~/Coding_Projects/big-ambitions/big-ambitions-agent-rig-worktrees/rig-player-car"],"59268":["~/Coding_Projects/work/MVP_project-worktrees/ux-insurgo-history-1970"]}`. Full process snapshots are in raw evidence.
+
+**gc-day end 2026-11-15T11:43:09Z — PROVISIONAL (Mac shared).**
+
+```text
+12:43  up 1 day, 18:21, 1 user, load averages: 8.79 9.54 9.70
+The system has 17179869184 (1048576 pages with a page size of 16384).
+System-wide memory free percentage: 77%
+  PID  %CPU COMM
+50212  87.8 Big Ambitions Agent Tests Mac
+49418  78.8 suggestd
+63895  66.2 dotnet
+63896  63.2 dotnet
+63888  49.4 dotnet
+63898  11.1 taskgated-helper
+  444   9.0 coreaudiod
+```
+
+Session statuses at this boundary: `20261115-110851-mac-fix-gr5-retime-appearance-planning` phase=fix, finished=None; `20261115-115959-ux-insurgo-history-1970` phase=review, finished=None; `20261115-121910-rig-player-car` phase=fix, finished=None. This rig session/build: candidate `564020b`, agentmac headless PID 50212.
+
+Live build/process worktrees by PID: `{"63741":["~/Coding_Projects/work/MVP_project-worktrees/ux-insurgo-history-1970"],"63742":["~/Coding_Projects/work/MVP_project-worktrees/ux-insurgo-history-1970"],"63799":["~/Coding_Projects/work/MVP_project-worktrees/ux-insurgo-history-1970"],"63800":["~/Coding_Projects/work/MVP_project-worktrees/ux-insurgo-history-1970"],"63806":["~/Coding_Projects/work/MVP_project-worktrees/ux-insurgo-history-1970"],"63888":["~/Coding_Projects/big-ambitions/big-ambitions-persistent-city-worktrees/fix-gr5-retime-appearance-planning/Compatibility"],"63895":["~/Coding_Projects/big-ambitions/big-ambitions-persistent-city-worktrees/fix-gr5-retime-appearance-planning/Persistence"],"63896":["~/Coding_Projects/big-ambitions/big-ambitions-persistent-city-worktrees/fix-gr5-retime-appearance-planning/Core"]}`. Full process snapshots are in raw evidence.
+
+**gc-night start 2026-11-15T11:46:55Z — PROVISIONAL (Mac shared).**
+
+```text
+12:46  up 1 day, 18:25, 1 user, load averages: 5.82 8.00 9.01
+The system has 17179869184 (1048576 pages with a page size of 16384).
+System-wide memory free percentage: 72%
+  PID  %CPU COMM
+63952 289.8 dotnet
+49418  81.3 suggestd
+50212  54.7 Big Ambitions Agent Tests Mac
+64859  22.4 mdworker_shared
+  444   9.1 coreaudiod
+63508   8.3 claude
+52261   4.3 Python
+```
+
+Session statuses at this boundary: `20261115-110851-mac-fix-gr5-retime-appearance-planning` phase=fix, finished=None; `20261115-115959-ux-insurgo-history-1970` phase=review, finished=None; `20261115-121910-rig-player-car` phase=fix, finished=None. This rig session/build: candidate `564020b`, agentmac headless PID 50212.
+
+Live build/process worktrees by PID: `{"63888":["~/Coding_Projects/big-ambitions/big-ambitions-persistent-city-worktrees/fix-gr5-retime-appearance-planning/Compatibility"],"63895":["~/Coding_Projects/big-ambitions/big-ambitions-persistent-city-worktrees/fix-gr5-retime-appearance-planning/tests"],"63896":["~/Coding_Projects/big-ambitions/big-ambitions-persistent-city-worktrees/fix-gr5-retime-appearance-planning/Core"],"63951":["~/Coding_Projects/big-ambitions/big-ambitions-persistent-city-worktrees/fix-gr5-retime-appearance-planning/tests"],"63952":["~/Coding_Projects/big-ambitions/big-ambitions-persistent-city-worktrees/fix-gr5-retime-appearance-planning/tests/bin/Debug/net10.0"],"64008":["~/Coding_Projects/work/MVP_project-worktrees/ux-insurgo-history-1970"],"64011":["~/Coding_Projects/work/MVP_project-worktrees/ux-insurgo-history-1970"],"64071":["~/Coding_Projects/work/MVP_project-worktrees/ux-insurgo-history-1970"],"64075":["~/Coding_Projects/work/MVP_project-worktrees/ux-insurgo-history-1970"],"64131":["~/Coding_Projects/work/MVP_project-worktrees/ux-insurgo-history-1970"],"64209":["~/Coding_Projects/work/MVP_project-worktrees/ux-insurgo-history-1970"]}`. Full process snapshots are in raw evidence.
+
+**gc-night end 2026-11-15T11:56:58Z — PROVISIONAL (Mac shared).**
+
+```text
+12:56  up 1 day, 18:35, 1 user, load averages: 5.87 6.33 7.48
+The system has 17179869184 (1048576 pages with a page size of 16384).
+System-wide memory free percentage: 66%
+  PID  %CPU COMM
+66120 294.5 dotnet
+50212  91.3 Big Ambitions Agent Tests Mac
+49418  81.1 suggestd
+  444  10.5 coreaudiod
+  735   2.2 Resolve
+  937   2.1 io.tailscale.ipn.macsys.network-extension
+  654   1.6 com.apple.DriverKit-AppleBCMWLAN
+```
+
+Session statuses at this boundary: `20261115-110851-mac-fix-gr5-retime-appearance-planning` phase=local_tests, finished=None; `20261115-115959-ux-insurgo-history-1970` phase=fix, finished=None; `20261115-121910-rig-player-car` phase=review, finished=None. This rig session/build: candidate `564020b`, agentmac headless PID 50212.
+
+Live build/process worktrees by PID: `{"66089":["~/Coding_Projects/big-ambitions/big-ambitions-persistent-city-worktrees/fix-gr5-retime-appearance-planning/Compatibility"],"66102":["~/Coding_Projects/big-ambitions/big-ambitions-persistent-city-worktrees/fix-gr5-retime-appearance-planning/tests"],"66103":["~/Coding_Projects/big-ambitions/big-ambitions-persistent-city-worktrees/fix-gr5-retime-appearance-planning/Core"],"66119":["~/Coding_Projects/big-ambitions/big-ambitions-persistent-city-worktrees/fix-gr5-retime-appearance-planning/tests"],"66120":["~/Coding_Projects/big-ambitions/big-ambitions-persistent-city-worktrees/fix-gr5-retime-appearance-planning/tests/bin/Debug/net10.0"],"66752":["~/Coding_Projects/big-ambitions/big-ambitions-agent-rig-worktrees/rig-player-car"],"66753":["~/Coding_Projects/big-ambitions/big-ambitions-agent-rig-worktrees/rig-player-car"],"66818":["~/Coding_Projects/big-ambitions/big-ambitions-agent-rig-worktrees/rig-player-car"],"66824":["~/Coding_Projects/big-ambitions/big-ambitions-agent-rig-worktrees/rig-player-car"],"66879":["~/Coding_Projects/big-ambitions/big-ambitions-agent-rig-worktrees/rig-player-car"],"66932":["~/Coding_Projects/big-ambitions/big-ambitions-agent-rig-worktrees/rig-player-car"]}`. Full process snapshots are in raw evidence.
+
+**street start 2026-11-15T12:00:55Z — PROVISIONAL (Mac shared).**
+
+```text
+13:00  up 1 day, 18:39, 1 user, load averages: 3.78 5.29 6.77
+The system has 17179869184 (1048576 pages with a page size of 16384).
+System-wide memory free percentage: 69%
+  PID  %CPU COMM
+66120 100.0 dotnet
+49418  91.5 suggestd
+50212  35.8 Big Ambitions Agent Tests Mac
+  444  11.3 coreaudiod
+52261   4.5 Python
+  735   2.2 Resolve
+  915   0.7 sysmond
+```
+
+Session statuses at this boundary: `20261115-110851-mac-fix-gr5-retime-appearance-planning` phase=local_tests, finished=None; `20261115-115959-ux-insurgo-history-1970` phase=fix, finished=None; `20261115-121910-rig-player-car` phase=review, finished=None. This rig session/build: candidate `564020b`, agentmac headless PID 50212.
+
+Live build/process worktrees by PID: `{"66089":["~/Coding_Projects/big-ambitions/big-ambitions-persistent-city-worktrees/fix-gr5-retime-appearance-planning/Compatibility"],"66102":["~/Coding_Projects/big-ambitions/big-ambitions-persistent-city-worktrees/fix-gr5-retime-appearance-planning/tests"],"66103":["~/Coding_Projects/big-ambitions/big-ambitions-persistent-city-worktrees/fix-gr5-retime-appearance-planning/Core"],"66119":["~/Coding_Projects/big-ambitions/big-ambitions-persistent-city-worktrees/fix-gr5-retime-appearance-planning/tests"],"66120":["~/Coding_Projects/big-ambitions/big-ambitions-persistent-city-worktrees/fix-gr5-retime-appearance-planning/tests/bin/Debug/net10.0"],"66752":["~/Coding_Projects/big-ambitions/big-ambitions-agent-rig-worktrees/rig-player-car"],"66753":["~/Coding_Projects/big-ambitions/big-ambitions-agent-rig-worktrees/rig-player-car"],"66818":["~/Coding_Projects/big-ambitions/big-ambitions-agent-rig-worktrees/rig-player-car"],"66824":["~/Coding_Projects/big-ambitions/big-ambitions-agent-rig-worktrees/rig-player-car"],"66879":["~/Coding_Projects/big-ambitions/big-ambitions-agent-rig-worktrees/rig-player-car"],"66932":["~/Coding_Projects/big-ambitions/big-ambitions-agent-rig-worktrees/rig-player-car"]}`. Full process snapshots are in raw evidence.
+
+**street end 2026-11-15T12:10:58Z — PROVISIONAL (Mac shared).**
+
+```text
+13:10  up 1 day, 18:49, 1 user, load averages: 7.67 6.46 6.58
+The system has 17179869184 (1048576 pages with a page size of 16384).
+System-wide memory free percentage: 59%
+  PID  %CPU COMM
+50220 180.2 com.apple.Virtualization.VirtualMachine
+50212 105.5 Big Ambitions Agent Tests Mac
+76914  84.4 node
+49418  53.4 suggestd
+50209  40.5 limactl
+76909  36.3 node
+50359  21.7 ssh.sock [mux]
+```
+
+Session statuses at this boundary: `20261115-110851-mac-fix-gr5-retime-appearance-planning` phase=done, finished=2026-11-15T13:07:40+01:00; `20261115-115959-ux-insurgo-history-1970` phase=fix, finished=None. This rig session/build: candidate `564020b`, agentmac headless PID 50212.
+
+Live build/process worktrees by PID: `{"74723":["~/Coding_Projects/work/MVP_project-worktrees/ux-insurgo-history-1970"],"75418":["~/Coding_Projects/work/MVP_project-worktrees/ux-insurgo-history-1970"],"75481":["~/Coding_Projects/work/MVP_project-worktrees/ux-insurgo-history-1970"],"76308":["~/Coding_Projects/work/MVP_project-worktrees/ux-insurgo-history-1970"],"76309":["~/Coding_Projects/work/MVP_project-worktrees/ux-insurgo-history-1970"],"76310":["~/Coding_Projects/work/MVP_project-worktrees/ux-insurgo-history-1970"],"76311":["~/Coding_Projects/work/MVP_project-worktrees/ux-insurgo-history-1970"],"76312":["~/Coding_Projects/work/MVP_project-worktrees/ux-insurgo-history-1970"],"76313":["~/Coding_Projects/work/MVP_project-worktrees/ux-insurgo-history-1970"],"76314":["~/Coding_Projects/work/MVP_project-worktrees/ux-insurgo-history-1970"],"76391":["~/Coding_Projects/work/MVP_project-worktrees/ux-insurgo-history-1970"],"76897":["~/Coding_Projects/work/MVP_project-worktrees/ux-insurgo-history-1970"],"76900":["~/Coding_Projects/work/MVP_project-worktrees/ux-insurgo-history-1970"],"76903":["~/Coding_Projects/work/MVP_project-worktrees/ux-insurgo-history-1970"],"76909":["~/Coding_Projects/work/MVP_project-worktrees/ux-insurgo-history-1970"],"76914":["~/Coding_Projects/work/MVP_project-worktrees/ux-insurgo-history-1970"]}`. Full process snapshots are in raw evidence.
+
+Known co-tenants: thirteenth-fix run `20261115-110851-mac-fix-gr5-retime-appearance-planning`, harness PID 18005, branch `codex/mac-fix-gr5-retime-appearance-planning`, PR #279; `20261115-115959-ux-insurgo-history-1970`, harness PID 26553; additional discovered sessions are listed above. No shared worktree, cancellation, debugging, file/branch modification or messages to those sessions. CPU quietness wait occurred before day start; host-load qualifications apply to every measured window.
+
+**gc-day sessions/builds observed at boundaries and minute samples:**
+
+| Session | phases seen while live |
+| --- | --- |
+| 20261115-110851-mac-fix-gr5-retime-appearance-planning | fix, review |
+| 20261115-115959-ux-insurgo-history-1970 | implement, local_tests, pr, review |
+| 20261115-121910-rig-player-car | fix, review |
+
+| Build/process worktree | PIDs seen |
+| --- | --- |
+| ~/Coding_Projects/big-ambitions/big-ambitions-persistent-city-worktrees/fix-gr5-retime-appearance-planning | 54999, 55001, 55075, 55078, 55114, 55253 |
+| ~/Coding_Projects/work/MVP_project-worktrees/ux-insurgo-history-1970 | 55800, 55908, 55914, 59268, 59580, 59609, 60014, 60047, 60230, 60316, 60323, 60572, 60573, 60574, 60575, 60576, 60577, 60578, 61408, 61719, 61720, 61722, 62103, 62104, 62105, 62106, 62107, 62108, 62393, 62395, 62606, 63087, 63156, 63159, 63166, 63741, 63742, 63799, 63800, 63806 |
+| ~/Coding_Projects/big-ambitions/big-ambitions-agent-rig-worktrees/rig-player-car | 55920, 55922, 55981, 55987, 56010, 56166 |
+| ~/Coding_Projects/big-ambitions/big-ambitions-persistent-city-worktrees/fix-gr5-retime-appearance-planning/Compatibility | 60567, 62330, 63144, 63453, 63888 |
+| ~/Coding_Projects/big-ambitions/big-ambitions-persistent-city-worktrees/fix-gr5-retime-appearance-planning/Persistence | 63895 |
+| ~/Coding_Projects/big-ambitions/big-ambitions-persistent-city-worktrees/fix-gr5-retime-appearance-planning/Core | 60611, 62338, 63153, 63469, 63896 |
+| ~/Coding_Projects/big-ambitions/big-ambitions-persistent-city-worktrees/fix-gr5-retime-appearance-planning/tests | 60594, 62337, 62350, 63152, 63161, 63468, 63482 |
+| ~/Coding_Projects/big-ambitions/big-ambitions-persistent-city-worktrees/fix-gr5-retime-appearance-planning/tests/bin/Debug/net10.0 | 62352, 63162, 63483 |
+
+**gc-night sessions/builds observed at boundaries and minute samples:**
+
+| Session | phases seen while live |
+| --- | --- |
+| 20261115-110851-mac-fix-gr5-retime-appearance-planning | fix, local_tests |
+| 20261115-115959-ux-insurgo-history-1970 | fix, review |
+| 20261115-121910-rig-player-car | ci, fix, push, review |
+
+| Build/process worktree | PIDs seen |
+| --- | --- |
+| ~/Coding_Projects/big-ambitions/big-ambitions-persistent-city-worktrees/fix-gr5-retime-appearance-planning/Compatibility | 63888, 66089 |
+| ~/Coding_Projects/big-ambitions/big-ambitions-persistent-city-worktrees/fix-gr5-retime-appearance-planning/tests | 63895, 63951, 66102, 66119 |
+| ~/Coding_Projects/big-ambitions/big-ambitions-persistent-city-worktrees/fix-gr5-retime-appearance-planning/Core | 63896, 66103 |
+| ~/Coding_Projects/big-ambitions/big-ambitions-persistent-city-worktrees/fix-gr5-retime-appearance-planning/tests/bin/Debug/net10.0 | 63952, 66120 |
+| ~/Coding_Projects/work/MVP_project-worktrees/ux-insurgo-history-1970 | 64008, 64011, 64071, 64075, 64131, 64209, 65219 |
+| ~/Coding_Projects/big-ambitions/big-ambitions-agent-rig-worktrees/rig-player-car | 66752, 66753, 66818, 66824, 66879, 66932 |
+
+**street sessions/builds observed at boundaries and minute samples:**
+
+| Session | phases seen while live |
+| --- | --- |
+| 20261115-110851-mac-fix-gr5-retime-appearance-planning | local_tests, review |
+| 20261115-115959-ux-insurgo-history-1970 | fix |
+| 20261115-121910-rig-player-car | ci, fix, review |
+
+| Build/process worktree | PIDs seen |
+| --- | --- |
+| ~/Coding_Projects/big-ambitions/big-ambitions-persistent-city-worktrees/fix-gr5-retime-appearance-planning/Compatibility | 66089, 68291 |
+| ~/Coding_Projects/big-ambitions/big-ambitions-persistent-city-worktrees/fix-gr5-retime-appearance-planning/tests | 66102, 66119, 68292, 68299, 68549, 68550, 68666, 68671, 69504, 69513 |
+| ~/Coding_Projects/big-ambitions/big-ambitions-persistent-city-worktrees/fix-gr5-retime-appearance-planning/Core | 66103, 68293 |
+| ~/Coding_Projects/big-ambitions/big-ambitions-persistent-city-worktrees/fix-gr5-retime-appearance-planning/tests/bin/Debug/net10.0 | 66120, 68300, 68551, 68672, 69534 |
+| ~/Coding_Projects/big-ambitions/big-ambitions-agent-rig-worktrees/rig-player-car | 66752, 66753, 66818, 66824, 66879, 66932, 70195, 70198, 70257, 70260, 70316, 70377 |
+| ~/Coding_Projects/work/MVP_project-worktrees/ux-insurgo-history-1970 | 68208, 68230, 68703, 69020, 69068, 69071, 69077, 69343, 69392, 69395, 69401, 70086, 70115, 74723, 75418, 75481, 76308, 76309, 76310, 76311, 76312, 76313, 76314, 76391, 76897, 76900, 76903, 76909, 76914 |
+| ~/Coding_Projects/big-ambitions/big-ambitions-persistent-city-worktrees/fix-gr5-retime-appearance-planning | 67735, 67739, 67803, 67805, 67838, 68033 |
+| ~/Coding_Projects/big-ambitions/big-ambitions-agent-rig-worktrees/rig-player-car/rig-ops/tests | 69081 |
+
+### #277 check 4 look stability
+
+**PARTIAL.** Graphics process PID 77500, same candidate DLL, background --rig-test outside every timing window. Five distinct native walker handles were followed, player/camera moved from x=215,z=0 to x=317.531,z=-122.201805 (159.5 m, beyond the configured 120 m body radius), waited 8 s, returned and waited 5 s. This does not establish five distinct persistent residents or actual body release/reacquire: the installed ops expose native handles, not resident/body links.
+
+Return durations for cycles 0–4: 19.638 / 18.153 / 18.536 / 18.257 / 18.971 s (exact controller values remain in look.log). Handles 0–2 remained readable on return; 3–4 returned ops_view_stale_target for screen_pos get and camera follow. Changed speed 1→2, waited 10 s, restored speed 1, waited 5 s, then bounded reload completed in 99.3 s. No ops_load_* failure or cold recovery. All five old handles returned ops_view_stale_target after reload; rediscovery found 40 fresh native handles, with no persistent identity link to the earlier five.
+
+Twelve 1600×900 captures inspected. Pair 0 has a cropped dressed blond/red-and-black figure before, then building obstruction. Pair 1 shows consistent grey/light top, magenta skirt, dark leggings and light shoes before/after, without proof of body release. Pair 2 is obstructed by building geometry in both images. Pair 3 shows dressed figures but the selected handle became stale; the image cannot establish identity. Pair 4 loses the selected red-shirted figure after return and leaves the purple-shirted player. The player is not counted as a resident. After-reload wide capture shows the player and curbside cars. No undressed body was observed; sparse/obstructed stills do not prove every required resident stayed dressed or exclude brief flashes.
+
+Curbside cars are visible; some appear raised or overlapping in the initial/close views. Saved-curb identities and assignments are not exported, so the literal saved-curb gate is NOT RUN / tooling gap. No new regression is established by these stills. Five-resident same-look continuity through actual release/reacquire, the retime and reload remains NOT RUN / tooling gap. No weaker pass criterion is substituted.
+
+Zero instances of each requested error string in each complete retained process log:
+
+| Process log | Appearance meshes unavailable | Empty appearance | Merged body |
+| --- | --- | --- | --- |
+| Player-C0.log | 0 | 0 | 0 |
+| Player-A-final.log | 0 | 0 | 0 |
+| Player-B.log | 0 | 0 | 0 |
+
+Graphics Clock retime lines:
+
+```text
+[Mod:PersistentCity] Clock retime: body release 0.0 ms in the previous update, journey retime 139.4 ms, simulation rebuild 56.5 ms.
+[Mod:PersistentCity] Clock retime: body release 0.0 ms in the previous update, journey retime 128.3 ms, simulation rebuild 35.5 ms.
+[Mod:PersistentCity] Clock retime: body release 188.6 ms in the previous update, journey retime 244.2 ms, simulation rebuild 60.3 ms.
+[Mod:PersistentCity] Clock retime: body release 0.0 ms in the previous update, journey retime 90.1 ms, simulation rebuild 30.1 ms.
+```
+
+Exact invoked look op failures (successful schema/capability read is retained as B-ops.json):
+
+- `python3 scripts/mac-agent op screen_pos '{"action": "get", "target": {"kind": "walker", "id": "walker-ac1813db8c4f452290acf1fd6a211b22"}}'` → `{   "error": "ops_view_stale_target",   "reply": {     "ok": false,     "id": "ed1c87b202334845a7852f2e940cad1b",     "session": "671012e72e154ea6bebb9b84a2aca8b8",     "error": "ops_view_stale_target"   } }`.
+- `python3 scripts/mac-agent op camera '{"action": "follow", "target": {"kind": "walker", "id": "walker-ac1813db8c4f452290acf1fd6a211b22"}, "offset": {"x": 0, "y": 4, "z": -6}, "seconds": 10}'` → `{   "error": "ops_view_stale_target",   "reply": {     "ok": false,     "id": "a90ecf71e7ca4b51a30d48d02eedcb07",     "session": "671012e72e154ea6bebb9b84a2aca8b8",     "error": "ops_view_stale_target"   } }`.
+- `python3 scripts/mac-agent op screen_pos '{"action": "get", "target": {"kind": "walker", "id": "walker-0b80f7c6008a480287fa99dd99fa16bb"}}'` → `{   "error": "ops_view_stale_target",   "reply": {     "ok": false,     "id": "ddd4f2a433154d1faa53ec4c160b95b7",     "session": "671012e72e154ea6bebb9b84a2aca8b8",     "error": "ops_view_stale_target"   } }`.
+- `python3 scripts/mac-agent op camera '{"action": "follow", "target": {"kind": "walker", "id": "walker-0b80f7c6008a480287fa99dd99fa16bb"}, "offset": {"x": 0, "y": 4, "z": -6}, "seconds": 10}'` → `{   "error": "ops_view_stale_target",   "reply": {     "ok": false,     "id": "409e1c5e89914e918b3d87c3ac77b031",     "session": "671012e72e154ea6bebb9b84a2aca8b8",     "error": "ops_view_stale_target"   } }`.
+- `python3 scripts/mac-agent op screen_pos '{"action": "get", "target": {"kind": "walker", "id": "walker-55199280320b48e8950c46a53a896010"}}'` → `{   "error": "ops_view_stale_target",   "reply": {     "ok": false,     "id": "a75f521854bd4307a7a8b446fdc6011f",     "session": "671012e72e154ea6bebb9b84a2aca8b8",     "error": "ops_view_stale_target"   } }`.
+- `python3 scripts/mac-agent op screen_pos '{"action": "get", "target": {"kind": "walker", "id": "walker-dbebe6318151490b8f9b5270c7f6caed"}}'` → `{   "error": "ops_view_stale_target",   "reply": {     "ok": false,     "id": "57940211c65e40e599d25e75a524cc20",     "session": "671012e72e154ea6bebb9b84a2aca8b8",     "error": "ops_view_stale_target"   } }`.
+- `python3 scripts/mac-agent op screen_pos '{"action": "get", "target": {"kind": "walker", "id": "walker-08ae2731b32d4433b30f34cd235ca1a1"}}'` → `{   "error": "ops_view_stale_target",   "reply": {     "ok": false,     "id": "0cd17c5eec68417cbb04b9f76176de10",     "session": "671012e72e154ea6bebb9b84a2aca8b8",     "error": "ops_view_stale_target"   } }`.
+- `python3 scripts/mac-agent op screen_pos '{"action": "get", "target": {"kind": "walker", "id": "walker-ac1813db8c4f452290acf1fd6a211b22"}}'` → `{   "error": "ops_view_stale_target",   "reply": {     "ok": false,     "id": "f41c92b4f00844d394b2fe6eb8da1c5c",     "session": "671012e72e154ea6bebb9b84a2aca8b8",     "error": "ops_view_stale_target"   } }`.
+- `python3 scripts/mac-agent op screen_pos '{"action": "get", "target": {"kind": "walker", "id": "walker-0b80f7c6008a480287fa99dd99fa16bb"}}'` → `{   "error": "ops_view_stale_target",   "reply": {     "ok": false,     "id": "32322249d0394d7685c4e398c8542966",     "session": "671012e72e154ea6bebb9b84a2aca8b8",     "error": "ops_view_stale_target"   } }`.
+
+
+### Findings, exact errors and NOT RUN
+
+`building read` for the collider-free unreadable subject returned `ops_building_bounds_unavailable` both before and after reload; this is the expected closed failure, not a missing-role failure. All five roles exist. No `ops_building_fixture_reload_incomplete` occurred.
+
+Preparation command refusals, recovered before D: `new_game {"name":"FT RIGTMP-GR5-15d-mac"}` from the loaded C0 city returned `new_game works from the main menu only; the game is at the city now.` The attempted bridge `menu {}` returned `Unknown command 'menu'.` with the command list. Stopped/restarted only the owned player and created the new city from the menu. A local controller initially dereferenced a null health.load while new_game was starting (`AttributeError: 'NoneType' object has no attribute 'get'`); resumed health polling in the same player, without repeating new_game. These are retained in raw logs.
+
+- GR-5 60 fps street/busy-shop arms: NOT RUN, Windows-only; Mac about 5–8 fps at 1,000 residents. Peter is gaming on the PC; no PC work or contact.
+- GR-5 save latency: NOT RUN, owner decision pending; no save profiling or save-latency measurement.
+- #262 checks 4–5 / #254-4 look identity: NOT RUN, resident-reacquire op missing from installed rig capabilities.
+- All other checks outside C0, D and #277 1–4: NOT RUN, outside this run. Literal resident identity/release/reacquire/reload and saved-curb proof within #277-4 remain tooling gaps, detailed above.
+
+### Cleanup and validation
+
+Fixture reverted before timing; disposable_save confirms both target disposables absent; no fixture sidecar remains. Owned agentmac game stopped normally. Printed stage rollback restored the complete PersistentCity folder and install.json; own pre-stage manifest verified exact hashes. Isolated preferences, persistent-city.json, autosave and frame-cap configuration restored, including absence where originally absent. RLO manifest unchanged. AgentRigOps remains at #93 hash. Lease released; no process started by this run remains running.
+
+Restore verification: `{"original_files_verified":29,"original_absent_paths_verified":3,"rlo_files_verified":53,"mismatches":[],"agent_rig_ops_sha256":"aa3481a680defffca4290069a29a0eb53332ff97ac95e5f9e94fb17aab13726e","install_json_sha256":"31566114100270354118e29cefa63871db1b9ee358d2abf161724d877c630166","fixture_sidecars":0,"disposables_absent":["FT RIGTMP-GR5-15c","FT RIGTMP-GR5-15c-mac","FT RIGTMP-GR5-15d-mac"],"sealed_fixture_hash_match":true,"lease_released":true,"started_game_processes_gone":[49403,50212,77500],"caffeinate_processes_gone":true}`.
+
+Offline verification: build passed; docs link and markdown-ban checks run for the results diff. No production code changes, no full test suite or regression suite. Original checkout unchanged. Build/evidence worktree removed after evidence commit and PR creation. No merge, release, Workshop, version/changelog, schema or weight change.
+
+Refs #246 #277
