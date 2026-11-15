@@ -96,7 +96,13 @@ namespace PersistentCity.Persistence
             }
         }
 
-        internal void MarkSerialized() => Volatile.Write(ref serialized, 1);
+        internal void MarkSerialized(int compressorThreadId)
+        {
+            CompressorThreadId = compressorThreadId;
+            Volatile.Write(ref serialized, 1);
+        }
+
+        public int CompressorThreadId { get; private set; }
         internal void MarkClaimed() { lock (gate) { claimed = 1; Monitor.PulseAll(gate); } }
 
         public bool WaitClaimed(int milliseconds) => WaitFor(milliseconds, () => claimed != 0 || spliceDone != 0);
@@ -301,10 +307,11 @@ namespace PersistentCity.Persistence
         public const int ClaimWaitMilliseconds = 2000;
         public const string StagingSuffix = ".persistentcity-staging";
         private static readonly object gate = new object();
-        private static PendingSave? expected, latest, refusing;
+        private static PendingSave? expected, latest, refusing, publishing;
         private static string? expectedPath;
 
         public static bool RefusalOutstanding { get { lock (gate) return refusing != null; } }
+        public static bool PublicationOutstanding { get { lock (gate) return publishing != null && !publishing.SpliceDone; } }
 
         public static void Expect(PendingSave save, string? tempPath)
         {
@@ -312,6 +319,7 @@ namespace PersistentCity.Persistence
             lock (gate)
             {
                 if (refusing != null) throw new InvalidOperationException("A cancelled hand-off still waits for its compressor.");
+                if (publishing != null && !publishing.SpliceDone) throw new InvalidOperationException("An earlier hand-off is still publishing.");
                 expected = latest = save; expectedPath = tempPath; save.TempPath = tempPath;
             }
         }
@@ -323,13 +331,13 @@ namespace PersistentCity.Persistence
 
         internal static void Reset()
         {
-            lock (gate) { expected = latest = refusing = null; expectedPath = null; }
+            lock (gate) { expected = latest = refusing = publishing = null; expectedPath = null; }
             BeforePublish = null;
         }
 
-        public static void MarkSerialized()
+        public static void MarkSerialized(int compressorThreadId = 0)
         {
-            lock (gate) { latest?.MarkSerialized(); latest = null; }
+            lock (gate) { latest?.MarkSerialized(compressorThreadId); latest = null; }
         }
 
         public static PendingSave? Claim(string? path) => Claim(path, out _);
@@ -345,6 +353,7 @@ namespace PersistentCity.Persistence
                 {
                     var cancelled = refusing;
                     if (cancelled == null || cancelled.TempPath != null && !string.Equals(path, cancelled.TempPath, StringComparison.Ordinal)) return null;
+                    if (cancelled.CompressorThreadId != 0 && cancelled.CompressorThreadId != Thread.CurrentThread.ManagedThreadId) return null;
                     refusing = null;
                     cancelled.MarkClaimed();
                     refused = true;
@@ -373,16 +382,20 @@ namespace PersistentCity.Persistence
             return refused ? false : (bool?)null;
         }
 
-        public static void AwaitCompression(PendingSave save, int claimMilliseconds = ClaimWaitMilliseconds,
-            int spliceMilliseconds = CompressWaitMilliseconds + 10000)
+        public const int PublishWaitMilliseconds = 30000;
+
+        public static bool AwaitCompression(PendingSave save, int claimMilliseconds = ClaimWaitMilliseconds,
+            int spliceMilliseconds = CompressWaitMilliseconds + 10000, int publishMilliseconds = PublishWaitMilliseconds)
         {
             if (save == null) throw new ArgumentNullException(nameof(save));
-            if (save.CompressionSettled || !save.Serialized && !save.Claimed) return;
+            if (save.CompressionSettled || !save.Serialized && !save.Claimed) return true;
             if (!save.WaitClaimed(claimMilliseconds) && Refuse(save, "native compression did not take the hand-off within "
-                + Seconds(claimMilliseconds))) return;
-            if (save.WaitSpliced(spliceMilliseconds)) return;
-            if (save.Cancel("native compression did not finish within " + Seconds(spliceMilliseconds))) return;
-            save.WaitSpliced(Timeout.Infinite);
+                + Seconds(claimMilliseconds))) return true;
+            if (save.WaitSpliced(spliceMilliseconds)) return true;
+            if (save.Cancel("native compression did not finish within " + Seconds(spliceMilliseconds))) return true;
+            if (save.WaitSpliced(publishMilliseconds)) return true;
+            lock (gate) { if (!save.SpliceDone) publishing = save; }
+            return save.SpliceDone;
         }
 
         private static bool Refuse(PendingSave save, string reason)

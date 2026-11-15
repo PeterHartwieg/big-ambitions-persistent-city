@@ -16,6 +16,7 @@ namespace PersistentCity.Runtime
         private const string PatchId = "persistentcity.save-handoff";
         private static readonly Harmony patches = new Harmony(PatchId);
         private static MethodInfo? compress, save;
+        private static FieldInfo? compressThread;
         private static long nativeStarted;
 
         internal static bool Installed { get; private set; }
@@ -36,6 +37,9 @@ namespace PersistentCity.Runtime
                 save = AccessTools.Method(typeof(SaveGameManager), nameof(SaveGameManager.Save),
                     new[] { typeof(SaveGameManager.SaveType), typeof(string), typeof(string) });
                 if (save == null) { Status = "SaveGameManager.Save(SaveType, string, string) is missing."; return; }
+                compressThread = AccessTools.Field(typeof(SaveGameManager), "_saveGameSaveThread");
+                if (compressThread == null || compressThread.FieldType != typeof(System.Threading.Thread) || !compressThread.IsStatic)
+                { Status = "SaveGameManager._saveGameSaveThread is missing."; return; }
                 string? contract = SelfTest();
                 if (contract != null) { Status = "Save hand-off contract check failed: " + contract; return; }
                 patches.Patch(compress, prefix: new HarmonyMethod(typeof(NativeSaveHandOff), nameof(CompressPrefix)) { priority = Priority.First });
@@ -73,7 +77,7 @@ namespace PersistentCity.Runtime
 
         private static void SavePostfix()
         {
-            SaveHandOff.MarkSerialized();
+            SaveHandOff.MarkSerialized((compressThread?.GetValue(null) as System.Threading.Thread)?.ManagedThreadId ?? 0);
             if (nativeStarted == 0) return;
             LastNativeSaveMilliseconds = (Stopwatch.GetTimestamp() - nativeStarted) * 1000.0 / Stopwatch.Frequency;
             NativeSaves++;

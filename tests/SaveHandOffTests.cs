@@ -437,6 +437,81 @@ public sealed class SaveHandOffTests
     }
 
     [Fact]
+    public void ANewerCompressorArrivingBeforeTheCancelledOriginalNeitherConsumesNorTakesItsRefusal()
+    {
+        var city = City();
+        var save = new Save(city);
+        var (_, late) = save.Begin(city);
+        Assert.Null(save.Settle(late!));
+        string temp = TempFile(Odin((SaveStore.StateKey, late!.PayloadToken), (SaveEpochStore.Key, late.MarkerToken)));
+        string oldSlot = temp + ".old", newSlot = temp + ".new";
+        byte[] previous = { 4, 4, 4 };
+        File.WriteAllBytes(oldSlot, previous);
+        bool? original = true;
+        var originalCompressor = new Thread(() => original = SaveHandOff.TryCompress(temp, oldSlot)) { Name = "SaveGame Compress Thread" };
+        try
+        {
+            SaveHandOff.Expect(late, temp);
+            SaveHandOff.MarkSerialized(originalCompressor.ManagedThreadId);
+            SaveHandOff.AwaitCompression(late, 50, 50);
+            SaveHandOff.Clear();
+            Assert.True(SaveHandOff.RefusalOutstanding);
+            File.WriteAllBytes(temp, Odin(("newer", "synchronous save")));
+            bool? newer = false;
+            var newerCompressor = new Thread(() => newer = SaveHandOff.TryCompress(temp, newSlot));
+            newerCompressor.Start();
+            Assert.True(newerCompressor.Join(Wait));
+            Assert.Null(newer);
+            Assert.True(SaveHandOff.RefusalOutstanding);
+            originalCompressor.Start();
+            Assert.True(originalCompressor.Join(Wait));
+            Assert.False(original);
+            Assert.Equal(previous, File.ReadAllBytes(oldSlot));
+            Assert.False(SaveHandOff.RefusalOutstanding);
+        }
+        finally { File.Delete(temp); File.Delete(oldSlot); File.Delete(newSlot); SaveHandOff.Reset(); }
+    }
+
+    [Fact]
+    public void AStalledPublicationReleasesShutdownAfterTheBoundAndBlocksNewHandOffsUntilItFinishes()
+    {
+        var city = City();
+        var save = new Save(city);
+        var (_, publishing) = save.Begin(city);
+        Assert.True(publishing!.Wait(Wait));
+        string temp = TempFile(Odin((SaveStore.StateKey, publishing.PayloadToken), (SaveEpochStore.Key, publishing.MarkerToken)));
+        string output = temp + ".out";
+        File.WriteAllBytes(output, new byte[] { 1 });
+        var hold = new ManualResetEventSlim(false);
+        var entered = new ManualResetEventSlim(false);
+        try
+        {
+            SaveHandOff.BeforePublish = () => { entered.Set(); hold.Wait(); };
+            SaveHandOff.Expect(publishing, temp);
+            bool? written = null;
+            var compressor = new Thread(() => written = SaveHandOff.TryCompress(temp, output));
+            compressor.Start();
+            SaveHandOff.MarkSerialized(compressor.ManagedThreadId);
+            Assert.True(entered.Wait(Wait));
+            Assert.False(SaveHandOff.AwaitCompression(publishing, Wait, 50, 100));
+            Assert.False(publishing.Cancelled);
+            Assert.False(publishing.SpliceDone);
+            Assert.True(SaveHandOff.PublicationOutstanding);
+            Assert.Null(save.Settle(publishing));
+            var (_, next) = save.Begin(city);
+            Assert.True(next!.Wait(Wait));
+            Assert.Throws<InvalidOperationException>(() => SaveHandOff.Expect(next, temp));
+            hold.Set();
+            Assert.True(compressor.Join(Wait));
+            Assert.True(written);
+            Assert.False(SaveHandOff.PublicationOutstanding);
+            Assert.Equal(publishing.Payload, ReadOdin(Gunzip(output))[SaveStore.StateKey]);
+            SaveHandOff.Expect(next, temp);
+        }
+        finally { hold.Set(); File.Delete(temp); File.Delete(output); SaveHandOff.Reset(); }
+    }
+
+    [Fact]
     public void AnActivePublicationIsAwaitedPastTheSpliceDeadlineAndNeverOverlapsTheNextSave()
     {
         var city = City();

@@ -20,8 +20,8 @@ namespace PersistentCity.Runtime
         private bool BackgroundSaveAvailable()
         {
             if (backgroundSaveDisabled) return false;
-            string? conflict = SaveHandOff.RefusalOutstanding
-                ? "A cancelled save hand-off still waits for its native compressor." : NativeSaveHandOff.Conflict();
+            string? conflict = SaveHandOff.RefusalOutstanding ? "A cancelled save hand-off still waits for its native compressor."
+                : SaveHandOff.PublicationOutstanding ? "An earlier save is still being published by its native compressor." : NativeSaveHandOff.Conflict();
             if (conflict == null) return true;
             if (!string.Equals(conflict, backgroundSaveStatus, StringComparison.Ordinal))
                 log?.Warn("Persistent City writes this save on the main thread: " + conflict);
@@ -89,7 +89,9 @@ namespace PersistentCity.Runtime
         {
             var splicing = splicingSave;
             if (splicing == null) return;
-            SaveHandOff.AwaitCompression(splicing);
+            if (!SaveHandOff.AwaitCompression(splicing))
+                log?.Warn("Persistent City save publication did not finish within " + SaveHandOff.PublishWaitMilliseconds / 1000
+                    + " s; it keeps its file and later saves write on the main thread until it finishes.");
             if (splicing.CompressionSettled) ReportSplice(splicing, stopOnRefusal);
             else splicingSave = null;
         }
