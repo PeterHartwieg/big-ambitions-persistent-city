@@ -5862,7 +5862,7 @@ Refs #246 #277
 
 ## Rig results — 15 November 2026 e, Mac (planned 16b relaunch; #279 checks 1-4, #246 check 4 re-baseline at cbd4e68e)
 
-**RESULT: DONE. 3 passed / 1 partial / 4 failed / 4 NOT RUN groups.** Counted checks: A1–A4, D4–D5, leftover cleanup and E27 when measured. All timing/GC/street numbers are **PROVISIONAL (shared Mac)**. In-game proof gates no merge; leave this docs-only results PR unmerged.
+**RESULT: DONE. 3 passed / 1 partial / 4 failed / 4 NOT RUN groups.** Counted checks: A1–A4, D4–D5, leftover cleanup and E27 when measured. All timing/GC/street numbers are **PROVISIONAL (shared Mac)**. The unresolved native proof gates apply to product changes. This docs-only results PR merges after current-head reviewer approval.
 
 Role `rig_test`, where `mac`, isolated `agentmac`, run `persistent-city-rig-2026-11-15f-mac`. `<stage>` = `~/HART-Builds/persistent-city-rig-2026-11-15f-mac`. Order: A day, night, street, look; D fresh re-baseline; E diagnostic reads. Raw logs, replies, controllers and backups remain outside Git in `<stage>`. Report copy: `~/Coding_Projects/.agent-logs/persistent-city-rig-2026-11-15f-mac.md`. MB is decimal.
 
