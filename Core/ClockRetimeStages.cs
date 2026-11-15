@@ -69,10 +69,10 @@ namespace PersistentCity.Core
                     }
                 }
                 snapshot = null; snapshotState = null;
-                CountSlice(started);
                 bool restarted = restartPending;
                 restartPending = false;
                 Pending = TravelTiming.Begin(state, walkMetresPerSecond, nativeRate);
+                CountSlice(started);
                 if (Pending == null) { Degraded = 0; finished = true; return ClockRetimeOutcome.Committed; }
                 return restarted ? ClockRetimeOutcome.Restarted : ClockRetimeOutcome.Began;
             }
