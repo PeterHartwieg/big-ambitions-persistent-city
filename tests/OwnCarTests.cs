@@ -152,6 +152,9 @@ public sealed class OwnCarTests
         Assert.Equal(expected.Keys.Except(blocked).OrderBy(k => k, StringComparer.Ordinal), vehicles.Parked.Keys.OrderBy(k => k, StringComparer.Ordinal));
         Assert.Equal(2, vehicles.MaximumParkedAttempts);
         Assert.Equal(2, vehicles.LastParkedAttempts);
+        int refreshes = vehicles.ParkedRefreshes;
+        for (int frame = 0; frame < 5; frame++) { Time.Next(0.11f); bodies.Update(); }
+        Assert.Equal(refreshes, vehicles.ParkedRefreshes);
     }
 
     [Fact]

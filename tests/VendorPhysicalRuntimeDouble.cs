@@ -188,7 +188,7 @@ namespace PersistentCity.Runtime
             parkedCursor = first + attempts;
             LastParkedAttempts = attempts; MaximumParkedAttempts = Math.Max(MaximumParkedAttempts, attempts);
             foreach (var id in Parked.Keys.Where(id => !keep.Contains(id)).ToList()) Parked.Remove(id);
-            return placed == pending.Count;
+            return attempts == pending.Count;
         }
         internal bool Activate() => true;
         internal void AssertHealthy() { }

@@ -755,7 +755,7 @@ namespace PersistentCity.Runtime
             for (; attempts < pending.Count && attempts < ParkedAttemptsPerRefresh && placed < ParkedPlacementsPerRefresh; attempts++)
                 if (TryPlaceParked(wanted[pending[(first + attempts) % pending.Count]], car)) placed++;
             parkedCursor = first + attempts;
-            bool complete = placed == pending.Count;
+            bool complete = attempts == pending.Count && (pending.Count == placed || SceneReady);
             pending.Clear();
             parkedScratch.Clear();
             foreach (var shown in parked.Values) parkedScratch.Add(shown);
