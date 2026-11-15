@@ -36,7 +36,9 @@ namespace PersistentCity.Runtime
             + idle.Count + " idle/" + all.Count + " owned/" + Adopted + " adopted/" + BlendshapeBake.Bakes + " baked/" + BlendshapeBake.ScratchSizes + " bake sizes/"
             + BlendshapeBake.ScratchBytes / 1024 + " KB bake scratch/" + Instantiated + " grown/" + Trimmed + " trimmed/"
             + budget.Gate!.Fitted + " fitted/" + budget.Gate.Waited + " waited/"
-            + budget.Gate.EstimateMilliseconds.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture) + " ms build";
+            + budget.Gate.EstimateMilliseconds.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture) + " ms build/"
+            + BodyMerge.Fast + " fast merges/" + BodyMerge.Native + " native merges/" + BodyMerge.Failed + " failed merges"
+            + (BodyMerge.LastError.Length == 0 ? "" : " (" + BodyMerge.LastError + ")");
         private readonly Dictionary<string, PhysicalPedestrianBody> active = new Dictionary<string, PhysicalPedestrianBody>(StringComparer.Ordinal);
         private bool disposed;
 
@@ -45,6 +47,7 @@ namespace PersistentCity.Runtime
             if (parent == null) throw new ArgumentNullException(nameof(parent));
             if (maximum < 1 || maximum > 256) throw new ArgumentOutOfRangeException(nameof(maximum));
             this.parent = parent; this.maximum = maximum; ceiling = DressedBodyPool<ThirdPersonCharacter>.Ceiling(maximum);
+            BodyMerge.Install();
             AdoptReserve();
             NavigationHook.Attach(this);
         }
@@ -92,6 +95,7 @@ namespace PersistentCity.Runtime
 
         private static void DestroyCharacter(ThirdPersonCharacter character)
         {
+            BodyMerge.Forget(character.appearanceSetter?.meshCombiner);
             NotifyRemoved(character);
             UnityEngine.Object.Destroy(character.gameObject);
         }
@@ -276,6 +280,7 @@ namespace PersistentCity.Runtime
             character.transform.SetParent(parent, false);
             all.Add(character);
             if (BlendshapeBake.Adopt(character.appearanceSetter.meshCombiner)) baked.Add(character.appearanceSetter);
+            BodyMerge.Own(character.appearanceSetter.meshCombiner);
             return character;
         }
 
@@ -364,7 +369,7 @@ namespace PersistentCity.Runtime
         private void DestroyOwned(ThirdPersonCharacter character)
         {
             all.Remove(character); leases.Forget(character);
-            if (character != null && character.appearanceSetter != null) baked.Remove(character.appearanceSetter);
+            if (character != null && character.appearanceSetter != null) { baked.Remove(character.appearanceSetter); BodyMerge.Forget(character.appearanceSetter.meshCombiner); }
             if (character != null)
             {
                 NotifyRemoved(character);
