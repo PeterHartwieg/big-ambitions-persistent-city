@@ -181,6 +181,7 @@ namespace PersistentCity.Core
         private double? estimatedMinutes;
         private RouteLegs legs;
         private double committedMinutes;
+        internal long[]? PresentationCells;
         public Route() { legs = new RouteLegs(); }
         internal Route(RouteLegs legs) { this.legs = legs ?? throw new ArgumentNullException(nameof(legs)); }
         public RouteLegs Legs

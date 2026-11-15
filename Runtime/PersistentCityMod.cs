@@ -339,7 +339,7 @@ namespace PersistentCity.Runtime
                         if (routes != null) swapped.ReuseRoadSceneForRetiming(routes);
                         routes = swapped;
                         seenRoadSnapshots = 0; clockRetimingRoutes = true;
-                        simulation = simulation.RebuildRoutes(routes);
+                        simulation = simulation.RebuildRoutes(routes, retimeDriver.TakeRetimedTraffic());
                         vendorMarket?.Rebind(simulation);
                         seenPlanningRequests = seenEventRestarts = seenInlineRestarts = 0;
                         log?.Info("Clock retime: body release " + Milliseconds(retimeReleaseMilliseconds) + " ms in the previous update, journey retime "

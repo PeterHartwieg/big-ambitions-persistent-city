@@ -833,8 +833,28 @@ namespace PersistentCity.Core
         public TrafficKernelState Capture(Func<string, bool> exclude)
         {
             if (exclude == null) throw new ArgumentNullException(nameof(exclude));
-            TrafficKernelState state = Capture();
-            if (state.Vehicles.RemoveAll(v => exclude(v.VehicleId)) == 0) return state;
+            return RunToEnd(CaptureExcludingSteps(exclude, int.MaxValue));
+        }
+
+        public IEnumerator<TrafficKernelState?> CaptureInSteps(Func<string, bool> exclude, int linksPerStep)
+        {
+            if (exclude == null) throw new ArgumentNullException(nameof(exclude));
+            if (linksPerStep < 1) throw new ArgumentOutOfRangeException(nameof(linksPerStep));
+            return CaptureExcludingSteps(exclude, linksPerStep);
+        }
+
+        private IEnumerator<TrafficKernelState?> CaptureExcludingSteps(Func<string, bool> exclude, int linksPerStep)
+        {
+            int work = 0;
+            TrafficKernelState? state = null;
+            var capture = CaptureInSteps(linksPerStep);
+            while (capture.MoveNext())
+            {
+                if (capture.Current != null) { state = capture.Current; break; }
+                yield return null;
+            }
+            if (state == null) throw new InvalidOperationException("Traffic capture ended without a result.");
+            if (state.Vehicles.RemoveAll(v => exclude(v.VehicleId)) == 0) { yield return state; yield break; }
             var rebased = new Dictionary<string, double>(StringComparer.Ordinal);
             foreach (Link link in orderedLinks)
             {
@@ -854,6 +874,7 @@ namespace PersistentCity.Core
                     if (exclude(occupant.VehicleId)) behind = true;
                     else if (behind && allowed < motion) rebased[occupant.VehicleId] = allowed;
                 }
+                if (++work % linksPerStep == 0) yield return null;
             }
             foreach (TrafficVehicleState vehicle in state.Vehicles)
             {
@@ -866,8 +887,21 @@ namespace PersistentCity.Core
             {
                 link.Vehicles.RemoveAll(id => exclude(id));
                 link.WaitingSources.RemoveAll(id => exclude(id));
+                if (++work % linksPerStep == 0) yield return null;
             }
-            return Restore(state, true).Capture();
+            TrafficKernel? rebuilt = null;
+            var restore = RestoreSteps(state, true, linksPerStep);
+            while (restore.MoveNext())
+            {
+                if (restore.Current != null) { rebuilt = restore.Current; break; }
+                yield return null;
+            }
+            var recapture = rebuilt!.CaptureInSteps(linksPerStep);
+            while (recapture.MoveNext())
+            {
+                if (recapture.Current != null) { yield return recapture.Current; yield break; }
+                yield return null;
+            }
         }
 
         public static TrafficKernel Restore(TrafficKernelState state) => Restore(state, false);

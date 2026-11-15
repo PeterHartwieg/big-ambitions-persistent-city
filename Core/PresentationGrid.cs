@@ -233,22 +233,47 @@ namespace PersistentCity.Core
             pool.Push(entry);
         }
 
+        private static readonly long[] Unplaceable = new long[0];
+        [ThreadStatic] private static List<long>? precomputeCells;
+        [ThreadStatic] private static HashSet<long>? precomputeScratch;
+
+        internal static void Precompute(Route journey)
+        {
+            if (journey == null || !journey.IsCommitted || journey.PresentationCells != null || journey.Legs.Count == 0) return;
+            var output = precomputeCells ??= new List<long>();
+            var seen = precomputeScratch ??= new HashSet<long>();
+            journey.PresentationCells = RouteCells(journey, output, seen) ? output.ToArray() : Unplaceable;
+            output.Clear(); seen.Clear();
+        }
+
         private bool CellsOf(Anchor kind, Route? journey, Position at, List<long> output)
         {
             output.Clear(); scratch.Clear();
             if (kind == Anchor.Place) { output.Add(Key(CellOf(at.X), CellOf(at.Z))); return true; }
-            var legs = journey!.Legs;
+            var cached = journey!.IsCommitted ? journey.PresentationCells : null;
+            if (cached != null)
+            {
+                if (ReferenceEquals(cached, Unplaceable)) return false;
+                output.AddRange(cached);
+                return true;
+            }
+            return RouteCells(journey, output, scratch);
+        }
+
+        private static bool RouteCells(Route journey, List<long> output, HashSet<long> scratch)
+        {
+            var legs = journey.Legs;
             for (int i = 0; i < legs.Count; i++)
             {
                 Position a = legs[i].From, b = legs[i].To;
                 if (!a.IsFinite || !b.IsFinite || Math.Abs(a.X - b.X) > MaxLegSpan * CellMetres
                     || Math.Abs(a.Z - b.Z) > MaxLegSpan * CellMetres) { output.Clear(); return false; }
-                AddSegment(a, b, output);
+                AddSegment(a, b, output, scratch);
             }
             return true;
         }
 
-        private void AddSegment(Position a, Position b, List<long> output)
+        private static void AddSegment(Position a, Position b, List<long> output, HashSet<long> scratch)
         {
             double minX = Math.Min(a.X, b.X) - Pad, maxX = Math.Max(a.X, b.X) + Pad;
             double dx = b.X - a.X;

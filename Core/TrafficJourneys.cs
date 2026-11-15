@@ -30,13 +30,13 @@ namespace PersistentCity.Core
             finally { closureLinks.Clear(); refreshingClosures = false; }
         }
 
-        private void RestoreTraffic()
+        private void RestoreTraffic(TravelTiming.RetimedTraffic? retimed)
         {
             State.SnapshotSynchronizer = CaptureTraffic;
             if (State.Traffic == null) return;
             if (State.Traffic.Clock != State.Minute || string.IsNullOrEmpty(State.TrafficTopologyId))
                 throw new ArgumentException("Traffic and city clocks/topology do not match.");
-            traffic = TrafficKernel.Restore(State.Traffic);
+            traffic = retimed != null && ReferenceEquals(retimed.Source, State.Traffic) ? retimed.Kernel : TrafficKernel.Restore(State.Traffic);
             traffic.VehicleCompleted += TrafficCompleted;
             foreach (var vehicle in State.Traffic.Vehicles)
             {
