@@ -20,7 +20,7 @@ namespace PersistentCity.Runtime
 
         private void Update()
         {
-            if (pendingSave != null || splicingSave != null) PollHandOff();
+            if (pendingSave != null || splicingSave != null || publishingSave != null) PollHandOff();
             long gcFrame = GcFrameBegin();
             var gcHeap = GcAllocationBegin();
             ModFrames.Begin(gcSampler, UnityEngine.Time.frameCount);

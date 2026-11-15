@@ -74,6 +74,7 @@ namespace PersistentCity.Persistence
         }
 
         internal string? TempPath { get; set; }
+        internal string? OutputPath { get; set; }
 
         internal bool TryBeginPublish()
         {
@@ -379,7 +380,23 @@ namespace PersistentCity.Persistence
         {
             var save = Claim(path, out bool refused);
             if (save != null) return Compress(path, outputPath, save);
-            return refused ? false : (bool?)null;
+            if (refused) return false;
+            PendingSave? earlier;
+            lock (gate) earlier = publishing;
+            if (earlier != null && string.Equals(earlier.OutputPath, outputPath, StringComparison.Ordinal))
+                while (!earlier.SpliceDone) { if (!Thread.Yield()) Thread.SpinWait(64); }
+            return null;
+        }
+
+        public static PendingSave? TakeSettledPublication()
+        {
+            lock (gate)
+            {
+                var settled = publishing;
+                if (settled == null || !settled.SpliceDone) return null;
+                publishing = null;
+                return settled;
+            }
         }
 
         public const int PublishWaitMilliseconds = 30000;
@@ -421,6 +438,7 @@ namespace PersistentCity.Persistence
         internal static bool Compress(string path, string outputPath, PendingSave save, int waitMilliseconds, Func<string, Stream> open)
         {
             long started = Stopwatch.GetTimestamp();
+            save.OutputPath = outputPath;
             long deadline = started + (long)(waitMilliseconds * (double)Stopwatch.Frequency / 1000);
             while (!save.Resolved && !save.Cancelled)
             {

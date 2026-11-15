@@ -512,6 +512,78 @@ public sealed class SaveHandOffTests
     }
 
     [Fact]
+    public void ANewerSynchronousSaveToTheSameSlotWaitsForAStalledPublisherAndLandsLast()
+    {
+        var city = City();
+        var save = new Save(city);
+        var (_, publishing) = save.Begin(city);
+        Assert.True(publishing!.Wait(Wait));
+        string temp = TempFile(Odin((SaveStore.StateKey, publishing.PayloadToken), (SaveEpochStore.Key, publishing.MarkerToken)));
+        string output = temp + ".out", otherSlot = temp + ".other";
+        var hold = new ManualResetEventSlim(false);
+        var entered = new ManualResetEventSlim(false);
+        try
+        {
+            SaveHandOff.BeforePublish = () => { entered.Set(); hold.Wait(); };
+            SaveHandOff.Expect(publishing, temp);
+            var compressor = new Thread(() => SaveHandOff.TryCompress(temp, output));
+            compressor.Start();
+            SaveHandOff.MarkSerialized(compressor.ManagedThreadId);
+            Assert.True(entered.Wait(Wait));
+            Assert.False(SaveHandOff.AwaitCompression(publishing, Wait, 50, 50));
+            SaveHandOff.Clear();
+            Assert.Null(SaveHandOff.TryCompress(temp, otherSlot));
+            byte[] newer = { 7, 7, 7 };
+            var sameSlot = new Thread(() => { if (SaveHandOff.TryCompress(temp, output) == null) File.WriteAllBytes(output, newer); });
+            sameSlot.Start();
+            Assert.False(sameSlot.Join(300));
+            Assert.Equal(ThreadState.Running, sameSlot.ThreadState & ~ThreadState.Background);
+            hold.Set();
+            Assert.True(compressor.Join(Wait));
+            Assert.True(sameSlot.Join(Wait));
+            Assert.Equal(newer, File.ReadAllBytes(output));
+        }
+        finally { hold.Set(); File.Delete(temp); File.Delete(output); File.Delete(otherSlot); SaveHandOff.Reset(); }
+    }
+
+    [Fact]
+    public void APublicationThatFailsAfterTheBoundedWaitIsStillReportedAsARefusal()
+    {
+        var city = City();
+        var save = new Save(city);
+        var (_, publishing) = save.Begin(city);
+        Assert.True(publishing!.Wait(Wait));
+        string temp = TempFile(Odin((SaveStore.StateKey, publishing.PayloadToken), (SaveEpochStore.Key, publishing.MarkerToken)));
+        string output = temp + ".out";
+        byte[] previous = { 3, 1, 4 };
+        File.WriteAllBytes(output, previous);
+        var hold = new ManualResetEventSlim(false);
+        var entered = new ManualResetEventSlim(false);
+        try
+        {
+            SaveHandOff.BeforePublish = () => { entered.Set(); hold.Wait(); throw new IOException("injected publication failure"); };
+            SaveHandOff.Expect(publishing, temp);
+            bool? written = null;
+            var compressor = new Thread(() => written = SaveHandOff.TryCompress(temp, output));
+            compressor.Start();
+            SaveHandOff.MarkSerialized(compressor.ManagedThreadId);
+            Assert.True(entered.Wait(Wait));
+            Assert.False(SaveHandOff.AwaitCompression(publishing, Wait, 50, 50));
+            Assert.Null(SaveHandOff.TakeSettledPublication());
+            hold.Set();
+            Assert.True(compressor.Join(Wait));
+            Assert.False(written);
+            var settled = SaveHandOff.TakeSettledPublication();
+            Assert.Same(publishing, settled);
+            Assert.Contains("injected publication failure", settled!.FileRefusal);
+            Assert.Equal(previous, File.ReadAllBytes(output));
+            Assert.False(SaveHandOff.PublicationOutstanding);
+            Assert.Null(SaveHandOff.TakeSettledPublication());
+        }
+        finally { hold.Set(); File.Delete(temp); File.Delete(output); SaveHandOff.Reset(); }
+    }
+
+    [Fact]
     public void AnActivePublicationIsAwaitedPastTheSpliceDeadlineAndNeverOverlapsTheNextSave()
     {
         var city = City();

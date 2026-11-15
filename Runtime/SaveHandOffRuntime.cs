@@ -6,7 +6,7 @@ namespace PersistentCity.Runtime
     public sealed partial class PopulationRuntime
     {
         private const int SettleWaitMilliseconds = 30000;
-        private PendingSave? pendingSave, splicingSave, queuedSave;
+        private PendingSave? pendingSave, splicingSave, queuedSave, publishingSave;
         private SaveCostRecorder? writerCost;
         private bool backgroundSaveDisabled;
         private string backgroundSaveStatus = "";
@@ -33,6 +33,15 @@ namespace PersistentCity.Runtime
         {
             if (pendingSave != null && pendingSave.Resolved) SettlePendingSave(false);
             if (splicingSave != null && splicingSave.CompressionSettled) ReportSplice(splicingSave, true);
+            ReportPublication(true);
+        }
+
+        private void ReportPublication(bool stopOnRefusal)
+        {
+            if (publishingSave == null || !publishingSave.CompressionSettled) return;
+            publishingSave = null;
+            var settled = SaveHandOff.TakeSettledPublication();
+            if (settled != null) ReportSplice(settled, stopOnRefusal);
         }
 
         private void SettlePendingSave(bool wait, bool stopOnRefusal = true)
@@ -93,13 +102,18 @@ namespace PersistentCity.Runtime
                 log?.Warn("Persistent City save publication did not finish within " + SaveHandOff.PublishWaitMilliseconds / 1000
                     + " s; it keeps its file and later saves write on the main thread until it finishes.");
             if (splicing.CompressionSettled) ReportSplice(splicing, stopOnRefusal);
-            else splicingSave = null;
+            else
+            {
+                splicingSave = null;
+                if (SaveHandOff.PublicationOutstanding) publishingSave = splicing;
+            }
         }
 
         private void BeginSaveHandOff()
         {
             SettlePendingSave(true);
             AwaitSplice(true);
+            ReportPublication(true);
             SaveHandOff.Clear();
             queuedSave = null;
         }
@@ -134,6 +148,7 @@ namespace PersistentCity.Runtime
             {
                 SettlePendingSave(true, false);
                 AwaitSplice(false);
+                ReportPublication(false);
                 SaveHandOff.Clear();
             }
             catch (Exception error) { log?.Warn("Persistent City background save flush failed: " + error.Message); }
