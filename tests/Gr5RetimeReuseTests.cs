@@ -37,7 +37,7 @@ public sealed class Gr5RetimeReuseTests
         return nodes;
     }
 
-    private static void AssertSame(TrafficNetwork expected, TrafficNetwork actual, IReadOnlyList<TrafficNetworkNode> nodes)
+    internal static void AssertSame(TrafficNetwork expected, TrafficNetwork actual, IReadOnlyList<TrafficNetworkNode> nodes)
     {
         Assert.Equal(expected.TopologyId, actual.TopologyId);
         Assert.Equal(expected.NativeTopologyId, actual.NativeTopologyId);

@@ -24,7 +24,7 @@ namespace PersistentCity.Core
     public sealed class ModFrameRecorder
     {
         public const int TopFrames = 16;
-        public const int SpikeCapacity = 64;
+        public const int SpikeCapacity = 1024;
         public const double SpikeMilliseconds = 30;
         private const int Segments = GcPauseSampler.Segments;
         private readonly long[] ticks = new long[Segments];
@@ -44,6 +44,7 @@ namespace PersistentCity.Core
         public long Spikes { get; private set; }
         public int TopCount => topCount;
         public int SpikeCount => spikeCount;
+        public bool SpikesTruncated => Spikes > spikeCount;
         public ModFrameRow Top(int index) => top[index];
         public ModFrameRow Spike(int index) => spikes[index];
         public bool Open => open;
@@ -183,7 +184,9 @@ namespace PersistentCity.Core
                 }
                 text.Append(']');
             }
-            text.Append("\"phase_frames\":").Append(N(Frames)).Append(",\"phase_spikes_30ms\":").Append(N(Spikes)).Append(',');
+            text.Append("\"phase_frames\":").Append(N(Frames)).Append(",\"phase_spikes_30ms\":").Append(N(Spikes))
+                .Append(",\"phase_spikes_retained\":").Append(N(spikeCount)).Append(",\"phase_spikes_truncated\":").Append(SpikesTruncated ? "true" : "false")
+                .Append(",\"phase_spike_cap\":").Append(N(SpikeCapacity)).Append(',');
             Rows("top_frames", top, topCount);
             text.Append(',');
             Rows("spike_frames", spikes, spikeCount);
@@ -206,7 +209,8 @@ namespace PersistentCity.Core
         public string ReportHuman()
         {
             var text = new StringBuilder(512).Append("[Persistent City] mod frames (diagnostic only): frames=").Append(Frames.ToString(CultureInfo.InvariantCulture))
-                .Append(" spikes>=30ms=").Append(Spikes.ToString(CultureInfo.InvariantCulture));
+                .Append(" spikes>=30ms=").Append(Spikes.ToString(CultureInfo.InvariantCulture))
+                .Append(" retained=").Append(spikeCount.ToString(CultureInfo.InvariantCulture)).Append(SpikesTruncated ? " truncated" : "");
             for (int i = 0; i < topCount && i < 5; i++)
             {
                 var r = top[i];

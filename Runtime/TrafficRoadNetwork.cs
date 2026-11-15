@@ -29,6 +29,8 @@ namespace PersistentCity.Runtime
         private readonly Dictionary<int, TrafficSignalSchedule> signals = new Dictionary<int, TrafficSignalSchedule>();
         private readonly NativeNode?[] nativeNodes;
         public bool Rerated { get; }
+        public bool ReusedRate { get; }
+        private readonly TrafficRateCache rated;
         private TrafficNetworkNode[] snapshot;
         private readonly int[]? roadIds;
         private readonly Dictionary<int, bool> junctionQueryResults = new Dictionary<int, bool>();
@@ -81,12 +83,16 @@ namespace PersistentCity.Runtime
             {
                 junctionIds = donor!.junctionIds; junctions = donor.junctions; nativeNodes = donor.nativeNodes;
                 snapshot = Array.Empty<TrafficNetworkNode>();
+                rated = donor.rated;
+                rated.Remember(donor.clockRate, network);
+                stage = Stage.Constructing; Rerated = true;
+                if (rated.TryGet(clockRate, out var cached)) { construction = Task.FromResult(cached); ReusedRate = true; return; }
                 foreach (var junction in junctions) AddSignals(junction);
                 var schedules = signals; double rate = clockRate;
                 construction = Task.Run(() => network.Rerated(rate, index => schedules.TryGetValue(index, out var signal) ? signal : null));
-                stage = Stage.Constructing; Rerated = true;
                 return;
             }
+            rated = new TrafficRateCache();
             junctionIds = new Dictionary<GenericIntersection, int>(); junctions = new List<Junction>();
             nativeNodes = new NativeNode?[waypoints.Length]; snapshot = new TrafficNetworkNode[waypoints.Length];
         }
@@ -165,7 +171,7 @@ namespace PersistentCity.Runtime
                             units++; break;
                         }
                         if (!ReferencesCurrent) { Stale = true; return false; }
-                        Network = constructed; stage = Stage.Complete; return true;
+                        Network = constructed; stage = Stage.Complete; rated.Remember(clockRate, constructed!); return true;
                     default: return true;
                 }
             }
