@@ -134,6 +134,8 @@ namespace PersistentCity.Runtime
         internal bool IsReserved(string id) => Reserved.Contains(id);
         internal void Activate() { Active = true; }
         internal void Update() { }
+        internal int DisposeSlices;
+        internal bool DisposeSome(long deadline) { DisposeSlices++; Active = false; return true; }
         public void Dispose() { Active = false; }
     }
     internal sealed class MultimodalRoutes

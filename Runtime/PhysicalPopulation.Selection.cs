@@ -54,7 +54,7 @@ namespace PersistentCity.Runtime
         public bool ReleasingForRetime => RetimeReleaseSteps > 0;
         public bool ReleaseForRetime(long deadlineTimestamp)
         {
-            if (disposed || retimeStage == 4) { retimeRelease.Clear(); return true; }
+            if (disposed || retimeStage == 6) { retimeRelease.Clear(); return true; }
             active = false;
             RetimeReleaseSteps++;
             if (retimeStage == 0)
@@ -91,8 +91,14 @@ namespace PersistentCity.Runtime
                 retimeStage = 3;
                 return false;
             }
-            ambient.Dispose();
-            retimeStage = 4;
+            if (retimeStage == 3)
+            {
+                if (ambient.DisposeSome(deadlineTimestamp)) retimeStage = 4;
+                return false;
+            }
+            if (retimeStage == 4) { vehicles.Dispose(); retimeStage = 5; return false; }
+            pedestrians.Dispose();
+            retimeStage = 6;
             return false;
         }
         public void Suspend()

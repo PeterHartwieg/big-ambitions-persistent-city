@@ -65,8 +65,8 @@ public sealed class Gr5RetimeReleaseTests
             Assert.Empty(pool.Active);
             Assert.True(calls >= bound - 1, calls + " slices for " + bound + " bodies");
             int teardown = 0;
-            while (!bodies.ReleaseForRetime(0)) Assert.True(++teardown <= 4, teardown + " teardown updates");
-            Assert.True(teardown >= 2, "cars and ambient walkers are released in their own updates, not with the last body");
+            while (!bodies.ReleaseForRetime(0)) Assert.True(++teardown <= 6, teardown + " teardown updates");
+            Assert.True(teardown >= 4, "cars, ambient walkers, the car pool and the body pool are torn down in their own updates");
             Assert.True(bodies.ReleaseForRetime(long.MaxValue));
         }
     }
@@ -81,8 +81,9 @@ public sealed class Gr5RetimeReleaseTests
             Assert.False(sliced.ReleaseForRetime(long.MaxValue));
             Assert.False(sliced.HasBodies);
             Assert.Empty(pool.Active);
-            Assert.False(sliced.ReleaseForRetime(long.MaxValue));
-            Assert.True(sliced.ReleaseForRetime(long.MaxValue));
+            int teardown = 0;
+            while (!sliced.ReleaseForRetime(long.MaxValue)) teardown++;
+            Assert.Equal(3, teardown);
             Assert.True(sliced.ReleasingForRetime);
         }
     }

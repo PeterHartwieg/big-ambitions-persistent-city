@@ -309,7 +309,12 @@ namespace PersistentCity.Runtime
                 if (retime == ClockRetimeOutcome.None)
                 {
                     retimeReleaseMilliseconds = 0; retimeReleaseUpdates = 0; retimedRoutes = null;
-                    if (physical?.ReleasingForRetime == true) { physical.Dispose(); physical = null; }
+                    if (physical?.ReleasingForRetime == true)
+                    {
+                        if (physical.ReleaseForRetime(retimeStarted + (long)(ClockRetimeStages.SliceMilliseconds * Stopwatch.Frequency / 1000)))
+                        { physical.Dispose(); physical = null; }
+                        else { WaitForRetime(); return; }
+                    }
                 }
                 else
                 {

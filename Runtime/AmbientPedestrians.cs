@@ -373,58 +373,64 @@ namespace PersistentCity.Runtime
             }
         }
 
-        public void Dispose()
+        public void Dispose() => DisposeSome(long.MaxValue);
+
+        private List<Pedestrian>? restoring;
+        private int restoreIndex = -1;
+        private bool restoreAll;
+        private Exception? restoreError;
+
+        public bool DisposeSome(long deadlineTimestamp)
         {
-            if (disposed) return;
-            bool restore = active && SameCity;
-            disposed = true; active = false;
-            stationary.Dispose();
-            if (ownsRegistration)
+            if (disposed) return true;
+            if (restoreIndex < 0)
             {
+                restoreAll = active && SameCity;
+                active = false;
+                stationary.Dispose();
+                restoreError = null; restoreIndex = 0;
+                if (!ownsRegistration) { disposed = true; return true; }
                 if (ReferenceEquals(current, this)) current = null;
                 ownsRegistration = false;
-                Exception? firstError = null;
-                try
+                if (restoreAll && spawner != null)
                 {
-                    if (restore && spawner != null)
-                    {
-                        RefreshReservations(force: true);
-                        foreach (var pedestrian in held)
-                        {
-                            try
-                            {
-                                if (!reservations.Ready && pedestrian != null && pedestrian.gameObject.activeInHierarchy)
-                                {
-                                    if (firstError == null) firstError = new InvalidOperationException(
-                                        "An active held pedestrian could not be restored because RLO ownership could not be verified: " + reservations.LastError);
-                                    continue;
-                                }
-                                if (pedestrian != null && spawner.activePedestrians.Contains(pedestrian) && IsOrdinaryUnreserved(pedestrian))
-                                {
-                                    if (pedestrian.tpc.capsuleCollider != null) pedestrian.tpc.capsuleCollider.enabled = true;
-                                    changeState!.Invoke(pedestrian, new object[] { false });
-                                }
-                            }
-                            catch (Exception error) { if (firstError == null) firstError = error; }
-                        }
-                    }
-                }
-                catch (Exception error) { if (firstError == null) firstError = error; }
-                finally
-                {
-                    try
-                    {
-                        if (restore && SameCity && spawner != null) spawner.SetActivePedestrians(desiredAmount);
-                    }
-                    catch (Exception error) { if (firstError == null) firstError = error; }
-                    finally { held.Clear(); resumeAt.Clear(); departing.Clear(); failedSearches.Clear(); }
-                }
-                if (firstError != null)
-                {
-                    LastError = "Ambient pedestrian restoration was incomplete; reload this city before continuing. " + firstError.Message;
-                    throw new InvalidOperationException(LastError, firstError);
+                    try { RefreshReservations(force: true); restoring = new List<Pedestrian>(held); }
+                    catch (Exception error) { restoreError = error; restoring = null; }
                 }
             }
+            var pending = restoring;
+            while (pending != null && restoreIndex < pending.Count)
+            {
+                var pedestrian = pending[restoreIndex++];
+                try
+                {
+                    if (!reservations.Ready && pedestrian != null && pedestrian.gameObject.activeInHierarchy)
+                    {
+                        if (restoreError == null) restoreError = new InvalidOperationException(
+                            "An active held pedestrian could not be restored because RLO ownership could not be verified: " + reservations.LastError);
+                    }
+                    else if (pedestrian != null && spawner!.activePedestrians.Contains(pedestrian) && IsOrdinaryUnreserved(pedestrian))
+                    {
+                        if (pedestrian.tpc.capsuleCollider != null) pedestrian.tpc.capsuleCollider.enabled = true;
+                        changeState!.Invoke(pedestrian, new object[] { false });
+                    }
+                }
+                catch (Exception error) { if (restoreError == null) restoreError = error; }
+                if (restoreIndex < pending.Count && System.Diagnostics.Stopwatch.GetTimestamp() >= deadlineTimestamp) return false;
+            }
+            disposed = true; restoring = null;
+            try
+            {
+                if (restoreAll && SameCity && spawner != null) spawner.SetActivePedestrians(desiredAmount);
+            }
+            catch (Exception error) { if (restoreError == null) restoreError = error; }
+            finally { held.Clear(); resumeAt.Clear(); departing.Clear(); failedSearches.Clear(); }
+            if (restoreError != null)
+            {
+                LastError = "Ambient pedestrian restoration was incomplete; reload this city before continuing. " + restoreError.Message;
+                throw new InvalidOperationException(LastError, restoreError);
+            }
+            return true;
         }
     }
 }
