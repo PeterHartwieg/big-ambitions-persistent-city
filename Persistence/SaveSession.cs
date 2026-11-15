@@ -68,6 +68,7 @@ namespace PersistentCity.Persistence
             if (state == null) return new SaveWriteResult(false, "State is null.");
             if (!string.Equals(state.PopulationKey, populationKey, StringComparison.Ordinal))
                 return new SaveWriteResult(false, "State belongs to another population than this save session.");
+            if (InFlight != null) return new SaveWriteResult(false, "A background save of this session has not settled.");
             SaveSnapshot snapshot;
             try
             {
@@ -79,10 +80,72 @@ namespace PersistentCity.Persistence
             return WriteTo(modData, snapshot, cost);
         }
 
+        public PendingSave? InFlight { get; private set; }
+
+        public SaveWriteResult BeginWrite(IDictionary<string, string> modData, CityState state, SaveHandOffWriter writer,
+            SaveCostRecorder? cost, SaveCostRecorder? writerCost, out PendingSave? pending)
+        {
+            pending = null;
+            if (modData == null) throw new ArgumentNullException(nameof(modData));
+            if (writer == null) throw new ArgumentNullException(nameof(writer));
+            if (state == null) return new SaveWriteResult(false, "State is null.");
+            if (InFlight != null) return new SaveWriteResult(false, "A background save of this session has not settled.");
+            if (!string.Equals(state.PopulationKey, populationKey, StringComparison.Ordinal))
+                return new SaveWriteResult(false, "State belongs to another population than this save session.");
+            try
+            {
+                var snapshot = SaveCodec.Capture(state, cost);
+                cost?.Enter(SaveCostPhase.Publish);
+                bool hasPayload = modData.TryGetValue(SaveStore.StateKey, out var existingPayload);
+                bool trusted = ReferenceEquals(modData, validatedDictionary)
+                    && hasPayload == validatedHasPayload && ReferenceEquals(existingPayload, validatedPayload);
+                if (!trusted)
+                {
+                    var existing = ValidateSource(modData);
+                    if (existing.Status != SaveReadStatus.Missing && existing.Status != SaveReadStatus.Loaded)
+                        return new SaveWriteResult(false, existing.Error);
+                    if (!ReferenceEquals(validatedDictionary, modData))
+                        return new SaveWriteResult(false, "Stored state changed during validation.");
+                }
+                pending = new PendingSave(snapshot, modData, writer, hasPayload, existingPayload, writerCost, writerCost != null);
+                snapshot.Published = true;
+                modData[SaveStore.StateKey] = pending.PayloadToken;
+                InFlight = pending;
+                return new SaveWriteResult(true, "");
+            }
+            catch (SaveValidationException exception) { pending = null; return new SaveWriteResult(false, exception.Message); }
+        }
+
+        public SaveWriteResult Settle(PendingSave pending)
+        {
+            if (pending == null) throw new ArgumentNullException(nameof(pending));
+            if (!ReferenceEquals(pending, InFlight)) return new SaveWriteResult(false, "The pending save does not belong to this session.");
+            if (!pending.Resolved) return new SaveWriteResult(false, "The pending save has not resolved.");
+            InFlight = null;
+            var data = pending.Target;
+            bool ours = data.TryGetValue(SaveStore.StateKey, out var current) && ReferenceEquals(current, pending.PayloadToken);
+            if (pending.Succeeded && ours)
+            {
+                data[SaveStore.StateKey] = pending.Payload;
+                validatedDictionary = data;
+                validatedHasPayload = true;
+                validatedPayload = pending.Payload;
+                return new SaveWriteResult(true, "");
+            }
+            if (ours)
+            {
+                if (pending.HadPreviousPayload) data[SaveStore.StateKey] = pending.PreviousPayload!;
+                else data.Remove(SaveStore.StateKey);
+            }
+            else validatedDictionary = null;
+            return new SaveWriteResult(false, pending.Succeeded ? "Stored state changed during the background write." : pending.Error);
+        }
+
         public SaveWriteResult WriteTo(IDictionary<string, string> modData, SaveSnapshot snapshot, SaveCostRecorder? cost = null)
         {
             if (modData == null) throw new ArgumentNullException(nameof(modData));
             if (snapshot == null) return new SaveWriteResult(false, "Snapshot is null.");
+            if (InFlight != null) return new SaveWriteResult(false, "A background save of this session has not settled.");
             if (snapshot.Published) return new SaveWriteResult(false, "A save snapshot is published at most once.");
             if (!string.Equals(snapshot.PopulationKey, populationKey, StringComparison.Ordinal))
                 return new SaveWriteResult(false, "State belongs to another population than this save session.");

@@ -16,7 +16,12 @@ namespace PersistentCity.Runtime
         public bool SaveCostDiagnosticsRequested
         {
             get => saveCost != null;
-            set => saveCost = value ? saveCost ?? new SaveCostRecorder() : null;
+            set
+            {
+                saveCost = value ? saveCost ?? new SaveCostRecorder() : null;
+                if (!value) { writerCost = null; writerCostSequence = 0; }
+                NativeSaveHandOff.TimeNativeSave = value;
+            }
         }
 
         public object SaveCostDiagnostics
@@ -52,6 +57,7 @@ namespace PersistentCity.Runtime
                         streamingRecords = cost.StreamingRecords, semanticRecords = cost.SemanticRecords,
                         recordCountMs = cost.CountMilliseconds, recordCountOutsidePhases = true
                     },
+                    handOff = HandOffDiagnostics(),
                     activation = activationSequence == 0 ? null : new
                     {
                         sequence = activationSequence, success = activationSucceeded, hadPayload = activationHadPayload,

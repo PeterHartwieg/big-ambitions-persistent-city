@@ -20,6 +20,7 @@ namespace PersistentCity.Runtime
 
         private void Update()
         {
+            if (pendingSave != null || splicingSave != null) PollHandOff();
             long gcFrame = GcFrameBegin();
             var gcHeap = GcAllocationBegin();
             ModFrames.Begin(gcSampler, UnityEngine.Time.frameCount);
@@ -48,9 +49,12 @@ namespace PersistentCity.Runtime
 
         private void Save()
         {
+            BeginSaveHandOff();
             var save = SaveGameManager.Current;
             var result = SaveEpochCallback.Run(saveEpoch, save, save?.modData, saveEpochUnits > 0,
                 CaptureForSave, StopAfterSaveEpochFailure, message => log?.Warn(message));
+            if (result == SaveEpochResult.Queued) QueueSaveHandOff();
+            else queuedSave = null;
             if (result == SaveEpochResult.Reentrant) saveEpochStopPending = true;
             if (saveEpochStopPending && saveEpochUnits == 0 && saveEpoch?.Saving != true) FinishDeferredSaveEpochStop();
         }
@@ -78,6 +82,7 @@ namespace PersistentCity.Runtime
 
         private void DropSaveEpoch()
         {
+            FlushSaveHandOff();
             var epoch = saveEpoch;
             saveEpoch = null;
             epoch?.Detach(null);
