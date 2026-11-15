@@ -879,6 +879,116 @@ public sealed class SaveHandOffTests
         Assert.Same(writerCost, pending!.Cost);
     }
 
+    private const string StreetFoodKey = "foodtrucks:state";
+
+    internal static readonly SaveCompressionPatch[] StreetFoodPatched =
+        { SaveCompressionPatches.HandOffPrefix, SaveCompressionPatches.StreetFoodBridgeObserver };
+
+    internal static bool StreetFoodPatchedCompress(string path, string outputPath, Action<bool> observed)
+    {
+        bool result = false;
+        Exception? error = null;
+        try
+        {
+            var handled = SaveHandOff.TryCompress(path, outputPath);
+            if (handled == null) throw new InvalidOperationException("The hand-off prefix let native compression run.");
+            result = handled.Value;
+        }
+        catch (Exception exception) { error = exception; }
+        observed(error == null && result);
+        if (error != null) throw error;
+        return result;
+    }
+
+    [Fact]
+    public void WithTheStreetFoodCompressionObserverTheBackgroundPathEngagesAndBothPayloadsRoundTrip()
+    {
+        var check = SaveCompressionPatches.Check(StreetFoodPatched, new[] { SaveCompressionPatches.HandOffOwner, "foodtrucks.mod" });
+        Assert.Null(check.Conflict);
+        Assert.Equal(new[] { SaveCompressionPatches.StreetFoodBridgeObserver.Describe() }, check.Accepted);
+        var city = RepresentativeFixture.Build(120).State;
+        string streetFood = "{\"v\":3,\"name\":\"Caf\u00e9 \u0416\ud83d\ude00\",\"quote\":\"\\\"\",\"fill\":\"" + new string('s', 70000) + "\"}";
+        var save = new Save(city, new Dictionary<string, string>(StringComparer.Ordinal) { ["other:sentinel"] = "keep", [StreetFoodKey] = streetFood });
+        var (result, pending) = save.Begin(city);
+        Assert.Equal(SaveEpochResult.Queued, result);
+        Assert.Equal(pending!.PayloadToken, save.Data[SaveStore.StateKey]);
+        Assert.Equal(pending.MarkerToken, save.Data[SaveEpochStore.Key]);
+        string temp = TempFile(Odin(save.Data.Select(entry => (entry.Key, entry.Value)).ToArray()));
+        string output = temp + ".out";
+        try
+        {
+            SaveHandOff.Expect(pending, temp);
+            SaveHandOff.MarkSerialized();
+            bool? compressed = null;
+            bool written = false;
+            var compressor = new Thread(() => written = StreetFoodPatchedCompress(temp, output, ok => compressed = ok)) { Name = "test compress" };
+            compressor.Start();
+            Assert.True(compressor.Join(Wait));
+            Assert.True(written);
+            Assert.True(compressed);
+            Assert.Equal(SaveSpliceOutcome.Spliced, pending.Splice);
+            Assert.Null(pending.FileRefusal);
+            Assert.True(pending.Succeeded);
+            var read = ReadOdin(Gunzip(output));
+            Assert.Equal(streetFood, read[StreetFoodKey]);
+            Assert.Equal("keep", read["other:sentinel"]);
+            Assert.Equal(pending.Payload, read[SaveStore.StateKey]);
+            Assert.Equal(pending.Marker, read[SaveEpochStore.Key]);
+            Assert.Null(SaveEpochStore.CheckForStart(read, out _));
+            Assert.Equal(SaveReadStatus.Loaded, SaveStore.ReadFrom(read, city.PopulationKey).Status);
+            Assert.Equal(SaveCodec.Write(city), read[SaveStore.StateKey]);
+            Assert.Null(save.Settle(pending));
+            Assert.Equal(streetFood, save.Data[StreetFoodKey]);
+            Assert.Equal(read[SaveStore.StateKey], save.Data[SaveStore.StateKey]);
+            Assert.Equal(read[SaveEpochStore.Key], save.Data[SaveEpochStore.Key]);
+        }
+        finally { File.Delete(temp); File.Delete(output); SaveHandOff.Reset(); }
+    }
+
+    [Fact]
+    public void AForcedWriterRefusalKeepsThePreviousPayloadAndTheStreetFoodPayloadAndMarksTheFileFailed()
+    {
+        var city = City();
+        string previous = SaveCodec.Write(City());
+        const string streetFood = "{\"v\":3}";
+        var save = new Save(city, new Dictionary<string, string>(StringComparer.Ordinal) { [SaveStore.StateKey] = previous, [StreetFoodKey] = streetFood });
+        save.Writer.Fault = () => "forced refusal";
+        var (result, pending) = save.Begin(city);
+        Assert.Equal(SaveEpochResult.Queued, result);
+        string temp = TempFile(Odin(save.Data.Select(entry => (entry.Key, entry.Value)).ToArray()));
+        string output = temp + ".out";
+        try
+        {
+            SaveHandOff.Expect(pending!, temp);
+            SaveHandOff.MarkSerialized();
+            bool? compressed = null;
+            Assert.True(StreetFoodPatchedCompress(temp, output, ok => compressed = ok));
+            Assert.True(compressed);
+            Assert.False(pending!.Succeeded);
+            Assert.False(pending.Aborted);
+            Assert.Equal("Population save refused: forced refusal", pending.Error);
+            Assert.Equal(SaveSpliceOutcome.Spliced, pending.Splice);
+            var file = ReadOdin(Gunzip(output));
+            Assert.Equal(previous, file[SaveStore.StateKey]);
+            Assert.Equal(streetFood, file[StreetFoodKey]);
+            Assert.Equal(SaveEpochStore.Failed(pending.Sequence), file[SaveEpochStore.Key]);
+            Assert.NotNull(SaveEpochStore.CheckForStart(file, out _));
+            Assert.Equal(pending.Error, save.Settle(pending));
+            Assert.Same(previous, save.Data[SaveStore.StateKey]);
+            Assert.Equal(file[SaveEpochStore.Key], save.Data[SaveEpochStore.Key]);
+            Assert.Equal(AccountingStopStore.SaveEpochFailed, save.Data[AccountingStopStore.Key]);
+            Assert.Equal(1, save.Binding.Refused);
+        }
+        finally { File.Delete(temp); File.Delete(output); SaveHandOff.Reset(); }
+    }
+
+    [Fact]
+    public void TheWriterFaultIsOffByDefault()
+    {
+        Assert.Null(SaveHandOffWriter.Shared.Fault);
+        Assert.Null(new SaveHandOffWriter("fresh writer").Fault);
+    }
+
     internal static byte[] OdinString(string value, bool wide)
     {
         var bytes = new byte[5 + value.Length * (wide ? 2 : 1)];

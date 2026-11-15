@@ -6,6 +6,7 @@ using System.Reflection;
 using System.Text;
 using HarmonyLib;
 using Newtonsoft.Json;
+using PersistentCity.Core;
 using PersistentCity.Persistence;
 using Stopwatch = System.Diagnostics.Stopwatch;
 
@@ -13,7 +14,7 @@ namespace PersistentCity.Runtime
 {
     internal static class NativeSaveHandOff
     {
-        private const string PatchId = "persistentcity.save-handoff";
+        private const string PatchId = SaveCompressionPatches.HandOffOwner;
         private static readonly Harmony patches = new Harmony(PatchId);
         private static MethodInfo? compress, save;
         private static FieldInfo? compressThread;
@@ -45,24 +46,45 @@ namespace PersistentCity.Runtime
                 patches.Patch(compress, prefix: new HarmonyMethod(typeof(NativeSaveHandOff), nameof(CompressPrefix)) { priority = Priority.First });
                 patches.Patch(save, prefix: new HarmonyMethod(typeof(NativeSaveHandOff), nameof(SavePrefix)) { priority = Priority.First },
                     postfix: new HarmonyMethod(typeof(NativeSaveHandOff), nameof(SavePostfix)) { priority = Priority.Last });
+#if PC_FAULT_POINTS
+                SaveHandOffWriter.Shared.Fault = FaultPoints.SaveWriter;
+#endif
                 Installed = true;
                 Status = "";
             }
             catch (Exception error) { Status = "Save hand-off install failed: " + error.Message; }
         }
 
+        internal static IReadOnlyList<string> AcceptedCompressionPatches { get; private set; } = Array.Empty<string>();
+
         internal static string? Conflict()
         {
             if (!Installed || compress == null || save == null) return Status.Length > 0 ? Status : "Save hand-off is not installed.";
-            foreach (var method in new[] { compress, save })
+            var saveInfo = Harmony.GetPatchInfo(save);
+            if (saveInfo == null || !saveInfo.Owners.Contains(PatchId)) return "Save hand-off patch is missing on " + save.Name + ".";
+            var info = Harmony.GetPatchInfo(compress);
+            if (info == null || !info.Owners.Contains(PatchId)) return "Save hand-off patch is missing on " + compress.Name + ".";
+            var patches = new List<SaveCompressionPatch>();
+            Add(patches, info.Prefixes, HookPatchKind.Prefix);
+            Add(patches, info.Postfixes, HookPatchKind.Postfix);
+            Add(patches, info.Transpilers, HookPatchKind.Transpiler);
+            Add(patches, info.Finalizers, HookPatchKind.Finalizer);
+            Add(patches, info.InnerPrefixes, HookPatchKind.InnerPrefix);
+            Add(patches, info.InnerPostfixes, HookPatchKind.InnerPostfix);
+            var check = SaveCompressionPatches.Check(patches, info.Owners);
+            AcceptedCompressionPatches = check.Accepted;
+            return check.Conflict;
+        }
+
+        private static void Add(List<SaveCompressionPatch> into, IEnumerable<Patch>? patches, HookPatchKind kind)
+        {
+            if (patches == null) return;
+            foreach (var patch in patches)
             {
-                var info = Harmony.GetPatchInfo(method);
-                if (info == null || !info.Owners.Contains(PatchId)) return "Save hand-off patch is missing on " + method.Name + ".";
-                if (method == compress)
-                    foreach (string owner in info.Owners)
-                        if (!string.Equals(owner, PatchId, StringComparison.Ordinal)) return "Another mod patches the native save compression: " + owner + ".";
+                var method = patch.PatchMethod;
+                into.Add(new SaveCompressionPatch(patch.owner, kind, method?.DeclaringType?.FullName ?? "", method?.Name ?? "",
+                    method?.ReturnType.FullName ?? "", method?.GetParameters().Select(p => p.ParameterType.FullName + " " + p.Name).ToArray() ?? Array.Empty<string>()));
             }
-            return null;
         }
 
         private static bool CompressPrefix(string path, string outputPath, ref bool __result)

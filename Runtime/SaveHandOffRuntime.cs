@@ -11,7 +11,7 @@ namespace PersistentCity.Runtime
         private int reportedSuppressedCompressions;
         private SaveCostRecorder? writerCost;
         private bool backgroundSaveDisabled;
-        private string backgroundSaveStatus = "";
+        private string backgroundSaveStatus = "", fallbackReason = "";
         private long backgroundSaves, synchronousSaves, settledSaves, splicedSaves;
         private bool lastSaveBackground;
         private double lastWriterMilliseconds, lastCompressWaitMilliseconds, lastCompressMilliseconds;
@@ -21,13 +21,18 @@ namespace PersistentCity.Runtime
 
         private bool BackgroundSaveAvailable()
         {
-            if (backgroundSaveDisabled) return false;
+            if (backgroundSaveDisabled) { fallbackReason = backgroundSaveStatus; return false; }
             string? conflict = SaveHandOff.RefusalOutstanding ? "A cancelled save hand-off still waits for its native compressor."
                 : SaveHandOff.PublicationOutstanding ? "An earlier save is still being published by its native compressor." : NativeSaveHandOff.Conflict();
-            if (conflict == null) return true;
+            if (conflict == null)
+            {
+                if (backgroundSaveStatus.Length > 0) log?.Info("Persistent City writes saves in the background again.");
+                backgroundSaveStatus = fallbackReason = "";
+                return true;
+            }
             if (!string.Equals(conflict, backgroundSaveStatus, StringComparison.Ordinal))
                 log?.Warn("Persistent City writes this save on the main thread: " + conflict);
-            backgroundSaveStatus = conflict;
+            backgroundSaveStatus = fallbackReason = conflict;
             return false;
         }
 
@@ -190,6 +195,8 @@ namespace PersistentCity.Runtime
         {
             mode = lastSaveBackground ? "background" : "main-thread", available = NativeSaveHandOff.Installed && !backgroundSaveDisabled,
             status = backgroundSaveStatus.Length > 0 ? backgroundSaveStatus : NativeSaveHandOff.Status,
+            fallbackReason = lastSaveBackground ? null : fallbackReason,
+            acceptedCompressionPatches = NativeSaveHandOff.AcceptedCompressionPatches,
             backgroundSaves, synchronousSaves, settledSaves, splicedSaves, inFlight = pendingSave != null,
             writer = WriterDiagnostics(),
             compress = splicedSaves == 0 ? null : new

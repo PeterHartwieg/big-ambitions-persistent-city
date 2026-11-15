@@ -231,6 +231,9 @@ public sealed class Gr5SaveMeasure
             var session = SaveSession.Open(data, state.PopulationKey);
             var binding = new SaveEpochBinding(owner, data, 0);
             var writer = new SaveHandOffWriter("measure save writer") { Allocation = GC.GetAllocatedBytesForCurrentThread };
+            var patchCheck = SaveCompressionPatches.Check(SaveHandOffTests.StreetFoodPatched, new[] { SaveCompressionPatches.HandOffOwner, "foodtrucks.mod" });
+            Assert.Null(patchCheck.Conflict);
+            int observed = 0;
             var main = new List<double>(); var written = new List<double>(); var spliced = new List<double>(); var plain = new List<double>();
             var mainCost = new SaveCostRecorder();
             var phases = new double[SaveCostRecorder.PhaseCount];
@@ -257,11 +260,13 @@ public sealed class Gr5SaveMeasure
                 using (var file = System.IO.File.Create(temp))
                 {
                     file.Write(filler, 0, filler.Length / 2);
-                    file.Write(SaveHandOffTests.Odin((SaveStore.StateKey, pending.PayloadToken), (SaveEpochStore.Key, pending.MarkerToken)));
+                    file.Write(SaveHandOffTests.Odin(("foodtrucks:state", "{\"v\":3}"), (SaveStore.StateKey, pending.PayloadToken), (SaveEpochStore.Key, pending.MarkerToken)));
                     file.Write(filler, filler.Length / 2, filler.Length / 2);
                 }
                 allocated = GC.GetAllocatedBytesForCurrentThread();
-                Assert.True(SaveHandOff.Compress(temp, temp + ".gz", pending));
+                SaveHandOff.Expect(pending, temp);
+                SaveHandOff.MarkSerialized();
+                Assert.True(SaveHandOffTests.StreetFoodPatchedCompress(temp, temp + ".gz", ok => { if (ok) observed++; }));
                 long compressAllocated = GC.GetAllocatedBytesForCurrentThread() - allocated;
                 Assert.Equal(SaveSpliceOutcome.Spliced, pending.Splice);
                 Assert.True(session.Settle(pending).Success);
@@ -280,10 +285,26 @@ public sealed class Gr5SaveMeasure
                 spliced.Add(pending.CompressMilliseconds); spliceBytes.Add(compressAllocated);
             }
             System.IO.File.Delete(temp); System.IO.File.Delete(temp + ".gz"); System.IO.File.Delete(temp + ".plain");
+            Assert.Equal(22, observed);
+            var fallbackData = new Dictionary<string, string>(StringComparer.Ordinal);
+            var fallbackSession = SaveSession.Open(fallbackData, state.PopulationKey);
+            var fallback = new List<double>(); var fallbackBytes = new List<long>();
+            for (int i = 0; i < 22; i++)
+            {
+                long allocated = GC.GetAllocatedBytesForCurrentThread();
+                long started = System.Diagnostics.Stopwatch.GetTimestamp();
+                Assert.True(fallbackSession.WriteTo(fallbackData, state).Success);
+                double ms = (System.Diagnostics.Stopwatch.GetTimestamp() - started) * 1000.0 / System.Diagnostics.Stopwatch.Frequency;
+                if (i == 0) continue;
+                fallback.Add(ms); fallbackBytes.Add(GC.GetAllocatedBytesForCurrentThread() - allocated);
+            }
+            fallback.Sort(); fallbackBytes.Sort();
             main.Sort(); written.Sort(); spliced.Sort(); plain.Sort();
             System.IO.File.AppendAllText(path, JsonConvert.SerializeObject(new
             {
                 kind = "background-save", residents, visitors = state.Visitors.Count, payloadChars = expected.Length, saves = main.Count,
+                streetFoodPatch = "accepted", streetFoodObserverCalls = observed,
+                fallbackMainThreadMedianMs = fallback[10], fallbackMainThreadP95Ms = fallback[19], fallbackMainThreadAllocatedBytesMedian = fallbackBytes[10],
                 mainThreadMedianMs = main[10], mainThreadP95Ms = main[19], mainThreadMaxMs = main[20],
                 writerMedianMs = written[10], writerP95Ms = written[19], writerMaxMs = written[20],
                 spliceCompressMedianMs = spliced[10], spliceCompressP95Ms = spliced[19], plainCompressMedianMs = plain[10], plainCompressP95Ms = plain[19],
