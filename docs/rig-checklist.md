@@ -3283,10 +3283,10 @@ Raw evidence index: `<stage>/raw-evidence-manifest.json`, SHA-256 `80174cbec02f2
 | Autosave / save cost | Original native 5 minutes / 3 saves, prevent_autosave=false. #70 process guard suppressed before/after every window and after each load; all measured allowed saves / native saving frames = 0. SaveCostDiagnostics requested=false; native profiler installed=false. No manual save or latency measurement. |
 | Lease / resources | Free at inspection; acquired 2026-11-14T23:13:51.461922Z. Initial memory free 81%. Every measurement start load <=8; zero load-wait seconds. No PC contact, takeover, other-session intervention, bot message or macOS setting change. |
 
-Printed rollback verbatim (game stopped, lease held):
+Printed rollback, path-sanitized with `<home>` (game stopped, lease held):
 
 ```sh
-rm -rf "/Users/peterhartwieg/Library/Application Support/com.hovgaardgames.bigambitions.agenttests.mac/ModsLocal/PersistentCity" && cp -Rp "/Users/peterhartwieg/Library/Application Support/BigAmbitionsAgentTestsMac/receipt-backups/20261114T231443Z/mod" "/Users/peterhartwieg/Library/Application Support/com.hovgaardgames.bigambitions.agenttests.mac/ModsLocal/PersistentCity" && cp "/Users/peterhartwieg/Library/Application Support/BigAmbitionsAgentTestsMac/receipt-backups/20261114T231443Z/install.json" "/Users/peterhartwieg/Library/Application Support/BigAmbitionsAgentTestsMac/install.json"
+rm -rf "<home>/Library/Application Support/com.hovgaardgames.bigambitions.agenttests.mac/ModsLocal/PersistentCity" && cp -Rp "<home>/Library/Application Support/BigAmbitionsAgentTestsMac/receipt-backups/20261114T231443Z/mod" "<home>/Library/Application Support/com.hovgaardgames.bigambitions.agenttests.mac/ModsLocal/PersistentCity" && cp "<home>/Library/Application Support/BigAmbitionsAgentTestsMac/receipt-backups/20261114T231443Z/install.json" "<home>/Library/Application Support/BigAmbitionsAgentTestsMac/install.json"
 ```
 
 Cleanup used the equivalent move-aside/copy-back form, retaining the staged candidate in `<stage>/staged-candidate-restored-out`. The complete original mod folder and exact receipt were restored, then hashes verified. No receipt was hand-edited.
@@ -3320,7 +3320,7 @@ Fixture `FT GR5 13f Timing v1`, 1,000 residents / 2,000 visitors / 1,683 places,
 gc-day: vs 14j mod -0.67%, advance -5.41%, pause p95 +4.907 ms, gen0 +1. Vs load-contaminated 14k mod +10.50%, advance +19.54%, pause p95 -186.325 ms, gen0 +2.
 gc-night: vs 14j mod -7.87%, advance +0.25%, pause p95 +3.815 ms, gen0 +1. Vs load-contaminated 14k mod -12.81%, advance -5.25%, pause p95 -197.795 ms, gen0 +0.
 
-14k had severe shared-host build/test load, up to load average 90. Its deltas are load-contaminated, not controlled code attribution. 14l measured-window boundaries are below; no build or test ran in this session during timing.
+All 14b, 14j and 14k baselines are shared-host measurements on the same Mac, not controlled A/B runs. 14k additionally had severe shared-host build/test load, up to load average 90; its deltas are load-contaminated, not controlled code attribution. 14l measured-window boundaries are below; no build or test ran in this session during timing.
 
 ### Every allocation segment and sub-segment
 
@@ -3391,7 +3391,7 @@ These are last periodic cumulative snapshots, not exact start-to-stop counter de
 
 GC windows use nested updatecity/advance/prepare/physical/inspector rig components: UpdateCity is self time, not inclusive p95. Street re-arms with only the UpdateCity component, as in 14j, plus automatic entry-point hooks; its boundary self time excludes any nested automatic hooks. Exact inclusive UpdateCity p95 is not exported. Total per-frame mod-work is the union of all timed scopes, bounds UpdateCity, and is the strict <5 ms gate used here. PC’s phase recorder separately supplies inner attribution; its Update-only values and the all-entry union have different scope. Whole-frame timings are separate.
 
-14j street boundary / union p95 3.7732 / 3.8197 ms, three spikes, 8.13 fps. 14l deltas +1.7182 / +1.7351 ms. 14b 5.5170 / 5.5824 ms, four spikes, 5.61 fps. 14k had 108 street spikes under severe load contamination; the comparison is not isolated evidence of code effects.
+Shared-host baselines: 14j street boundary / union p95 3.7732 / 3.8197 ms, three spikes, 8.13 fps. 14l deltas +1.7182 / +1.7351 ms. 14b 5.5170 / 5.5824 ms, four spikes, 5.61 fps. 14k had 108 street spikes under severe load contamination; the comparison is not isolated evidence of code effects.
 
 **gc-day: every exported union spike** (2 total / 2 listed), matched to PC phase records by Unity frame:
 
