@@ -306,7 +306,11 @@ namespace PersistentCity.Runtime
                 double clockRate = NativeTravelPace.ClockRate;
                 long retimeStarted = Stopwatch.GetTimestamp();
                 var retime = retimeDriver.Update(simulation.State, clockRate, physical != null, NativeTravelPace.WalkingMetresPerSecond, ClockRetimeStages.SliceMilliseconds);
-                if (retime == ClockRetimeOutcome.None) { retimeReleaseMilliseconds = 0; retimeReleaseUpdates = 0; retimedRoutes = null; }
+                if (retime == ClockRetimeOutcome.None)
+                {
+                    retimeReleaseMilliseconds = 0; retimeReleaseUpdates = 0; retimedRoutes = null;
+                    if (physical?.ReleasingForRetime == true) { physical.Dispose(); physical = null; }
+                }
                 else
                 {
                     if (retime == ClockRetimeOutcome.ReleaseBodies)

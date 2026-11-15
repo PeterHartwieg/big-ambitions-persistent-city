@@ -236,6 +236,14 @@ namespace PersistentCity.Runtime
                 if (at.HasValue && Position.Distance(body.Position, at.Value) <= 1e-6) body.Reach(at.Value);
             }
         }
+        internal int ReleaseSlices;
+        internal bool ReleaseSome(long deadline)
+        {
+            ReleaseSlices++;
+            foreach (var body in Active.Values) body.Valid = false;
+            Active.Clear();
+            return true;
+        }
         public void Dispose() { foreach (var body in Active.Values) body.Valid = false; Active.Clear(); }
     }
     internal sealed class PhysicalVehicleBody
