@@ -115,6 +115,27 @@ public sealed class OwnCarTests
     }
 
     [Fact]
+    public void ParkedPlacementIsSpreadAcrossRefreshesAndEndsWithTheSameCars()
+    {
+        var expected = ShowParked(ParkedCity(6), Home);
+        StreetFoodHooks.Reset(); NavMesh.Reset(); AmbientPedestrians.Reserved.Clear(); PhysicalPedestrians.VisiblePoint = null;
+        NativeTravelPace.Focus = Home; Time.Next(3);
+        var city = new CitySimulator(ParkedCity(6), new NoRoutes());
+        using var bodies = new PhysicalPopulation(new Transform { Component = new PopulationRuntime() }, city, new MultimodalRoutes(),
+            typeof(OwnCarTests).Assembly, new VendorBodyTests.Log(), 8, 4, 120, new DwellSpots());
+        var vehicles = PhysicalVehicles.Last!;
+        vehicles.ParkedPlacementLimit = 1;
+        var counts = new List<int>();
+        for (int frame = 0; frame < 6; frame++)
+        {
+            Time.Next(frame == 0 ? 2 : 0.11f); bodies.Update();
+            counts.Add(vehicles.Parked.Count);
+        }
+        Assert.Equal(new[] { 1, 2, 3, 4, 4, 4 }, counts);
+        Assert.Equal(expected, vehicles.Parked.ToDictionary(p => p.Key, p => p.Value.Car.At));
+    }
+
+    [Fact]
     public void ParkedCarsStandAtTheSavedCurbAcrossCameraMovementAndReload()
     {
         var state = ParkedCity(6);

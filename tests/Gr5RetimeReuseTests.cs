@@ -141,3 +141,124 @@ public sealed class Gr5RetimeReuseTests
         Assert.True(rerated * 5 < fresh, rerated + " B rerated vs " + fresh + " B fresh for " + nodes.Count + " nodes");
     }
 }
+
+public sealed class Gr5FrameBoundTests
+{
+    [Fact]
+    public void PrewarmedThroughRoutesMatchRoutesComputedOnTheMainThread()
+    {
+        var network = new TrafficNetwork("gr5-through", Gr5RetimeReuseTests.Grid(18, 1), 1);
+        var direct = new ThroughTrafficRoutes(network);
+        var warmed = new ThroughTrafficRoutes(network);
+        Assert.True(direct.Entries.Count > 4, direct.Entries.Count.ToString());
+        warmed.Prewarm(direct.Entries.ToList());
+        var deadline = DateTime.UtcNow.AddSeconds(30);
+        while (warmed.Prewarmed < direct.Entries.Count && DateTime.UtcNow < deadline) System.Threading.Thread.Sleep(5);
+        Assert.Equal(direct.Entries.Count, warmed.Prewarmed);
+        long directBytes = 0, warmedBytes = 0;
+        foreach (int entry in direct.Entries)
+            for (uint draw = 0; draw < 5; draw++)
+            {
+                long started = GC.GetAllocatedBytesForCurrentThread();
+                var a = direct.Route(entry, draw * 7919);
+                directBytes += GC.GetAllocatedBytesForCurrentThread() - started;
+                started = GC.GetAllocatedBytesForCurrentThread();
+                var b = warmed.Route(entry, draw * 7919);
+                warmedBytes += GC.GetAllocatedBytesForCurrentThread() - started;
+                Assert.Equal(a == null, b == null);
+                if (a == null) continue;
+                Assert.Equal(a.Select(l => (l.LinkId, l.StartNominalMinutes, l.EndNominalMinutes, l.FreeFlowMinutes)),
+                    b!.Select(l => (l.LinkId, l.StartNominalMinutes, l.EndNominalMinutes, l.FreeFlowMinutes)));
+            }
+        Assert.True(warmedBytes * 2 < directBytes, warmedBytes + " B prewarmed vs " + directBytes + " B on the main thread");
+    }
+
+    [Fact]
+    public void AThroughRouteRequestedBeforeItsPrewarmFinishesIsStillComputed()
+    {
+        var network = new TrafficNetwork("gr5-through", Gr5RetimeReuseTests.Grid(8, 1), 1);
+        var direct = new ThroughTrafficRoutes(network);
+        var racing = new ThroughTrafficRoutes(network);
+        racing.Prewarm(direct.Entries.ToList());
+        foreach (int entry in direct.Entries)
+            Assert.Equal(direct.Route(entry, 3)?.Select(l => l.LinkId), racing.Route(entry, 3)?.Select(l => l.LinkId));
+    }
+}
+
+public sealed class Gr5NetworkSwapTests
+{
+    private const string Native = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
+    private static Position P(double x) => new(x, 0, 0);
+
+    private sealed class Planner : IRoutePlanner, ITrafficRoutePlanner
+    {
+        public TrafficNetwork? TrafficNetwork { get; set; }
+        public Route? Plan(Place from, Place to, double minute, TravelPreferences preferences) => null;
+        public void SetTrafficForecast(Func<int, double, TrafficLinkForecast>? forecast) { }
+        public bool IsTrafficLinkClosed(int linkId) => false;
+    }
+
+    private static TrafficNetwork Line() => new TrafficNetwork(Native, Enumerable.Range(0, 12).Select(i => new TrafficNetworkNode
+    { Id = i, Position = P(i * 10), AllowsCar = true, KilometresPerHour = 36, Boundary = i % 4 == 0,
+        Successors = i == 11 ? Array.Empty<int>() : new[] { i + 1 } }).ToArray(), 1);
+
+    private static CityState City(TrafficNetwork network)
+    {
+        var route = new Route();
+        for (int i = 0; i < 11; i++)
+        {
+            network.TryGetEdge(i, i + 1, out var edge);
+            route.Legs.Add(new RouteLeg { From = P(i * 10), To = P((i + 1) * 10), Mode = TravelMode.Car, Minutes = edge.FreeFlowMinutes,
+                ServiceId = $"native:road:v1:{Native}:{i}:{i + 1}" });
+        }
+        var state = Population.Create(new[] { new CitizenIdentity { Id = "driver", Name = "Driver", Age = 30, Persona = Persona.Commuter } }, new[]
+        { new Place { Id = "a", Name = "Home", Kind = PlaceKind.Home, Capacity = 1, Position = route.Legs[0].From },
+          new Place { Id = "b", Name = "Work", Kind = PlaceKind.Work, Capacity = 1, Position = route.Legs[^1].To } }, "gr5-network-swap", "0.40.4", 7, 100);
+        var citizen = state.Citizens[0]; citizen.PlaceId = citizen.HomeId = "a";
+        citizen.DestinationId = citizen.DayPlaceId = "b"; citizen.Phase = CitizenPhase.Travelling;
+        citizen.DestinationActivity = Activity.Work; citizen.ActivityUntilMinute = 500;
+        citizen.DepartureMinute = 100; citizen.NextEventMinute = 100 + route.Minutes; citizen.Journey = route;
+        citizen.Preferences.OwnsCar = true; citizen.Car = new CarState { Id = "driver:car", ParkedPosition = route.Legs[0].From };
+        state.TravelTimingVersion = 1; state.TravelClockRate = 1;
+        return state;
+    }
+
+    private static string Run(bool swap)
+    {
+        var network = Line();
+        var planner = new Planner { TrafficNetwork = network };
+        var city = new CitySimulator(City(network), planner);
+        var saves = new List<string>();
+        for (double minute = 100; minute <= 112; minute += 0.05)
+        {
+            if (swap && Math.Abs(minute - 101) < 0.001)
+            {
+                Assert.True(city.Traffic!.VehicleCount > 0);
+                planner.TrafficNetwork = network.Rerated(1, _ => null);
+            }
+            city.RefreshTrafficClosures();
+            city.AdvanceTo(minute);
+            city.SynchronizeSnapshot();
+            saves.Add(PersistentCity.Persistence.SaveCodec.Write(city.State));
+        }
+        return string.Join("\n", saves);
+    }
+
+    [Fact]
+    public void ASteadyClosureRefreshAllocatesNothingAfterWarmUp()
+    {
+        var network = Line();
+        var city = new CitySimulator(City(network), new Planner { TrafficNetwork = network });
+        city.RefreshTrafficClosures(); city.AdvanceTo(101); city.RefreshTrafficClosures();
+        Assert.True(city.Traffic!.VehicleCount > 0);
+        long before = GC.GetAllocatedBytesForCurrentThread();
+        for (int frame = 0; frame < 500; frame++) city.RefreshTrafficClosures();
+        Assert.Equal(0, GC.GetAllocatedBytesForCurrentThread() - before);
+    }
+
+    [Fact]
+    public void SwappingInARetimedNetworkMidJourneyKeepsTheCityIdentical()
+    {
+        Assert.Equal(Run(false), Run(true));
+    }
+}

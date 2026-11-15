@@ -337,7 +337,7 @@ namespace PersistentCity.Runtime
                     roadRebuildReasons.TryGetValue(reason, out int count); roadRebuildReasons[reason] = count + snapshots - seenRoadSnapshots;
                     lastRoadRebuild = reason + " index=" + routes!.LastRoadInvalidationIndex;
                     log?.Info("Road snapshot started: frame=" + Time.frameCount + ", reason=" + lastRoadRebuild
-                        + ", scene searches in this planner=" + routes.RoadSceneSearches + ".");
+                        + ", scene searches in this planner=" + routes.RoadSceneSearches + ", reused unchanged snapshot=" + routes.LastRoadSnapshotReused + ".");
                 }
                 seenRoadSnapshots = snapshots;
                 ModFrames.Charge(GcAllocationSegment.ModRoutes);

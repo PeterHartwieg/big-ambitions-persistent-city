@@ -150,6 +150,13 @@ namespace PersistentCity.Core
         }
         private static readonly Comparison<int> AscendingIds = (a, b) => a.CompareTo(b);
         private static readonly Comparison<TrafficEventState> EventOrder = EventComparer.Instance.Compare;
+        private static readonly Comparison<TrafficVehicleState> VehicleOrder = (a, b) => a.Order.CompareTo(b.Order);
+        internal void CopyVehiclesInOrder(List<TrafficVehicleState> into)
+        {
+            into.Clear();
+            foreach (var vehicle in vehicles.Values) into.Add(vehicle);
+            into.Sort(VehicleOrder);
+        }
         internal void CopyRelevantLinkIds(List<int> result)
         {
             result.Clear();
