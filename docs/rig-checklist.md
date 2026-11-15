@@ -3573,10 +3573,10 @@ Raw evidence index: `<stage>/raw-evidence-manifest.json`, SHA-256 `99a3a5fcc32b5
 | Autosave / SaveCost | Original native 5 minutes / 3 saves, prevent_autosave=false. #70 process guard suppressed after every load and before/after every window. SaveCostDiagnostics requested=false, writerSchema=1; native save profiler installed=false. No manual save or save-latency measurement. |
 | Lease / resources | Free/stopped initially; acquired 2026-11-15T02:32:37.473863Z. Pre-start 52.3 GiB disk, 76% reported memory free. No other session intervention, bot message, Windows contact or macOS setting change. |
 
-Printed rollback verbatim (game stopped, lease held):
+Printed rollback, home paths redacted (game stopped, lease held):
 
 ```sh
-rm -rf "/Users/peterhartwieg/Library/Application Support/com.hovgaardgames.bigambitions.agenttests.mac/ModsLocal/PersistentCity" && cp -Rp "/Users/peterhartwieg/Library/Application Support/BigAmbitionsAgentTestsMac/receipt-backups/20261115T023340Z/mod" "/Users/peterhartwieg/Library/Application Support/com.hovgaardgames.bigambitions.agenttests.mac/ModsLocal/PersistentCity" && cp "/Users/peterhartwieg/Library/Application Support/BigAmbitionsAgentTestsMac/receipt-backups/20261115T023340Z/install.json" "/Users/peterhartwieg/Library/Application Support/BigAmbitionsAgentTestsMac/install.json"
+rm -rf "<home>/Library/Application Support/com.hovgaardgames.bigambitions.agenttests.mac/ModsLocal/PersistentCity" && cp -Rp "<home>/Library/Application Support/BigAmbitionsAgentTestsMac/receipt-backups/20261115T023340Z/mod" "<home>/Library/Application Support/com.hovgaardgames.bigambitions.agenttests.mac/ModsLocal/PersistentCity" && cp "<home>/Library/Application Support/BigAmbitionsAgentTestsMac/receipt-backups/20261115T023340Z/install.json" "<home>/Library/Application Support/BigAmbitionsAgentTestsMac/install.json"
 ```
 
 Cleanup used the equivalent move-aside/copy-back form, retaining the staged candidate outside the profile before copying the complete original mod and exact receipt back. No receipt was hand-edited.
