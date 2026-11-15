@@ -17,6 +17,7 @@
     <Compile Include="../../tests/Kit/CompactFormat/*.cs" />
     <Compile Include="../../tests/capability-matrix/CapabilityMatrix.cs" />
     <Compile Include="../../Runtime/DecisionSupplyImage.cs" />
+    <Compile Include="../../Runtime/GcAllocationCounter.cs" />
     <Compile Include="../../Runtime/FoodContractStamps.cs" />
     <Compile Include="../../Runtime/FoodContractHooks.cs" />
     <Compile Include="../../Runtime/OrdinaryOwnershipIndex.cs" />

@@ -213,6 +213,91 @@ public sealed class Gr5SaveMeasure
     }
 
     [Fact]
+    public void MeasureBackgroundSaveAtCitySizes()
+    {
+        string? path = PerfGate.Variable("PC_GR5_MEASURE");
+        if (string.IsNullOrEmpty(path)) return;
+        foreach (int residents in new[] { CityBalance.CityResidentTotal, 1074 })
+        {
+            var state = EconomyScenario.Create(residents, RepresentativeFixture.Seed);
+            PortalPlaces.Add(state, RepresentativeFixture.Portals);
+            VisitorSchedules.Create(state, 2 * residents);
+            state.Food = new FoodCommerceState { MealRhythmVersion = MealRhythm.PolicyVersion, HouseholdFinanceVersion = HouseholdFinance.PolicyVersion,
+                Shops = Enumerable.Range(1, 3).Select(i => new FoodScope { PlaceId = "shop-" + i, BusinessId = "b" + i, ProductId = FoodProducts.Croissant }).ToList() };
+            new CitySimulator(state, new FreshCityTraceTests.Walk()).AttachFoodMarket(new VisitorRoutineTests.Market { Shops = F5gPopulationFillTests.Shops(state) });
+            string expected = SaveCodec.Write(state);
+            var owner = new object();
+            var data = new Dictionary<string, string>(StringComparer.Ordinal);
+            var session = SaveSession.Open(data, state.PopulationKey);
+            var binding = new SaveEpochBinding(owner, data, 0);
+            var writer = new SaveHandOffWriter("measure save writer") { Allocation = GC.GetAllocatedBytesForCurrentThread };
+            var main = new List<double>(); var written = new List<double>(); var spliced = new List<double>(); var plain = new List<double>();
+            var mainCost = new SaveCostRecorder();
+            var phases = new double[SaveCostRecorder.PhaseCount];
+            var mainBytes = new List<long>(); var writerBytes = new List<long>(); var spliceBytes = new List<long>();
+            string temp = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "pc-gr5-handoff-" + Guid.NewGuid().ToString("N"));
+            var filler = new byte[8 << 20];
+            new Random(5).NextBytes(filler);
+            for (int i = 0; i < 22; i++)
+            {
+                PendingSave? queued = null;
+                long allocated = GC.GetAllocatedBytesForCurrentThread();
+                long started = System.Diagnostics.Stopwatch.GetTimestamp();
+                var result = SaveEpochCallback.Run(binding, owner, data, false, ticket =>
+                {
+                    mainCost.Begin();
+                    var begun = session.BeginWrite(data, state, writer, mainCost, null, out queued);
+                    mainCost.End(begun.Success, begun.Error);
+                    return begun.Success ? SaveEpochCapture.Queued(queued!) : SaveEpochCapture.Refused(begun.Error);
+                }, _ => { }, _ => { });
+                double mainMs = (System.Diagnostics.Stopwatch.GetTimestamp() - started) * 1000.0 / System.Diagnostics.Stopwatch.Frequency;
+                long mainAllocated = GC.GetAllocatedBytesForCurrentThread() - allocated;
+                Assert.Equal(SaveEpochResult.Queued, result);
+                var pending = queued!;
+                using (var file = System.IO.File.Create(temp))
+                {
+                    file.Write(filler, 0, filler.Length / 2);
+                    file.Write(SaveHandOffTests.Odin((SaveStore.StateKey, pending.PayloadToken), (SaveEpochStore.Key, pending.MarkerToken)));
+                    file.Write(filler, filler.Length / 2, filler.Length / 2);
+                }
+                allocated = GC.GetAllocatedBytesForCurrentThread();
+                Assert.True(SaveHandOff.Compress(temp, temp + ".gz", pending));
+                long compressAllocated = GC.GetAllocatedBytesForCurrentThread() - allocated;
+                Assert.Equal(SaveSpliceOutcome.Spliced, pending.Splice);
+                Assert.True(session.Settle(pending).Success);
+                Assert.True(binding.Settle(pending));
+                Assert.Equal(expected, data[SaveStore.StateKey]);
+                long plainStarted = System.Diagnostics.Stopwatch.GetTimestamp();
+                using (var input = System.IO.File.OpenRead(temp))
+                using (var output = new System.IO.Compression.GZipStream(System.IO.File.Create(temp + ".plain"), System.IO.Compression.CompressionLevel.Optimal))
+                    input.CopyTo(output);
+                double plainMs = (System.Diagnostics.Stopwatch.GetTimestamp() - plainStarted) * 1000.0 / System.Diagnostics.Stopwatch.Frequency;
+                if (i == 0) continue;
+                plain.Add(plainMs);
+                for (int phase = 0; phase < phases.Length; phase++) phases[phase] += mainCost.Milliseconds((SaveCostPhase)phase) / 21;
+                main.Add(mainMs); mainBytes.Add(mainAllocated);
+                written.Add(pending.WriteMilliseconds); writerBytes.Add(pending.WriterAllocatedBytes);
+                spliced.Add(pending.CompressMilliseconds); spliceBytes.Add(compressAllocated);
+            }
+            System.IO.File.Delete(temp); System.IO.File.Delete(temp + ".gz"); System.IO.File.Delete(temp + ".plain");
+            main.Sort(); written.Sort(); spliced.Sort(); plain.Sort();
+            System.IO.File.AppendAllText(path, JsonConvert.SerializeObject(new
+            {
+                kind = "background-save", residents, visitors = state.Visitors.Count, payloadChars = expected.Length, saves = main.Count,
+                mainThreadMedianMs = main[10], mainThreadP95Ms = main[19], mainThreadMaxMs = main[20],
+                writerMedianMs = written[10], writerP95Ms = written[19], writerMaxMs = written[20],
+                spliceCompressMedianMs = spliced[10], spliceCompressP95Ms = spliced[19], plainCompressMedianMs = plain[10], plainCompressP95Ms = plain[19],
+                spliceFillerBytes = filler.Length,
+                meanMainPhaseMs = Enumerable.Range(0, phases.Length).ToDictionary(i => ((SaveCostPhase)i).ToString(), i => Math.Round(phases[i], 3)),
+                mainThreadAllocatedBytesMedian = mainBytes.OrderBy(b => b).ElementAt(10),
+                writerAllocatedBytesMedian = writerBytes.OrderBy(b => b).ElementAt(10),
+                spliceAllocatedBytesMedian = spliceBytes.OrderBy(b => b).ElementAt(10),
+                totalAllocatedBytesMedian = mainBytes.OrderBy(b => b).ElementAt(10) + writerBytes.OrderBy(b => b).ElementAt(10) + spliceBytes.OrderBy(b => b).ElementAt(10),
+            }) + Environment.NewLine);
+        }
+    }
+
+    [Fact]
     public void MeasureSimulationAllocationOfCapturedPayload()
     {
         string? path = PerfGate.Variable("PC_GR5_MEASURE");

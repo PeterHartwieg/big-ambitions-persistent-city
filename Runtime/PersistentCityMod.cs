@@ -186,6 +186,8 @@ namespace PersistentCity.Runtime
                 if (File.Exists(path)) settings = JsonConvert.DeserializeObject<PrototypeSettings>(File.ReadAllText(path)) ?? throw new InvalidDataException("Configuration is null.");
                 settings.FoodProductOverrides.ReportOnce(message => log.Info(message));
                 SaveCostDiagnosticsRequested = settings.SaveCostDiagnostics;
+                NativeSaveHandOff.Install();
+                if (NativeSaveHandOff.Status.Length > 0) log.Warn("Persistent City saves on the main thread: " + NativeSaveHandOff.Status);
                 inspector.ShopName = place => foodMarket?.NameOf(place);
                 inspector.CurrentOwnShop = ObservedOwnShop;
                 settings.FoodChoice.Clamp(message => log.Info(message));
@@ -872,7 +874,7 @@ namespace PersistentCity.Runtime
                 if (cost != null)
                 {
                     cost.End(capture.Error == null, capture.Error ?? "");
-                    if (capture.Error == null) CountSavedRecords(cost, payload => SaveCodec.CountRecords(simulation!.State, payload));
+                    if (capture.Error == null && capture.Pending == null) CountSavedRecords(cost, payload => SaveCodec.CountRecords(simulation!.State, payload));
                 }
             }
         }
@@ -893,8 +895,11 @@ namespace PersistentCity.Runtime
             if (saveEpoch?.CanPublish(ticket, SaveGameManager.Current, SaveGameManager.Current.modData) != true)
                 return SaveEpochCapture.Refused("Save epoch changed during capture; previous payload retained.");
             vendorMarket?.CompleteForSave();
-            var result = (saveSession ?? throw new InvalidOperationException("Save session is missing."))
-                .WriteTo(SaveGameManager.Current.modData, simulation.State, cost);
+            var session = saveSession ?? throw new InvalidOperationException("Save session is missing.");
+            if (BackgroundSaveAvailable()) return BeginBackgroundWrite(session, cost);
+            synchronousSaves++;
+            lastSaveBackground = false;
+            var result = session.WriteTo(SaveGameManager.Current.modData, simulation.State, cost);
             return result.Success ? SaveEpochCapture.Written(simulation.State.Minute, simulation.State.PopulationKey)
                 : SaveEpochCapture.Refused("Population save refused: " + result.Error);
         }
@@ -958,6 +963,7 @@ namespace PersistentCity.Runtime
 
         private void Detach()
         {
+            FlushSaveHandOff();
             settings.MarketResearch.ClearAvailability(); ResearchAgencyDialog.Detach(); ResearchBilling.Detach();
             DetachSaveEpoch();
             NativeInteriorCityView.Stop();

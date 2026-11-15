@@ -33,6 +33,27 @@ namespace PersistentCity.Persistence
 
         public static string Success(long sequence, int schema, double minute, string populationKey, IDictionary<string, string> data)
         {
+            var text = Header(sequence, schema, minute, populationKey);
+            foreach (string key in PublishedKeys)
+            {
+                if (!data.TryGetValue(key, out var payload) || payload == null)
+                    throw new InvalidOperationException("Published key " + key + " is missing.");
+                text.Append("\npayload=").Append(payload.Length.ToString(CultureInfo.InvariantCulture)).Append(' ').Append(key);
+            }
+            return text.ToString();
+        }
+
+        public static string Success(long sequence, int schema, double minute, string populationKey, int payloadCharacters)
+        {
+            if (PublishedKeys.Count != 1 || PublishedKeys[0] != SaveStore.StateKey)
+                throw new InvalidOperationException("A single-payload marker needs exactly one published key.");
+            if (payloadCharacters < 0) throw new ArgumentOutOfRangeException(nameof(payloadCharacters));
+            return Header(sequence, schema, minute, populationKey).Append("\npayload=")
+                .Append(payloadCharacters.ToString(CultureInfo.InvariantCulture)).Append(' ').Append(SaveStore.StateKey).ToString();
+        }
+
+        private static System.Text.StringBuilder Header(long sequence, int schema, double minute, string populationKey)
+        {
             if (sequence < 1) throw new ArgumentOutOfRangeException(nameof(sequence));
             if (schema < 1) throw new ArgumentOutOfRangeException(nameof(schema));
             if (!IsFinite(minute) || minute < 0) throw new ArgumentOutOfRangeException(nameof(minute));
@@ -42,13 +63,7 @@ namespace PersistentCity.Persistence
                 .Append("\nschema=").Append(schema.ToString(CultureInfo.InvariantCulture))
                 .Append("\nminute=").Append(minute.ToString("R", CultureInfo.InvariantCulture))
                 .Append("\npopulation=").Append(populationKey);
-            foreach (string key in PublishedKeys)
-            {
-                if (!data.TryGetValue(key, out var payload) || payload == null)
-                    throw new InvalidOperationException("Published key " + key + " is missing.");
-                text.Append("\npayload=").Append(payload.Length.ToString(CultureInfo.InvariantCulture)).Append(' ').Append(key);
-            }
-            return text.ToString();
+            return text;
         }
 
         public static bool TryRead(string? text, out SaveEpochMarker? marker, out string error)
@@ -166,6 +181,8 @@ namespace PersistentCity.Persistence
 
         public bool BoundTo(object? current) => !Detached && ReferenceEquals(current, instance);
 
+        public bool Owns(IDictionary<string, string>? candidate) => ReferenceEquals(candidate, data);
+
         public SaveEpochTicket? Begin(object? current, IDictionary<string, string>? currentData, bool unitOnStack)
         {
             if (!BoundTo(current)) return null;
@@ -216,6 +233,40 @@ namespace PersistentCity.Persistence
             return true;
         }
 
+        public bool PublishPending(SaveEpochTicket ticket, object? current, IDictionary<string, string>? currentData, PendingSave pending)
+        {
+            if (pending == null) throw new ArgumentNullException(nameof(pending));
+            string? refusal = PublicationRefusal(ticket, current, currentData);
+            if (refusal != null) { Fail(ticket, refusal); return false; }
+            pending.Sequence = ticket.Sequence;
+            data[SaveEpochStore.Key] = pending.MarkerToken;
+            Queued++;
+            return true;
+        }
+
+        public bool Settle(PendingSave pending, string? payloadRefusal = null)
+        {
+            if (pending == null) throw new ArgumentNullException(nameof(pending));
+            bool ours = data.TryGetValue(SaveEpochStore.Key, out var marker) && ReferenceEquals(marker, pending.MarkerToken);
+            if (pending.Succeeded && ours && payloadRefusal == null)
+            {
+                data[SaveEpochStore.Key] = pending.Marker;
+                Published++;
+                return true;
+            }
+            Refused++;
+            LastRefusal = payloadRefusal ?? (pending.Succeeded ? "The save-epoch marker changed during the background write." : pending.Error);
+            if (ours || !Detached)
+            {
+                poisoned = true;
+                AccountingStopStore.Stop(data, AccountingStopStore.SaveEpochFailed);
+                data[SaveEpochStore.Key] = SaveEpochStore.Failed(pending.Sequence);
+            }
+            return false;
+        }
+
+        public int Queued { get; private set; }
+
         public void End(SaveEpochTicket ticket)
         {
             if (!ReferenceEquals(ticket.Owner, this) || !ticket.Open) return;
@@ -264,16 +315,20 @@ namespace PersistentCity.Persistence
         public bool Reentrant { get; internal set; }
     }
 
-    public enum SaveEpochResult { NotBound, Published, Refused, Reentrant, Deferred }
+    public enum SaveEpochResult { NotBound, Published, Refused, Reentrant, Deferred, Queued }
 
     public readonly struct SaveEpochCapture
     {
-        private SaveEpochCapture(string? error, double minute, string populationKey) { Error = error; Minute = minute; PopulationKey = populationKey; }
+        private SaveEpochCapture(string? error, double minute, string populationKey, PendingSave? pending)
+        { Error = error; Minute = minute; PopulationKey = populationKey; Pending = pending; }
         public string? Error { get; }
         public double Minute { get; }
         public string PopulationKey { get; }
-        public static SaveEpochCapture Written(double minute, string populationKey) => new SaveEpochCapture(null, minute, populationKey);
-        public static SaveEpochCapture Refused(string error) => new SaveEpochCapture(error ?? "Save refused.", 0, "");
+        public PendingSave? Pending { get; }
+        public static SaveEpochCapture Written(double minute, string populationKey) => new SaveEpochCapture(null, minute, populationKey, null);
+        public static SaveEpochCapture Queued(PendingSave pending) =>
+            new SaveEpochCapture(null, pending.Minute, pending.PopulationKey, pending ?? throw new ArgumentNullException(nameof(pending)));
+        public static SaveEpochCapture Refused(string error) => new SaveEpochCapture(error ?? "Save refused.", 0, "", null);
     }
 
     public static class SaveEpochCallback
@@ -282,6 +337,7 @@ namespace PersistentCity.Persistence
             bool unitOnStack, Func<SaveEpochTicket, SaveEpochCapture> capture, Action<string> stop, Action<string> report)
         {
             SaveEpochTicket? ticket = null;
+            PendingSave? pending = null;
             string reason;
             try
             {
@@ -300,13 +356,23 @@ namespace PersistentCity.Persistence
                     return SaveEpochResult.Refused;
                 }
                 var captured = capture(ticket);
-                if (captured.Error == null
+                pending = captured.Pending;
+                if (captured.Error == null && pending != null)
+                {
+                    if (binding!.PublishPending(ticket, current, currentData, pending))
+                    {
+                        pending.Start();
+                        pending = null;
+                        return SaveEpochResult.Queued;
+                    }
+                }
+                else if (captured.Error == null
                     && binding!.Publish(ticket, current, currentData, CityState.CurrentSchema, captured.Minute, captured.PopulationKey))
                     return SaveEpochResult.Published;
                 reason = captured.Error ?? binding!.LastRefusal;
             }
             catch (Exception error) { reason = "Population save failed: " + error.Message; }
-            finally { if (ticket != null) binding!.End(ticket); }
+            finally { pending?.Abandon(); if (ticket != null) binding!.End(ticket); }
             try { if (ticket != null) binding!.Fail(ticket, reason); }
             catch (Exception error) { Report(report, "Persistent City save-epoch marker write failed: " + error); }
             Report(report, "Persistent City save refused: " + reason);
