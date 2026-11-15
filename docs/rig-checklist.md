@@ -8,6 +8,8 @@ Detailed specs: [F8 §7](https://github.com/PeterHartwieg/big-ambitions-persiste
 
 ## Latest evidence
 
+- **15 November e, Mac (planned 16b), candidate `cbd4e68e`:** 0 passed / 0 partial / 0 failed / 6 mandatory NOT RUN + 4 NOT RUN groups; staging refused (missing owner environment); no game started; unchanged hashes, lease free ([15e results](#rig-results--15-november-2026-e-mac-planned-16b-279-checks-1-4-246-check-4-re-baseline-at-cbd4e68e)).
+
 - **15 November d, Mac (planned 16a), build `564020b`:** 2 passed / 1 partial / 4 failed / 4 NOT RUN groups; #93 reload adoption verified; #246-4 floor mismatch; day/night gen0 6/5, pause p95 674.160/45.630 ms; timing PROVISIONAL (Mac shared); restored ([15d results](#rig-results--15-november-2026-d-mac-planned-16a-leftover-ft-rigtmp-gr5-15c-delete-246-check-4-via-agent-rig-93-277-checks-1-4-at-564020b)).
 
 - **15 November c, Mac, build `39bd8e0`:** 0 passed / 0 partial / 4 failed / 4 NOT RUN groups. #91 fixture reload failed; day/night gen0 6/4, pause p95 110.57/4651.381 ms; street fail; provisional (Mac shared), restored ([15c results](#rig-results--15-november-2026-c-mac-gr-5-246-check-4-via-91-then-gcstreet-after-275-at-39bd8e0)).
@@ -5857,3 +5859,186 @@ Restore verification: `{"original_files_verified":29,"original_absent_paths_veri
 Offline verification: build passed; docs link and markdown-ban checks run for the results diff. No production code changes, no full test suite or regression suite. Original checkout unchanged. Build/evidence worktree removed after evidence commit and PR creation. No merge, release, Workshop, version/changelog, schema or weight change.
 
 Refs #246 #277
+
+## Rig results — 15 November 2026 e, Mac (planned 16b; #279 checks 1-4, #246 check 4 re-baseline at cbd4e68e)
+
+**RESULT: BLOCKED. Counts: 0 passed / 0 partial / 0 failed / 6 mandatory checks NOT RUN, plus 4 NOT RUN groups.** The staging setup failure is separate from the in-game counts. No game started and no in-game evidence was obtained. In-game proof gates no merge. This docs-only results PR remains unmerged.
+
+Role `rig_test`, where `mac`, isolated `agentmac`; run `persistent-city-rig-2026-11-15e-mac`. `<stage>` = `~/HART-Builds/persistent-city-rig-2026-11-15e-mac`. Raw logs, manifests and backups remain outside Git. Report copy: `~/Coding_Projects/.agent-logs/persistent-city-rig-2026-11-15e-mac.md`. New Markdown files are banned by `tools/md-ban.py` and `tests/MarkdownBanTests.cs`; following the requested fallback, results are appended here, as in 15d. No GC JSON was created and the existing 15d evidence is unchanged.
+
+### Build and rig
+
+| Item | Evidence |
+| --- | --- |
+| Source | `cbd4e68e58dee03272d23612cee23b52d5ebcda8`, #279 merge `1cbcc130` plus #280 docs. Fetched origin/codex/persistent-city matched the requested tip at prep and final recheck; no movement observed. |
+| Branch/worktree | New `codex/mac-rig-2026-11-15e`, built in `rig-2026-11-15e-mac-evidence`. Original checkout unchanged. The single build/evidence worktree is removed after commit, push and PR creation. |
+| agent-rig HEAD | `62106d35be6735fab3e126d3905a5de069068145` (#94/#95, includes #93/#92); clean before and after fetch/ff-only pull; already current. No edits, commits, pushes or installation update. |
+| Live AgentRigOps SHA-256 | `dc621edf1136d8111ae3bc821d0e7f17903df2f03281b1e7fb1c16dd5a0e589d`, verified at prep and cleanup. The rig overlay rollback named in the request was not executed. |
+| Candidate PersistentCity DLL SHA-256 | `2d4986e9e59ce067b0901ede6aa4e39553598eca395e77971a0a526d51864fa7`; build/package only, never staged or loaded. |
+| Build | `PATH=/opt/homebrew/bin:$PATH`, `DOTNET_ROOT` from Homebrew dotnet; `python3 tools/build.py --game-managed "~/Library/Application Support/BigAmbitionsMCP/dll-import-shim/Big Ambitions_Data/Managed"`, exit 0. Package at `<stage>/package`, no RLO/game DLLs copied. Home-normalized paths in this report are evidence labels, not literal quoted-tilde shell recipes. |
+| Stage | Refused before lifecycle reservation; exact error below. No receipt-backups path or rollback was printed or created by this attempt. |
+| staged_mod line / loaded build | Unavailable: staging refused and no player was launched. No historical Player.log line is presented as this run’s build proof. |
+| RLO version/options and autosave | NOT RUN: no live readback. RLO 1.0.6 and 5 minutes / 3 saves were 15d observations only. Own RLO file manifest and isolated preferences/config backup were taken before staging; unchanged hashes verified. No process guard, SaveCostDiagnostics status or autosave suppression claim is made for this run. No save latency measured. |
+| Cities/population | Planned A: `FT GR5 13f Timing v1`, 1,000 residents / 2,000 visitors; fallback `FT RLO 13d Food v1` was not used. Planned D: `FT RIGTMP-GR5-15e-mac`. None loaded or created; live population unavailable. |
+| Lease | Free/stopped at launch; acquired 2026-11-15T12:44:22.911923Z under owner `persistent-city-rig-2026-11-15e-mac`; released after hash verification. Final held=false, pending=0, running=false, process=null. |
+| Own pre-stage manifest | `<stage>/pre-stage-manifest.json`, SHA-256 `7a2154016e205b9bcf0f3126926460847ff6f8d53d2f0b379aa875592f4f1c2b`; 6 tracked paths, including ModsLocal/PersistentCity, profile config, frame-cap/save-mode paths, receipt and preferences. |
+| Evidence index | `<stage>/raw-evidence-manifest.json`, SHA-256 `f973c414b437822ec4a1276977dffe4148eaa68fd9262a31fa5413a3c0eff27e`. Raw stage traceback in `<stage>/stage.log`. |
+
+### Staging failure and cause
+
+The stage command omitted `BA_LOCK_OWNER`. Earlier lease acquisition supplied it only for that individual command; it was not exported into this invocation. Consequently the installer could not use this session’s lease token. This is a rig-test invocation error, not evidence that #94/#95 lack staging support. Per the explicit instruction “If staging refuses ... mark everything NOT RUN / tooling gap ... RESULT: BLOCKED”, no retry or game start followed.
+
+Exact attempted staging command, home-normalized:
+
+```sh
+python3 scripts/install-mac.py --stage-mod PersistentCity ~/HART-Builds/persistent-city-rig-2026-11-15e-mac/package
+```
+
+Exact output, home-normalized:
+
+```text
+Traceback (most recent call last):
+  File "~/Coding_Projects/big-ambitions/big-ambitions-agent-rig/scripts/install-mac.py", line 273, in <module>
+    elif a.stage_mod:refresh_mods(a.stage_mod[0],a.stage_mod[1],what_if=a.what_if)
+                     ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "~/Coding_Projects/big-ambitions/big-ambitions-agent-rig/scripts/install-mac.py", line 188, in refresh_mods
+    with lifecycle():
+         ~~~~~~~~~^^
+  File "/opt/homebrew/Cellar/python@3.15/3.15.0/Frameworks/Python.framework/Versions/3.15/lib/python3.15/contextlib.py", line 203, in __enter__
+    return next(self.gen)
+  File "~/Coding_Projects/big-ambitions/big-ambitions-agent-rig/scripts/mac_common.py", line 44, in lifecycle
+    if p.stdout.readline().strip()!='{"ready":true}':raise RuntimeError(p.stderr.read().strip() or 'Could not reserve the rig')
+                                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+RuntimeError: A valid lock token is required
+```
+
+The shell wrapper ran `cat stage.log` afterward and returned 0; that wrapper exit is not installer success. The traceback is the refusal evidence. `install-mac.py` enters `lifecycle()` before its stopped check, receipt backup creation and scoped copy; the exception occurred on entry. No receipt was hand-edited and no rollback command was available. Hash verification independently confirms unchanged files.
+
+### A: #279 checks 1–4, Expected requirements and gates
+
+[PR #279](https://github.com/PeterHartwieg/big-ambitions-persistent-city/pull/279) body and issue comments were read and retained as `pr279.txt` and `pr279-comments.json`. Its body has a PROCESS requirement listing checks (1)–(4), plus TARGETS; it has no separate numbered “Expected:” lines. The table preserves those requirements rather than attributing invented Expected lines to it. The previous #277 Expected lines in 15d do not replace #279’s targets.
+
+| Check | Expected requirement from #279 / requested acceptance | Outcome |
+| --- | --- | --- |
+| 1 day 15:30 GC | 600 s on FT GR5 13f Timing v1 at 1,000 residents / 2,000 visitors; report gen0, pause p95, heap, mod, physical, advance and every segment/sub-segment vs latest rig. Targets: gen0 about 5 or fewer; pause p95 under ~36 ms. | **NOT RUN**: stage refusal; gates untested, not met by evidence. |
+| 2 night 01:00 GC | Same 600 s report at night after speed-20 advance; same gen0/pause targets. All ≥30 ms spikes with phase, detail, sub, gc_phase, collections and unity_frame, plus rig gc_pauses keyed by unity_frame. | **NOT RUN**: no advance/window; gates untested. |
+| 3 street | 600 s, daytime camera pans and a clock-rate change. UpdateCity and mod-work p95 under 5 ms, no ≥30 ms mod-work frame (including retime/rebuild and appearance), inclusive/exclusive components and whole-frame p95/max separately; copy Clock retime line. | **NOT RUN**: no sampler-off street window, component key, frame attribution or Clock retime line. |
+| 4 look stability | Follow 5 residents through body release/reacquire, speed change/retime and reload; dressed bodies, same look per resident, parked cars at saved curbs; zero Appearance meshes unavailable / Empty appearance / Merged body log strings. | **NOT RUN**: no player/captures/identity observations. No empty-log pass inferred. |
+
+TARGETS also requires idle ticks at 0 B and no visual or behaviour change (same simulation results/routes). These were not tested. Autosave-OFF before/after, no save during windows and SaveCostDiagnostics off could not be verified because no window started.
+
+### Comparison with prior runs
+
+All timing/GC/street figures below are **PROVISIONAL (shared Mac)**; they are prior observations, not new measurements or a clean baseline. MB is decimal. No improvement or regression can be concluded for #279 from this blocked run.
+
+| Metric | 15a #274 | 15b #276 | 15c #278 | 15d #280 at 564020b7 | 15e |
+| --- | --- | --- | --- | --- | --- |
+| Day gen0 / mod MB / pause p95 ms | 8 / 295.628 / 27.888 | 7 / 177.883 / 43.403 | 6 / 272.206 / 110.570 | 6 / 139.858 / 674.160 | NOT RUN |
+| Night gen0 / mod MB / pause p95 ms | 6 / 151.470 / 37.301 | 6 / 78.728 / 38.929 | 4 / 66.856 / 4651.381 | 5 / 75.720 / 45.630 | NOT RUN |
+| Street UpdateCity self / union p95 ms | 6.5466 / 6.6550 | 6.8007 / 6.9556 | 16.81 / 17.22 | 3.7571 / 3.8278 | NOT RUN |
+| Street ≥30 ms union frames | 37 | 28 | 114 | 1 (about 44 ms) | NOT RUN |
+
+15d’s day pause p95 is 674.160 ms in its committed report; the request only specified its day gen0/mod totals. Shared-host frame excess and profiler GC.Collect marker durations remain different evidence. No new heap, physical/advance totals, segments/sub-segments, per-component inclusive/exclusive values or gc_pauses rows exist for 15e.
+
+### Spike accounting (#94)
+
+| Window | Counted | Retained | Truncated | Cap |
+| --- | --- | --- | --- | --- |
+| Day GC | NOT RUN | NOT RUN | Unknown; no window | 1,024 in rig format, not exercised |
+| Night GC | NOT RUN | NOT RUN | Unknown; no window | 1,024 in rig format, not exercised |
+| Street | NOT RUN | NOT RUN | Unknown; no window | 1,024 in rig format, not exercised |
+
+No zero-spike or zero-truncation claim is made. No ≥30 ms rows were observed or chased. Both the rig’s new counted/retained/truncated fields and Persistent City’s own recorder remain unverified by this run.
+
+### D: #246 check 4 re-baseline and check-5 tally
+
+[PR #246](https://github.com/PeterHartwieg/big-ambitions-persistent-city/pull/246) body and issue comments were read and retained. Check 4 Expected: “footprint within about 1.5x of the visible ground area and floors within one of the visible storeys.” **NOT RUN**, not met by evidence. 15d failed on floors 11 versus visible storeys 13; the pending floors-bias change is not in this candidate. That expected repeat failure is not recorded as an observed 15e failure.
+
+Check 5 Expected: “buildings under one storey count as empty, not unreadable, and the omitted-places warning only counts unreadable ones.” **NOT RUN**; no in-load tally or omitted-places warning was obtained.
+
+| Official steps / evidence | 15e result |
+| --- | --- |
+| 1 new_game FT RIGTMP-GR5-15e-mac, population, pause/autosave | NOT RUN; city not created. |
+| 2 apply, after.subjects / after.missing | NOT RUN; roles and missing counts unknown, not zero. |
+| 3 list rentable=false / rotated / yard / unreadable / empty; in-load tally | NOT RUN; no yard-filter scan.geometry_reads / scan.slices, yard read or class counts. |
+| 4 Default save under same loaded name only | NOT RUN; no save triggered. |
+| 5 reload, then 6 pause/status before other mutation | NOT RUN; applied, restored_on_load, adopted_at, load_hook.installed/error/last, sidecar and role-place equality unavailable. |
+| 6 repeat list / five-role PC visibility / independent storeys and home_area | NOT RUN; housed_rotated, housed_yard, housed_plain, unreadable and empty unobserved. No footprint_m2/gross_m2/usable_m2 or invented collider-free count. ops_building_bounds_unavailable was not invoked in this run. |
+| 7 revert originals/colliders, sidecar=false | Not needed: no fixture applied. Offline cleanup found zero sidecars. |
+| 8 load different FT city; disposable_save read/delete | NOT RUN: no game loaded; no disposable created by this run. |
+
+Leftover-delete read results: `FT RIGTMP-GR5-15d-mac` **NOT RUN**; `FT RIGTMP-GR5-15c` **NOT RUN**. No `disposable_save` read or delete was sent, so absence is not claimed. Their deletion in 15d remains historical evidence. `FT RIGTMP-GR5-14i` and sealed fixtures were not deleted; their protected-file hashes match prep.
+
+### Shared-host evidence
+
+No performance window started, so there are no window start/end host samples or live-window session/build lists. Launch observation at 13:43 Europe/Berlin: uptime 1 day 19:22; load 5.31 / 6.27 / 5.96; memory_pressure reported 57% system-wide free. Top processes included next-server 275.4% CPU, FPCKService 49.3%, suggestd 46.6% and chrome-headless-shell 43.1%. No heavy-memory refusal was observed.
+
+Post-block snapshot `<stage>/post-block-host.json`: 2026-11-15T12:47:04Z; 13:47  up 1 day, 19:25, 1 user, load averages: 7.45 6.36 6.02; System-wide memory free percentage: 74%. Exact `ps -Arco pid,pcpu,comm | head -8` equivalent excerpt:
+
+```text
+  PID  %CPU COMM
+50220 198.7 com.apple.Virtualization.VirtualMachine
+49418  57.8 suggestd
+92656  44.3 spotlightknowledged
+50209  42.5 limactl
+93588  24.0 Google Chrome
+50359  23.2 ssh.sock [mux]
+93573  15.9 node
+```
+
+Live sessions observed read-only:
+
+- `20261115-115959-ux-insurgo-history-1970`: phase `local_tests`.
+- `20261115-133316-mac-fix-gr5-rig15d-leaves`: phase `implement`.
+- `20261115-134624-rig-walker-binding`: phase `implement`.
+
+The launched fourteenth GR-5 fix remained harness PID 84936, branch `codex/mac-fix-gr5-rig15d-leaves`, worktree `fix-gr5-rig15d-leaves`, implement phase. Other-project harness PID 26553 was in local_tests. Build/current-working-directory observations are retained in the host JSON. No files, branches or processes of those sessions were changed. No rig build was live during a performance window because there were no windows. `harness` was absent from PATH; read-only fallback `PYTHONPATH=~/Coding_Projects/personal/coding-harness python3 -m harness stream-guard status` returned idle from its registry. It did not start/contact the PC.
+
+### NOT RUN grouped
+
+The six mandatory checks are enumerated above. Four additional NOT RUN groups:
+
+1. **E, other pending Mac checks:** staging-refusal stop rule; A and D prerequisites never completed. Every current checklist row below is NOT RUN for this run. No `rig-2026-11-06` checklist or `STATUS.md` was found in the repository; no additional coordinator notes were supplied.
+2. **GR-5 60 fps street/busy-shop arms:** Windows-only; Mac roughly 5–8 fps at 1,000 residents in prior evidence; Peter gaming on PC, no PC work.
+3. **GR-5 save latency:** owner decision pending; separate profiling explicitly excluded.
+4. **#262 checks 4–5 / #254-4 look identity:** resident-reacquire rig op missing per requested exclusions; no weaker native-handle check substituted. Everything outside A, D and eligible E is outside this run.
+
+| Checklist row | Outcome/reason |
+| --- | --- |
+| 1. Sales at current head (food/goods/service, ceiling, cut/recovery) | NOT RUN: E blocked by staging refusal before A/D; no capability claim or new op failure |
+| 2. PR checks since 12b (#234/#236/#237/#238/#239) | NOT RUN: E blocked by staging refusal before A/D; no capability claim or new op failure |
+| 3. RLO overlap and own cars | NOT RUN: E blocked by staging refusal before A/D; no capability claim or new op failure |
+| 4. Mixed and original-three menus | NOT RUN: E blocked by staging refusal before A/D; no capability claim or new op failure |
+| 5. Eight- and nine-offer menus/refill | NOT RUN: E blocked by staging refusal before A/D; no capability claim or new op failure |
+| 6. Repair storms at 8 and 64 shops | NOT RUN: E blocked by staging refusal before A/D; no capability claim or new op failure |
+| 7. E6 checks 1–13 | NOT RUN: E blocked by staging refusal before A/D; no capability claim or new op failure |
+| 8. Street Food absent/returned | NOT RUN: E blocked by staging refusal before A/D; no capability claim or new op failure |
+| 9. Research and a truck | NOT RUN: E blocked by staging refusal before A/D; no capability claim or new op failure |
+| 10. Mechanism report | NOT RUN: E blocked by staging refusal before A/D; no capability claim or new op failure |
+| 11. Representative throughput | NOT RUN: E blocked by staging refusal before A/D; no capability claim or new op failure |
+| 12. Price response at weight 1.2 | NOT RUN: E blocked by staging refusal before A/D; no capability claim or new op failure |
+| 13. Larger F7-1 matrix | NOT RUN: E blocked by staging refusal before A/D; no capability claim or new op failure |
+| 14. X3-1 literal schema read | NOT RUN: E blocked by staging refusal before A/D; no capability claim or new op failure |
+| 15. Unreadable/wrong-schema city refusal | NOT RUN: E blocked by staging refusal before A/D; no capability claim or new op failure |
+| 16. RLO absent at load | NOT RUN: E blocked by staging refusal before A/D; no capability claim or new op failure |
+| 17. Changed native members | NOT RUN: E blocked by staging refusal before A/D; no capability claim or new op failure |
+| 18. Foreign checkout prefix | NOT RUN: E blocked by staging refusal before A/D; no capability claim or new op failure |
+| 19. Business lifecycle | NOT RUN: E blocked by staging refusal before A/D; no capability claim or new op failure |
+| 20. Seven days with daily save/reload | NOT RUN: E blocked by staging refusal before A/D; no capability claim or new op failure |
+| 21. Native changes across cadences | NOT RUN: E blocked by staging refusal before A/D; no capability claim or new op failure |
+| 22. Detail transitions/in-flight reload | NOT RUN: E blocked by staging refusal before A/D; no capability claim or new op failure |
+| 23. Provenance/capabilities/summary | NOT RUN: E blocked by staging refusal before A/D; no capability claim or new op failure |
+| 24. Population/GC scale | NOT RUN: E blocked by staging refusal before A/D; no capability claim or new op failure |
+| 25. Sealed F4 fixtures/windows | NOT RUN: E blocked by staging refusal before A/D; no capability claim or new op failure |
+| 26. Present/foreground/priority flow steps | NOT RUN: E blocked by staging refusal before A/D; no capability claim or new op failure |
+| 27. Capability report cost | NOT RUN: E blocked by staging refusal before A/D; no capability claim or new op failure |
+| 28. Pointer/hover/focus/click | NOT RUN: owner playtest |
+| 29. Windows/PC-overlay rows | NOT RUN: Windows excluded |
+
+### Cleanup and validation
+
+No fixture was applied and no player was started, so no game stop, revert, save deletion or rollback was necessary. Verified **29 original file hashes**, **3 originally absent paths**, **53 RLO file hashes** and **12 protected fixture file hashes**; **0 mismatches**, **0 fixture sidecars**. Preferences, persistent-city.json, frame-cap/save-mode state, ModsLocal/PersistentCity and install.json match their own pre-stage manifest. Autosave was never changed; its live numeric value was not measured. AgentRigOps retains the prep hash. No process started by this run remains; the foreground build/installer/controller commands completed. Final status running=false, process=null, held=false, pending=0. No force stop, Windows access, RLO changes, OS setting changes, unlock, production code, schema, food-weight, release, Workshop or issue creation.
+
+The staging setup failure above is the only executed operation failure. No ops_load_* or in-game op error occurred. Build passed. `tools/md-ban.py`, `tools/docs-links/check.py`, report size/home-path checks and `git diff --check` validate the docs-only change. No test source changed; no full xUnit or regression suite ran. The results PR is opened without reviewers and remains unmerged. Raw backups and the report copy remain outside Git.
+
+RESULT: BLOCKED
