@@ -132,7 +132,8 @@ namespace PersistentCity.Core
                     if (legacy || state.Traffic.Clock != state.Minute)
                         throw new ArgumentException("Traffic needs native timing at the city clock.");
                     foreach (var vehicle in state.Traffic.Vehicles) trafficRoutes[vehicle.VehicleId] = vehicle;
-                    if (ReferenceEquals(state.TrafficSourceState, state.Traffic) && state.TrafficSource != null && state.TrafficSource.Clock == state.Minute)
+                    if (state.SnapshotSynchronizer != null && ReferenceEquals(state.TrafficSourceState, state.Traffic)
+                        && state.TrafficSource != null && state.TrafficSource.Clock == state.Minute)
                         liveTraffic = state.TrafficSource;
                 }
                 foreach (var place in state.Places) placeIndex.Add(place.Id, place);

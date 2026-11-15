@@ -52,6 +52,24 @@ public sealed class Gr5RetimeSnapshotTests
         Assert.False(driver.Holding);
     }
 
+    private static (List<double> Updates, int Slices) SnapshotUpdates(CityState state, double budget)
+    {
+        var driver = new ClockRetimeDriver();
+        var updates = new List<double>();
+        ClockRetimeOutcome outcome;
+        do
+        {
+            long started = Stopwatch.GetTimestamp();
+            outcome = driver.Update(state, state.TravelClockRate * 2, false, 2, budget);
+            updates.Add(Milliseconds(started));
+        }
+        while (outcome == ClockRetimeOutcome.Preparing && !driver.Holding);
+        Assert.Equal(ClockRetimeOutcome.Began, outcome);
+        int slices = driver.SnapshotSlices;
+        driver.Cancel();
+        return (updates, slices);
+    }
+
     [Fact]
     public void TheRetimeSnapshotRunsInSlicesUnderTheFrameBudget()
     {
@@ -59,20 +77,13 @@ public sealed class Gr5RetimeSnapshotTests
         long started = Stopwatch.GetTimestamp();
         state.PrepareForSave();
         double whole = Milliseconds(started);
-        var driver = new ClockRetimeDriver();
-        var updates = new List<double>();
-        ClockRetimeOutcome outcome;
-        do
-        {
-            started = Stopwatch.GetTimestamp();
-            outcome = driver.Update(state, state.TravelClockRate * 2, false, 2, ClockRetimeStages.SliceMilliseconds);
-            updates.Add(Milliseconds(started));
-        }
-        while (outcome == ClockRetimeOutcome.Preparing && !driver.Holding);
-        Assert.Equal(ClockRetimeOutcome.Began, outcome);
-        Assert.True(driver.SnapshotSlices > 1, driver.SnapshotSlices.ToString());
-        output.WriteLine($"unsliced PrepareForSave {whole:0.0} ms; sliced into {updates.Count} updates, slowest {updates.Max():0.0} ms, began update {updates[^1]:0.0} ms (.NET)");
+        var (stepped, slices) = SnapshotUpdates(state, 0);
+        Assert.True(slices >= TravelTimingMaximumRouteTests.FixtureLinks / ClockRetimeDriver.SnapshotLinksPerStep, slices.ToString());
+        var (updates, _) = SnapshotUpdates(state, ClockRetimeStages.SliceMilliseconds);
+        output.WriteLine($"unsliced PrepareForSave {whole:0.0} ms; zero budget {stepped.Count} updates, slowest {stepped.Max():0.00} ms; "
+            + $"4 ms budget {updates.Count} updates, slowest {updates.Max():0.0} ms, began update {updates[^1]:0.0} ms (.NET)");
         PerfGate.Under(updates.Max(), 30, "slowest retime snapshot update at 13,965 links");
+        PerfGate.Under(stepped.Max(), 30, "slowest single snapshot step at 13,965 links");
     }
 
     private static IEnumerator<bool> Forgetting(IEnumerator<bool> steps, CityState state)

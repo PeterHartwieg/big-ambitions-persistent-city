@@ -360,7 +360,7 @@ namespace PersistentCity.Core
         public IEnumerator<bool> PrepareForSaveInSteps(int linksPerStep)
         {
             if (linksPerStep < 1) throw new ArgumentOutOfRangeException(nameof(linksPerStep));
-            if (SnapshotSteps != null)
+            if (SnapshotSynchronizer != null && SnapshotSteps != null)
             {
                 var steps = SnapshotSteps(linksPerStep);
                 while (true)

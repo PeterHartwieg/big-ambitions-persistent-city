@@ -355,7 +355,8 @@ namespace PersistentCity.Runtime
                         log?.Info("Clock retime: body release " + Milliseconds(retimeReleaseMilliseconds) + " ms over "
                             + retimeReleaseUpdates.ToString(System.Globalization.CultureInfo.InvariantCulture) + " updates, journey retime "
                             + Milliseconds(retimeDriver.SliceMilliseconds) + " ms over " + retimeDriver.Slices.ToString(System.Globalization.CultureInfo.InvariantCulture)
-                            + " updates (slowest " + Milliseconds(retimeDriver.SlowestSliceMilliseconds) + " ms, restarts "
+                            + " updates (snapshot " + retimeDriver.SnapshotSlices.ToString(System.Globalization.CultureInfo.InvariantCulture)
+                            + ", slowest " + Milliseconds(retimeDriver.SlowestSliceMilliseconds) + " ms, restarts "
                             + retimeDriver.Restarts.ToString(System.Globalization.CultureInfo.InvariantCulture) + "), final slice and commit " + Milliseconds(commit)
                             + " ms, simulation rebuild " + Milliseconds((Stopwatch.GetTimestamp() - rebuildStarted) * MillisecondsPerTimestamp) + " ms.");
                         retimeReleaseMilliseconds = 0; retimeReleaseUpdates = 0;
