@@ -8,6 +8,8 @@ Detailed specs: [F8 §7](https://github.com/PeterHartwieg/big-ambitions-persiste
 
 ## Latest evidence
 
+- **15 November h, Mac (rig 16d), build `6ac902c1`:** 3 passed / 3 partial / 4 failed / 4 NOT RUN groups; #284 checks 1–5 and #246 re-baseline; all timing PROVISIONAL (shared Mac); restored ([15h results](#rig-results--15-november-2026-h-mac-rig-16d-284-checks-1-5-246-check-4-re-baseline-at-6ac902c1)).
+
 - **15 November g, Mac, build `c9378fc`:** 3 passed / 2 partial / 4 failed / 5 NOT RUN groups; #282 checks 1–5 / #246-4–5; timing **PROVISIONAL (shared Mac)**; restored ([15g results](#rig-results--15-november-2026-e-mac-279-checks-1-4-246-check-4-re-baseline-at-c9378fc)).
 
 - **15 November e, Mac (planned 16b relaunch; run 15f), build `cbd4e68e`:** 3 passed / 1 partial / 4 failed / 4 NOT RUN groups; A/D completed; timing **PROVISIONAL (shared Mac)**; restored ([15f results](#rig-results--15-november-2026-e-mac-planned-16b-relaunch-279-checks-1-4-246-check-4-re-baseline-at-cbd4e68e)).
@@ -8169,3 +8171,822 @@ Raw report records and hashes:
 | restore-verification.json | 637 | 64a6d3bbdfda43d17a85809232629625b5cd3da29dfb26b85b6a0ade1c385cc8 |
 
 Raw JSON is kept in `<stage>`; no full record is added to Git because the combined GC records exceed 20 KB. All exported segment values, retained mod-work spikes, pause markers and window-boundary host evidence are excerpted above.
+
+## Rig results — 15 November 2026 h, Mac (rig 16d; #284 checks 1-5, #246 check 4 re-baseline at 6ac902c1)
+
+This is run **persistent-city-rig-2026-11-15h-mac**, role `rig_test`, where `mac`, and tests **#284 checks 1–5**. All timing, GC and street numbers are **PROVISIONAL (shared Mac)**. The save-route-A writer session `20261115-165535-mac-gr5-save-background-writer`, branch `codex/mac-gr5-save-background-writer`, PR #286, overlapped this run. These are not clean baselines or controlled A/B comparisons.
+
+Raw evidence stays at `~/HART-Builds/persistent-city-rig-2026-11-15h-mac` (`<stage>` below). The report copy is `~/Coding_Projects/.agent-logs/persistent-city-rig-2026-11-15h-mac.md`. No raw logs, saves, binaries or new Markdown paths are committed. The markdown ban requires appending here.
+
+**Counts: 3 PASS / 3 PARTIAL / 4 FAIL / 4 NOT RUN groups.** Counts cover the named A/D checks, E capability-cost check and restoration; the four NOT RUN groups and inventory are listed below.
+
+| Check | Outcome | Evidence / unmet clause |
+| --- | --- | --- |
+| #284-1 day GC | FAIL | gen0 4 met; pause p95 300.212 ms and mod 151.482 MB miss <~36 ms / ≤119 MB. Routes rebuild 70.681 MB is only 15.7% below 15f; well-below not demonstrated. |
+| #284-2 night GC | FAIL | The literal allocation/report Expected line is met (routes rebuild 1.845 MB); gen0=3, pause p95=32.342 ms and mod=17.883 MB meet the requested targets. The original #246 Mono-heap reference does not: 1.493 GB >1.47 GB. No overall GC pass; appearance had zero samples. |
+| #284-3 street | FAIL | UpdateCity/union p95 4.3791/4.4659 ms meet <5 ms; zero ≥30 ms mod frames not met (4). Three are routes_rebuild. Retention complete. |
+| #284-4 look | PARTIAL | Five confirmed residents; 5/5 reacquired after speed, 1/5 current bodies after reload; all five IDs still exist logically. Rendering/wardrobe/animation/blendshape proof unavailable. |
+| #284-5 release frames | PARTIAL | 53.9 ms / 7 logged release updates; ambient restore one substantive update at 39.1 ms plus final no-op. Component totals and retained frames reported; complete per-update stage mapping and visual/incident clauses unverified. |
+| #246-4 footprint | FAIL | Footprint ratios meet ~1.5×; plain collider floors 11 vs renderer-derived 13 fail within one. Rotated 13/14 and yard 5/6 meet within one. Height/area report complete. |
+| #246-5 tally | PASS | In-load list fallback 3 housed / 1 unreadable / 1 empty; reload mod tally agrees, beds=1270. Omitted warning counts one unreadable, not empty. |
+| E / origin row 27 capability cost | PASS | 600 s; union p95 4.0181 ms (target <5); 4 ≥30 ms frames listed; coverage complete=True; capability_report itself max 45.831 ms over 20 calls. |
+| E / #262-5 current refill | PARTIAL | Official #98 telemetry used; peak 6 nearby, final 5, band 48–96 not reached. Current-build sample only; no paired 14b proof. |
+| Restoration / disposable cleanup | PASS | D city removed, 15d/15c absent, fixture reverted; receipt/mod/config/preferences and hashes restored, own processes stopped and lease released. |
+
+
+### Build, rig and staging
+
+| Item | Recorded evidence |
+| --- | --- |
+| Candidate tested | `6ac902c14fba44e61fecc36490ffe26443407c84` (#284); built from a new evidence worktree. Initial origin re-verification matched. |
+| Final origin tip | 82d19844de8c7b6eded19a9db50a85a8c1915e5d |
+| Official agent-rig HEAD | `9d4d4ab51af30b31033260f921cffdd4204251a7` (clean fast-forward; contains #96/#97/#98). The installed receipt carries no source Git commit; the live file hash and successful ops identify the installed build. |
+| Live AgentRigOps SHA-256 | `40a288c24dc1976e85d67599395f222b544258c0b820015dbf92b0981be6e6ee`; unchanged through cleanup. |
+| PersistentCity DLL SHA-256 | `d21bae4992788567ccb67586983d86ed9a30891dccd21f100f133bbb772247b9`; build/package/staged log agree. |
+| Stage command | `python3 scripts/install-mac.py --stage-mod PersistentCity ~/HART-Builds/persistent-city-rig-2026-11-15h-mac/package` |
+| Receipt backup | `~/Library/Application Support/BigAmbitionsAgentTestsMac/receipt-backups/20261115T165339Z` |
+| RLO | `[Mod:RealLifeOverhaul] Real Life Overhaul 1.0.6 initialised.` |
+| Start | `python3 scripts/mac-agent start --mode headless --rig-test`; A used one process. After A, a normal D menu session was started because new_game requires the main menu. No ops_load_* recovery restart; no Windows contact. |
+| Game processes | A PID 7893 / session 5df0b58f; D/E PID 34561 / session a60022ce |
+| Fixture | `FT GR5 13f Timing v1`, 1,000 residents / 2,000 visitors. Fallback not used. |
+| Fresh city | `FT RIGTMP-GR5-15h-mac`; population evidence below. |
+| Native autosave preference | 5 minutes / 3 saves; `prevent_autosave=false`. The #70 rig-test guard reports `autosave_disabled=true` / `suppressed=true`; natural saves OFF throughout. Preferences restored. |
+| Save diagnostics | `SaveCostDiagnostics.requested=false`; native save profiler not installed. No save-latency measurement. |
+| Stream guard | `python3 -m harness stream-guard status`: idle, obs64.exe not running, registry read; Mac only. |
+
+
+Stage and Player.log identity:
+
+```text
+[AgentRigOps] staged_mod name=PersistentCity version=absent informational=0.10.0-persistent-city-candidate sha256=d21bae4992788567ccb67586983d86ed9a30891dccd21f100f133bbb772247b9
+```
+
+```text
+unavailable
+```
+
+Printed rollback, verbatim except the home prefix is replaced by `~` (expand it inside quoted paths before execution):
+
+```sh
+rm -rf "~/Library/Application Support/com.hovgaardgames.bigambitions.agenttests.mac/ModsLocal/PersistentCity" && cp -Rp "~/Library/Application Support/BigAmbitionsAgentTestsMac/receipt-backups/20261115T165339Z/mod" "~/Library/Application Support/com.hovgaardgames.bigambitions.agenttests.mac/ModsLocal/PersistentCity" && cp "~/Library/Application Support/BigAmbitionsAgentTestsMac/receipt-backups/20261115T165339Z/install.json" "~/Library/Application Support/BigAmbitionsAgentTestsMac/install.json"
+```
+
+The pinned origin checklist contained 15a–15d and 15f; no 15g section was present at 6ac902c1. PR #285 supplies the later 15g comparison. The #246/#279/#282/#284 bodies and comments were retained in `<stage>` and their named check sections were read.
+
+Final origin fetch was 82d19844 (#285 docs only); its production code is identical to the tested 6ac902c1. The newly available 15g summary and NOT RUN inventory were read before this report was finalized.
+
+### Literal Expected lines and outcomes
+
+**PR #284**
+
+## In-game checks
+All locked-PC, none input-only. Fixture FT GR5 13f Timing v1, 1,000 residents / 2,000 visitors.
+1. **Day GC window.** Setup: clock 15:30, idle camera, speed 1 after a 20→1 change. Steps: 600 s gc window. Expected: report gen0, pause p95, heap, mod, physical, advance and every segment and sub-segment against rig 15f. `mod_routes_rebuild` well below 83.9 MB; food, planning and citizen leaves below 15f.
+2. **Night GC window.** Same at 01:00. Expected: the same report; `mod_routes_rebuild` well below 58.7 MB.
+3. **Street window.** Setup: daytime. Steps: 600 s street window with pans and a 1→2→1 rate change. Expected: UpdateCity and mod-work p95 under 5 ms; every ≥30 ms spike listed with phase, detail, sub and gc_phase, none from retime/`mod_routes_rebuild`, `physical_spawn_appearance` or `mod_rlo`; `phase_spikes_30ms`, retained and `phase_spikes_truncated=false`; whole-frame p95/max reported separately; the `Clock retime: body release … ms over N updates` lines copied.
+4. **Look stability.** Setup: daytime street. Steps: follow 5 residents through a speed change (body release and reacquire), then reload and find them again. Expected: dressed, animated bodies with the same look before and after, and none of "Appearance meshes unavailable", "Empty appearance" or "Merged body" in Player.log.
+5. **Release frames.** Setup: daytime street with bodies and cars on screen. Steps: change speed 1→2 and watch the release updates. Expected: bodies and cars not yet released hold still or fade for at most a few frames with no visible jump, and no body stays behind after the new population appears. Report `RetimeReleaseSteps` (the N in the log line), how many of those updates the ambient walker restore took, and the mod-work time of each release update, including the car-pool and body-pool updates. No walker that RLO took over for an incident or ragdoll during the release gets its collider re-enabled or starts walking.
+
+
+**PR #282**
+
+## In-game checks
+All locked-PC, none input-only.
+1. **Day GC window.** Setup: FT GR5 13f Timing v1, 1,000 residents / 2,000 visitors, clock 15:30, idle camera, speed 1 after a 20 to 1 change. Steps: run a 600 s gc window. Expected: report gen0, pause p95, heap, mod, physical, advance and every segment and sub-segment vs 15d. physical_spawn_appearance well below 33.5 MB. The look diagnostics show `fast merges` > 0 and `failed merges` 0. mod_routes_nodes near 0.5 MB if the rate returned to one seen earlier in the session.
+2. **Night GC window.** Same at 01:00. Expected: appearance well below 14.1 MB; report every segment vs 15d night.
+3. **Street window.** Setup: same fixture, daytime. Steps: 600 s street window with pans and at least one clock-rate change and back. Expected: report UpdateCity and mod-work p95 and every ≥30 ms spike with phase, detail, sub and gc_phase, plus whole-frame p95/max separately. The phase recorder reports `phase_spikes_30ms`, `phase_spikes_retained` and `phase_spikes_truncated=false`. Note any spike from retime/mod_routes_rebuild, physical_spawn_appearance or mod_rlo with its whole-frame time.
+4. **Look stability.** Setup: same fixture, daytime street. Steps: follow 5 residents through body release and reacquire, change speed once, reload and find them again. Expected: dressed and animated bodies with blendshapes applied, the same look per resident before and after, `failed merges` 0, and none of "Appearance meshes unavailable", "Empty appearance" or "Merged body" in Player.log.
+
+**PR #246**
+
+4. **Unrentable home footprint (input-only).** Setup: the city from check 1. Steps: pick three residential buildings with no rentable interior, including one rotated off the world axes and one with a yard or sidewalk under it. Compare each Home place's area evidence (footprint x floors x 0.6) and floor count with the visible building. Expected: footprint within about 1.5x of the visible ground area and floors within one of the visible storeys. `ReadFootprint` takes the world-axis bounds of every enabled non-trigger collider, so rotated buildings and ground colliders read large. If this check fails, the read moves to the main mesh in local space.
+5. **Unreadable and empty tally (input-only).** Steps: read the `unrentable homes ... unreadable=N empty=M` line after load. Expected: buildings under one storey count as empty, not unreadable, and the omitted-places warning only counts unreadable ones.
+
+#284-1: requested totals/segments are reported; food/planning/citizen totals are below 15f, with samples/per-call figures below. The “well below 83.9 MB” route-rebuild clause is not demonstrated (70.681 MB). Day original pause/mod gates are NOT MET.
+
+#284-2: literal report/routing Expected is MET (1.845 MB versus 58.7 MB). Night ≤53 MB is MET, as are gen0 and pause; the original #246 Mono-heap reference is NOT MET (1.493 GB). The window is therefore not an overall GC pass.
+
+#284-3: p95, row retention and separate whole-frame reporting clauses are MET. Zero ≥30 ms frames and none from retime/routes_rebuild are NOT MET. No retained appearance/mod_rlo ≥30 ms dominant frame is observed.
+
+#284-4: identity through speed is observed for five residents; only one current body was found after reload. All three error strings are absent. Rendered dressing/animation/same-look is UNVERIFIED, so Expected is not fully met.
+
+#284-5: N, method timings and retained frame times are reported. Every release update’s stage/time, visible hold/fade/no-jump/no-left-behind, and incident/ragdoll ownership clauses are UNVERIFIED. A 39.1 ms ambient-restore frame is flagged.
+
+#282-1: day appearance is lower at 21.688 MB versus 33.5 MB, but fast merges >0 is NOT MET (zero), failed merges=0 is MET, and nodes 3.472 MB is not near the requested 0.5 MB. #282-2: zero night appearance bytes with zero samples is UNEXERCISED. #282-3’s reporting/retention clauses are MET; #282-4’s visual clauses remain UNVERIFIED. #282’s height-report request is complete within D.
+
+#246-4 Expected is NOT MET on plain floors (difference two); footprint and rotated/yard floor clauses are MET. #246-5 Expected is MET by the reload tally and omitted warning. No weaker acceptance criteria are substituted.
+
+### GC totals and original gates — PROVISIONAL
+
+| Window | Residents/visitors; frames/dropped | gen0/1/2 | Sampler pause p50/p95/max ms | Heap start/end/peak/after GC/Mono bytes | Mod/physical/advance MB |
+| --- | --- | --- | --- | --- | --- |
+| gc-day | 1000/2000; 3469/0 | 4/0/0 | 35.369/300.212/300.212 | 1308123136/1226248192/1431740416/1217766400/1442480128 | 151.482/28.387/39.965 |
+| gc-night | 1000/2000; 3528/0 | 3/0/0 | 31.957/32.342/32.342 | 1429704704/1407123456/1482321920/1351536640/1492811776 | 17.883/2.824/6.646 |
+
+
+| Window | Original target | Measured | Outcome |
+| --- | --- | --- | --- |
+| gc-day | gen0 ≤~5 | 4 | MET |
+| gc-day | pause p95 <~36 ms | 300.212 | NOT MET |
+| gc-day | Mono heap ≤1.47 GB | 1.442 | MET |
+| gc-day | mod ≤119 MB | 151.482 | NOT MET |
+| gc-night | gen0 ≤~5 | 3 | MET |
+| gc-night | pause p95 <~36 ms | 32.342 | MET |
+| gc-night | Mono heap ≤1.47 GB | 1.493 | NOT MET |
+| gc-night | mod ≤53 MB | 17.883 | MET |
+
+
+Appearance gate: day 21.688 MB is 35.3% below 33.5 MB; first/later merges still all use the native path, so the fast-path Expected clause is NOT MET. Night 0 B has 0 appearance samples and does not exercise appearance-build cost. Routes_rebuild: day 70.681 MB versus 83.9 MB (only 15.7% lower; well-below not demonstrated); night 1.845 MB versus 58.7 MB (MET). Day routes_nodes 3.472 MB versus #282’s near-0.5 MB request is NOT MET; night is 0 B.
+
+| Window | Allocation counter | Counter frame bytes / frames | Heap-difference bytes / sampled frames |
+| --- | --- | --- | --- |
+| gc-day | boehm_total | 811363560 / 3469 | 533606400 / 3465 |
+| gc-night | boehm_total | 706252560 / 3528 | 363094016 / 3525 |
+
+
+The sampler’s `pause_ms` is cycle-ending frame excess. `gc_pauses` below is the independent Unity `GC.Collect` marker, keyed by `unity_frame`. A shared-host frame excess is not asserted to be a marker duration. All MB here are decimal; raw byte counts remain in the full JSON evidence.
+
+| Day / night | 15a | 15b | 15c | 15f | PR #285 c9378fcd (15g; launch calls it 15h) | This 15h #284 head |
+| --- | --- | --- | --- | --- | --- | --- |
+| mod MB | 295.628 / 151.470 | 177.883 / 78.728 | 272.206 / 66.856 | 267.436 / 129.231 | 214.783 / 124.297 | 151.482 / 17.883 |
+| gen0 | 8 / 6 | 7 / 6 | 6 / 4 | 7 / 7 | 7 / 5 | 4 / 3 |
+| sampler pause p95 ms | 27.888 / 37.301 | 43.403 / 38.929 | 110.570 / 4651.381 | 31.829 / 100.850 | 449.4 / 102.8 | 300.212 / 32.342 |
+| routes_rebuild MB | — | — | — | 83.9 / 58.7 | 49.686 / 57.723 | 70.681 / 1.845 |
+| appearance MB | — | — | — | — | 43.3 / — | 21.688 / 0.000 |
+
+
+PR #285 identifies its run as 15g at c9378fcd; the launch calls that comparison 15h. Its launch comparison reports heap 1.474 / 1.575 GB and day looks 0 fast / 748 native / 0 failed. It is a separate provisional observation, not this run. 15c’s 4651 ms night value was a shared-host artefact.
+
+| Leaf | 15f day MB / B per sample / samples | This day MB / B per sample / samples | Day comparison | 15f night MB / B per sample / samples | This night MB / B per sample / samples | Night comparison |
+| --- | --- | --- | --- | --- | --- | --- |
+| mod_food | 1.277 / 76.892 / 16610 | 0.851 / 245.376 / 3470 | lower total | 0.852 / 51.878 / 16414 | 0.851 / 241.274 / 3529 | lower total |
+| advance_events_food | 32.567 / 28973.765 / 1124 | 9.048 / 22564.429 / 401 | lower total | 3.895 / 12171.500 / 320 | 0.000 / 0.533 / 270 | lower total |
+| advance_events_citizen | 12.346 / 3025.867 / 4080 | 3.720 / 1838.980 / 2023 | lower total | 2.072 / 960.898 / 2156 | 0.398 / 750.008 / 530 | lower total |
+| advance_events_route_begin | 5.160 / 1455.255 / 3546 | 1.806 / 949.791 / 1901 | lower total | 1.605 / 1054.244 / 1522 | 0.297 / 670.014 / 443 | lower total |
+| advance_planning_slice | 33.180 / 5453.700 / 6084 | 15.401 / 5211.847 / 2955 | lower total | 12.512 / 5109.050 / 2449 | 3.474 / 3907.672 / 889 | lower total |
+| advance_planning_finish | 13.328 / 3757.440 / 3547 | 9.491 / 4995.120 / 1900 | lower total | 6.345 / 4168.610 / 1522 | 1.969 / 4444.135 / 443 | lower total |
+| mod_routes_rebuild | 83.875 / 5049.697 / 16610 | 70.681 / 20369.116 / 3470 | lower total | 58.653 / 3573.366 / 16414 | 1.845 / 522.949 / 3529 | lower total |
+
+
+Day/night use 600 s foreground holds; recorder intervals also include start/stop command overhead. Street, release and capability arms deliberately leave the GC allocation sampler OFF. Their heap and full mod/physical/advance allocation-segment totals, and sampler frame-excess pause p95, are not measured; zeros are not substituted. Rig gen0 increases in those arms are street=3, release=0, capability=4. Every Unity GC marker row is still reported below.
+
+### Every allocation segment and sub-segment
+
+| Segment | Day bytes / samples / skipped | Night bytes / samples / skipped |
+| --- | --- | --- |
+| frame | 533606400 / — / — | 363094016 / — / — |
+| mod | 151482152 / 3470 / 0 | 17883104 / 3529 / 0 |
+| advance | 39965080 / 3437 / 0 | 6645504 / 3529 / 0 |
+| physical | 28387272 / 3453 / 0 | 2824448 / 3529 / 0 |
+| physical_ambient | 441808 / 3437 / 0 | 451712 / 3529 / 0 |
+| physical_vehicles | 278288 / 3437 / 0 | 832 / 3529 / 0 |
+| physical_bindings | 6672 / 63395 / 0 | 0 / 3585 / 0 |
+| physical_vendor_meals | 0 / 3437 / 0 | 0 / 3529 / 0 |
+| physical_fade | 0 / 3437 / 0 | 0 / 3529 / 0 |
+| physical_focus | 0 / 3437 / 0 | 0 / 3529 / 0 |
+| physical_observe | 65424 / 59811 / 0 | 48 / 55 / 0 |
+| physical_release | 5152 / 171 / 0 | 0 / 14 / 0 |
+| physical_parked | 1721536 / 1106 / 0 | 1863680 / 1120 / 0 |
+| physical_index | 80 / 1732 / 0 | 0 / 1770 / 0 |
+| physical_queues | 4880 / 1732 / 0 | 0 / 1770 / 0 |
+| physical_roster | 7824 / 1732 / 0 | 0 / 1770 / 0 |
+| physical_selection | 857720 / 2053 / 0 | 0 / 1770 / 0 |
+| physical_spawn_pedestrian | 2064856 / 411 / 0 | 0 / 0 / 0 |
+| physical_spawn_appearance | 21687904 / 387 / 0 | 0 / 0 / 0 |
+| physical_spawn_check | 0 / 258 / 0 | 0 / 0 / 0 |
+| physical_spawn_vehicle | 69920 / 39 / 0 | 0 / 0 / 0 |
+| physical_unattributed | 1175208 / 6892 / 0 | 508176 / 7058 / 0 |
+| physical_spawn_randomize | 1175904 / 129 / 0 | 0 / 0 / 0 |
+| physical_spawn_bake | 2172016 / 129 / 0 | 0 / 0 / 0 |
+| advance_planning | 24891736 / 4855 / 0 | 5442672 / 1332 / 0 |
+| advance_events | 14578416 / 6700 / 0 | 694624 / 4372 / 0 |
+| advance_stops | 494928 / 3437 / 0 | 508208 / 3529 / 0 |
+| advance_other | 0 / 3437 / 0 | 0 / 3529 / 0 |
+| physical_spawn_grow | 551552 / 134 / 0 | 0 / 0 / 0 |
+| mod_prelude | 580112 / 3470 / 0 | 588816 / 3529 / 0 |
+| mod_rlo | 3506320 / 3470 / 0 | 3524512 / 3529 / 0 |
+| mod_food | 851456 / 3470 / 0 | 851456 / 3529 / 0 |
+| mod_optional_stops | 499984 / 3470 / 0 | 508176 / 3529 / 0 |
+| mod_routes | 76351576 / 3470 / 0 | 2049200 / 3529 / 0 |
+| mod_closures | 388288 / 3437 / 0 | 720 / 3529 / 0 |
+| mod_hold_replay | 0 / 3437 / 0 | 0 / 3529 / 0 |
+| mod_physical_setup | 0 / 3433 / 0 | 0 / 3522 / 0 |
+| mod_inspector | 517136 / 3437 / 0 | 508176 / 3529 / 0 |
+| mod_summary | 378976 / 3394 / 0 | 382096 / 3448 / 0 |
+| mod_other | 2784 / 3470 / 0 | 0 / 3529 / 0 |
+| mod_routes_speeds | 136720 / 2123 / 0 | 203712 / 3183 / 0 |
+| mod_routes_nodes | 3472216 / 2123 / 0 | 0 / 3183 / 0 |
+| mod_routes_sweep | 0 / 3436 / 0 | 0 / 3529 / 0 |
+| mod_routes_rebuild | 70680832 / 3470 / 0 | 1845488 / 3529 / 0 |
+| mod_closures_network | 229120 / 3437 / 0 | 496 / 3529 / 0 |
+| mod_closures_links | 159168 / 3437 / 0 | 224 / 3529 / 0 |
+| advance_events_traffic | 4272 / 1536 / 0 | 160 / 172 / 0 |
+| advance_events_food | 9048336 / 401 / 0 | 144 / 270 / 0 |
+| advance_events_citizen | 3720256 / 2023 / 0 | 397504 / 530 / 0 |
+| advance_events_route_begin | 1805552 / 1901 / 0 | 296816 / 443 / 0 |
+| advance_events_other | 0 / 839 / 0 | 0 / 2957 / 0 |
+| advance_planning_slice | 15401008 / 2955 / 0 | 3473920 / 889 / 0 |
+| advance_planning_finish | 9490728 / 1900 / 0 | 1968752 / 443 / 0 |
+| physical_setup_places | 274040 / 1 / 0 | 0 / 0 / 0 |
+| physical_setup_bodies | 180032 / 1 / 0 | 0 / 0 / 0 |
+| physical_setup_vehicles | 15984 / 2 / 0 | 0 / 0 / 0 |
+| physical_setup_ambient | 173808 / 2 / 0 | 0 / 0 / 0 |
+| physical_setup_preflight | 2000 / 1 / 0 | 0 / 0 / 0 |
+| physical_unattributed_setup | 3568 / 1 / 0 | 0 / 0 / 0 |
+| physical_unattributed_update | 7248 / 3437 / 0 | 0 / 3529 / 0 |
+| physical_unattributed_waiting | 23600 / 15 / 0 | 0 / 0 / 0 |
+| physical_unattributed_entry | 494928 / 3437 / 0 | 508176 / 3529 / 0 |
+
+
+`frame_alloc_bytes` is the whole-frame heap-difference figure; `counter_frame_bytes` is the Boehm counter figure. Segment scopes can overlap; do not sum parent and child leaves. Every emitted allocation key is above.
+
+### Mod-work, whole frame and spike retention
+
+| Window | Rig frames | Rig seconds | UpdateCity inclusive p50/p95/max ms | Mod-work union p50/p95/max ms | Whole frame p50/p95/max ms (separate) | Validity | Coverage complete |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| gc-day | 3471 | 600.626 | 1.324/3.977/53.239 | 1.379/4.039/53.467 | 167.056/202.124/1195.514 | {'off_main_thread_calls': 0, 'cross_frame_scopes': 0, 'unbalanced_exits': 0, 'depth_overflow': 0, 'frames_dropped': 0, 'valid': True, 'invalid_reasons': []} | True |
+| gc-night | 3530 | 600.834 | 0.504/3.241/5.304 | 0.552/3.290/5.352 | 166.463/170.651/1694.001 | {'off_main_thread_calls': 0, 'cross_frame_scopes': 0, 'unbalanced_exits': 0, 'depth_overflow': 0, 'frames_dropped': 0, 'valid': True, 'invalid_reasons': []} | True |
+| street | 3391 | 600.761 | 2.051/4.379/61.090 | 2.102/4.466/61.124 | 167.358/218.309/867.637 | {'off_main_thread_calls': 0, 'cross_frame_scopes': 0, 'unbalanced_exits': 0, 'depth_overflow': 0, 'frames_dropped': 0, 'valid': True, 'invalid_reasons': []} | True |
+| release | 37 | 6.661 | 4.102/20.249/39.233 | 4.130/20.280/39.267 | 166.757/204.896/272.279 | {'off_main_thread_calls': 0, 'cross_frame_scopes': 0, 'unbalanced_exits': 0, 'depth_overflow': 0, 'frames_dropped': 0, 'valid': True, 'invalid_reasons': []} | True |
+| capability | 3392 | 600.620 | 1.146/3.878/26.781 | 1.205/4.018/50.991 | 167.151/220.053/1374.816 | {'off_main_thread_calls': 0, 'cross_frame_scopes': 0, 'unbalanced_exits': 0, 'depth_overflow': 0, 'frames_dropped': 0, 'valid': True, 'invalid_reasons': []} | True |
+
+
+| Window | Recorder | Counted ≥30 ms | Retained | Truncated | Cap |
+| --- | --- | --- | --- | --- | --- |
+| gc-day | mod-work | 2 | 2 | False | 1024 |
+| gc-day | phase | 2 | 2 | False | 1024 |
+| gc-day | whole-frame perf | 3480 | 1024 | True | 1024 |
+| gc-night | mod-work | 0 | 0 | False | 1024 |
+| gc-night | phase | 0 | 0 | False | 1024 |
+| gc-night | whole-frame perf | 3540 | 1024 | True | 1024 |
+| street | mod-work | 4 | 4 | False | 1024 |
+| street | phase | 4 | 4 | False | 1024 |
+| street | whole-frame perf | 3402 | 1024 | True | 1024 |
+| release | mod-work | 1 | 1 | False | 1024 |
+| release | phase | 1 | 1 | False | 1024 |
+| release | whole-frame perf | 48 | 48 | False | 1024 |
+| capability | mod-work | 4 | 4 | False | 1024 |
+| capability | phase | 0 | 0 | False | 1024 |
+| capability | whole-frame perf | 3402 | 1024 | True | 1024 |
+
+
+Whole-frame lists can truncate at 1,024 because almost every Mac frame exceeds 30 ms. The counts above disclose that; it is separate from mod-work. The phase and mod-work rows below include every retained ≥30 ms mod frame. The union recorder can cross 30 ms when the phase recorder is fractionally below it; such rows are retained with unavailable phase fields if neither phase list contains the frame.
+
+| Window | unity_frame | Mod ms | Whole frame ms | Union dominant | Phase | Detail | Sub | gc_phase | Collections | Alloc phase | Phase bytes | Mod bytes |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| gc-day | 5639 | 53.467 | 235.464 | updatecity | mod_routes | none | mod_routes_rebuild | none | 0 | mod_routes | 46704 | 47136 |
+| gc-day | 5643 | 30.668 | 201.434 | updatecity | mod_routes | none | mod_routes_rebuild | none | 0 | mod_routes | 27015400 | 27015688 |
+| street | 29228 | 42.948 | 205.047 | updatecity | mod_routes | none | mod_routes_rebuild | none | 0 | mod_routes | 47200 | 47344 |
+| street | 29232 | 33.966 | 201.988 | updatecity | mod_routes | none | mod_routes_rebuild | none | 0 | mod_routes | 27231016 | 27231160 |
+| street | 30166 | 61.124 | 249.952 | updatecity | mod_routes | none | mod_routes_rebuild | none | 0 | mod_routes | 90272 | 90560 |
+| street | 30207 | 33.017 | 180.709 | updatecity | mod_closures | physical_spawn_bake | mod_closures_network | none | 0 | advance_events | 3753328 | 5242616 |
+| release | 35644 | 39.267 | 204.896 | ambient_restore | mod_routes | none | mod_routes_rebuild | none | 0 | mod_routes | 27536 | 27680 |
+| capability | 7491 | 50.991 | 233.963 | capability_report | unavailable | unavailable | unavailable | unavailable | unavailable | unavailable | unavailable | unavailable |
+| capability | 7492 | 42.093 | 232.877 | capability_report | unavailable | unavailable | unavailable | unavailable | unavailable | unavailable | unavailable | unavailable |
+| capability | 7800 | 37.238 | 220.870 | capability_report | unavailable | unavailable | unavailable | unavailable | unavailable | unavailable | unavailable | unavailable |
+| capability | 8147 | 30.579 | 199.919 | capability_report | unavailable | unavailable | unavailable | unavailable | unavailable | unavailable | unavailable | unavailable |
+
+
+Street comparison: 15a UpdateCity/union p95 6.5466/6.6550 ms, 37 ≥30 ms mod frames; 15b 6.8007/6.9556, 28; 15c 16.8084/17.2191, 114; 15f 4.0914/4.1405, 3. Earlier 15h launch comparison: UpdateCity p95 6.92 ms, 25 ≥30 ms frames. This run’s values are in the table above; the original gate remains p95 <5 ms and zero ≥30 ms mod frames.
+
+### Every rig GC pause, keyed by unity_frame
+
+The perf and modwork gc_pauses arrays agree exactly for each of the five timed arms. All available rows follow; durations are profiler marker readings, not sampler frame excess.
+
+gc-day: source `Unity.Profiling.ProfilerRecorder:GC.Collect`, unavailable reason `None`, counted/listed/truncated 8/8/False.
+
+gc-night: source `Unity.Profiling.ProfilerRecorder:GC.Collect`, unavailable reason `None`, counted/listed/truncated 6/6/False.
+
+street: source `Unity.Profiling.ProfilerRecorder:GC.Collect`, unavailable reason `None`, counted/listed/truncated 6/6/False.
+
+release: source `Unity.Profiling.ProfilerRecorder:GC.Collect`, unavailable reason `None`, counted/listed/truncated 0/0/False.
+
+capability: source `Unity.Profiling.ProfilerRecorder:GC.Collect`, unavailable reason `None`, counted/listed/truncated 8/8/False.
+
+| Window | unity_frame | GC.Collect ms | Collections | Generation |
+| --- | --- | --- | --- | --- |
+| gc-day | 5753 | 1.978 | 0 | None |
+| gc-day | 5781 | 22.832 | 1 | 0 |
+| gc-day | 6859 | 3.196 | 0 | None |
+| gc-day | 6901 | 17.208 | 1 | 0 |
+| gc-day | 7859 | 3.014 | 0 | None |
+| gc-day | 7883 | 26.094 | 1 | 0 |
+| gc-day | 8930 | 3.011 | 0 | None |
+| gc-day | 8966 | 22.675 | 1 | 0 |
+| gc-night | 18079 | 2.910 | 0 | None |
+| gc-night | 18121 | 23.541 | 1 | 0 |
+| gc-night | 19293 | 2.992 | 0 | None |
+| gc-night | 19331 | 22.772 | 1 | 0 |
+| gc-night | 20497 | 3.009 | 0 | None |
+| gc-night | 20533 | 23.514 | 1 | 0 |
+| street | 28950 | 3.016 | 0 | None |
+| street | 28989 | 23.895 | 1 | 0 |
+| street | 29634 | 3.018 | 0 | None |
+| street | 29700 | 28.714 | 1 | 0 |
+| street | 30482 | 3.020 | 0 | None |
+| street | 30528 | 25.557 | 1 | 0 |
+| capability | 5500 | 2.703 | 0 | None |
+| capability | 5553 | 31.648 | 1 | 0 |
+| capability | 6507 | 3.013 | 0 | None |
+| capability | 6536 | 31.771 | 1 | 0 |
+| capability | 7491 | 2.647 | 0 | None |
+| capability | 7515 | 37.339 | 1 | 0 |
+| capability | 8500 | 2.811 | 0 | None |
+| capability | 8542 | 33.753 | 1 | 0 |
+
+
+### Look diagnostics, resident bindings and release updates
+
+**early:** `2 built/0 reused/7 deferred/0 idle/1 owned/0 adopted/2 baked/8 bake sizes/213 KB bake scratch/0 grown/0 trimmed/0 fitted/0 waited/3.9 ms build/0 fast merges/2 native merges/0 failed merges`.
+
+**day:** `123 built/19 reused/3823 deferred/29 idle/51 owned/8 adopted/133 baked/45 bake sizes/1678 KB bake scratch/66 grown/24 trimmed/0 fitted/254 waited/2.8 ms build/0 fast merges/133 native merges/0 failed merges`.
+
+**night:** `757 built/138 reused/36501 deferred/32 idle/32 owned/8 adopted/767 baked/45 bake sizes/1678 KB bake scratch/166 grown/143 trimmed/0 fitted/1088 waited/10.9 ms build/0 fast merges/767 native merges/0 failed merges`.
+
+**street:** `52 built/47 reused/435 deferred/53 idle/66 owned/74 adopted/1195 baked/45 bake sizes/1678 KB bake scratch/6 grown/14 trimmed/0 fitted/62 waited/2.5 ms build/0 fast merges/1195 native merges/0 failed merges`.
+
+**release:** `31 built/68 reused/4115 deferred/23 idle/94 owned/65 adopted/1331 baked/45 bake sizes/1678 KB bake scratch/29 grown/0 trimmed/0 fitted/87 waited/3.0 ms build/0 fast merges/1331 native merges/0 failed merges`.
+
+**capability:** `92 built/16 reused/2758 deferred/32 idle/50 owned/9 adopted/104 baked/45 bake sizes/1678 KB bake scratch/58 grown/17 trimmed/0 fitted/207 waited/3.3 ms build/0 fast merges/104 native merges/0 failed merges`.
+
+The counters are cumulative in this process, not per-window deltas. The earliest population line had 0 fast / 2 native / 0 failed; later day evidence has 0 / 133 / 0. Positive native-counter increments show the owned-combiner prefix did run. With failed=0 and no `fast merge off` or last-error suffix, source inspection narrows the fallback to `Collect` returning false or its caught collection exception. That is an inference, not a measured predicate: neither the log nor the available ops expose which Collect guard rejected it. The first observed merges and later ones both used the native path.
+
+| Resident ID | Population kind | Before generation | After rate-change generations | Reload generations (not compared across scenes) | Reload binding |
+| --- | --- | --- | --- | --- | --- |
+| c123 | resident | 127 | [13, 14] | absent | no current body found |
+| pc:495 | resident | 123 | [12, 13] | absent | no current body found |
+| pc:583 | resident | 113 | [6] | [80] | persistent_city |
+| c383 | resident | 116 | [8] | absent | no current body found |
+| pc:69 | resident | 111 | [15] | absent | no current body found |
+
+
+#96/#97 identity ops were used on five confirmed residents. 5/5 were reacquired after the speed cycle; 1/5 were found after the sealed-fixture reload. Only replies with the requested ID and `binding.source=persistent_city` count above. Visitor and native-only bindings are excluded. Generations differ after release/reacquire; generation values are not a cross-reload identity. The sealed reload resets the save’s day/time; clock and player position were returned to the observed afternoon setup before lookups. Current-body absence is reported as observed, without substituting an old walker handle.
+
+Supplementary logical-person reads after the release arm found all five IDs still present as residents. These later reads do not stand in for a rendered body at the earlier lookup instant.
+
+| Resident ID | Later logical state |
+| --- | --- |
+| c123 | kind=resident; phase=WaitingForRoute activity=Study place=address:ba%3Astreet_fourthavenue:7:study destination=address:reallife%3Astreet_uptown_third:1002:home |
+| pc:495 | kind=resident; phase=WaitingForRoute activity=Work place=address:ba%3Astreet_fourthavenue:21:work destination=address:ba%3Astreet_tenthstreet:8:home |
+| pc:583 | kind=resident; phase=AtPlace activity=Home place=address:ba%3Astreet_fourthavenue:12:home destination= |
+| c383 | kind=resident; phase=Travelling activity=Work place=address:reallife%3Astreet_uptown_uptownavenue:68:work destination=address:ba%3Astreet_fourthavenue:9:home |
+| pc:69 | kind=resident; phase=AtPlace activity=Home place=address:ba%3Astreet_thirdstreet:58:home destination= |
+
+
+Headless capture returned `ops_view_rendering_required`. Donor/wardrobe state is not exposed (`ops_view_walker_donor_unexposed`); dressed/animated/blendshape continuity and visible jumps are NOT RUN. No visual pass is inferred from identity or zero errors.
+
+Requested appearance error strings in A Player.log: `{"Appearance meshes unavailable": 0, "Empty appearance": 0, "Merged body": 0}`.
+
+#98 density/hotspot flow was used: original nearby/active 16/27, hotspot nearby/active 17/29; band 48–96 within 50 m. These counts describe the scene; they do not manufacture walkers or establish the paired 14b refill comparison.
+
+Dedicated 1→2 release arm, after the look reload:
+
+```text
+[Mod:PersistentCity] Clock retime: body release 53.9 ms over 7 updates, journey retime 58.1 ms over 15 updates (slowest 4.3 ms, restarts 0), final slice and commit 1.3 ms, simulation rebuild 17.0 ms.
+```
+
+| Timed method component | Calls | Inclusive total ms | Max per frame ms | p95 per frame ms (zeros included) |
+| --- | --- | --- | --- | --- |
+| release | 7 | 53.851 | 39.129 | 4.143 |
+| ambient_restore | 2 | 39.109 | 39.108 | 0.001 |
+| car_release | 1 | 0.488 | 0.488 | 0.000 |
+| car_dispose | 2 | 2.787 | 2.787 | 0.000 |
+| body_dispose | 2 | 0.484 | 0.484 | 0.000 |
+
+
+The requested RetimeReleaseSteps is reported as N in the copied log line. Source inspection shows the logged update count also includes the terminal completion check; the public property itself is not exposed through `pcstate read RetimeReleaseSteps` (exact refusal below). Ambient restore calls include the final already-disposed no-op from PhysicalPopulation.Dispose; actual restoration updates can be inferred as calls minus that final no-op, not as a separately emitted per-update field. Pool Dispose calls likewise include final no-ops. Method totals and retained frame timings are measured; per-frame method-to-stage mapping is not exposed.
+
+| Retained release-arm unity_frame | Mod ms | Phase | Detail | Sub | gc_phase | Collections |
+| --- | --- | --- | --- | --- | --- | --- |
+| 35638 | 4.783 | physical_spawn_appearance | physical_spawn_bake | advance_planning_slice | none | 0 |
+| 35641 | 4.269 | mod_routes | none | mod_routes_rebuild | none | 0 |
+| 35642 | 4.211 | mod_routes | none | mod_routes_rebuild | none | 0 |
+| 35644 | 39.237 | mod_routes | none | mod_routes_rebuild | none | 0 |
+| 35648 | 9.077 | mod_routes | none | mod_routes_rebuild | none | 0 |
+| 35649 | 4.645 | mod_routes | none | mod_routes_rebuild | none | 0 |
+| 35651 | 4.118 | mod_routes | none | mod_routes_rebuild | none | 0 |
+| 35654 | 4.116 | mod_routes | none | mod_routes_rebuild | none | 0 |
+| 35655 | 4.137 | mod_routes | none | mod_routes_rebuild | none | 0 |
+| 35656 | 4.248 | mod_routes | none | mod_routes_rebuild | none | 0 |
+| 35657 | 4.382 | mod_routes | none | mod_routes_rebuild | none | 0 |
+| 35658 | 4.178 | mod_routes | none | mod_routes_rebuild | none | 0 |
+| 35660 | 4.128 | mod_routes | none | mod_routes_rebuild | none | 0 |
+| 35661 | 4.153 | mod_routes | none | mod_routes_rebuild | none | 0 |
+| 35662 | 4.237 | mod_routes | none | mod_routes_rebuild | none | 0 |
+| 35664 | 20.253 | mod_routes | none | mod_routes_rebuild | none | 0 |
+
+
+The phase recorder retains only the 16 slowest non-spike frames. The table is every retained release-arm frame, not proof that every release update survived that selection. Complete per-update mod-work times for all release/pool stages remain a tooling gap. The headless run cannot verify hold/fade versus jump, no body left behind visually, or an RLO incident/ragdoll takeover during release. Those Expected clauses remain unverified.
+
+Every `Clock retime:` line captured in A, including setup transitions outside measured windows:
+
+```text
+[Mod:PersistentCity] Clock retime: body release 0.0 ms over 0 updates, journey retime 52.7 ms over 13 updates (slowest 4.8 ms, restarts 0), final slice and commit 2.3 ms, simulation rebuild 13.8 ms.
+[Mod:PersistentCity] Clock retime: body release 51.8 ms over 5 updates, journey retime 47.0 ms over 12 updates (slowest 4.1 ms, restarts 0), final slice and commit 1.0 ms, simulation rebuild 12.0 ms.
+[Mod:PersistentCity] Clock retime: body release 58.8 ms over 6 updates, journey retime 44.1 ms over 11 updates (slowest 4.2 ms, restarts 0), final slice and commit 1.0 ms, simulation rebuild 12.8 ms.
+[Mod:PersistentCity] Clock retime: body release 49.3 ms over 6 updates, journey retime 50.7 ms over 13 updates (slowest 4.8 ms, restarts 0), final slice and commit 1.0 ms, simulation rebuild 14.4 ms.
+[Mod:PersistentCity] Clock retime: body release 82.4 ms over 9 updates, journey retime 80.6 ms over 20 updates (slowest 5.2 ms, restarts 0), final slice and commit 1.6 ms, simulation rebuild 21.7 ms.
+[Mod:PersistentCity] Clock retime: body release 50.8 ms over 6 updates, journey retime 134.3 ms over 25 updates (slowest 34.0 ms, restarts 0), final slice and commit 1.2 ms, simulation rebuild 16.1 ms.
+[Mod:PersistentCity] Clock retime: body release 47.1 ms over 5 updates, journey retime 63.9 ms over 16 updates (slowest 4.3 ms, restarts 0), final slice and commit 1.2 ms, simulation rebuild 17.2 ms.
+[Mod:PersistentCity] Clock retime: body release 0.0 ms over 0 updates, journey retime 43.1 ms over 11 updates (slowest 4.1 ms, restarts 0), final slice and commit 1.1 ms, simulation rebuild 15.1 ms.
+[Mod:PersistentCity] Clock retime: body release 55.7 ms over 7 updates, journey retime 62.7 ms over 16 updates (slowest 4.2 ms, restarts 0), final slice and commit 1.4 ms, simulation rebuild 18.1 ms.
+[Mod:PersistentCity] Clock retime: body release 53.9 ms over 7 updates, journey retime 58.1 ms over 15 updates (slowest 4.3 ms, restarts 0), final slice and commit 1.3 ms, simulation rebuild 17.0 ms.
+```
+
+### #246 fresh fixture, reload adoption, tally and deletion
+
+Fresh-city flow used official #93 steps 1–8. `new_game {"name":"FT RIGTMP-GR5-15h-mac"}` had no throwaway flag. The game was paused and autosave suppression checked; no fixture apply/revert was used to adopt on reload.
+
+Population: [Persistent City] MEASUREMENT MODE gc population (diagnostic only; not saved, cleared on reload; existing persons are never removed) target=off reached=2000 residents=1000 visitors=1000 portals=20 fill=attached refusals=0 visitor_capacity=unplanned. Visitors are added at the next midnight boundary; the fill stops at its own limits and reports the reached count.
+
+| Stage | Evidence |
+| --- | --- |
+| apply | applied=True; missing=[] |
+| reload | applied=True; restored_on_load=True; adopted_at=CityManager.InitCityBuildingControllers; sidecar=True |
+| load hook | {"installed":true,"patch_owner":"agent-rig.unrentable-fixture-load","seams":["CityManager.InitCityBuildingControllers","GlobalEvents.InvokeOnGameLoaded"],"error":null,"last":{"GlobalEvents.InvokeOnGameLoaded":{"save":"FT RIGTMP-GR5-15h-mac","outcome":"already_adopted","error":null,"utc":"2026-11-15T18:32:12.7913800Z"},"CityManager.InitCityBuildingControllers":{"save":"FT RIGTMP-GR5-15h-mac","outcome":"adopted","error":null,"utc":"2026-11-15T18:32:10.4905190Z"}}} |
+| same places per role | True |
+| revert | applied=False; sidecar=False |
+
+
+| Role | Place | Rentable interior | Rotated | Yard/sidewalk | Class |
+| --- | --- | --- | --- | --- | --- |
+| housed_rotated | address:ba%3Astreet_firststreet:22:home | False | True | False | housed |
+| housed_yard | address:ba%3Astreet_fifthavenue:25:home | False | False | True | housed |
+| housed_plain | address:ba%3Astreet_broadwaystreet:2:home | False | False | False | housed |
+| unreadable | address:ba%3Astreet_broadwaystreet:13:home | False | False | False | unreadable |
+| empty | address:ba%3Astreet_broadwaystreet:23:home | False | False | False | empty |
+
+
+| Stage | List filter | Matched | Geometry reads / slices | City-wide tally | Matched PC Home candidates |
+| --- | --- | --- | --- | --- | --- |
+| D | all | 5 | {'geometry_reads': 5, 'slices': 1} | {'total': 5, 'housed': 3, 'unreadable': 1, 'empty': 1, 'policy': 'native:building-bounds;policy:unrentable-footprint-floors-v1'} | 5 |
+| D | yard | 1 | {'geometry_reads': 5, 'slices': 1} | {'total': 5, 'housed': 3, 'unreadable': 1, 'empty': 1, 'policy': 'native:building-bounds;policy:unrentable-footprint-floors-v1'} | 1 |
+| D | unreadable | 1 | {'geometry_reads': 5, 'slices': 1} | {'total': 5, 'housed': 3, 'unreadable': 1, 'empty': 1, 'policy': 'native:building-bounds;policy:unrentable-footprint-floors-v1'} | 1 |
+| D | empty | 1 | {'geometry_reads': 5, 'slices': 1} | {'total': 5, 'housed': 3, 'unreadable': 1, 'empty': 1, 'policy': 'native:building-bounds;policy:unrentable-footprint-floors-v1'} | 1 |
+| D-reloaded | all | 5 | {'geometry_reads': 5, 'slices': 1} | {'total': 5, 'housed': 3, 'unreadable': 1, 'empty': 1, 'policy': 'native:building-bounds;policy:unrentable-footprint-floors-v1'} | 5 |
+| D-reloaded | yard | 1 | {'geometry_reads': 5, 'slices': 1} | {'total': 5, 'housed': 3, 'unreadable': 1, 'empty': 1, 'policy': 'native:building-bounds;policy:unrentable-footprint-floors-v1'} | 1 |
+| D-reloaded | unreadable | 1 | {'geometry_reads': 5, 'slices': 1} | {'total': 5, 'housed': 3, 'unreadable': 1, 'empty': 1, 'policy': 'native:building-bounds;policy:unrentable-footprint-floors-v1'} | 1 |
+| D-reloaded | empty | 1 | {'geometry_reads': 5, 'slices': 1} | {'total': 5, 'housed': 3, 'unreadable': 1, 'empty': 1, 'policy': 'native:building-bounds;policy:unrentable-footprint-floors-v1'} | 1 |
+
+
+| Role | Address | Collider height m | Renderer height m | Collider floors / independent storeys | PC collider world footprint m2 | Renderer world footprint m2 | Footprint ratio | Independent local footprint / gross / usable m2 | PC-rule world-footprint usable m2 (computed) |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| housed_rotated | {'street': 'ba:street_firststreet', 'number': 22} | 48.719 | 49.920 | 13.0 / 14 | 1488.514 | 1493.488 | 0.99667 | 1431.112/20035.568/12021.341 | 11610.409 |
+| housed_yard | {'street': 'ba:street_fifthavenue', 'number': 25} | 18.389 | 23.514 | 5.0 / 6 | 426.709 | 437.253 | 0.97589 | 426.709/2560.254/1536.152 | 1280.127 |
+| housed_plain | {'street': 'ba:street_broadwaystreet', 'number': 2} | 40.332 | 47.418 | 11.0 / 13 | 3826.156 | 3826.155 | 1.00000 | 3826.154/49740.002/29844.001 | 25252.630 |
+
+
+Independent storeys are explicitly `Floor(renderer height / 3.5)`, a renderer-derived proxy rather than a native floor-count field. Independent Home area excludes fixture-written BuildingSize, BuildingSizeHelper and the journal/sidecar. PC-rule usable m² in the last column is computed from the read geometry and unchanged formula, not claimed as a separately extracted saved Home. The three footprint ratios meet about 1.5×; plain floors differ by two and fail the within-one requirement. Rotated and yard differ by one. #282’s requested collider/renderer-height report is complete; the product floor formula was unchanged.
+
+`Player-D-before-apply.log`:
+
+```text
+[Persistent City] unrentable homes housed=0 beds=0 unreadable=0 empty=0
+```
+
+`Player-D-applied.log`:
+
+```text
+[Persistent City] unrentable homes housed=0 beds=0 unreadable=0 empty=0
+```
+
+`Player-D-reloaded.log`:
+
+```text
+[Persistent City] unrentable homes housed=0 beds=0 unreadable=0 empty=0
+[Persistent City] unrentable homes housed=3 beds=1270 unreadable=1 empty=1
+```
+
+The in-load list classification after apply is the check-5 fallback; PC’s log from before apply cannot be changed retroactively. Reload status was read immediately after load/pause and before any other mutation, then the mod’s load tally was compared with the five candidate roles. The collider-free unreadable role correctly returns `ops_building_bounds_unavailable`; no count was invented. Empty remains a zero-floor capacity class rather than unreadable.
+
+| Disposable name | Read exists | Delete performed | After exists |
+| --- | --- | --- | --- |
+| FT RIGTMP-GR5-15h-mac | True | True | False |
+| FT RIGTMP-GR5-15d-mac | False | False | False |
+| FT RIGTMP-GR5-15c | False | False | False |
+
+
+A different FT city was loaded before deletion; the D deletion returned no remaining files. No `FT RIGTMP-GR5-14i` or sealed fixture was deleted. Revert restored original sizes/colliders and removed the sidecar before deletion.
+
+### Shared-host evidence at each window start and end
+
+Host-table alias `writer` means session `20261115-165535-mac-gr5-save-background-writer`, branch `codex/mac-gr5-save-background-writer`, PR #286; directory `~/Coding_Projects/big-ambitions/big-ambitions-persistent-city-worktrees/gr5-save-background-writer`. Suffixes name its live Core/Compatibility/tests/testhost builds. Other sessions/directories, if observed, are written in full.
+
+All windows share the Mac with this rig run and the save-writer session/PR #286 named above. Boundary snapshots name live sessions and build working directories; intermediate snapshots remain in `<stage>`. No other session was cancelled, debugged, modified or messaged.
+
+| Boundary | UTC | Uptime/load | Memory pressure | Live harness sessions | Live build/session directories |
+| --- | --- | --- | --- | --- | --- |
+| gc-day/start | 2026-11-15T16:57:32Z | 17:57  up 1 day, 23:35, 1 user, load averages: 6.63 6.88 6.73 | System-wide memory free percentage: 62% | writer: fix | writer/Compatibility; writer/Core; writer/tests; writer/tests/bin/Debug/net10.0; ~/Coding_Projects/personal/coding-harness |
+| gc-day/end | 2026-11-15T17:07:35Z | 18:07  up 1 day, 23:45, 1 user, load averages: 7.14 6.80 6.49 | System-wide memory free percentage: 61% | writer: local_tests | writer/Compatibility; writer/Core; writer/tests; writer/tests/bin/Debug/net10.0; ~/Coding_Projects/personal/coding-harness |
+| gc-night/start | 2026-11-15T17:32:40Z | 18:32  up 2 days, 10 mins, 1 user, load averages: 7.52 6.88 6.21 | System-wide memory free percentage: 58% | writer: local_tests | writer/Compatibility; writer/Core; writer/tests; writer/tests/bin/Debug/net10.0; ~/Coding_Projects/personal/coding-harness |
+| gc-night/end | 2026-11-15T17:42:43Z | 18:42  up 2 days, 20 mins, 1 user, load averages: 4.02 4.02 4.95 | System-wide memory free percentage: 63% | writer: fix | writer/Compatibility; writer/Core; writer/tests; writer/tests/bin/Release/net10.0; ~/Coding_Projects/personal/coding-harness |
+| street/start | 2026-11-15T18:02:46Z | 19:02  up 2 days, 40 mins, 1 user, load averages: 3.16 4.52 5.21 | System-wide memory free percentage: 70% | writer: review | writer; ~/Coding_Projects/personal/coding-harness |
+| street/end | 2026-11-15T18:12:49Z | 19:12  up 2 days, 51 mins, 1 user, load averages: 6.56 6.43 5.84 | System-wide memory free percentage: 64% | writer: fix | writer/Compatibility; writer/Core; writer/tests; writer/tests/bin/Debug/net10.0; ~/Coding_Projects/personal/coding-harness |
+| release/start | 2026-11-15T18:26:17Z | 19:26  up 2 days,  1:04, 1 user, load averages: 4.42 5.49 5.80 | System-wide memory free percentage: 66% | writer: review | writer; ~/Coding_Projects/personal/coding-harness |
+| release/end | 2026-11-15T18:26:26Z | 19:26  up 2 days,  1:04, 1 user, load averages: 4.21 5.40 5.77 | System-wide memory free percentage: 66% | writer: review | writer; ~/Coding_Projects/personal/coding-harness |
+| capability/start | 2026-11-15T18:35:12Z | 19:35  up 2 days,  1:13, 1 user, load averages: 4.02 3.87 4.70 | System-wide memory free percentage: 71% | writer: review | ~/Coding_Projects/personal/coding-harness |
+| capability/end | 2026-11-15T18:45:15Z | 19:45  up 2 days,  1:23, 1 user, load averages: 6.38 6.87 5.84 | System-wide memory free percentage: 61% | writer: fix | writer/Compatibility; writer/Core; writer/tests; writer/tests/bin/Debug/net10.0; ~/Coding_Projects/personal/coding-harness |
+| refill/start | 2026-11-15T18:34:24Z | 19:34  up 2 days,  1:12, 1 user, load averages: 3.32 3.75 4.71 | System-wide memory free percentage: 71% | writer: review | ~/Coding_Projects/personal/coding-harness |
+| refill/end | 2026-11-15T18:35:11Z | 19:35  up 2 days,  1:13, 1 user, load averages: 4.02 3.87 4.70 | System-wide memory free percentage: 71% | writer: review | ~/Coding_Projects/personal/coding-harness |
+
+
+| Window (boundary + minute snapshots) | Observed session phases | Observed build/session directories |
+| --- | --- | --- |
+| gc-day | writer: fix; writer: local_tests | writer/Compatibility; writer/Core; writer/tests; writer/tests/bin/Debug/net10.0; ~/Coding_Projects/personal/coding-harness |
+| gc-night | writer: coordinate; writer: fix; writer: local_tests; writer: review | writer; writer/Compatibility; writer/Core; writer/tests; writer/tests/bin/Debug/net10.0; writer/tests/bin/Release/net10.0; ~/Coding_Projects/personal/coding-harness |
+| street | writer: fix; writer: review | writer; writer/Compatibility; writer/Core; writer/tests; writer/tests/bin/Debug/net10.0; writer/tests/bin/Release/net10.0; ~/Coding_Projects/personal/coding-harness |
+| release | writer: review | writer; ~/Coding_Projects/personal/coding-harness |
+| capability | writer: coordinate; writer: fix; writer: review | writer; writer/Compatibility; writer/Core; writer/tests; writer/tests/bin/Debug/net10.0; ~/Coding_Projects/personal/coding-harness |
+| refill | writer: review | ~/Coding_Projects/personal/coding-harness |
+
+
+`gc-day/start` — `ps -Arco pid,pcpu,comm | head -8`:
+
+```text
+  PID  %CPU COMM
+ 7653 288.6 dotnet
+49418  91.3 suggestd
+ 7893  87.7 Big Ambitions Agent Tests Mac
+  444  10.3 coreaudiod
+ 8931   4.2 Python
+  735   2.0 Resolve
+  707   0.4 Microsoft Outlook
+```
+
+`gc-day/end` — `ps -Arco pid,pcpu,comm | head -8`:
+
+```text
+  PID  %CPU COMM
+10630 293.6 dotnet
+ 7893 111.2 Big Ambitions Agent Tests Mac
+49418  85.9 suggestd
+  444  11.5 coreaudiod
+  384   2.5 mds
+  561   2.3 mds_stores
+  735   2.2 Resolve
+```
+
+`gc-night/start` — `ps -Arco pid,pcpu,comm | head -8`:
+
+```text
+  PID  %CPU COMM
+19228 277.8 dotnet
+49418  90.4 suggestd
+ 7893  85.2 Big Ambitions Agent Tests Mac
+  444   9.5 coreaudiod
+ 8931   5.7 Python
+  735   2.3 Resolve
+20143   0.7 ps
+```
+
+`gc-night/end` — `ps -Arco pid,pcpu,comm | head -8`:
+
+```text
+  PID  %CPU COMM
+ 7893 111.0 Big Ambitions Agent Tests Mac
+22035 100.0 VBCSCompiler
+49418  84.4 suggestd
+22050  62.5 dotnet
+22049  30.0 dotnet
+  444  11.2 coreaudiod
+  384   2.8 mds
+```
+
+`street/start` — `ps -Arco pid,pcpu,comm | head -8`:
+
+```text
+  PID  %CPU COMM
+ 7893  87.5 Big Ambitions Agent Tests Mac
+49418  86.4 suggestd
+  444  11.4 coreaudiod
+ 8931   5.0 Python
+  735   2.3 Resolve
+ 6835   1.9 codex
+  654   1.0 com.apple.DriverKit-AppleBCMWLAN
+```
+
+`street/end` — `ps -Arco pid,pcpu,comm | head -8`:
+
+```text
+  PID  %CPU COMM
+ 7893 113.6 Big Ambitions Agent Tests Mac
+25155  99.0 dotnet
+49418  77.3 suggestd
+  444  11.7 coreaudiod
+  384   3.8 mds
+26162   2.8 mdworker_shared
+  735   2.4 Resolve
+```
+
+`release/start` — `ps -Arco pid,pcpu,comm | head -8`:
+
+```text
+  PID  %CPU COMM
+ 7893 107.7 Big Ambitions Agent Tests Mac
+49418  80.7 suggestd
+33646  13.3 gh
+  561  12.4 mds_stores
+  444  10.4 coreaudiod
+33623   5.4 Python
+  654   2.9 com.apple.DriverKit-AppleBCMWLAN
+```
+
+`release/end` — `ps -Arco pid,pcpu,comm | head -8`:
+
+```text
+  PID  %CPU COMM
+ 7893 112.2 Big Ambitions Agent Tests Mac
+49418  85.5 suggestd
+  444  11.5 coreaudiod
+  756   6.9 Activity Monitor
+  735   2.4 Resolve
+  398   1.5 launchservicesd
+  664   1.3 cfprefsd
+```
+
+`capability/start` — `ps -Arco pid,pcpu,comm | head -8`:
+
+```text
+  PID  %CPU COMM
+34561 109.9 Big Ambitions Agent Tests Mac
+49418  63.9 suggestd
+35436  14.4 mdworker_shared
+  407  12.4 dasd
+  444   8.9 coreaudiod
+    1   8.0 launchd
+35437   7.8 contactsd
+```
+
+`capability/end` — `ps -Arco pid,pcpu,comm | head -8`:
+
+```text
+  PID  %CPU COMM
+36330 188.3 dotnet
+34561 113.2 Big Ambitions Agent Tests Mac
+49418  79.3 suggestd
+  444  10.9 coreaudiod
+  384   3.0 mds
+  735   2.3 Resolve
+37182   2.2 mdworker_shared
+```
+
+`refill/start` — `ps -Arco pid,pcpu,comm | head -8`:
+
+```text
+  PID  %CPU COMM
+49418  87.3 suggestd
+34561  46.5 Big Ambitions Agent Tests Mac
+  444  10.1 coreaudiod
+  915   9.9 sysmond
+  756   2.7 Activity Monitor
+  735   2.7 Resolve
+35246   1.5 mdworker_shared
+```
+
+`refill/end` — `ps -Arco pid,pcpu,comm | head -8`:
+
+```text
+  PID  %CPU COMM
+34561  99.7 Big Ambitions Agent Tests Mac
+49418  93.2 suggestd
+  444  10.8 coreaudiod
+  735   2.4 Resolve
+  654   0.5 com.apple.DriverKit-AppleBCMWLAN
+  707   0.4 Microsoft Outlook
+ 1366   0.4 Spotify Helper (Renderer)
+```
+
+### Save guards and autosave at every measured window
+
+| Window | Save activity | Autosave OFF before | OFF after |
+| --- | --- | --- | --- |
+| gc-day | {'attempts': 2975, 'allowed': 0, 'refused': 2975, 'native_saving_frames': 0, 'clean': True, 'invalid_reasons': []} | True | True |
+| gc-night | {'attempts': 3540, 'allowed': 0, 'refused': 3540, 'native_saving_frames': 0, 'clean': True, 'invalid_reasons': []} | True | True |
+| street | {'attempts': 3402, 'allowed': 0, 'refused': 3402, 'native_saving_frames': 0, 'clean': True, 'invalid_reasons': []} | True | True |
+| release | {'attempts': 48, 'allowed': 0, 'refused': 48, 'native_saving_frames': 0, 'clean': True, 'invalid_reasons': []} | True | True |
+| capability | {'attempts': 2524, 'allowed': 0, 'refused': 2524, 'native_saving_frames': 0, 'clean': True, 'invalid_reasons': []} | True | True |
+
+
+Autosave was also checked after every reload. No save reached native work inside any measured window. The one D fixture save was outside all windows, under its own loaded name, with save profiling off.
+
+### E inventory, exact failures and NOT RUN
+
+The E inventory uses the pinned origin checklist’s rows 1–29 and the #279/#282/#284 open checks. Current op discovery, capabilities, movement, player-car readbacks, epoch/config readbacks and dense-street telemetry were collected. A readback alone is not a pass for a wider scenario. No STATUS-style note exists in the pinned repository.
+
+| Origin row | Outcome | Remaining requirement / reason |
+| --- | --- | --- |
+| 1 Sales at current head | PARTIAL | Existing 12b base/prepared food/goods/service checkpoints inspected. Base/service expose no probe businesses; prepared food/goods have the exact older-development-save refusal. Native sale/ceiling and cut/recovery transactions are NOT RUN; no fixture was bypassed or overwritten. |
+| 2 PR checks since 12b | NOT RUN | Needs/venue/staffing/household/workplace/through-traffic scenarios require their own fixtures and observations; A/D do not prove these. |
+| 3 RLO overlap and own cars | NOT RUN | No paired RLO on/off two-hour save/reload arm; player-car ops do not expose resident saved-curb ownership. RLO files were not changed. |
+| 4 Mixed/original-three menus | NOT RUN | No qualified multi-offer catalogue/reconciliation fixture in this batch. |
+| 5 Eight/nine offers and refill | NOT RUN | No qualified eight/nine-offer fixture; native availability alone does not establish PC eligibility. |
+| 6 Repair storms, 8/64 shops | NOT RUN | No cohort/storm driver; sequential diagnostic reads do not exercise mutation storms. |
+| 7 E6 checks 1–13 | NOT RUN | Street Food API/vehicle-ledger/fault fixture coverage is not supplied by the installed generic shop ops. |
+| 8 Street Food absent/returned | NOT RUN | Requires a separate modset-removal arm; candidate-only staging and no installs in this run. |
+| 9 Research and truck | NOT RUN | No pending research/truck checkpoint arm was prepared or loaded. |
+| 10 Mechanism report | PARTIAL | Capability report read; no qualified vehicle-business fixture proves the vehicle mechanism. |
+| 11 Representative throughput | NOT RUN | No representative staffed-shop cohort; one shop would not satisfy the Expected line. |
+| 12 Price response, weight 1.2 | NOT RUN | No paired two-day price intervention and conserved ledger comparison. Weight stays 1.2. |
+| 13 Larger F7 matrix | NOT RUN | Pending/fault/relocation/menu arms need their own fixture and interruption flow; intentional crash/restart arms are outside this run. |
+| 14 Literal Loaded/schema 1 | NOT RUN | Epoch and writerSchema readbacks are not the required literal population-reader evidence. |
+| 15 Wrong/unreadable schema | NOT RUN | No wrong-schema fixture loader/payload injection op; no raw-save editing. |
+| 16 RLO absent | NOT RUN | Would require removing RLO; RLO files must not be edited or updated in this run. |
+| 17 Changed native members | NOT RUN | Native-member fault-injection arm absent. |
+| 18 Foreign checkout prefix | NOT RUN | Foreign-prefix fixture/patch arm absent; no addon install authorized. |
+| 19 Business lifecycle | NOT RUN | No lifecycle/modded-type/pre-GR-1 checkpoint matrix. |
+| 20 Seven days, paired | NOT RUN | Paired daily extracts/orders/ledger conservation for seven game days was not executed; the A/D observations cannot substitute. |
+| 21 Cadences 30/60/120 | NOT RUN | Requires the windowed/frame-cap matrix; this is headless, Mac cannot supply the Windows 60 fps arms, and PC use is forbidden. |
+| 22 Detail/in-flight reload | NOT RUN | No paired bodies-on/off extract/order comparison; resident-binding readbacks are narrower evidence. |
+| 23 Provenance/capabilities/summary | PARTIAL | Capability reasons and loaded build identity read; no complete declared-fingerprint acceptance bundle. |
+| 24 Population/GC scale | NOT RUN | Only the authorized 1,000/2,000 fixture measured; no stress-10k/50k fixture run. |
+| 25 Sealed F4 fixtures | NOT RUN | Implementation/manifest sealing is outside a docs-only rig run. |
+| 26 Present/foreground/priority | NOT RUN | Headless run; no focus, priority or OS-setting intervention authorized. |
+| 27 Capability report cost | PASS | Separate 600 s window, original p95 <5 ms target and every ≥30 ms component spike. |
+| 28 Pointer/hover/focus/click | NOT RUN | Owner playtest. |
+| 29 Windows/PC overlay | NOT RUN | Windows-only; Peter is gaming there. |
+
+NOT RUN groups: (1) GR-5 60 fps street/busy-shop arms, Windows-only (Mac about 5–8 fps at 1,000 residents; no PC contact); (2) GR-5 save latency, owner decision pending; (3) rendered clothing/animation/blendshape/jump/incident proof and paired dense-refill/GR-9 driving/parking/48-vs-96 scenarios, unavailable in this headless unpaired run; (4) remaining checklist scenarios itemized above. Resident identity and current-build density ops were actually used, rather than listed as missing.
+
+
+Supplementary S2 fixture inspection (no native sale or save executed):
+
+| City | Probe state | Business readback |
+| --- | --- | --- |
+| FT-PC-Mac-20261112b-060a794 | purchases attached=false | [] |
+| FT Mac F8h Food v1 | no active PC city | Warning: [Persistent City] sale probe unavailable: no active city. |
+| FT-PC-Mac-20261112b-S2-goods | no active PC city | Warning: [Persistent City] sale probe unavailable: no active city. |
+| FT-PC-Mac-20261112b-S2-service | purchases attached=false | [] |
+
+Prepared food/goods refusal: `This Persistent City save was created by an older development build; start a new city. The saved state is kept unchanged. Persistent City takes no food ownership; owned shops return to native customers after the current hour.` Base food/service remain active but expose an empty probe business list. These observations are not sale or ceiling passes. Twelve fixture-file hashes were unchanged through cleanup.
+
+Current refill record: `{"peak":{"nearby":6,"t":6.368},"final":{"nearby":5,"t":45.333},"in_band":false,"burst":{"size":1,"t":1.598,"window":3.0},"thresholds":{"12":null,"24":null,"32":null,"48":null,"96":null}}`. Native active counts in the sample ranged 9–44. The native active count is an upper bound on nearby walkers; no walkers were manufactured.
+
+Exact failed commands/errors (repeat calls grouped; every raw reply remains in `<stage>`):
+
+| Command | Exact error | Occurrences | Evidence labels |
+| --- | --- | --- | --- |
+| `export BA_LOCK_OWNER=persistent-city-rig-2026-11-15h-mac; python3 scripts/mac-agent op capture '{"action": "start"}'` | `ops_view_rendering_required` | 1 | look-headless-capture |
+| `export BA_LOCK_OWNER=persistent-city-rig-2026-11-15h-mac; python3 scripts/mac-agent op screen_pos '{"action": "get", "target": {"kind": "resident", "id": "pc:583"}}'` | `ops_view_resident_absent` | 8 | look-after-2-try0, look-reloaded-2-try0 … |
+| `export BA_LOCK_OWNER=persistent-city-rig-2026-11-15h-mac; python3 scripts/mac-agent op screen_pos '{"action": "get", "target": {"kind": "resident", "id": "c383"}}'` | `ops_view_resident_absent` | 11 | look-after-3-try0, look-reloaded-3-try0 … |
+| `export BA_LOCK_OWNER=persistent-city-rig-2026-11-15h-mac; python3 scripts/mac-agent op screen_pos '{"action": "get", "target": {"kind": "resident", "id": "pc:69"}}'` | `ops_view_resident_absent` | 11 | look-after-4-try0, look-reloaded-4-try0 … |
+| `export BA_LOCK_OWNER=persistent-city-rig-2026-11-15h-mac; python3 scripts/mac-agent op screen_pos '{"action": "get", "target": {"kind": "resident", "id": "c123"}}'` | `ops_view_resident_absent` | 10 | look-reloaded-0-try0, look-reloaded-0-try1 … |
+| `export BA_LOCK_OWNER=persistent-city-rig-2026-11-15h-mac; python3 scripts/mac-agent op screen_pos '{"action": "get", "target": {"kind": "resident", "id": "pc:495"}}'` | `ops_view_resident_absent` | 10 | look-reloaded-1-try0, look-reloaded-1-try1 … |
+| `export BA_LOCK_OWNER=persistent-city-rig-2026-11-15h-mac; python3 scripts/mac-agent op pcstate '{"action": "read", "property": "RetimeReleaseSteps"}'` | `pcstate reads only public *Diagnostics/*Overview projections` | 1 | release-steps-read |
+| `export BA_LOCK_OWNER=persistent-city-rig-2026-11-15h-mac; python3 scripts/mac-agent call new_game '{"name": "FT RIGTMP-GR5-15h-mac"}'` | `new_game works from the main menu only; the game is at the city now.` | 1 | D-new-game-in-city |
+| `export BA_LOCK_OWNER=persistent-city-rig-2026-11-15h-mac; python3 scripts/mac-agent op building '{"action": "read", "place": "address:ba%3Astreet_broadwaystreet:13:home"}'` | `ops_building_bounds_unavailable` | 2 | D-read-unreadable, D-reloaded-read-unreadable |
+| `export BA_LOCK_OWNER=persistent-city-rig-2026-11-15h-mac; python3 scripts/mac-agent op car '{"action": "pose"}'` | `ops_car_none` | 1 | E-car-pose |
+
+`ops_building_bounds_unavailable` on the deliberately collider-free subject is an expected control. Resident-absent replies identify missing current bodies, not an absent #96/#97 op. Capture and projection-read refusals are tooling limits and do not prove visual correctness.
+
+Local orchestration corrections, not product failures: initial look selection raised `KeyError: 'resident_id'`; the driver was corrected to `binding.resident_id` before the five-resident test. No measured window was interrupted. Initial D new_game was refused in the city; A had finished, so a normal headless D menu session was started and the same fresh-city command then succeeded. No ops_load_* recovery restart was needed.
+
+### Restoration and offline validation
+
+Own pre-stage manifest: `<stage>/pre-stage-manifest.json`, SHA-256 `7a7880a1c55bb75c6241eecc11d4f119337a03b5b87e4630ce74cc61c19afe64`; byte backups in `<stage>/pre-stage-backup`. RLO file manifest SHA-256 `37907c00b41161a3bbf9a705eeb0a02e146bd378a49565e832c69866c6783a83`. Full isolated preferences/profile JSON were backed up before staging; first live option values were read before checks and matched again before stop.
+
+| RLO option | Before stored/live | Final stored/live |
+| --- | --- | --- |
+| living_population | {'stored': None, 'live': True} | {'stored': None, 'live': True} |
+| social_media | {'stored': 1, 'live': True} | {'stored': 1, 'live': True} |
+| social_media_notices | {'stored': 0, 'live': False} | {'stored': 0, 'live': False} |
+
+
+| Item | Result |
+| --- | --- |
+| original_files_verified | 32 |
+| original_absent_paths_verified | 3 |
+| rlo_files_verified | 53 |
+| mismatches | [] |
+| agent_rig_ops_sha256 | 40a288c24dc1976e85d67599395f222b544258c0b820015dbf92b0981be6e6ee |
+| install_json_sha256 | d49deda807eb3ca93d8e91983fca2fbcd6df4ff7fe620edf2fcc5e8e9e28c512 |
+| fixture_sidecars | 0 |
+| disposables_absent | ['FT RIGTMP-GR5-15c', 'FT RIGTMP-GR5-15d-mac', 'FT RIGTMP-GR5-15h-mac'] |
+| sealed_fixture_hash_match | True |
+| supplementary_fixture_files_verified | 12 |
+| lease_released | True |
+| started_game_processes_gone | [7893, 34561] |
+| caffeinate_processes_gone | True |
+
+
+The game stopped normally unless an exact stop failure is recorded above. Only this run’s process was controlled. The printed stage rollback restored the complete PersistentCity folder and receipt; pre-stage preferences, JSON config, autosave and frame-cap presence/absence were restored and hash-checked. RLO and sealed-fixture hashes were checked without writing them. Fixture sidecars are absent and the lease was released.
+
+Build passed from the tested SHA. `python3 tools/md-ban.py` and `python3 tools/docs-links/check.py` were run for the docs-only delivery; results are recorded in the PR. No full suite, game save latency, release or merge was run. Schema remains 1; food weights and production code are unchanged.
+
+### Raw JSON pointers and hashes
+
+| File under <stage> | Bytes | SHA-256 |
+| --- | --- | --- |
+| gc-day-gc-stop.json | 16775 | 2d284bac3fb920aaaac8cdc56918caffc92b0d585ef97a86b8f0ace69c3a328c |
+| gc-night-gc-stop.json | 15603 | 339f4ca7c6fce43a02e14394ee96dcbf108edea80664db91ec32db6d90100e2b |
+| gc-day-modwork-end.json | 49289 | 295eb42ac0cfb0bfe7d757483a9094d2789f71ccc6748c033a22cc85b0dedbbb |
+| gc-night-modwork-end.json | 43523 | 1022fa61018e05aec181ae9ef112d0e5cabc1d4d5a1f2b7bdba9adfffa4e3aa2 |
+| street-frames-stop.json | 8508 | 8e966f55f7afe4854e30c530e21e8ef248ddb95ad2458fffade82d48270995f1 |
+| street-end.json | 44144 | 49af763de4422ef09475eac23ecdbac8f8bba27df3ff6ee08c17ad6735c98d3b |
+| release-frames-stop.json | 7234 | ad82470f07d5ef5d4b65e6076c75621f10a4b449161457ec3c0d2f42595116f4 |
+| release-end.json | 48717 | 8c6fdedfb015ad83c64878cda839c4e03887cb4b45815b6d2daf23be397fb8d9 |
+| capability-end.json | 44504 | 3dc13830463ed012a5f032b01fa2a40f961f07e18eec4a94966e95a1f0443089 |
+| E-refill.json | 4681 | 56982ae3105496376cd2eac4e4df94837690b6467e54fd62b0bb76064d105b84 |
+| E-s2-fixture-hashes.json | 1855 | dd346c5d5636cb533bb278336fbc4d25365a2f95744277b492b9b8fe1582bfe1 |
+
+
+The full day/night GC JSON exceeds the optional 20 KB limit when combined, so no new perf JSON is committed. Tables above contain every allocation leaf, retained mod spike and rig GC pause; full method/phase records, command replies and raw Player.log copies stay in `<stage>`.
