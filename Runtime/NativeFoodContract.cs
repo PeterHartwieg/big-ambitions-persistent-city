@@ -126,6 +126,9 @@ namespace PersistentCity.Runtime
             var parts = Selected.Split(new[] { ':' }, 2);
             return parts.Length == 2 && parts[0] == "research" ? parts[1] + " changed (PC_FAULT_POINTS)." : null;
         }
+
+        internal static string? SaveWriter() => Selected == "save:writer-refusal"
+            ? "Forced background save refusal (PC_FAULT_POINT=save:writer-refusal)." : null;
     }
 #endif
 }

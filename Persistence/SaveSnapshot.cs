@@ -164,7 +164,7 @@ namespace PersistentCity.Persistence
 
             private void Visitors(CityState live, CityState wire)
             {
-                var routines = new Dictionary<VisitorRoutine, VisitorRoutine>(ReferenceComparer<VisitorRoutine>.Instance);
+                var routines = new Dictionary<VisitorRoutine, VisitorRoutine>(live.VisitorRoutines?.Count ?? 0, ReferenceComparer<VisitorRoutine>.Instance);
                 VisitorRoutine Routine(VisitorRoutine r)
                 {
                     if (routines.TryGetValue(r, out var known)) return known;
@@ -172,7 +172,7 @@ namespace PersistentCity.Persistence
                     routines.Add(r, copy);
                     return copy;
                 }
-                var persons = new Dictionary<VisitorPerson, VisitorPerson>(ReferenceComparer<VisitorPerson>.Instance);
+                var persons = new Dictionary<VisitorPerson, VisitorPerson>(live.Visitors?.Count ?? 0, ReferenceComparer<VisitorPerson>.Instance);
                 wire.Visitors = List(live.Visitors, v =>
                 {
                     var stay = v.Stay;

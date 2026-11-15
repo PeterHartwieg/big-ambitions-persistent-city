@@ -203,6 +203,7 @@ namespace PersistentCity.Persistence
             {
                 cost?.Begin();
                 cost?.Enter(SaveCostPhase.Validate);
+                if (writer.Fault?.Invoke() is string fault) throw new SaveValidationException(fault);
                 SaveCodec.RequireExecutablePolicy(snapshot.Wire);
                 payload = SaveCodec.Encode(snapshot, cost);
                 cost?.Enter(SaveCostPhase.Publish);
@@ -262,6 +263,7 @@ namespace PersistentCity.Persistence
         internal SaveHandOffWriter(string name) { this.name = name; }
 
         internal Action? BeforeWrite { get; set; }
+        internal Func<string?>? Fault { get; set; }
         internal Func<long>? Allocation { get; set; }
         public int ThreadId { get; private set; }
         public long Written { get; private set; }
