@@ -8,6 +8,8 @@ Detailed specs: [F8 §7](https://github.com/PeterHartwieg/big-ambitions-persiste
 
 ## Latest evidence
 
+- **15 November i, Mac (rig 16e), build `29dcbbf5`:** 0 passed / 2 partial / 4 failed / 5 NOT RUN groups; #286 save p95 824.920 ms, background path blocked; day/night/street completed; **PROVISIONAL (shared Mac)**; restored ([15i results](#rig-results--15-november-2026-i-mac-rig-16e-286-save-checks-1-5-and-gcstreet-baseline-at-29dcbbf5)).
+
 - **15 November h, Mac (rig 16d), build `6ac902c1`:** 3 passed / 3 partial / 4 failed / 4 NOT RUN groups; #284 checks 1–5 and #246 re-baseline; all timing PROVISIONAL (shared Mac); restored ([15h results](#rig-results--15-november-2026-h-mac-rig-16d-284-checks-1-5-246-check-4-re-baseline-at-6ac902c1)).
 
 - **15 November g, Mac, build `c9378fc`:** 3 passed / 2 partial / 4 failed / 5 NOT RUN groups; #282 checks 1–5 / #246-4–5; timing **PROVISIONAL (shared Mac)**; restored ([15g results](#rig-results--15-november-2026-e-mac-279-checks-1-4-246-check-4-re-baseline-at-c9378fc)).
@@ -8990,3 +8992,435 @@ Build passed from the tested SHA. `python3 tools/md-ban.py` and `python3 tools/d
 
 
 The full day/night GC JSON exceeds the optional 20 KB limit when combined, so no new perf JSON is committed. Tables above contain every allocation leaf, retained mod spike and rig GC pause; full method/phase records, command replies and raw Player.log copies stay in `<stage>`.
+
+## Rig results — 15 November 2026 i, Mac (rig 16e; #286 save checks 1-5 and GC/street baseline at 29dcbbf5)
+
+**0 passed / 2 partial / 4 failed / 5 NOT RUN groups. RESULT: DONE.** Role `rig_test`, where `mac`, isolated `agentmac`, run `persistent-city-rig-2026-11-15i-mac`. All timing, GC and street numbers are **PROVISIONAL (shared Mac)**. The PC <40 ms callback target remains literal; these Mac numbers are indicative only. Locked-PC and 60 fps arms are NOT RUN: Peter was gaming on Windows, and this role made no Windows contact.
+
+Raw evidence, scripts, logs, native save profiles, extracted payloads and backups are in `~/HART-Builds/persistent-city-rig-2026-11-15i-mac/` (`<stage>` below), outside Git. Report copy: `~/Coding_Projects/.agent-logs/persistent-city-rig-2026-11-15i-mac.md`. This section is the requested report: `tools/md-ban.py` bans a new Markdown path without `docs-approved`, so no `docs/checks/rig-2026-11-15i-mac-results.md` was added. No production code changed.
+
+### Build, staging and ownership
+
+| Item | Recorded evidence |
+| --- | --- |
+| Tested head | `29dcbbf58e7f8d60fe1f1839dcf2cc72a3ad0979`; fetched and re-verified before the build. #284 + #286; later BodyMerge/street/GC fixes are absent. Final fetched origin tip `ffe1a131df1d6e0dcc12c9f6e7dccce1fd559909` moved during this run; the tested binary stayed pinned to 29dcbbf5. |
+| Branch / worktree | `codex/mac-rig-2026-11-15i` / sibling `big-ambitions-persistent-city-worktrees/rig-2026-11-15i-mac-evidence`; new, isolated build/evidence worktree. |
+| Official agent-rig HEAD | `9d4d4ab51af30b31033260f921cffdd4204251a7`; clean, fetched, ff-only pull already current. Newer commits after `546b3f7` are repository hygiene/docs. No source edits, builds, overlay install/update, commit or push in that checkout. |
+| Installed overlay identity | No commit field exists in installed `agent-install.json`; live bytes match the `546b3f7` installation recorded by 15g and update receipt `updates/20261115T142504Z`. The checkout HEAD is recorded separately from the installed binary. |
+| Live AgentRigOps SHA-256 | `40a288c24dc1976e85d67599395f222b544258c0b820015dbf92b0981be6e6ee`; independently hashed before launch, live health ready, and unchanged at restore. No overlay change required rollback. |
+| PersistentCity DLL SHA-256 | `dc7450382c5a63075667cfc58171edcfe2c1efa6002a861a78f06d043e9da815`; built, packaged, staged and loaded hashes agree. |
+| Build | Homebrew dotnet; `python3 tools/build.py --game-managed "~/Library/Application Support/BigAmbitionsMCP/dll-import-shim/Big Ambitions_Data/Managed"`, exit 0. No RLO/game DLL packaged. |
+| Stage command | `python3 scripts/install-mac.py --stage-mod PersistentCity ~/HART-Builds/persistent-city-rig-2026-11-15i-mac/package` |
+| Receipt backups | First stage: `~/Library/Application Support/BigAmbitionsAgentTestsMac/receipt-backups/20261115T193946Z`. SaveCost OFF stage (`package-gc`): `receipt-backups/20261115T195016Z`. Both stopped and owned. Final restore uses the first original backup. |
+| RLO | Player.log: `[Mod:RealLifeOverhaul] Real Life Overhaul 1.0.6 initialised.` No RLO file/option changed. living_population stored=null/live=true; social_media=1/true; social_media_notices=0/false. |
+| Autosave | Original native 5 minutes / max 3 / prevent_autosave=false; #70 `--rig-test` process suppression verified after every load and before/after each window. Original preference bytes restored; guard ends with the process. |
+| Cities | `FT GR5 13f Timing v1`: 1,000 residents / 2,000 visitors / 1,683 places. No fallback. Disposable copy `FT RIGTMP-GR5-15i-mac`: same population; native-byte copy in the same FT-only character, exclusive create and SHA-256 verification, following `Rig.fixture` copy flow with the requested disposable alias. |
+| Lease / launch | Free and stopped; acquired `2026-11-15T19:38:42Z`. All starts `--mode headless --rig-test`, one attempt each. No ops_load_* failure or forced stop. Local stream-guard registry status was checked; it does not override the no-Windows instruction. |
+
+
+Stage and Player.log line:
+
+```text
+[AgentRigOps] staged_mod name=PersistentCity version=absent informational=0.10.0-persistent-city-candidate sha256=dc7450382c5a63075667cfc58171edcfe2c1efa6002a861a78f06d043e9da815
+```
+
+The informational version has no commit stamp. The controlled DLL hash identifies the candidate. Activation also logged `Persistent population active: 1000 residents, 2000 visitors, 1683 places.`
+
+Printed rollback is retained verbatim in `<stage>/stage.log`. Home-normalized form (expand `~` before executing quoted paths):
+
+```sh
+rm -rf "~/Library/Application Support/com.hovgaardgames.bigambitions.agenttests.mac/ModsLocal/PersistentCity" && cp -Rp "~/Library/Application Support/BigAmbitionsAgentTestsMac/receipt-backups/20261115T193946Z/mod" "~/Library/Application Support/com.hovgaardgames.bigambitions.agenttests.mac/ModsLocal/PersistentCity" && cp "~/Library/Application Support/BigAmbitionsAgentTestsMac/receipt-backups/20261115T193946Z/install.json" "~/Library/Application Support/BigAmbitionsAgentTestsMac/install.json"
+```
+
+Cleanup used the move-aside/copy-back equivalent, retaining the candidate folder outside the profile, then restoring the complete original mod and exact receipt. No receipt was hand-edited.
+
+### A — #286 check 1: paused manual saves
+
+**FAIL: <40 ms not met.** Twenty paused manual saves, native idle awaited between saves, SaveCostDiagnostics=true, separate native save-profiling mode, no GC window. Every save used `main-thread`; none was `background` or `Spliced`. All 20 report exactly `Another mod patches the native save compression: foodtrucks.mod.` The existing Food Trucks test bridge patches `CompressBinaryData`; no hook was removed or rig code changed.
+
+Writer, compress wait and splice-and-compress fields were null for every save: **N/A**, not zero. Native `CompressSaveGame` below is the native profile phase, not `spliceAndCompressMs`. Percentiles use nearest rank.
+
+| Save | save.totalMs | writer.totalMs | waitedForWriterMs | spliceAndCompressMs | nativeSave.lastMainThreadMs | native Save / serialize / compress ms |
+| --- | --- | --- | --- | --- | --- | --- |
+| 1 | 824.920 | N/A | N/A | N/A | 2349.880 | 2349.404 / 271.663 / 703.461 |
+| 2 | 543.217 | N/A | N/A | N/A | 2093.882 | 2093.666 / 91.063 / 886.265 |
+| 3 | 495.255 | N/A | N/A | N/A | 3673.926 | 3673.153 / 124.842 / 897.813 |
+| 4 | 655.350 | N/A | N/A | N/A | 2432.795 | 2432.431 / 103.680 / 755.476 |
+| 5 | 912.259 | N/A | N/A | N/A | 3625.104 | 3624.789 / 220.161 / 1021.605 |
+| 6 | 408.898 | N/A | N/A | N/A | 1722.699 | 1722.589 / 66.278 / 701.125 |
+| 7 | 291.753 | N/A | N/A | N/A | 1028.558 | 1028.480 / 40.338 / 596.076 |
+| 8 | 285.825 | N/A | N/A | N/A | 987.645 | 987.591 / 55.633 / 610.404 |
+| 9 | 295.896 | N/A | N/A | N/A | 914.091 | 914.033 / 51.227 / 591.032 |
+| 10 | 246.720 | N/A | N/A | N/A | 881.145 | 881.091 / 36.418 / 594.891 |
+| 11 | 457.004 | N/A | N/A | N/A | 1262.111 | 1262.058 / 35.856 / 588.388 |
+| 12 | 252.110 | N/A | N/A | N/A | 863.706 | 863.652 / 36.175 / 593.507 |
+| 13 | 247.337 | N/A | N/A | N/A | 852.858 | 852.804 / 36.471 / 587.256 |
+| 14 | 250.022 | N/A | N/A | N/A | 866.461 | 866.406 / 35.880 / 590.771 |
+| 15 | 251.442 | N/A | N/A | N/A | 851.998 | 851.944 / 36.800 / 588.344 |
+| 16 | 245.982 | N/A | N/A | N/A | 852.920 | 852.863 / 45.825 / 591.353 |
+| 17 | 244.105 | N/A | N/A | N/A | 805.287 | 805.230 / 36.074 / 624.655 |
+| 18 | 252.878 | N/A | N/A | N/A | 774.175 | 774.123 / 37.487 / 587.457 |
+| 19 | 240.055 | N/A | N/A | N/A | 761.640 | 761.586 / 35.822 / 586.064 |
+| 20 | 238.344 | N/A | N/A | N/A | 759.274 | 759.221 / 37.694 / 586.893 |
+
+
+| Metric (ms) | p50 | p95 | max |
+| --- | --- | --- | --- |
+| totalMs | 252.878 | 824.920 | 912.259 |
+| recordCountMs | 450.935 | 1220.584 | 2046.428 |
+| nativeMainThreadMs | 881.145 | 3625.104 | 3673.926 |
+| nativePcSubscriberMs | 723.247 | 2133.273 | 2543.267 |
+| Save | 881.091 | 3624.789 | 3673.153 |
+| SerializeSaveGame | 37.694 | 220.161 | 271.663 |
+| CompressSaveGame | 593.507 | 897.813 | 1021.605 |
+| PortraitGenerator.Create | 4.366 | 114.073 | 160.995 |
+| GenerateSaveGameTexture | 0.345 | 5.387 | 15.989 |
+
+
+Native subscriber timings (ms), across the same 20 saves:
+
+| Subscriber | p50 | p95 | max |
+| --- | --- | --- | --- |
+| HARTModPack.CompanionSave.Save | 10.245 | 62.045 | 129.218 |
+| GameManager+<>c.<Start>b__70_2 | 0.001 | 0.065 | 0.223 |
+| Helpers.PlayerHelper.SaveCurrentPosition | 0.005 | 0.144 | 0.418 |
+| UI.DraggableWindows.DraggableWindows.Save | 0.052 | 0.526 | 4.579 |
+| BuildingManager.<Awake>b__59_1 | 0.002 | 0.017 | 0.071 |
+| CityPerformance.FrameTrace.Save | 0.003 | 0.017 | 0.074 |
+| FoodTrucks.FoodTrucksSession.OnSaveGame | 1.130 | 16.700 | 38.636 |
+| RealLifeOverhaul.Guard+Calls+Caught.Run | 0.002 | 0.132 | 0.155 |
+| PersistentCity.Runtime.PopulationRuntime.Save | 723.247 | 2133.273 | 2543.267 |
+| RealLifeOverhaul.SaveHook.Run | 112.442 | 835.216 | 930.792 |
+
+
+Full per-save native profiles are retained as `A-01-native-profile.json` through `A-20-native-profile.json`. CompressSaveGame reports destination_bytes=-1 in these records; that field supplies no file-size proof.
+
+The native PC subscriber includes diagnostic record counting outside `save.totalMs` (recordCountMs is reported separately). Against 13f #248-1 Mac callback p95 742.8 ms / recorded phases 301.0 ms, this run has native PC subscriber p95 2,133.3 ms / save.totalMs p95 824.9 ms. The launch PC reference is 731 ms; no PC measurement ran here. Host and diagnostic scope differences prevent a controlled performance comparison. Background/splice requirements: not met on saves 1–20.
+
+### B — #286 checks 2 and 3: consistency during reload and quit
+
+**PARTIAL for each check.** Both operations succeeded without save refusal, but both saves used the fallback writer; background hand-off concurrency is NOT RUN. Native trigger replies showed `in_progress=true, compress_thread_alive=true` before immediate load/stop dispatch. The stop was `mac-agent stop` of agentmac only, followed by headless rig-test start and a cold load.
+
+| Check | Load / payload / epoch evidence | Outcome |
+| --- | --- | --- |
+| 2 immediate reload | `status=done`, 74.0 s; activation success=true, payloadCharacters=5734081; extracted and live-key length 5734081; marker `payload=5734081 persistentcity:state_v1`; sequence=22; attached=true, refused=0, stopPending=false. | Fallback consistency verified; background path not exercised. |
+| 3 quit/restart/load | `stopped=true`; `status=done`, 46.2 s; activation success=true, payloadCharacters=5613619; extracted and live-key length 5613619; marker `payload=5613619 persistentcity:state_v1`; sequence=23; attached=true, refused=0, stopPending=false. | Fallback load consistency verified; no post-quit live traffic projection or background completion proof. |
+
+
+Exact epoch markers:
+
+```text
+v1
+sequence=22
+schema=1
+minute=3783.6998991966248
+population=rlo:0.40.4:3c8b6b2a5b0c9d5ce2a23b21aaae571544fec473d23d55ead9a498d0ac656b8d
+payload=5734081 persistentcity:state_v1
+```
+
+```text
+v1
+sequence=23
+schema=1
+minute=3787.5462822914124
+population=rlo:0.40.4:3c8b6b2a5b0c9d5ce2a23b21aaae571544fec473d23d55ead9a498d0ac656b8d
+payload=5613619 persistentcity:state_v1
+```
+
+Residents/visitors remain 1,000/2,000. All 1,000 resident IDs and wallet arrays match between the first reload snapshot and the subsequent quit-save snapshot. EconomyOverview before/after the immediate reload matches exactly, including balances `458553164.37276510894298553466796875`. The traffic clock advances 3783.6998991966248 → 3787.5462822914124 after resuming the reloaded city; in-flight cars `c23`, `pc:277`, `pc:486` advance route indices 33→43, 52→57, 36→48. The first file has 6 in-flight vehicles, the second 3; 306 resident car records remain in each. The quit-loaded file contains those 3 in-flight vehicles, but no live per-car readback proves their post-quit continuation.
+
+Log diagnostic: `[Mod:PersistentCity] Persistent City writes this save on the main thread: Another mod patches the native save compression: foodtrucks.mod.` No hand-off refusal/timeout/splice warning was found. Normal unload text `Persistent City detached from the current save; later native saves of this city keep a refusal marker.` is not a refused save. Epoch readbacks show lastRefusal="". Raw save_activity, pcstate diagnostics and native profile records are retained by check label.
+
+### C — #286 check 4: forced background refusal
+
+**NOT RUN.** Existing ops do not provide a reviewed mutation that makes the population fail save validation, and no fault-points DLL for the tested head exists in this evidence worktree. This run built the standard candidate without `--fault-points`. The compression-owner refusal also prevents the background path here. No sealed fixture was edited; no invalid state was manufactured.
+
+### D — #286 check 5 / GR-5 day, night and street
+
+Both GC windows use cold process starts and reload the unchanged sealed timing fixture. Day begins Tuesday 15:30; night Wednesday 01:00 after speed-20 positioning outside timing. Each controller hold is 600 s; begin/end command overhead is included in exported rig duration. Idle camera for GC, player x=215,z=0. GC sampler OFF for the single headless street window, with camera pans and speed 1→2→1. SaveCostDiagnostics=false and native save profiler disabled throughout D. `boehm_total`, incremental=true, max_generation=0; sampler pause is cycle-ending frame excess, separate from Unity GC.Collect marker duration. MB/GB are decimal.
+
+| Window | Frames / dropped | gen0/1/2 | Pause p50/p95/max ms | Mono heap GB / peak used GB | mod / physical / advance MB | appearance / routes rebuild MB | Gate |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| gc-day | 16521 / 0 | 7/0/0 | 28.205/70.386/70.386 | 1.393 / 1.384 | 240.161 / 62.519 / 87.924 | 47.588 / 72.536 | not met |
+| gc-night | 16909 / 0 | 7/0/0 | 30.167/32.617/32.617 | 1.487 / 1.479 | 160.456 / 22.762 / 33.629 | 13.930 / 84.120 | not met |
+
+
+| Window / target | Observed | Literal result |
+| --- | --- | --- |
+| gc-day gen0 <= ~5 | 7 | not met |
+| gc-day pause p95 < ~36 ms | 70.386 | not met |
+| gc-day mod <= 119 MB | 240.161 | not met |
+| gc-day Mono heap <= 1.47 GB | 1.393148 | met |
+| gc-night gen0 <= ~5 | 7 | not met |
+| gc-night pause p95 < ~36 ms | 32.617 | met |
+| gc-night mod <= 53 MB | 160.456 | not met |
+| gc-night Mono heap <= 1.47 GB | 1.486668 | not met |
+
+
+| Window | UpdateCity self / inclusive p95 ms | mod-work p95 / max ms | whole-frame p95 / max ms | >=30 ms mod-work frames | Street gate |
+| --- | --- | --- | --- | --- | --- |
+| gc-day | 0.3020 / 3.4384 | 3.4944 / 43.8270 | 45.2384 / 746.9332 | 2 | reported separately |
+| gc-night | 0.3661 / 2.6124 | 2.6643 / 40.8889 | 40.0570 / 613.3983 | 2 | reported separately |
+| street | 3.8561 / 3.8561 | 3.9207 / 88.1317 | 207.6679 / 1075.4791 | 6 | not met |
+
+
+No save reached native work in any D window. Every perf save_activity record reports allowed=0, native_saving_frames=0, clean=true, invalid_reasons=[]. Refused natural attempts are counted below; they did no native save work. All modwork records have valid=true, complete coverage, no off-main calls, cross-frame scopes, unbalanced exits, dropped frames or patch failures.
+
+| Window | Refused / allowed / native saving frames | Save epoch before → after | SaveCost requested |
+| --- | --- | --- | --- |
+| gc-day | 10952 / 0 / 0 | 1 → 1 | False → False |
+| gc-night | 16936 / 0 / 0 | 1 → 1 | False → False |
+| street | 2084 / 0 / 0 | 1 → 1 | False → False |
+
+
+### Comparison with 15a, 15b, 15c, 15f and 16d (all PROVISIONAL)
+
+| Run | Day gen0 / pause p95 / mod MB | Night gen0 / pause p95 / mod MB | Street UpdateCity self / union p95 ms; >=30 ms frames |
+| --- | --- | --- | --- |
+| 15a | 8 / 27.888 / 295.628 | 6 / 37.301 / 151.470 | 6.5466 / 6.6550; 37 |
+| 15b | 7 / 43.403 / 177.883 | 6 / 38.929 / 78.728 | 6.8007 / 6.9556; 28 |
+| 15c | 6 / 110.570 / 272.206 | 4 / 4651.381 / 66.856 | 16.8084 / 17.2191; 114 |
+| 15f at cbd4e68e | 7 / 31.829 / 267.436 | 7 / 100.850 / 129.231 | 4.0914 / 4.1405; 3 |
+| 16d, PR #287 at 6ac902c1 (launch reference) | 4 / 300.2 / 151.5 | 3 / 32.3 / 17.9 | union 4.38; 4 |
+| 15i at 29dcbbf5 | 7 / 70.386 / 240.161 | 7 / 32.617 / 160.456 | 3.8561 / 3.9207; 6 |
+
+
+16d Mono heap day/night was 1.442/1.493 GB; day routes rebuild 70.7 MB. 15f routes rebuild was 83.875/58.653 MB. Shared-host, clock, process and workload differences do not establish a controlled improvement or regression. This is a provisional #284+#286 baseline; the BodyMerge/street/GC fixes are absent.
+
+### Spike retention and every retained mod-work spike
+
+| Window | Recorder | Counted | Retained | Truncated | Cap |
+| --- | --- | --- | --- | --- | --- |
+| gc-day | rig mod_work | 2 | 2 | False | 1024 |
+| gc-day | rig perf whole_frame | 16188 | 1024 | True | 1024 |
+| gc-day | PC phases | 2 | 2 | False | 1024 |
+| gc-night | rig mod_work | 2 | 2 | False | 1024 |
+| gc-night | rig perf whole_frame | 16604 | 1024 | True | 1024 |
+| gc-night | PC phases | 2 | 2 | False | 1024 |
+| street | rig mod_work | 6 | 6 | False | 1024 |
+| street | rig perf whole_frame | 4533 | 1024 | True | 1024 |
+| street | PC phases | 6 | 6 | False | 1024 |
+
+
+Use #94 `spikes_truncated` for spike-row retention; perf whole_frame `truncated=false` describes the frame buffer, not that spike list. Whole-frame rows over the 1,024-row cap remain counted and flagged in raw perf evidence. They are not mod-work spikes. No missing PC phase row is treated as zero.
+
+**gc-day**
+
+| unity_frame | union ms | phase | detail | sub | gc_phase | collections | rig dominant |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 4025 | 43.827 | mod_routes | none | mod_routes_rebuild | none | 0 | updatecity |
+| 4029 | 30.615 | mod_routes | none | mod_routes_rebuild | none | 0 | updatecity |
+
+
+PC phase rows:
+
+| frame | mod / phase / detail / sub ms | phase / detail / sub | gc_phase / collections |
+| --- | --- | --- | --- |
+| 4025 | 43.764 / 43.573 / 0.000 / 43.571 | mod_routes / none / mod_routes_rebuild | none / 0 |
+| 4029 | 30.582 / 30.392 / 0.000 / 30.390 | mod_routes / none / mod_routes_rebuild | none / 0 |
+
+
+**gc-night**
+
+| unity_frame | union ms | phase | detail | sub | gc_phase | collections | rig dominant |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 10613 | 32.684 | mod_routes | none | mod_routes_rebuild | none | 0 | updatecity |
+| 10648 | 40.889 | mod_closures | physical_spawn_bake | mod_closures_network | none | 0 | updatecity |
+
+
+PC phase rows:
+
+| frame | mod / phase / detail / sub ms | phase / detail / sub | gc_phase / collections |
+| --- | --- | --- | --- |
+| 10613 | 32.643 / 32.541 / 0.000 / 32.539 | mod_routes / none / mod_routes_rebuild | none / 0 |
+| 10648 | 40.836 / 20.869 / 0.957 / 19.787 | mod_closures / physical_spawn_bake / mod_closures_network | none / 0 |
+
+
+**street**
+
+| unity_frame | union ms | phase | detail | sub | gc_phase | collections | rig dominant |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 29365 | 37.935 | mod_routes | none | mod_routes_rebuild | none | 0 | updatecity |
+| 29369 | 88.132 | mod_routes | none | mod_routes_rebuild | mod_routes | 1 | updatecity |
+| 31788 | 40.214 | mod_routes | none | mod_routes_rebuild | none | 0 | updatecity |
+| 32976 | 67.387 | mod_routes | none | mod_routes_rebuild | none | 0 | updatecity |
+| 32980 | 48.481 | mod_routes | none | mod_routes_rebuild | none | 0 | updatecity |
+| 33013 | 30.612 | mod_closures | physical_spawn_bake | mod_closures_network | none | 0 | updatecity |
+
+
+PC phase rows:
+
+| frame | mod / phase / detail / sub ms | phase / detail / sub | gc_phase / collections |
+| --- | --- | --- | --- |
+| 29365 | 37.887 / 37.709 / 0.000 / 37.707 | mod_routes / none / mod_routes_rebuild | none / 0 |
+| 29369 | 88.101 / 87.937 / 0.000 / 87.935 | mod_routes / none / mod_routes_rebuild | mod_routes / 1 |
+| 31788 | 40.182 / 40.049 / 0.000 / 40.047 | mod_routes / none / mod_routes_rebuild | none / 0 |
+| 32976 | 67.343 / 67.193 / 0.000 / 67.191 | mod_routes / none / mod_routes_rebuild | none / 0 |
+| 32980 | 48.441 / 48.280 / 0.000 / 48.278 | mod_routes / none / mod_routes_rebuild | none / 0 |
+| 33013 | 30.554 / 7.590 / 0.485 / 7.403 | mod_closures / physical_spawn_bake / mod_closures_network | none / 0 |
+
+
+### Look diagnostics and the BodyMerge rejection
+
+**gc-day**, last periodic cumulative process snapshot: `263 built/28 reused/6112 deferred/31 idle/95 owned/8 adopted/273 baked/45 bake sizes/1678 KB bake scratch/100 grown/14 trimmed/275 fitted/187 waited/2.9 ms build/0 fast merges/273 native merges/0 failed merges`.
+
+**gc-night**, last periodic cumulative process snapshot: `93 built/52 reused/1720 deferred/32 idle/32 owned/63 adopted/247 baked/45 bake sizes/1678 KB bake scratch/6 grown/37 trimmed/42 fitted/62 waited/3.1 ms build/0 fast merges/247 native merges/0 failed merges`.
+
+**street**, last periodic cumulative process snapshot: `33 built/41 reused/71 deferred/37 idle/66 owned/72 adopted/382 baked/45 bake sizes/1678 KB bake scratch/0 grown/6 trimmed/0 fitted/31 waited/3.9 ms build/0 fast merges/382 native merges/0 failed merges`.
+
+Fast merges remain zero in the exported snapshots. The 16d launch reference was 0 fast / 1,195 native / 0 failed cumulative. Cold process starts reset these counters; they are not exact window deltas. No log line or counter naming the rejected predicate was exposed: the last-error suffix is absent. Exact fast-path rejection cause is a tooling gap, not an inferred merge failure. Five-person dressed-look/release/reacquire proof is NOT RUN in this headless run.
+
+### Shared-host boundaries (mandatory; all PROVISIONAL)
+
+Each boundary retains full uptime, memory_pressure, `ps -Arco pid,pcpu,comm | head -8`, process inventory and live harness state in `<stage>/*-host-*.json`. No other session was cancelled, debugged, modified or shared. The BodyMerge harness uses `codex/mac-fix-gr5-bodymerge-fastpath`; its build/test activity can overlap this run. Other observed sessions: MVP UX demo and MVP UX map research/browser sessions. CWD/PID inventories are retained; standing h+h agent/CI daemons are also visible. Only role names are used in this report.
+
+**A start 2026-11-15T19:44:18.628312+00:00** — 20:44  up 2 days,  2:22, 1 user, load averages: 8.95 8.47 7.32; System-wide memory free percentage: 35%. Harness: 20261115-203821-mac-fix-gr5-bodymerge-fastpath (implement, pid 53109).
+
+```text
+PID  %CPU COMM
+56163  67.4 chrome-headless-shell
+49418  63.4 suggestd
+55534  53.9 Big Ambitions Agent Tests Mac
+47198  53.8 next-server (v16.4.2)
+56713  16.2 node
+56161  15.4 chrome-headless-shell
+48045  14.5 chrome-headless-shell
+```
+
+**A end 2026-11-15T19:46:20.094044+00:00** — 20:46  up 2 days,  2:24, 1 user, load averages: 6.81 8.17 7.37; System-wide memory free percentage: 78%. Harness: 20261115-203821-mac-fix-gr5-bodymerge-fastpath (implement, pid 53109).
+
+```text
+PID  %CPU COMM
+49418  85.0 suggestd
+55534  81.1 Big Ambitions Agent Tests Mac
+  444  11.3 coreaudiod
+  384   5.0 mds
+  561   3.9 mds_stores
+  359   2.5 fseventsd
+  735   2.5 Resolve
+```
+
+**gc-day start 2026-11-15T19:52:01.900464+00:00** — 20:52  up 2 days,  2:30, 1 user, load averages: 4.53 6.20 6.67; System-wide memory free percentage: 80%. Harness: 20261115-203821-mac-fix-gr5-bodymerge-fastpath (implement, pid 53109).
+
+```text
+PID  %CPU COMM
+58973 105.5 Big Ambitions Agent Tests Mac
+49418  73.9 suggestd
+  432  12.8 loginwindow
+  444  10.7 coreaudiod
+47549   5.8 claude
+59251   4.4 mdworker_shared
+  384   3.8 mds
+```
+
+**gc-day end 2026-11-15T20:02:04.584670+00:00** — 21:02  up 2 days,  2:40, 1 user, load averages: 3.96 4.46 5.39; System-wide memory free percentage: 68%. Harness: 20261115-203821-mac-fix-gr5-bodymerge-fastpath (implement, pid 53109).
+
+```text
+PID  %CPU COMM
+49418  85.5 suggestd
+58973  85.4 Big Ambitions Agent Tests Mac
+  444  11.3 coreaudiod
+  384   4.4 mds
+  561   3.3 mds_stores
+  735   2.3 Resolve
+  359   1.6 fseventsd
+```
+
+**gc-night start 2026-11-15T20:08:37.144001+00:00** — 21:08  up 2 days,  2:46, 1 user, load averages: 5.63 6.12 5.95; System-wide memory free percentage: 73%. Harness: 20261115-203821-mac-fix-gr5-bodymerge-fastpath (implement, pid 53109).
+
+```text
+PID  %CPU COMM
+61352 280.7 dotnet
+61212 103.9 Big Ambitions Agent Tests Mac
+49418  88.5 suggestd
+  444  11.3 coreaudiod
+  403   2.8 locationd
+  735   2.4 Resolve
+  654   2.2 com.apple.DriverKit-AppleBCMWLAN
+```
+
+**gc-night end 2026-11-15T20:18:40.047884+00:00** — 21:18  up 2 days,  2:56, 1 user, load averages: 8.18 5.47 5.34; System-wide memory free percentage: 65%. Harness: 20261115-203821-mac-fix-gr5-bodymerge-fastpath (implement, pid 53109).
+
+```text
+PID  %CPU COMM
+62801 380.2 dotnet
+61212  79.4 Big Ambitions Agent Tests Mac
+49418  50.1 suggestd
+  444   7.5 coreaudiod
+47549   3.7 claude
+  735   1.2 Resolve
+  384   0.7 mds
+```
+
+**street start 2026-11-15T20:20:49.773389+00:00** — 21:20  up 2 days,  2:59, 1 user, load averages: 7.10 6.08 5.61; System-wide memory free percentage: 67%. Harness: 20261115-203821-mac-fix-gr5-bodymerge-fastpath (implement, pid 53109).
+
+```text
+PID  %CPU COMM
+62801 286.0 dotnet
+61212  92.6 Big Ambitions Agent Tests Mac
+49418  52.8 suggestd
+  561  22.6 mds_stores
+  407  12.0 dasd
+63257  11.9 contactsd
+63259  10.5 contactsd
+```
+
+**street end 2026-11-15T20:30:52.201982+00:00** — 21:30  up 2 days,  3:09, 1 user, load averages: 6.11 6.05 5.69; System-wide memory free percentage: 59%. Harness: 20261115-203821-mac-fix-gr5-bodymerge-fastpath (local_tests, pid 53109).
+
+```text
+PID  %CPU COMM
+69183 281.2 dotnet
+61212 106.0 Big Ambitions Agent Tests Mac
+49418  84.0 suggestd
+    1  10.4 launchd
+  444   9.9 coreaudiod
+69587   3.4 mdworker_shared
+ 1333   2.8 Spotify
+```
+
+Concurrent build identification: night-start dotnet PID 61352 (280.7% CPU) and night-end/street-start dotnet PID 62801 (380.2% / 286.0% CPU) resolve to the BodyMerge worktree tests output. This role did not run a build/test inside any measurement window. MVP sessions and standing daemons are named above and retained in boundary process/CWD inventories.
+
+### NOT RUN groups, prior fixture flow and tooling gaps
+
+| Group | NOT RUN / exact reason |
+| --- | --- |
+| #286 check 4 | No save-validation mutator or tested-head fault-points build; background path additionally blocked by foodtrucks.mod compression patch. |
+| PC locked-PC and GR-5 60 fps arms | Windows-only; Peter was gaming. No PC contact, startup or client used. The Mac <40 ms number remains indicative only. |
+| #246 check 4 re-baseline | Done in 16d: plain floors 11 vs independent 13, FAIL. #286 does not change it; not repeated. |
+| #246 check 5 / old fixture flow and visual #282 check 4 | No new unrentable fixture applied. Subjects, restored_on_load/adopted_at, sidecar adoption, five-role visibility, independent storeys/home_area, yard-filter scan, revert and in-load tally are NOT RUN here; 16d evidence retained. D supplies new day/night/street and cumulative look counters only. |
+| E / all other pending checklist checks | Checklist items 1–29 beyond this named save/GC/street scope are NOT RUN, retaining their scenario/fixture/owner prerequisites. No Windows arm, new shop/lifecycle/invalid-state fixture, cadence matrix, seven-day or visual test was added. Optional mechanism read results are retained below; absent business fixtures cannot establish mechanism behavior. |
+
+
+Exact op failures and optional E results:
+
+No invoked rig op, load, stage or lifecycle command failed. Performance threshold failures and the compression-owner fallback are reported above; they are not transport errors.
+
+Optional E reads completed: `pc food contract capabilities` passed=True, firstFailure=null; `pc capability status` reports `vendor.streetfood optional off: Street Food vendor API missing.` These reads do not supply the three business mechanism cases in checklist item 10; that behavioral check remains NOT RUN.
+
+Tooling gaps: no background save can be exercised with the existing compression owner; no invalid-state/fault-points arm; no fast-merge rejection-predicate diagnostic; no headless visual continuity or post-quit per-car runtime projection. Spikes are reported rather than chased. No issue was opened.
+
+### Disposable saves, cleanup and evidence verification
+
+Leftover read `FT RIGTMP-GR5-15c`: `{"name":"FT RIGTMP-GR5-15c","exists":false,"loaded":false,"files":[]}`.
+
+Leftover read `FT RIGTMP-GR5-15c-mac`: `{"name":"FT RIGTMP-GR5-15c-mac","exists":false,"loaded":false,"files":[]}`.
+
+Disposable read before delete: 3 files (.hsg, .hsg.meta, .jpg), loaded=false; delete after.exists=false/files=[]. Final read of `FT RIGTMP-GR5-15i-mac` is absent. No fixture sidecar was created or left; no sealed fixture, `FT RIGTMP-GR5-14i`, RLO file, ordinary profile or Steam app was changed.
+
+Game stopped normally; no --force. Original file/absence checks: 34; read-only RLO file checks: 53; sealed fixture file checks: 4; mismatches=0. Complete original mod file set matches. Preferences, persistent-city.json, autosave bytes, save-mode request and frame-cap configuration restored. install.json SHA-256 `d49deda807eb3ca93d8e91983fca2fbcd6df4ff7fe620edf2fcc5e8e9e28c512` matches the independent original and receipt backup. AgentRigOps SHA-256 unchanged; sidecars=0. Final status running=false/process=null, lease held=false/pending=0. All game PIDs and caffeinate assertions started by this run are gone. Build/evidence worktree is removed after commit/push/PR creation.
+
+Raw evidence index and SHA-256: `<stage>/raw-evidence-manifest.json`, `d4bf89ff1aaffb34f2f0f70332d281bebe9f7199f18e23aa8e677e8116ec0f81`. No raw logs, binaries, native saves or extracted payloads are committed. Full GC JSON exceeds the small-file allowance together, so this section provides excerpts and hashes/pointers instead of adding a perf file.
+
+| Raw evidence in <stage> | Bytes | SHA-256 |
+| --- | --- | --- |
+| A-summary.json | 11488 | bd373eb80febdbdb65bfd1d73a27d4f21227884cbc10433b6024c9d68ead78c9 |
+| gc-day-pc.json | 18446 | b9509b23543bb01dbdee34a075d036881f91989ffd4d8e5eee71189aa74764d7 |
+| gc-night-pc.json | 18352 | 510bcb39d953a297e5f3b51d0e4f6a67c2cce1ca6ac2258c99c82247f4aec9ba |
+| street-pc.json | 10664 | 488fcb38ed022ff6c340e3f40553916f3076b447440d1a2997ca583a017a90c8 |
+| gc-day-modwork-end.json | 56732 | bb47ee29d3ce91847707eee54b6d6609167a41d066af249d9405beb4b2973015 |
+| gc-night-modwork-end.json | 56697 | a535785747ad2a7db41ef904d138ccf7c082cc19efebd1427a56f4a1185a0d4c |
+| street-modwork-end.json | 53277 | 68565657355cfc3b579c929b23abbc8dec0616be80040e67fcf861f01adb2a88 |
+| restore-verification.json | 423 | 87e4cbade49e612707751bf2adf9e5b7c278861d1299602d3ffede41e9ea17d3 |
+
+
+Refs #248 #286. Results PR is docs-only, has no requested reviewers and is not merged. In-game proof does not gate merge; no release or Workshop action.
