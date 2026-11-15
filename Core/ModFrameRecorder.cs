@@ -12,6 +12,8 @@ namespace PersistentCity.Core
         public double PhaseMs;
         public int Detail;
         public double DetailMs;
+        public int Sub;
+        public double SubMs;
         public int GcPhase;
         public int Collections;
         public int AllocPhase;
@@ -119,8 +121,8 @@ namespace PersistentCity.Core
             double modMilliseconds = (timestamp - began) / ticksPerMillisecond;
             Charge(GcAllocationSegment.ModOther, timestamp, counter, collections, counterEpoch);
             open = false;
-            var row = new ModFrameRow { Frame = frame, ModMs = modMilliseconds, Phase = -1, Detail = -1, GcPhase = -1, AllocPhase = -1 };
-            long phaseTicks = 0, detailTicks = 0;
+            var row = new ModFrameRow { Frame = frame, ModMs = modMilliseconds, Phase = -1, Detail = -1, Sub = -1, GcPhase = -1, AllocPhase = -1 };
+            long phaseTicks = 0, detailTicks = 0, subTicks = 0;
             for (int i = 0; i < Segments; i++)
             {
                 var segment = (GcAllocationSegment)i;
@@ -128,7 +130,8 @@ namespace PersistentCity.Core
                 if (GcPauseSampler.IsParent(segment)) continue;
                 if (Overlaps(segment))
                 {
-                    if (ticks[i] > detailTicks) { detailTicks = ticks[i]; row.Detail = i; }
+                    if (!GcPauseSampler.IsSub(segment)) { if (ticks[i] > detailTicks) { detailTicks = ticks[i]; row.Detail = i; } }
+                    else if (ticks[i] > subTicks) { subTicks = ticks[i]; row.Sub = i; }
                     if (sampler != null && GcPauseSampler.IsOuter(segment) && (ticks[i] > 0 || bytes[i] > 0)) sampler.Outer(segment, bytes[i], countersValid);
                     continue;
                 }
@@ -140,6 +143,7 @@ namespace PersistentCity.Core
             }
             row.PhaseMs = phaseTicks / ticksPerMillisecond;
             row.DetailMs = detailTicks / ticksPerMillisecond;
+            row.SubMs = subTicks / ticksPerMillisecond;
             Frames++;
             if (modMilliseconds >= SpikeMilliseconds)
             {
@@ -172,6 +176,7 @@ namespace PersistentCity.Core
                     text.Append("{\"frame\":").Append(N(r.Frame)).Append(",\"mod_ms\":").Append(D(r.ModMs))
                         .Append(",\"phase\":\"").Append(Name(r.Phase)).Append("\",\"phase_ms\":").Append(D(r.PhaseMs))
                         .Append(",\"detail\":\"").Append(Name(r.Detail)).Append("\",\"detail_ms\":").Append(D(r.DetailMs))
+                        .Append(",\"sub\":\"").Append(Name(r.Sub)).Append("\",\"sub_ms\":").Append(D(r.SubMs))
                         .Append(",\"gc_phase\":\"").Append(Name(r.GcPhase)).Append("\",\"collections\":").Append(N(r.Collections))
                         .Append(",\"alloc_phase\":\"").Append(Name(r.AllocPhase)).Append("\",\"alloc_phase_bytes\":").Append(N(r.AllocBytes))
                         .Append(",\"alloc_bytes\":").Append(N(r.Bytes)).Append('}');

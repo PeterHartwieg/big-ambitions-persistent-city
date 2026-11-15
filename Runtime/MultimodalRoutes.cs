@@ -179,6 +179,7 @@ namespace PersistentCity.Runtime
             if (roads != null && (routeEventHeld || roadSpeeds.Waiting != null) && roadSpeeds.WaitsAfterRefresh()) return false;
             if (routeEventHeld && !cityChanged && !sceneLost && roads?.Ready == true && roads.IsCurrent)
             {
+                ModFrames.Detail(GcAllocationSegment.ModRoutesRebuild);
                 try { roads.Sweep(1, 1024); }
                 catch (RoadSpeedsWaitingException) { return false; }
                 finally { ModFrames.Detail(GcAllocationSegment.ModRoutesSweep); }
@@ -227,6 +228,7 @@ namespace PersistentCity.Runtime
                 roads.SetTrafficEntryForecast(trafficEntryForecast);
             }
             else roads.SetAccess(access!);
+            ModFrames.Detail(GcAllocationSegment.ModRoutesRebuild);
             if (!roads.Prepare()) return false;
             try { roads.Sweep(1, 1024); }
             catch (RoadSpeedsWaitingException) { return false; }

@@ -40,11 +40,11 @@ namespace PersistentCity.Tests
             sampler.Start(1);
             sampler.BeginNested(1000, 0);
             sampler.Detail(GcAllocationSegment.AdvanceStops, 1010, 0);
-            sampler.Sub(GcAllocationSegment.AdvancePlanningSlice, 1300, 0, false);
+            sampler.Sub(GcAllocationSegment.AdvancePlanningSlice, 1300, 0);
             sampler.Detail(GcAllocationSegment.AdvancePlanning, 1300, 0);
-            sampler.Sub(GcAllocationSegment.AdvanceEventsTraffic, 1500, 0, false);
+            sampler.Sub(GcAllocationSegment.AdvanceEventsTraffic, 1500, 0);
             sampler.Detail(GcAllocationSegment.AdvanceEvents, 1500, 0);
-            sampler.Sub(GcAllocationSegment.AdvanceEventsCitizen, 1550, 0, false);
+            sampler.Sub(GcAllocationSegment.AdvanceEventsCitizen, 1550, 0);
             sampler.Detail(GcAllocationSegment.AdvanceEvents, 1550, 0);
             sampler.EndDetails(GcAllocationSegment.AdvanceOther, 1560, 0);
             Assert.Equal(290, sampler.SegmentBytes(GcAllocationSegment.AdvancePlanning));
@@ -54,9 +54,9 @@ namespace PersistentCity.Tests
             Assert.Equal(50, sampler.SegmentBytes(GcAllocationSegment.AdvanceEventsCitizen));
             Assert.Equal(10, sampler.SegmentBytes(GcAllocationSegment.AdvanceOther));
 
-            Assert.Equal(GcAllocationSegment.AdvanceEventsTraffic, GcPauseSampler.AdvanceEventSegment(1, 1, 1, true));
-            Assert.Equal(GcAllocationSegment.AdvanceEventsFood, GcPauseSampler.AdvanceEventSegment(0, 1, 1, true));
-            Assert.Equal(GcAllocationSegment.AdvanceEventsRouteBegin, GcPauseSampler.AdvanceEventSegment(0, 0, 1, true));
+            Assert.Equal(GcAllocationSegment.AdvanceEventsRouteBegin, GcPauseSampler.AdvanceEventSegment(0, 0, 0, true));
+            Assert.Equal(GcAllocationSegment.AdvanceEventsTraffic, GcPauseSampler.AdvanceEventSegment(1, 1, 1, false));
+            Assert.Equal(GcAllocationSegment.AdvanceEventsFood, GcPauseSampler.AdvanceEventSegment(0, 1, 1, false));
             Assert.Equal(GcAllocationSegment.AdvanceEventsCitizen, GcPauseSampler.AdvanceEventSegment(0, 0, 1, false));
             Assert.Equal(GcAllocationSegment.AdvanceEventsOther, GcPauseSampler.AdvanceEventSegment(0, 0, 0, false));
         }
@@ -70,20 +70,68 @@ namespace PersistentCity.Tests
             sampler.Detail(GcAllocationSegment.PhysicalSetupPlaces, 10_100, 0);
             sampler.Detail(GcAllocationSegment.PhysicalSetupBodies, 9_010_100, 0);
             sampler.Detail(GcAllocationSegment.PhysicalSetupVehicles, 12_010_100, 0);
-            sampler.Sub(GcAllocationSegment.PhysicalUnattributedSetup, 12_010_200, 0, true);
+            sampler.Sub(GcAllocationSegment.PhysicalUnattributedSetup, 12_010_200, 0);
             sampler.EndNested(GcAllocationSegment.Physical, GcAllocationSegment.PhysicalUnattributed, 12_010_200, 0);
             Assert.Equal(12_000_200, sampler.SegmentBytes(GcAllocationSegment.PhysicalUnattributed));
-            Assert.Equal(12_000_200, sampler.SegmentBytes(GcAllocationSegment.PhysicalUnattributedSetup));
+            Assert.Equal(100, sampler.SegmentBytes(GcAllocationSegment.PhysicalUnattributedSetup));
             Assert.Equal(12_000_200, sampler.SegmentBytes(GcAllocationSegment.Physical));
             Assert.Equal(9_000_000, sampler.SegmentBytes(GcAllocationSegment.PhysicalSetupBodies));
+            Assert.Equal(12_000_200, SubTotal(sampler, GcAllocationSegment.PhysicalUnattributed));
             Assert.Equal(0, sampler.SegmentBytes(GcAllocationSegment.PhysicalUnattributedUpdate));
 
             sampler.BeginNested(20_000_000, 0);
+            sampler.Detail(GcAllocationSegment.PhysicalUnattributedEntry, 20_000_030, 0);
+            sampler.Charge(GcAllocationSegment.PhysicalUnattributed, 20_000_030, 0);
             sampler.Charge(GcAllocationSegment.PhysicalAmbient, 20_000_100, 0);
-            sampler.Sub(GcAllocationSegment.PhysicalUnattributedUpdate, 20_000_150, 0, true);
+            sampler.Sub(GcAllocationSegment.PhysicalUnattributedUpdate, 20_000_150, 0);
             sampler.EndNested(GcAllocationSegment.Physical, GcAllocationSegment.PhysicalUnattributed, 20_000_150, 0);
+            Assert.Equal(30, sampler.SegmentBytes(GcAllocationSegment.PhysicalUnattributedEntry));
             Assert.Equal(50, sampler.SegmentBytes(GcAllocationSegment.PhysicalUnattributedUpdate));
-            Assert.Equal(12_000_250, sampler.SegmentBytes(GcAllocationSegment.PhysicalUnattributed));
+            Assert.Equal(12_000_280, sampler.SegmentBytes(GcAllocationSegment.PhysicalUnattributed));
+            Assert.Equal(12_000_280, SubTotal(sampler, GcAllocationSegment.PhysicalUnattributed));
+        }
+
+        private static long SubTotal(GcPauseSampler sampler, GcAllocationSegment parent) => Enumerable.Range(0, GcPauseSampler.Segments)
+            .Select(i => (GcAllocationSegment)i).Where(s => GcPauseSampler.IsSub(s) && GcPauseSampler.SubParent(s) == parent).Sum(sampler.SegmentBytes);
+
+        [Fact]
+        public void ARouteBeginThatSuspendsOnPlanningIsClassifiedAsARouteBegin()
+        {
+            var city = new CitySimulator(ResumablePlanningTests.City(12), new ResumablePlanningTests.DeferredPlanner { ContinuesFor = _ => 3 });
+            AdvanceResult result;
+            int guard = 0;
+            do { Assert.True(++guard < 100000); result = city.AdvanceFrameSlice(ResumablePlanningTests.Target(3), 1); } while (!result.PlanningPending && !result.CaughtUp);
+            Assert.True(result.PlanningPending);
+            Assert.Equal(GcAllocationSegment.AdvanceEventsRouteBegin,
+                GcPauseSampler.AdvanceEventSegment(result.TrafficEvents, result.FoodContinuationEvents, result.CitizenEvents, result.PlanningPending));
+        }
+
+        [Fact]
+        public void RouteRebuildWorkBeforeTheSpeedRefreshIsNotChargedToSpeeds()
+        {
+            var sampler = new GcPauseSampler(64);
+            sampler.Start(1);
+            var recorder = sampler.FrameRecorder;
+            recorder.Arm(1000);
+            recorder.Begin(1, 0, 0, 0);
+            recorder.Charge(GcAllocationSegment.ModOptionalStops, 1, 100, 0);
+            recorder.Detail(GcAllocationSegment.ModRoutesRebuild, 300, 900_100, 0);
+            recorder.Detail(GcAllocationSegment.ModRoutesSpeeds, 301, 900_148, 0);
+            recorder.Detail(GcAllocationSegment.ModRoutesNodes, 302, 900_150, 0);
+            recorder.Detail(GcAllocationSegment.ModRoutesSweep, 310, 900_400, 0);
+            recorder.Charge(GcAllocationSegment.ModRoutes, 311, 900_400, 0);
+            recorder.Detail(GcAllocationSegment.PhysicalSpawnGrow, 312, 900_500, 0);
+            recorder.End(313, 900_500, 0, sampler);
+            Assert.Equal(900_000, sampler.SegmentBytes(GcAllocationSegment.ModRoutesRebuild));
+            Assert.Equal(48, sampler.SegmentBytes(GcAllocationSegment.ModRoutesSpeeds));
+            Assert.Equal(900_300, sampler.SegmentBytes(GcAllocationSegment.ModRoutes));
+            var row = recorder.Top(0);
+            Assert.Equal((int)GcAllocationSegment.ModRoutes, row.Phase);
+            Assert.Equal((int)GcAllocationSegment.PhysicalSpawnGrow, row.Detail);
+            Assert.Equal((int)GcAllocationSegment.ModRoutesRebuild, row.Sub);
+            Assert.Equal(299, row.SubMs, 3);
+            Assert.Contains("\"detail\":\"physical_spawn_grow\"", recorder.ReportJson());
+            Assert.Contains("\"sub\":\"mod_routes_rebuild\"", recorder.ReportJson());
         }
 
         [Fact]

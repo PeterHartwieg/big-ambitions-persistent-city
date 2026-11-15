@@ -101,7 +101,7 @@ namespace PersistentCity.Runtime
             if (current != null)
             {
                 long counter = GcAllocationCounter.Read(); int collections = GcAllocationCounter.Collections;
-                current.Sub(remainder, counter, collections, true);
+                current.Sub(remainder, counter, collections);
                 current.EndNested(GcAllocationSegment.Physical, GcAllocationSegment.PhysicalUnattributed, counter, collections);
             }
             ModFrames.Detail(remainder);
@@ -131,7 +131,7 @@ namespace PersistentCity.Runtime
         public static void Sub(GcAllocationSegment segment)
         {
             var current = sampler;
-            if (current != null) current.Sub(segment, GcAllocationCounter.Read(), GcAllocationCounter.Collections, false);
+            if (current != null) current.Sub(segment, GcAllocationCounter.Read(), GcAllocationCounter.Collections);
             ModFrames.Detail(segment);
         }
 

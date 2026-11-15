@@ -38,16 +38,16 @@ namespace PersistentCity.Core
         AdvancePlanning, AdvanceEvents, AdvanceStops, AdvanceOther,
         PhysicalSpawnGrow, ModPrelude, ModRlo, ModFood, ModOptionalStops, ModRoutes, ModClosures, ModHoldReplay, ModPhysicalSetup,
         ModInspector, ModSummary, ModOther,
-        ModRoutesSpeeds, ModRoutesNodes, ModRoutesSweep, ModClosuresNetwork, ModClosuresLinks,
+        ModRoutesSpeeds, ModRoutesNodes, ModRoutesSweep, ModRoutesRebuild, ModClosuresNetwork, ModClosuresLinks,
         AdvanceEventsTraffic, AdvanceEventsFood, AdvanceEventsCitizen, AdvanceEventsRouteBegin, AdvanceEventsOther,
         AdvancePlanningSlice, AdvancePlanningFinish,
         PhysicalSetupPlaces, PhysicalSetupBodies, PhysicalSetupVehicles, PhysicalSetupAmbient, PhysicalSetupPreflight,
-        PhysicalUnattributedSetup, PhysicalUnattributedUpdate, PhysicalUnattributedWaiting,
+        PhysicalUnattributedSetup, PhysicalUnattributedUpdate, PhysicalUnattributedWaiting, PhysicalUnattributedEntry,
     }
 
     public sealed class GcPauseSampler
     {
-        public const int Segments = 59;
+        public const int Segments = 61;
         private static readonly string[] SegmentNames =
         {
             "mod", "advance", "physical", "physical_ambient", "physical_vehicles", "physical_bindings",
@@ -57,11 +57,11 @@ namespace PersistentCity.Core
             "advance_planning", "advance_events", "advance_stops", "advance_other",
             "physical_spawn_grow", "mod_prelude", "mod_rlo", "mod_food", "mod_optional_stops", "mod_routes", "mod_closures", "mod_hold_replay", "mod_physical_setup",
             "mod_inspector", "mod_summary", "mod_other",
-            "mod_routes_speeds", "mod_routes_nodes", "mod_routes_sweep", "mod_closures_network", "mod_closures_links",
+            "mod_routes_speeds", "mod_routes_nodes", "mod_routes_sweep", "mod_routes_rebuild", "mod_closures_network", "mod_closures_links",
             "advance_events_traffic", "advance_events_food", "advance_events_citizen", "advance_events_route_begin", "advance_events_other",
             "advance_planning_slice", "advance_planning_finish",
             "physical_setup_places", "physical_setup_bodies", "physical_setup_vehicles", "physical_setup_ambient", "physical_setup_preflight",
-            "physical_unattributed_setup", "physical_unattributed_update", "physical_unattributed_waiting",
+            "physical_unattributed_setup", "physical_unattributed_update", "physical_unattributed_waiting", "physical_unattributed_entry",
         };
 
         public static string SegmentName(GcAllocationSegment segment) => SegmentNames[(int)segment];
@@ -72,14 +72,15 @@ namespace PersistentCity.Core
         public static bool IsSub(GcAllocationSegment segment) => segment >= GcAllocationSegment.ModRoutesSpeeds;
 
         public static GcAllocationSegment AdvanceEventSegment(int trafficEvents, int foodContinuationEvents, int citizenEvents, bool planningPending) =>
-            trafficEvents > 0 ? GcAllocationSegment.AdvanceEventsTraffic
+            planningPending ? GcAllocationSegment.AdvanceEventsRouteBegin
+            : trafficEvents > 0 ? GcAllocationSegment.AdvanceEventsTraffic
             : foodContinuationEvents > 0 ? GcAllocationSegment.AdvanceEventsFood
-            : citizenEvents > 0 ? (planningPending ? GcAllocationSegment.AdvanceEventsRouteBegin : GcAllocationSegment.AdvanceEventsCitizen)
+            : citizenEvents > 0 ? GcAllocationSegment.AdvanceEventsCitizen
             : GcAllocationSegment.AdvanceEventsOther;
 
         public static GcAllocationSegment SubParent(GcAllocationSegment segment) => segment switch
         {
-            >= GcAllocationSegment.ModRoutesSpeeds and <= GcAllocationSegment.ModRoutesSweep => GcAllocationSegment.ModRoutes,
+            >= GcAllocationSegment.ModRoutesSpeeds and <= GcAllocationSegment.ModRoutesRebuild => GcAllocationSegment.ModRoutes,
             >= GcAllocationSegment.ModClosuresNetwork and <= GcAllocationSegment.ModClosuresLinks => GcAllocationSegment.ModClosures,
             >= GcAllocationSegment.AdvanceEventsTraffic and <= GcAllocationSegment.AdvanceEventsOther => GcAllocationSegment.AdvanceEvents,
             >= GcAllocationSegment.AdvancePlanningSlice and <= GcAllocationSegment.AdvancePlanningFinish => GcAllocationSegment.AdvancePlanning,
@@ -241,13 +242,12 @@ namespace PersistentCity.Core
             detailMark = counter;
         }
 
-        public void Sub(GcAllocationSegment segment, long counter, int collections, bool sinceCharge)
+        public void Sub(GcAllocationSegment segment, long counter, int collections)
         {
             if (!nested || !IsSub(segment)) return;
             int index = (int)segment;
-            long from = sinceCharge ? nestedMark : detailMark;
-            if (counter < 0 || counter < from || collections != nestedCollections) nestedValid = false;
-            else pendingBytes[index] += counter - from;
+            if (counter < 0 || counter < detailMark || collections != nestedCollections) nestedValid = false;
+            else pendingBytes[index] += counter - detailMark;
             pendingSpans[index]++;
         }
 
