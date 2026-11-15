@@ -304,22 +304,37 @@ namespace PersistentCity.Runtime
                 RunPhysical(physicalBeforeAdvance ??= () => physical?.BeforeAdvance());
                 ModFrames.Charge(GcAllocationSegment.ModOptionalStops);
                 double clockRate = NativeTravelPace.ClockRate;
-                if (Math.Abs(clockRate - simulation.State.TravelClockRate) > .000001)
+                var retime = ClockRetimeStages.Next(clockRate, simulation.State.TravelClockRate, physical != null);
+                if (retime == ClockRetimeStage.None) retimeReleaseMilliseconds = 0;
+                else
                 {
-                    physical?.Dispose(); physical = null;
-                    simulation.State.PrepareForSave();
-                    TravelTiming.Apply(simulation.State, NativeTravelPace.WalkingMetresPerSecond, clockRate, out int degraded);
-                    if (degraded > 0)
-                        log?.Info("Clock retime degraded " + degraded.ToString(System.Globalization.CultureInfo.InvariantCulture)
-                            + " journeys: each keeps its old pace on its current road edge or drives outside traffic until its next road section.");
-                    var retimedRoutes = new MultimodalRoutes(simulation.State.Places, NativeTravelPace.WalkingMetresPerSecond / clockRate, clockRate, dependency, routeObjects);
-                    if (foodMarket != null) log?.Info(FoodClockReach.RetimeLine(clockRate, retimedRoutes.WalkingMetresPerMinute));
-                    if (routes != null) retimedRoutes.ReuseRoadSceneForRetiming(routes);
-                    routes = retimedRoutes;
-                    seenRoadSnapshots = 0; clockRetimingRoutes = true;
-                    simulation = simulation.RebuildRoutes(routes);
-                    vendorMarket?.Rebind(simulation);
-                    seenPlanningRequests = seenEventRestarts = seenInlineRestarts = 0;
+                    long retimeStarted = Stopwatch.GetTimestamp();
+                    if (retime == ClockRetimeStage.ReleaseBodies)
+                    {
+                        physical!.Dispose(); physical = null;
+                        retimeReleaseMilliseconds = (Stopwatch.GetTimestamp() - retimeStarted) * MillisecondsPerTimestamp;
+                    }
+                    else
+                    {
+                        simulation.State.PrepareForSave();
+                        TravelTiming.Apply(simulation.State, NativeTravelPace.WalkingMetresPerSecond, clockRate, out int degraded);
+                        double timing = (Stopwatch.GetTimestamp() - retimeStarted) * MillisecondsPerTimestamp;
+                        if (degraded > 0)
+                            log?.Info("Clock retime degraded " + degraded.ToString(System.Globalization.CultureInfo.InvariantCulture)
+                                + " journeys: each keeps its old pace on its current road edge or drives outside traffic until its next road section.");
+                        var retimedRoutes = new MultimodalRoutes(simulation.State.Places, NativeTravelPace.WalkingMetresPerSecond / clockRate, clockRate, dependency, routeObjects);
+                        if (foodMarket != null) log?.Info(FoodClockReach.RetimeLine(clockRate, retimedRoutes.WalkingMetresPerMinute));
+                        if (routes != null) retimedRoutes.ReuseRoadSceneForRetiming(routes);
+                        routes = retimedRoutes;
+                        seenRoadSnapshots = 0; clockRetimingRoutes = true;
+                        simulation = simulation.RebuildRoutes(routes);
+                        vendorMarket?.Rebind(simulation);
+                        seenPlanningRequests = seenEventRestarts = seenInlineRestarts = 0;
+                        log?.Info("Clock retime: body release " + Milliseconds(retimeReleaseMilliseconds) + " ms in the previous update, journey retime "
+                            + Milliseconds(timing) + " ms, simulation rebuild " + Milliseconds((Stopwatch.GetTimestamp() - retimeStarted) * MillisecondsPerTimestamp - timing) + " ms.");
+                        retimeReleaseMilliseconds = 0;
+                    }
+                    WaitForRetime(); return;
                 }
                 long prepareStarted = Stopwatch.GetTimestamp();
                 bool prepared = routes == null || routes.Prepare();
@@ -563,6 +578,16 @@ namespace PersistentCity.Runtime
                 finally { physical = null; PhysicalPedestrians.DestroyReserve(); }
                 log?.Warn("Physical population stopped; ordinary spawning restored and background simulation continues: " + error);
             }
+        }
+
+        private double retimeReleaseMilliseconds;
+        private static string Milliseconds(double value) => value.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture);
+        private void WaitForRetime()
+        {
+            ModFrames.Detail(GcAllocationSegment.ModRoutesRebuild);
+            ModFrames.Charge(GcAllocationSegment.ModRoutes);
+            waitingFrames++;
+            inspector.Suspend();
         }
 
         private void RecordRoutingFrame(double preparation, double closure, bool prepared)

@@ -50,15 +50,10 @@ namespace PersistentCity.Core
     {
         public static string Fingerprint(FoodAlternativeObservation observation)
         {
-            var text = new StringBuilder().Append(observation.OwnerId.Length.ToString(CultureInfo.InvariantCulture)).Append(':').Append(observation.OwnerId);
+            var text = TextDigest.Begin().Append(observation.OwnerId.Length).Append(':').Append(observation.OwnerId);
             foreach (var window in observation.Hours)
-            {
-                text.Append('|').Append(window.Day.ToString(CultureInfo.InvariantCulture))
-                    .Append(':').Append(window.FromMinute.ToString(CultureInfo.InvariantCulture))
-                    .Append(':').Append(window.ToMinute.ToString(CultureInfo.InvariantCulture));
-            }
-            using var sha = SHA256.Create();
-            var hash = sha.ComputeHash(Encoding.UTF8.GetBytes(text.ToString()));
+                text.Append('|').Append(window.Day).Append(':').Append(window.FromMinute).Append(':').Append(window.ToMinute);
+            var hash = text.Hash();
             return Convert.ToBase64String(hash, 0, 14).TrimEnd('=').Replace('+', '-').Replace('/', '_');
         }
         public static bool Canonical(string value)

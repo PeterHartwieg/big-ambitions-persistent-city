@@ -76,7 +76,7 @@ public sealed class OwnCarTests
         Assert.True(SelfChecks.Same(own, plain));
     }
 
-    private sealed class NoRoutes : IRoutePlanner
+    internal sealed class NoRoutes : IRoutePlanner
     {
         public Route? Plan(Place from, Place to, double departureMinute, TravelPreferences preferences) => null;
     }
@@ -152,9 +152,30 @@ public sealed class OwnCarTests
         Assert.Equal(expected.Keys.Except(blocked).OrderBy(k => k, StringComparer.Ordinal), vehicles.Parked.Keys.OrderBy(k => k, StringComparer.Ordinal));
         Assert.Equal(2, vehicles.MaximumParkedAttempts);
         Assert.Equal(2, vehicles.LastParkedAttempts);
-        int refreshes = vehicles.ParkedRefreshes;
-        for (int frame = 0; frame < 5; frame++) { Time.Next(0.11f); bodies.Update(); }
-        Assert.Equal(refreshes, vehicles.ParkedRefreshes);
+        int refreshes = vehicles.ParkedRefreshes, continuations = vehicles.ParkedContinuations;
+        for (int frame = 0; frame < 30; frame++) { Time.Next(0.11f); bodies.Update(); }
+        Assert.InRange(vehicles.ParkedRefreshes - refreshes, 3, 4);
+        Assert.Equal(continuations, vehicles.ParkedContinuations);
+    }
+
+    [Fact]
+    public void ManyBlockedCarsKeepTheOneSecondScanAndRetryOnlyTheUnfinishedPass()
+    {
+        StreetFoodHooks.Reset(); NavMesh.Reset(); AmbientPedestrians.Reserved.Clear(); PhysicalPedestrians.VisiblePoint = null;
+        NativeTravelPace.Focus = Home; Time.Next(3);
+        var city = new CitySimulator(ParkedCity(12), new NoRoutes());
+        using var bodies = new PhysicalPopulation(new Transform { Component = new PopulationRuntime() }, city, new MultimodalRoutes(),
+            typeof(OwnCarTests).Assembly, new VendorBodyTests.Log(), 8, 12, 120, new DwellSpots());
+        var vehicles = PhysicalVehicles.Last!;
+        vehicles.ParkedPlacementLimit = 2; vehicles.ParkedAttemptLimit = 4;
+        foreach (var person in city.State.Citizens.Take(10)) vehicles.Blocked.Add(person.Car!.Id);
+        Time.Next(2); bodies.Update();
+        int scans = bodies.ParkedScans;
+        for (int frame = 0; frame < 100; frame++) { Time.Next(0.1f); bodies.Update(); }
+        Assert.InRange(bodies.ParkedScans - scans, 9, 11);
+        Assert.InRange(vehicles.ParkedContinuations, 9 * 2, 11 * 3);
+        Assert.Equal(2, vehicles.Parked.Count);
+        Assert.True(vehicles.MaximumParkedAttempts <= 4);
     }
 
     [Fact]

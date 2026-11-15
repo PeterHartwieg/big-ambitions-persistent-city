@@ -86,6 +86,7 @@ namespace PersistentCity.Runtime
         internal static void DestroyReserve()
         {
             foreach (var kept in reserve) if (kept.Character != null) DestroyCharacter(kept.Character);
+            if (reserve.Count > 0) BlendshapeBake.Clear();
             reserve.Clear(); reserveParent = null;
         }
 
@@ -399,7 +400,8 @@ namespace PersistentCity.Runtime
                 foreach (var entry in reserve) if (ReferenceEquals(entry.Character, character)) { kept = true; break; }
                 if (!kept) DestroyCharacter(character);
             }
-            active.Clear(); idle.Clear(); baked.Clear(); leases.Clear(); BlendshapeBake.Clear(); all.Clear();
+            active.Clear(); idle.Clear(); baked.Clear(); leases.Clear(); all.Clear();
+            if (reserve.Count == 0) BlendshapeBake.Clear();
             CancelGrow();
             if (staging != null) { UnityEngine.Object.Destroy(staging); staging = null; }
         }
