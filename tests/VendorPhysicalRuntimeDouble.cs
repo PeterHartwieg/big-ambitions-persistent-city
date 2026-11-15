@@ -164,31 +164,43 @@ namespace PersistentCity.Runtime
         internal int ParkedRefreshes;
         internal int ParkedPlacementLimit = int.MaxValue, ParkedAttemptLimit = int.MaxValue, LastParkedAttempts, MaximumParkedAttempts;
         internal readonly HashSet<string> Blocked = new();
+        private readonly List<ParkedCar> parkedPending = new();
+        private Func<string, CarState?>? parkedCar;
         private int parkedCursor;
+        internal int ParkedContinuations;
         internal bool ShowParked(IReadOnlyList<ParkedCar> wanted, Func<string, CarState?> car)
         {
             ParkedRefreshes++;
             var keep = new HashSet<string>();
-            var pending = new List<ParkedCar>();
+            parkedPending.Clear(); parkedCursor = 0;
             foreach (var entry in wanted)
             {
                 if (Active.Values.Any(b => b.CarId == entry.CarId)) continue;
                 keep.Add(entry.CarId);
                 if (Parked.TryGetValue(entry.CarId, out var shown) && Position.Distance(shown.Car.At, entry.At) <= .01) continue;
-                pending.Add(entry);
+                parkedPending.Add(entry);
             }
-            int first = pending.Count == 0 ? 0 : parkedCursor % pending.Count, placed = 0, attempts = 0;
-            for (; attempts < pending.Count && attempts < ParkedAttemptLimit && placed < ParkedPlacementLimit; attempts++)
+            foreach (var id in Parked.Keys.Where(id => !keep.Contains(id)).ToList()) Parked.Remove(id);
+            parkedCar = car;
+            LastParkedAttempts = 0;
+            return Place(car);
+        }
+        internal bool ContinueParked(Func<string, CarState?> car) { ParkedContinuations++; LastParkedAttempts = 0; return Place(car); }
+        private bool Place(Func<string, CarState?> car)
+        {
+            int placed = 0, attempts = 0;
+            while (parkedCursor < parkedPending.Count && attempts < ParkedAttemptLimit && placed < ParkedPlacementLimit)
             {
-                var entry = pending[(first + attempts) % pending.Count];
+                var entry = parkedPending[parkedCursor++];
+                attempts++;
                 Parked.Remove(entry.CarId);
                 if (Blocked.Contains(entry.CarId)) continue;
                 Parked[entry.CarId] = (entry, car(entry.CarId)); placed++;
             }
-            parkedCursor = first + attempts;
             LastParkedAttempts = attempts; MaximumParkedAttempts = Math.Max(MaximumParkedAttempts, attempts);
-            foreach (var id in Parked.Keys.Where(id => !keep.Contains(id)).ToList()) Parked.Remove(id);
-            return attempts == pending.Count;
+            if (parkedCursor < parkedPending.Count) return false;
+            parkedPending.Clear(); parkedCursor = 0;
+            return true;
         }
         internal bool Activate() => true;
         internal void AssertHealthy() { }

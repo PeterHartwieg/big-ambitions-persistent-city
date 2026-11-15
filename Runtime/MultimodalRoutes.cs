@@ -24,6 +24,7 @@ namespace PersistentCity.Runtime
     {
         private readonly double subwayMetresPerMinute;
         private readonly double clockRate;
+        internal double ClockRate => clockRate;
         private readonly IRouteObjectSource? objects;
         private int objectRevision = -1;
         public string LastDiscoveryGateChange { get; private set; } = "";

@@ -289,8 +289,8 @@ namespace PersistentCity.Core
             {
                 if (slot > 0) meal.RepresentedTraits = ResidentTraits.Generate(city.State.Seed, id);
                 var products = FoodProducts.Ids.OrderBy(p => p, StringComparer.Ordinal).ToArray();
-                meal.PreferredProductId = products[StableRandom.Hash(id + ":taste", city.State.Seed) % (uint)products.Length];
-                meal.PreferenceBonusCents = 50 + (int)(StableRandom.Hash(id + ":taste-strength", city.State.Seed) % 101);
+                meal.PreferredProductId = products[StableRandom.Hash(id, ":taste", city.State.Seed) % (uint)products.Length];
+                meal.PreferenceBonusCents = 50 + (int)(StableRandom.Hash(id, ":taste-strength", city.State.Seed) % 101);
             }
             var consumer = Consumer(person, Money.Zero, meal);
             FoodHouseholdPolicy.SetAllowance(consumer, resident, city.State.Seed,
@@ -616,9 +616,9 @@ namespace PersistentCity.Core
         private FoodConsumer Consumer(CitizenState p, Money allowance, ResidentMeal? meal = null) => new FoodConsumer { Id = meal?.ResidentId ?? p.Identity.Id, Name = p.Identity.Name,
             PreferredProductId = meal?.PreferredProductId ?? "", PreferenceBonusCents = meal?.PreferenceBonusCents ?? 0,
             OriginPlaceId = p.PlaceId, DailyAllowance = allowance,
-            ValueOfTimeCentsPerMinute = 4 + (int)(StableRandom.Hash((meal?.ResidentId ?? p.Identity.Id) + ":food-time", city.State.Seed) % 9),
-            ServiceQualityValueCents = 100 + (int)(StableRandom.Hash((meal?.ResidentId ?? p.Identity.Id) + ":food-quality", city.State.Seed) % 301),
-            DistrictAppealValueCents = 50 + (int)(StableRandom.Hash((meal?.ResidentId ?? p.Identity.Id) + ":food-district", city.State.Seed) % 151) };
+            ValueOfTimeCentsPerMinute = 4 + (int)(StableRandom.Hash(meal?.ResidentId ?? p.Identity.Id, ":food-time", city.State.Seed) % 9),
+            ServiceQualityValueCents = 100 + (int)(StableRandom.Hash(meal?.ResidentId ?? p.Identity.Id, ":food-quality", city.State.Seed) % 301),
+            DistrictAppealValueCents = 50 + (int)(StableRandom.Hash(meal?.ResidentId ?? p.Identity.Id, ":food-district", city.State.Seed) % 151) };
         private void Decide(ResidentMeal meal, CitizenState person)
         {
             if (NewChoice(meal)) { BeginFoodDecision(meal,person,false); return; }

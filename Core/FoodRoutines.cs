@@ -125,16 +125,15 @@ namespace PersistentCity.Core
         public static int BreakMinutes(string residentId, int seed, Activity activity)
         {
             if (activity != Activity.Work && activity != Activity.Study) return 75;
-            uint flexibility = StableRandom.Hash(residentId + ":food-break-flexibility", seed) % 100;
+            uint flexibility = StableRandom.Hash(residentId, ":food-break-flexibility", seed) % 100;
             return flexibility < 25 ? 45 : flexibility < 85 ? 60 : 75;
         }
         public static double DesiredMealMinute(CitizenState person, int seed, int day)
         {
             string id = person.Identity.Id;
-            string key = id + ":food-day:" + day.ToString(CultureInfo.InvariantCulture);
             double wake = DailyRhythm.OnDay(person, seed, day - 1).EndsAt;
-            double desired = wake + 240 + (int)(StableRandom.Hash(id + ":meal-rhythm", seed) % 61) - 30
-                + (int)(StableRandom.Hash(key, seed) % 41) - 20;
+            double desired = wake + 240 + (int)(StableRandom.Hash(id, ":meal-rhythm", seed) % 61) - 30
+                + (int)(StableRandom.Hash(id, ":food-day:", day, "", seed) % 41) - 20;
             return Math.Max(day * 1440.0, Math.Min(day * 1440.0 + 1200, desired));
         }
 
@@ -160,9 +159,9 @@ namespace PersistentCity.Core
                 if (resident.HomeDistrictId == null || resident.HomeDistrictId.Length > 1024 || !Enum.IsDefined(typeof(Persona), resident.Identity.Persona))
                     throw new ArgumentException("Invalid resident home district/personality.");
                 var consumer = new FoodConsumer { Id = id, Name = resident.Identity.Name, OriginPlaceId = resident.HomeId,
-                    ValueOfTimeCentsPerMinute = 4 + (int)(StableRandom.Hash(id + ":food-time", capture.Seed) % 9),
-                    ServiceQualityValueCents = 100 + (int)(StableRandom.Hash(id + ":food-quality", capture.Seed) % 301),
-                    DistrictAppealValueCents = 50 + (int)(StableRandom.Hash(id + ":food-district", capture.Seed) % 151) };
+                    ValueOfTimeCentsPerMinute = 4 + (int)(StableRandom.Hash(id, ":food-time", capture.Seed) % 9),
+                    ServiceQualityValueCents = 100 + (int)(StableRandom.Hash(id, ":food-quality", capture.Seed) % 301),
+                    DistrictAppealValueCents = 50 + (int)(StableRandom.Hash(id, ":food-district", capture.Seed) % 151) };
                 mixes.TryGetValue(resident.HomeDistrictId, out var mix);
                 FoodHouseholdPolicy.SetAllowance(consumer, resident, capture.Seed, mix, dailyAllowanceCents);
                 result.Consumers.Add(consumer);
@@ -193,7 +192,7 @@ namespace PersistentCity.Core
                         if (end - at < intent.EatingMinutes + 10) continue;
                         intent.OriginPlaceId = span.PlaceId; intent.OriginActivity = span.Activity;
                         intent.RequestedAt = at; intent.Deadline = end;
-                        intent.MaximumQueueMinutes = (working ? 10 : 15) + (int)(StableRandom.Hash(id + ":queue-patience", capture.Seed) % 6);
+                        intent.MaximumQueueMinutes = (working ? 10 : 15) + (int)(StableRandom.Hash(id, ":queue-patience", capture.Seed) % 6);
                         intent.TimeCostMultiplier = 1 + Math.Min(1, (at - desired) / 120.0);
                         intent.ContextEvidence = working
                             ? "Observed work/study presence; provisional " + available.ToString(CultureInfo.InvariantCulture) + "-minute lunch break, including travel, service, eating and return"

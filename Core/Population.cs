@@ -17,6 +17,14 @@ namespace PersistentCity.Core
             }
         }
 
+        public static uint Hash(string first, string second, int seed) => Finish(Append(Append(Begin(seed), first ?? ""), second ?? ""));
+
+        public static uint Hash(string first, string second, string third, int seed)
+            => Finish(Append(Append(Append(Begin(seed), first ?? ""), second ?? ""), third ?? ""));
+
+        public static uint Hash(string first, string second, int day, string third, int seed)
+            => Finish(Append(AppendDecimal(Append(Append(Begin(seed), first ?? ""), second ?? ""), day), third ?? ""));
+
         internal static uint Begin(int seed) { unchecked { return 2166136261u ^ (uint)seed; } }
 
         internal static uint Append(uint state, string text)

@@ -62,12 +62,14 @@ namespace PersistentCity.Core
         }
         public static double Duration(string key, DwellKind kind, int seed) => Duration(key, kind, seed, DwellRules.For(kind).MaximumMinutes);
         public static double Duration(string key, DwellKind kind, int seed, double maximum) => Minimum(kind)
-            + StableRandom.Hash(key + ":duration:" + kind, seed) % 10001 / 10000.0
+            + StableRandom.Hash(key, ":duration:", KindName(kind), seed) % 10001 / 10000.0
                 * (maximum - Minimum(kind));
+        private static readonly string[] KindNames = Enum.GetNames(typeof(DwellKind));
+        private static string KindName(DwellKind kind) => (uint)kind < (uint)KindNames.Length ? KindNames[(int)kind] : kind.ToString();
         public static bool Choose(string key, int seed, int percentage)
         {
             if (percentage < 0 || percentage > 100) throw new ArgumentOutOfRangeException(nameof(percentage));
-            return StableRandom.Hash(key + ":optional-stop", seed) % 100 < percentage;
+            return StableRandom.Hash(key, ":optional-stop", seed) % 100 < percentage;
         }
         internal static string VisitKey(CitizenState person, double at) => person.Identity.Id + ":" + person.PlaceId
             + ":" + at.ToString("R", CultureInfo.InvariantCulture);

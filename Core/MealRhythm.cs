@@ -8,8 +8,13 @@ namespace PersistentCity.Core
     public static class MealRhythm
     {
         public const int PolicyVersion = 1;
-        private static int Draw(CitizenState p, int seed, string key, int radius)
-            => (int)(StableRandom.Hash(p.Identity.Id + ":meal:" + key, seed) % (uint)(radius * 2 + 1)) - radius;
+        private static readonly string[] KindNames = { nameof(MealKind.Legacy), nameof(MealKind.Breakfast), nameof(MealKind.Lunch), nameof(MealKind.Dinner) };
+        private static string KindName(MealKind kind) => (uint)kind < (uint)KindNames.Length ? KindNames[(int)kind] : kind.ToString();
+        private static int Draw(CitizenState p, int seed, MealKind kind, string suffix, int radius)
+            => Draw(StableRandom.Finish(StableRandom.Append(StableRandom.Append(StableRandom.Append(StableRandom.Append(StableRandom.Begin(seed), p.Identity.Id), ":meal:"), KindName(kind)), suffix)), radius);
+        private static int Draw(CitizenState p, int seed, MealKind kind, int day, int radius)
+            => Draw(StableRandom.Finish(StableRandom.AppendDecimal(StableRandom.Append(StableRandom.Append(StableRandom.Append(StableRandom.Append(StableRandom.Begin(seed), p.Identity.Id), ":meal:"), KindName(kind)), ":day:"), day)), radius);
+        private static int Draw(uint hash, int radius) => (int)(hash % (uint)(radius * 2 + 1)) - radius;
         public static string IntentId(string id, int day, MealKind kind) => kind == MealKind.Legacy
             ? FoodDemand.IntentId(id, day)
             : "food:" + Uri.EscapeDataString(id) + ":" + kind.ToString().ToLowerInvariant() + ":" + day.ToString(CultureInfo.InvariantCulture);
@@ -33,8 +38,8 @@ namespace PersistentCity.Core
             double wake = DailyRhythm.OnDay(person, seed, day - 1).EndsAt;
             int offset = kind == MealKind.Breakfast ? 30 : kind == MealKind.Lunch ? 300 : 690;
             int radius = kind == MealKind.Breakfast ? 15 : kind == MealKind.Lunch ? 30 : 45;
-            double desired = wake + offset + Draw(person, seed, kind + ":habit", radius)
-                + Draw(person, seed, kind + ":day:" + day.ToString(CultureInfo.InvariantCulture), kind == MealKind.Breakfast ? 10 : 15);
+            double desired = wake + offset + Draw(person, seed, kind, ":habit", radius)
+                + Draw(person, seed, kind, day, kind == MealKind.Breakfast ? 10 : 15);
             return Math.Min(desired, Math.Min((day + 1) * 1440.0, DailyRhythm.OnDay(person, seed, day).StartsAt) - 90);
         }
         public static double ExpiresAt(CitizenState person, int seed, int day, MealKind kind)

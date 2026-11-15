@@ -13,6 +13,10 @@ namespace PersistentCity.Runtime
     internal sealed partial class PhysicalPopulation
     {
         internal const int DressScanLimit = 16;
+        internal const int DistanceReleasesPerFrame = 4;
+        internal const double AcquireStopMilliseconds = 8;
+        private long acquireStops;
+        internal long AcquireStops => acquireStops;
 
         public void BeforeAdvance()
         {
@@ -55,6 +59,7 @@ namespace PersistentCity.Runtime
         public void Update()
         {
             if (!active || disposed) return;
+            long updateStarted = System.Diagnostics.Stopwatch.GetTimestamp();
             followDelta = simulation.View.Minute > followMinute ? Time.unscaledDeltaTime : 0;
             followClock += followDelta;
             followMinute = simulation.View.Minute;
@@ -86,7 +91,7 @@ namespace PersistentCity.Runtime
             try
             {
                 foreach (var value in bindings.Values) snapshot.Add(value);
-                int keptPeople = 0, keptCars = 0;
+                int keptPeople = 0, keptCars = 0, distanceReleases = 0;
                 foreach (var binding in snapshot)
                 {
                     if (ambient.IsReserved(binding.Citizen.Identity.Id)) { ReleaseCharged(binding); continue; }
@@ -95,7 +100,8 @@ namespace PersistentCity.Runtime
                     PhysicalAllocation.Charge(GcAllocationSegment.PhysicalObserve);
                     if (!observed) { ReleaseCharged(binding); continue; }
                     Position position = binding.Person?.Position ?? binding.Car!.Position;
-                    if (Position.Distance(position, focus) > releaseRadius) { ReleaseCharged(binding); continue; }
+                    if (Position.Distance(position, focus) > releaseRadius && distanceReleases < DistanceReleasesPerFrame)
+                    { distanceReleases++; ReleaseCharged(binding); continue; }
                     if (interior && (binding.Person != null ? ++keptPeople > pedestrianLimit : ++keptCars > vehicleLimit)) { ReleaseCharged(binding); continue; }
                     if (player) ObservePlayerContact(binding, playerPose);
                     FadeIn(binding);
@@ -105,7 +111,10 @@ namespace PersistentCity.Runtime
             PhysicalAllocation.Charge(GcAllocationSegment.PhysicalBindings);
             if (!interior && Time.unscaledTime >= nextParked)
             {
-                nextParked = Time.unscaledTime + (ShowParked(focus, radius, vehicleLimit) ? ParkedRefreshSeconds : ParkedRetrySeconds);
+                bool scan = Time.unscaledTime >= nextParkedScan;
+                if (scan) nextParkedScan = Time.unscaledTime + ParkedRefreshSeconds;
+                bool complete = scan ? ShowParked(focus, radius, vehicleLimit) : vehicles.ContinueParked(ParkedState);
+                nextParked = complete ? nextParkedScan : Time.unscaledTime + ParkedRetrySeconds;
                 PhysicalAllocation.Charge(GcAllocationSegment.PhysicalParked);
             }
             if (Time.unscaledTime < nextSelection || !routes.ReadyForPopulation)
@@ -171,6 +180,8 @@ namespace PersistentCity.Runtime
                     if (dressScans < DressScanLimit) { dressScans++; pedestrians.NoteDeferred(); }
                     continue;
                 }
+                if (attempts > 0 && (System.Diagnostics.Stopwatch.GetTimestamp() - updateStarted) * 1000.0 / System.Diagnostics.Stopwatch.Frequency >= AcquireStopMilliseconds)
+                { acquireStops++; break; }
                 if (++attempts > 4) break;
                 attempted[citizen.Identity.Id] = Time.unscaledTime;
                 PhysicalRoadSample road = default;
@@ -262,11 +273,13 @@ namespace PersistentCity.Runtime
         }
 
         private const float ParkedRefreshSeconds = 1f, ParkedRetrySeconds = .1f;
-        private float nextParked;
+        private float nextParked, nextParkedScan;
+        internal int ParkedScans { get; private set; }
         private readonly List<ParkedCar> parkedCandidates = new List<ParkedCar>();
         private bool ShowParked(Position focus, double radius, int limit)
         {
-            parkedCandidates.Clear();
+            ParkedScans++;
+            parkedCandidates.Clear(); parkedStates.Clear();
             var residents = simulation.View.ResidentList;
             for (int i = 0; i < residents.Count; i++)
             {
@@ -290,10 +303,11 @@ namespace PersistentCity.Runtime
                 }
             }
             var shown = ParkedCars.Nearest(parkedCandidates, focus, radius, limit, parkedShown);
-            bool complete = vehicles.ShowParked(shown, parkedState ??= id => parkedStates.TryGetValue(id, out var state) ? state : null);
-            parkedCandidates.Clear(); parkedStates.Clear(); parkedShown.Clear();
+            bool complete = vehicles.ShowParked(shown, ParkedState);
+            parkedCandidates.Clear(); parkedShown.Clear();
             return complete;
         }
+        private Func<string, CarState?> ParkedState => parkedState ??= id => parkedStates.TryGetValue(id, out var state) ? state : null;
         private readonly List<ParkedCar> parkedShown = new List<ParkedCar>();
         private readonly Dictionary<string, CarState> parkedStates = new Dictionary<string, CarState>(StringComparer.Ordinal);
         private Func<string, CarState?>? parkedState;

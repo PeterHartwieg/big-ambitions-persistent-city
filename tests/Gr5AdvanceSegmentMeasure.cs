@@ -33,7 +33,7 @@ public sealed class Gr5AdvanceSegmentMeasure
         }
     }
 
-    private sealed class Straight : IResumableRoutePlanner, ICommuteTimingPlanner
+    internal sealed class Straight : IResumableRoutePlanner, ICommuteTimingPlanner
     {
         public Route? Plan(Place from, Place to, double minute, TravelPreferences preferences)
         {

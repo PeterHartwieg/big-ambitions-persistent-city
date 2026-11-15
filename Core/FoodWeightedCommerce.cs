@@ -108,10 +108,9 @@ namespace PersistentCity.Core
         }
         private static string Context(FoodRoutineStop stop,bool atStop)
         {
-            string text=stop.PlaceId.Length.ToString(CultureInfo.InvariantCulture)+":"+stop.PlaceId+"|"
-                +((int)stop.Activity).ToString(CultureInfo.InvariantCulture)+"|"+stop.CapturedAt.ToString("R",CultureInfo.InvariantCulture)
-                +"|"+stop.DepartureAt.ToString("R",CultureInfo.InvariantCulture);
-            using(var sha=SHA256.Create()) return (atStop ? "stop:" : "trip:")+Convert.ToBase64String(sha.ComputeHash(Encoding.UTF8.GetBytes(text)));
+            var hash=TextDigest.Begin().Append(stop.PlaceId.Length).Append(':').Append(stop.PlaceId).Append('|')
+                .Append((int)stop.Activity).Append('|').AppendRoundTrip(stop.CapturedAt).Append('|').AppendRoundTrip(stop.DepartureAt).Hash();
+            return (atStop ? "stop:" : "trip:")+Convert.ToBase64String(hash);
         }
         private FoodDrawContext Draw(ResidentMeal meal,FoodDecisionState d) => new FoodDrawContext(city.State.Seed,meal.ResidentId,meal.Day,meal.Kind,d.ContextKey,d.Attempt);
         private static FoodRoutineStop CopyStop(FoodRoutineStop s) => new FoodRoutineStop {PlaceId=s.PlaceId,Activity=s.Activity,CapturedAt=s.CapturedAt,DepartureAt=s.DepartureAt};

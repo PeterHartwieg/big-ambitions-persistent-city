@@ -38,7 +38,7 @@ namespace PersistentCity.Core
                 person.BudgetEvidence = "Explicit fixed allowance for a controlled comparison; not observed income";
                 return;
             }
-            int band = (int)(StableRandom.Hash(person.Id + ":food-economic-band", seed) % 100);
+            int band = (int)(StableRandom.Hash(person.Id, ":food-economic-band", seed) % 100);
             int low = 1100, range = 2200;
             if (mix != null)
             {
@@ -47,7 +47,7 @@ namespace PersistentCity.Core
                 else if (band < mix.WorkingPercent + mix.MiddlePercent) { low = 1400; range = 2200; }
                 else { low = 2400; range = 3000; }
             }
-            person.DailyAllowance = Money.FromCents(low + (int)(StableRandom.Hash(person.Id + ":food-budget", seed) % (uint)(range + 1)));
+            person.DailyAllowance = Money.FromCents(low + (int)(StableRandom.Hash(person.Id, ":food-budget", seed) % (uint)(range + 1)));
             person.BudgetEvidence = mix == null
                 ? "Provisional individual allowance ($11–33); home-district economic mix unknown; not observed income"
                 : "Provisional individual allowance from overlapping $9–24/$14–36/$24–54 bands, sampled using the home district's economic mix; not observed income. " + mix.Evidence;
@@ -56,18 +56,17 @@ namespace PersistentCity.Core
         public static void SetOutsideOption(FoodConsumer person, FoodRoutineResident resident, FoodIntent intent, int seed)
         {
             if (intent.OriginPlaceId.Length == 0) return;
-            string dayKey = person.Id + ":prepared-food:" + intent.Day.ToString(CultureInfo.InvariantCulture);
             bool home = intent.OriginActivity == Activity.Home && intent.OriginPlaceId == resident.HomeId;
             bool work = intent.OriginActivity == Activity.Work || intent.OriginActivity == Activity.Study;
             Persona character = resident.Identity.Persona;
             int packingChance = character == Persona.Foodie ? 20 : character == Persona.Parent || character == Persona.Student ? 65
                 : character == Persona.Commuter ? 35 : 45;
-            if (!home && (!work || StableRandom.Hash(dayKey + ":pack", seed) % 100 >= packingChance)) return;
+            if (!home && (!work || StableRandom.Hash(person.Id, ":prepared-food:", intent.Day, ":pack", seed) % 100 >= packingChance)) return;
             intent.OutsideOption = home ? FoodOutsideOption.HomePreparation : FoodOutsideOption.PackedMeal;
             double characterValue = character == Persona.Foodie ? 1.25 : character == Persona.Student ? .8
                 : character == Persona.Parent ? .9 : character == Persona.Commuter ? 1.05 : 1;
-            double fraction = (home ? .50 : .45) + (StableRandom.Hash(dayKey + ":value", seed) % 301) / 1000.0;
-            int preparationMinutes = home ? 15 + (int)(StableRandom.Hash(person.Id + ":food-preparation", seed) % 21) : 0;
+            double fraction = (home ? .50 : .45) + (StableRandom.Hash(person.Id, ":prepared-food:", intent.Day, ":value", seed) % 301) / 1000.0;
+            int preparationMinutes = home ? 15 + (int)(StableRandom.Hash(person.Id, ":food-preparation", seed) % 21) : 0;
             intent.OutsideOptionScoreCents = (int)Math.Min(1000000, Math.Round(person.DailyAllowance.ApproximateCents() * fraction * characterValue
                 + (preparationMinutes + intent.EatingMinutes) * person.ValueOfTimeCentsPerMinute * intent.TimeCostMultiplier));
             intent.OutsideOptionEvidence = home

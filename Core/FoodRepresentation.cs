@@ -58,8 +58,8 @@ namespace PersistentCity.Core
     public sealed partial class FoodCommerce
     {
         private readonly Dictionary<string, FoodRoutineStop> routineStops = new Dictionary<string, FoodRoutineStop>(StringComparer.Ordinal);
-        private readonly Dictionary<string, Route> walkingQuotes = new Dictionary<string, Route>(StringComparer.Ordinal);
-        private readonly Queue<string> walkingQuoteOrder = new Queue<string>();
+        private readonly Dictionary<(string From, string To), Route> walkingQuotes = new Dictionary<(string From, string To), Route>();
+        private readonly Queue<(string From, string To)> walkingQuoteOrder = new Queue<(string From, string To)>();
         private const int WalkingQuoteLimit = 512;
         private const int LocalFoodCandidates = 8;
 
@@ -208,9 +208,16 @@ namespace PersistentCity.Core
             return true;
         }
 
+        private static bool WalkLegs(Route route)
+        {
+            foreach (var l in route.Legs)
+                if (l.Mode != TravelMode.Walk || !l.From.IsFinite || !l.To.IsFinite || !Position.Finite(l.Minutes) || l.Minutes < 0) return false;
+            return true;
+        }
+
         private static Route CopyWalkingRoute(Route source)
         {
-            var copy = new Route();
+            var copy = new Route(new RouteLegs(source.Legs.Count));
             foreach (var leg in source.Legs) copy.Legs.Add(new RouteLeg {
                 From = leg.From, To = leg.To, Minutes = leg.Minutes, Mode = leg.Mode, ServiceId = leg.ServiceId });
             return copy;
@@ -218,14 +225,13 @@ namespace PersistentCity.Core
 
         private static string GeometrySignature(Route route)
         {
-            var text = new StringBuilder();
-            foreach (var leg in route.Legs)
-                foreach (var point in new[] { leg.From, leg.To })
-                    text.Append(point.X.ToString("R", CultureInfo.InvariantCulture)).Append(',')
-                        .Append(point.Y.ToString("R", CultureInfo.InvariantCulture)).Append(',')
-                        .Append(point.Z.ToString("R", CultureInfo.InvariantCulture)).Append(';');
-            using (var sha = SHA256.Create()) return Convert.ToBase64String(sha.ComputeHash(Encoding.UTF8.GetBytes(text.ToString())));
+            var text = TextDigest.Begin();
+            foreach (var leg in route.Legs) { Signature(text, leg.From); Signature(text, leg.To); }
+            return text.Base64();
         }
+
+        private static void Signature(TextDigest text, Position point) =>
+            text.AppendRoundTrip(point.X).Append(',').AppendRoundTrip(point.Y).Append(',').AppendRoundTrip(point.Z).Append(';');
 
         private Route? WalkingQuote(Place from, Place to, double at, TravelPreferences preferences, FoodDecisionTrace? trace = null)
         {
@@ -244,14 +250,13 @@ namespace PersistentCity.Core
         private Route? SharedWalkingQuote(Place from, Place to, double at, TravelPreferences preferences,
             IWalkingQuoteValidity? validator, FoodDecisionTrace? trace)
         {
-            string key = from.Id + "\n" + to.Id;
+            var key = (from.Id, to.Id);
             if (validator != null && walkingQuotes.TryGetValue(key, out var cached)
                 && validator.IsWalkingQuoteValid(from, to, cached, preferences)) return CopyWalkingRoute(cached);
             if (trace != null) trace.RouteCalls++;
             var planned = routes.Plan(from, to, at, preferences);
             if (planned == null || planned.Legs.Count == 0 || planned.Legs.Count > 512
-                || planned.Legs.Any(l => l.Mode != TravelMode.Walk || !l.From.IsFinite || !l.To.IsFinite
-                    || !Position.Finite(l.Minutes) || l.Minutes < 0)
+                || !WalkLegs(planned)
                 || !Position.Finite(planned.Minutes) || planned.Minutes <= 0 || planned.Minutes > 1440
                 || Position.Distance(planned.Legs[0].From, from.Position) > .01
                 || Position.Distance(planned.Legs[planned.Legs.Count - 1].To, to.Position) > .01) return null;
