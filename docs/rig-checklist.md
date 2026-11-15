@@ -5240,7 +5240,7 @@ Refs #276
 
 ## Rig results — 15 November 2026 d, Mac (planned 16a; leftover FT RIGTMP-GR5-15c delete, #246 check 4 via agent-rig #93, #277 checks 1-4 at 564020b)
 
-**RESULT: DONE. Counts: 2 passed / 1 partial / 4 failed / 4 NOT RUN groups.** Order C0, D, day, night, street, look. Timing/GC/street numbers are **PROVISIONAL (Mac shared)**. In-game proof gates no merge. This docs-only results PR remains unmerged.
+**RESULT: DONE. Counts: 2 passed / 1 partial / 4 failed / 4 NOT RUN groups.** Order C0, D, day, night, street, look. Timing/GC/street numbers are **PROVISIONAL (Mac shared)**. The unresolved native proof gates apply to product changes. This docs-only results PR merges after current-head reviewer approval.
 
 Role `rig_test`, where `mac`, isolated `agentmac`. Run `persistent-city-rig-2026-11-15d-mac`, planned name Mac rig 16a. `<stage>` = `~/HART-Builds/persistent-city-rig-2026-11-15d-mac`; raw replies, logs, scripts, screenshots and backups remain there. Report copy `~/Coding_Projects/.agent-logs/persistent-city-rig-2026-11-15d-mac.md`. MB is decimal.
 
