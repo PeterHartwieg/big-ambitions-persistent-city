@@ -31,7 +31,7 @@ namespace PersistentCity.Runtime
         private void PollHandOff()
         {
             if (pendingSave != null && pendingSave.Resolved) SettlePendingSave(false);
-            if (splicingSave != null && splicingSave.SpliceDone) ReportSplice(splicingSave, true);
+            if (splicingSave != null && splicingSave.CompressionSettled) ReportSplice(splicingSave, true);
         }
 
         private void SettlePendingSave(bool wait, bool stopOnRefusal = true)
@@ -89,7 +89,7 @@ namespace PersistentCity.Runtime
             var splicing = splicingSave;
             if (splicing == null) return;
             SaveHandOff.AwaitCompression(splicing);
-            if (splicing.SpliceDone) ReportSplice(splicing, stopOnRefusal);
+            if (splicing.CompressionSettled) ReportSplice(splicing, stopOnRefusal);
             else splicingSave = null;
         }
 

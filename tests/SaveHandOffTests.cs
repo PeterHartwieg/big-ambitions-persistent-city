@@ -357,7 +357,7 @@ public sealed class SaveHandOffTests
         var (_, unwritten) = save.Begin(city);
         Assert.Null(save.Settle(unwritten!));
         SaveHandOff.AwaitCompression(unwritten!, 50, 50);
-        Assert.False(unwritten!.SpliceDone);
+        Assert.False(unwritten!.CompressionSettled);
         Assert.Null(unwritten.FileRefusal);
 
         var (_, unclaimed) = save.Begin(city);
@@ -366,16 +366,94 @@ public sealed class SaveHandOffTests
         SaveHandOff.MarkSerialized();
         SaveHandOff.Clear();
         SaveHandOff.AwaitCompression(unclaimed!, 50, 50);
-        Assert.Equal(SaveSpliceOutcome.Absent, unclaimed!.Splice);
-        Assert.NotNull(unclaimed.FileRefusal);
+        Assert.True(unclaimed!.Cancelled);
+        Assert.False(unclaimed.SpliceDone);
+        Assert.Contains("pending marker", unclaimed.FileRefusal);
+        var tokenFile = new Dictionary<string, string> { [SaveStore.StateKey] = unclaimed.PayloadToken, [SaveEpochStore.Key] = unclaimed.MarkerToken };
+        Assert.True(AccountingStopStore.IsStopped(tokenFile));
+        var refusedSync = new Dictionary<string, string> { [AccountingStopStore.Key] = AccountingStopStore.SaveEpochFailed };
+        Assert.Equal(AccountingStopStore.Cause(refusedSync), AccountingStopStore.Cause(tokenFile));
+    }
 
+    [Fact]
+    public void AMisdirectedCompressionIsSuppressedAndKeepsThePreviousFile()
+    {
+        var city = City();
+        var save = new Save(city);
         var (_, misdirected) = save.Begin(city);
         Assert.Null(save.Settle(misdirected!));
-        SaveHandOff.Expect(misdirected!, "temp");
-        Assert.Null(SaveHandOff.Claim("another temp"));
-        Assert.Null(SaveHandOff.Claim("temp"));
-        Assert.Equal(SaveSpliceOutcome.Failed, misdirected!.Splice);
-        Assert.NotNull(misdirected.FileRefusal);
+        string output = Path.Combine(Path.GetTempPath(), "pc-handoff-dest-" + Guid.NewGuid().ToString("N"));
+        string other = TempFile(Odin((SaveStore.StateKey, misdirected!.PayloadToken), (SaveEpochStore.Key, misdirected.MarkerToken)));
+        var previous = Odin((SaveStore.StateKey, "previous"), (SaveEpochStore.Key, "failed:1"));
+        File.WriteAllBytes(output, previous);
+        try
+        {
+            SaveHandOff.Expect(misdirected, "the expected temp");
+            Assert.False(SaveHandOff.TryCompress(other, output));
+            Assert.Equal(previous, File.ReadAllBytes(output));
+            Assert.Equal(SaveSpliceOutcome.Failed, misdirected.Splice);
+            Assert.Contains("previous file in that slot is kept", misdirected.FileRefusal);
+            Assert.Null(SaveHandOff.TryCompress(other, output));
+        }
+        finally { File.Delete(other); File.Delete(output); SaveHandOff.Clear(); }
+    }
+
+    [Fact]
+    public void ALateCompressorAfterTheClaimDeadlineIsRefusedAndNeverPublishes()
+    {
+        var city = City();
+        var save = new Save(city);
+        var (_, late) = save.Begin(city);
+        Assert.Null(save.Settle(late!));
+        string temp = TempFile(Odin((SaveStore.StateKey, late!.PayloadToken), (SaveEpochStore.Key, late.MarkerToken)));
+        string output = temp + ".out";
+        byte[] previous = { 9, 8, 7 };
+        File.WriteAllBytes(output, previous);
+        try
+        {
+            SaveHandOff.Expect(late, temp);
+            SaveHandOff.MarkSerialized();
+            SaveHandOff.AwaitCompression(late, 50, 50);
+            Assert.True(late.Cancelled);
+            Assert.False(SaveHandOff.TryCompress(temp, output));
+            Assert.Equal(previous, File.ReadAllBytes(output));
+            Assert.False(File.Exists(output + SaveHandOff.StagingSuffix));
+        }
+        finally { File.Delete(temp); File.Delete(output); SaveHandOff.Clear(); }
+    }
+
+    [Fact]
+    public void ACompressorHeldPastTheSpliceDeadlineResumesWithoutPublishing()
+    {
+        var city = City();
+        var save = new Save(city);
+        save.Gate.Reset();
+        var (_, held) = save.Begin(city);
+        string temp = TempFile(Odin((SaveStore.StateKey, held!.PayloadToken), (SaveEpochStore.Key, held.MarkerToken)));
+        string output = temp + ".out";
+        byte[] previous = { 5, 5, 5 };
+        File.WriteAllBytes(output, previous);
+        try
+        {
+            SaveHandOff.Expect(held, temp);
+            bool? written = null;
+            var compressor = new Thread(() => written = SaveHandOff.TryCompress(temp, output));
+            compressor.Start();
+            SaveHandOff.MarkSerialized();
+            Assert.True(held.WaitClaimed(Wait));
+            SaveHandOff.AwaitCompression(held, Wait, 100);
+            Assert.True(held.Cancelled);
+            Assert.NotNull(held.FileRefusal);
+            File.WriteAllBytes(temp, Odin(("next", "save reuses the temporary file")));
+            save.Gate.Set();
+            Assert.True(compressor.Join(Wait));
+            Assert.False(written);
+            Assert.Equal(previous, File.ReadAllBytes(output));
+            Assert.False(File.Exists(output + SaveHandOff.StagingSuffix));
+            Assert.True(held.SpliceDone);
+            Assert.NotEqual(SaveSpliceOutcome.Spliced, held.Splice);
+        }
+        finally { save.Gate.Set(); File.Delete(temp); File.Delete(output); SaveHandOff.Clear(); }
     }
 
     [Theory]

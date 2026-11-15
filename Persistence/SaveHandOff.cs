@@ -18,7 +18,7 @@ namespace PersistentCity.Persistence
         private readonly SaveSnapshot snapshot;
         private readonly SaveHandOffWriter writer;
         private readonly bool countRecords;
-        private bool resolved, started;
+        private bool resolved, started, cancelled, publishing;
         private int spliceDone, serialized, claimed;
 
         internal PendingSave(SaveSnapshot snapshot, IDictionary<string, string> target, SaveHandOffWriter writer,
@@ -56,9 +56,43 @@ namespace PersistentCity.Persistence
         public bool Claimed => Volatile.Read(ref claimed) != 0;
         internal SaveSession? Owner { get; set; }
 
-        public string? FileRefusal => !SpliceDone ? null : Splice == SaveSpliceOutcome.Spliced ? null
-            : "The native save file was not replaced because the Persistent City hand-off failed (" + Splice
-                + (SpliceError.Length > 0 ? ": " + SpliceError : "") + "); the previous file in that slot is kept.";
+        public bool Cancelled { get { lock (gate) return cancelled; } }
+        public string CancelReason { get; private set; } = "";
+        public bool CompressionSettled => SpliceDone || Cancelled;
+
+        public string? FileRefusal
+        {
+            get
+            {
+                if (Cancelled)
+                    return "The native save of this city was not completed with the Persistent City hand-off (" + CancelReason
+                        + "). Persistent City refuses to publish it; if native compression wrote it without the hand-off, that file carries a pending marker and reload stops accounting.";
+                if (!SpliceDone || Splice == SaveSpliceOutcome.Spliced) return null;
+                return "The native save file was not replaced because the Persistent City hand-off failed (" + Splice
+                    + (SpliceError.Length > 0 ? ": " + SpliceError : "") + "); the previous file in that slot is kept.";
+            }
+        }
+
+        internal bool TryBeginPublish()
+        {
+            lock (gate)
+            {
+                if (cancelled) return false;
+                publishing = true;
+                return true;
+            }
+        }
+
+        public bool Cancel(string reason)
+        {
+            lock (gate)
+            {
+                if (publishing || spliceDone != 0) return false;
+                if (!cancelled) { cancelled = true; CancelReason = reason ?? "cancelled"; }
+                Monitor.PulseAll(gate);
+                return true;
+            }
+        }
 
         internal void MarkSerialized() => Volatile.Write(ref serialized, 1);
         internal void MarkClaimed() { lock (gate) { claimed = 1; Monitor.PulseAll(gate); } }
@@ -282,9 +316,12 @@ namespace PersistentCity.Persistence
             lock (gate) { latest?.MarkSerialized(); latest = null; }
         }
 
-        public static PendingSave? Claim(string? path)
+        public static PendingSave? Claim(string? path) => Claim(path, out _);
+
+        public static PendingSave? Claim(string? path, out bool refused)
         {
             PendingSave? save, misdirected = null;
+            refused = false;
             lock (gate)
             {
                 save = expected;
@@ -293,30 +330,42 @@ namespace PersistentCity.Persistence
                 if (expectedPath != null && !string.Equals(path, expectedPath, StringComparison.Ordinal)) { misdirected = save; save = null; }
                 expectedPath = null;
             }
+            refused = true;
             if (misdirected != null)
             {
                 misdirected.MarkClaimed();
-                misdirected.Spliced(SaveSpliceOutcome.Failed, "native compression read another temporary file", 0, 0);
+                if (!misdirected.Cancelled) misdirected.Spliced(SaveSpliceOutcome.Failed, "native compression read another temporary file", 0, 0);
                 return null;
             }
             save!.MarkClaimed();
+            if (save.Cancelled) return null;
+            refused = false;
             return save;
+        }
+
+        public static bool? TryCompress(string path, string outputPath)
+        {
+            var save = Claim(path, out bool refused);
+            if (save != null) return Compress(path, outputPath, save);
+            return refused ? false : (bool?)null;
         }
 
         public static void AwaitCompression(PendingSave save, int claimMilliseconds = ClaimWaitMilliseconds,
             int spliceMilliseconds = CompressWaitMilliseconds + 10000)
         {
             if (save == null) throw new ArgumentNullException(nameof(save));
-            if (save.SpliceDone || !save.Serialized && !save.Claimed) return;
-            if (!save.WaitClaimed(claimMilliseconds))
-            {
-                save.Spliced(SaveSpliceOutcome.Absent, "native compression never took the hand-off", 0, 0);
-                return;
-            }
-            if (!save.WaitSpliced(spliceMilliseconds))
-                save.Spliced(SaveSpliceOutcome.Failed, "native compression did not finish within "
-                    + (spliceMilliseconds / 1000).ToString(System.Globalization.CultureInfo.InvariantCulture) + " s", 0, 0);
+            if (save.CompressionSettled || !save.Serialized && !save.Claimed) return;
+            if (!save.WaitClaimed(claimMilliseconds) && save.Cancel("native compression did not take the hand-off within "
+                + Seconds(claimMilliseconds))) return;
+            if (save.WaitSpliced(spliceMilliseconds)) return;
+            if (save.Cancel("native compression did not finish within " + Seconds(spliceMilliseconds))) return;
+            save.WaitSpliced(PublishWaitMilliseconds);
         }
+
+        private const int PublishWaitMilliseconds = 30000;
+
+        private static string Seconds(int milliseconds) =>
+            (milliseconds / 1000.0).ToString("0.###", System.Globalization.CultureInfo.InvariantCulture) + " s";
 
         public static bool Compress(string path, string outputPath, PendingSave save, int waitMilliseconds = CompressWaitMilliseconds)
             => Compress(path, outputPath, save, waitMilliseconds, File.Create);
@@ -325,7 +374,7 @@ namespace PersistentCity.Persistence
         {
             long started = Stopwatch.GetTimestamp();
             long deadline = started + (long)(waitMilliseconds * (double)Stopwatch.Frequency / 1000);
-            while (!save.Resolved)
+            while (!save.Resolved && !save.Cancelled)
             {
                 if (Stopwatch.GetTimestamp() >= deadline)
                 {
@@ -349,6 +398,8 @@ namespace PersistentCity.Persistence
                     outcome = SaveSplice.Copy(input, output, tokens, values);
                 if (outcome != SaveSpliceOutcome.Spliced)
                     throw new InvalidDataException("the native save did not hold both Persistent City tokens exactly once");
+                if (!save.TryBeginPublish())
+                    throw new OperationCanceledException("the hand-off was cancelled before publication: " + save.CancelReason);
                 Publish(staging, outputPath);
                 written = true;
             }

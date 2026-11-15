@@ -63,9 +63,9 @@ namespace PersistentCity.Runtime
 
         private static bool CompressPrefix(string path, string outputPath, ref bool __result)
         {
-            var pending = SaveHandOff.Claim(path);
-            if (pending == null) return true;
-            __result = SaveHandOff.Compress(path, outputPath, pending);
+            var handled = SaveHandOff.TryCompress(path, outputPath);
+            if (handled == null) return true;
+            __result = handled.Value;
             return false;
         }
 
