@@ -56,6 +56,16 @@ namespace PersistentCity.Core
         public static bool Apply(CityState state, double nativeWalkMetresPerSecond, double clockRate, out int degraded)
         {
             degraded = 0;
+            var job = Begin(state, nativeWalkMetresPerSecond, clockRate);
+            if (job == null) return false;
+            while (!job.Step(long.MaxValue)) { }
+            if (!job.Commit()) throw new InvalidOperationException("Retime inputs changed during an unsliced retime.");
+            degraded = job.Degraded;
+            return true;
+        }
+
+        public static TravelRetime? Begin(CityState state, double nativeWalkMetresPerSecond, double clockRate)
+        {
             if (state == null) throw new ArgumentNullException(nameof(state));
             Rate(nativeWalkMetresPerSecond, nameof(nativeWalkMetresPerSecond)); Rate(clockRate, nameof(clockRate));
             Rate(state.TravelClockRate, nameof(state.TravelClockRate));
@@ -64,38 +74,278 @@ namespace PersistentCity.Core
             if (!Position.Finite(state.Minute) || state.Minute < 0 || state.Minute > MaxMinute)
                 throw new ArgumentException("Invalid city clock.", nameof(state));
             bool legacy = state.TravelTimingVersion == 0;
-            if (!legacy && state.TravelClockRate == clockRate) return false;
-            double ratio = clockRate / state.TravelClockRate;
-            TrafficKernel? savedTraffic = null;
-            var trafficRoutes = new Dictionary<string, TrafficVehicleState>(StringComparer.Ordinal);
-            var evicted = new HashSet<string>(StringComparer.Ordinal);
-            if (state.Traffic != null)
+            if (!legacy && state.TravelClockRate == clockRate) return null;
+            return new TravelRetime(state, nativeWalkMetresPerSecond, clockRate, legacy);
+        }
+
+        public sealed class RetimedTraffic
+        {
+            internal RetimedTraffic(TrafficKernelState source, TrafficKernel kernel) { Source = source; Kernel = kernel; }
+            internal TrafficKernelState Source { get; }
+            internal TrafficKernel Kernel { get; }
+        }
+
+        public sealed class TravelRetime
+        {
+            private struct Input
             {
-                if (legacy || state.Traffic.Clock != state.Minute)
-                    throw new ArgumentException("Traffic needs native timing at the city clock.");
-                savedTraffic = TrafficKernel.Restore(state.Traffic);
-                foreach (var vehicle in state.Traffic.Vehicles) trafficRoutes[vehicle.VehicleId] = vehicle;
+                internal CitizenState Citizen;
+                internal CitizenPhase Phase;
+                internal Route? Journey;
+                internal double Departure, NextEvent, ActivityUntil;
+                internal string PlaceId, DestinationId;
+                internal MealOuting? Meal;
+                internal bool Returning, SafelyHome;
+                internal Place? Origin, Destination;
+                internal Position OriginPosition, DestinationPosition;
             }
-            var changes = new List<Change>();
-            var maps = new Dictionary<string, NominalMap>(StringComparer.Ordinal);
-            var trafficChanges = new Dictionary<string, Change>(StringComparer.Ordinal);
-            var places = new Dictionary<string, Place>(StringComparer.Ordinal);
-            foreach (var place in state.Places) places.Add(place.Id, place);
-            foreach (var citizen in PersonTable.Schedules(state))
+            private readonly double walk, rate, ratio, minute, stateRate;
+            private readonly bool legacy;
+            private readonly int version, places;
+            private readonly TrafficKernelState? trafficState;
+            private readonly List<CitizenState> schedules = new List<CitizenState>();
+            private readonly Input[] inputs;
+            private const int LinksPerStep = 256;
+            private TrafficKernel? savedTraffic, kernel;
+            private System.Collections.IEnumerator? pass;
+            private TrafficKernelState? excluded;
+            private RetimedTraffic? restoredTraffic;
+            private readonly Dictionary<string, TrafficVehicleState> trafficRoutes = new Dictionary<string, TrafficVehicleState>(StringComparer.Ordinal);
+            private readonly HashSet<string> evicted = new HashSet<string>(StringComparer.Ordinal);
+            private readonly List<Change> changes = new List<Change>();
+            private readonly Dictionary<string, NominalMap> maps = new Dictionary<string, NominalMap>(StringComparer.Ordinal);
+            private readonly Dictionary<string, Change> trafficChanges = new Dictionary<string, Change>(StringComparer.Ordinal);
+            private readonly Dictionary<string, Place> placeIndex = new Dictionary<string, Place>(StringComparer.Ordinal);
+            private TrafficKernelState? traffic;
+            private TrafficKernel? rescaledKernel;
+            private Dictionary<string, CitizenState>? citizens;
+            private int next, checkedVehicles, stage;
+            private bool trafficDone, committed;
+
+            internal TravelRetime(CityState state, double walk, double rate, bool legacy)
             {
+                State = state; this.walk = walk; this.rate = rate; this.legacy = legacy;
+                ratio = rate / state.TravelClockRate; minute = state.Minute; stateRate = state.TravelClockRate;
+                version = state.TravelTimingVersion; places = state.Places.Count; trafficState = state.Traffic;
+                if (state.Traffic != null)
+                {
+                    if (legacy || state.Traffic.Clock != state.Minute)
+                        throw new ArgumentException("Traffic needs native timing at the city clock.");
+                    foreach (var vehicle in state.Traffic.Vehicles) trafficRoutes[vehicle.VehicleId] = vehicle;
+                }
+                foreach (var place in state.Places) placeIndex.Add(place.Id, place);
+                foreach (var citizen in PersonTable.Schedules(state)) schedules.Add(citizen);
+                inputs = new Input[schedules.Count];
+                stage = trafficState == null ? 1 : 0;
+            }
+
+            public CityState State { get; }
+            public double ClockRate => rate;
+            public int Degraded { get; private set; }
+            public int Prepared => next;
+            public int Count => schedules.Count;
+            public bool Ready => trafficDone;
+
+            public bool Stale => committed || State.Minute != minute || State.TravelClockRate != stateRate
+                || State.TravelTimingVersion != version || !ReferenceEquals(State.Traffic, trafficState)
+                || State.Places.Count != places || State.Citizens.Count + State.VisitorRoutines.Count != schedules.Count;
+
+            public bool Step(long deadlineTimestamp)
+            {
+                if (committed) throw new InvalidOperationException("The retime was already committed.");
+                if (Stale) throw new InvalidOperationException("The retime inputs changed; begin a new retime.");
+                bool worked = false;
+                while (!trafficDone)
+                {
+                    if (stage == 1)
+                    {
+                        while (next < schedules.Count)
+                        {
+                            Prepare(next++); worked = true;
+                            if (System.Diagnostics.Stopwatch.GetTimestamp() >= deadlineTimestamp) return false;
+                        }
+                        stage = trafficState == null ? 9 : evicted.Count > 0 ? 2 : 4;
+                        if (stage == 4) kernel = savedTraffic;
+                        continue;
+                    }
+                    if (stage == 4)
+                    {
+                        if (worked && System.Diagnostics.Stopwatch.GetTimestamp() >= deadlineTimestamp) return false;
+                        CheckTrafficOwners(); worked = true; stage = 5;
+                        continue;
+                    }
+                    if (stage == 8)
+                    {
+                        while (checkedVehicles < traffic!.Vehicles.Count)
+                        {
+                            if (worked && System.Diagnostics.Stopwatch.GetTimestamp() >= deadlineTimestamp) return false;
+                            CheckVehicle(traffic.Vehicles[checkedVehicles++]); worked = true;
+                        }
+                        stage = 9; rescaledKernel = null;
+                        continue;
+                    }
+                    if (stage == 9) { trafficDone = true; break; }
+                    if (worked && System.Diagnostics.Stopwatch.GetTimestamp() >= deadlineTimestamp) return false;
+                    pass ??= StartPass();
+                    while (true)
+                    {
+                        if (!pass.MoveNext()) throw new InvalidOperationException("Traffic retime pass ended without a result.");
+                        worked = true;
+                        if (pass.Current != null) { FinishPass(pass.Current); pass = null; stage++; break; }
+                        if (System.Diagnostics.Stopwatch.GetTimestamp() >= deadlineTimestamp) return false;
+                    }
+                }
+                return true;
+            }
+
+            private System.Collections.IEnumerator StartPass()
+            {
+                var state = State;
+                switch (stage)
+                {
+                    case 0: return TrafficKernel.RestoreInSteps(trafficState!, LinksPerStep);
+                    case 2: return savedTraffic!.CaptureInSteps(evicted.Contains, LinksPerStep);
+                    case 3: return TrafficKernel.RestoreInSteps(excluded!, LinksPerStep);
+                    case 5:
+                        return kernel!.RescaleTimeInSteps(ratio, (id, value) => maps.TryGetValue(id, out var mapping)
+                            ? mapping.Map(value) : throw new ArgumentException("Missing traffic geometry map.", nameof(state)), LinksPerStep);
+                    case 6: return rescaledKernel!.CaptureInSteps(LinksPerStep);
+                    case 7: return TrafficKernel.RestoreInSteps(traffic!, LinksPerStep);
+                    default: throw new InvalidOperationException("Unknown traffic retime pass.");
+                }
+            }
+
+            private void FinishPass(object result)
+            {
+                switch (stage)
+                {
+                    case 0: savedTraffic = (TrafficKernel)result; break;
+                    case 2: excluded = (TrafficKernelState)result; break;
+                    case 3: kernel = (TrafficKernel)result; excluded = null; break;
+                    case 5: rescaledKernel = (TrafficKernel)result; kernel = null; break;
+                    case 6: traffic = (TrafficKernelState)result; break;
+                    case 7: restoredTraffic = new RetimedTraffic(traffic!, (TrafficKernel)result); break;
+                }
+            }
+
+            private void CheckTrafficOwners()
+            {
+                var state = State;
+                citizens = new Dictionary<string, CitizenState>(StringComparer.Ordinal);
+                foreach (var citizen in state.Citizens) citizens.Add(citizen.Identity.Id, citizen);
+                foreach (var vehicle in trafficState!.Vehicles)
+                {
+                    if (evicted.Contains(vehicle.VehicleId)) continue;
+                    if (!citizens.TryGetValue(vehicle.VehicleId, out var citizen) || citizen.Journey == null
+                        || !maps.ContainsKey(vehicle.VehicleId)) throw new ArgumentException("Traffic owner has no committed journey.", nameof(state));
+                    double elapsed = kernel!.GetPermission(vehicle.VehicleId).NominalMinutes;
+                    if (Math.Abs(elapsed - (state.Minute - citizen.DepartureMinute)) > 1e-7)
+                        throw new ArgumentException("Traffic and journey progress disagree.", nameof(state));
+                }
+            }
+
+            public RetimedTraffic? TakeRestoredTraffic()
+            {
+                var restored = committed ? restoredTraffic : null;
+                restoredTraffic = null;
+                return restored;
+            }
+
+            public bool Commit()
+            {
+                if (!trafficDone || committed) throw new InvalidOperationException("The retime is not ready to commit.");
+                var state = State;
+                if (!Unchanged()) return false;
+                var meals = new List<(ResidentMeal Meal, double ReturnMinutes, double DueAt)>();
+                if (state.Food != null)
+                {
+                    var arrivals = new Dictionary<string, double>(StringComparer.Ordinal);
+                    foreach (var change in changes)
+                        if (change.Route != null && change.Citizen.MealOuting != null && !change.Citizen.MealOuting.Returning)
+                            arrivals.Add(change.Citizen.Identity.Id, change.EventMinute);
+                    foreach (var meal in state.Food.Residents)
+                    {
+                        if (meal.HostSlot > 0) continue;
+                        if (meal.Status != MealStatus.Travelling && meal.Status != MealStatus.Serving) continue;
+                        double back = meal.ReturnMinutes * ratio;
+                        double due = meal.Status == MealStatus.Travelling && arrivals.TryGetValue(meal.ResidentId, out var arrival)
+                            ? arrival : meal.DueAt;
+                        if (!Position.Finite(back) || back < 0 || back > MaxLegMinutes || !Position.Finite(due)
+                            || due < state.Minute || due > MaxMinute) throw new ArgumentException("Retimed meal exceeds the supported clock.");
+                        meals.Add((meal, back, due));
+                    }
+                }
+                committed = true;
+                foreach (var change in changes)
+                {
+                    if (change.Route != null) change.Citizen.Journey = change.Route.Commit();
+                    if (change.DepartureMinute.HasValue) change.Citizen.DepartureMinute = change.DepartureMinute.Value;
+                    change.Citizen.NextEventMinute = change.EventMinute;
+                    if (change.MealStayUntil.HasValue) change.Citizen.ActivityUntilMinute = change.MealStayUntil.Value;
+                }
+                foreach (var citizen in schedules) citizen.CommutePreparation = new CommutePreparation();
+                foreach (var meal in meals) { meal.Meal.ReturnMinutes = meal.ReturnMinutes; meal.Meal.DueAt = meal.DueAt; }
+                state.TravelTimingVersion = 1;
+                state.TravelClockRate = rate;
+                if (traffic != null) state.Traffic = traffic;
+                state.SnapshotSynchronizer = null;
+                return true;
+            }
+
+            private bool Unchanged()
+            {
+                var state = State;
+                if (Stale) return false;
+                int index = 0;
+                foreach (var citizen in PersonTable.Schedules(state))
+                {
+                    if (!ReferenceEquals(citizen, schedules[index])) return false;
+                    ref var input = ref inputs[index++];
+                    if (citizen.Phase != input.Phase || !ReferenceEquals(citizen.Journey, input.Journey)
+                        || citizen.DepartureMinute != input.Departure || citizen.NextEventMinute != input.NextEvent
+                        || citizen.ActivityUntilMinute != input.ActivityUntil || !ReferenceEquals(citizen.MealOuting, input.Meal)
+                        || (citizen.MealOuting != null && citizen.MealOuting.Returning != input.Returning)
+                        || !string.Equals(citizen.PlaceId, input.PlaceId, StringComparison.Ordinal)
+                        || !string.Equals(citizen.DestinationId, input.DestinationId, StringComparison.Ordinal)) return false;
+                    if (citizen.Phase != CitizenPhase.Travelling)
+                    {
+                        if (ResidentLifecycle.IsSafelyHome(citizen) != input.SafelyHome) return false;
+                    }
+                    else if (input.Origin == null || input.Destination == null
+                        || !placeIndex.TryGetValue(citizen.PlaceId, out var origin) || !ReferenceEquals(origin, input.Origin)
+                        || !placeIndex.TryGetValue(citizen.DestinationId, out var destination) || !ReferenceEquals(destination, input.Destination)
+                        || !origin.Position.Equals(input.OriginPosition) || !destination.Position.Equals(input.DestinationPosition)) return false;
+                }
+                for (int i = 0; i < state.Places.Count; i++)
+                    if (!placeIndex.TryGetValue(state.Places[i].Id, out var place) || !ReferenceEquals(place, state.Places[i])) return false;
+                return true;
+            }
+
+            private void Prepare(int index)
+            {
+                var state = State;
+                var citizen = schedules[index];
                 if (citizen == null || !Position.Finite(citizen.NextEventMinute)
                     || citizen.NextEventMinute < state.Minute || citizen.NextEventMinute > MaxMinute)
                     throw new ArgumentException("Invalid citizen event.", nameof(state));
+                ref var input = ref inputs[index];
+                input.Citizen = citizen; input.Phase = citizen.Phase; input.Journey = citizen.Journey;
+                input.Departure = citizen.DepartureMinute; input.NextEvent = citizen.NextEventMinute; input.ActivityUntil = citizen.ActivityUntilMinute;
+                input.PlaceId = citizen.PlaceId; input.DestinationId = citizen.DestinationId;
+                input.Meal = citizen.MealOuting; input.Returning = citizen.MealOuting?.Returning ?? false;
                 if (citizen.Phase != CitizenPhase.Travelling)
                 {
-                    if (ResidentLifecycle.IsSafelyHome(citizen))
+                    input.SafelyHome = ResidentLifecycle.IsSafelyHome(citizen);
+                    if (input.SafelyHome)
                         changes.Add(new Change { Citizen = citizen, EventMinute = state.Minute });
-                    continue;
+                    return;
                 }
                 var route = citizen.Journey;
-                if (route == null || !places.TryGetValue(citizen.PlaceId, out var origin)
-                    || !places.TryGetValue(citizen.DestinationId, out var destination))
+                if (route == null || !placeIndex.TryGetValue(citizen.PlaceId, out var origin)
+                    || !placeIndex.TryGetValue(citizen.DestinationId, out var destination))
                     throw new ArgumentException("Missing committed journey or place.", nameof(state));
+                input.Origin = origin; input.Destination = destination;
+                input.OriginPosition = origin.Position; input.DestinationPosition = destination.Position;
                 ValidateCommittedRoute(route, origin.Position, destination.Position, citizen);
                 if (!Position.Finite(citizen.DepartureMinute) || citizen.DepartureMinute < 0 || citizen.DepartureMinute > state.Minute)
                     throw new ArgumentException("Invalid journey departure.", nameof(state));
@@ -115,17 +365,17 @@ namespace PersistentCity.Core
                     ? Math.Max(1e-7, CitySimulator.JourneyClockTolerance(state.Minute, route.Minutes)) : 1e-7;
                 if (elapsed > route.Minutes || arrivalDifference > arrivalTolerance)
                     throw new ArgumentException("Journey clock does not match its route.", nameof(state));
-                var replacement = Retime(route, elapsed, legacy, nativeWalkMetresPerSecond, clockRate, ratio, false, out var map, out int completed);
+                var replacement = Retime(route, elapsed, legacy, walk, rate, ratio, false, out var map, out int completed);
                 if (replacement.Legs.Count > MaxLegs
                     && !MergeCompletedLegs(replacement, completed, elapsed, trafficOwned ? trafficRoutes[citizen.Identity.Id] : null))
                 {
-                    replacement = Retime(route, elapsed, legacy, nativeWalkMetresPerSecond, clockRate, ratio, true, out map, out _);
-                    degraded++;
+                    replacement = Retime(route, elapsed, legacy, walk, rate, ratio, true, out map, out _);
+                    Degraded++;
                     if (trafficOwned) { evicted.Add(citizen.Identity.Id); trafficOwned = false; }
                 }
                 else if (trafficOwned && TrafficCannotFollow(trafficRoutes[citizen.Identity.Id], map, elapsed, ratio))
                 {
-                    degraded++;
+                    Degraded++;
                     evicted.Add(citizen.Identity.Id); trafficOwned = false;
                 }
                 maps.Add(citizen.Identity.Id, map);
@@ -147,6 +397,7 @@ namespace PersistentCity.Core
                     arrival = state.Minute;
                 if (!Position.Finite(arrival) || arrival < state.Minute || arrival > MaxMinute)
                     throw new ArgumentException("Retimed arrival exceeds the supported clock.", nameof(state));
+                PresentationGrid.Precompute(replacement.Commit());
                 var change = new Change { Citizen = citizen, Route = replacement, EventMinute = arrival, Elapsed = elapsed,
                     DepartureMinute = departure == citizen.DepartureMinute ? (double?)null : departure };
                 if (citizen.MealOuting != null && !citizen.MealOuting.Returning)
@@ -159,75 +410,20 @@ namespace PersistentCity.Core
                 changes.Add(change);
                 if (trafficOwned) trafficChanges.Add(citizen.Identity.Id, change);
             }
-            TrafficKernelState? traffic = null;
-            if (state.Traffic != null)
+
+            private void CheckVehicle(TrafficVehicleState vehicle)
             {
-                if (legacy || state.Traffic.Clock != state.Minute)
-                    throw new ArgumentException("Traffic needs native timing at the city clock.", nameof(state));
-                var kernel = TrafficKernel.Restore(state.Traffic);
-                if (evicted.Count > 0) kernel = TrafficKernel.Restore(kernel.Capture(evicted.Contains));
-                var citizens = new Dictionary<string, CitizenState>(StringComparer.Ordinal);
-                foreach (var citizen in state.Citizens) citizens.Add(citizen.Identity.Id, citizen);
-                foreach (var vehicle in state.Traffic.Vehicles)
-                {
-                    if (evicted.Contains(vehicle.VehicleId)) continue;
-                    if (!citizens.TryGetValue(vehicle.VehicleId, out var citizen) || citizen.Journey == null
-                        || !maps.ContainsKey(vehicle.VehicleId)) throw new ArgumentException("Traffic owner has no committed journey.", nameof(state));
-                    double elapsed = kernel.GetPermission(vehicle.VehicleId).NominalMinutes;
-                    if (Math.Abs(elapsed - (state.Minute - citizen.DepartureMinute)) > 1e-7)
-                        throw new ArgumentException("Traffic and journey progress disagree.", nameof(state));
-                }
-                var rescaled = kernel.RescaleTime(ratio, (id, value) => maps.TryGetValue(id, out var mapping)
-                    ? mapping.Map(value) : throw new ArgumentException("Missing traffic geometry map.", nameof(state)));
-                traffic = rescaled.Capture();
-                TrafficKernel.ValidateState(traffic);
-                foreach (var vehicle in traffic.Vehicles)
-                {
-                    double expected = rescaled.GetPermission(vehicle.VehicleId).NominalMinutes;
-                    var change = trafficChanges[vehicle.VehicleId];
-                    ValidateSampledPose(change.Citizen, change.Route!, change.Elapsed, expected);
-                    double actual = state.Minute - citizens[vehicle.VehicleId].DepartureMinute;
-                    if (Math.Abs(expected - actual) > 1e-7)
-                        throw new ArgumentException("Retimed traffic progress and committed journey disagree.");
-                    if (vehicle.Completed) continue;
-                    foreach (var span in vehicle.Route)
-                        if (span.EndNominalMinutes > vehicle.NominalMinutes)
-                            TrafficNetwork.ValidateCommittedSpanTiming(span);
-                }
+                double expected = rescaledKernel!.GetPermission(vehicle.VehicleId).NominalMinutes;
+                var change = trafficChanges[vehicle.VehicleId];
+                ValidateSampledPose(change.Citizen, change.Route!, change.Elapsed, expected);
+                double actual = State.Minute - citizens![vehicle.VehicleId].DepartureMinute;
+                if (Math.Abs(expected - actual) > 1e-7)
+                    throw new ArgumentException("Retimed traffic progress and committed journey disagree.");
+                if (vehicle.Completed) return;
+                foreach (var span in vehicle.Route)
+                    if (span.EndNominalMinutes > vehicle.NominalMinutes)
+                        TrafficNetwork.ValidateCommittedSpanTiming(span);
             }
-            var meals = new List<(ResidentMeal Meal, double ReturnMinutes, double DueAt)>();
-            if (state.Food != null)
-            {
-                var arrivals = new Dictionary<string, double>(StringComparer.Ordinal);
-                foreach (var change in changes)
-                    if (change.Route != null && change.Citizen.MealOuting != null && !change.Citizen.MealOuting.Returning)
-                        arrivals.Add(change.Citizen.Identity.Id, change.EventMinute);
-                foreach (var meal in state.Food.Residents)
-                {
-                    if (meal.HostSlot > 0) continue;
-                    if (meal.Status != MealStatus.Travelling && meal.Status != MealStatus.Serving) continue;
-                    double back = meal.ReturnMinutes * ratio;
-                    double due = meal.Status == MealStatus.Travelling && arrivals.TryGetValue(meal.ResidentId, out var arrival)
-                        ? arrival : meal.DueAt;
-                    if (!Position.Finite(back) || back < 0 || back > MaxLegMinutes || !Position.Finite(due)
-                        || due < state.Minute || due > MaxMinute) throw new ArgumentException("Retimed meal exceeds the supported clock.");
-                    meals.Add((meal, back, due));
-                }
-            }
-            foreach (var change in changes)
-            {
-                if (change.Route != null) change.Citizen.Journey = change.Route.Commit();
-                if (change.DepartureMinute.HasValue) change.Citizen.DepartureMinute = change.DepartureMinute.Value;
-                change.Citizen.NextEventMinute = change.EventMinute;
-                if (change.MealStayUntil.HasValue) change.Citizen.ActivityUntilMinute = change.MealStayUntil.Value;
-            }
-            foreach (var citizen in PersonTable.Schedules(state)) citizen.CommutePreparation = new CommutePreparation();
-            foreach (var meal in meals) { meal.Meal.ReturnMinutes = meal.ReturnMinutes; meal.Meal.DueAt = meal.DueAt; }
-            state.TravelTimingVersion = 1;
-            state.TravelClockRate = clockRate;
-            if (traffic != null) state.Traffic = traffic;
-            state.SnapshotSynchronizer = null;
-            return true;
         }
 
         private static void ValidateSampledPose(CitizenState citizen, Route replacement, double oldElapsed, double resumedElapsed)

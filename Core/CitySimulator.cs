@@ -141,10 +141,12 @@ namespace PersistentCity.Core
         internal bool ObservingFood => activityObservers.FoodHandlers != null;
         internal void ObserveFood(FoodDecisionTrace trace) => activityObservers.FoodHandlers?.Invoke(trace);
 
-        public CitySimulator RebuildRoutes(IRoutePlanner replacementRoutes)
+        public CitySimulator RebuildRoutes(IRoutePlanner replacementRoutes) => RebuildRoutes(replacementRoutes, null);
+
+        public CitySimulator RebuildRoutes(IRoutePlanner replacementRoutes, TravelTiming.RetimedTraffic? retimedTraffic)
         {
             AbortPending();
-            var replacement = new CitySimulator(State, replacementRoutes);
+            var replacement = new CitySimulator(State, replacementRoutes, retimedTraffic);
             replacement.CopyVendorPlaces(this);
             replacement.activityObservers = activityObservers;
             replacement.workplaceAvailability = workplaceAvailability;
@@ -163,7 +165,9 @@ namespace PersistentCity.Core
             return replacement;
         }
 
-        public CitySimulator(CityState state, IRoutePlanner routes)
+        public CitySimulator(CityState state, IRoutePlanner routes) : this(state, routes, null) { }
+
+        private CitySimulator(CityState state, IRoutePlanner routes, TravelTiming.RetimedTraffic? retimedTraffic)
         {
             activeJourneys = new ActiveJourneyIndex(FindPosition);
             State = state ?? throw new ArgumentNullException(nameof(state));
@@ -204,7 +208,7 @@ namespace PersistentCity.Core
             }
             activeJourneys.Rebuild(state.Citizens, state.VisitorRoutines);
             occupancy.Rebuild(state);
-            RestoreTraffic();
+            RestoreTraffic(retimedTraffic);
             EnsureTrafficNetwork();
         }
 
