@@ -26,9 +26,10 @@ namespace PersistentCity.Core
         private bool finished, restartPending;
         private IEnumerator<bool>? snapshot;
         private CityState? snapshotState;
+        private double snapshotMinute;
 
         public TravelTiming.TravelRetime? Pending { get; private set; }
-        public bool Holding => Pending != null;
+        public bool Holding => Pending != null || snapshot != null;
         public int Restarts { get; private set; }
         public int Slices { get; private set; }
         public int SnapshotSlices { get; private set; }
@@ -47,11 +48,13 @@ namespace PersistentCity.Core
             if (Pending != null && Pending.Stale) { Pending = null; Restarts++; restartPending = true; }
             if (Pending == null)
             {
-                if (snapshot == null || !ReferenceEquals(snapshotState, state))
+                if (snapshot != null && (!ReferenceEquals(snapshotState, state) || snapshotMinute != state.Minute))
+                { snapshot = null; snapshotState = null; Restarts++; restartPending = true; }
+                if (snapshot == null)
                 {
                     if (finished) Reset();
                     snapshot = state.PrepareForSaveInSteps(SnapshotLinksPerStep);
-                    snapshotState = state;
+                    snapshotState = state; snapshotMinute = state.Minute;
                 }
                 long started = Stopwatch.GetTimestamp();
                 long deadline = started + (long)(budgetMilliseconds * Stopwatch.Frequency / 1000);
@@ -66,7 +69,7 @@ namespace PersistentCity.Core
                     }
                 }
                 snapshot = null; snapshotState = null;
-                if (SnapshotSlices > 0) { CountSlice(started); SnapshotSlices++; }
+                CountSlice(started);
                 bool restarted = restartPending;
                 restartPending = false;
                 Pending = TravelTiming.Begin(state, walkMetresPerSecond, nativeRate);

@@ -35,7 +35,32 @@ public sealed class Gr5RetimeSnapshotTests
         int count = 0;
         while (true) { Assert.True(steps.MoveNext()); count++; if (steps.Current) break; }
         Assert.True(count > 100, count.ToString());
+        Assert.NotSame(whole.Traffic, sliced.Traffic);
+        whole.SnapshotSynchronizer = null;
+        sliced.SnapshotSynchronizer = null;
+        var capturedTraffic = sliced.Traffic;
         Assert.Equal(RushSpikeReplay.Sha(SaveCodec.Write(whole)), RushSpikeReplay.Sha(SaveCodec.Write(sliced)));
+        Assert.Same(capturedTraffic, sliced.Traffic);
+        sliced.Traffic!.Links[sliced.Traffic.Links.Count / 2].NextDischargeAt += 0.5;
+        Assert.NotEqual(RushSpikeReplay.Sha(SaveCodec.Write(whole)), RushSpikeReplay.Sha(SaveCodec.Write(sliced)));
+    }
+
+    [Fact]
+    public void AnAccountingBoundaryDuringTheSnapshotRestartsItAtTheNewClock()
+    {
+        var (state, simulator) = City();
+        var driver = new ClockRetimeDriver();
+        double rate = state.TravelClockRate * 2;
+        Assert.Equal(ClockRetimeOutcome.Preparing, driver.Update(state, rate, false, 2, 0));
+        Assert.Null(driver.Pending);
+        Assert.True(driver.Holding);
+        simulator.AdvanceTo(state.Minute + 0.1, int.MaxValue);
+        ClockRetimeOutcome outcome;
+        do outcome = driver.Update(state, rate, false, 2, 0);
+        while (outcome == ClockRetimeOutcome.Preparing && driver.Pending == null);
+        Assert.Equal(ClockRetimeOutcome.Restarted, outcome);
+        Assert.Equal(1, driver.Restarts);
+        Assert.Equal(state.Minute, state.Traffic!.Clock);
     }
 
     [Fact]
@@ -63,7 +88,7 @@ public sealed class Gr5RetimeSnapshotTests
             outcome = driver.Update(state, state.TravelClockRate * 2, false, 2, budget);
             updates.Add(Milliseconds(started));
         }
-        while (outcome == ClockRetimeOutcome.Preparing && !driver.Holding);
+        while (outcome == ClockRetimeOutcome.Preparing && driver.Pending == null);
         Assert.Equal(ClockRetimeOutcome.Began, outcome);
         int slices = driver.SnapshotSlices;
         driver.Cancel();
