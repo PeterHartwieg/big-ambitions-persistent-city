@@ -163,6 +163,7 @@ namespace PersistentCity.Runtime
         internal readonly Dictionary<string, (ParkedCar Car, CarState? State)> Parked = new();
         internal int ParkedRefreshes;
         internal int ParkedPlacementLimit = int.MaxValue;
+        internal readonly HashSet<string> Blocked = new();
         internal bool ShowParked(IReadOnlyList<ParkedCar> wanted, Func<string, CarState?> car)
         {
             ParkedRefreshes++;
@@ -175,6 +176,7 @@ namespace PersistentCity.Runtime
                 keep.Add(entry.CarId);
                 if (Parked.TryGetValue(entry.CarId, out var shown) && Position.Distance(shown.Car.At, entry.At) <= .01) continue;
                 if (placed >= ParkedPlacementLimit) { complete = false; continue; }
+                if (Blocked.Contains(entry.CarId)) continue;
                 placed++;
                 Parked[entry.CarId] = (entry, car(entry.CarId));
             }

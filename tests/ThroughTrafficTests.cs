@@ -317,4 +317,48 @@ public sealed class ThroughTrafficTests
         restored.AdvanceTo(120, 10000);
         Assert.Equal("resident", done);
     }
+
+    private static int MainThreadTrees(CitySimulator city)
+    {
+        var state = typeof(CitySimulator).GetField("throughTraffic", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!.GetValue(city);
+        var routes = (ThroughTrafficRoutes?)state!.GetType().GetField("Routes", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!.GetValue(state);
+        return routes?.MainThreadTrees ?? 0;
+    }
+
+    private static (string Save, int Yields, int Trees) Sliced(bool hold)
+    {
+        var city = City();
+        city.AttachThroughTraffic(new ThroughTrafficSettings(0.5));
+        int yields = 0, trees = 0;
+        using var gate = new System.Threading.ManualResetEventSlim(!hold);
+        ThroughTrafficRoutes.HoldPrewarm = gate;
+        try
+        {
+            for (double minute = 1440; minute <= 1440 + 150; minute += 0.25)
+            {
+                if (hold && minute >= 1440 + 100) gate.Set();
+                for (int unit = 0; unit < 200; unit++)
+                {
+                    var result = city.AdvanceFrameSlice(minute, 1);
+                    if (result.ThroughRoutePending) { yields++; if (!gate.IsSet) break; System.Threading.Thread.Sleep(1); continue; }
+                    if (result.CaughtUp) break;
+                }
+                trees = Math.Max(trees, MainThreadTrees(city));
+                if (hold && !gate.IsSet) Assert.Equal(0, MainThreadTrees(city));
+            }
+            while (!city.AdvanceFrameSlice(1440 + 150, 1).CaughtUp) System.Threading.Thread.Sleep(1);
+        }
+        finally { gate.Set(); ThroughTrafficRoutes.HoldPrewarm = null; }
+        city.SynchronizeSnapshot();
+        return (SaveCodec.Write(city.State), yields, trees);
+    }
+
+    [Fact]
+    public void ADelayedRoutePrewarmYieldsTheThroughCarWithoutSearchingOnTheMainThreadAndKeepsTheCity()
+    {
+        var held = Sliced(true);
+        var plain = Sliced(false);
+        Assert.True(held.Yields > 0, "no through car waited for its route");
+        Assert.Equal(plain.Save, held.Save);
+    }
 }

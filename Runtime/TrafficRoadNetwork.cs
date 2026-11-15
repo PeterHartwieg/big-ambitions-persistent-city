@@ -147,7 +147,7 @@ namespace PersistentCity.Runtime
                         stage = Stage.Constructing; return false;
                     case Stage.Constructing:
                         if (!construction!.IsCompleted) return false;
-                        constructed = construction.GetAwaiter().GetResult();
+                        constructed = construction.GetAwaiter().GetResult(); construction = null;
                         snapshot = Array.Empty<TrafficNetworkNode>();
                         stage = Stage.ValidateJunctions; validationCursor = 0; continue;
                     case Stage.ValidateJunctions:

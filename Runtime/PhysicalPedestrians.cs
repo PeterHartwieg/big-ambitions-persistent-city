@@ -130,8 +130,9 @@ namespace PersistentCity.Runtime
                 else if (!immediate)
                 {
                     PhysicalAllocation.Mark();
-                    var grown = Grow();
+                    var grown = Grow(out bool failed);
                     PhysicalAllocation.Detail(PersistentCity.Core.GcAllocationSegment.PhysicalSpawnGrow);
+                    if (failed) return false;
                     if (grown != null)
                     {
                         idle.Return(grown, default, Time.unscaledTime);
@@ -221,11 +222,12 @@ namespace PersistentCity.Runtime
             return true;
         }
 
-        private ThirdPersonCharacter? Grow()
+        private ThirdPersonCharacter? Grow(out bool failed)
         {
+            failed = false;
             if (growing == null)
             {
-                if (!Staged()) return null;
+                if (!Staged()) { failed = true; return null; }
                 growing = UnityEngine.Object.InstantiateAsync(prefab!, staging!.transform);
                 GrowsStarted++;
                 return null;
@@ -236,9 +238,11 @@ namespace PersistentCity.Runtime
             if (made == null || made.Length != 1 || made[0] == null)
             {
                 if (made != null) foreach (var extra in made) if (extra != null) UnityEngine.Object.Destroy(extra);
-                return null;
+                failed = true; return null;
             }
-            return Adopt(made[0]);
+            var adopted = Adopt(made[0]);
+            failed = adopted == null;
+            return adopted;
         }
 
         private void CancelGrow()

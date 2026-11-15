@@ -749,7 +749,6 @@ namespace PersistentCity.Runtime
                 if (showing && Position.Distance(shown.At, entry.At) <= .01) { shown.FadeOut = double.NaN; continue; }
                 if (placed >= ParkedPlacementsPerRefresh) { complete = false; continue; }
                 if (showing) ReleaseParked(shown);
-                placed++;
                 var state = car(entry.CarId);
                 if (state == null || !SceneReady || !CarAppearance.TryModel(state, modelNameList ??= () => modelNames, out string modelId)
                     || !models.TryGetValue(modelId, out var model) || model.Refused) continue;
@@ -762,6 +761,7 @@ namespace PersistentCity.Runtime
                 if (instance.CanFade) instance.SetFade(0); else body.FadeIn = BodyFade.FadeInSeconds;
                 instance.Root.SetActive(true);
                 parked.Add(entry.CarId, body);
+                placed++;
             }
             parkedScratch.Clear();
             foreach (var shown in parked.Values) parkedScratch.Add(shown);

@@ -214,7 +214,7 @@ namespace PersistentCity.Runtime
         private readonly List<TransportRoadNode> nodes = new List<TransportRoadNode>();
         private readonly Dictionary<(int X, int Z), List<int>> cells = new Dictionary<(int, int), List<int>>();
         private static RoadRoutes? donor;
-        private readonly TrafficRoadNetwork? trafficDonor;
+        private TrafficRoadNetwork? trafficDonor;
         public bool AdoptedSnapshot { get; }
         internal static void ForgetSnapshot() => donor = null;
         private readonly Waypoint[] waypoints;
@@ -437,7 +437,7 @@ namespace PersistentCity.Runtime
             double remaining = 2 - ((Stopwatch.GetTimestamp() - watchStarted) * 1000.0 / Stopwatch.Frequency);
             int remainingUnits = 2048 - (copiedNodes - startedAt);
             if (remaining <= 0 || remainingUnits <= 0) return false;
-            if (trafficBuilder == null) trafficBuilder = new TrafficRoadNetwork(TopologyId, nodes, waypoints, scene, access, clockRate, SnapshotNodeCurrent, trafficDonor);
+            if (trafficBuilder == null) { trafficBuilder = new TrafficRoadNetwork(TopologyId, nodes, waypoints, scene, access, clockRate, SnapshotNodeCurrent, trafficDonor); trafficDonor = null; }
             if (!trafficBuilder.Prepare(remaining, remainingUnits))
             { if (trafficBuilder.Stale && !unsafeTopology) TrafficInvalid(); return false; }
             TrafficNetwork = trafficBuilder.Network;

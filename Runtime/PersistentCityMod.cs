@@ -511,7 +511,7 @@ namespace PersistentCity.Runtime
                     Unit(result.PlanningPending ? "citizen-route-begin" : result.TrafficEvents > 0 ? "traffic"
                         : result.FoodContinuationEvents > 0 ? "food-continuation" : result.CitizenEvents > 0 ? "citizen" : "other");
                     if (result.PlanningPending) { pendingAtEnd = elapsed >= timeBudget; if (pendingAtEnd) break; continue; }
-                    if (result.CaughtUp || citizenEvents >= citizenLimit || elapsed >= timeBudget) break;
+                    if (result.CaughtUp || result.ThroughRoutePending || citizenEvents >= citizenLimit || elapsed >= timeBudget) break;
                 }
             }
             finally { active.SynchronizeSnapshot(); NativeCityClock.ObserveSimulationLag(target, active.State.Minute); }
