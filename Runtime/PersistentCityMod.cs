@@ -341,7 +341,7 @@ namespace PersistentCity.Runtime
                     RecordRoutingFrame(prepareElapsed, 0, false); waitingFrames++;
                     PhysicalAllocation.Begin(gcSampler);
                     try { RunPhysical(physicalUpdate ??= () => physical?.Update()); }
-                    finally { PhysicalAllocation.End(); }
+                    finally { PhysicalAllocation.End(GcAllocationSegment.PhysicalUnattributedWaiting); }
                     inspector.Suspend(); return;
                 }
                 long closureStarted = Stopwatch.GetTimestamp();
@@ -375,7 +375,7 @@ namespace PersistentCity.Runtime
                         if (NativeInteriorCityView.Configured) NativeInteriorCityView.FailClosed();
                         log?.Warn("Physical population unavailable; ordinary spawning restored, persistent background simulation remains active: " + error);
                     }
-                    finally { PhysicalAllocation.End(); }
+                    finally { PhysicalAllocation.End(GcAllocationSegment.PhysicalUnattributedSetup); }
                 }
                 ModFrames.Charge(GcAllocationSegment.ModPhysicalSetup);
                 PhysicalAllocation.Begin(gcSampler);
@@ -480,6 +480,7 @@ namespace PersistentCity.Runtime
                         long sliceStarted = Stopwatch.GetTimestamp();
                         long queriesBefore = routes?.Metrics.NavMeshPathQueries ?? 0;
                         bool finished = active.ContinuePlanning(Math.Max(0, timeBudget - elapsed));
+                        AdvanceAllocation.Sub(finished ? GcAllocationSegment.AdvancePlanningFinish : GcAllocationSegment.AdvancePlanningSlice);
                         AdvanceAllocation.Detail(GcAllocationSegment.AdvancePlanning);
                         double slice = (Stopwatch.GetTimestamp() - sliceStarted) * MillisecondsPerTimestamp;
                         planningSlices++; planningMilliseconds += slice;
@@ -497,6 +498,7 @@ namespace PersistentCity.Runtime
                         continue;
                     }
                     var result = active.AdvanceFrameSlice(target, 1);
+                    AdvanceAllocation.Sub(GcPauseSampler.AdvanceEventSegment(result.TrafficEvents, result.FoodContinuationEvents, result.CitizenEvents, result.PlanningPending));
                     AdvanceAllocation.Detail(GcAllocationSegment.AdvanceEvents);
                     events += result.Events;
                     citizenEvents += result.CitizenEvents;

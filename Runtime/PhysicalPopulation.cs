@@ -118,11 +118,15 @@ namespace PersistentCity.Runtime
             RefreshVendorMeals();
             this.pedestrianLimit = pedestrianLimit; this.vehicleLimit = vehicleLimit; this.radius = radius;
             places = simulation.State.Places.ToDictionary(p => p.Id, StringComparer.Ordinal);
+            PhysicalAllocation.Detail(GcAllocationSegment.PhysicalSetupPlaces);
             pedestrians = new PhysicalPedestrians(parent, pedestrianLimit) { BeforeNavigation = BoundWalkers };
+            PhysicalAllocation.Detail(GcAllocationSegment.PhysicalSetupBodies);
             vehicles = new PhysicalVehicles(routes.ResolveWaypoint, vehicleLimit);
             vehicles.CommandLimit = CommandLimit;
             vehicles.NativeTargetPermission = NativeTargetPermission;
+            PhysicalAllocation.Detail(GcAllocationSegment.PhysicalSetupVehicles);
             ambient = new AmbientPedestrians(dependency, simulation.State.SourceIdentities);
+            PhysicalAllocation.Detail(GcAllocationSegment.PhysicalSetupAmbient);
             try
             {
                 if (!vehicles.Ready) throw new InvalidOperationException("Own cars: " + vehicles.LastError);
@@ -134,8 +138,11 @@ namespace PersistentCity.Runtime
                     pedestrians.Release(body!); tested = true; break;
                 }
                 if (!tested) throw new InvalidOperationException("No native pedestrian body passed appearance/NavMesh preflight.");
+                PhysicalAllocation.Detail(GcAllocationSegment.PhysicalSetupPreflight);
                 if (!vehicles.Activate()) throw new InvalidOperationException("Native traffic is not ready or has no ordinary car model.");
+                PhysicalAllocation.Detail(GcAllocationSegment.PhysicalSetupVehicles);
                 ambient.Activate();
+                PhysicalAllocation.Detail(GcAllocationSegment.PhysicalSetupAmbient);
                 if (!ambient.Active) throw new InvalidOperationException("Pedestrian activation: " + ambient.LastError);
                 active = true;
                 simulation.ActivityObserved += OnOptionalDeparture;

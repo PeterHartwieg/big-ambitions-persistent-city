@@ -124,7 +124,7 @@ public sealed class BodyReuseAttributionTests
             sampler.Allocated(GcAllocationSegment.Mod, start, counter, false);
         }
         long outer = 0;
-        for (int i = (int)GcAllocationSegment.ModPrelude; i < GcPauseSampler.Segments; i++) outer += sampler.SegmentBytes((GcAllocationSegment)i);
+        for (int i = (int)GcAllocationSegment.ModPrelude; i < GcPauseSampler.Segments; i++) if (!GcPauseSampler.IsSub((GcAllocationSegment)i)) outer += sampler.SegmentBytes((GcAllocationSegment)i);
         Assert.Equal(sampler.SegmentBytes(GcAllocationSegment.Mod),
             outer + sampler.SegmentBytes(GcAllocationSegment.Physical) + sampler.SegmentBytes(GcAllocationSegment.Advance));
         Assert.Equal(40000, sampler.SegmentBytes(GcAllocationSegment.ModRlo));
@@ -618,7 +618,7 @@ public sealed class BodyLeaseAndScopeTests
         }
         GC.KeepAlive(keep);
         long outer = 0;
-        for (int i = (int)GcAllocationSegment.ModPrelude; i < GcPauseSampler.Segments; i++) outer += sampler.SegmentBytes((GcAllocationSegment)i);
+        for (int i = (int)GcAllocationSegment.ModPrelude; i < GcPauseSampler.Segments; i++) if (!GcPauseSampler.IsSub((GcAllocationSegment)i)) outer += sampler.SegmentBytes((GcAllocationSegment)i);
         long mod = sampler.SegmentBytes(GcAllocationSegment.Mod), physical = sampler.SegmentBytes(GcAllocationSegment.Physical);
         Assert.True(sampler.SegmentBytes(GcAllocationSegment.PhysicalSpawnAppearance) >= 4 * 400_000);
         Assert.Equal(mod, outer + physical + sampler.SegmentBytes(GcAllocationSegment.Advance));

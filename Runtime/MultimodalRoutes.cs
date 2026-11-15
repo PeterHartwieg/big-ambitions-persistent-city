@@ -75,7 +75,8 @@ namespace PersistentCity.Runtime
             else
             {
                 var reviewed = new RloRoadSpeedOverrides(dependency);
-                roadSpeeds = new NativeRoadSpeeds(() => NativeRoadSpeeds.Copy(reviewed.Capture(), pair => (pair.OriginalKilometresPerHour, pair.EffectiveKilometresPerHour)),
+                roadSpeeds = new NativeRoadSpeeds(NativeRoadSpeeds.Reusing<RloRoadSpeedOverride>(reviewed.CaptureInto, RloRoadSpeedOverrides.NewBuffer,
+                    pair => (pair.OriginalKilometresPerHour, pair.EffectiveKilometresPerHour)),
                     error => error is RloRoadSpeedsNotReadyException ? error.Message : null);
             }
             walking = new WalkingRoutes(walkingMetresPerMinute, (from, to) => access != null && access.ClearSegment(from, to));
@@ -135,11 +136,13 @@ namespace PersistentCity.Runtime
         public void BeginTrafficClosureBatch()
         {
             if (closureRoads != null) throw new InvalidOperationException("Traffic closure batch cannot be nested.");
+            ModFrames.Detail(GcAllocationSegment.ModClosuresNetwork);
             roads?.BeginTrafficClosureBatch();
             closureRoads = roads;
         }
         public void EndTrafficClosureBatch()
         {
+            ModFrames.Detail(GcAllocationSegment.ModClosuresLinks);
             closureRoads?.EndTrafficClosureBatch();
             closureRoads = null;
         }
@@ -178,6 +181,7 @@ namespace PersistentCity.Runtime
             {
                 try { roads.Sweep(1, 1024); }
                 catch (RoadSpeedsWaitingException) { return false; }
+                finally { ModFrames.Detail(GcAllocationSegment.ModRoutesSweep); }
                 return roads.IsCurrent;
             }
             if (!routeEventHeld)
@@ -226,6 +230,7 @@ namespace PersistentCity.Runtime
             if (!roads.Prepare()) return false;
             try { roads.Sweep(1, 1024); }
             catch (RoadSpeedsWaitingException) { return false; }
+            finally { ModFrames.Detail(GcAllocationSegment.ModRoutesSweep); }
             return roads.IsCurrent;
         }
         public GleyTrafficSystem.Waypoint? ResolveWaypoint(string topology, int index) => roads?.ResolveWaypoint(topology, index);

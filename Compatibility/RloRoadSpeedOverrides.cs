@@ -66,10 +66,27 @@ namespace PersistentCity.Compatibility
 
         public IReadOnlyDictionary<object, RloRoadSpeedOverride> Capture()
         {
-            if (bridge != null) return CaptureThroughApi(bridge);
+            var scratch = captureScratch;
             try
             {
-                var result = new Dictionary<object, RloRoadSpeedOverride>(References.Instance);
+                CaptureInto(scratch);
+                return scratch.Count == 0 ? Empty
+                    : new ReadOnlyDictionary<object, RloRoadSpeedOverride>(new Dictionary<object, RloRoadSpeedOverride>(scratch, References.Instance));
+            }
+            finally { scratch.Clear(); }
+        }
+
+        private readonly Dictionary<object, RloRoadSpeedOverride> captureScratch = new Dictionary<object, RloRoadSpeedOverride>(References.Instance);
+
+        public static Dictionary<object, RloRoadSpeedOverride> NewBuffer() => new Dictionary<object, RloRoadSpeedOverride>(References.Instance);
+
+        public void CaptureInto(Dictionary<object, RloRoadSpeedOverride> result)
+        {
+            if (result == null) throw new ArgumentNullException(nameof(result));
+            result.Clear();
+            if (bridge != null) { CaptureThroughApi(bridge, result); return; }
+            try
+            {
                 object? director = instance.GetValue(null);
                 if (director != null)
                 {
@@ -96,7 +113,6 @@ namespace PersistentCity.Compatibility
                         }
                     }
                 }
-                return new ReadOnlyDictionary<object, RloRoadSpeedOverride>(result);
             }
             catch (Exception error) when (!(error is InvalidOperationException))
             { throw Invalid("could not capture the reviewed fault speed snapshot", error); }
@@ -105,18 +121,16 @@ namespace PersistentCity.Compatibility
         private static readonly IReadOnlyDictionary<object, RloRoadSpeedOverride> Empty =
             new ReadOnlyDictionary<object, RloRoadSpeedOverride>(new Dictionary<object, RloRoadSpeedOverride>(References.Instance));
 
-        private IReadOnlyDictionary<object, RloRoadSpeedOverride> CaptureThroughApi(RloBridge api)
+        private void CaptureThroughApi(RloBridge api, Dictionary<object, RloRoadSpeedOverride> result)
         {
             try
             {
                 RloBridge.Status status = api.ReadSlowedLanes(lanes, originals, currents);
-                if (status == RloBridge.Status.Off) return Empty;
+                if (status == RloBridge.Status.Off) return;
                 if (status == RloBridge.Status.NotYet || status == RloBridge.Status.Refreshing)
                     throw new RloRoadSpeedsNotReadyException("RLO road speed overrides: ReadSlowedLanes: " + RloBridge.Describe(status));
                 if (status != RloBridge.Status.Ready) throw Invalid("ReadSlowedLanes: " + RloBridge.Describe(status));
                 if (originals.Count != lanes.Count || currents.Count != lanes.Count) throw Invalid("ReadSlowedLanes returned lists of different lengths");
-                if (lanes.Count == 0) return Empty;
-                var result = new Dictionary<object, RloRoadSpeedOverride>(References.Instance);
                 for (int i = 0; i < lanes.Count; i++)
                 {
                     object? point = lanes[i];
@@ -125,7 +139,6 @@ namespace PersistentCity.Compatibility
                     if (result.ContainsKey(point)) throw Invalid("multiple faults claim the same native lane reference");
                     result.Add(point, new RloRoadSpeedOverride(originals[i], currents[i]));
                 }
-                return new ReadOnlyDictionary<object, RloRoadSpeedOverride>(result);
             }
             finally { lanes.Clear(); originals.Clear(); currents.Clear(); }
         }

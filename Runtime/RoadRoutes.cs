@@ -355,10 +355,12 @@ namespace PersistentCity.Runtime
 
         public bool Prepare()
         {
-            speeds.Refresh();
+            speeds.RefreshForFrame(Time.frameCount);
+            ModFrames.Detail(GcAllocationSegment.ModRoutesSpeeds);
             if (speeds.Waiting != null) return false;
             try { return PrepareNodes(); }
             catch (RoadSpeedsWaitingException) { return false; }
+            finally { ModFrames.Detail(GcAllocationSegment.ModRoutesNodes); }
         }
 
         private bool PrepareNodes()

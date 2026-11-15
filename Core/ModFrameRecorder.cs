@@ -48,7 +48,7 @@ namespace PersistentCity.Core
         public double TotalMilliseconds(GcAllocationSegment segment) => totalTicks[(int)segment] / ticksPerMillisecond;
 
         public static bool Overlaps(GcAllocationSegment segment) => segment == GcAllocationSegment.PhysicalSpawnRandomize
-            || segment == GcAllocationSegment.PhysicalSpawnBake || segment == GcAllocationSegment.PhysicalSpawnGrow;
+            || segment == GcAllocationSegment.PhysicalSpawnBake || segment == GcAllocationSegment.PhysicalSpawnGrow || GcPauseSampler.IsSub(segment);
 
         public void Arm(double ticksPerSecond)
         {
@@ -129,6 +129,7 @@ namespace PersistentCity.Core
                 if (Overlaps(segment))
                 {
                     if (ticks[i] > detailTicks) { detailTicks = ticks[i]; row.Detail = i; }
+                    if (sampler != null && GcPauseSampler.IsOuter(segment) && (ticks[i] > 0 || bytes[i] > 0)) sampler.Outer(segment, bytes[i], countersValid);
                     continue;
                 }
                 row.Bytes += bytes[i];
