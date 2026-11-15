@@ -3985,10 +3985,10 @@ Raw evidence manifest: `<stage>/raw-evidence-manifest.json`, SHA-256 `07d59fbacb
 | Autosave / SaveCost | Original native 5 minutes / 3 saves, prevent_autosave=false. #70 guard suppressed before/after each window and after loads. SaveCostDiagnostics requested=false; writerSchema=1. No manual save or latency measurement. |
 | Lease / resources | Free/stopped initially; acquired 2026-11-15T06:49:41.398516Z. Before start 42.2 GiB disk / 40% reported memory free. Shared host; no other-session intervention or Windows contact. |
 
-Printed rollback (stopped, leased), verbatim:
+Printed rollback (stopped, leased), verbatim apart from `<home>` substituted for the home-directory path:
 
 ```sh
-rm -rf "/Users/peterhartwieg/Library/Application Support/com.hovgaardgames.bigambitions.agenttests.mac/ModsLocal/PersistentCity" && cp -Rp "/Users/peterhartwieg/Library/Application Support/BigAmbitionsAgentTestsMac/receipt-backups/20261115T065052Z/mod" "/Users/peterhartwieg/Library/Application Support/com.hovgaardgames.bigambitions.agenttests.mac/ModsLocal/PersistentCity" && cp "/Users/peterhartwieg/Library/Application Support/BigAmbitionsAgentTestsMac/receipt-backups/20261115T065052Z/install.json" "/Users/peterhartwieg/Library/Application Support/BigAmbitionsAgentTestsMac/install.json"
+rm -rf "<home>/Library/Application Support/com.hovgaardgames.bigambitions.agenttests.mac/ModsLocal/PersistentCity" && cp -Rp "<home>/Library/Application Support/BigAmbitionsAgentTestsMac/receipt-backups/20261115T065052Z/mod" "<home>/Library/Application Support/com.hovgaardgames.bigambitions.agenttests.mac/ModsLocal/PersistentCity" && cp "<home>/Library/Application Support/BigAmbitionsAgentTestsMac/receipt-backups/20261115T065052Z/install.json" "<home>/Library/Application Support/BigAmbitionsAgentTestsMac/install.json"
 ```
 
 Cleanup used the equivalent move-aside/copy-back form, preserving the staged candidate outside the profile and restoring the complete original mod plus exact receipt.
@@ -4041,7 +4041,7 @@ Fixture `FT GR5 13f Timing v1`, 1,000 residents / 2,000 visitors, player x=215,z
 | gen0 | 8 / 6 | 7 / 6 | -1 / 0 |
 | pause p95 ms | 27.888 / 37.301 | 43.403 / 38.929 | +15.515 / +1.628 |
 
-15a street began at 16:04 after its load wait; 15b keeps the city paused through load waits and starts street at 15:30. Shared-host observations, not a controlled A/B comparison. Host boundaries below record other load; this session ran no build/test during measurements.
+15a street began at 16:04 after its load wait; 15b keeps the city paused through load waits and starts street at 15:30. Shared-host observations, not a controlled A/B comparison. Host boundaries below record other load; this session ran no build/test during measurements. A concurrent Rig-bot perf-attribution session, `20261115-081854-rig-gr5-perf-attribution`, ran on the same Mac from about 08:18 CET (07:18Z), overlapping the second half of gc-night (07:13:08Z to 07:23:10Z) and all of street (07:27:56Z to 07:38:02Z). Night and street timings are shared-host measurements affected by that overlap.
 
 ### Every allocating segment and sub-segment
 
