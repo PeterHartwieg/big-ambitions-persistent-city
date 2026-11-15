@@ -305,7 +305,8 @@ namespace PersistentCity.Runtime
                 ModFrames.Charge(GcAllocationSegment.ModOptionalStops);
                 double clockRate = NativeTravelPace.ClockRate;
                 var retime = ClockRetimeStages.Next(clockRate, simulation.State.TravelClockRate, physical != null);
-                if (retime != ClockRetimeStage.None)
+                if (retime == ClockRetimeStage.None) retimeReleaseMilliseconds = 0;
+                else
                 {
                     long retimeStarted = Stopwatch.GetTimestamp();
                     if (retime == ClockRetimeStage.ReleaseBodies)
