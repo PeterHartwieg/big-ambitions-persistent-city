@@ -87,4 +87,25 @@ public sealed class Gr5RetimeReleaseTests
             Assert.True(sliced.ReleasingForRetime);
         }
     }
+
+    [Fact]
+    public void AnAmbientRestoreThatNeedsSeveralSlicesHoldsTheReleaseUntilItFinishes()
+    {
+        var (bodies, _) = Walkers(12);
+        using (bodies)
+        {
+            var ambient = AmbientPedestrians.Last!;
+            ambient.RestoreSlices = 3;
+            while (bodies.HasBodies) Assert.False(bodies.ReleaseForRetime(long.MaxValue));
+            int updates = 0;
+            while (ambient.DisposeSlices == 0) { Assert.False(bodies.ReleaseForRetime(long.MaxValue)); updates++; Assert.True(updates < 4); }
+            Assert.False(bodies.ReleaseForRetime(long.MaxValue));
+            Assert.False(bodies.ReleaseForRetime(long.MaxValue));
+            Assert.Equal(3, ambient.DisposeSlices);
+            int after = 0;
+            while (!bodies.ReleaseForRetime(long.MaxValue)) after++;
+            Assert.Equal(2, after);
+            Assert.Equal(3, ambient.DisposeSlices);
+        }
+    }
 }

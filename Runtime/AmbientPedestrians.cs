@@ -398,6 +398,11 @@ namespace PersistentCity.Runtime
                     catch (Exception error) { restoreError = error; restoring = null; }
                 }
             }
+            else if (restoring != null && restoreIndex < restoring.Count)
+            {
+                try { RefreshReservations(force: true); }
+                catch (Exception error) { if (restoreError == null) restoreError = error; restoring = null; }
+            }
             var pending = restoring;
             while (pending != null && restoreIndex < pending.Count)
             {
