@@ -8,7 +8,7 @@ Detailed specs: [F8 §7](https://github.com/PeterHartwieg/big-ambitions-persiste
 
 ## Latest evidence
 
-- **15 November h, Mac (rig 16d), build `6ac902c1`:** 3 passed / 3 partial / 4 failed / 4 NOT RUN groups; #284 checks 1–5 and #246 re-baseline; all timing PROVISIONAL (shared Mac); restored ([15h results](#rig-results--15-november-2026-e-mac-rig-16d-282-checks-1-4-246-check-4-re-baseline-at-6ac902c1)).
+- **15 November h, Mac (rig 16d), build `6ac902c1`:** 3 passed / 3 partial / 4 failed / 4 NOT RUN groups; #284 checks 1–5 and #246 re-baseline; all timing PROVISIONAL (shared Mac); restored ([15h results](#rig-results--15-november-2026-h-mac-rig-16d-284-checks-1-5-246-check-4-re-baseline-at-6ac902c1)).
 
 - **15 November g, Mac, build `c9378fc`:** 3 passed / 2 partial / 4 failed / 5 NOT RUN groups; #282 checks 1–5 / #246-4–5; timing **PROVISIONAL (shared Mac)**; restored ([15g results](#rig-results--15-november-2026-e-mac-279-checks-1-4-246-check-4-re-baseline-at-c9378fc)).
 
@@ -8172,9 +8172,9 @@ Raw report records and hashes:
 
 Raw JSON is kept in `<stage>`; no full record is added to Git because the combined GC records exceed 20 KB. All exported segment values, retained mod-work spikes, pause markers and window-boundary host evidence are excerpted above.
 
-## Rig results — 15 November 2026 e, Mac (rig 16d; #282 checks 1-4, #246 check 4 re-baseline at 6ac902c1)
+## Rig results — 15 November 2026 h, Mac (rig 16d; #284 checks 1-5, #246 check 4 re-baseline at 6ac902c1)
 
-This is run **persistent-city-rig-2026-11-15h-mac**, role `rig_test`, where `mac`, and tests **#284 checks 1–5**. The section title retains the launch request’s wording. All timing, GC and street numbers are **PROVISIONAL (shared Mac)**. The save-route-A writer session `20261115-165535-mac-gr5-save-background-writer`, branch `codex/mac-gr5-save-background-writer`, PR #286, overlapped this run. These are not clean baselines or controlled A/B comparisons.
+This is run **persistent-city-rig-2026-11-15h-mac**, role `rig_test`, where `mac`, and tests **#284 checks 1–5**. All timing, GC and street numbers are **PROVISIONAL (shared Mac)**. The save-route-A writer session `20261115-165535-mac-gr5-save-background-writer`, branch `codex/mac-gr5-save-background-writer`, PR #286, overlapped this run. These are not clean baselines or controlled A/B comparisons.
 
 Raw evidence stays at `~/HART-Builds/persistent-city-rig-2026-11-15h-mac` (`<stage>` below). The report copy is `~/Coding_Projects/.agent-logs/persistent-city-rig-2026-11-15h-mac.md`. No raw logs, saves, binaries or new Markdown paths are committed. The markdown ban requires appending here.
 
