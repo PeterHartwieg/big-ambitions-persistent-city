@@ -18,64 +18,76 @@ public sealed class Gr5RetimeSliceTests
         public readonly CityState State;
         public CitySimulator City;
         public readonly bool Sliced;
+        public readonly ClockRetimeDriver Driver = new ClockRetimeDriver();
+        public double Budget = .3;
         public bool Bodies = true;
         public int Events, Rebuilds, Slices, Restarts;
-        public TravelTiming.TravelRetime? Pending;
-        public ModUpdates(bool sliced)
+        public double SlowestRetimeUpdate, CommitUpdate, Rebuild;
+        public Action<ModUpdates>? WhilePreparing;
+        public ModUpdates(bool sliced, bool atFence = false)
         {
             Sliced = sliced;
             State = Gr5AllocationMeasure.RigCity();
             City = new CitySimulator(State, new Gr5AdvanceSegmentMeasure.Straight());
             City.AttachFoodMarket(new VisitorRoutineTests.Market { Shops = F5gPopulationFillTests.Shops(State) });
-            City.AdvanceTo(Math.Floor(State.Minute / 1440) * 1440 + 1440 + 12 * 60, int.MaxValue);
+            double noon = Math.Floor(State.Minute / 1440) * 1440 + 1440 + 12 * 60;
+            City.AdvanceTo(atFence ? Math.BitDecrement(noon + 1) : noon, int.MaxValue);
         }
-        public void Update(double nativeRate, double target, Action<CityState>? betweenSlices = null)
+        public void Invalidate()
+        {
+            if (State.Minute == Math.Floor(State.Minute)) City.AdvanceTo(Math.BitDecrement(State.Minute + 1), int.MaxValue);
+            else Assert.True(City.BeginAccountingObservations(Math.Floor(State.Minute) + 1));
+        }
+        public TravelTiming.TravelRetime? Pending => Driver.Pending;
+        public void Update(double nativeRate, double target)
         {
             double before = State.TravelClockRate; var city = City;
-            var stage = ClockRetimeStages.Next(nativeRate, State.TravelClockRate, Bodies);
-            if (stage == ClockRetimeStage.None) Pending = null;
-            if (stage == ClockRetimeStage.ReleaseBodies) Bodies = false;
-            else if (stage == ClockRetimeStage.RetimeAndRebuild)
+            if (!Sliced)
             {
-                if (!Sliced)
+                var stage = ClockRetimeStages.Next(nativeRate, State.TravelClockRate, Bodies);
+                if (stage == ClockRetimeStage.ReleaseBodies) { Bodies = false; return; }
+                if (stage == ClockRetimeStage.RetimeAndRebuild)
                 {
                     State.PrepareForSave();
                     TravelTiming.Apply(State, 1.4, nativeRate, out _);
                     City = City.RebuildRoutes(new Gr5AdvanceSegmentMeasure.Straight());
                     Rebuilds++;
-                }
-                else
-                {
-                    if (Pending != null && Pending.ClockRate != nativeRate) Pending = null;
-                    if (Pending == null) { State.PrepareForSave(); Pending = TravelTiming.Begin(State, 1.4, nativeRate)!; }
-                    for (int i = 0; i < 97 && !Pending.Ready; i++) Pending.Step(0);
-                    Slices++;
-                    if (Pending.Ready)
-                    {
-                        if (Pending.Commit())
-                        {
-                            City = City.RebuildRoutes(new Gr5AdvanceSegmentMeasure.Straight());
-                            Rebuilds++;
-                        }
-                        else Restarts++;
-                        Pending = null;
-                    }
-                    else betweenSlices?.Invoke(State);
+                    return;
                 }
             }
             else
             {
-                Bodies = true;
-                for (int unit = 0; unit < 64; unit++)
+                long started = System.Diagnostics.Stopwatch.GetTimestamp();
+                var outcome = Driver.Update(State, nativeRate, Bodies, 1.4, Budget);
+                if (outcome == ClockRetimeOutcome.ReleaseBodies) { Bodies = false; return; }
+                if (outcome != ClockRetimeOutcome.None)
                 {
-                    if (City.PlanningPending) { City.ContinuePlanning(1); continue; }
-                    var result = City.AdvanceFrameSlice(target, 1);
-                    Events += result.Events;
-                    if (result.CaughtUp) break;
+                    Slices++;
+                    if (outcome == ClockRetimeOutcome.Restarted) Restarts++;
+                    if (outcome == ClockRetimeOutcome.Committed)
+                    {
+                        long rebuild = System.Diagnostics.Stopwatch.GetTimestamp();
+                        City = City.RebuildRoutes(new Gr5AdvanceSegmentMeasure.Straight());
+                        Rebuild = Math.Max(Rebuild, (System.Diagnostics.Stopwatch.GetTimestamp() - rebuild) * 1000.0 / System.Diagnostics.Stopwatch.Frequency);
+                        Rebuilds++;
+                    }
+                    double ms = (System.Diagnostics.Stopwatch.GetTimestamp() - started) * 1000.0 / System.Diagnostics.Stopwatch.Frequency;
+                    SlowestRetimeUpdate = Math.Max(SlowestRetimeUpdate, ms);
+                    if (outcome == ClockRetimeOutcome.Committed) CommitUpdate = Math.Max(CommitUpdate, ms);
+                    Assert.True(State.TravelClockRate == before || !ReferenceEquals(city, City), "journeys were retimed without a rebuilt simulator");
+                    Assert.True(Pending == null || State.TravelClockRate == before, "a pending retime changed the city before its commit");
+                    if (Pending != null) WhilePreparing?.Invoke(this);
+                    return;
                 }
             }
-            Assert.True(State.TravelClockRate == before || !ReferenceEquals(city, City), "journeys were retimed without a rebuilt simulator");
-            Assert.True(Pending == null || State.TravelClockRate == before, "a pending retime changed the city before its commit");
+            Bodies = true;
+            for (int unit = 0; unit < 64; unit++)
+            {
+                if (City.PlanningPending) { City.ContinuePlanning(1); continue; }
+                var result = City.AdvanceFrameSlice(target, 1);
+                Events += result.Events;
+                if (result.CaughtUp) break;
+            }
         }
         public string Save() { City.SynchronizeSnapshot(); return SaveCodec.Write(State); }
     }
@@ -117,6 +129,66 @@ public sealed class Gr5RetimeSliceTests
         Assert.Equal(whole.Rebuilds, sliced.Rebuilds);
         Assert.Equal(0, sliced.Restarts);
         Assert.True(sliced.City.ActiveJourneyIndexMatchesState());
+        output.WriteLine("slowest retime update " + sliced.SlowestRetimeUpdate.ToString("0.00") + " ms, commit + rebuild update " + sliced.CommitUpdate.ToString("0.00") + " ms (rebuild " + sliced.Rebuild.ToString("0.00") + " ms)");
+        PerfGate.Under(sliced.CommitUpdate, 30, "retime commit and simulator rebuild");
+        PerfGate.Under(sliced.SlowestRetimeUpdate, 30, "slowest retime update");
+    }
+
+    [Fact]
+    public void AnAccountingBoundaryBetweenSlicesRestartsTheRetimeInSlicesAndMatchesTheUnslicedRetimeAtTheNewMinute()
+    {
+        var whole = new ModUpdates(false, atFence: true);
+        var sliced = new ModUpdates(true, atFence: true) { Budget = .1 };
+        double start = sliced.State.Minute;
+        Assert.Equal(start, whole.State.Minute);
+        Assert.True(start < Math.Ceiling(start));
+        int observed = 0;
+        sliced.WhilePreparing = mod =>
+        {
+            Assert.Equal(0, AccountingClock.Limit(!mod.Driver.Holding, Math.Floor(mod.State.Minute) + .5, 1));
+            if (observed >= 3 || mod.Driver.Pending!.Prepared < 200) return;
+            observed++;
+            mod.Invalidate();
+        };
+        Settle(sliced, 2, start + 10);
+        Assert.Equal(3, observed);
+        Assert.Equal(3, sliced.Restarts);
+        Assert.Equal(1, sliced.Rebuilds);
+        Assert.Equal(Math.Ceiling(start) + 1, sliced.State.Minute);
+        for (int i = 0; i < 3; i++) whole.Invalidate();
+        Settle(whole, 2, start + 10);
+        Assert.Equal(whole.Save(), sliced.Save());
+        output.WriteLine(sliced.Slices + " retime updates over 3 restarts, slowest " + sliced.SlowestRetimeUpdate.ToString("0.00") + " ms");
+        PerfGate.Under(sliced.SlowestRetimeUpdate, 30, "retime update after repeated invalidation");
+        sliced.WhilePreparing = null;
+        double target = sliced.State.Minute + 1;
+        whole.Update(2, target); sliced.Update(2, target);
+        Assert.Equal(whole.Save(), sliced.Save());
+    }
+
+    [Fact]
+    public void ACancelledRetimeForgetsItsRestartsAndTheNextRetimeStaysSliced()
+    {
+        var mod = new ModUpdates(true, atFence: true) { Budget = .1 };
+        int observed = 0;
+        mod.WhilePreparing = m =>
+        {
+            if (observed >= 2 || m.Driver.Pending!.Prepared < 100) return;
+            observed++;
+            m.Invalidate();
+        };
+        for (int i = 0; i < 400 && observed < 2; i++) mod.Update(2, mod.State.Minute);
+        mod.Update(2, mod.State.Minute);
+        Assert.Equal(2, mod.Driver.Restarts);
+        mod.Update(1, mod.State.Minute);
+        Assert.Null(mod.Pending);
+        Assert.Equal(0, mod.Driver.Restarts);
+        mod.WhilePreparing = null;
+        int before = mod.Slices;
+        Settle(mod, 2, mod.State.Minute);
+        Assert.Equal(1, mod.Rebuilds);
+        Assert.True(mod.Slices - before > 4, (mod.Slices - before).ToString());
+        Assert.Equal(0, mod.Driver.Restarts);
     }
 
     [Fact]
