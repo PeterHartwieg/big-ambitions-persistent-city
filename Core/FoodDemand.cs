@@ -259,17 +259,31 @@ namespace PersistentCity.Core
         {
             var person = consumers[intent.ConsumerId];
             Choose(intent, person, State.Businesses, business => quotes.TryGetValue(
-                Key(Routine ? intent.Id : person.Id, business.Id), out var quote) ? quote : null, State.Minute, Routine);
+                Key(Routine ? intent.Id : person.Id, business.Id), out var quote) ? quote : null, null, State.Minute, Routine);
         }
 
         public static void ChooseObserved(FoodConsumer person, IReadOnlyList<FoodBusiness> shops,
             IReadOnlyList<FoodTravelQuote> routes, FoodIntent intent, double minute,
             IReadOnlyDictionary<string, string>? refusals = null, MealKind mealKind = MealKind.Legacy, bool evaluateOnly = false)
+            => ChooseObserved(person, shops, routes, intent, minute, refusals, mealKind, evaluateOnly, null);
+
+        internal static void ChooseObserved(FoodConsumer person, IReadOnlyList<FoodBusiness> shops,
+            IReadOnlyList<FoodTravelQuote> routes, FoodIntent intent, double minute,
+            IReadOnlyDictionary<string, string>? refusals, MealKind mealKind, bool evaluateOnly, List<FoodChoice>? spareChoices)
         {
             if (intent.Status != FoodIntentStatus.Planned || intent.Choices.Count != 0 || shops.Count > 8)
                 throw new ArgumentException("A fresh intention and bounded live market are required.");
-            Choose(intent, person, shops, business => routes.FirstOrDefault(q => q.BusinessId == business.Id
-                && q.IntentId == intent.Id && q.ConsumerId == person.Id), minute, true, refusals, mealKind, evaluateOnly);
+            Choose(intent, person, shops, null, routes, minute, true, refusals, mealKind, evaluateOnly, spareChoices);
+        }
+
+        private static FoodTravelQuote? ObservedRoute(IReadOnlyList<FoodTravelQuote> routes, FoodBusiness business, FoodIntent intent, FoodConsumer person)
+        {
+            for (int i = 0; i < routes.Count; i++)
+            {
+                var q = routes[i];
+                if (q.BusinessId == business.Id && q.IntentId == intent.Id && q.ConsumerId == person.Id) return q;
+            }
+            return null;
         }
 
         public static string? KnownUnavailable(FoodBusiness business, FoodConsumer consumer, double now, double deadline)
@@ -277,27 +291,81 @@ namespace PersistentCity.Core
             if (!DailyRoutine.NextOpen(Place(business), now, deadline).HasValue) return "Closed or too late";
             if (business.MealsPerHour == 0) return business.ServiceUnavailableReason.Length == 0
                 ? "Service unavailable" : business.ServiceUnavailableReason;
-            if (business.Offers.Count > 0 && business.Offers.All(o => o.Units == 0)) return "Out of stock";
-            if (business.Offers.Count > 0 && business.Offers.All(o => o.Price > consumer.DailyAllowance)) return "Over allowance";
+            var offers = business.Offers;
+            if (offers.Count == 0) return null;
+            bool soldOut = true, overAllowance = true;
+            for (int i = 0; i < offers.Count; i++)
+            {
+                if (offers[i].Units != 0) soldOut = false;
+                if (!(offers[i].Price > consumer.DailyAllowance)) overAllowance = false;
+            }
+            if (soldOut) return "Out of stock";
+            if (overAllowance) return "Over allowance";
             return null;
         }
 
+        [ThreadStatic] private static List<FoodBusiness>? orderedShops;
+        [ThreadStatic] private static List<FoodOffer>? orderedOffers;
+
+        private static void OrderById(IReadOnlyList<FoodBusiness> shops, List<FoodBusiness> into)
+        {
+            into.Clear();
+            for (int i = 0; i < shops.Count; i++)
+            {
+                var business = shops[i];
+                int at = into.Count;
+                while (at > 0 && StringComparer.Ordinal.Compare(into[at - 1].Id, business.Id) > 0) at--;
+                into.Insert(at, business);
+            }
+        }
+
+        private static void OrderByProduct(List<FoodOffer> offers, List<FoodOffer> into)
+        {
+            into.Clear();
+            for (int i = 0; i < offers.Count; i++)
+            {
+                var offer = offers[i];
+                int at = into.Count;
+                while (at > 0 && StringComparer.Ordinal.Compare(into[at - 1].ProductId, offer.ProductId) > 0) at--;
+                into.Insert(at, offer);
+            }
+        }
+
+        private static FoodChoice NewChoice(List<FoodChoice>? spare)
+        {
+            if (spare == null || spare.Count == 0) return new FoodChoice();
+            var choice = spare[spare.Count - 1];
+            spare.RemoveAt(spare.Count - 1);
+            choice.TravelMinutes = null; choice.AdmissionMinute = null; choice.ScoreCents = null; choice.Reason = "";
+            choice.ReturnMinutes = null; choice.ServiceEndsAt = null;
+            return choice;
+        }
+
         private static void Choose(FoodIntent intent, FoodConsumer person, IReadOnlyList<FoodBusiness> shops,
-            Func<FoodBusiness, FoodTravelQuote?> routeFor, double minute, bool routine,
-            IReadOnlyDictionary<string, string>? refusals = null, MealKind mealKind = MealKind.Legacy, bool evaluateOnly = false)
+            Func<FoodBusiness, FoodTravelQuote?>? routeFor, IReadOnlyList<FoodTravelQuote>? observedRoutes, double minute, bool routine,
+            IReadOnlyDictionary<string, string>? refusals = null, MealKind mealKind = MealKind.Legacy, bool evaluateOnly = false,
+            List<FoodChoice>? spareChoices = null)
         {
             if (routine && intent.OriginPlaceId.Length == 0)
             { Miss(intent, intent.ContextEvidence, true); return; }
-            foreach (var business in shops.OrderBy(b => b.Id, StringComparer.Ordinal))
-            foreach (var offer in business.Offers.OrderBy(o => o.ProductId, StringComparer.Ordinal))
+            var shopOrder = orderedShops ??= new List<FoodBusiness>();
+            var offerOrder = orderedOffers ??= new List<FoodOffer>();
+            OrderById(shops, shopOrder);
+            try
             {
-                var choice = new FoodChoice { BusinessId = business.Id, ProductId = offer.ProductId, Price = offer.Price,
-                    CustomerServicePercent = business.CustomerServicePercent, DistrictDemandPercent = offer.DistrictDemandPercent,
-                    ServiceQualityAdjustmentCents = business.CustomerServicePercent.HasValue
-                        ? (50 - business.CustomerServicePercent.Value) / 100.0 * person.ServiceQualityValueCents : 0,
-                    DistrictAppealAdjustmentCents = offer.DistrictDemandPercent.HasValue
-                        ? (50 - offer.DistrictDemandPercent.Value) / 100.0 * person.DistrictAppealValueCents : 0 };
-                var route = routeFor(business);
+            foreach (var business in shopOrder)
+            {
+            OrderByProduct(business.Offers, offerOrder);
+            foreach (var offer in offerOrder)
+            {
+                var choice = NewChoice(spareChoices);
+                choice.BusinessId = business.Id; choice.ProductId = offer.ProductId; choice.Price = offer.Price;
+                choice.CustomerServicePercent = business.CustomerServicePercent; choice.DistrictDemandPercent = offer.DistrictDemandPercent;
+                choice.ServiceQualityAdjustmentCents = business.CustomerServicePercent.HasValue
+                    ? (50 - business.CustomerServicePercent.Value) / 100.0 * person.ServiceQualityValueCents : 0;
+                choice.DistrictAppealAdjustmentCents = offer.DistrictDemandPercent.HasValue
+                    ? (50 - offer.DistrictDemandPercent.Value) / 100.0 * person.DistrictAppealValueCents : 0;
+                var route = observedRoutes != null ? ObservedRoute(observedRoutes, business, intent, person) : routeFor!(business);
                 var knownUnavailable = routine ? KnownUnavailable(business, person, minute, intent.Deadline) : null;
                 if (knownUnavailable != null) choice.Reason = knownUnavailable;
                 else if (refusals != null && refusals.TryGetValue(business.Id, out var refusal)) choice.Reason = refusal;
@@ -336,6 +404,9 @@ namespace PersistentCity.Core
                 }
                 intent.Choices.Add(choice);
             }
+            }
+            }
+            finally { shopOrder.Clear(); offerOrder.Clear(); }
             if (evaluateOnly) return;
             var selected = intent.Choices.Where(c => c.ScoreCents.HasValue).OrderBy(c => c.ScoreCents)
                 .ThenBy(c => c.BusinessId, StringComparer.Ordinal).ThenBy(c => c.ProductId, StringComparer.Ordinal).FirstOrDefault();

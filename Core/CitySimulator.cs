@@ -386,16 +386,16 @@ namespace PersistentCity.Core
 
         private sealed class PendingEvent
         {
-            public PendingEvent(Due item, CitizenState working, IEnumerator<RouteRequest> steps)
-            { Item = item; Working = working; Steps = steps; }
-            public readonly Due Item;
-            public readonly CitizenState Working;
-            public readonly IEnumerator<RouteRequest> Steps;
+            public PendingEvent Start(Due item, CitizenState working, IEnumerator<RouteRequest> steps)
+            { Item = item; Working = working; Steps = steps; Request = null; Job = null; InputLease = false; return this; }
+            public Due Item = null!;
+            public CitizenState Working = null!;
+            public IEnumerator<RouteRequest> Steps = null!;
             public RouteRequest? Request;
             public IRoutePlanningJob? Job;
             public bool InputLease;
         }
-        private PendingEvent? pending;
+        private PendingEvent? pending, spareEvent;
         public bool PlanningPending => pending != null;
         public long PlanningRequests { get; private set; }
         private bool InProgress(Due item) => pending != null && ReferenceEquals(pending.Item, item);
@@ -409,7 +409,8 @@ namespace PersistentCity.Core
         private bool RunEvent(Due item, bool inline)
         {
             var working = EventCopy(item.Citizen);
-            var evt = new PendingEvent(item, working, StepEvent(working, item.Minute).GetEnumerator());
+            var shell = spareEvent ?? new PendingEvent(); spareEvent = null;
+            var evt = shell.Start(item, working, StepEvent(working, item.Minute).GetEnumerator());
             try
             {
                 if (routes is IRouteEventInputs inputs) { inputs.BeginRouteEvent(); evt.InputLease = true; }
@@ -528,6 +529,8 @@ namespace PersistentCity.Core
             FileOptionalStop(live);
             activityObservers.Handlers?.Invoke(live.Identity.Id, live, State.Minute);
             spareShell = working;
+            evt.Item = null!; evt.Working = null!; evt.Steps = null!; evt.Request = null; evt.Job = null;
+            spareEvent = evt;
         }
 
         internal bool PoolEventShells { get; set; } = true;

@@ -164,9 +164,13 @@ namespace PersistentCity.Core
             double[] contributions=Array.Empty<double>();
             var policy=ProductPolicy();
             var scopes=meal.Day>=state.AwarenessStartsDay ? AwareShortlist(meal,person,stop,d,atStop)
-                : atStop ? state.Shops.Where(s=>s.PlaceId==stop.PlaceId).Select(FreezeScope).ToArray()
+                : atStop ? ScopesAt(stop.PlaceId)
                 : Shortlist(meal,person,stop,Draw(meal,d),d.Tuning.Settings,out contributions,d.WeatherTravelMultiplier);
-            if (atStop || meal.Day>=state.AwarenessStartsDay) contributions=scopes.Select(s=>MemoryContribution(meal,person,s.BusinessId)).ToArray();
+            if (atStop || meal.Day>=state.AwarenessStartsDay)
+            {
+                contributions=scopes.Length==0 ? Array.Empty<double>() : new double[scopes.Length];
+                for(int i=0;i<scopes.Length;i++) contributions[i]=MemoryContribution(meal,person,scopes[i].BusinessId);
+            }
             choiceMilliseconds=city.ObservingFood ? (System.Diagnostics.Stopwatch.GetTimestamp()-choiceStarted)*1000.0/System.Diagnostics.Stopwatch.Frequency : (double?)null;
             for (int scopeIndex=0; scopeIndex<scopes.Length; scopeIndex++)
             {
@@ -182,7 +186,7 @@ namespace PersistentCity.Core
                 var shop=new FoodDecisionShop {AlternativeKind=b.AlternativeKind,RivalTerms=b.RivalTerms,RivalServiceMinutes=b.RivalServiceMinutes,AlternativeWeight=b.AlternativeKind==FoodAlternativeKind.Rival ? RivalSettings.RivalChoiceWeight : 1,MemoryContribution=contributions[scopeIndex],BusinessId=b.Id,PlaceId=b.PlaceId,MealsPerHour=b.MealsPerHour ?? -1,
                     NextServiceAt=Math.Max(now,scope.NextServiceAt),ServiceUnavailable=b.ServiceUnavailableReason.Length>0,
                     CustomerServicePercent=b.CustomerServicePercent ?? -1,DistrictId=b.DistrictId,
-                    Hours=b.Hours.Select(h=>new OpeningWindow {Day=h.Day,FromMinute=h.FromMinute,ToMinute=h.ToMinute}).ToList()};
+                    Hours=CopyHours(b.Hours)};
                 foreach(var offer in b.Offers)
                 {
                     int held=0;
@@ -200,6 +204,36 @@ namespace PersistentCity.Core
             capturedStop=CopyStop(stop);
         }
 
+        private FoodScope[] ScopesAt(string placeId)
+        {
+            int count=0;
+            foreach(var s in state.Shops) if(s.PlaceId==placeId) count++;
+            if(count==0) return Array.Empty<FoodScope>();
+            var scopes=new FoodScope[count];int at=0;
+            foreach(var s in state.Shops) if(s.PlaceId==placeId) scopes[at++]=FreezeScope(s);
+            return scopes;
+        }
+        private static List<OpeningWindow> CopyHours(List<OpeningWindow> hours)
+        {
+            var copy=new List<OpeningWindow>(hours.Count);
+            foreach(var h in hours) copy.Add(new OpeningWindow {Day=h.Day,FromMinute=h.FromMinute,ToMinute=h.ToMinute});
+            return copy;
+        }
+        private static FoodBusiness BusinessById(List<FoodBusiness> businesses,string id)
+        {
+            foreach(var b in businesses) if(b.Id==id) return b;
+            throw new InvalidOperationException("Sequence contains no matching element");
+        }
+        private static FoodDecisionShop ShopById(List<FoodDecisionShop> shops,string id)
+        {
+            foreach(var s in shops) if(s.BusinessId==id) return s;
+            throw new InvalidOperationException("Sequence contains no matching element");
+        }
+        private static FoodChoice ChoiceFor(List<FoodChoice> choices,string business,string product)
+        {
+            foreach(var c in choices) if(c.BusinessId==business && c.ProductId==product) return c;
+            throw new InvalidOperationException("Sequence contains no matching element");
+        }
         private IFoodProductPolicy ProductPolicy()
             => city.State.MenuPolicy==FoodNameIdentity.DynamicWire
                 && market is IFoodProductPolicyMarket policies ? policies.ProductPolicy : FoodProductPolicy.OriginalThree;
@@ -221,8 +255,11 @@ namespace PersistentCity.Core
             var catalogue=AwarenessCatalogue();
             decision.Awareness=AwarenessSample(meal,person,stop,meal.Day,atStop);
             double pace=routes is IFoodWalkingPace walking ? walking.WalkingMetresPerMinute : 120;
-            return catalogue.Rank(decision.Awareness,city.FindPlace(stop.PlaceId).Position,Traits(meal,person),decision.Tuning!.Settings,Draw(meal,decision),pace,id=>MemoryContribution(meal,person,id),rivalWeight:RivalSettings.RivalChoiceWeight,weatherTravelMultiplier:decision.WeatherTravelMultiplier)
-                .Select(e=>FreezeScope(e.Scope!)).ToArray();
+            var ranked=catalogue.Rank(decision.Awareness,city.FindPlace(stop.PlaceId).Position,Traits(meal,person),decision.Tuning!.Settings,Draw(meal,decision),pace,id=>MemoryContribution(meal,person,id),rivalWeight:RivalSettings.RivalChoiceWeight,weatherTravelMultiplier:decision.WeatherTravelMultiplier);
+            if(ranked.Length==0) return Array.Empty<FoodScope>();
+            var scopes=new FoodScope[ranked.Length];
+            for(int i=0;i<ranked.Length;i++) scopes[i]=FreezeScope(ranked[i].Scope!);
+            return scopes;
         }
 
         private FoodScope[] Shortlist(ResidentMeal meal,CitizenState person,FoodRoutineStop stop,FoodDrawContext draw,FoodChoiceSettings tuning,out double[] contributions,double weatherTravelMultiplier)
@@ -258,8 +295,14 @@ namespace PersistentCity.Core
             ServiceUnavailableReason=s.ServiceUnavailable ? "Service unavailable" : "",Hours=s.Hours,
             ServiceEvidence=s.AlternativeKind==FoodAlternativeKind.Rival ? "Estimated availability from advertised price/hours; stock unknown" : "Captured player supply",
             CustomerServicePercent=s.CustomerServicePercent<0 ? (int?)null : s.CustomerServicePercent,DistrictId=s.DistrictId,
-            Offers=s.Offers.Select(o=>new FoodOffer {ProductId=o.ProductId,Price=o.Price,Units=o.Units<0 ? (int?)null : o.Units,
-                DistrictDemandPercent=o.DistrictDemandPercent<0 ? (int?)null : o.DistrictDemandPercent}).ToList()};
+            Offers=MaterializeOffers(s.Offers)};
+        private static List<FoodOffer> MaterializeOffers(List<FoodDecisionOffer> offers)
+        {
+            var list=new List<FoodOffer>(offers.Count);
+            foreach(var o in offers) list.Add(new FoodOffer {ProductId=o.ProductId,Price=o.Price,Units=o.Units<0 ? (int?)null : o.Units,
+                DistrictDemandPercent=o.DistrictDemandPercent<0 ? (int?)null : o.DistrictDemandPercent});
+            return list;
+        }
 
         private FoodIntent DecisionIntent(ResidentMeal meal,CitizenState person,FoodDecisionState d,FoodRoutineStop stop)
         {
@@ -320,13 +363,13 @@ namespace PersistentCity.Core
                 d.QuotesDone++;
             }
             var intent=EvaluateDecision(meal,person,d,stop,out var businesses,out var quotes);
-            var evaluated=new List<EvaluatedFoodOffer>();
+            var evaluated=evaluatedOffers;evaluated.Clear();
             var allowance=AvailableForMeal(meal);
             foreach(var c in intent.Choices)
             {
                 if(!c.ScoreCents.HasValue) continue;
-                var b=businesses.First(x=>x.Id==c.BusinessId);
-                var heldShop=d.Shops.First(s=>s.BusinessId==c.BusinessId);
+                var b=BusinessById(businesses,c.BusinessId);
+                var heldShop=ShopById(d.Shops,c.BusinessId);
                 var ticket=CandidateTicket(meal,person,heldShop,c.ProductId,c.Price,allowance);
                 double queue=Math.Max(0,b.NextServiceMinute-c.AdmissionMinute!.Value);
                 var dynamic=HeldDynamic(heldShop,c.ProductId);
@@ -344,6 +387,7 @@ namespace PersistentCity.Core
             if(pick.Index>=0) {d.BusinessId=evaluated[pick.Index].BusinessId;d.ProductId=evaluated[pick.Index].ProductId;}
             else if(pick.Outside) d.Outside=intent.OutsideOption;
             else d.Reason=FailureReason(intent);
+            evaluated.Clear();
         }
         private static Route PresentRoute(Position point) => new Route {Legs=new List<RouteLeg> {new RouteLeg {From=point,To=point,Mode=TravelMode.Walk}}};
         private Route? RequestFoodQuote(Place from,Place to,double at,TravelPreferences preferences)
@@ -366,38 +410,64 @@ namespace PersistentCity.Core
         private FoodIntent EvaluateDecision(ResidentMeal meal,CitizenState person,FoodDecisionState d,FoodRoutineStop stop,
             out List<FoodBusiness> businesses,out List<FoodTravelQuote> quotes)
         {
-            businesses=d.Shops.Select(CapturedBusiness).ToList();quotes=new List<FoodTravelQuote>();
+            bool reuse=!city.ObservingFood;
+            if(reuse) {RecycleChoices();businesses=scratchBusinesses;businesses.Clear();quotes=scratchQuotes;spareQuotes.AddRange(quotes);quotes.Clear();}
+            else {businesses=new List<FoodBusiness>(d.Shops.Count);quotes=new List<FoodTravelQuote>();}
+            foreach(var s in d.Shops) businesses.Add(CapturedBusiness(s));
             for(int i=0;i<d.Shops.Count;i++)
                 if(d.Shops[i].AlternativeKind==FoodAlternativeKind.Rival) businesses[i].NextServiceMinute=RivalNextService(d.Shops[i],d.OriginAt);
             foreach(var s in d.Shops)
-                if(s.Outward!=null && s.Return!=null) quotes.Add(new FoodTravelQuote {BusinessId=s.BusinessId,ConsumerId=meal.ResidentId,
-                    IntentId=meal.IntentId,OriginPlaceId=stop.PlaceId,Minutes=s.Outward.Minutes,ReturnMinutes=s.Return.Minutes,Evidence="Captured complete walking paths"});
+                if(s.Outward!=null && s.Return!=null)
+                {
+                    FoodTravelQuote quote;
+                    if(reuse && spareQuotes.Count>0) {quote=spareQuotes[spareQuotes.Count-1];spareQuotes.RemoveAt(spareQuotes.Count-1);}
+                    else quote=new FoodTravelQuote();
+                    quote.BusinessId=s.BusinessId;quote.ConsumerId=meal.ResidentId;quote.IntentId=meal.IntentId;quote.OriginPlaceId=stop.PlaceId;
+                    quote.Minutes=s.Outward.Minutes;quote.ReturnMinutes=s.Return.Minutes;quote.Evidence="Captured complete walking paths";
+                    quotes.Add(quote);
+                }
             var consumer=Consumer(person,AvailableForMeal(meal),meal);MealRhythm.Apply(consumer,meal.Kind);
             var intent=DecisionIntent(meal,person,d,stop);
-            var refusals=new Dictionary<string,string>(StringComparer.Ordinal);
+            var refusals=scratchRefusals;refusals.Clear();
             foreach(var shop in d.Shops)
                 if(shop.OutwardQuote==FoodQuoteState.Refused) refusals[shop.BusinessId]="Unreachable";
                 else if(shop.ReturnQuote==FoodQuoteState.Refused) refusals[shop.BusinessId]="No confirmed return path";
                 else if(shop.OutwardQuote==FoodQuoteState.NotNeeded && FoodDemand.KnownUnavailable(CapturedBusiness(shop),consumer,d.OriginAt,d.Deadline)==null)
                     refusals[shop.BusinessId]="Service and return do not fit available time";
-            FoodDemand.ChooseObserved(consumer,businesses,quotes,intent,d.OriginAt,refusals,meal.Kind,evaluateOnly:true);
+            FoodDemand.ChooseObserved(consumer,businesses,quotes,intent,d.OriginAt,refusals,meal.Kind,true,reuse ? spareChoices : null);
+            refusals.Clear();
+            if(reuse) recycledIntent=intent;
             rivalSoldOutShops.Clear();
             foreach(var c in intent.Choices)
             {
                 if(!c.ScoreCents.HasValue || !c.ServiceEndsAt.HasValue) continue;
-                var s=d.Shops.First(x=>x.BusinessId==c.BusinessId);
+                var s=ShopById(d.Shops,c.BusinessId);
                 if(s.AlternativeKind!=FoodAlternativeKind.Rival || !SoldOut(s.PlaceId,RivalType(s),c.ServiceEndsAt.Value)) continue;
                 c.ScoreCents=null;c.Reason="Out of stock";rivalSoldOutShops.Add(s);
             }
             return intent;
         }
+        private readonly List<FoodBusiness> scratchBusinesses=new List<FoodBusiness>(FoodChoicePolicy.MaximumShortlist);
+        private readonly List<FoodTravelQuote> scratchQuotes=new List<FoodTravelQuote>(FoodChoicePolicy.MaximumShortlist);
+        private readonly List<FoodTravelQuote> spareQuotes=new List<FoodTravelQuote>(FoodChoicePolicy.MaximumShortlist);
+        private readonly Dictionary<string,string> scratchRefusals=new Dictionary<string,string>(StringComparer.Ordinal);
+        private readonly List<FoodChoice> spareChoices=new List<FoodChoice>();
+        private readonly List<EvaluatedFoodOffer> evaluatedOffers=new List<EvaluatedFoodOffer>();
+        private FoodIntent? recycledIntent;
+        private void RecycleChoices()
+        {
+            var intent=recycledIntent;recycledIntent=null;
+            if(intent==null) return;
+            spareChoices.AddRange(intent.Choices);intent.Choices.Clear();
+        }
         private static MealReasonCode FailureReason(FoodIntent intent)
         {
-            if(intent.Choices.Any(c=>c.Reason.Contains("unknown"))) return MealReasonCode.InsufficientEvidence;
-            if(intent.Choices.Any(c=>c.Reason.Contains("queue"))) return MealReasonCode.QueueTooLong;
-            if(intent.Choices.Any(c=>c.Reason.Contains("available time"))) return MealReasonCode.NoLongerFits;
-            if(intent.Choices.Any(c=>c.Reason=="Closed or too late")) return MealReasonCode.ShopClosed;
-            if(intent.Choices.Any(c=>c.Reason=="Service unavailable")) return MealReasonCode.ServiceUnavailable;
+            var choices=intent.Choices;
+            foreach(var c in choices) if(c.Reason.Contains("unknown")) return MealReasonCode.InsufficientEvidence;
+            foreach(var c in choices) if(c.Reason.Contains("queue")) return MealReasonCode.QueueTooLong;
+            foreach(var c in choices) if(c.Reason.Contains("available time")) return MealReasonCode.NoLongerFits;
+            foreach(var c in choices) if(c.Reason=="Closed or too late") return MealReasonCode.ShopClosed;
+            foreach(var c in choices) if(c.Reason=="Service unavailable") return MealReasonCode.ServiceUnavailable;
             return MealReasonCode.NoFeasibleOffer;
         }
         private void EndDecision(ResidentMeal meal) {meal.Decision=null;pendingDecision=null;capturedStop=null;evaluatedBusinesses.Clear();rivalSoldOutShops.Clear();}
@@ -416,8 +486,8 @@ namespace PersistentCity.Core
             var intent=EvaluateDecision(meal,person,d,stop,out var businesses,out var quotes);
             if(d.Result==FoodDecisionResult.Selected)
             {
-                var shop=d.Shops.First(s=>s.BusinessId==d.BusinessId);
-                var choice=intent.Choices.First(c=>c.BusinessId==d.BusinessId && c.ProductId==d.ProductId);
+                var shop=ShopById(d.Shops,d.BusinessId);
+                var choice=ChoiceFor(intent.Choices,d.BusinessId,d.ProductId);
                 if(!choice.ScoreCents.HasValue || (shop.AlternativeKind==FoodAlternativeKind.Rival ? !RivalCommitAllowed(meal,shop,choice.Price,d.OriginAt) : market is IFoodBusinessAuthority authority && !authority.CanServe(shop.BusinessId))
                     || !ValidateCapturedRoute(city.FindPlace(stop.PlaceId),city.FindPlace(shop.PlaceId),shop.Outward!,preferences,atStop)
                     || !ValidateCapturedRoute(city.FindPlace(shop.PlaceId),city.FindPlace(stop.PlaceId),shop.Return!,preferences,atStop))

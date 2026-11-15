@@ -469,11 +469,14 @@ namespace PersistentCity.Runtime
             void Write(int[]? values) { writer.Write(values?.Length ?? -1); if (values != null) foreach (int value in values) writer.Write(value); }
         }
 
-        public List<Curb> Near(Position position, double radius, int limit = 2)
+        public List<Curb> Near(Position position, double radius, int limit = 2) => Near(position, radius, limit, new List<Curb>());
+
+        public List<Curb> Near(Position position, double radius, int limit, List<Curb> result)
         {
+            result.Clear();
             trafficBuilder?.BeginQuery();
             if (!Ready || !position.IsFinite || Math.Abs(position.X) > 1000000 || Math.Abs(position.Z) > 1000000
-                || !Position.Finite(radius) || radius < 0 || radius > 100 || limit < 1 || limit > 2) return new List<Curb>();
+                || !Position.Finite(radius) || radius < 0 || radius > 100 || limit < 1 || limit > 2) return result;
             var nearby = nearbyNodes;
             nearby.Clear();
             var cell = Cell(position); int reach = (int)Math.Ceiling(radius / 50);
@@ -484,7 +487,6 @@ namespace PersistentCity.Runtime
             var order = nearbyOrder ??= new NearbyOrder(nodes);
             order.Origin = position;
             nearby.Sort(nearbyCompare ??= order.Compare);
-            var result = new List<Curb>();
             int attempts = 0;
             foreach (int index in nearby)
             {
@@ -515,10 +517,15 @@ namespace PersistentCity.Runtime
             }
         }
 
-        public List<Curb> AtParked(Position parked)
+        public List<Curb> AtParked(Position parked) => AtParked(parked, new List<Curb>());
+
+        public List<Curb> AtParked(Position parked, List<Curb> candidates)
         {
-            var candidates = Near(parked, ConnectorMetres, 2);
-            candidates.RemoveAll(c => !ConnectorClear(parked, nodes[c.Node].Position));
+            Near(parked, ConnectorMetres, 2, candidates);
+            int kept = 0;
+            for (int i = 0; i < candidates.Count; i++)
+                if (ConnectorClear(parked, nodes[candidates[i].Node].Position)) candidates[kept++] = candidates[i];
+            if (kept != candidates.Count) candidates.RemoveRange(kept, candidates.Count - kept);
             foreach (var c in candidates) c.Position = parked;
             return candidates;
         }

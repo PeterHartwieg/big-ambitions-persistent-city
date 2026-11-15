@@ -1,0 +1,85 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using PersistentCity.Core;
+using PersistentCity.Runtime;
+using UnityEngine;
+using UnityEngine.AI;
+using Xunit;
+
+namespace PersistentCity.Tests;
+
+[Collection(StreetFoodHooks.Collection)]
+public sealed class Gr5RetimeReleaseTests
+{
+    private sealed class Walk : IRoutePlanner
+    {
+        public Route Plan(Place a, Place b, double at, TravelPreferences p)
+            => new Route { Legs = new() { new RouteLeg { From = a.Position, To = b.Position, Mode = TravelMode.Walk, Minutes = Math.Max(1, Position.Distance(a.Position, b.Position) / 2) } } };
+    }
+
+    private static (PhysicalPopulation Bodies, PhysicalPedestrians Pool) Walkers(int walkers)
+    {
+        StreetFoodHooks.Reset(); NavMesh.Reset(); AmbientPedestrians.Reserved.Clear();
+        const double now = 1440 + 600;
+        var ids = Enumerable.Range(0, walkers).Select(i => new CitizenIdentity { Id = "w" + i.ToString("D2"), Name = "W" + i, Age = 30, AppearanceSeed = i + 1 }).ToList();
+        var places = new List<Place> { new Place { Id = "work", Name = "Work", Kind = PlaceKind.Work, Capacity = 64, Position = new Position(100, 0, 0) } };
+        for (int i = 0; i < walkers; i++)
+            places.Add(new Place { Id = "home" + i, Name = "Home", Kind = PlaceKind.Home, Capacity = 1, Position = new Position(100 + 60 * Math.Cos(i * 0.13), 0, 60 * Math.Sin(i * 0.13)) });
+        var state = PersistentCity.Core.Population.Create(ids, places, "gr5-release", "0.40.4", 3, now);
+        for (int i = 0; i < walkers; i++)
+        {
+            var c = state.Citizens[i];
+            c.HomeId = c.PlaceId = "home" + i; c.DayPlaceId = "work"; c.MealOuting = null;
+            c.Phase = CitizenPhase.Travelling; c.DestinationId = "work"; c.DestinationActivity = Activity.Work;
+            c.Journey = new Walk().Plan(places[i + 1], places[0], now, c.Preferences);
+            c.DepartureMinute = now; c.NextEventMinute = now + c.Journey.Minutes; c.ActivityUntilMinute = now + 600;
+        }
+        var city = new CitySimulator(state, new Walk());
+        NativeTravelPace.Focus = new Position(100, 0, 0); Time.Next(3);
+        var bodies = new PhysicalPopulation(new Transform { Component = new PopulationRuntime() }, city, new MultimodalRoutes(),
+            typeof(Gr5RetimeReleaseTests).Assembly, new VendorBodyTests.Log(), 64, 8, 120, new DwellSpots());
+        var pool = PhysicalPedestrians.Last!;
+        double minute = now;
+        for (int i = 0; i < 120; i++) { minute += 1 / 180.0; city.AdvanceTo(minute); Time.Next(1 / 60f); bodies.Update(); }
+        return (bodies, pool);
+    }
+
+    [Fact]
+    public void ARetimeReleasesBodiesOneSliceAtATimeAndDisposesInALaterUpdate()
+    {
+        var (bodies, pool) = Walkers(24);
+        using (bodies)
+        {
+            int bound = pool.Active.Count;
+            Assert.True(bound >= 4, bound.ToString());
+            int calls = 0;
+            while (bodies.HasBodies)
+            {
+                int before = pool.Active.Count;
+                Assert.False(bodies.ReleaseForRetime(0));
+                calls++;
+                Assert.True(pool.Active.Count <= before && pool.Active.Count >= before - 1, before + " -> " + pool.Active.Count);
+                Assert.True(calls <= bound + 1);
+            }
+            Assert.Empty(pool.Active);
+            Assert.True(calls >= bound - 1, calls + " slices for " + bound + " bodies");
+            Assert.True(bodies.ReleaseForRetime(0));
+            Assert.True(bodies.ReleaseForRetime(long.MaxValue));
+        }
+    }
+
+    [Fact]
+    public void AnUnboundedSliceReleasesEveryBodyLikeSuspend()
+    {
+        var (sliced, pool) = Walkers(24);
+        using (sliced)
+        {
+            Assert.True(pool.Active.Count >= 4);
+            Assert.False(sliced.ReleaseForRetime(long.MaxValue));
+            Assert.False(sliced.HasBodies);
+            Assert.Empty(pool.Active);
+            Assert.True(sliced.ReleaseForRetime(long.MaxValue));
+        }
+    }
+}
