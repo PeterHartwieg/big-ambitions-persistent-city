@@ -163,7 +163,23 @@ namespace PersistentCity.Runtime
         public bool ReadyForPopulation => roadSpeeds.Waiting == null && (routeEventHeld || !refreshDeferred && !stationsDeferred)
             && (routeEventHeld || objects == null || (objects.Ready && objectRevision == objects.Revision))
             && stations != null && roads != null && roads.Ready && roads.IsCurrent;
+        private bool rebuildOpen;
+
         public bool Prepare()
+        {
+            rebuildOpen = true;
+            try { return PrepareRoads(); }
+            finally { CloseRebuild(); }
+        }
+
+        private void CloseRebuild()
+        {
+            if (!rebuildOpen) return;
+            rebuildOpen = false;
+            ModFrames.Detail(GcAllocationSegment.ModRoutesRebuild);
+        }
+
+        private bool PrepareRoads()
         {
             LastDiscoveryGateChange = "";
             var city = CityManager.Instance;
@@ -179,7 +195,7 @@ namespace PersistentCity.Runtime
             if (roads != null && (routeEventHeld || roadSpeeds.Waiting != null) && roadSpeeds.WaitsAfterRefresh()) return false;
             if (routeEventHeld && !cityChanged && !sceneLost && roads?.Ready == true && roads.IsCurrent)
             {
-                ModFrames.Detail(GcAllocationSegment.ModRoutesRebuild);
+                CloseRebuild();
                 try { roads.Sweep(1, 1024); }
                 catch (RoadSpeedsWaitingException) { return false; }
                 finally { ModFrames.Detail(GcAllocationSegment.ModRoutesSweep); }
@@ -228,7 +244,7 @@ namespace PersistentCity.Runtime
                 roads.SetTrafficEntryForecast(trafficEntryForecast);
             }
             else roads.SetAccess(access!);
-            ModFrames.Detail(GcAllocationSegment.ModRoutesRebuild);
+            CloseRebuild();
             if (!roads.Prepare()) return false;
             try { roads.Sweep(1, 1024); }
             catch (RoadSpeedsWaitingException) { return false; }

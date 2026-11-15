@@ -503,8 +503,8 @@ namespace PersistentCity.Runtime
                     events += result.Events;
                     citizenEvents += result.CitizenEvents;
                     elapsed = (Stopwatch.GetTimestamp() - started) * MillisecondsPerTimestamp;
-                    Unit(result.TrafficEvents > 0 ? "traffic" : result.FoodContinuationEvents > 0 ? "food-continuation"
-                        : result.CitizenEvents > 0 ? (result.PlanningPending ? "citizen-route-begin" : "citizen") : "other");
+                    Unit(result.PlanningPending ? "citizen-route-begin" : result.TrafficEvents > 0 ? "traffic"
+                        : result.FoodContinuationEvents > 0 ? "food-continuation" : result.CitizenEvents > 0 ? "citizen" : "other");
                     if (result.PlanningPending) { pendingAtEnd = elapsed >= timeBudget; if (pendingAtEnd) break; continue; }
                     if (result.CaughtUp || citizenEvents >= citizenLimit || elapsed >= timeBudget) break;
                 }

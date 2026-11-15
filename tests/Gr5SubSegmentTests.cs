@@ -91,6 +91,45 @@ namespace PersistentCity.Tests
             Assert.Equal(12_000_280, SubTotal(sampler, GcAllocationSegment.PhysicalUnattributed));
         }
 
+        [Fact]
+        public void TheSetupSequenceWithPreflightSpawnChargesKeepsUnattributedEqualToItsSubSegments()
+        {
+            var sampler = new GcPauseSampler(64);
+            sampler.Start(1);
+            void Settle(GcAllocationSegment sub, long counter)
+            {
+                sampler.Detail(sub, counter, 0);
+                sampler.Charge(GcAllocationSegment.PhysicalUnattributed, counter, 0);
+            }
+            sampler.BeginNested(1_000, 0);
+            sampler.Detail(GcAllocationSegment.PhysicalSetupPlaces, 1_100, 0);
+            sampler.Detail(GcAllocationSegment.PhysicalSetupBodies, 9_001_100, 0);
+            sampler.Detail(GcAllocationSegment.PhysicalSetupVehicles, 12_001_100, 0);
+            Settle(GcAllocationSegment.PhysicalSetupAmbient, 12_001_600);
+            sampler.Mark(12_001_700, 0);
+            sampler.Detail(GcAllocationSegment.PhysicalSpawnGrow, 12_291_700, 0);
+            sampler.Charge(GcAllocationSegment.PhysicalSpawnPedestrian, 12_291_800, 0);
+            sampler.Detail(GcAllocationSegment.PhysicalSpawnRandomize, 12_301_800, 0);
+            sampler.Charge(GcAllocationSegment.PhysicalSpawnAppearance, 12_301_800, 0);
+            sampler.Charge(GcAllocationSegment.PhysicalSpawnCheck, 12_302_000, 0);
+            sampler.Charge(GcAllocationSegment.PhysicalSpawnAppearance, 12_402_000, 0);
+            Settle(GcAllocationSegment.PhysicalSetupPreflight, 12_402_040);
+            sampler.Detail(GcAllocationSegment.PhysicalSetupVehicles, 12_402_340, 0);
+            sampler.Detail(GcAllocationSegment.PhysicalSetupAmbient, 12_402_440, 0);
+            sampler.Sub(GcAllocationSegment.PhysicalUnattributedSetup, 12_402_460, 0);
+            sampler.EndNested(GcAllocationSegment.Physical, GcAllocationSegment.PhysicalUnattributed, 12_402_460, 0);
+
+            Assert.Equal(12_000_600 + 40 + 400 + 20, sampler.SegmentBytes(GcAllocationSegment.PhysicalUnattributed));
+            Assert.Equal(sampler.SegmentBytes(GcAllocationSegment.PhysicalUnattributed), SubTotal(sampler, GcAllocationSegment.PhysicalUnattributed));
+            Assert.Equal(290_200, sampler.SegmentBytes(GcAllocationSegment.PhysicalSpawnPedestrian));
+            Assert.Equal(290_000, sampler.SegmentBytes(GcAllocationSegment.PhysicalSpawnGrow));
+            Assert.Equal(110_000, sampler.SegmentBytes(GcAllocationSegment.PhysicalSpawnAppearance));
+            Assert.Equal(40, sampler.SegmentBytes(GcAllocationSegment.PhysicalSetupPreflight));
+            Assert.Equal(sampler.SegmentBytes(GcAllocationSegment.PhysicalUnattributed) + 290_200 + 110_000 + 200,
+                sampler.SegmentBytes(GcAllocationSegment.Physical));
+            Assert.Equal(12_401_460, sampler.SegmentBytes(GcAllocationSegment.Physical));
+        }
+
         private static long SubTotal(GcPauseSampler sampler, GcAllocationSegment parent) => Enumerable.Range(0, GcPauseSampler.Segments)
             .Select(i => (GcAllocationSegment)i).Where(s => GcPauseSampler.IsSub(s) && GcPauseSampler.SubParent(s) == parent).Sum(sampler.SegmentBytes);
 
@@ -226,6 +265,7 @@ namespace PersistentCity.Tests
                 AdvanceAllocation.End();
                 PhysicalAllocation.Begin(sampler);
                 PhysicalAllocation.Detail(GcAllocationSegment.PhysicalSetupBodies);
+                PhysicalAllocation.Settle(GcAllocationSegment.PhysicalSetupAmbient);
                 PhysicalAllocation.End(GcAllocationSegment.PhysicalUnattributedSetup);
                 ModFrames.End();
             }

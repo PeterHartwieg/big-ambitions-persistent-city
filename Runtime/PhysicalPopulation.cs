@@ -126,7 +126,7 @@ namespace PersistentCity.Runtime
             vehicles.NativeTargetPermission = NativeTargetPermission;
             PhysicalAllocation.Detail(GcAllocationSegment.PhysicalSetupVehicles);
             ambient = new AmbientPedestrians(dependency, simulation.State.SourceIdentities);
-            PhysicalAllocation.Detail(GcAllocationSegment.PhysicalSetupAmbient);
+            PhysicalAllocation.Settle(GcAllocationSegment.PhysicalSetupAmbient);
             try
             {
                 if (!vehicles.Ready) throw new InvalidOperationException("Own cars: " + vehicles.LastError);
@@ -138,7 +138,7 @@ namespace PersistentCity.Runtime
                     pedestrians.Release(body!); tested = true; break;
                 }
                 if (!tested) throw new InvalidOperationException("No native pedestrian body passed appearance/NavMesh preflight.");
-                PhysicalAllocation.Detail(GcAllocationSegment.PhysicalSetupPreflight);
+                PhysicalAllocation.Settle(GcAllocationSegment.PhysicalSetupPreflight);
                 if (!vehicles.Activate()) throw new InvalidOperationException("Native traffic is not ready or has no ordinary car model.");
                 PhysicalAllocation.Detail(GcAllocationSegment.PhysicalSetupVehicles);
                 ambient.Activate();

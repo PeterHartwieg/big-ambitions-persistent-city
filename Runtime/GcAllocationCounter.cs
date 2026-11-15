@@ -92,6 +92,19 @@ namespace PersistentCity.Runtime
             ModFrames.Detail(segment);
         }
 
+        public static void Settle(GcAllocationSegment sub)
+        {
+            var current = sampler;
+            if (current != null)
+            {
+                long counter = GcAllocationCounter.Read(); int collections = GcAllocationCounter.Collections;
+                current.Detail(sub, counter, collections);
+                current.Charge(GcAllocationSegment.PhysicalUnattributed, counter, collections);
+            }
+            ModFrames.Detail(sub);
+            ModFrames.Charge(GcAllocationSegment.PhysicalUnattributed);
+        }
+
         public static void End() => End(GcAllocationSegment.PhysicalUnattributedUpdate);
 
         public static void End(GcAllocationSegment remainder)
