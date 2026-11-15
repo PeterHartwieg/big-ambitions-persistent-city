@@ -168,55 +168,68 @@ public sealed class Gr5RebuildFoodParkedTests
     }
 
     [Fact]
-    public void ClockRetimeRunsOneStagePerFrameInTheOriginalOrder()
+    public void ClockRetimeReleasesBodiesOneUpdateAheadAndNeverSplitsRetimeFromRebuild()
     {
-        var stages = new List<ClockRetimeStage>();
-        double native = 2, state = 1, routes = 1;
-        bool bodies = true;
-        for (int frame = 0; frame < 6; frame++)
+        Assert.Equal(ClockRetimeStage.ReleaseBodies, ClockRetimeStages.Next(2, 1, true));
+        Assert.Equal(ClockRetimeStage.RetimeAndRebuild, ClockRetimeStages.Next(2, 1, false));
+        Assert.Equal(ClockRetimeStage.None, ClockRetimeStages.Next(1.0000001, 1, true));
+        Assert.Equal(ClockRetimeStage.None, ClockRetimeStages.Next(1, 1, false));
+        Assert.Equal(new[] { "None", "ReleaseBodies", "RetimeAndRebuild" }, Enum.GetNames(typeof(ClockRetimeStage)));
+    }
+
+    private sealed class ModUpdates
+    {
+        public readonly CityState State;
+        public CitySimulator City;
+        public bool Bodies = true;
+        public int Events, Rebuilds;
+        public ModUpdates()
         {
-            var stage = ClockRetimeStages.Next(native, state, routes, bodies);
-            stages.Add(stage);
-            if (stage == ClockRetimeStage.ReleaseBodies) bodies = false;
-            else if (stage == ClockRetimeStage.RetimeJourneys) state = native;
-            else if (stage == ClockRetimeStage.RebuildSimulation) routes = state;
-            else bodies = true;
+            State = Gr5AllocationMeasure.RigCity();
+            City = new CitySimulator(State, new Gr5AdvanceSegmentMeasure.Straight());
+            City.AttachFoodMarket(new VisitorRoutineTests.Market { Shops = F5gPopulationFillTests.Shops(State) });
+            City.AdvanceTo(Math.Floor(State.Minute / 1440) * 1440 + 1440 + 12 * 60, int.MaxValue);
         }
-        Assert.Equal(new[] { ClockRetimeStage.ReleaseBodies, ClockRetimeStage.RetimeJourneys, ClockRetimeStage.RebuildSimulation,
-            ClockRetimeStage.None, ClockRetimeStage.None, ClockRetimeStage.None }, stages);
-        Assert.Equal(ClockRetimeStage.RetimeJourneys, ClockRetimeStages.Next(3, 2, 1, false));
-        Assert.Equal(ClockRetimeStage.ReleaseBodies, ClockRetimeStages.Next(3, 2, 1, true));
-        Assert.Equal(ClockRetimeStage.None, ClockRetimeStages.Next(1.0000001, 1, 1, true));
-        Assert.Equal(ClockRetimeStage.RebuildSimulation, ClockRetimeStages.Next(2, 2, 1, true));
+        public void Update(double nativeRate, double target)
+        {
+            double before = State.TravelClockRate; var city = City;
+            var stage = ClockRetimeStages.Next(nativeRate, State.TravelClockRate, Bodies);
+            if (stage == ClockRetimeStage.ReleaseBodies) Bodies = false;
+            else if (stage == ClockRetimeStage.RetimeAndRebuild)
+            {
+                State.PrepareForSave();
+                TravelTiming.Apply(State, 1.4, nativeRate, out _);
+                City = City.RebuildRoutes(new Gr5AdvanceSegmentMeasure.Straight());
+                Rebuilds++;
+            }
+            else
+            {
+                Bodies = true;
+                for (int unit = 0; unit < 64; unit++)
+                {
+                    if (City.PlanningPending) { City.ContinuePlanning(1); continue; }
+                    var result = City.AdvanceFrameSlice(target, 1);
+                    Events += result.Events;
+                    if (result.CaughtUp) break;
+                }
+            }
+            Assert.True(State.TravelClockRate == before || !ReferenceEquals(city, City), "journeys were retimed without a rebuilt simulator");
+        }
     }
 
     [Fact]
-    public void AStagedRetimeEndsWithTheSameSaveAsTheSingleFrameRetime()
+    public void ARateThatReturnsBeforeTheRetimeLeavesNoStaleSimulatorAndMinuteBoundariesKeepAdvancing()
     {
-        string Run(bool staged)
-        {
-            var state = Gr5AllocationMeasure.RigCity();
-            var city = new CitySimulator(state, new Gr5AdvanceSegmentMeasure.Straight());
-            city.AttachFoodMarket(new VisitorRoutineTests.Market { Shops = F5gPopulationFillTests.Shops(state) });
-            double day = Math.Floor(state.Minute / 1440) * 1440 + 1440;
-            city.AdvanceTo(day + 12 * 60, int.MaxValue);
-            state.PrepareForSave();
-            TravelTiming.Apply(state, 1.4, 2, out _);
-            if (staged)
-            {
-                Assert.Equal(ClockRetimeStage.RebuildSimulation, ClockRetimeStages.Next(2, state.TravelClockRate, 1, false));
-                city.RefreshOptionalStops();
-            }
-            city = city.RebuildRoutes(new Gr5AdvanceSegmentMeasure.Straight());
-            for (double minute = day + 12 * 60; minute < day + 14 * 60; minute += 1.0 / 30)
-                for (int unit = 0; unit < 64; unit++)
-                {
-                    if (city.PlanningPending) { city.ContinuePlanning(1); continue; }
-                    if (city.AdvanceFrameSlice(minute, 1).CaughtUp) break;
-                }
-            return PersistentCity.Persistence.SaveCodec.Write(state);
-        }
-        Assert.Equal(Run(false), Run(true));
+        var mod = new ModUpdates();
+        double minute = mod.State.Minute;
+        double[] rates = { 1, 2, 1, 2, 2, 1, 1, 1, 2, 1, 1 };
+        foreach (double rate in rates) { minute += .999; mod.Update(rate, minute); }
+        Assert.True(mod.Rebuilds >= 2);
+        Assert.Equal(1, mod.State.TravelClockRate);
+        int before = mod.Events;
+        for (int frame = 0; frame < 3600; frame++) { minute += 1.0 / 30; mod.Update(1, minute); }
+        Assert.True(mod.Events > before, "the rebuilt simulator must keep finding events after a reversed rate");
+        Assert.True(mod.City.ActiveJourneyIndexMatchesState());
     }
 
     [Fact]

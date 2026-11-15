@@ -304,7 +304,7 @@ namespace PersistentCity.Runtime
                 RunPhysical(physicalBeforeAdvance ??= () => physical?.BeforeAdvance());
                 ModFrames.Charge(GcAllocationSegment.ModOptionalStops);
                 double clockRate = NativeTravelPace.ClockRate;
-                var retime = ClockRetimeStages.Next(clockRate, simulation.State.TravelClockRate, routes?.ClockRate ?? simulation.State.TravelClockRate, physical != null);
+                var retime = ClockRetimeStages.Next(clockRate, simulation.State.TravelClockRate, physical != null);
                 if (retime != ClockRetimeStage.None)
                 {
                     long retimeStarted = Stopwatch.GetTimestamp();
@@ -313,29 +313,25 @@ namespace PersistentCity.Runtime
                         physical!.Dispose(); physical = null;
                         retimeReleaseMilliseconds = (Stopwatch.GetTimestamp() - retimeStarted) * MillisecondsPerTimestamp;
                     }
-                    else if (retime == ClockRetimeStage.RetimeJourneys)
+                    else
                     {
                         simulation.State.PrepareForSave();
                         TravelTiming.Apply(simulation.State, NativeTravelPace.WalkingMetresPerSecond, clockRate, out int degraded);
-                        retimeTimingMilliseconds = (Stopwatch.GetTimestamp() - retimeStarted) * MillisecondsPerTimestamp;
+                        double timing = (Stopwatch.GetTimestamp() - retimeStarted) * MillisecondsPerTimestamp;
                         if (degraded > 0)
                             log?.Info("Clock retime degraded " + degraded.ToString(System.Globalization.CultureInfo.InvariantCulture)
                                 + " journeys: each keeps its old pace on its current road edge or drives outside traffic until its next road section.");
-                    }
-                    else
-                    {
-                        double retimed = simulation.State.TravelClockRate;
-                        var retimedRoutes = new MultimodalRoutes(simulation.State.Places, NativeTravelPace.WalkingMetresPerSecond / retimed, retimed, dependency, routeObjects);
-                        if (foodMarket != null) log?.Info(FoodClockReach.RetimeLine(retimed, retimedRoutes.WalkingMetresPerMinute));
-                        retimedRoutes.ReuseRoadSceneForRetiming(routes!);
+                        var retimedRoutes = new MultimodalRoutes(simulation.State.Places, NativeTravelPace.WalkingMetresPerSecond / clockRate, clockRate, dependency, routeObjects);
+                        if (foodMarket != null) log?.Info(FoodClockReach.RetimeLine(clockRate, retimedRoutes.WalkingMetresPerMinute));
+                        if (routes != null) retimedRoutes.ReuseRoadSceneForRetiming(routes);
                         routes = retimedRoutes;
                         seenRoadSnapshots = 0; clockRetimingRoutes = true;
                         simulation = simulation.RebuildRoutes(routes);
                         vendorMarket?.Rebind(simulation);
                         seenPlanningRequests = seenEventRestarts = seenInlineRestarts = 0;
-                        log?.Info("Clock retime spread over frames: body release " + Milliseconds(retimeReleaseMilliseconds) + " ms, journey retime "
-                            + Milliseconds(retimeTimingMilliseconds) + " ms, simulation rebuild " + Milliseconds((Stopwatch.GetTimestamp() - retimeStarted) * MillisecondsPerTimestamp) + " ms.");
-                        retimeReleaseMilliseconds = retimeTimingMilliseconds = 0;
+                        log?.Info("Clock retime: body release " + Milliseconds(retimeReleaseMilliseconds) + " ms in the previous update, journey retime "
+                            + Milliseconds(timing) + " ms, simulation rebuild " + Milliseconds((Stopwatch.GetTimestamp() - retimeStarted) * MillisecondsPerTimestamp - timing) + " ms.");
+                        retimeReleaseMilliseconds = 0;
                     }
                     WaitForRetime(); return;
                 }
@@ -583,7 +579,7 @@ namespace PersistentCity.Runtime
             }
         }
 
-        private double retimeReleaseMilliseconds, retimeTimingMilliseconds;
+        private double retimeReleaseMilliseconds;
         private static string Milliseconds(double value) => value.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture);
         private void WaitForRetime()
         {
