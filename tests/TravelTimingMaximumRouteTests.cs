@@ -159,10 +159,11 @@ public sealed class TravelTimingMaximumRouteTests
         AssertValid(state);
     }
 
-    private static CityState Owned(double progress, bool firstEdge)
+    private static CityState Owned(double progress, bool firstEdge, int linkCount = 1)
     {
         var state = City(2);
-        var kernel = new TrafficKernel(new[] { new TrafficLinkDefinition { Id = 0, Capacity = 4, FreeFlowMinutes = CarMinutes, HeadwayMinutes = 0.001 } }, 1442);
+        var kernel = new TrafficKernel(Enumerable.Range(0, linkCount).Select(i => new TrafficLinkDefinition
+        { Id = i, Capacity = i == 0 ? 4 : 1000, FreeFlowMinutes = i == 0 ? CarMinutes : CarMinutes / 4, HeadwayMinutes = i == 0 ? 0.001 : 0.0001 }), 1442);
         foreach (var c in state.Citizens)
         {
             c.Journey = new Route { Legs = MaximumRoute(true) };
@@ -224,12 +225,14 @@ public sealed class TravelTimingMaximumRouteTests
         AssertValid(state);
     }
 
-    [Fact]
-    public void RigScaleMixedCityRetimesEveryCommittedJourneyThroughRepeatedSpeedChanges()
+    internal const int FixtureLinks = 13965;
+    internal const double CollectedUpdateLimitMilliseconds = 150;
+
+    internal static (CityState State, int Owned) RigScaleCity(int linkCount = 4)
     {
         const int residents = 1000;
         var state = City(residents);
-        var links = Enumerable.Range(0, 4).Select(i => new TrafficLinkDefinition
+        var links = Enumerable.Range(0, linkCount).Select(i => new TrafficLinkDefinition
         { Id = i, Capacity = 1000, FreeFlowMinutes = CarMinutes / 4, HeadwayMinutes = 0.0001 }).ToArray();
         var kernel = new TrafficKernel(links, Departure);
         const double now = Departure + 9.5;
@@ -272,6 +275,14 @@ public sealed class TravelTimingMaximumRouteTests
         int ownedCount = state.Traffic.Vehicles.Count;
         Assert.Equal(residents / 4, ownedCount);
 
+        return (state, ownedCount);
+    }
+
+    [Fact]
+    public void RigScaleMixedCityRetimesEveryCommittedJourneyThroughRepeatedSpeedChanges()
+    {
+        const int residents = 1000;
+        var (state, ownedCount) = RigScaleCity();
         var timings = new List<double>();
         foreach (double rate in new[] { 1.0, 3, 20, 1, 20, 3, 1, 20 })
         {
@@ -292,6 +303,93 @@ public sealed class TravelTimingMaximumRouteTests
         output.WriteLine("retime ms: " + string.Join(", ", timings.Select(t => t.ToString("0.00"))));
         PerfGate.Under(timings.Skip(1).Max(), 250, "rig-scale clock retime");
     }
+    [Theory]
+    [InlineData(4)]
+    [InlineData(FixtureLinks)]
+    public void RigScaleRetimeSlicesStayUnderTheFrameBudgetAndMatchTheUnslicedRetime(int linkCount)
+    {
+        var (sliced, _) = RigScaleCity(linkCount);
+        var (whole, _) = RigScaleCity(linkCount);
+        var updates = new List<double>();
+        var commits = new List<double>();
+        var wholeTimings = new List<double>();
+        var driver = new ClockRetimeDriver();
+        var simulator = new CitySimulator(sliced, new NoRoutes());
+        var reference = new CitySimulator(whole, new NoRoutes());
+        long bytes = 0;
+        var tail = new List<double>();
+        int collected = 0;
+        var slowest = new List<(double Ms, bool Gc, string Where)>();
+        foreach (double rate in new[] { 3.0, 20, 1, 20 })
+        {
+            long started = Stopwatch.GetTimestamp();
+            whole.PrepareForSave();
+            Assert.True(TravelTiming.Apply(whole, 2, rate));
+            reference = reference.RebuildRoutes(new NoRoutes());
+            wholeTimings.Add((Stopwatch.GetTimestamp() - started) * 1000.0 / Stopwatch.Frequency);
+            long allocated = GC.GetAllocatedBytesForCurrentThread();
+            while (true)
+            {
+                int collections = GC.CollectionCount(1);
+                long frame = Stopwatch.GetTimestamp();
+                var outcome = driver.Update(sliced, rate, false, 2, ClockRetimeStages.SliceMilliseconds);
+                if (outcome == ClockRetimeOutcome.Committed) simulator = simulator.RebuildRoutes(new NoRoutes(), driver.TakeRetimedTraffic());
+                double ms = (Stopwatch.GetTimestamp() - frame) * 1000.0 / Stopwatch.Frequency;
+                Assert.NotEqual(ClockRetimeOutcome.Restarted, outcome);
+                bool gc = GC.CollectionCount(1) != collections;
+                if (gc) collected++;
+                slowest.Add((ms, gc, outcome.ToString() + (driver.Pending != null && driver.Pending.Prepared == driver.Pending.Count ? "/traffic" : "")));
+                if (outcome == ClockRetimeOutcome.Committed) { commits.Add(ms); break; }
+                updates.Add(ms);
+                if (driver.Pending != null && driver.Pending.Prepared == driver.Pending.Count) tail.Add(ms);
+            }
+            bytes += GC.GetAllocatedBytesForCurrentThread() - allocated;
+            Assert.Equal(SaveCodec.Write(whole), SaveCodec.Write(sliced));
+        }
+        Assert.All(sliced.Citizens, c => Assert.NotNull(c.Journey!.PresentationCells));
+        Assert.True(simulator.ActiveJourneys.Grid.Matches(simulator.ActiveJourneys.BodyCandidates, true));
+        Assert.True(simulator.ActiveJourneyIndexMatchesState());
+        double later = sliced.Minute + 0.5;
+        simulator.AdvanceTo(later, int.MaxValue); reference.AdvanceTo(later, int.MaxValue);
+        sliced.PrepareForSave(); whole.PrepareForSave();
+        Assert.Equal(SaveCodec.Write(whole), SaveCodec.Write(sliced));
+        output.WriteLine(linkCount + " links; unsliced retime and rebuild ms: " + string.Join(", ", wholeTimings.Select(t => t.ToString("0.00"))));
+        output.WriteLine("sliced: " + updates.Count + " updates, slowest " + updates.Max().ToString("0.00") + " ms, p95 "
+            + updates.OrderBy(f => f).ElementAt((int)(updates.Count * .95)).ToString("0.00") + " ms; " + collected + " updates with a gen1/gen2 collection; commit and rebuild ms: "
+            + string.Join(", ", commits.Select(t => t.ToString("0.00"))) + "; " + (bytes / 4 / 1e6).ToString("0.0") + " MB per retime; traffic updates ms: "
+            + string.Join(", ", tail.Select(t => t.ToString("0.0"))));
+        output.WriteLine("slowest updates: " + string.Join(", ", slowest.OrderByDescending(x => x.Ms).Take(6).Select(x => x.Ms.ToString("0.0") + (x.Gc ? " gc " : " ") + x.Where)));
+        Assert.Equal(4, commits.Count);
+        Assert.True(updates.Count > 4 * 4);
+        PerfGate.Under(slowest.Where(x => !x.Gc).Max(x => x.Ms), 30, "slowest retime update without a collection");
+        if (slowest.Any(x => x.Gc)) PerfGate.Under(slowest.Where(x => x.Gc).Max(x => x.Ms), CollectedUpdateLimitMilliseconds, "slowest retime update with a gen1/gen2 collection");
+        PerfGate.Under(commits.Max(), 30, "retime commit and simulator rebuild update, collections included");
+    }
+
+    [Fact]
+    public void ADegradedFirstEdgeAtNetworkScaleLeavesTrafficInSlicesAndMatchesTheUnslicedRetime()
+    {
+        var sliced = Owned(0.37 * CarMinutes / CarLegs, true, FixtureLinks);
+        var whole = Owned(0.37 * CarMinutes / CarLegs, true, FixtureLinks);
+        Assert.True(TravelTiming.Apply(whole, 2, 1, out int wholeDegraded));
+        Assert.True(wholeDegraded >= 1);
+        var driver = new ClockRetimeDriver();
+        var updates = new List<double>();
+        while (true)
+        {
+            long frame = Stopwatch.GetTimestamp();
+            var outcome = driver.Update(sliced, 1, false, 2, ClockRetimeStages.SliceMilliseconds);
+            updates.Add((Stopwatch.GetTimestamp() - frame) * 1000.0 / Stopwatch.Frequency);
+            Assert.NotEqual(ClockRetimeOutcome.Restarted, outcome);
+            if (outcome == ClockRetimeOutcome.Committed) break;
+        }
+        Assert.Equal(wholeDegraded, driver.Degraded);
+        Assert.Equal(SaveCodec.Write(whole), SaveCodec.Write(sliced));
+        output.WriteLine(updates.Count + " updates, slowest " + updates.Max().ToString("0.00") + " ms: " + string.Join(", ", updates.Select(u => u.ToString("0.0"))));
+        Assert.True(updates.Count > 8, updates.Count.ToString());
+        PerfGate.Under(updates.Max(), 30, "degraded first-edge retime update");
+    }
+
     private sealed class LongRoad : IRoutePlanner, ITrafficRoutePlanner
     {
         public const string Topology = "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc";
