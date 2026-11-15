@@ -106,7 +106,7 @@ namespace PersistentCity.Core
             private readonly List<CitizenState> schedules = new List<CitizenState>();
             private readonly Input[] inputs;
             private const int LinksPerStep = 256;
-            private TrafficKernel? savedTraffic, kernel;
+            private TrafficKernel? savedTraffic, kernel, liveTraffic;
             private System.Collections.IEnumerator? pass;
             private TrafficKernelState? excluded;
             private RetimedTraffic? restoredTraffic;
@@ -132,11 +132,15 @@ namespace PersistentCity.Core
                     if (legacy || state.Traffic.Clock != state.Minute)
                         throw new ArgumentException("Traffic needs native timing at the city clock.");
                     foreach (var vehicle in state.Traffic.Vehicles) trafficRoutes[vehicle.VehicleId] = vehicle;
+                    if (state.SnapshotSynchronizer != null && ReferenceEquals(state.TrafficSourceState, state.Traffic)
+                        && state.TrafficSource != null && state.TrafficSource.Clock == state.Minute)
+                        liveTraffic = state.TrafficSource;
                 }
                 foreach (var place in state.Places) placeIndex.Add(place.Id, place);
                 foreach (var citizen in PersonTable.Schedules(state)) schedules.Add(citizen);
                 inputs = new Input[schedules.Count];
                 stage = trafficState == null ? 1 : 0;
+                if (liveTraffic != null) { savedTraffic = liveTraffic; stage = 1; }
             }
 
             public CityState State { get; }
@@ -287,6 +291,8 @@ namespace PersistentCity.Core
                 state.TravelClockRate = rate;
                 if (traffic != null) state.Traffic = traffic;
                 state.SnapshotSynchronizer = null;
+                state.SnapshotSteps = null;
+                state.TrafficSource = null; state.TrafficSourceState = null;
                 return true;
             }
 

@@ -215,7 +215,11 @@ namespace PersistentCity.Runtime
         private readonly Dictionary<(int X, int Z), List<int>> cells = new Dictionary<(int, int), List<int>>();
         private static RoadRoutes? donor;
         private TrafficRoadNetwork? trafficDonor;
+        private bool[]? donorGateClear;
+        private string donorGateTopology = "";
+        private PublicRoadAccess? donorGateAccess;
         public bool AdoptedSnapshot { get; }
+        public bool AdoptedGateClearance { get; private set; }
         internal static void ForgetSnapshot() => donor = null;
         private readonly Waypoint[] waypoints;
         private readonly TransportRoadGraph graph;
@@ -376,6 +380,8 @@ namespace PersistentCity.Runtime
                 nativeContracts = previous.nativeContracts; nullNeighbours = previous.nullNeighbours; edgeTags = previous.edgeTags;
                 edgeTagTopology = previous.edgeTagTopology; copiedNodes = previous.copiedNodes; TopologyId = previous.TopologyId;
                 trafficDonor = previous.trafficBuilder; AdoptedSnapshot = true;
+                if (previous.TrafficNetwork != null)
+                { donorGateClear = (bool[])previous.closureGateClear.Clone(); donorGateTopology = previous.TrafficNetwork.TopologyId; donorGateAccess = previous.access; }
                 topologyHash.Dispose();
             }
             graph = new TransportRoadGraph(nodes, clockRate);
@@ -441,9 +447,22 @@ namespace PersistentCity.Runtime
             if (!trafficBuilder.Prepare(remaining, remainingUnits))
             { if (trafficBuilder.Stale && !unsafeTopology) TrafficInvalid(); return false; }
             TrafficNetwork = trafficBuilder.Network;
+            AdoptGateClearance();
             if (!Ready || !IsCurrent) return false;
             donor = this;
             return true;
+        }
+        private void AdoptGateClearance()
+        {
+            var clear = donorGateClear;
+            var gates = donorGateAccess;
+            string topology = donorGateTopology;
+            donorGateClear = null; donorGateAccess = null; donorGateTopology = "";
+            var network = TrafficNetwork;
+            if (clear == null || gates == null || network == null || clear.Length != network.Links.Count
+                || !string.Equals(topology, network.TopologyId, StringComparison.Ordinal) || !gates.SameGates(access)) return;
+            closureGateClear = clear;
+            AdoptedGateClearance = true;
         }
         private bool Adoptable(RoadRoutes? previous)
         {

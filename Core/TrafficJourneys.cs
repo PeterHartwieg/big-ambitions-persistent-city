@@ -33,6 +33,8 @@ namespace PersistentCity.Core
         private void RestoreTraffic(TravelTiming.RetimedTraffic? retimed)
         {
             State.SnapshotSynchronizer = CaptureTraffic;
+            State.SnapshotSteps = CaptureTrafficInSteps;
+            State.TrafficSource = null; State.TrafficSourceState = null;
             if (State.Traffic == null) return;
             if (State.Traffic.Clock != State.Minute || string.IsNullOrEmpty(State.TrafficTopologyId))
                 throw new ArgumentException("Traffic and city clocks/topology do not match.");
@@ -236,6 +238,27 @@ namespace PersistentCity.Core
         {
             SynchronizeSnapshot();
             State.Traffic = traffic == null ? null : ThroughCarCount > 0 ? traffic.Capture(ThroughTraffic.IsThroughVehicle) : traffic.Capture();
+            NoteTrafficSource(ThroughCarCount == 0);
+        }
+
+        private void NoteTrafficSource(bool whole)
+        {
+            State.TrafficSource = whole && State.Traffic != null ? traffic : null;
+            State.TrafficSourceState = State.TrafficSource != null ? State.Traffic : null;
+        }
+
+        private IEnumerator<bool> CaptureTrafficInSteps(int linksPerStep)
+        {
+            SynchronizeSnapshot();
+            if (traffic == null) { State.Traffic = null; NoteTrafficSource(false); yield return true; yield break; }
+            bool whole = ThroughCarCount == 0;
+            var capture = whole ? traffic.CaptureInSteps(linksPerStep) : traffic.CaptureInSteps(ThroughTraffic.IsThroughVehicle, linksPerStep);
+            while (capture.MoveNext())
+            {
+                if (capture.Current != null) { State.Traffic = capture.Current; NoteTrafficSource(whole); yield return true; yield break; }
+                yield return false;
+            }
+            throw new InvalidOperationException("Traffic capture ended without a result.");
         }
 
         public void SynchronizeSnapshot() => SynchronizeTrafficJourneys();

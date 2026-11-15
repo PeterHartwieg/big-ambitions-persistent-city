@@ -38,7 +38,8 @@ namespace PersistentCity.Runtime
             + budget.Gate!.Fitted + " fitted/" + budget.Gate.Waited + " waited/"
             + budget.Gate.EstimateMilliseconds.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture) + " ms build/"
             + BodyMerge.Fast + " fast merges/" + BodyMerge.Native + " native merges/" + BodyMerge.Failed + " failed merges" + (BodyMerge.Disabled ? "/fast merge off" : "")
-            + (BodyMerge.LastError.Length == 0 ? "" : " (" + BodyMerge.LastError + ")");
+            + (BodyMerge.LastError.Length == 0 ? "" : " (" + BodyMerge.LastError + ")")
+            + "/fallbacks: " + BodyMerge.Fallbacks + (BodyMerge.LastCollectError.Length == 0 ? "" : " (collect: " + BodyMerge.LastCollectError + ")");
         private readonly Dictionary<string, PhysicalPedestrianBody> active = new Dictionary<string, PhysicalPedestrianBody>(StringComparer.Ordinal);
         private bool disposed;
 

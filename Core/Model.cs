@@ -349,9 +349,33 @@ namespace PersistentCity.Core
         public FoodCommerceState? Food { get; set; }
         public EconomicLedger Economy { get; set; } = new EconomicLedger();
         internal Action? SnapshotSynchronizer;
+        internal Func<int, IEnumerator<bool>>? SnapshotSteps;
+        internal TrafficKernel? TrafficSource;
+        internal TrafficKernelState? TrafficSourceState;
         public void PrepareForSave()
         {
             SnapshotSynchronizer?.Invoke();
+            FinishPrepareForSave();
+        }
+        public IEnumerator<bool> PrepareForSaveInSteps(int linksPerStep)
+        {
+            if (linksPerStep < 1) throw new ArgumentOutOfRangeException(nameof(linksPerStep));
+            if (SnapshotSynchronizer != null && SnapshotSteps != null)
+            {
+                var steps = SnapshotSteps(linksPerStep);
+                while (true)
+                {
+                    if (!steps.MoveNext()) throw new InvalidOperationException("The snapshot steps ended without a result.");
+                    if (steps.Current) break;
+                    yield return false;
+                }
+            }
+            else SnapshotSynchronizer?.Invoke();
+            FinishPrepareForSave();
+            yield return true;
+        }
+        private void FinishPrepareForSave()
+        {
             foreach (var visitor in Visitors) if (visitor.Routine != null) VisitorSchedules.Sync(visitor);
             Food?.Outflow?.Advance((int)(Minute / 1440));
         }
