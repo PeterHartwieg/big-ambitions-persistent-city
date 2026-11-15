@@ -479,10 +479,17 @@ namespace PersistentCity.Runtime
             pool.Return(instance.Model.Name, instance);
         }
 
+        private static object? paletteSource;
+        private static int paletteCount = -1;
+        private static Data.VehicleColors.VehicleColor[] palette = Array.Empty<Data.VehicleColors.VehicleColor>();
         private static void Paint(OwnCarInstance instance, int paintSeed)
         {
             var colors = InstanceBehavior<GlobalReferences>.Instance.vehicleColors;
-            var palette = colors.Where(c => c != null).OrderBy(c => c.name, StringComparer.Ordinal).ToArray();
+            if (!ReferenceEquals(colors, paletteSource) || colors.Length != paletteCount)
+            {
+                palette = colors.Where(c => c != null).OrderBy(c => c.name, StringComparer.Ordinal).ToArray();
+                paletteSource = colors; paletteCount = colors.Length;
+            }
             if (palette.Length == 0) return;
             foreach (var features in instance.Features) if (features != null) features.SetColor(palette[(uint)paintSeed % (uint)palette.Length]);
         }
@@ -724,36 +731,32 @@ namespace PersistentCity.Runtime
             return nearest;
         }
 
-        internal void ShowParked(IReadOnlyList<ParkedCar> wanted, Func<string, CarState?> car)
+        internal const int ParkedPlacementsPerRefresh = 2, ParkedAttemptsPerRefresh = 4;
+        private readonly List<int> parkedPending = new List<int>();
+        private int parkedCursor;
+        internal bool ShowParked(IReadOnlyList<ParkedCar> wanted, Func<string, CarState?> car)
         {
-            if (!Active || models == null) return;
+            if (!Active || models == null) return true;
             var keep = parkedKeep;
             keep.Clear();
-            int count = 0;
+            var pending = parkedPending;
+            pending.Clear();
+            int count = 0, placed = 0, attempts = 0;
             for (int index = 0; index < wanted.Count; index++)
             {
                 var entry = wanted[index];
                 if (count >= maximum) break;
                 if (bodies.ContainsKey(entry.CarId)) continue;
                 keep.Add(entry.CarId); count++;
-                if (parked.TryGetValue(entry.CarId, out var shown))
-                {
-                    if (Position.Distance(shown.At, entry.At) <= .01) { shown.FadeOut = double.NaN; continue; }
-                    ReleaseParked(shown);
-                }
-                var state = car(entry.CarId);
-                if (state == null || !SceneReady || !CarAppearance.TryModel(state, modelNameList ??= () => modelNames, out string modelId)
-                    || !models.TryGetValue(modelId, out var model) || model.Refused) continue;
-                var rotation = Quaternion.Euler(0, ParkedYaw(entry), 0);
-                if (!ParkedClear(model, entry.At, rotation)) continue;
-                var instance = Take(model, CarAppearance.Paint(state));
-                if (instance == null) continue;
-                instance.Root.transform.SetPositionAndRotation(Vector(entry.At), rotation);
-                var body = new ParkedCarBody(entry.CarId, instance, entry.At);
-                if (instance.CanFade) instance.SetFade(0); else body.FadeIn = BodyFade.FadeInSeconds;
-                instance.Root.SetActive(true);
-                parked.Add(entry.CarId, body);
+                if (parked.TryGetValue(entry.CarId, out var shown) && Position.Distance(shown.At, entry.At) <= .01) { shown.FadeOut = double.NaN; continue; }
+                pending.Add(index);
             }
+            int first = pending.Count == 0 ? 0 : parkedCursor % pending.Count;
+            for (; attempts < pending.Count && attempts < ParkedAttemptsPerRefresh && placed < ParkedPlacementsPerRefresh; attempts++)
+                if (TryPlaceParked(wanted[pending[(first + attempts) % pending.Count]], car)) placed++;
+            parkedCursor = first + attempts;
+            bool complete = attempts == pending.Count && (pending.Count == placed || SceneReady);
+            pending.Clear();
             parkedScratch.Clear();
             foreach (var shown in parked.Values) parkedScratch.Add(shown);
             foreach (var shown in parkedScratch)
@@ -763,8 +766,26 @@ namespace PersistentCity.Runtime
                     else ReleaseParked(shown);
                 }
             parkedScratch.Clear(); keep.Clear();
+            return complete;
         }
         private readonly HashSet<string> parkedKeep = new HashSet<string>(StringComparer.Ordinal);
+        private bool TryPlaceParked(ParkedCar entry, Func<string, CarState?> car)
+        {
+            if (parked.TryGetValue(entry.CarId, out var shown)) ReleaseParked(shown);
+            var state = car(entry.CarId);
+            if (state == null || !SceneReady || !CarAppearance.TryModel(state, modelNameList ??= () => modelNames, out string modelId)
+                || !models!.TryGetValue(modelId, out var model) || model.Refused) return false;
+            var rotation = Quaternion.Euler(0, ParkedYaw(entry), 0);
+            if (!ParkedClear(model, entry.At, rotation)) return false;
+            var instance = Take(model, CarAppearance.Paint(state));
+            if (instance == null) return false;
+            instance.Root.transform.SetPositionAndRotation(Vector(entry.At), rotation);
+            var body = new ParkedCarBody(entry.CarId, instance, entry.At);
+            if (instance.CanFade) instance.SetFade(0); else body.FadeIn = BodyFade.FadeInSeconds;
+            instance.Root.SetActive(true);
+            parked.Add(entry.CarId, body);
+            return true;
+        }
         private Func<IReadOnlyList<string>>? modelNameList;
 
         private bool ParkedClear(OwnCarModel model, Position at, Quaternion rotation)

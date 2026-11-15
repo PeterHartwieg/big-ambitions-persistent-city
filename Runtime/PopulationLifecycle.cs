@@ -22,7 +22,7 @@ namespace PersistentCity.Runtime
             initialization = null; initializingSave = null; initializingPayload = null; initializingHadPayload = false;
             startupHold.Reset();
             simulation = null; saveSession = null; stopEnvironment = null;
-            routes = null; clockRetimingRoutes = false; saveIdentity = null;
+            routes = null; clockRetimingRoutes = false; saveIdentity = null; RoadRoutes.ForgetSnapshot();
             accountingText = ""; nextAccountingText = 0;
             economyRefresh.Reset();
         }

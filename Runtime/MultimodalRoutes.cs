@@ -130,6 +130,7 @@ namespace PersistentCity.Runtime
             return true;
         }
         public int RoadSnapshots { get; private set; }
+        public bool LastRoadSnapshotReused => roads?.AdoptedSnapshot == true;
         public TrafficNetwork? TrafficNetwork => roads?.TrafficNetwork;
         public bool IsTrafficLinkClosed(int linkId) => roads?.IsTrafficLinkClosed(linkId) ?? true;
         private RoadRoutes? closureRoads;

@@ -273,11 +273,16 @@ namespace PersistentCity.Runtime
                         log?.Info(rloTransient ? "RLO transient (" + source.Reason + "): " + source.Message + " The city continues and saves on its saved donor catalogue; no identity is created, renamed or regenerated."
                             : "RLO ready again and matching the saved donor catalogue; the transient window ended.");
                     }
+                    gateRefreshDue = true;
+                    nextStationScan = Time.unscaledTime + 15;
+                }
+                else if (gateRefreshDue)
+                {
+                    gateRefreshDue = false;
                     long gateStarted = Stopwatch.GetTimestamp();
                     string gateChange = routes?.Refresh() ?? "";
                     maxGateCheckMilliseconds = Math.Max(maxGateCheckMilliseconds, (Stopwatch.GetTimestamp() - gateStarted) * MillisecondsPerTimestamp);
                     if (gateChange.Length > 0) { gateChanges++; log?.Info("Public gates changed (" + gateChange + "); road snapshot discarded; a new one follows station preparation and reuses the live road scene."); }
-                    nextStationScan = Time.unscaledTime + 15;
                 }
                 else if (Time.unscaledTime >= nextStationScan)
                 {
@@ -332,7 +337,7 @@ namespace PersistentCity.Runtime
                     roadRebuildReasons.TryGetValue(reason, out int count); roadRebuildReasons[reason] = count + snapshots - seenRoadSnapshots;
                     lastRoadRebuild = reason + " index=" + routes!.LastRoadInvalidationIndex;
                     log?.Info("Road snapshot started: frame=" + Time.frameCount + ", reason=" + lastRoadRebuild
-                        + ", scene searches in this planner=" + routes.RoadSceneSearches + ".");
+                        + ", scene searches in this planner=" + routes.RoadSceneSearches + ", reused unchanged snapshot=" + routes.LastRoadSnapshotReused + ".");
                 }
                 seenRoadSnapshots = snapshots;
                 ModFrames.Charge(GcAllocationSegment.ModRoutes);
@@ -506,7 +511,7 @@ namespace PersistentCity.Runtime
                     Unit(result.PlanningPending ? "citizen-route-begin" : result.TrafficEvents > 0 ? "traffic"
                         : result.FoodContinuationEvents > 0 ? "food-continuation" : result.CitizenEvents > 0 ? "citizen" : "other");
                     if (result.PlanningPending) { pendingAtEnd = elapsed >= timeBudget; if (pendingAtEnd) break; continue; }
-                    if (result.CaughtUp || citizenEvents >= citizenLimit || elapsed >= timeBudget) break;
+                    if (result.CaughtUp || result.ThroughRoutePending || citizenEvents >= citizenLimit || elapsed >= timeBudget) break;
                 }
             }
             finally { active.SynchronizeSnapshot(); NativeCityClock.ObserveSimulationLag(target, active.State.Minute); }
@@ -544,6 +549,7 @@ namespace PersistentCity.Runtime
         }
 
         private Action? physicalBeforeAdvance, physicalUpdate, physicalCatchLoads;
+        private bool gateRefreshDue;
         private readonly UpdateCityBudget frameBudget = new UpdateCityBudget();
 
         private void RunPhysical(Action action)

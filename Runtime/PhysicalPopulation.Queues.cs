@@ -241,7 +241,7 @@ namespace PersistentCity.Runtime
             var order = vendorOrder;
             order.Clear();
             foreach (var waiter in vendorWaiters.Values) order.Add(new VendorTurn(waiter, vendorMeals.TryGetValue(waiter.Id, out var m) ? m.ServiceAt : double.MaxValue));
-            order.Sort(VendorTurn.ByService);
+            order.Sort(VendorTurn.ByServiceOrder);
             foreach (var turn in order)
             {
                 var citizen = turn.Citizen;
@@ -266,6 +266,7 @@ namespace PersistentCity.Runtime
             public IPersonView Citizen { get; }
             public double ServiceAt { get; }
             public static readonly IComparer<VendorTurn> ByService = new Order();
+            public static readonly Comparison<VendorTurn> ByServiceOrder = ByService.Compare;
             private sealed class Order : IComparer<VendorTurn>
             {
                 public int Compare(VendorTurn a, VendorTurn b)

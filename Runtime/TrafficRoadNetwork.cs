@@ -24,10 +24,11 @@ namespace PersistentCity.Runtime
         private readonly PublicRoadAccess access;
         private readonly double clockRate;
         private readonly Func<int, bool> baseCurrent;
-        private readonly Dictionary<GenericIntersection, int> junctionIds = new Dictionary<GenericIntersection, int>();
-        private readonly List<Junction> junctions = new List<Junction>();
+        private readonly Dictionary<GenericIntersection, int> junctionIds;
+        private readonly List<Junction> junctions;
         private readonly Dictionary<int, TrafficSignalSchedule> signals = new Dictionary<int, TrafficSignalSchedule>();
         private readonly NativeNode?[] nativeNodes;
+        public bool Rerated { get; }
         private TrafficNetworkNode[] snapshot;
         private readonly int[]? roadIds;
         private readonly Dictionary<int, bool> junctionQueryResults = new Dictionary<int, bool>();
@@ -65,7 +66,7 @@ namespace PersistentCity.Runtime
         }
 
         public TrafficRoadNetwork(string topology, IReadOnlyList<TransportRoadNode> roads, Waypoint[] waypoints,
-            CurrentSceneData? scene, PublicRoadAccess access, double clockRate, Func<int, bool> baseCurrent)
+            CurrentSceneData? scene, PublicRoadAccess access, double clockRate, Func<int, bool> baseCurrent, TrafficRoadNetwork? donor = null)
         {
             if (Associated == null || Associated.FieldType != typeof(IIntersection))
                 throw new MissingFieldException("Native traffic intersection association contract.");
@@ -74,9 +75,41 @@ namespace PersistentCity.Runtime
             hadScene = scene != null;
             priorities = scene?.allPriorityIntersections ?? Array.Empty<PriorityIntersection>();
             lights = scene?.allLightsIntersections ?? Array.Empty<TrafficLightsIntersection>();
-            nativeNodes = new NativeNode?[waypoints.Length]; snapshot = new TrafficNetworkNode[waypoints.Length];
             roadIds = scene?.roadIds != null && scene.roadIds.Length == waypoints.Length ? scene.roadIds : null;
+            var network = donor?.Network;
+            if (network != null && Adoptable(donor!))
+            {
+                junctionIds = donor!.junctionIds; junctions = donor.junctions; nativeNodes = donor.nativeNodes;
+                snapshot = Array.Empty<TrafficNetworkNode>();
+                foreach (var junction in junctions) AddSignals(junction);
+                var schedules = signals; double rate = clockRate;
+                construction = Task.Run(() => network.Rerated(rate, index => schedules.TryGetValue(index, out var signal) ? signal : null));
+                stage = Stage.Constructing; Rerated = true;
+                return;
+            }
+            junctionIds = new Dictionary<GenericIntersection, int>(); junctions = new List<Junction>();
+            nativeNodes = new NativeNode?[waypoints.Length]; snapshot = new TrafficNetworkNode[waypoints.Length];
         }
+
+        private bool Adoptable(TrafficRoadNetwork donor) => donor.stage == Stage.Complete && !donor.Stale && scene != null
+            && ReferenceEquals(donor.scene, scene) && ReferenceEquals(donor.waypoints, waypoints) && ReferenceEquals(donor.roads, roads)
+            && string.Equals(donor.topology, topology, StringComparison.Ordinal) && ReferenceEquals(donor.priorities, priorities)
+            && ReferenceEquals(donor.lights, lights) && ReferenceEquals(donor.roadIds, roadIds) && donor.access.SameGates(access)
+            && donor.ReferencesCurrent;
+
+        private void AddSignals(Junction captured)
+        {
+            if (!(captured.Native is TrafficLightsIntersection)) return;
+            double green = captured.Green * clockRate, yellow = captured.Yellow * clockRate;
+            double slot = green + yellow, cycle = captured.Groups.Length * slot;
+            if (!Position.Finite(green) || green <= 0 || !Position.Finite(yellow) || yellow < 0 || !Position.Finite(cycle) || cycle <= 0)
+                throw new InvalidOperationException("Native light timing cannot define a periodic logical schedule.");
+            for (int group = 0; group < captured.Groups.Length; group++)
+                foreach (int index in captured.Groups[group]!) AddSignal(index, group, cycle, slot, green);
+        }
+
+        private void AddSignal(int index, int group, double cycle, double slot, double green) =>
+            signals.Add(index, new TrafficSignalSchedule { CycleMinutes = cycle, GreenStartMinutes = group * slot, GreenDurationMinutes = green, PhaseOffsetMinutes = 0 });
 
         public bool ReferencesCurrent
         {
@@ -114,7 +147,7 @@ namespace PersistentCity.Runtime
                         stage = Stage.Constructing; return false;
                     case Stage.Constructing:
                         if (!construction!.IsCompleted) return false;
-                        constructed = construction.GetAwaiter().GetResult();
+                        constructed = construction.GetAwaiter().GetResult(); construction = null;
                         snapshot = Array.Empty<TrafficNetworkNode>();
                         stage = Stage.ValidateJunctions; validationCursor = 0; continue;
                     case Stage.ValidateJunctions:
@@ -195,8 +228,7 @@ namespace PersistentCity.Runtime
                         if (index < 0 || index >= waypoints.Length || waypoints[index] == null
                             || !ReferenceEquals(Associated!.GetValue(waypoints[index]), native) || !waypoints[index].enter || signals.ContainsKey(index))
                             throw new InvalidOperationException("Native light group association is ambiguous.");
-                        signals.Add(index, new TrafficSignalSchedule { CycleMinutes = cycle, GreenStartMinutes = group * slot,
-                            GreenDurationMinutes = green, PhaseOffsetMinutes = 0 });
+                        AddSignal(index, group, cycle, slot, green);
                     }
                 }
             }

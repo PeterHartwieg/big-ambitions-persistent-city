@@ -162,11 +162,33 @@ namespace PersistentCity.Runtime
         internal string OwnershipDiagnostics => "ownCars=" + Active.Count + ", parkedCars=" + Parked.Count;
         internal readonly Dictionary<string, (ParkedCar Car, CarState? State)> Parked = new();
         internal int ParkedRefreshes;
-        internal void ShowParked(IReadOnlyList<ParkedCar> wanted, Func<string, CarState?> car)
+        internal int ParkedPlacementLimit = int.MaxValue, ParkedAttemptLimit = int.MaxValue, LastParkedAttempts, MaximumParkedAttempts;
+        internal readonly HashSet<string> Blocked = new();
+        private int parkedCursor;
+        internal bool ShowParked(IReadOnlyList<ParkedCar> wanted, Func<string, CarState?> car)
         {
             ParkedRefreshes++;
-            Parked.Clear();
-            foreach (var entry in wanted) if (!Active.Values.Any(b => b.CarId == entry.CarId)) Parked[entry.CarId] = (entry, car(entry.CarId));
+            var keep = new HashSet<string>();
+            var pending = new List<ParkedCar>();
+            foreach (var entry in wanted)
+            {
+                if (Active.Values.Any(b => b.CarId == entry.CarId)) continue;
+                keep.Add(entry.CarId);
+                if (Parked.TryGetValue(entry.CarId, out var shown) && Position.Distance(shown.Car.At, entry.At) <= .01) continue;
+                pending.Add(entry);
+            }
+            int first = pending.Count == 0 ? 0 : parkedCursor % pending.Count, placed = 0, attempts = 0;
+            for (; attempts < pending.Count && attempts < ParkedAttemptLimit && placed < ParkedPlacementLimit; attempts++)
+            {
+                var entry = pending[(first + attempts) % pending.Count];
+                Parked.Remove(entry.CarId);
+                if (Blocked.Contains(entry.CarId)) continue;
+                Parked[entry.CarId] = (entry, car(entry.CarId)); placed++;
+            }
+            parkedCursor = first + attempts;
+            LastParkedAttempts = attempts; MaximumParkedAttempts = Math.Max(MaximumParkedAttempts, attempts);
+            foreach (var id in Parked.Keys.Where(id => !keep.Contains(id)).ToList()) Parked.Remove(id);
+            return attempts == pending.Count;
         }
         internal bool Activate() => true;
         internal void AssertHealthy() { }

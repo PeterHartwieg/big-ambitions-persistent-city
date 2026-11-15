@@ -74,8 +74,13 @@ namespace PersistentCity.Core
                 throw new InvalidOperationException("The road topology changed during committed traffic; preserve the saved state.");
             if (traffic != null && traffic.VehicleCount != 0)
             {
-                foreach (var vehicle in traffic.Capture().Vehicles)
-                    if (!ThroughTraffic.IsThroughVehicle(vehicle.VehicleId)) network.ValidateRemainingMapping(trafficCitizens[vehicle.VehicleId].Journey!, vehicle.Route, vehicle.NominalMinutes);
+                traffic.CopyVehiclesInOrder(liveVehicles);
+                try
+                {
+                    foreach (var vehicle in liveVehicles)
+                        if (!ThroughTraffic.IsThroughVehicle(vehicle.VehicleId)) network.ValidateRemainingMapping(trafficCitizens[vehicle.VehicleId].Journey!, vehicle.Route, vehicle.NominalMinutes);
+                }
+                finally { liveVehicles.Clear(); }
             }
             if (traffic == null || State.TrafficTopologyId != network.TopologyId)
             {
@@ -96,6 +101,7 @@ namespace PersistentCity.Core
         }
 
         private readonly List<TrafficNetwork.MappedSpan> mappingSpans = new List<TrafficNetwork.MappedSpan>();
+        private readonly List<TrafficVehicleState> liveVehicles = new List<TrafficVehicleState>();
 
         private double ScheduledMinute(CitizenState citizen)
         {

@@ -156,6 +156,7 @@ namespace PersistentCity.Core
 
         private EssentialNeeds? essentials;
         private long essentialsHour = long.MinValue;
+        private static readonly Comparison<string> OrdinalOrder = string.CompareOrdinal;
 
         internal EssentialNeeds? PurchaseEssentials()
         {
@@ -170,7 +171,7 @@ namespace PersistentCity.Core
                 string category = BusinessTypes.For(venue.BusinessType).EssentialCategory;
                 if (HouseholdEssentials.CanBecomeNeed(category) && !categories.Contains(category)) categories.Add(category);
             }
-            categories.Sort(StringComparer.Ordinal);
+            categories.Sort(OrdinalOrder);
             essentials = EssentialNeeds.Of(categories.ToArray()); essentialsHour = hour;
             return essentials;
         }

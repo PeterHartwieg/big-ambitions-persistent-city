@@ -66,9 +66,45 @@ namespace PersistentCity.Core
         public bool IsEntry(int linkId) => ((List<int>)Entries).BinarySearch(linkId) >= 0;
         public bool IsExit(int linkId) => ((List<int>)Exits).BinarySearch(linkId) >= 0;
 
+        private readonly System.Collections.Concurrent.ConcurrentDictionary<int, (int[] Previous, int[] Reachable)> ready
+            = new System.Collections.Concurrent.ConcurrentDictionary<int, (int[] Previous, int[] Reachable)>();
+        private readonly Dictionary<int, System.Threading.Tasks.Task> requested = new Dictionary<int, System.Threading.Tasks.Task>();
+        internal static System.Threading.ManualResetEventSlim? HoldPrewarm;
+        internal int MainThreadTrees { get; private set; }
+        private double[]? cost;
+        private readonly List<(double Cost, int Link)> open = new List<(double Cost, int Link)>();
+        public int Prewarmed => ready.Count;
+
+        public void Prewarm(List<int> entries)
+        {
+            List<int>? missing = null;
+            foreach (int entry in entries)
+                if (!routes.ContainsKey(entry) && !requested.ContainsKey(entry) && (missing == null || !missing.Contains(entry))) (missing ??= new List<int>()).Add(entry);
+            if (missing == null) return;
+            var hold = HoldPrewarm;
+            var work = System.Threading.Tasks.Task.Run(() =>
+            {
+                hold?.Wait();
+                var scratch = new double[network.Links.Count];
+                var heap = new List<(double Cost, int Link)>();
+                foreach (int entry in missing) ready.TryAdd(entry, Paths(entry, scratch, heap));
+            });
+            foreach (int entry in missing) requested.Add(entry, work);
+        }
+
+        public bool Ready(int entry) => routes.ContainsKey(entry) || ready.ContainsKey(entry)
+            || !requested.TryGetValue(entry, out var work) || work.IsCompleted;
+
+        private (int[] Previous, int[] Reachable) Tree(int entry)
+        {
+            if (ready.TryRemove(entry, out var tree)) return tree;
+            MainThreadTrees++;
+            return Paths(entry, cost ??= new double[network.Links.Count], open);
+        }
+
         public List<TrafficRouteLeg>? Route(int entry, uint draw)
         {
-            if (!routes.TryGetValue(entry, out var tree)) routes.Add(entry, tree = Paths(entry));
+            if (!routes.TryGetValue(entry, out var tree)) routes.Add(entry, tree = Tree(entry));
             if (tree.Reachable.Length == 0) return null;
             var chain = new List<int>();
             for (int link = tree.Reachable[(int)(draw % (uint)tree.Reachable.Length)]; link != -1; link = tree.Previous[link]) chain.Add(link);
@@ -85,13 +121,13 @@ namespace PersistentCity.Core
             return legs;
         }
 
-        private (int[] Previous, int[] Reachable) Paths(int entry)
+        private (int[] Previous, int[] Reachable) Paths(int entry, double[] cost, List<(double Cost, int Link)> open)
         {
             int count = network.Links.Count;
-            var cost = new double[count]; var previous = new int[count];
+            var previous = new int[count];
             for (int i = 0; i < count; i++) { cost[i] = double.PositiveInfinity; previous[i] = -1; }
             cost[entry] = network.Links[entry].FreeFlowMinutes;
-            var open = new List<(double Cost, int Link)>();
+            open.Clear();
             Push(open, (cost[entry], entry));
             while (open.Count > 0)
             {
@@ -154,6 +190,7 @@ namespace PersistentCity.Core
         internal TrafficNetwork? Network;
         internal readonly List<(double At, string Id, int Entry, uint Exit)> Pending = new List<(double, string, int, uint)>();
         internal int Cursor;
+        internal readonly List<int> Entries = new List<int>();
         internal readonly HashSet<string> InFlight = new HashSet<string>(StringComparer.Ordinal);
         internal long ScheduledHour = long.MinValue;
         internal double CountingSince = double.PositiveInfinity;
@@ -228,13 +265,14 @@ namespace PersistentCity.Core
             state.ScheduledHour = long.MinValue; state.CountingSince = double.PositiveInfinity; state.CountHour = long.MinValue; state.CountEntries = state.LastHourEntries = 0;
         }
 
-        private void RunThroughTraffic()
+        private bool RunThroughTraffic(bool wait)
         {
             var state = throughTraffic!;
             long hour = (long)Math.Floor(State.Minute / 60);
             if (state.ScheduledHour == long.MinValue || hour > state.ScheduledHour) ScheduleThroughHour(state, hour);
             while (state.Cursor < state.Pending.Count && state.Pending[state.Cursor].At <= State.Minute)
             {
+                if (!wait && !state.Routes!.Ready(state.Pending[state.Cursor].Entry)) return false;
                 var entry = state.Pending[state.Cursor++];
                 var route = state.Routes!.Route(entry.Entry, entry.Exit);
                 if (route == null) continue;
@@ -251,6 +289,7 @@ namespace PersistentCity.Core
                 state.InFlight.Add(entry.Id); state.Generated++;
             }
             if (state.Cursor == state.Pending.Count) { state.Pending.Clear(); state.Cursor = 0; }
+            return true;
         }
 
         private void ScheduleThroughHour(ThroughTrafficState state, long hour)
@@ -274,6 +313,9 @@ namespace PersistentCity.Core
             }
             state.Pending.Sort((a, b) => a.At != b.At ? a.At.CompareTo(b.At) : string.CompareOrdinal(a.Id, b.Id));
             state.ScheduledHour = hour;
+            state.Entries.Clear();
+            for (int i = 0; i < state.Pending.Count; i++) state.Entries.Add(state.Pending[i].Entry);
+            state.Routes.Prewarm(state.Entries);
         }
 
         private void CountResidentCar()

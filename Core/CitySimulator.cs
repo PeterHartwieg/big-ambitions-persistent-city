@@ -8,8 +8,9 @@ namespace PersistentCity.Core
 {
     public readonly struct AdvanceResult
     {
-        public AdvanceResult(int events, bool caughtUp, int trafficEvents = 0, bool planningPending = false, int foodContinuationEvents = 0, int researchUnits = 0)
-        { Events = events; CaughtUp = caughtUp; TrafficEvents = trafficEvents; PlanningPending = planningPending; FoodContinuationEvents = foodContinuationEvents; ResearchUnits = researchUnits; }
+        public AdvanceResult(int events, bool caughtUp, int trafficEvents = 0, bool planningPending = false, int foodContinuationEvents = 0, int researchUnits = 0, bool throughRoutePending = false)
+        { Events = events; CaughtUp = caughtUp; TrafficEvents = trafficEvents; PlanningPending = planningPending; FoodContinuationEvents = foodContinuationEvents; ResearchUnits = researchUnits; ThroughRoutePending = throughRoutePending; }
+        public bool ThroughRoutePending { get; }
         public int Events { get; }
         public int TrafficEvents { get; }
         public int FoodContinuationEvents { get; }
@@ -330,7 +331,9 @@ namespace PersistentCity.Core
                 {
                     State.Minute = Math.Max(State.Minute, through);
                     traffic!.AdvanceTo(State.Minute, 0);
-                    RunThroughTraffic(); count++; trafficCount++;
+                    if (!RunThroughTraffic(publishSnapshot))
+                        return new AdvanceResult(count, false, trafficCount, foodContinuationEvents: foodContinuationCount, researchUnits: researchCount, throughRoutePending: true);
+                    count++; trafficCount++;
                     continue;
                 }
                 if (next > targetMinute) break;

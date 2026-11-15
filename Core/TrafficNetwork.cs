@@ -51,11 +51,12 @@ namespace PersistentCity.Core
     public sealed class TrafficNetwork
     {
         public const string PolicyId = "directed-sections-v1;max80m;storage6m;headway1.8s;native-periodic-groups";
-        private readonly Dictionary<(int, int), TrafficNetworkEdge> edges = new Dictionary<(int, int), TrafficNetworkEdge>();
-        private readonly List<TrafficLinkDefinition> links = new List<TrafficLinkDefinition>();
-        private readonly List<IReadOnlyList<int>> linkNodes = new List<IReadOnlyList<int>>();
-        private readonly Dictionary<int, Position> positions = new Dictionary<int, Position>();
-        private readonly List<SectionGeometry> sectionGeometry = new List<SectionGeometry>();
+        private readonly Dictionary<(int, int), TrafficNetworkEdge> edges;
+        private readonly List<TrafficLinkDefinition> links;
+        private readonly List<IReadOnlyList<int>> linkNodes;
+        private readonly Dictionary<int, Position> positions;
+        private readonly Dictionary<int, double> kilometres;
+        private readonly List<SectionGeometry> sectionGeometry;
         private const double MappingMetresTolerance = 0.002;
 
         private sealed class SectionGeometry
@@ -82,12 +83,16 @@ namespace PersistentCity.Core
             if (string.IsNullOrEmpty(nativeTopologyId) || snapshot == null || !Position.Finite(clockRate) || clockRate <= 0)
                 throw new ArgumentException("Invalid traffic network snapshot.");
             NativeTopologyId = nativeTopologyId;
+            edges = new Dictionary<(int, int), TrafficNetworkEdge>(); links = new List<TrafficLinkDefinition>();
+            linkNodes = new List<IReadOnlyList<int>>(); positions = new Dictionary<int, Position>();
+            kilometres = new Dictionary<int, double>(); sectionGeometry = new List<SectionGeometry>();
             var nodes = new Dictionary<int, TrafficNetworkNode>();
             foreach (var node in snapshot)
             {
                 if (node == null || node.Id < 0 || node.Successors == null || node.StructuralContract == null
                     || !nodes.TryAdd(node.Id, node)) throw new ArgumentException("Duplicate/invalid traffic node.");
                 positions.Add(node.Id, node.Position);
+                kilometres.Add(node.Id, node.KilometresPerHour);
             }
             var outgoing = nodes.Keys.ToDictionary(i => i, i => new List<Edge>());
             var incoming = nodes.Keys.ToDictionary(i => i, i => 0);
@@ -170,6 +175,46 @@ namespace PersistentCity.Core
             }
             using var hash = SHA256.Create();
             TopologyId = BitConverter.ToString(hash.ComputeHash(buffer.ToArray())).Replace("-", "").ToLowerInvariant();
+        }
+
+        public TrafficNetwork Rerated(double clockRate, Func<int, TrafficSignalSchedule?> signalAt)
+        {
+            if (!Position.Finite(clockRate) || clockRate <= 0) throw new ArgumentException("Invalid traffic network clock rate.");
+            if (signalAt == null) throw new ArgumentNullException(nameof(signalAt));
+            return new TrafficNetwork(this, clockRate, signalAt);
+        }
+
+        private TrafficNetwork(TrafficNetwork source, double clockRate, Func<int, TrafficSignalSchedule?> signalAt)
+        {
+            NativeTopologyId = source.NativeTopologyId; TopologyId = source.TopologyId;
+            positions = source.positions; kilometres = source.kilometres; linkNodes = source.linkNodes;
+            edges = new Dictionary<(int, int), TrafficNetworkEdge>(source.edges.Count);
+            links = new List<TrafficLinkDefinition>(source.links.Count);
+            sectionGeometry = new List<SectionGeometry>(source.sectionGeometry.Count);
+            for (int id = 0; id < source.links.Count; id++)
+            {
+                var indices = linkNodes[id];
+                double minutes = 0;
+                for (int i = 1; i < indices.Count; i++)
+                {
+                    int from = indices[i - 1], to = indices[i];
+                    double length = Position.Distance(positions[from], positions[to]);
+                    double part = length / (Math.Min(40, kilometres[from]) / 3.6 / clockRate);
+                    if (!Position.Finite(part) || part <= 0) throw new ArgumentException("Invalid native edge duration.");
+                    var old = source.edges[(from, to)];
+                    edges.Add((from, to), new TrafficNetworkEdge(from, to, id, part, old.StartLinkFraction, old.EndLinkFraction));
+                    minutes += part;
+                }
+                var link = source.links[id];
+                links.Add(new TrafficLinkDefinition
+                {
+                    Id = id, Capacity = link.Capacity, FreeFlowMinutes = minutes, HeadwayMinutes = 1.8 * clockRate,
+                    Signal = CopySignal(signalAt(indices[indices.Count - 1]))
+                });
+                var geometry = source.sectionGeometry[id];
+                sectionGeometry.Add(new SectionGeometry(geometry.Points, geometry.Distances, minutes));
+            }
+            Links = links.AsReadOnly();
         }
 
         public IReadOnlyList<int> NativeNodes(int linkId) => linkId >= 0 && linkId < linkNodes.Count
