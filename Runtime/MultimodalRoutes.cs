@@ -75,7 +75,8 @@ namespace PersistentCity.Runtime
             else
             {
                 var reviewed = new RloRoadSpeedOverrides(dependency);
-                roadSpeeds = new NativeRoadSpeeds(() => NativeRoadSpeeds.Copy(reviewed.Capture(), pair => (pair.OriginalKilometresPerHour, pair.EffectiveKilometresPerHour)),
+                roadSpeeds = new NativeRoadSpeeds(NativeRoadSpeeds.Reusing<RloRoadSpeedOverride>(reviewed.CaptureInto, RloRoadSpeedOverrides.NewBuffer,
+                    pair => (pair.OriginalKilometresPerHour, pair.EffectiveKilometresPerHour)),
                     error => error is RloRoadSpeedsNotReadyException ? error.Message : null);
             }
             walking = new WalkingRoutes(walkingMetresPerMinute, (from, to) => access != null && access.ClearSegment(from, to));
@@ -135,11 +136,13 @@ namespace PersistentCity.Runtime
         public void BeginTrafficClosureBatch()
         {
             if (closureRoads != null) throw new InvalidOperationException("Traffic closure batch cannot be nested.");
+            ModFrames.Detail(GcAllocationSegment.ModClosuresNetwork);
             roads?.BeginTrafficClosureBatch();
             closureRoads = roads;
         }
         public void EndTrafficClosureBatch()
         {
+            ModFrames.Detail(GcAllocationSegment.ModClosuresLinks);
             closureRoads?.EndTrafficClosureBatch();
             closureRoads = null;
         }
@@ -160,7 +163,23 @@ namespace PersistentCity.Runtime
         public bool ReadyForPopulation => roadSpeeds.Waiting == null && (routeEventHeld || !refreshDeferred && !stationsDeferred)
             && (routeEventHeld || objects == null || (objects.Ready && objectRevision == objects.Revision))
             && stations != null && roads != null && roads.Ready && roads.IsCurrent;
+        private bool rebuildOpen;
+
         public bool Prepare()
+        {
+            rebuildOpen = true;
+            try { return PrepareRoads(); }
+            finally { CloseRebuild(); }
+        }
+
+        private void CloseRebuild()
+        {
+            if (!rebuildOpen) return;
+            rebuildOpen = false;
+            ModFrames.Detail(GcAllocationSegment.ModRoutesRebuild);
+        }
+
+        private bool PrepareRoads()
         {
             LastDiscoveryGateChange = "";
             var city = CityManager.Instance;
@@ -176,8 +195,10 @@ namespace PersistentCity.Runtime
             if (roads != null && (routeEventHeld || roadSpeeds.Waiting != null) && roadSpeeds.WaitsAfterRefresh()) return false;
             if (routeEventHeld && !cityChanged && !sceneLost && roads?.Ready == true && roads.IsCurrent)
             {
+                CloseRebuild();
                 try { roads.Sweep(1, 1024); }
                 catch (RoadSpeedsWaitingException) { return false; }
+                finally { ModFrames.Detail(GcAllocationSegment.ModRoutesSweep); }
                 return roads.IsCurrent;
             }
             if (!routeEventHeld)
@@ -223,9 +244,11 @@ namespace PersistentCity.Runtime
                 roads.SetTrafficEntryForecast(trafficEntryForecast);
             }
             else roads.SetAccess(access!);
+            CloseRebuild();
             if (!roads.Prepare()) return false;
             try { roads.Sweep(1, 1024); }
             catch (RoadSpeedsWaitingException) { return false; }
+            finally { ModFrames.Detail(GcAllocationSegment.ModRoutesSweep); }
             return roads.IsCurrent;
         }
         public GleyTrafficSystem.Waypoint? ResolveWaypoint(string topology, int index) => roads?.ResolveWaypoint(topology, index);

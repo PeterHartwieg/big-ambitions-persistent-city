@@ -32,6 +32,19 @@ namespace PersistentCity.Runtime
         internal static IEqualityComparer<object> ReferenceComparer => References.Instance;
         private static readonly IReadOnlyDictionary<object, (int Original, int Effective)> NoOverrides =
             new Dictionary<object, (int Original, int Effective)>(References.Instance);
+        internal static Func<IReadOnlyDictionary<object, (int Original, int Effective)>> Reusing<T>(Action<Dictionary<object, T>> fill,
+            Func<Dictionary<object, T>> buffer, Func<T, (int, int)> limits)
+        {
+            var read = buffer();
+            var mapped = new Dictionary<object, (int Original, int Effective)>(References.Instance);
+            return () =>
+            {
+                fill(read);
+                mapped.Clear();
+                foreach (var pair in read) mapped.Add(pair.Key, limits(pair.Value));
+                return mapped;
+            };
+        }
         internal static IReadOnlyDictionary<object, (int Original, int Effective)> Copy<T>(IReadOnlyDictionary<object, T> source, Func<T, (int, int)> limits)
         {
             if (source.Count == 0) return NoOverrides;

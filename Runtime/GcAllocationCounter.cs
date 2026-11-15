@@ -92,11 +92,32 @@ namespace PersistentCity.Runtime
             ModFrames.Detail(segment);
         }
 
-        public static void End()
+        public static void Settle(GcAllocationSegment sub)
+        {
+            var current = sampler;
+            if (current != null)
+            {
+                long counter = GcAllocationCounter.Read(); int collections = GcAllocationCounter.Collections;
+                current.Detail(sub, counter, collections);
+                current.Charge(GcAllocationSegment.PhysicalUnattributed, counter, collections);
+            }
+            ModFrames.Detail(sub);
+            ModFrames.Charge(GcAllocationSegment.PhysicalUnattributed);
+        }
+
+        public static void End() => End(GcAllocationSegment.PhysicalUnattributedUpdate);
+
+        public static void End(GcAllocationSegment remainder)
         {
             var current = sampler;
             sampler = null;
-            current?.EndNested(GcAllocationSegment.Physical, GcAllocationSegment.PhysicalUnattributed, GcAllocationCounter.Read(), GcAllocationCounter.Collections);
+            if (current != null)
+            {
+                long counter = GcAllocationCounter.Read(); int collections = GcAllocationCounter.Collections;
+                current.Sub(remainder, counter, collections);
+                current.EndNested(GcAllocationSegment.Physical, GcAllocationSegment.PhysicalUnattributed, counter, collections);
+            }
+            ModFrames.Detail(remainder);
             ModFrames.Charge(GcAllocationSegment.PhysicalUnattributed);
         }
     }
@@ -118,6 +139,13 @@ namespace PersistentCity.Runtime
             var current = sampler;
             if (current != null) current.Detail(segment, GcAllocationCounter.Read(), GcAllocationCounter.Collections);
             ModFrames.Charge(segment);
+        }
+
+        public static void Sub(GcAllocationSegment segment)
+        {
+            var current = sampler;
+            if (current != null) current.Sub(segment, GcAllocationCounter.Read(), GcAllocationCounter.Collections);
+            ModFrames.Detail(segment);
         }
 
         public static void End()
