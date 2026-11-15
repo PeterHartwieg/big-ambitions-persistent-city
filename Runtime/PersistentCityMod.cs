@@ -471,7 +471,8 @@ namespace PersistentCity.Runtime
                         + maxStationSearchMilliseconds.ToString("F3", System.Globalization.CultureInfo.InvariantCulture) + " ms, preparation frame "
                         + maxPrepareMilliseconds.ToString("F3", System.Globalization.CultureInfo.InvariantCulture) + " ms. Closure refresh: "
                         + closureFrames + " calls, " + closureMilliseconds.ToString("F3", System.Globalization.CultureInfo.InvariantCulture)
-                        + " ms total, " + maxClosureMilliseconds.ToString("F3", System.Globalization.CultureInfo.InvariantCulture) + " ms maximum. Route planning across frames: "
+                        + " ms total, " + maxClosureMilliseconds.ToString("F3", System.Globalization.CultureInfo.InvariantCulture) + " ms maximum, gate clearance reused "
+                        + (routes?.LastRoadGateClearanceReused == true) + ". Route planning across frames: "
                         + planningRequests + " requests, " + planningSlices + " slices, " + planningEvents + " events completed, "
                         + planningPendingFrames + " frames ended with a plan pending, "
                         + planningMilliseconds.ToString("F3", System.Globalization.CultureInfo.InvariantCulture) + " ms total, slowest slice "

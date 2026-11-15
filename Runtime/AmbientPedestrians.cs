@@ -379,6 +379,7 @@ namespace PersistentCity.Runtime
         private int restoreIndex = -1;
         private bool restoreAll;
         private Exception? restoreError;
+        private int respawnedFrom = -1;
 
         public bool DisposeSome(long deadlineTimestamp)
         {
@@ -423,13 +424,24 @@ namespace PersistentCity.Runtime
                 catch (Exception error) { if (restoreError == null) restoreError = error; }
                 if (restoreIndex < pending.Count && System.Diagnostics.Stopwatch.GetTimestamp() >= deadlineTimestamp) return false;
             }
-            disposed = true; restoring = null;
+            restoring = null;
             try
             {
-                if (restoreAll && SameCity && spawner != null) spawner.SetActivePedestrians(desiredAmount);
+                while (restoreAll && SameCity && spawner != null)
+                {
+                    int have = spawner.activePedestrians.Count;
+                    var action = AmbientRespawnSteps.Next(have, desiredAmount, (int)lastAmount!.GetValue(spawner)!, BuildingManager.IsInsideBuilding, respawnedFrom);
+                    if (action == AmbientRespawnAction.Done) break;
+                    if (action == AmbientRespawnAction.SetDesired) { spawner.SetActivePedestrians(desiredAmount); break; }
+                    respawnedFrom = have;
+                    spawner.SetActivePedestrians(have + 1);
+                    lastAmount.SetValue(spawner, desiredAmount);
+                    if (have + 1 < desiredAmount && System.Diagnostics.Stopwatch.GetTimestamp() >= deadlineTimestamp) return false;
+                }
             }
             catch (Exception error) { if (restoreError == null) restoreError = error; }
-            finally { held.Clear(); resumeAt.Clear(); departing.Clear(); failedSearches.Clear(); }
+            disposed = true; respawnedFrom = -1;
+            held.Clear(); resumeAt.Clear(); departing.Clear(); failedSearches.Clear();
             if (restoreError != null)
             {
                 LastError = "Ambient pedestrian restoration was incomplete; reload this city before continuing. " + restoreError.Message;

@@ -287,6 +287,7 @@ namespace PersistentCity.Core
                 state.TravelClockRate = rate;
                 if (traffic != null) state.Traffic = traffic;
                 state.SnapshotSynchronizer = null;
+                state.SnapshotSteps = null;
                 return true;
             }
 

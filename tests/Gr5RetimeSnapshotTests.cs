@@ -1,0 +1,77 @@
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
+using PersistentCity.Core;
+using PersistentCity.Persistence;
+using Xunit;
+using Xunit.Abstractions;
+
+namespace PersistentCity.Tests;
+
+public sealed class Gr5RetimeSnapshotTests
+{
+    private readonly ITestOutputHelper output;
+    public Gr5RetimeSnapshotTests(ITestOutputHelper output) { this.output = output; }
+
+    private static (CityState State, CitySimulator Simulator) City()
+    {
+        var (state, _) = TravelTimingMaximumRouteTests.RigScaleCity(TravelTimingMaximumRouteTests.FixtureLinks);
+        var simulator = new CitySimulator(state, new NoRoutes());
+        simulator.AdvanceTo(state.Minute + 0.25, int.MaxValue);
+        return (state, simulator);
+    }
+
+    private static double Milliseconds(long started) => (Stopwatch.GetTimestamp() - started) * 1000.0 / Stopwatch.Frequency;
+
+    [Fact]
+    public void ASlicedSaveSnapshotWritesTheSameSaveAsTheWholeOne()
+    {
+        var (whole, _) = City();
+        var (sliced, _) = City();
+        Assert.NotNull(whole.Traffic);
+        whole.PrepareForSave();
+        var steps = sliced.PrepareForSaveInSteps(16);
+        int count = 0;
+        while (true) { Assert.True(steps.MoveNext()); count++; if (steps.Current) break; }
+        Assert.True(count > 100, count.ToString());
+        Assert.Equal(RushSpikeReplay.Sha(SaveCodec.Write(whole)), RushSpikeReplay.Sha(SaveCodec.Write(sliced)));
+    }
+
+    [Fact]
+    public void AnUnfinishedSnapshotLeavesTheSavedTrafficUntouched()
+    {
+        var (state, _) = City();
+        state.PrepareForSave();
+        var saved = state.Traffic;
+        var driver = new ClockRetimeDriver();
+        Assert.Equal(ClockRetimeOutcome.Preparing, driver.Update(state, state.TravelClockRate * 2, false, 2, 0));
+        Assert.Same(saved, state.Traffic);
+        Assert.Equal(ClockRetimeOutcome.None, driver.Update(state, state.TravelClockRate, false, 2, 0));
+        Assert.Same(saved, state.Traffic);
+        Assert.False(driver.Holding);
+    }
+
+    [Fact]
+    public void TheRetimeSnapshotRunsInSlicesUnderTheFrameBudget()
+    {
+        var (state, _) = City();
+        long started = Stopwatch.GetTimestamp();
+        state.PrepareForSave();
+        double whole = Milliseconds(started);
+        var driver = new ClockRetimeDriver();
+        var updates = new List<double>();
+        ClockRetimeOutcome outcome;
+        do
+        {
+            started = Stopwatch.GetTimestamp();
+            outcome = driver.Update(state, state.TravelClockRate * 2, false, 2, ClockRetimeStages.SliceMilliseconds);
+            updates.Add(Milliseconds(started));
+        }
+        while (outcome == ClockRetimeOutcome.Preparing && !driver.Holding);
+        Assert.Equal(ClockRetimeOutcome.Began, outcome);
+        Assert.True(driver.SnapshotSlices > 1, driver.SnapshotSlices.ToString());
+        output.WriteLine($"unsliced PrepareForSave {whole:0.0} ms; sliced into {updates.Count} updates, slowest {updates.Max():0.0} ms, began update {updates[^1]:0.0} ms (.NET)");
+        PerfGate.Under(updates.Max(), 30, "slowest retime snapshot update at 13,965 links");
+    }
+}

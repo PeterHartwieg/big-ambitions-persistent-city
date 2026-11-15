@@ -33,6 +33,7 @@ namespace PersistentCity.Core
         private void RestoreTraffic(TravelTiming.RetimedTraffic? retimed)
         {
             State.SnapshotSynchronizer = CaptureTraffic;
+            State.SnapshotSteps = CaptureTrafficInSteps;
             if (State.Traffic == null) return;
             if (State.Traffic.Clock != State.Minute || string.IsNullOrEmpty(State.TrafficTopologyId))
                 throw new ArgumentException("Traffic and city clocks/topology do not match.");
@@ -236,6 +237,19 @@ namespace PersistentCity.Core
         {
             SynchronizeSnapshot();
             State.Traffic = traffic == null ? null : ThroughCarCount > 0 ? traffic.Capture(ThroughTraffic.IsThroughVehicle) : traffic.Capture();
+        }
+
+        private IEnumerator<bool> CaptureTrafficInSteps(int linksPerStep)
+        {
+            SynchronizeSnapshot();
+            if (traffic == null) { State.Traffic = null; yield return true; yield break; }
+            var capture = ThroughCarCount > 0 ? traffic.CaptureInSteps(ThroughTraffic.IsThroughVehicle, linksPerStep) : traffic.CaptureInSteps(linksPerStep);
+            while (capture.MoveNext())
+            {
+                if (capture.Current != null) { State.Traffic = capture.Current; yield return true; yield break; }
+                yield return false;
+            }
+            throw new InvalidOperationException("Traffic capture ended without a result.");
         }
 
         public void SynchronizeSnapshot() => SynchronizeTrafficJourneys();

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 
 namespace PersistentCity.Core
@@ -21,12 +22,16 @@ namespace PersistentCity.Core
 
     public sealed class ClockRetimeDriver
     {
-        private bool finished;
+        public const int SnapshotLinksPerStep = 256;
+        private bool finished, restartPending;
+        private IEnumerator<bool>? snapshot;
+        private CityState? snapshotState;
 
         public TravelTiming.TravelRetime? Pending { get; private set; }
         public bool Holding => Pending != null;
         public int Restarts { get; private set; }
         public int Slices { get; private set; }
+        public int SnapshotSlices { get; private set; }
         public double SliceMilliseconds { get; private set; }
         public double SlowestSliceMilliseconds { get; private set; }
         public int Degraded { get; private set; }
@@ -39,12 +44,31 @@ namespace PersistentCity.Core
             if (stage == ClockRetimeStage.None) { Cancel(); return ClockRetimeOutcome.None; }
             if (stage == ClockRetimeStage.ReleaseBodies) return ClockRetimeOutcome.ReleaseBodies;
             if (Pending != null && (Pending.ClockRate != nativeRate || !ReferenceEquals(Pending.State, state))) Cancel();
-            bool restarted = false;
-            if (Pending != null && Pending.Stale) { Pending = null; Restarts++; restarted = true; }
+            if (Pending != null && Pending.Stale) { Pending = null; Restarts++; restartPending = true; }
             if (Pending == null)
             {
-                if (finished) Reset();
-                state.PrepareForSave();
+                if (snapshot == null || !ReferenceEquals(snapshotState, state))
+                {
+                    if (finished) Reset();
+                    snapshot = state.PrepareForSaveInSteps(SnapshotLinksPerStep);
+                    snapshotState = state;
+                }
+                long started = Stopwatch.GetTimestamp();
+                long deadline = started + (long)(budgetMilliseconds * Stopwatch.Frequency / 1000);
+                while (true)
+                {
+                    if (!snapshot.MoveNext()) throw new InvalidOperationException("The retime snapshot ended without a result.");
+                    if (snapshot.Current) break;
+                    if (Stopwatch.GetTimestamp() >= deadline)
+                    {
+                        CountSlice(started); SnapshotSlices++;
+                        return ClockRetimeOutcome.Preparing;
+                    }
+                }
+                snapshot = null; snapshotState = null;
+                if (SnapshotSlices > 0) { CountSlice(started); SnapshotSlices++; }
+                bool restarted = restartPending;
+                restartPending = false;
                 Pending = TravelTiming.Begin(state, walkMetresPerSecond, nativeRate);
                 if (Pending == null) { Degraded = 0; finished = true; return ClockRetimeOutcome.Committed; }
                 return restarted ? ClockRetimeOutcome.Restarted : ClockRetimeOutcome.Began;
@@ -53,8 +77,7 @@ namespace PersistentCity.Core
             {
                 long started = Stopwatch.GetTimestamp();
                 Pending.Step(started + (long)(budgetMilliseconds * Stopwatch.Frequency / 1000));
-                double slice = (Stopwatch.GetTimestamp() - started) * 1000.0 / Stopwatch.Frequency;
-                Slices++; SliceMilliseconds += slice; SlowestSliceMilliseconds = Math.Max(SlowestSliceMilliseconds, slice);
+                CountSlice(started);
                 return ClockRetimeOutcome.Preparing;
             }
             if (!Pending.Commit()) { Pending = null; Restarts++; return ClockRetimeOutcome.Restarted; }
@@ -62,7 +85,13 @@ namespace PersistentCity.Core
             return ClockRetimeOutcome.Committed;
         }
 
-        public void Cancel() { Pending = null; Reset(); }
+        private void CountSlice(long started)
+        {
+            double slice = (Stopwatch.GetTimestamp() - started) * 1000.0 / Stopwatch.Frequency;
+            Slices++; SliceMilliseconds += slice; SlowestSliceMilliseconds = Math.Max(SlowestSliceMilliseconds, slice);
+        }
+
+        public void Cancel() { Pending = null; snapshot = null; snapshotState = null; restartPending = false; Reset(); }
 
         public TravelTiming.RetimedTraffic? TakeRetimedTraffic()
         {
@@ -73,7 +102,7 @@ namespace PersistentCity.Core
 
         private void Reset()
         {
-            finished = false; Restarts = 0; Slices = 0; SliceMilliseconds = SlowestSliceMilliseconds = 0; Degraded = 0; RetimedTraffic = null;
+            finished = false; Restarts = 0; Slices = 0; SnapshotSlices = 0; SliceMilliseconds = SlowestSliceMilliseconds = 0; Degraded = 0; RetimedTraffic = null;
         }
     }
 }
