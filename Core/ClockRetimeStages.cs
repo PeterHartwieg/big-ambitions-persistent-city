@@ -7,6 +7,8 @@ namespace PersistentCity.Core
     public static class ClockRetimeStages
     {
         public const double Tolerance = .000001;
+        public const double SliceMilliseconds = 4;
+        public const int MaximumRestarts = 3;
 
         public static ClockRetimeStage Next(double nativeRate, double stateRate, bool bodiesLive)
         {

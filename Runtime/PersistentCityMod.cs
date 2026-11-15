@@ -305,7 +305,7 @@ namespace PersistentCity.Runtime
                 ModFrames.Charge(GcAllocationSegment.ModOptionalStops);
                 double clockRate = NativeTravelPace.ClockRate;
                 var retime = ClockRetimeStages.Next(clockRate, simulation.State.TravelClockRate, physical != null);
-                if (retime == ClockRetimeStage.None) retimeReleaseMilliseconds = 0;
+                if (retime == ClockRetimeStage.None) { retimeReleaseMilliseconds = 0; pendingRetime = null; }
                 else
                 {
                     long retimeStarted = Stopwatch.GetTimestamp();
@@ -316,23 +316,55 @@ namespace PersistentCity.Runtime
                     }
                     else
                     {
-                        simulation.State.PrepareForSave();
-                        TravelTiming.Apply(simulation.State, NativeTravelPace.WalkingMetresPerSecond, clockRate, out int degraded);
-                        double timing = (Stopwatch.GetTimestamp() - retimeStarted) * MillisecondsPerTimestamp;
-                        if (degraded > 0)
-                            log?.Info("Clock retime degraded " + degraded.ToString(System.Globalization.CultureInfo.InvariantCulture)
-                                + " journeys: each keeps its old pace on its current road edge or drives outside traffic until its next road section.");
-                        var retimedRoutes = new MultimodalRoutes(simulation.State.Places, NativeTravelPace.WalkingMetresPerSecond / clockRate, clockRate, dependency, routeObjects);
-                        if (foodMarket != null) log?.Info(FoodClockReach.RetimeLine(clockRate, retimedRoutes.WalkingMetresPerMinute));
-                        if (routes != null) retimedRoutes.ReuseRoadSceneForRetiming(routes);
-                        routes = retimedRoutes;
-                        seenRoadSnapshots = 0; clockRetimingRoutes = true;
-                        simulation = simulation.RebuildRoutes(routes);
-                        vendorMarket?.Rebind(simulation);
-                        seenPlanningRequests = seenEventRestarts = seenInlineRestarts = 0;
-                        log?.Info("Clock retime: body release " + Milliseconds(retimeReleaseMilliseconds) + " ms in the previous update, journey retime "
-                            + Milliseconds(timing) + " ms, simulation rebuild " + Milliseconds((Stopwatch.GetTimestamp() - retimeStarted) * MillisecondsPerTimestamp - timing) + " ms.");
-                        retimeReleaseMilliseconds = 0;
+                        if (pendingRetime != null && (pendingRetime.ClockRate != clockRate || !ReferenceEquals(pendingRetime.State, simulation.State)))
+                            pendingRetime = null;
+                        bool unsliced = retimeRestarts >= ClockRetimeStages.MaximumRestarts;
+                        if (pendingRetime == null)
+                        {
+                            simulation.State.PrepareForSave();
+                            pendingRetime = TravelTiming.Begin(simulation.State, NativeTravelPace.WalkingMetresPerSecond, clockRate);
+                            retimeSlices = 0; retimeSliceMilliseconds = retimeMaxSliceMilliseconds = 0;
+                        }
+                        bool ready = true;
+                        if (pendingRetime != null)
+                        {
+                            long deadline = unsliced ? long.MaxValue : retimeStarted + (long)(ClockRetimeStages.SliceMilliseconds / MillisecondsPerTimestamp);
+                            ready = pendingRetime.Step(deadline);
+                            double slice = (Stopwatch.GetTimestamp() - retimeStarted) * MillisecondsPerTimestamp;
+                            retimeSlices++; retimeSliceMilliseconds += slice; retimeMaxSliceMilliseconds = Math.Max(retimeMaxSliceMilliseconds, slice);
+                        }
+                        if (ready)
+                        {
+                            long commitStarted = Stopwatch.GetTimestamp();
+                            if (pendingRetime != null && !pendingRetime.Commit())
+                            {
+                                retimeRestarts++; pendingRetime = null;
+                                log?.Info("Clock retime inputs changed between slices; the retime restarts" + (retimeRestarts >= ClockRetimeStages.MaximumRestarts ? " in one update." : "."));
+                            }
+                            else
+                            {
+                                int degraded = pendingRetime?.Degraded ?? 0;
+                                pendingRetime = null; retimeRestarts = 0;
+                                double timing = (Stopwatch.GetTimestamp() - commitStarted) * MillisecondsPerTimestamp;
+                                if (degraded > 0)
+                                    log?.Info("Clock retime degraded " + degraded.ToString(System.Globalization.CultureInfo.InvariantCulture)
+                                        + " journeys: each keeps its old pace on its current road edge or drives outside traffic until its next road section.");
+                                long rebuildStarted = Stopwatch.GetTimestamp();
+                                var retimedRoutes = new MultimodalRoutes(simulation.State.Places, NativeTravelPace.WalkingMetresPerSecond / clockRate, clockRate, dependency, routeObjects);
+                                if (foodMarket != null) log?.Info(FoodClockReach.RetimeLine(clockRate, retimedRoutes.WalkingMetresPerMinute));
+                                if (routes != null) retimedRoutes.ReuseRoadSceneForRetiming(routes);
+                                routes = retimedRoutes;
+                                seenRoadSnapshots = 0; clockRetimingRoutes = true;
+                                simulation = simulation.RebuildRoutes(routes);
+                                vendorMarket?.Rebind(simulation);
+                                seenPlanningRequests = seenEventRestarts = seenInlineRestarts = 0;
+                                log?.Info("Clock retime: body release " + Milliseconds(retimeReleaseMilliseconds) + " ms in the previous update, journey retime "
+                                    + Milliseconds(retimeSliceMilliseconds) + " ms over " + retimeSlices.ToString(System.Globalization.CultureInfo.InvariantCulture)
+                                    + " updates (slowest " + Milliseconds(retimeMaxSliceMilliseconds) + " ms), commit " + Milliseconds(timing)
+                                    + " ms, simulation rebuild " + Milliseconds((Stopwatch.GetTimestamp() - rebuildStarted) * MillisecondsPerTimestamp) + " ms.");
+                                retimeReleaseMilliseconds = 0;
+                            }
+                        }
                     }
                     WaitForRetime(); return;
                 }
@@ -580,7 +612,9 @@ namespace PersistentCity.Runtime
             }
         }
 
-        private double retimeReleaseMilliseconds;
+        private double retimeReleaseMilliseconds, retimeSliceMilliseconds, retimeMaxSliceMilliseconds;
+        private TravelTiming.TravelRetime? pendingRetime;
+        private int retimeSlices, retimeRestarts;
         private static string Milliseconds(double value) => value.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture);
         private void WaitForRetime()
         {
@@ -957,7 +991,7 @@ namespace PersistentCity.Runtime
             initialization = null;
             initializingSave = null;
             initializingPayload = null;
-            simulation = null; stopEnvironment = null;
+            simulation = null; stopEnvironment = null; pendingRetime = null; retimeRestarts = 0;
             saveSession = null;
             routes = null;
             saveIdentity = null;
