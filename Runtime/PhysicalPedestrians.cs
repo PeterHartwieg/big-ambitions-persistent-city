@@ -127,22 +127,25 @@ namespace PersistentCity.Runtime
                 bool dressed = choice == BodyChoice.Hit;
                 long buildStarted = dressed ? 0 : System.Diagnostics.Stopwatch.GetTimestamp();
                 if (choice != BodyChoice.Grow) character = pooled;
+                else if (!immediate)
+                {
+                    PhysicalAllocation.Mark();
+                    var grown = Grow();
+                    PhysicalAllocation.Detail(PersistentCity.Core.GcAllocationSegment.PhysicalSpawnGrow);
+                    if (grown != null)
+                    {
+                        idle.Return(grown, default, Time.unscaledTime);
+                        UpdateCityClock.AddBuild((System.Diagnostics.Stopwatch.GetTimestamp() - buildStarted) * 1000.0 / System.Diagnostics.Stopwatch.Frequency);
+                        Instantiated++;
+                    }
+                    LastDeferred = true; return false;
+                }
                 else
                 {
                     PhysicalAllocation.Mark();
                     character = Instantiate();
                     PhysicalAllocation.Detail(PersistentCity.Core.GcAllocationSegment.PhysicalSpawnGrow);
                     if (character == null) return false;
-                    if (!immediate)
-                    {
-                        idle.Return(character, default, Time.unscaledTime);
-                        character = null;
-                        double instantiateMilliseconds = (System.Diagnostics.Stopwatch.GetTimestamp() - buildStarted) * 1000.0 / System.Diagnostics.Stopwatch.Frequency;
-                        UpdateCityClock.AddBuild(instantiateMilliseconds);
-                        budget.Gate!.Observe(instantiateMilliseconds);
-                        Instantiated++;
-                        LastDeferred = true; return false;
-                    }
                 }
                 character.isPlayer = false; character.updatePlayerPos = false;
                 character.navmeshAgent.enabled = false;
@@ -200,7 +203,10 @@ namespace PersistentCity.Runtime
         private static GameObject? prefab;
         private GameObject? staging;
 
-        private ThirdPersonCharacter? Instantiate()
+        private AsyncInstantiateOperation<GameObject>? growing;
+        public long GrowsStarted { get; private set; }
+
+        private bool Staged()
         {
             if (staging == null)
             {
@@ -210,9 +216,49 @@ namespace PersistentCity.Runtime
             if (prefab == null)
             {
                 prefab = PrefabHelper.LoadPrefabAssetByName("Characters/HumanDefinitionLow");
-                if (prefab == null || prefab.GetComponent<ThirdPersonCharacter>() == null) { prefab = null; return null; }
+                if (prefab == null || prefab.GetComponent<ThirdPersonCharacter>() == null) { prefab = null; return false; }
             }
-            GameObject instance = UnityEngine.Object.Instantiate(prefab, staging.transform);
+            return true;
+        }
+
+        private ThirdPersonCharacter? Grow()
+        {
+            if (growing == null)
+            {
+                if (!Staged()) return null;
+                growing = UnityEngine.Object.InstantiateAsync(prefab!, staging!.transform);
+                GrowsStarted++;
+                return null;
+            }
+            if (!growing.isDone) return null;
+            var made = growing.Result;
+            growing = null;
+            if (made == null || made.Length != 1 || made[0] == null)
+            {
+                if (made != null) foreach (var extra in made) if (extra != null) UnityEngine.Object.Destroy(extra);
+                return null;
+            }
+            return Adopt(made[0]);
+        }
+
+        private void CancelGrow()
+        {
+            var pending = growing;
+            growing = null;
+            if (pending == null) return;
+            if (!pending.isDone) { pending.Cancel(); return; }
+            var made = pending.Result;
+            if (made != null) foreach (var instance in made) if (instance != null) UnityEngine.Object.Destroy(instance);
+        }
+
+        private ThirdPersonCharacter? Instantiate()
+        {
+            if (!Staged()) return null;
+            return Adopt(UnityEngine.Object.Instantiate(prefab!, staging!.transform));
+        }
+
+        private ThirdPersonCharacter? Adopt(GameObject instance)
+        {
             var character = instance.GetComponent<ThirdPersonCharacter>();
             if (character == null || character.navmeshAgent == null || character.capsuleCollider == null
                 || character.appearanceSetter == null || character.animator == null || character.animator.runtimeAnimatorController == null
@@ -350,6 +396,7 @@ namespace PersistentCity.Runtime
                 if (!kept) DestroyCharacter(character);
             }
             active.Clear(); idle.Clear(); baked.Clear(); leases.Clear(); BlendshapeBake.Clear(); all.Clear();
+            CancelGrow();
             if (staging != null) { UnityEngine.Object.Destroy(staging); staging = null; }
         }
     }

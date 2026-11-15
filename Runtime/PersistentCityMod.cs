@@ -273,11 +273,16 @@ namespace PersistentCity.Runtime
                         log?.Info(rloTransient ? "RLO transient (" + source.Reason + "): " + source.Message + " The city continues and saves on its saved donor catalogue; no identity is created, renamed or regenerated."
                             : "RLO ready again and matching the saved donor catalogue; the transient window ended.");
                     }
+                    gateRefreshDue = true;
+                    nextStationScan = Time.unscaledTime + 15;
+                }
+                else if (gateRefreshDue)
+                {
+                    gateRefreshDue = false;
                     long gateStarted = Stopwatch.GetTimestamp();
                     string gateChange = routes?.Refresh() ?? "";
                     maxGateCheckMilliseconds = Math.Max(maxGateCheckMilliseconds, (Stopwatch.GetTimestamp() - gateStarted) * MillisecondsPerTimestamp);
                     if (gateChange.Length > 0) { gateChanges++; log?.Info("Public gates changed (" + gateChange + "); road snapshot discarded; a new one follows station preparation and reuses the live road scene."); }
-                    nextStationScan = Time.unscaledTime + 15;
                 }
                 else if (Time.unscaledTime >= nextStationScan)
                 {
@@ -544,6 +549,7 @@ namespace PersistentCity.Runtime
         }
 
         private Action? physicalBeforeAdvance, physicalUpdate, physicalCatchLoads;
+        private bool gateRefreshDue;
         private readonly UpdateCityBudget frameBudget = new UpdateCityBudget();
 
         private void RunPhysical(Action action)

@@ -148,6 +148,8 @@ namespace PersistentCity.Core
                 return result;
             }
         }
+        private static readonly Comparison<int> AscendingIds = (a, b) => a.CompareTo(b);
+        private static readonly Comparison<TrafficEventState> EventOrder = EventComparer.Instance.Compare;
         internal void CopyRelevantLinkIds(List<int> result)
         {
             result.Clear();
@@ -159,7 +161,7 @@ namespace PersistentCity.Core
                 TrafficVehicleState head = link.Queue.First.Value;
                 if (head.RouteIndex + 1 < head.Route.Count) result.Add(head.Route[head.RouteIndex + 1].LinkId);
             }
-            result.Sort();
+            result.Sort(AscendingIds);
             int count = 0;
             for (int i = 0; i < result.Count; i++)
                 if (count == 0 || result[i] != result[count - 1]) result[count++] = result[i];
@@ -465,7 +467,7 @@ namespace PersistentCity.Core
                     if ((incoming.Queue.Count != 0 || incoming.Sources.Count != 0) && !Include(incomingId)) return null;
                 }
             }
-            order.Sort();
+            order.Sort(AscendingIds);
             TrafficKernel projection = scratch.Kernel;
             foreach (int id in scratch.Used)
             {
@@ -798,7 +800,7 @@ namespace PersistentCity.Core
             foreach (TrafficVehicleState vehicle in vehicles.Values.OrderBy(v => v.Order)) state.Vehicles.Add(CopyVehicle(vehicle));
             var scheduled = new List<TrafficEventState>(events.Count);
             events.CopyTo(scheduled);
-            scheduled.Sort(EventComparer.Instance);
+            scheduled.Sort(EventOrder);
             foreach (TrafficEventState item in scheduled) state.Events.Add(new TrafficEventState { LinkId = item.LinkId, At = item.At, Order = item.Order });
             return state;
         }

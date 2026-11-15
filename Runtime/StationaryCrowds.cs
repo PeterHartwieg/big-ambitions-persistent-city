@@ -9,7 +9,8 @@ namespace PersistentCity.Runtime
     internal sealed class StationaryCrowds : IDisposable
     {
         private const string Owner = "hart.persistentcity.stationarycrowds.v1";
-        private readonly Harmony harmony = new Harmony(Owner);
+        private static readonly Harmony harmony = new Harmony(Owner);
+        private static bool hooked;
         private readonly MethodInfo? spawn = AccessTools.Method(typeof(StationaryAiSpawner), "Spawn", new[] { typeof(Vector3) });
         private readonly FieldInfo? visible = AccessTools.Field(typeof(StationaryAiSpawner), "isVisible");
         private bool active;
@@ -31,8 +32,8 @@ namespace PersistentCity.Runtime
             {
                 if (spawn == null || spawn.ReturnType != typeof(void) || visible == null || visible.FieldType != typeof(bool))
                     throw new InvalidOperationException("Unexpected native stationary spawner contract.");
-                if (Harmony.HasAnyPatches(Owner)) throw new InvalidOperationException("Another stationary crowd hook owner is already registered.");
-                harmony.Patch(spawn, prefix: new HarmonyMethod(typeof(StationaryCrowds), nameof(SpawnPrefix)));
+                if (Overruling || !hooked && Harmony.HasAnyPatches(Owner)) throw new InvalidOperationException("Another stationary crowd hook owner is already registered.");
+                if (!hooked) { harmony.Patch(spawn, prefix: new HarmonyMethod(typeof(StationaryCrowds), nameof(SpawnPrefix))); hooked = true; }
                 active = Overruling = true;
                 int cleared = 0;
                 foreach (var zone in StationaryAiSpawner.AllPedestrianSpawners)
@@ -49,19 +50,18 @@ namespace PersistentCity.Runtime
             catch (Exception error)
             {
                 LastError = error.GetType().Name + ": " + error.Message;
-                harmony.UnpatchAll(Owner);
+                if (!hooked) harmony.UnpatchAll(Owner);
                 active = Overruling = false;
                 UnityEngine.Debug.LogWarning("[Persistent City] Stationary crowds left as the game has them: " + LastError);
             }
         }
 
-        private static bool SpawnPrefix() => false;
+        private static bool SpawnPrefix() => !Overruling;
 
         public void Dispose()
         {
             if (!active) return;
             active = Overruling = false;
-            harmony.UnpatchAll(Owner);
         }
     }
 }

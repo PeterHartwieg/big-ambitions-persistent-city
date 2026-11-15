@@ -105,7 +105,7 @@ namespace PersistentCity.Runtime
             PhysicalAllocation.Charge(GcAllocationSegment.PhysicalBindings);
             if (!interior && Time.unscaledTime >= nextParked)
             {
-                nextParked = Time.unscaledTime + ParkedRefreshSeconds; ShowParked(focus, radius, vehicleLimit);
+                nextParked = Time.unscaledTime + (ShowParked(focus, radius, vehicleLimit) ? ParkedRefreshSeconds : ParkedRetrySeconds);
                 PhysicalAllocation.Charge(GcAllocationSegment.PhysicalParked);
             }
             if (Time.unscaledTime < nextSelection || !routes.ReadyForPopulation)
@@ -154,7 +154,7 @@ namespace PersistentCity.Runtime
                 if (distance <= radius) candidates.Add(new SelectionCandidate(Entity(waiter), queue.Line.Entrance,
                     tried ? lastAttempt : float.NegativeInfinity, distance, candidates.Count));
             }
-            candidates.Sort(SelectionCandidate.ByPriority);
+            candidates.Sort(SelectionCandidate.ByPriorityOrder);
             PhysicalAllocation.Charge(GcAllocationSegment.PhysicalRoster);
             foreach (var candidate in candidates)
             {
@@ -261,10 +261,10 @@ namespace PersistentCity.Runtime
             if (binding.Person != null) binding.Person.SetFade(alpha); else binding.Car?.SetFade(alpha);
         }
 
-        private const float ParkedRefreshSeconds = 1f;
+        private const float ParkedRefreshSeconds = 1f, ParkedRetrySeconds = .1f;
         private float nextParked;
         private readonly List<ParkedCar> parkedCandidates = new List<ParkedCar>();
-        private void ShowParked(Position focus, double radius, int limit)
+        private bool ShowParked(Position focus, double radius, int limit)
         {
             parkedCandidates.Clear();
             var residents = simulation.View.ResidentList;
@@ -290,8 +290,9 @@ namespace PersistentCity.Runtime
                 }
             }
             var shown = ParkedCars.Nearest(parkedCandidates, focus, radius, limit, parkedShown);
-            vehicles.ShowParked(shown, parkedState ??= id => parkedStates.TryGetValue(id, out var state) ? state : null);
+            bool complete = vehicles.ShowParked(shown, parkedState ??= id => parkedStates.TryGetValue(id, out var state) ? state : null);
             parkedCandidates.Clear(); parkedStates.Clear(); parkedShown.Clear();
+            return complete;
         }
         private readonly List<ParkedCar> parkedShown = new List<ParkedCar>();
         private readonly Dictionary<string, CarState> parkedStates = new Dictionary<string, CarState>(StringComparer.Ordinal);
@@ -345,6 +346,7 @@ namespace PersistentCity.Runtime
             public double Distance { get; }
             public int RosterIndex { get; }
             public static readonly IComparer<SelectionCandidate> ByPriority = new Priority();
+            public static readonly Comparison<SelectionCandidate> ByPriorityOrder = ByPriority.Compare;
             private sealed class Priority : IComparer<SelectionCandidate>
             {
                 public int Compare(SelectionCandidate a, SelectionCandidate b)
@@ -384,7 +386,7 @@ namespace PersistentCity.Runtime
             if (planned.Count == 0) return;
             plannedOrder.Clear();
             foreach (var pair in planned) plannedOrder.Add(new PlannedLine(pair.Key, Position.Distance(pair.Value.Place.Position, focus)));
-            plannedOrder.Sort(PlannedLine.ByDistance);
+            plannedOrder.Sort(PlannedLine.ByDistanceOrder);
             foreach (var entry in plannedOrder)
             {
                 var value = planned[entry.Key];
@@ -422,6 +424,7 @@ namespace PersistentCity.Runtime
             public string Key { get; }
             public double Distance { get; }
             public static readonly IComparer<PlannedLine> ByDistance = new Order();
+            public static readonly Comparison<PlannedLine> ByDistanceOrder = ByDistance.Compare;
             private sealed class Order : IComparer<PlannedLine>
             {
                 public int Compare(PlannedLine a, PlannedLine b)

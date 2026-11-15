@@ -22,7 +22,8 @@ namespace PersistentCity.Runtime
             public Vector3 Target; public float Until; public bool WalkAway;
         }
         private static AmbientPedestrians? current;
-        private readonly Harmony harmony = new Harmony(Owner);
+        private static readonly Harmony harmony = new Harmony(Owner);
+        private static bool hooked;
         private readonly RloPhysicalReservations reservations;
         private readonly FieldInfo? lastAmount;
         private readonly MethodInfo? setActive;
@@ -91,7 +92,7 @@ namespace PersistentCity.Runtime
         {
             if (active) return;
             if (!Ready) throw new InvalidOperationException("Ambient pedestrian preflight failed: " + (LastError == "" ? reservations.LastError : LastError));
-            if (current != null || Harmony.HasAnyPatches(Owner))
+            if (current != null || !hooked && Harmony.HasAnyPatches(Owner))
             { LastError = "Another ambient pedestrian hook owner is already registered."; throw new InvalidOperationException(LastError); }
             try
             {
@@ -101,9 +102,13 @@ namespace PersistentCity.Runtime
                 if (city == null || spawner == null || save == null) throw new InvalidOperationException("No live city pedestrian spawner.");
                 desiredAmount = (int)lastAmount!.GetValue(spawner)!;
                 current = this; ownsRegistration = true;
-                harmony.Patch(setActive!, prefix: new HarmonyMethod(typeof(AmbientPedestrians), nameof(SetActivePrefix)));
-                harmony.Patch(endCycle!, prefix: new HarmonyMethod(typeof(AmbientPedestrians), nameof(EndCyclePrefix)));
-                harmony.Patch(changeState!, prefix: new HarmonyMethod(typeof(AmbientPedestrians), nameof(ChangeStatePrefix)));
+                if (!hooked)
+                {
+                    harmony.Patch(setActive!, prefix: new HarmonyMethod(typeof(AmbientPedestrians), nameof(SetActivePrefix)));
+                    harmony.Patch(endCycle!, prefix: new HarmonyMethod(typeof(AmbientPedestrians), nameof(EndCyclePrefix)));
+                    harmony.Patch(changeState!, prefix: new HarmonyMethod(typeof(AmbientPedestrians), nameof(ChangeStatePrefix)));
+                    hooked = true;
+                }
                 active = true;
                 UnityEngine.Debug.Log("[Persistent City] Ordinary ambient pedestrian requests: suppressed; RLO scenes and global spawning retained.");
                 stationary.Activate();
@@ -111,7 +116,7 @@ namespace PersistentCity.Runtime
             catch (Exception error)
             {
                 LastError = error.GetType().Name + ": " + error.Message;
-                if (ownsRegistration) { harmony.UnpatchAll(Owner); current = null; ownsRegistration = false; }
+                if (ownsRegistration) { if (!hooked) harmony.UnpatchAll(Owner); current = null; ownsRegistration = false; }
                 active = false;
                 throw new InvalidOperationException("Ambient pedestrian activation failed: " + LastError, error);
             }
@@ -376,7 +381,6 @@ namespace PersistentCity.Runtime
             stationary.Dispose();
             if (ownsRegistration)
             {
-                harmony.UnpatchAll(Owner);
                 if (ReferenceEquals(current, this)) current = null;
                 ownsRegistration = false;
                 Exception? firstError = null;

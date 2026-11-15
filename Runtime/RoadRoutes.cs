@@ -114,6 +114,24 @@ namespace PersistentCity.Runtime
             doorBoxes = next.doorBoxes;
             return null;
         }
+        public bool SameGates(PublicRoadAccess other)
+        {
+            if (ReferenceEquals(this, other)) return true;
+            if (other == null || other.gates.Count != gates.Count) return false;
+            for (int i = 0; i < gates.Count; i++)
+            {
+                bool found = false;
+                for (int j = 0; j < other.gates.Count && !found; j++) found = other.gates[j].Same(gates[i]);
+                if (!found) return false;
+            }
+            for (int i = 0; i < other.gates.Count; i++)
+            {
+                bool found = false;
+                for (int j = 0; j < gates.Count && !found; j++) found = gates[j].Same(other.gates[i]);
+                if (!found) return false;
+            }
+            return true;
+        }
         private static bool Leaf(FenceDoor door, Transform part)
         {
             if (door.doors == null) return false;
@@ -195,6 +213,10 @@ namespace PersistentCity.Runtime
         private const double ConnectorMetres = 8;
         private readonly List<TransportRoadNode> nodes = new List<TransportRoadNode>();
         private readonly Dictionary<(int X, int Z), List<int>> cells = new Dictionary<(int, int), List<int>>();
+        private static RoadRoutes? donor;
+        private readonly TrafficRoadNetwork? trafficDonor;
+        public bool AdoptedSnapshot { get; }
+        internal static void ForgetSnapshot() => donor = null;
         private readonly Waypoint[] waypoints;
         private readonly TransportRoadGraph graph;
         private readonly CurrentSceneData? scene;
@@ -204,7 +226,7 @@ namespace PersistentCity.Runtime
         public int InvalidationIndex { get; private set; } = -1;
         private bool Invalid(string reason, int index = -1)
         {
-            unsafeTopology = true;
+            unsafeTopology = true; donor = null;
             if (InvalidationReason.Length == 0) { InvalidationReason = reason; InvalidationIndex = index; }
             return false;
         }
@@ -347,6 +369,15 @@ namespace PersistentCity.Runtime
             this.access = access;
             this.scene = scene; hadScene = scene != null;
             waypoints = scene != null && scene.allWaypoints != null ? scene.allWaypoints : Array.Empty<Waypoint>();
+            var previous = donor;
+            if (Adoptable(previous))
+            {
+                nodes = previous!.nodes; cells = previous.cells; agentContracts = previous.agentContracts; carContracts = previous.carContracts;
+                nativeContracts = previous.nativeContracts; nullNeighbours = previous.nullNeighbours; edgeTags = previous.edgeTags;
+                edgeTagTopology = previous.edgeTagTopology; copiedNodes = previous.copiedNodes; TopologyId = previous.TopologyId;
+                trafficDonor = previous.trafficBuilder; AdoptedSnapshot = true;
+                topologyHash.Dispose();
+            }
             graph = new TransportRoadGraph(nodes, clockRate);
             topologyWriter = new BinaryWriter(topologyBuffer);
             searchedAt = new int[waypoints.Length];
@@ -406,11 +437,19 @@ namespace PersistentCity.Runtime
             double remaining = 2 - ((Stopwatch.GetTimestamp() - watchStarted) * 1000.0 / Stopwatch.Frequency);
             int remainingUnits = 2048 - (copiedNodes - startedAt);
             if (remaining <= 0 || remainingUnits <= 0) return false;
-            if (trafficBuilder == null) trafficBuilder = new TrafficRoadNetwork(TopologyId, nodes, waypoints, scene, access, clockRate, SnapshotNodeCurrent);
+            if (trafficBuilder == null) trafficBuilder = new TrafficRoadNetwork(TopologyId, nodes, waypoints, scene, access, clockRate, SnapshotNodeCurrent, trafficDonor);
             if (!trafficBuilder.Prepare(remaining, remainingUnits))
             { if (trafficBuilder.Stale && !unsafeTopology) TrafficInvalid(); return false; }
             TrafficNetwork = trafficBuilder.Network;
-            return Ready && IsCurrent;
+            if (!Ready || !IsCurrent) return false;
+            donor = this;
+            return true;
+        }
+        private bool Adoptable(RoadRoutes? previous)
+        {
+            if (previous == null || scene == null || !ReferenceEquals(previous.scene, scene) || !ReferenceEquals(previous.waypoints, waypoints)
+                || previous.copiedNodes != waypoints.Length || previous.TopologyId.Length == 0 || previous.trafficBuilder == null) return false;
+            return previous.Ready && previous.IsCurrent;
         }
         private void HashNode(int index, Waypoint? native, TransportRoadNode node)
         {
@@ -444,7 +483,7 @@ namespace PersistentCity.Runtime
                         foreach (int index in indices) if (!Disabled(index) && Position.Distance(position, nodes[index].Position) <= radius) nearby.Add(index);
             var order = nearbyOrder ??= new NearbyOrder(nodes);
             order.Origin = position;
-            nearby.Sort(order);
+            nearby.Sort(nearbyCompare ??= order.Compare);
             var result = new List<Curb>();
             int attempts = 0;
             foreach (int index in nearby)
@@ -463,6 +502,7 @@ namespace PersistentCity.Runtime
 
         private readonly List<int> nearbyNodes = new List<int>();
         private NearbyOrder? nearbyOrder;
+        private Comparison<int>? nearbyCompare;
         private sealed class NearbyOrder : IComparer<int>
         {
             private readonly List<TransportRoadNode> nodes;
