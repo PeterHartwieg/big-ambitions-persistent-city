@@ -273,7 +273,11 @@ namespace PersistentCity.Runtime
         {
             try { DestroyGroups(); } catch (Exception) { groupMeshes.Clear(); }
             try { if (combined != null) Object.Destroy(combined); } catch (Exception) { }
-            try { if (result != null) Object.Destroy(result); } catch (Exception) { }
+            if (result != null)
+            {
+                try { result.SetActive(false); result.transform.SetParent(null, false); } catch (Exception) { }
+                try { Object.Destroy(result); } catch (Exception) { }
+            }
             if (hidden) foreach (var source in sources) try { if (source != null) source.gameObject.SetActive(true); } catch (Exception) { }
             if (result != null && ReferenceEquals(combiner.resultMergeGameObject, result))
             {
