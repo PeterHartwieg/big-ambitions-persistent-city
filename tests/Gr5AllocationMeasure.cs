@@ -602,6 +602,46 @@ public sealed class Gr5AllocationMeasure
     }
 
     [Fact]
+    public void PooledEventShellsKeepTheRigCityAndCutTheBytesPerEvent()
+    {
+        (string Save, long Bytes, int Events) Run(bool pooled)
+        {
+            var state = RigCity();
+            var grid = new RoadGrid(state.Places);
+            var simulator = new CitySimulator(state, grid) { PoolEventShells = pooled };
+            simulator.AttachFoodMarket(new VisitorRoutineTests.Market { Shops = F5gPopulationFillTests.Shops(state) });
+            simulator.AttachOptionalStops(new StopSpots(), OptionalStopPolicy.ApprovedChoicePercentage);
+            double start = Math.Floor(state.Minute / 1440) * 1440 + 15.5 * 60;
+            simulator.AdvanceTo(start - 20, int.MaxValue);
+            const int fps = 90;
+            long bytes = 0; int events = 0;
+            for (double minute = start - 20; minute < start + 20; minute += 1.0 / fps)
+            {
+                long before = GC.GetAllocatedBytesForCurrentThread();
+                long fixture = grid.SearchBytes + grid.CopyBytes;
+                simulator.RefreshOptionalStops();
+                var result = simulator.AdvanceFrameSlice(minute, 32);
+                if (minute < start) continue;
+                bytes += GC.GetAllocatedBytesForCurrentThread() - before - (grid.SearchBytes + grid.CopyBytes - fixture);
+                events += result.Events;
+            }
+            simulator.SynchronizeSnapshot();
+            return (SaveCodec.Write(simulator.State), bytes, events);
+        }
+        var fresh = Run(false);
+        var pooled = Run(true);
+        Assert.Equal(fresh.Save, pooled.Save);
+        Assert.Equal(fresh.Events, pooled.Events);
+        Assert.True(fresh.Events > 100, fresh.Events.ToString());
+        long before = fresh.Bytes / fresh.Events, after = pooled.Bytes / pooled.Events;
+        string? path = PerfGate.Variable("PC_GR5_ALLOC");
+        if (!string.IsNullOrEmpty(path))
+            Record(path, new { label = PerfGate.Variable("PC_GR5_ALLOC_LABEL") ?? "", component = "simulator bytes per advance event 15:10-15:30 (fixture planner excluded)",
+                events = pooled.Events, freshCloneBytesPerEvent = before, pooledShellBytesPerEvent = after });
+        Assert.True(after < before, after + " vs " + before);
+    }
+
+    [Fact]
     public void MeasureNativeRoadSpeedsRefreshAllocation()
     {
         string? path = PerfGate.Variable("PC_GR5_ALLOC");

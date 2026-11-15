@@ -401,7 +401,7 @@ namespace PersistentCity.Core
 
         private bool RunEvent(Due item, bool inline)
         {
-            var working = CloneForEvent(item.Citizen);
+            var working = EventCopy(item.Citizen);
             var evt = new PendingEvent(item, working, StepEvent(working, item.Minute).GetEnumerator());
             try
             {
@@ -473,6 +473,7 @@ namespace PersistentCity.Core
             {
                 ReleaseEventInputs(evt);
                 evt.Steps.Dispose();
+                spareShell = evt.Working;
                 if (!due.Add(evt.Item)) throw new InvalidOperationException("An interrupted event lost its queue slot.");
             }
         }
@@ -519,6 +520,15 @@ namespace PersistentCity.Core
             ScheduleOptionalStop(live, arrivalRoute);
             FileOptionalStop(live);
             activityObservers.Handlers?.Invoke(live.Identity.Id, live, State.Minute);
+            spareShell = working;
+        }
+
+        internal bool PoolEventShells { get; set; } = true;
+        private CitizenState? spareShell;
+        private CitizenState EventCopy(CitizenState live)
+        {
+            var shell = spareShell; spareShell = null;
+            return shell == null || !PoolEventShells ? CloneForEvent(live) : CopyForEvent(live, shell);
         }
 
         private void ReleaseEventInputs(PendingEvent evt)
@@ -551,6 +561,35 @@ namespace PersistentCity.Core
             RoutineKeys = live.RoutineKeys,
             Visitor = live.Visitor, VisitorCarried = live.VisitorCarried
         };
+        internal static CitizenState CopyForEvent(CitizenState live, CitizenState into)
+        {
+            into.Identity = live.Identity; into.HomeId = live.HomeId; into.DayPlaceId = live.DayPlaceId; into.ShopId = live.ShopId; into.LeisureId = live.LeisureId;
+            var preferences = into.Preferences ??= new TravelPreferences();
+            preferences.OwnsCar = live.Preferences.OwnsCar; preferences.AllowTransit = live.Preferences.AllowTransit;
+            preferences.WalkingToleranceMetres = live.Preferences.WalkingToleranceMetres; preferences.FareWeightMinutes = live.Preferences.FareWeightMinutes;
+            var preparation = into.CommutePreparation ??= new CommutePreparation();
+            var source = live.CommutePreparation;
+            preparation.PlaceId = source.PlaceId; preparation.WorkStartsAt = source.WorkStartsAt; preparation.WorkEndsAt = source.WorkEndsAt;
+            preparation.PreparedAt = source.PreparedAt; preparation.TravelMinutes = source.TravelMinutes;
+            into.MealOuting = live.MealOuting == null ? null : CopyOuting(live.MealOuting);
+            into.OptionalStop = live.OptionalStop?.Copy();
+            into.W = live.W;
+            into.OptionalStopChoice = live.OptionalStopChoice;
+            into.Car = live.Car == null ? null : CopyCar(live.Car);
+            into.JoinedMinute = live.JoinedMinute; into.LastEmploymentCheckDay = live.LastEmploymentCheckDay; into.JobChanges = live.JobChanges;
+            into.EmploymentStartDay = live.EmploymentStartDay; into.Accrual = live.Accrual; into.Wallet = live.Wallet; into.Plan = live.Plan?.Copy(); into.Needs = live.Needs?.Copy();
+            into.Phase = live.Phase; into.Activity = live.Activity; into.PlaceId = live.PlaceId; into.DestinationId = live.DestinationId;
+            into.DestinationActivity = live.DestinationActivity; into.Journey = live.Journey; into.DepartureMinute = live.DepartureMinute;
+            into.NextEventMinute = live.NextEventMinute; into.ActivityUntilMinute = live.ActivityUntilMinute;
+            into.CompletedJourneys = live.CompletedJourneys; into.MissedActivities = live.MissedActivities;
+            into.PlayerHoldMinutes = live.PlayerHoldMinutes;
+            var visits = into.RecentVisits ??= new List<VisitRecord>();
+            visits.Clear(); visits.AddRange(live.RecentVisits);
+            into.Traits = live.Traits;
+            into.RoutineKeys = live.RoutineKeys;
+            into.Visitor = live.Visitor; into.VisitorCarried = live.VisitorCarried;
+            return into;
+        }
         private static CommutePreparation CopyPreparation(CommutePreparation source) => new CommutePreparation
         {
             PlaceId = source.PlaceId, WorkStartsAt = source.WorkStartsAt, WorkEndsAt = source.WorkEndsAt,
