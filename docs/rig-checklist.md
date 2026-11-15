@@ -8,6 +8,7 @@ Detailed specs: [F8 §7](https://github.com/PeterHartwieg/big-ambitions-persiste
 
 ## Latest evidence
 
+- **14 November l, Mac, build `da8b495b`:** 0 passed / 1 partial / 3 failed / 4 NOT RUN groups. Day/night mod 313.5/166.4 MB, gen0 8/7, pause p95 33.488/36.717 ms; street fail; restored ([14l results](#rig-results--14-november-2026-l-mac-gr-5-gcstreet-recheck-after-270-at-da8b495b)).
 - **14 November k, Mac, build `8eb87be2`:** 0 passed / 0 partial / 3 failed / 5 NOT RUN groups. Day/night gen0 6/7, pause p95 219.813/234.512 ms; advance 85.040/35.434 MB; street union p95 23.2135 ms; restored ([14k results](#rig-results--14-november-2026-k-mac-gr-5-gctraffic-recheck-after-268-at-8eb87be2)).
 - **14 November j, Mac, build `50f52c18`:** 2 passed / 2 partial / 0 failed / 5 NOT RUN groups. Day/night gen0 7/6, pause p95 28.581/32.902 ms; street p95 3.7732/3.8197 ms with three spikes; night pool 16/16; look identity partial; restored ([14j results](#rig-results--14-november-2026-j-mac-gr-5-gc-recheck-after-266-at-50f52c18)).
 - **14 November i, Mac, build `65b41db5`:** 1 passed / 1 partial / 0 failed / 4 NOT RUN groups. Five unrentable fixture subjects, rig tally 3 housed / 1 unreadable / 1 empty; PC applied Home evidence not observable in-load; restored ([14i results](#rig-results--14-november-2026-i-mac-246-checks-4-5-with-unrentable_fixture-at-65b41db5)).
@@ -3256,3 +3257,290 @@ Stopped only owned PID 74916 normally. Restored the full PersistentCity folder a
 Build passed. Compact JSON parses and is under 20 KB; docs-links, markdown-ban and diff checks recorded with this docs-only change. No test sources changed, no focused classes or full/regression suite. Evidence committed and pushed; PR remains unmerged, no reviewers. The isolated worktree is removed after opening the PR.
 
 Refs #268
+
+## Rig results — 14 November 2026 l, Mac (GR-5 GC/street recheck after #270 at da8b495b)
+
+**RESULT: DONE. Counts: 0 passed / 1 partial / 3 failed / 4 NOT RUN groups.** Both GC windows miss #270’s allocation/count/pause targets. Street: FAIL; look stability: partial. In-game proof gates no merge; this evidence PR remains unmerged.
+
+Role `rig_test`, where `mac`, isolated `agentmac`, owner `persistent-city-rig-2026-11-14l-mac`. `<stage>` = `<home>/HART-Builds/persistent-city-rig-2026-11-14l-mac`. [Compact GC/frame evidence](perf/gr5-2026-11-14l-mac.json): 17,571 bytes, SHA-256 `4b6ec80d655663f670f56cb62fbbbffd0d8e6ce38d351e76c7ceb7648e396abc`. Raw replies, full reports, Player logs, scripts, images and pre-stage backups stay there. Report copy: `<home>/Coding_Projects/.agent-logs/persistent-city-rig-2026-11-14l-mac.md`.
+
+Raw evidence index: `<stage>/raw-evidence-manifest.json`, SHA-256 `80174cbec02f22776bdde0d8052602b30eb3f3295575c9a545e00cff91fbf806`; pre-stage manifest and restore verification included.
+
+### Build and rig
+
+| Item | Evidence |
+| --- | --- |
+| Candidate | `da8b495b6a4b6092a8d18107507044cd2aa1bd94`; initial fetched tip agrees; docs-only #271 merged during the run, final fetched tip `73b6fdbc09878bf7d995d067086fb0fdfa802cc8`. #270 and #268 included. |
+| Worktree / branch | New `rig-2026-11-14l-mac-evidence` / `codex/mac-rig-2026-11-14l`; isolated worktree used for build and evidence; original checkout unchanged. |
+| Official agent-rig HEAD | `17ff9f86ef07a8c071a90886fa76ed2e98f56c57`; clean before fetch / ff-only pull; already current. No rig edit, commit, build or update. |
+| Live AgentRigOps SHA-256 | `d3188b0e837188aec8be85535846953170da99807ad22914ccf4a3c38d77ed3c`; live pre-start hash, loaded health and cleanup agree. |
+| Build | `PATH=/opt/homebrew/bin:$PATH`; `DOTNET_ROOT` from Homebrew dotnet; `python3 tools/build.py --game-managed "<home>/Library/Application Support/BigAmbitionsMCP/dll-import-shim/Big Ambitions_Data/Managed"`; exit 0. No RLO or game DLL packaged. |
+| PersistentCity DLL SHA-256 | `888f49e4fb0a622896927d7efa85ba6b9eab0b7095370f29d9b467c678d6b239`; package and staged copy agree. |
+| Loaded build | Health module ID `e487d483-9a39-4fb1-ba64-bcfca5c8fbdc` occurs once in candidate DLL. Receipt-validated starts accepted staged hashes. No commit-stamped build line exists; activation quoted below. |
+| Stage | `python3 scripts/install-mac.py --stage-mod PersistentCity <stage>/package`; stopped and leased; 28 scoped receipt entries refreshed. Backup `<home>/Library/Application Support/BigAmbitionsAgentTestsMac/receipt-backups/20261114T231443Z`. |
+| Starts | Headless rig-test PID 10080: day, night, street in one process. Separate background graphics rig-test PID 26377 for looks. No load failure or forced stop. |
+| RLO | Player.log: Real Life Overhaul 1.0.6 initialised. living_population absent/live=true; social_media=1/true; social_media_notices=0/false. No option toggle or RLO file edit. |
+| Autosave / save cost | Original native 5 minutes / 3 saves, prevent_autosave=false. #70 process guard suppressed before/after every window and after each load; all measured allowed saves / native saving frames = 0. SaveCostDiagnostics requested=false; native profiler installed=false. No manual save or latency measurement. |
+| Lease / resources | Free at inspection; acquired 2026-11-14T23:13:51.461922Z. Initial memory free 81%. Every measurement start load <=8; zero load-wait seconds. No PC contact, takeover, other-session intervention, bot message or macOS setting change. |
+
+Printed rollback, path-sanitized with `<home>` (game stopped, lease held):
+
+```sh
+rm -rf "<home>/Library/Application Support/com.hovgaardgames.bigambitions.agenttests.mac/ModsLocal/PersistentCity" && cp -Rp "<home>/Library/Application Support/BigAmbitionsAgentTestsMac/receipt-backups/20261114T231443Z/mod" "<home>/Library/Application Support/com.hovgaardgames.bigambitions.agenttests.mac/ModsLocal/PersistentCity" && cp "<home>/Library/Application Support/BigAmbitionsAgentTestsMac/receipt-backups/20261114T231443Z/install.json" "<home>/Library/Application Support/BigAmbitionsAgentTestsMac/install.json"
+```
+
+Cleanup used the equivalent move-aside/copy-back form, retaining the staged candidate in `<stage>/staged-candidate-restored-out`. The complete original mod folder and exact receipt were restored, then hashes verified. No receipt was hand-edited.
+
+### Per-check results and Expected lines
+
+- **1. Day 15:30 / 600 s: FAIL. Expected (#270 TARGETS):** total mod allocation per 600 s window at least a third below 14j, gen0 about 5 or fewer, pause p95 at or below 14j and under ~36 ms; appearance/body reuse a large share, spawn_appearance + spawn_pedestrian several times smaller. **Observed:** mod 313.467 MB vs 315.571 MB (0.67% lower; one-third threshold 210.381 MB), gen0 8, pause p95 33.488 ms vs 28.581 ms. Allocation, collection count and no-pause-regression clauses not met. Pause under ~36 ms met. Spawn and reuse detail below.
+- **2. Night 01:00 / 600 s after speed 20: FAIL. Expected (#270 TARGETS):** total mod allocation per 600 s window at least a third below 14j, gen0 about 5 or fewer, pause p95 at or below 14j and under ~36 ms; appearance/body reuse a large share, spawn_appearance + spawn_pedestrian several times smaller. **Observed:** mod 166.405 MB vs 180.623 MB (7.87% lower; one-third threshold 120.416 MB), gen0 7, pause p95 36.717 ms vs 32.902 ms. Allocation, collection count and no-pause-regression clauses not met. Pause under ~36 ms not met. Spawn and reuse detail below.
+- **3. Headless street / 600 s with pans: FAIL. Expected (#270 TARGETS):** UpdateCity / mod-work p95 under 5 ms, no >=30 ms body-work spike. Observed UpdateCity boundary self / union p95 5.4914 / 5.5548 ms; 10 union spikes and 10 PC phase spikes. The p95 clause is not met. Frame 51811 spends 31.038 ms in physical_unattributed; its body-growth source is unresolved, so the no-body-work-spike clause is unverified. Full frame/component rows below. No weaker threshold substituted.
+- **4. Look stability: PARTIAL. Expected (#270 TARGETS):** no visual change: dressed bodies, same look per resident across release/reacquire, no invisible or undressed bodies, none of “Appearance meshes unavailable”, “Empty appearance” or “Merged body ...”. Inspected screenshots and exact tooling outcomes below. No durable resident/reacquire op is advertised, so same-resident stability is unverified. Sparse images cannot prove no invisible body or brief flash.
+
+Idle ticks staying 0 B is not separately exercised; the requested windows are moving speed-1 gameplay, and zero-valued segments are reported without treating them as an idle-tick test.
+
+### GC windows and baselines
+
+Fixture `FT GR5 13f Timing v1`, 1,000 residents / 2,000 visitors / 1,683 places, person-target off, player x=215,z=0. Day Tuesday 15:30; night Wednesday 01:00; street Wednesday 15:30. Speed=1 in windows; speed-20 advances outside. `boehm_total` allocation counter; legacy frame allocation uses heap_used. Incremental=true, max_generation=0; pause means cycle-ending frame excess, not all incremental collector work. MB means decimal bytes.
+
+| Window | frames / dropped | gen0/1/2 | pause p50 / p95 / max ms | heap_after_gc_bytes | mono_heap_bytes | mod / physical / advance MB |
+| --- | --- | --- | --- | --- | --- | --- |
+| gc-day | 16804 / 0 | 8/0/0 | 26.708/33.488/33.488 | 1221783552 | 1457061888 | 313.467 / 113.771 / 101.657 |
+| gc-night | 17026 / 0 | 7/0/0 | 31.653/36.717/36.717 | 1337786368 | 1608056832 | 166.405 / 35.991 / 33.572 |
+
+| Metric | 14b day / night | 14j day / night | 14k day / night (load-contaminated) | 14l day / night |
+| --- | --- | --- | --- | --- |
+| gen0 | 11 / 8 | 7 / 6 | 6 / 7 | 8 / 7 |
+| pause p95 ms | 28.191 / 61.316 | 28.581 / 32.902 | 219.8 / 234.5 | 33.488 / 36.717 |
+| mod MB | not retained here | 315.571 / 180.623 | 283.687 / 190.858 | 313.467 / 166.405 |
+| physical+advance MB | 1021.587 / 433.642 | 200.927 / 68.086 | 156.411 / 75.158 | 215.427 / 69.563 |
+| advance MB | 236.448 / 72.746 | 107.466 / 33.489 | 85.0 / 35.4 | 101.657 / 33.572 |
+
+gc-day: vs 14j mod -0.67%, advance -5.41%, pause p95 +4.907 ms, gen0 +1. Vs load-contaminated 14k mod +10.50%, advance +19.54%, pause p95 -186.325 ms, gen0 +2.
+gc-night: vs 14j mod -7.87%, advance +0.25%, pause p95 +3.815 ms, gen0 +1. Vs load-contaminated 14k mod -12.81%, advance -5.25%, pause p95 -197.795 ms, gen0 +0.
+
+All 14b, 14j and 14k baselines are shared-host measurements on the same Mac, not controlled A/B runs. 14k additionally had severe shared-host build/test load, up to load average 90; its deltas are load-contaminated, not controlled code attribution. 14l measured-window boundaries are below; no build or test ran in this session during timing.
+
+### Every allocation segment and sub-segment
+
+| Segment | Day bytes / samples / skipped | Night bytes / samples / skipped |
+| --- | --- | --- |
+| mod | 313466760 / 16805 / 0 | 166405264 / 17027 / 0 |
+| advance | 101656568 / 16711 / 0 | 33572232 / 16947 / 0 |
+| physical | 113770760 / 16806 / 0 | 35990768 / 17028 / 0 |
+| physical_ambient | 2140880 / 16711 / 0 | 2172208 / 16947 / 0 |
+| physical_vehicles | 1038848 / 16711 / 0 | 385936 / 16947 / 0 |
+| physical_bindings | 12464 / 525991 / 0 | 15312 / 274981 / 0 |
+| physical_vendor_meals | 0 / 16711 / 0 | 0 / 16947 / 0 |
+| physical_fade | 0 / 16711 / 0 | 0 / 16947 / 0 |
+| physical_focus | 0 / 16711 / 0 | 0 / 16947 / 0 |
+| physical_observe | 261200 / 508967 / 0 | 99952 / 257831 / 0 |
+| physical_release | 9968 / 329 / 0 | 2480 / 295 / 0 |
+| physical_parked | 1969904 / 586 / 0 | 1723584 / 589 / 0 |
+| physical_index | 80 / 2191 / 0 | 80 / 2194 / 0 |
+| physical_queues | 8960 / 2191 / 0 | 27184 / 2194 / 0 |
+| physical_roster | 285456 / 2191 / 0 | 209184 / 2194 / 0 |
+| physical_selection | 1400664 / 2768 / 0 | 654064 / 2413 / 0 |
+| physical_spawn_pedestrian | 41773560 / 807 / 0 | 667128 / 281 / 0 |
+| physical_spawn_appearance | 50000864 / 936 / 0 | 15208928 / 273 / 0 |
+| physical_spawn_check | 0 / 624 / 0 | 0 / 182 / 0 |
+| physical_spawn_vehicle | 168352 / 82 / 0 | 90496 / 29 / 0 |
+| physical_unattributed | 14699560 / 33517 / 0 | 14734232 / 33975 / 0 |
+| physical_spawn_randomize | 2802160 / 312 / 0 | 798624 / 91 / 0 |
+| physical_spawn_bake | 2775056 / 312 / 0 | 1691520 / 91 / 0 |
+| advance_planning | 45550560 / 9461 / 0 | 20019896 / 3989 / 0 |
+| advance_events | 53699624 / 21567 / 0 | 11111936 / 19951 / 0 |
+| advance_stops | 2406384 / 16711 / 0 | 2440368 / 16947 / 0 |
+| advance_other | 0 / 16711 / 0 | 32 / 16947 / 0 |
+| physical_spawn_grow | 38248208 / 132 / 0 | 0 / 0 / 0 |
+| mod_prelude | 2584608 / 16805 / 0 | 2642128 / 17027 / 0 |
+| mod_rlo | 3541904 / 16805 / 0 | 3530080 / 17027 / 0 |
+| mod_food | 1279184 / 16805 / 0 | 1279648 / 17027 / 0 |
+| mod_optional_stops | 2498192 / 16805 / 0 | 2455680 / 17027 / 0 |
+| mod_routes | 75000152 / 16805 / 0 | 74009272 / 17027 / 0 |
+| mod_closures | 10365632 / 16711 / 0 | 10120912 / 16947 / 0 |
+| mod_hold_replay | 0 / 16711 / 0 | 0 / 16947 / 0 |
+| mod_physical_setup | 0 / 13741 / 0 | 0 / 13475 / 0 |
+| mod_inspector | 2406384 / 16711 / 0 | 2440864 / 16947 / 0 |
+| mod_summary | 361328 / 16429 / 0 | 360880 / 16216 / 0 |
+| mod_other | 272 / 16805 / 0 | 576 / 17027 / 0 |
+
+Advance children partition advance; physical children partition physical. randomize, bake and grow overlap spawn parents and must not be added again. mod_* children partition the outer residual. Samples skipped after collections are explicit.
+
+- gc-day: previously unattributed outer residual now 98,039,432 bytes; mod_* segments account for 98,037,656, leaving 1,776 bytes of boundary/counter difference. `mod_routes`=75,000,152 and `mod_closures`=10,365,632 dominate. These boundary names do not identify an allocating method. Appearance + pedestrian spawn = 91.774 MB versus 86.823 MB in 14j; several-fold reduction not met.
+- gc-night: previously unattributed outer residual now 96,842,264 bytes; mod_* segments account for 96,840,040, leaving 2,224 bytes of boundary/counter difference. `mod_routes`=74,009,272 and `mod_closures`=10,120,912 dominate. These boundary names do not identify an allocating method. Appearance + pedestrian spawn = 15.876 MB versus 28.495 MB in 14j; several-fold reduction not met.
+
+### Look counters, pool hit rate and retained bodies
+
+| Window | AppearanceBuilds / AppearanceReuses | reuse / (build+reuse) % | last periodic pedestrianLooks |
+| --- | --- | --- | --- |
+| gc-day | 280 / 29 | 9.39 | 280 built/29 reused/2718 deferred/32 idle/102 owned/8 adopted/290 baked/45 bake sizes/1678 KB bake scratch/108 grown/15 trimmed/224 fitted/162 waited/2.4 ms build |
+| gc-night | 91 / 95 | 51.08 | 91 built/95 reused/1574 deferred/33 idle/33 owned/124 adopted/556 baked/44 bake sizes/1634 KB bake scratch/0 grown/91 trimmed/0 fitted/89 waited/4.3 ms build |
+| street | 105 / 34 | 24.46 | 105 built/34 reused/401 deferred/32 idle/53 owned/86 adopted/800 baked/45 bake sizes/1678 KB bake scratch/26 grown/59 trimmed/0 fitted/129 waited/6.9 ms build |
+
+These are last periodic cumulative snapshots, not exact start-to-stop counter deltas. 14j snapshots: day 298/16 (5.10%), night 92/1 (1.08%), street 148/7 (4.52%). Day reuse is 9.39%, still a small share: that target is not met. Night reuse is 51.08%, a majority: that clause is met. No arbitrary numeric threshold replaces the target. Exact sampler randomize/bake/grow sample counts are in the allocation table.
+
+### Timing, top GC frames and every >=30 ms mod-work spike
+
+| Window | seconds / frames / achieved fps | UpdateCity self p95 / max ms | mod-work p95 / max ms / spikes | whole-frame p95 / max ms / spikes | MaximumLagMinutes |
+| --- | --- | --- | --- | --- | --- |
+| gc-day | 600.603 / 16811 / 27.99 | 0.3146 / 50.3308 | 3.4712 / 61.9973 / 2 | 42.8955 / 172.1595 / 16565 | 0.8821749687199372 |
+| gc-night | 600.599 / 17035 / 28.36 | 0.3677 / 66.8887 | 2.6328 / 80.9280 / 1 | 37.8688 / 516.5799 / 16818 | 0.8821749687199372 |
+| street | 601.424 / 4573 / 7.60 | 5.4914 / 359.4385 | 5.5548 / 359.4729 / 10 | 221.2817 / 965.5998 / 4541 | 1.0 |
+
+GC windows use nested updatecity/advance/prepare/physical/inspector rig components: UpdateCity is self time, not inclusive p95. Street re-arms with only the UpdateCity component, as in 14j, plus automatic entry-point hooks; its boundary self time excludes any nested automatic hooks. Exact inclusive UpdateCity p95 is not exported. Total per-frame mod-work is the union of all timed scopes, bounds UpdateCity, and is the strict <5 ms gate used here. PC’s phase recorder separately supplies inner attribution; its Update-only values and the all-entry union have different scope. Whole-frame timings are separate.
+
+Shared-host baselines: 14j street boundary / union p95 3.7732 / 3.8197 ms, three spikes, 8.13 fps. 14l deltas +1.7182 / +1.7351 ms. 14b 5.5170 / 5.5824 ms, four spikes, 5.61 fps. 14k had 108 street spikes under severe load contamination; the comparison is not isolated evidence of code effects.
+
+**gc-day: every exported union spike** (2 total / 2 listed), matched to PC phase records by Unity frame:
+
+| Frame | union ms | rig dominant / top self components ms | PC mod / phase ms | PC detail ms / gc phase | whole-frame ms |
+| --- | --- | --- | --- | --- | --- |
+| 3757 | 61.9973 | updatecity; updatecity=50.3308, advance=6.3522, physical=5.037, prepare=0.2374, NativeCityClock.AccountingPrefix=0.0113, PopulationRuntime.Update=0.0075 | 61.947 / physical_unattributed=26.554 | physical_spawn_grow=2.167 / none | 94.0142 |
+| 16301 | 33.6589 | physical; physical=33.3021, updatecity=0.2827, prepare=0.0183, advance=0.0137, NativeCityClock.AccountingPrefix=0.011, inspector=0.0094 | 33.614 / physical_spawn_pedestrian=32.474 | physical_spawn_grow=32.462 / physical_spawn_pedestrian | 64.3958 |
+
+**gc-night: every exported union spike** (1 total / 1 listed), matched to PC phase records by Unity frame:
+
+| Frame | union ms | rig dominant / top self components ms | PC mod / phase ms | PC detail ms / gc phase | whole-frame ms |
+| --- | --- | --- | --- | --- | --- |
+| 26859 | 80.928 | updatecity; updatecity=66.8887, physical=7.25, advance=6.5201, prepare=0.2278, NativeCityClock.AccountingPrefix=0.0115, PopulationRuntime.Update=0.0089 | 80.876 / physical_unattributed=31.984 | physical_spawn_bake=0.512 / none | 128.3859 |
+
+**street: every exported union spike** (10 total / 10 listed), matched to PC phase records by Unity frame:
+
+| Frame | union ms | rig dominant / top self components ms | PC mod / phase ms | PC detail ms / gc phase | whole-frame ms |
+| --- | --- | --- | --- | --- | --- |
+| 51716 | 359.4729 | updatecity; updatecity=359.4385, NativeCityClock.AccountingPrefix=0.0141, ResidentInspector.UiRaycastPrefix=0.0073, PopulationRuntime.Update=0.0069, NativeTravelPace.ObserveTickPostfix=0.0015, ResidentInspector.MouseRunPrefix=0.0014 | 359.442 / mod_routes=359.288 | none=0 / mod_routes | 409.9833 |
+| 51811 | 72.8058 | updatecity; updatecity=72.7426, PopulationRuntime.LateUpdate=0.0329, NativeCityClock.AccountingPrefix=0.0114, PopulationRuntime.Update=0.0074, ResidentInspector.UiRaycastPrefix=0.0058, ResidentInspector.MouseRunPrefix=0.0013 | 72.747 / physical_unattributed=31.038 | physical_spawn_bake=0.914 / none | 95.122 |
+| 54291 | 35.8596 | updatecity; updatecity=35.7844, PopulationRuntime.Update=0.0242, PopulationRuntime.LateUpdate=0.0227, NativeCityClock.AccountingPrefix=0.0139, ResidentInspector.UiRaycastPrefix=0.0083, ResidentInspector.MouseRunPrefix=0.0015 | 35.805 / mod_summary=30.356 | none=0 / none | 342.5705 |
+| 54636 | 31.6301 | updatecity; updatecity=31.3583, NativeCityClock.AccountingPrefix=0.137, PopulationRuntime.LateUpdate=0.0447, ResidentInspector.MouseRunPrefix=0.026, PopulationRuntime.Update=0.0218, ResidentInspector.UiRaycastPrefix=0.0183 | 31.375 / physical_parked=12.936 | none=0 / none | 462.7409 |
+| 55224 | 35.8843 | updatecity; updatecity=35.621, NativeCityClock.AccountingPrefix=0.1496, PopulationRuntime.Update=0.056, PopulationRuntime.LateUpdate=0.0332, ResidentInspector.UiRaycastPrefix=0.008, NativeTravelPace.ObserveTickPostfix=0.008 | 35.667 / physical_roster=9.572 | none=0 / none | 364.8978 |
+| 55240 | 31.9082 | updatecity; updatecity=31.8433, PopulationRuntime.LateUpdate=0.0229, PopulationRuntime.Update=0.0144, NativeCityClock.AccountingPrefix=0.0135, ResidentInspector.UiRaycastPrefix=0.007, ResidentInspector.MouseRunPrefix=0.0019 | 31.848 / mod_summary=22.616 | none=0 / none | 228.7934 |
+| 55616 | 41.757 | updatecity; updatecity=41.1434, NativeCityClock.AccountingPrefix=0.4363, PopulationRuntime.Update=0.1018, ResidentInspector.MouseRunPrefix=0.0321, PopulationRuntime.LateUpdate=0.0268, ResidentInspector.UiRaycastPrefix=0.0082 | 41.202 / mod_optional_stops=10.234 | none=0 / none | 452.6298 |
+| 55618 | 41.5307 | updatecity; updatecity=40.1885, PopulationRuntime.Update=0.4938, NativeCityClock.AccountingPrefix=0.4629, PopulationRuntime.LateUpdate=0.2306, ResidentInspector.UiRaycastPrefix=0.0677, ResidentInspector.MouseRunPrefix=0.0545 | 40.622 / physical_parked=11.948 | none=0 / none | 418.2179 |
+| 55620 | 32.9644 | updatecity; updatecity=32.3469, NativeCityClock.AccountingPrefix=0.2878, PopulationRuntime.Update=0.2178, PopulationRuntime.LateUpdate=0.0318, ResidentInspector.MouseRunPrefix=0.0295, ResidentInspector.UiRaycastPrefix=0.0253 | 32.48 / physical_parked=6.898 | none=0 / none | 334.1804 |
+| 56085 | 42.5574 | updatecity; updatecity=42.1942, PopulationRuntime.Update=0.2618, NativeCityClock.AccountingPrefix=0.0598, PopulationRuntime.LateUpdate=0.0276, ResidentInspector.UiRaycastPrefix=0.0065, NativeTravelPace.ObserveTickPostfix=0.003 | 42.255 / physical_index=21.736 | none=0 / none | 432.386 |
+
+**gc-day: full 16-row GC top-frame report**, highest PC Update work first:
+
+| Frame | mod ms | phase / ms | detail / ms | gc phase / collections | alloc phase / bytes | total alloc bytes |
+| --- | --- | --- | --- | --- | --- | --- |
+| 3757 | 61.947 | physical_unattributed / 26.554 | physical_spawn_grow / 2.167 | none / 0 | physical_unattributed / 12279624 | 25317760 |
+| 16301 | 33.614 | physical_spawn_pedestrian / 32.474 | physical_spawn_grow / 32.462 | physical_spawn_pedestrian / 1 | physical_spawn_pedestrian / 289680 | 292704 |
+| 3760 | 9.896 | physical_vehicles / 4.051 | none / 0 | none / 0 | advance_planning / 764352 | 841600 |
+| 7419 | 7.56 | physical_selection / 4.124 | none / 0 | none / 0 | physical_selection / 157760 | 168912 |
+| 4549 | 7.29 | physical_spawn_pedestrian / 6.833 | physical_spawn_grow / 6.824 | none / 0 | physical_spawn_pedestrian / 289680 | 292128 |
+| 16493 | 7.004 | advance_planning / 3.086 | physical_spawn_bake / 0.57 | none / 0 | physical_spawn_appearance / 152048 | 179312 |
+| 14653 | 6.686 | advance_planning / 2.39 | physical_spawn_bake / 0.5 | none / 0 | physical_spawn_appearance / 146080 | 180320 |
+| 18786 | 6.65 | advance_planning / 2.084 | physical_spawn_bake / 0.49 | none / 0 | physical_spawn_appearance / 176880 | 206064 |
+| 12030 | 6.637 | physical_vehicles / 3.627 | none / 0 | none / 0 | advance_planning / 2656 | 5088 |
+| 9842 | 6.594 | advance_planning / 3.02 | physical_spawn_bake / 0.742 | none / 0 | physical_spawn_appearance / 136224 | 147952 |
+| 16269 | 6.58 | physical_spawn_appearance / 4.416 | physical_spawn_bake / 0.499 | none / 0 | physical_spawn_appearance / 136960 | 161712 |
+| 15367 | 6.51 | advance_planning / 3.291 | physical_spawn_bake / 0.505 | none / 0 | physical_spawn_appearance / 150720 | 167552 |
+| 6260 | 6.485 | advance_planning / 2.571 | physical_spawn_bake / 0.548 | none / 0 | physical_spawn_appearance / 224240 | 318912 |
+| 18664 | 6.339 | advance_planning / 1.753 | physical_spawn_bake / 0.552 | none / 0 | physical_spawn_appearance / 151328 | 165392 |
+| 17220 | 6.33 | advance_planning / 1.73 | physical_spawn_bake / 0.532 | none / 0 | physical_spawn_appearance / 137696 | 166736 |
+| 13948 | 6.327 | advance_planning / 3.266 | physical_spawn_bake / 0.718 | none / 0 | physical_spawn_appearance / 134480 | 148528 |
+
+**gc-night: full 16-row GC top-frame report**, highest PC Update work first:
+
+| Frame | mod ms | phase / ms | detail / ms | gc phase / collections | alloc phase / bytes | total alloc bytes |
+| --- | --- | --- | --- | --- | --- | --- |
+| 26859 | 80.876 | physical_unattributed / 31.984 | physical_spawn_bake / 0.512 | none / 0 | physical_unattributed / 12276280 | 25575168 |
+| 26954 | 15.098 | physical_spawn_pedestrian / 10.973 | none / 0 | none / 0 | physical_selection / 1856 | 5568 |
+| 27320 | 14.335 | advance_events / 12.129 | none / 0 | none / 0 | advance_events / 218208 | 228368 |
+| 27516 | 12.609 | physical_release / 10.336 | none / 0 | none / 0 | advance_planning / 7392 | 11440 |
+| 27273 | 11.852 | physical_spawn_pedestrian / 5.354 | none / 0 | none / 0 | advance_events / 4352 | 11072 |
+| 27470 | 11.31 | physical_spawn_appearance / 6.494 | physical_spawn_bake / 1.05 | none / 0 | physical_spawn_appearance / 165296 | 176096 |
+| 26938 | 10.893 | physical_spawn_pedestrian / 6.502 | none / 0 | none / 0 | advance_events / 8992 | 15024 |
+| 27015 | 10.625 | physical_spawn_pedestrian / 7.488 | none / 0 | none / 0 | advance_planning / 13792 | 21104 |
+| 27023 | 10.463 | physical_spawn_pedestrian / 6.468 | none / 0 | none / 0 | physical_selection / 14064 | 38400 |
+| 38964 | 10.341 | advance_planning / 10.029 | none / 0 | none / 0 | advance_planning / 6736 | 10224 |
+| 26946 | 9.048 | physical_spawn_pedestrian / 5.08 | none / 0 | none / 0 | advance_planning / 2928 | 8496 |
+| 39574 | 8.58 | advance_planning / 8.038 | none / 0 | none / 0 | advance_planning / 16240 | 21440 |
+| 27825 | 7.712 | advance_planning / 2.512 | physical_spawn_bake / 0.534 | none / 0 | physical_spawn_appearance / 198128 | 203888 |
+| 28321 | 7.61 | physical_spawn_appearance / 3.264 | physical_spawn_bake / 0.542 | none / 0 | physical_spawn_appearance / 160768 | 217968 |
+| 28603 | 7.531 | advance_planning / 2.616 | physical_spawn_bake / 0.49 | none / 0 | physical_spawn_appearance / 149248 | 152352 |
+| 27497 | 7.514 | physical_spawn_appearance / 3.306 | physical_spawn_bake / 0.658 | none / 0 | physical_spawn_appearance / 223600 | 234352 |
+
+PC phase recorder: day/night/street spikes and counts retained without chasing them. A collection ending inside a phase is correlation, not proof that the phase caused the collection. GC pause rows still have no per-pause Unity frame IDs; top mod-work frames and their `gc_phase` are exported.
+
+gc-day: coverage.complete=True, validity=`{"off_main_thread_calls":0,"cross_frame_scopes":0,"unbalanced_exits":0,"depth_overflow":0,"frames_dropped":0,"valid":true,"invalid_reasons":[]}`; save_activity=`{"attempts":10816,"allowed":0,"refused":10816,"native_saving_frames":0,"clean":true,"invalid_reasons":[]}`; clock final lag=0.022049903869628906, caughtUpToTarget=False, refused=False, stoppedAfterAccountingFailure=False, historicalClockMisses=0.
+gc-night: coverage.complete=True, validity=`{"off_main_thread_calls":0,"cross_frame_scopes":0,"unbalanced_exits":0,"depth_overflow":0,"frames_dropped":0,"valid":true,"invalid_reasons":[]}`; save_activity=`{"attempts":17046,"allowed":0,"refused":17046,"native_saving_frames":0,"clean":true,"invalid_reasons":[]}`; clock final lag=0.0, caughtUpToTarget=True, refused=False, stoppedAfterAccountingFailure=False, historicalClockMisses=0.
+street: coverage.complete=True, validity=`{"off_main_thread_calls":0,"cross_frame_scopes":0,"unbalanced_exits":0,"depth_overflow":0,"frames_dropped":0,"valid":true,"invalid_reasons":[]}`; save_activity=`{"attempts":4582,"allowed":0,"refused":4582,"native_saving_frames":0,"clean":true,"invalid_reasons":[]}`; clock final lag=0.09999465942382812, caughtUpToTarget=False, refused=False, stoppedAfterAccountingFailure=False, historicalClockMisses=0.
+
+### Host load and memory at every window boundary
+
+| Window | Boundary UTC | uptime | memory_pressure -Q |
+| --- | --- | --- | --- |
+| gc-day start | 2026-11-14T23:16:32Z | 0:16  up 1 day,  5:54, 1 user, load averages: 5.32 5.82 9.68 | System-wide memory free percentage: 75% |
+| gc-day end | 2026-11-14T23:26:33Z | 0:26  up 1 day,  6:04, 1 user, load averages: 2.90 3.04 6.07 | System-wide memory free percentage: 75% |
+| gc-night start | 2026-11-14T23:30:18Z | 0:30  up 1 day,  6:08, 1 user, load averages: 3.50 3.22 5.44 | System-wide memory free percentage: 66% |
+| gc-night end | 2026-11-14T23:40:20Z | 0:40  up 1 day,  6:18, 1 user, load averages: 4.35 4.43 5.03 | System-wide memory free percentage: 58% |
+| street start | 2026-11-14T23:45:06Z | 0:45  up 1 day,  6:23, 1 user, load averages: 4.53 4.73 5.02 | System-wide memory free percentage: 71% |
+| street end | 2026-11-14T23:55:08Z | 0:55  up 1 day,  6:33, 1 user, load averages: 6.35 7.93 6.75 | System-wide memory free percentage: 70% |
+
+At each start, the single foreground load loop inspected the 1-minute average; all were <=8 on the first read, so no 60 s sleeps were required (wait=0 s each). Raw boundary snapshots also retain vm_stat. Other sessions were not inspected or changed.
+
+### Visual check and exact failures
+
+Separate cold background graphics rig-test start, same fixture Tuesday 15:30, player x=215,z=0. Nine 1600×900 PNGs inspected: first close view includes a dressed walker in a red jacket and dark trousers; its return contains dressed walkers but the target is distant. The second close/return view is occluded by a building. Five pan stills contain sparse dressed walkers or empty/occluded sidewalk. No undressed body is seen in the inspected images; the images do not prove no invisible body or brief appearance flash, or unchanged visuals versus a synchronized baseline.
+
+Two native walker handles were selected. After an 8 s camera-away interval, the first handle (`walker-a003dd287c154421abf30362d533be80`) still answered screen_pos and camera-follow; its return capture occurred after 11.914 s. The second (`walker-469c462227ce4d1aa31d9cfaac62f003`) returned `ops_view_stale_target` for both screen_pos get and camera follow; return after 11.871 s. A native body handle has no persistent resident ID and no release/reacquire event proof. Even the surviving handle cannot establish that the same resident was assigned before and after, or that release/reacquire happened. Same-resident look stability remains unverified; this is not an asserted appearance-change failure. The pan sequence used 24 camera operations over 121.914 s. All requested appearance-error strings have zero matches in both Player logs.
+
+| Player.log string | Headless A matches | Background B matches |
+| --- | --- | --- |
+| Appearance meshes unavailable | 0 | 0 |
+| Empty appearance | 0 | 0 |
+| Merged body | 0 | 0 |
+| Merged body already has blendshapes | 0 | 0 |
+| Merged body vertex layout differs | 0 | 0 |
+
+- `python3 scripts/mac-agent call teleport {"x": 215, "z": 0}` → `Missing "who": "player" or a food vehicle's id.`.
+- `python3 scripts/mac-agent op screen_pos {"action": "get", "target": {"kind": "walker", "id": "walker-469c462227ce4d1aa31d9cfaac62f003"}}` → `{ "error": "ops_view_stale_target", "reply": { "ok": false, "id": "9832f911693340308264b5eac50a8340", "session": "5cecf2c6bbea47769b9ce83575df334e", "error": "ops_view_stale_target" } }`.
+- `python3 scripts/mac-agent op camera {"action": "follow", "target": {"kind": "walker", "id": "walker-469c462227ce4d1aa31d9cfaac62f003"}, "offset": {"x": 0, "y": 4, "z": -6}, "seconds": 10}` → `{ "error": "ops_view_stale_target", "reply": { "ok": false, "id": "1f22729883314256aca2a7a02c524bef", "session": "5cecf2c6bbea47769b9ce83575df334e", "error": "ops_view_stale_target" } }`.
+
+The second walker handle went stale; the first remained readable. The initial teleport omitted who=player and was refused before mutation; the corrected call succeeded. The first gc population read after native load returned `Warning: [Persistent City] gc population refused: no active city.`; asynchronous activation completed before the next read confirmed reached=3000. No window opened before confirmation. No ops_load_* failure, staging refusal or runtime stop occurred.
+
+### Player.log excerpts: activation, speed changes and toggles
+
+```text
+[Mod:RealLifeOverhaul] Real Life Overhaul 1.0.6 initialised.
+[Mod:FoodTrucks] Test bridge: console 'pc gc population' (1 lines).
+[Mod:PersistentCity] Persistent population active: 1000 residents, 2000 visitors, 1683 places. Native-pace walking, subway and car journeys; physical population preflight follows road initialization. Ctrl+F8 opens food business feedback.
+[Mod:FoodTrucks] Test bridge: console 'pc gc population' (1 lines).
+[Mod:FoodTrucks] Test bridge: running the clock at speed 20 until day 2 15:30.
+[Mod:FoodTrucks] Test bridge: run_until day 2 15:30 reached at day 2 15:30; paused, speed 1.
+[Mod:FoodTrucks] Test bridge: console 'pc gc start' (1 lines).
+[Mod:FoodTrucks] Test bridge: console 'pc gc stop' (3 lines).
+[Mod:FoodTrucks] Test bridge: running the clock at speed 20 until day 3 01:00.
+[Mod:FoodTrucks] Test bridge: run_until day 3 01:00 reached at day 3 01:00; paused, speed 1.
+[Mod:FoodTrucks] Test bridge: console 'pc gc start' (1 lines).
+[Mod:FoodTrucks] Test bridge: console 'pc gc stop' (3 lines).
+[Mod:FoodTrucks] Test bridge: console 'pc gc stop' (3 lines).
+[Mod:FoodTrucks] Test bridge: running the clock at speed 20 until day 3 15:30.
+[Mod:FoodTrucks] Test bridge: run_until day 3 15:30 reached at day 3 15:30; paused, speed 1.
+[Mod:FoodTrucks] Test bridge: console 'pc gc population' (1 lines).
+[Mod:FoodTrucks] Test bridge: console 'pc gc frames start' (1 lines).
+[Mod:FoodTrucks] Test bridge: console 'pc gc population' (1 lines).
+[Mod:FoodTrucks] Test bridge: console 'pc gc frames stop' (2 lines).
+```
+
+Explicit speed=1 replies and autosave readbacks are retained before each window. No RLO toggle occurred, so there is no toggle excerpt. SaveCostDiagnostics stayed off.
+
+### NOT RUN grouped
+
+- **GR-5 60 fps arms:** excluded; Mac historically about 5 fps at 1,000 residents in graphics mode; PC throwaway time/perf/modwork fix agent-rig #90 not merged for this request. Headless achieved fps does not verify a graphics arm. No Windows PC contact.
+- **GR-5 save latency:** excluded, owner decision pending; no save profiling or save-latency measurement.
+- **#262 checks 4–5 and #246 check 4 full proof:** excluded, Rig bot fixture/observation gaps.
+- **Everything else:** outside the requested GR-5 GC/street/looks checks, including a standalone idle-tick allocation check. No release, Workshop, version/changelog, production-code, schema or food-weight change.
+
+Tooling gaps within performed checks: durable resident identity/reacquisition; sparse visual observation cannot prove no invisible/briefly undressed body; exact inclusive UpdateCity p95 under automatic nested hooks; per-GC-pause frame IDs; no commit-stamped build log. Exact invoked errors are above, with no invented failure for an unadvertised op.
+
+### Cleanup and offline validation
+
+Stopped only owned players normally. Restored full original ModsLocal/PersistentCity, exact install.json, isolated preferences/config/plist/PlayerSettings and original absent paths. Verified 35 file hashes, 3 absent paths, PersistentCity file set and 53 RLO hashes; mismatches=`[]`. AgentRigOps unchanged. install.json SHA-256 `dea36ce03586cc53d3b2c7e5cd0fda6d9a54e61c670a21d0676ad18feee54a95`. Original autosave settings restored; process guard ends at stop. Disposable fixture saves unchanged; no new save. Final running=false, lease held=false, pending=0; both owned player PIDs and their caffeinate processes gone.
+
+Candidate build passed. Compact JSON parses and is under 20 KB; docs-links, markdown-ban and diff checks recorded in the PR. No test source changed, no full/regression suite run. One build/evidence worktree removed after commit, push and PR creation.
+
+Refs #270
