@@ -4443,10 +4443,10 @@ Role `rig_test`, where `mac`, isolated `agentmac`; owner `persistent-city-rig-20
 | Lease / resources | Free/stopped initially; acquired 2026-11-15T08:14:02.670592Z. Initial 45.4 GiB free / 82% reported memory free. No Windows contact, other-session intervention or macOS setting change. |
 | Host qualification | All three windows provisional (Mac shared). Live sessions and host boundaries below; this rig session ran no build/test during timing. |
 
-Printed rollback, verbatim (stopped, owned):
+Printed rollback, placeholder-normalized (`<home>` replaces the home prefix; stopped, owned):
 
 ```sh
-rm -rf "/Users/peterhartwieg/Library/Application Support/com.hovgaardgames.bigambitions.agenttests.mac/ModsLocal/PersistentCity" && cp -Rp "/Users/peterhartwieg/Library/Application Support/BigAmbitionsAgentTestsMac/receipt-backups/20261115T081455Z/mod" "/Users/peterhartwieg/Library/Application Support/com.hovgaardgames.bigambitions.agenttests.mac/ModsLocal/PersistentCity" && cp "/Users/peterhartwieg/Library/Application Support/BigAmbitionsAgentTestsMac/receipt-backups/20261115T081455Z/install.json" "/Users/peterhartwieg/Library/Application Support/BigAmbitionsAgentTestsMac/install.json"
+rm -rf "<home>/Library/Application Support/com.hovgaardgames.bigambitions.agenttests.mac/ModsLocal/PersistentCity" && cp -Rp "<home>/Library/Application Support/BigAmbitionsAgentTestsMac/receipt-backups/20261115T081455Z/mod" "<home>/Library/Application Support/com.hovgaardgames.bigambitions.agenttests.mac/ModsLocal/PersistentCity" && cp "<home>/Library/Application Support/BigAmbitionsAgentTestsMac/receipt-backups/20261115T081455Z/install.json" "<home>/Library/Application Support/BigAmbitionsAgentTestsMac/install.json"
 ```
 
 Cleanup used the equivalent move-aside/copy-back form: retained the staged candidate outside the profile, replaced the complete mod folder from the receipt backup and restored exact install.json.
@@ -4529,7 +4529,7 @@ Fixture `FT GR5 13f Timing v1`, 1,000 residents / 2,000 visitors / 1,683 places,
 | gen0 | 8.000 / 6.000 | 7.000 / 6.000 | 6.000 / 4.000 |
 | pause p95 ms | 27.888 / 37.301 | 43.403 / 38.929 | 110.570 / 4651.381 |
 
-15b night overlapped `20261115-081854-rig-gr5-perf-attribution` after 08:18 CET, and street overlapped it throughout; those timings may be skewed. 15c is also shared and is not a clean baseline. 15a street began at 16:04 after a wait; 15b/15c target 15:30. The twelfth-fix testhost PID 86541 (parent 86539, dotnet test parent 86535) was active in the final minute of day; retained `build-attribution-before-night.json` names its worktree and command. No completed PC 15c report exists: that run was stopped mid-measurement when Peter started gaming.
+15a, 15b and 15c are all shared-host measurements, not a controlled A/B comparison; their differences in this table and in the street deltas below cannot establish a product regression. 15b night overlapped `20261115-081854-rig-gr5-perf-attribution` after 08:18 CET, and street overlapped it throughout; those timings may be skewed. 15c is also shared and is not a clean baseline. 15a street began at 16:04 after a wait; 15b/15c target 15:30. The twelfth-fix testhost PID 86541 (parent 86539, dotnet test parent 86535) was active in the final minute of day; retained `build-attribution-before-night.json` names its worktree and command. No completed PC 15c report exists: that run was stopped mid-measurement when Peter started gaming.
 
 ### Every segment and sub-segment
 
@@ -4632,7 +4632,7 @@ Last periodic cumulative snapshots, not exact boundary deltas. 15a reuse day/nig
 | gc-night | 605.326 / 9135 / 15.09 | 1.9531 / 274.3132 | 9.6616 / 348.5835 / 93 | 137.9068 / 5399.7441 | 1.0 |
 | street | 605.862 / 3387 / 5.59 | 16.8084 / 121.1979 | 17.2191 / 122.1744 / 114 | 441.9586 / 4310.7739 | 1.0 |
 
-15a street self/union p95 6.5466 / 6.6550 ms, 37 spikes; 15b 6.8007 / 6.9556 ms, 28 spikes (shared after 08:18 CET). 15c self/union deltas versus 15a +10.2618 / +10.5641 ms.
+15a street self/union p95 6.5466 / 6.6550 ms, 37 spikes; 15b 6.8007 / 6.9556 ms, 28 spikes (shared after 08:18 CET). 15c self/union deltas versus 15a +10.2618 / +10.5641 ms. All three street runs are shared-host measurements, so these deltas are not a controlled A/B result and cannot establish a product regression.
 
 Each controller hold was 600 s; exported durations include begin/end command overhead. The first controller was interrupted only in the paused pre-night CPU-load wait, then resumed in the same game process at 01:00 after confirming memory headroom. No measurement window was interrupted; subsequent windows use memory headroom and shared-load qualification rather than a CPU quietness wait. GC nested hooks cover UpdateCity, advance, prepare, physical and inspector. Street arms UpdateCity plus automatic entry points, as in 15a/15b. Self excludes nested scopes; union counts them once. Exact inclusive UpdateCity p95 under nested GC hooks is not exported. Whole-frame timing is separate.
 
@@ -4921,14 +4921,14 @@ PID  %CPU COMM
 Harness commands/PIDs:
 
 ```text
-76767 /opt/homebrew/Cellar/python@3.15/3.15.0/Frameworks/Python.framework/Versions/3.15/Resources/Python.app/Contents/MacOS/Python -m harness resume --answer /Users/peterhartwieg/Coding_Projects/_bot-runs/mvp-harness/answer-1966-0905.md --resolved /Users/peterhartwieg/Coding_Projects/_bot-runs/mvp-harness/fresh-resolved-1966-0905.json /Users/peterhartwieg/Coding_Projects/_harness-runs/20261115-033628-ux-akte-one-screen-1966
-77725 /opt/homebrew/Cellar/python@3.15/3.15.0/Frameworks/Python.framework/Versions/3.15/Resources/Python.app/Contents/MacOS/Python -m harness run --run-dir /Users/peterhartwieg/Coding_Projects/_harness-runs/20261115-090523-mac-fix-gr5-rebuild-food-appearance-parked
+76767 /opt/homebrew/Cellar/python@3.15/3.15.0/Frameworks/Python.framework/Versions/3.15/Resources/Python.app/Contents/MacOS/Python -m harness resume --answer <home>/Coding_Projects/_bot-runs/mvp-harness/answer-1966-0905.md --resolved <home>/Coding_Projects/_bot-runs/mvp-harness/fresh-resolved-1966-0905.json <home>/Coding_Projects/_harness-runs/20261115-033628-ux-akte-one-screen-1966
+77725 /opt/homebrew/Cellar/python@3.15/3.15.0/Frameworks/Python.framework/Versions/3.15/Resources/Python.app/Contents/MacOS/Python -m harness run --run-dir <home>/Coding_Projects/_harness-runs/20261115-090523-mac-fix-gr5-rebuild-food-appearance-parked
 ```
 
 Other coding/build process PID / PPID / CPU / elapsed / command:
 
 ```text
-78025 77725   0.1          14:27 /Users/peterhartwieg/.local/bin/claude
+78025 77725   0.1          14:27 <home>/.local/bin/claude
 78353     1   0.0          12:53 /opt/homebrew/Cellar/dotnet/10.0.400/libexec/dotnet
 78354     1   0.0          12:53 /opt/homebrew/Cellar/dotnet/10.0.400/libexec/dotnet
 78364 78354   0.0          12:51 /opt/homebrew/Cellar/dotnet/10.0.400/libexec/sdk/10.0.400/Roslyn/bincore/VBCSCompiler
@@ -4964,18 +4964,18 @@ PID  %CPU COMM
 Harness commands/PIDs:
 
 ```text
-76767 /opt/homebrew/Cellar/python@3.15/3.15.0/Frameworks/Python.framework/Versions/3.15/Resources/Python.app/Contents/MacOS/Python -m harness resume --answer /Users/peterhartwieg/Coding_Projects/_bot-runs/mvp-harness/answer-1966-0905.md --resolved /Users/peterhartwieg/Coding_Projects/_bot-runs/mvp-harness/fresh-resolved-1966-0905.json /Users/peterhartwieg/Coding_Projects/_harness-runs/20261115-033628-ux-akte-one-screen-1966
-77725 /opt/homebrew/Cellar/python@3.15/3.15.0/Frameworks/Python.framework/Versions/3.15/Resources/Python.app/Contents/MacOS/Python -m harness run --run-dir /Users/peterhartwieg/Coding_Projects/_harness-runs/20261115-090523-mac-fix-gr5-rebuild-food-appearance-parked
+76767 /opt/homebrew/Cellar/python@3.15/3.15.0/Frameworks/Python.framework/Versions/3.15/Resources/Python.app/Contents/MacOS/Python -m harness resume --answer <home>/Coding_Projects/_bot-runs/mvp-harness/answer-1966-0905.md --resolved <home>/Coding_Projects/_bot-runs/mvp-harness/fresh-resolved-1966-0905.json <home>/Coding_Projects/_harness-runs/20261115-033628-ux-akte-one-screen-1966
+77725 /opt/homebrew/Cellar/python@3.15/3.15.0/Frameworks/Python.framework/Versions/3.15/Resources/Python.app/Contents/MacOS/Python -m harness run --run-dir <home>/Coding_Projects/_harness-runs/20261115-090523-mac-fix-gr5-rebuild-food-appearance-parked
 ```
 
 Other coding/build process PID / PPID / CPU / elapsed / command:
 
 ```text
-78025 77725   3.8          24:29 /Users/peterhartwieg/.local/bin/claude
+78025 77725   3.8          24:29 <home>/.local/bin/claude
 78353     1   0.0          22:55 /opt/homebrew/Cellar/dotnet/10.0.400/libexec/dotnet
 78354     1   0.0          22:55 /opt/homebrew/Cellar/dotnet/10.0.400/libexec/dotnet
 78364 78354  63.6          22:53 /opt/homebrew/Cellar/dotnet/10.0.400/libexec/sdk/10.0.400/Roslyn/bincore/VBCSCompiler
-83604 76767   4.7          08:31 /Users/peterhartwieg/.local/bin/claude
+83604 76767   4.7          08:31 <home>/.local/bin/claude
 86535 85540   0.0          00:23 /opt/homebrew/Cellar/dotnet/10.0.400/libexec/dotnet
 86539 86535   0.0          00:22 /opt/homebrew/Cellar/dotnet/10.0.400/libexec/dotnet
 86541 86539 143.4          00:22 /opt/homebrew/Cellar/dotnet/10.0.400/libexec/dotnet
@@ -5008,28 +5008,28 @@ PID  %CPU COMM
 Harness commands/PIDs:
 
 ```text
-76767 /opt/homebrew/Cellar/python@3.15/3.15.0/Frameworks/Python.framework/Versions/3.15/Resources/Python.app/Contents/MacOS/Python -m harness resume --answer /Users/peterhartwieg/Coding_Projects/_bot-runs/mvp-harness/answer-1966-0905.md --resolved /Users/peterhartwieg/Coding_Projects/_bot-runs/mvp-harness/fresh-resolved-1966-0905.json /Users/peterhartwieg/Coding_Projects/_harness-runs/20261115-033628-ux-akte-one-screen-1966
-77725 /opt/homebrew/Cellar/python@3.15/3.15.0/Frameworks/Python.framework/Versions/3.15/Resources/Python.app/Contents/MacOS/Python -m harness run --run-dir /Users/peterhartwieg/Coding_Projects/_harness-runs/20261115-090523-mac-fix-gr5-rebuild-food-appearance-parked
+76767 /opt/homebrew/Cellar/python@3.15/3.15.0/Frameworks/Python.framework/Versions/3.15/Resources/Python.app/Contents/MacOS/Python -m harness resume --answer <home>/Coding_Projects/_bot-runs/mvp-harness/answer-1966-0905.md --resolved <home>/Coding_Projects/_bot-runs/mvp-harness/fresh-resolved-1966-0905.json <home>/Coding_Projects/_harness-runs/20261115-033628-ux-akte-one-screen-1966
+77725 /opt/homebrew/Cellar/python@3.15/3.15.0/Frameworks/Python.framework/Versions/3.15/Resources/Python.app/Contents/MacOS/Python -m harness run --run-dir <home>/Coding_Projects/_harness-runs/20261115-090523-mac-fix-gr5-rebuild-food-appearance-parked
 ```
 
 Other coding/build process PID / PPID / CPU / elapsed / command:
 
 ```text
-78025 77725   0.0          37:24 /Users/peterhartwieg/.local/bin/claude
+78025 77725   0.0          37:24 <home>/.local/bin/claude
 78353     1   0.0          35:50 /opt/homebrew/Cellar/dotnet/10.0.400/libexec/dotnet
 78354     1   0.0          35:50 /opt/homebrew/Cellar/dotnet/10.0.400/libexec/dotnet
 78364 78354   0.0          35:48 /opt/homebrew/Cellar/dotnet/10.0.400/libexec/sdk/10.0.400/Roslyn/bincore/VBCSCompiler
-83604 76767   0.0          21:26 /Users/peterhartwieg/.local/bin/claude
+83604 76767   0.0          21:26 <home>/.local/bin/claude
 88310 88298   0.0          04:43 /opt/homebrew/Cellar/dotnet/10.0.400/libexec/dotnet
 88314 88310   0.0          04:42 /opt/homebrew/Cellar/dotnet/10.0.400/libexec/dotnet
 88315 88310   0.0          04:42 /opt/homebrew/Cellar/dotnet/10.0.400/libexec/dotnet
 88337 88314   0.0          04:37 /opt/homebrew/Cellar/dotnet/10.0.400/libexec/dotnet
 88339 88337 270.8          04:37 /opt/homebrew/Cellar/dotnet/10.0.400/libexec/dotnet
 88931 88930  15.0          01:19 next-server (v16.4.2)
-88941 88940  20.9          01:07 /Users/peterhartwieg/Library/Caches/ms-playwright/chromium_headless_shell-1248/chrome-headless-shell-mac-arm64/chrome-headless-shell
-88942 88941  47.7          01:07 /Users/peterhartwieg/Library/Caches/ms-playwright/chromium_headless_shell-1248/chrome-headless-shell-mac-arm64/chrome-headless-shell
-88943 88941   0.3          01:07 /Users/peterhartwieg/Library/Caches/ms-playwright/chromium_headless_shell-1248/chrome-headless-shell-mac-arm64/chrome-headless-shell
-89006 88941  57.1          00:07 /Users/peterhartwieg/Library/Caches/ms-playwright/chromium_headless_shell-1248/chrome-headless-shell-mac-arm64/chrome-headless-shell
+88941 88940  20.9          01:07 <home>/Library/Caches/ms-playwright/chromium_headless_shell-1248/chrome-headless-shell-mac-arm64/chrome-headless-shell
+88942 88941  47.7          01:07 <home>/Library/Caches/ms-playwright/chromium_headless_shell-1248/chrome-headless-shell-mac-arm64/chrome-headless-shell
+88943 88941   0.3          01:07 <home>/Library/Caches/ms-playwright/chromium_headless_shell-1248/chrome-headless-shell-mac-arm64/chrome-headless-shell
+89006 88941  57.1          00:07 <home>/Library/Caches/ms-playwright/chromium_headless_shell-1248/chrome-headless-shell-mac-arm64/chrome-headless-shell
 ```
 
 **gc-night end, 2026-11-15T08:53:32Z — provisional (Mac shared)**
@@ -5059,15 +5059,15 @@ PID  %CPU COMM
 Harness commands/PIDs:
 
 ```text
-76767 /opt/homebrew/Cellar/python@3.15/3.15.0/Frameworks/Python.framework/Versions/3.15/Resources/Python.app/Contents/MacOS/Python -m harness resume --answer /Users/peterhartwieg/Coding_Projects/_bot-runs/mvp-harness/answer-1966-0905.md --resolved /Users/peterhartwieg/Coding_Projects/_bot-runs/mvp-harness/fresh-resolved-1966-0905.json /Users/peterhartwieg/Coding_Projects/_harness-runs/20261115-033628-ux-akte-one-screen-1966
-77725 /opt/homebrew/Cellar/python@3.15/3.15.0/Frameworks/Python.framework/Versions/3.15/Resources/Python.app/Contents/MacOS/Python -m harness run --run-dir /Users/peterhartwieg/Coding_Projects/_harness-runs/20261115-090523-mac-fix-gr5-rebuild-food-appearance-parked
+76767 /opt/homebrew/Cellar/python@3.15/3.15.0/Frameworks/Python.framework/Versions/3.15/Resources/Python.app/Contents/MacOS/Python -m harness resume --answer <home>/Coding_Projects/_bot-runs/mvp-harness/answer-1966-0905.md --resolved <home>/Coding_Projects/_bot-runs/mvp-harness/fresh-resolved-1966-0905.json <home>/Coding_Projects/_harness-runs/20261115-033628-ux-akte-one-screen-1966
+77725 /opt/homebrew/Cellar/python@3.15/3.15.0/Frameworks/Python.framework/Versions/3.15/Resources/Python.app/Contents/MacOS/Python -m harness run --run-dir <home>/Coding_Projects/_harness-runs/20261115-090523-mac-fix-gr5-rebuild-food-appearance-parked
 ```
 
 Other coding/build process PID / PPID / CPU / elapsed / command:
 
 ```text
-78025 77725   4.0          47:32 /Users/peterhartwieg/.local/bin/claude
-83604 76767   1.6          31:34 /Users/peterhartwieg/.local/bin/claude
+78025 77725   4.0          47:32 <home>/.local/bin/claude
+83604 76767   1.6          31:34 <home>/.local/bin/claude
 89847     1  25.8          00:26 /opt/homebrew/Cellar/dotnet/10.0.400/libexec/dotnet
 89848     1   0.1          00:26 /opt/homebrew/Cellar/dotnet/10.0.400/libexec/dotnet
 89849 89847  90.0          00:25 /opt/homebrew/Cellar/dotnet/10.0.400/libexec/sdk/10.0.400/Roslyn/bincore/VBCSCompiler
@@ -5103,8 +5103,8 @@ PID  %CPU COMM
 Harness commands/PIDs:
 
 ```text
-76767 /opt/homebrew/Cellar/python@3.15/3.15.0/Frameworks/Python.framework/Versions/3.15/Resources/Python.app/Contents/MacOS/Python -m harness resume --answer /Users/peterhartwieg/Coding_Projects/_bot-runs/mvp-harness/answer-1966-0905.md --resolved /Users/peterhartwieg/Coding_Projects/_bot-runs/mvp-harness/fresh-resolved-1966-0905.json /Users/peterhartwieg/Coding_Projects/_harness-runs/20261115-033628-ux-akte-one-screen-1966
-77725 /opt/homebrew/Cellar/python@3.15/3.15.0/Frameworks/Python.framework/Versions/3.15/Resources/Python.app/Contents/MacOS/Python -m harness run --run-dir /Users/peterhartwieg/Coding_Projects/_harness-runs/20261115-090523-mac-fix-gr5-rebuild-food-appearance-parked
+76767 /opt/homebrew/Cellar/python@3.15/3.15.0/Frameworks/Python.framework/Versions/3.15/Resources/Python.app/Contents/MacOS/Python -m harness resume --answer <home>/Coding_Projects/_bot-runs/mvp-harness/answer-1966-0905.md --resolved <home>/Coding_Projects/_bot-runs/mvp-harness/fresh-resolved-1966-0905.json <home>/Coding_Projects/_harness-runs/20261115-033628-ux-akte-one-screen-1966
+77725 /opt/homebrew/Cellar/python@3.15/3.15.0/Frameworks/Python.framework/Versions/3.15/Resources/Python.app/Contents/MacOS/Python -m harness run --run-dir <home>/Coding_Projects/_harness-runs/20261115-090523-mac-fix-gr5-rebuild-food-appearance-parked
 ```
 
 Other coding/build process PID / PPID / CPU / elapsed / command:
@@ -5147,25 +5147,25 @@ PID  %CPU COMM
 Harness commands/PIDs:
 
 ```text
-76767 /opt/homebrew/Cellar/python@3.15/3.15.0/Frameworks/Python.framework/Versions/3.15/Resources/Python.app/Contents/MacOS/Python -m harness resume --answer /Users/peterhartwieg/Coding_Projects/_bot-runs/mvp-harness/answer-1966-0905.md --resolved /Users/peterhartwieg/Coding_Projects/_bot-runs/mvp-harness/fresh-resolved-1966-0905.json /Users/peterhartwieg/Coding_Projects/_harness-runs/20261115-033628-ux-akte-one-screen-1966
-77725 /opt/homebrew/Cellar/python@3.15/3.15.0/Frameworks/Python.framework/Versions/3.15/Resources/Python.app/Contents/MacOS/Python -m harness run --run-dir /Users/peterhartwieg/Coding_Projects/_harness-runs/20261115-090523-mac-fix-gr5-rebuild-food-appearance-parked
+76767 /opt/homebrew/Cellar/python@3.15/3.15.0/Frameworks/Python.framework/Versions/3.15/Resources/Python.app/Contents/MacOS/Python -m harness resume --answer <home>/Coding_Projects/_bot-runs/mvp-harness/answer-1966-0905.md --resolved <home>/Coding_Projects/_bot-runs/mvp-harness/fresh-resolved-1966-0905.json <home>/Coding_Projects/_harness-runs/20261115-033628-ux-akte-one-screen-1966
+77725 /opt/homebrew/Cellar/python@3.15/3.15.0/Frameworks/Python.framework/Versions/3.15/Resources/Python.app/Contents/MacOS/Python -m harness run --run-dir <home>/Coding_Projects/_harness-runs/20261115-090523-mac-fix-gr5-rebuild-food-appearance-parked
 ```
 
 Other coding/build process PID / PPID / CPU / elapsed / command:
 
 ```text
 96993 96992 185.2          07:33 next-server (v16.4.2)
-97312 77725   1.6          06:42 /Users/peterhartwieg/.local/bin/claude
+97312 77725   1.6          06:42 <home>/.local/bin/claude
 98073 98072   0.0          02:27 /opt/homebrew/Cellar/dotnet/10.0.400/libexec/dotnet
 98076 98073   0.0          02:26 /opt/homebrew/Cellar/dotnet/10.0.400/libexec/dotnet
 98077 98076  78.1          02:26 /opt/homebrew/Cellar/dotnet/10.0.400/libexec/dotnet
 98198 97234   0.0          00:40 /opt/homebrew/Cellar/dotnet/10.0.400/libexec/dotnet
 98199 98198   0.0          00:40 /opt/homebrew/Cellar/dotnet/10.0.400/libexec/dotnet
 98200 98199  71.4          00:40 /opt/homebrew/Cellar/dotnet/10.0.400/libexec/dotnet
-98209 98206   0.3          00:32 /Users/peterhartwieg/Library/Caches/ms-playwright/chromium_headless_shell-1248/chrome-headless-shell-mac-arm64/chrome-headless-shell
-98210 98209   0.0          00:32 /Users/peterhartwieg/Library/Caches/ms-playwright/chromium_headless_shell-1248/chrome-headless-shell-mac-arm64/chrome-headless-shell
-98211 98209   0.0          00:32 /Users/peterhartwieg/Library/Caches/ms-playwright/chromium_headless_shell-1248/chrome-headless-shell-mac-arm64/chrome-headless-shell
-98212 98209   0.0          00:32 /Users/peterhartwieg/Library/Caches/ms-playwright/chromium_headless_shell-1248/chrome-headless-shell-mac-arm64/chrome-headless-shell
+98209 98206   0.3          00:32 <home>/Library/Caches/ms-playwright/chromium_headless_shell-1248/chrome-headless-shell-mac-arm64/chrome-headless-shell
+98210 98209   0.0          00:32 <home>/Library/Caches/ms-playwright/chromium_headless_shell-1248/chrome-headless-shell-mac-arm64/chrome-headless-shell
+98211 98209   0.0          00:32 <home>/Library/Caches/ms-playwright/chromium_headless_shell-1248/chrome-headless-shell-mac-arm64/chrome-headless-shell
+98212 98209   0.0          00:32 <home>/Library/Caches/ms-playwright/chromium_headless_shell-1248/chrome-headless-shell-mac-arm64/chrome-headless-shell
 ```
 
 ### Exact invoked failures and tooling gaps
