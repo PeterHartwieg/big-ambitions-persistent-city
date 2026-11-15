@@ -141,4 +141,16 @@ public sealed class Gr5BodyMergeTests
         }
         output.WriteLine("rig 15d day measured " + (perBuild / 1024).ToString("0.0", CultureInfo.InvariantCulture) + " KB per build; calibrated bones per renderer " + calibrated);
     }
+
+    [Fact]
+    public void OneFastMergeFailureSendsEveryLaterMergeToTheNativeCombiner()
+    {
+        var gate = new BodyMergeGate();
+        Assert.True(gate.Allows);
+        gate.Fail();
+        Assert.False(gate.Allows);
+        gate.Fail();
+        Assert.False(gate.Allows);
+        Assert.Equal(2, gate.Failures);
+    }
 }

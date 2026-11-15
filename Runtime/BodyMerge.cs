@@ -17,16 +17,15 @@ namespace PersistentCity.Runtime
         private static readonly Harmony harmony = new Harmony(Owner);
         private static readonly MethodInfo? Target = AccessTools.Method(typeof(SkinnedMeshCombiner), "DoCombineMeshs_OneMeshPerMaterial");
         private static readonly MethodInfo? ValidateMethod = AccessTools.Method(typeof(SkinnedMeshCombiner), "ValidateAllVariables");
-        private static readonly MethodInfo? StopMethod = AccessTools.Method(typeof(SkinnedMeshCombiner), "StopMergeByErrorWhileMerging", new[] { typeof(Exception) });
         private static readonly FieldInfo? PositionField = AccessTools.Field(typeof(SkinnedMeshCombiner), "thisOriginalPosition");
         private static readonly FieldInfo? RotationField = AccessTools.Field(typeof(SkinnedMeshCombiner), "thisOriginalRotation");
         private static readonly FieldInfo? ScaleField = AccessTools.Field(typeof(SkinnedMeshCombiner), "thisOriginalScale");
         private static Action<SkinnedMeshCombiner>? validate;
-        private static Action<SkinnedMeshCombiner, Exception>? stop;
         private static AccessTools.FieldRef<SkinnedMeshCombiner, Vector3>? originalPosition, originalRotation, originalScale;
         private static bool hooked;
         private static readonly HashSet<SkinnedMeshCombiner> owned = new HashSet<SkinnedMeshCombiner>();
         private static readonly BodyMergePlan plan = new BodyMergePlan();
+        private static readonly BodyMergeGate gate = new BodyMergeGate();
         private static readonly List<SkinnedMeshRenderer> found = new List<SkinnedMeshRenderer>();
         private static readonly List<SkinnedMeshRenderer> items = new List<SkinnedMeshRenderer>();
         private static readonly List<SkinnedMeshRenderer> sources = new List<SkinnedMeshRenderer>();
@@ -50,19 +49,20 @@ namespace PersistentCity.Runtime
         public static long Failed { get; private set; }
         public static string LastError { get; private set; } = "";
         public static bool Hooked => hooked;
+        public static bool Disabled => !gate.Allows;
         public static int Owned => owned.Count;
 
         public static void Install()
         {
+            owned.RemoveWhere(combiner => combiner == null);
             if (hooked || LastError.Length != 0) return;
             try
             {
-                if (Target == null || ValidateMethod == null || StopMethod == null || PositionField == null || RotationField == null || ScaleField == null
+                if (Target == null || ValidateMethod == null || PositionField == null || RotationField == null || ScaleField == null
                     || PositionField.FieldType != typeof(Vector3) || RotationField.FieldType != typeof(Vector3) || ScaleField.FieldType != typeof(Vector3))
                     throw new InvalidOperationException("Unexpected native body combiner contract.");
                 if (Harmony.HasAnyPatches(Owner)) throw new InvalidOperationException("Another body merge hook owner is already registered.");
                 validate = AccessTools.MethodDelegate<Action<SkinnedMeshCombiner>>(ValidateMethod);
-                stop = AccessTools.MethodDelegate<Action<SkinnedMeshCombiner, Exception>>(StopMethod);
                 originalPosition = AccessTools.FieldRefAccess<SkinnedMeshCombiner, Vector3>(PositionField);
                 originalRotation = AccessTools.FieldRefAccess<SkinnedMeshCombiner, Vector3>(RotationField);
                 originalScale = AccessTools.FieldRefAccess<SkinnedMeshCombiner, Vector3>(ScaleField);
@@ -79,19 +79,24 @@ namespace PersistentCity.Runtime
         private static bool MergePrefix(SkinnedMeshCombiner __instance)
         {
             if (!owned.Contains(__instance)) return true;
-            bool collected;
-            try { collected = Collect(__instance); }
-            catch (Exception) { collected = false; }
-            if (!collected) { Release(); Native++; return true; }
-            Merge(__instance);
-            Release();
-            return false;
+            if (!gate.Allows) { Native++; return true; }
+            try
+            {
+                bool collected;
+                try { collected = Collect(__instance); }
+                catch (Exception) { collected = false; }
+                if (!collected) { Native++; return true; }
+                if (Merge(__instance)) return false;
+                Native++;
+                return true;
+            }
+            finally { Release(); }
         }
 
         private static bool Collect(SkinnedMeshCombiner combiner)
         {
             Release();
-            if (!Application.isPlaying || combiner.resultMergeGameObject != null || combiner.legacyAnimationSupport
+            if (!Application.isPlaying || combiner.resultMergeGameObject != null || combiner.resultMergeOriginalGameObjects != null || combiner.legacyAnimationSupport
                 || combiner.blendShapesSupport == SkinnedMeshCombiner.BlendShapesSupport.FullSupport
                 || combiner.mergeMethod != SkinnedMeshCombiner.MergeMethod.OneMeshPerMaterial
                 || combiner.gameObjectsToIgnore == null || combiner.gameObjectsToIgnore.Count != 0 || combiner.launchConsoleLogs
@@ -146,24 +151,32 @@ namespace PersistentCity.Runtime
             return materials.Count - 1;
         }
 
-        private static void Merge(SkinnedMeshCombiner combiner)
+        private static bool Merge(SkinnedMeshCombiner combiner)
         {
             var root = combiner.gameObject.transform;
-            if (combiner.autoManagePosition)
-            {
-                originalPosition!(combiner) = root.position;
-                originalRotation!(combiner) = root.eulerAngles;
-                originalScale!(combiner) = root.localScale;
-                root.position = Vector3.zero;
-                root.eulerAngles = Vector3.zero;
-                root.localScale = Vector3.one;
-            }
+            Vector3 position = root.position, rotation = root.eulerAngles, scale = root.localScale;
+            Animator? animator = null;
+            var cullingMode = AnimatorCullingMode.AlwaysAnimate;
+            bool culled = false, moved = false, hidden = false;
+            Mesh? combined = null;
+            GameObject? result = null;
             try
             {
+                if (combiner.autoManagePosition)
+                {
+                    originalPosition!(combiner) = position;
+                    originalRotation!(combiner) = rotation;
+                    originalScale!(combiner) = scale;
+                    moved = true;
+                    root.position = Vector3.zero;
+                    root.eulerAngles = Vector3.zero;
+                    root.localScale = Vector3.one;
+                }
                 combiner.resultMergeLogs.Clear();
                 validate!(combiner);
-                var animator = combiner.GetComponent<Animator>();
-                var cullingMode = animator.cullingMode;
+                animator = combiner.GetComponent<Animator>();
+                cullingMode = animator.cullingMode;
+                culled = true;
                 animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
                 int vertices = 0;
                 foreach (var source in sources) vertices += source.sharedMesh.vertexCount;
@@ -188,37 +201,31 @@ namespace PersistentCity.Runtime
                         parts[e] = new CombineInstance { mesh = source.sharedMesh, subMeshIndex = entry.Submesh, transform = transform.localToWorldMatrix };
                     }
                     var mesh = new Mesh { indexFormat = format };
-                    mesh.CombineMeshes(parts, mergeSubMeshes: true, useMatrices: true);
-                    System.Array.Clear(parts, 0, parts.Length);
                     groupMeshes.Add(mesh);
+                    mesh.CombineMeshes(parts, mergeSubMeshes: true, useMatrices: true);
                     var groupPoses = Array(poses, finalPoses.Count - poseStart);
                     for (int k = 0; k < groupPoses.Length; k++) groupPoses[k] = finalPoses[poseStart + k];
                     mesh.bindposes = groupPoses;
                 }
                 var final = Array(combines, groupMeshes.Count);
                 for (int g = 0; g < groupMeshes.Count; g++) final[g] = new CombineInstance { mesh = groupMeshes[g], subMeshIndex = 0, transform = Matrix4x4.identity };
-                var combined = new Mesh { indexFormat = format, name = "Combined Meshes (One Mesh Per Material)" };
+                combined = new Mesh { indexFormat = format, name = "Combined Meshes (One Mesh Per Material)" };
                 combined.CombineMeshes(final, mergeSubMeshes: false);
-                System.Array.Clear(final, 0, final.Length);
-                foreach (var mesh in groupMeshes) Object.Destroy(mesh);
-                groupMeshes.Clear();
+                DestroyGroups();
                 combined.RecalculateBounds();
-                var result = new GameObject(combiner.nameOfThisMerge);
-                combiner.resultMergeGameObject = result;
+                result = new GameObject(combiner.nameOfThisMerge);
                 result.transform.SetParent(root);
                 var merged = result.AddComponent<SkinnedMeshRenderer>();
                 merged.sharedMesh = combined;
                 var boneArray = Array(bones, finalBones.Count);
                 for (int k = 0; k < boneArray.Length; k++) boneArray[k] = finalBones[k];
                 merged.bones = boneArray;
-                System.Array.Clear(boneArray, 0, boneArray.Length);
                 var poseArray = Array(poses, finalPoses.Count);
                 for (int k = 0; k < poseArray.Length; k++) poseArray[k] = finalPoses[k];
-                merged.sharedMesh.bindposes = poseArray;
+                combined.bindposes = poseArray;
                 var materialArray = Array(materialArrays, plan.Groups);
                 for (int g = 0; g < plan.Groups; g++) materialArray[g] = materials[plan.Material(g)];
                 merged.sharedMaterials = materialArray;
-                System.Array.Clear(materialArray, 0, materialArray.Length);
                 merged.rootBone = RootBone(combiner);
                 var manager = result.AddComponent<CombinedMeshesManager>();
                 manager.rootGameObject = combiner.gameObject;
@@ -227,26 +234,59 @@ namespace PersistentCity.Runtime
                 manager.sourceMeshes = sourceArray;
                 var originals = new GameObject[items.Count];
                 for (int i = 0; i < originals.Length; i++) originals[i] = items[i].gameObject;
-                combiner.resultMergeOriginalGameObjects = originals;
+                hidden = true;
                 foreach (var source in sourceArray) source.gameObject.SetActive(false);
-                animator.cullingMode = cullingMode;
-                Fast++;
+                combiner.resultMergeGameObject = result;
+                combiner.resultMergeOriginalGameObjects = originals;
                 if (combiner.onCombineMeshs != null) combiner.onCombineMeshs.Invoke();
+                Fast++;
             }
             catch (Exception error)
             {
                 Failed++;
+                gate.Fail();
                 LastError = error.GetType().Name + ": " + error.Message;
-                foreach (var mesh in groupMeshes) if (mesh != null) Object.Destroy(mesh);
-                groupMeshes.Clear();
-                stop!(combiner, error);
+                Discard(combiner, combined, result, hidden);
+                return false;
             }
-            if (combiner.autoManagePosition)
+            finally
             {
-                root.position = originalPosition!(combiner);
-                root.eulerAngles = originalRotation!(combiner);
-                root.localScale = originalScale!(combiner);
+                ClearScratchArrays();
+                if (culled && animator != null) animator.cullingMode = cullingMode;
+                if (moved)
+                {
+                    root.position = position;
+                    root.eulerAngles = rotation;
+                    root.localScale = scale;
+                }
             }
+            return true;
+        }
+
+        private static void DestroyGroups()
+        {
+            foreach (var mesh in groupMeshes) if (mesh != null) Object.Destroy(mesh);
+            groupMeshes.Clear();
+        }
+
+        private static void Discard(SkinnedMeshCombiner combiner, Mesh? combined, GameObject? result, bool hidden)
+        {
+            try { DestroyGroups(); } catch (Exception) { groupMeshes.Clear(); }
+            try { if (combined != null) Object.Destroy(combined); } catch (Exception) { }
+            try { if (result != null) Object.Destroy(result); } catch (Exception) { }
+            if (hidden) foreach (var source in sources) try { if (source != null) source.gameObject.SetActive(true); } catch (Exception) { }
+            if (result != null && ReferenceEquals(combiner.resultMergeGameObject, result))
+            {
+                combiner.resultMergeGameObject = null!;
+                combiner.resultMergeOriginalGameObjects = null!;
+            }
+        }
+
+        private static void ClearScratchArrays()
+        {
+            foreach (var array in combines.Values) System.Array.Clear(array, 0, array.Length);
+            foreach (var array in bones.Values) System.Array.Clear(array, 0, array.Length);
+            foreach (var array in materialArrays.Values) System.Array.Clear(array, 0, array.Length);
         }
 
         private static Transform? RootBone(SkinnedMeshCombiner combiner)

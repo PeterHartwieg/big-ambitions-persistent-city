@@ -10,6 +10,13 @@ namespace PersistentCity.Core
         public int Submesh { get; }
     }
 
+    public sealed class BodyMergeGate
+    {
+        public bool Allows => Failures == 0;
+        public int Failures { get; private set; }
+        public void Fail() => Failures++;
+    }
+
     public sealed class BodyMergePlan
     {
         private readonly List<int> rendererBones = new List<int>();
