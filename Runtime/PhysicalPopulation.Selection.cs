@@ -48,6 +48,28 @@ namespace PersistentCity.Runtime
         {
             get { int count = 0; foreach (var binding in bindings.Values) if (binding.Car != null && binding.Journey != null) count++; return count; }
         }
+        private readonly List<Binding> retimeRelease = new List<Binding>();
+        public int RetimeReleaseSteps { get; private set; }
+        public bool ReleaseForRetime(long deadlineTimestamp)
+        {
+            if (disposed || bindings.Count == 0 && leaving.Count == 0) { retimeRelease.Clear(); return true; }
+            RetimeReleaseSteps++;
+            Exception? failure = null;
+            while (bindings.Count != 0)
+            {
+                if (retimeRelease.Count == 0) foreach (var binding in bindings.Values) retimeRelease.Add(binding);
+                var next = retimeRelease[retimeRelease.Count - 1];
+                retimeRelease.RemoveAt(retimeRelease.Count - 1);
+                if (!Bound(next)) continue;
+                try { Release(next); } catch (Exception error) { failure = failure ?? error; }
+                if (failure != null) break;
+                if (System.Diagnostics.Stopwatch.GetTimestamp() >= deadlineTimestamp) break;
+            }
+            if (failure == null && bindings.Count == 0)
+                try { FadeLeaving(all: true); } catch (Exception error) { failure = error; }
+            if (failure != null) { retimeRelease.Clear(); throw new InvalidOperationException("One or more physical bodies could not be released.", failure); }
+            return false;
+        }
         public void Suspend()
         {
             Exception? failure = null;
