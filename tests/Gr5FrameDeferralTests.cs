@@ -25,7 +25,7 @@ public sealed class Gr5FrameDeferralTests
     }
 
     [Fact]
-    public void PhysicalSelectionWaitsWhileTheUpdateIsAlreadyHeavyAndRunsOnTheNextLightOrOverdueFrame()
+    public void PhysicalSelectionAndParkedScansNeverRunOnAHeavyUpdateEvenAfterSecondsOfHeavyUpdates()
     {
         StreetFoodHooks.Reset(); NavMesh.Reset(); AmbientPedestrians.Reserved.Clear(); PhysicalPedestrians.VisiblePoint = null;
         const int walkers = 24;
@@ -51,59 +51,50 @@ public sealed class Gr5FrameDeferralTests
             using var bodies = new PhysicalPopulation(new Transform { Component = new PopulationRuntime() }, city, new MultimodalRoutes(),
                 typeof(Gr5FrameDeferralTests).Assembly, new VendorBodyTests.Log(), 96, 8, 120, new DwellSpots());
             var pool = PhysicalPedestrians.Last!;
-            int calls = pool.AcquireCalls;
+            int calls = pool.AcquireCalls, parked = bodies.ParkedScans;
             double minute = now;
-            for (int i = 0; i < 3; i++)
+            for (int i = 0; i < 12; i++)
             {
                 minute += 0.3 / 60; city.AdvanceTo(minute); Time.Next(0.3f);
                 Frame(FrameDeferral.DefaultFrameMilliseconds + 1);
                 bodies.Update();
             }
             Assert.Equal(calls, pool.AcquireCalls);
-            minute += 0.5 / 60; city.AdvanceTo(minute); Time.Next(0.5f);
-            Frame(FrameDeferral.DefaultFrameMilliseconds + 1);
-            bodies.Update();
-            Assert.True(pool.AcquireCalls > calls, "an overdue heavy frame still selects");
-            calls = pool.AcquireCalls;
-            minute += 0.3 / 60; city.AdvanceTo(minute); Time.Next(0.3f);
-            Frame(0);
-            bodies.Update();
-            Assert.True(pool.AcquireCalls > calls, "a light frame selects");
+            Assert.Equal(parked, bodies.ParkedScans);
+            Assert.Contains("longest wait 3.", bodies.Diagnostics);
+            for (int i = 0; i < 4 && pool.AcquireCalls == calls; i++)
+            {
+                minute += 0.3 / 60; city.AdvanceTo(minute); Time.Next(0.3f);
+                Frame(0);
+                bodies.Update();
+            }
+            Assert.True(pool.AcquireCalls > calls, "light frames select " + bodies.Diagnostics);
         }
         finally { UpdateCityClock.Reset(); }
     }
 
     [Fact]
-    public void OptionalPhysicalWorkWaitsForALighterFrameButNeverLongerThanItsMaximum()
+    public void OptionalPhysicalWorkWaitsForALightFrameHoweverLongTheHeavyStreakLasts()
     {
         var gate = new FrameDeferral();
         Assert.True(gate.Allows(3, 0));
-        Assert.False(gate.Allows(8, 1));
-        Assert.False(gate.Allows(25, 1.5));
-        Assert.True(gate.Allows(7.9, 1.6));
-        Assert.Equal(2, gate.Deferred);
-        for (int frame = 0; frame < 60; frame++) Assert.False(gate.Allows(12, 2 + frame / 60.0));
-        Assert.True(gate.Allows(12, 3));
-        Assert.Equal(1, gate.Forced);
-        Assert.False(gate.Allows(12, 3.1));
+        for (int frame = 0; frame < 600; frame++) Assert.False(gate.Allows(8 + frame % 20, 1 + frame / 60.0));
+        Assert.Equal(600, gate.Deferred);
+        Assert.True(gate.LongestWaitSeconds >= 9.9);
+        Assert.True(gate.Allows(7.9, 12));
+        Assert.Throws<ArgumentOutOfRangeException>(() => new FrameDeferral(0));
     }
 
     [Fact]
-    public void AHeavyStreetFrameStopsBeforeTheSpawnThatWouldCrossThirtyMilliseconds()
+    public void ParkedAndSelectionWorkShareOneFrameClock()
     {
-        const double prelude = 12.0, grow = 22.0;
-        var gate = new FrameDeferral();
-        double frame = prelude;
-        int spawned = 0;
-        for (double second = 0; second < 0.9; second += 1 / 60.0)
-        {
-            if (!gate.Allows(frame, second)) continue;
-            frame += grow; spawned++;
-        }
-        Assert.Equal(0, spawned);
-        double light = 4;
-        Assert.True(gate.Allows(light, 1));
-        Assert.True(light + grow < 30);
-        Assert.Throws<ArgumentOutOfRangeException>(() => new FrameDeferral(0));
+        var parkedGate = new FrameDeferral();
+        var selectionGate = new FrameDeferral();
+        double frame = 5;
+        Assert.True(parkedGate.Allows(frame, 0));
+        frame += 4;
+        Assert.False(selectionGate.Allows(frame, 0));
+        Assert.True(selectionGate.Spent(frame));
+        Assert.True(selectionGate.Allows(5, 0.02));
     }
 }

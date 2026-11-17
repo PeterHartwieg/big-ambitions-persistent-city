@@ -182,11 +182,10 @@ namespace PersistentCity.Runtime
             if (!journeyIndexFallback && Time.unscaledTime >= nextJourneyIndexCheck)
             {
                 nextJourneyIndexCheck = Time.unscaledTime + JourneyIndexCheckSeconds;
-                bool light = !selectionGate.Spent(UpdateCityClock.Elapsed());
                 CheckJourneyIndex();
                 PruneFadeRestrictions();
                 PhysicalAllocation.Charge(GcAllocationSegment.PhysicalIndex);
-                if (light && selectionGate.Spent(UpdateCityClock.Elapsed())) { nextSelection = Time.unscaledTime; return; }
+                if (selectionGate.Spent(UpdateCityClock.Elapsed())) { nextSelection = Time.unscaledTime; return; }
             }
             PhysicalAllocation.Charge(GcAllocationSegment.PhysicalIndex);
             PlanQueues(focus, radius);
@@ -237,8 +236,8 @@ namespace PersistentCity.Runtime
                     if (dressScans < DressScanLimit) { dressScans++; pedestrians.NoteDeferred(); }
                     continue;
                 }
-                if (attempts > 0 && ((System.Diagnostics.Stopwatch.GetTimestamp() - updateStarted) * 1000.0 / System.Diagnostics.Stopwatch.Frequency >= AcquireStopMilliseconds
-                    || selectionGate.Spent(UpdateCityClock.Elapsed())))
+                if (selectionGate.Spent(UpdateCityClock.Elapsed())
+                    || attempts > 0 && (System.Diagnostics.Stopwatch.GetTimestamp() - updateStarted) * 1000.0 / System.Diagnostics.Stopwatch.Frequency >= AcquireStopMilliseconds)
                 { acquireStops++; break; }
                 if (++attempts > 4) break;
                 attempted[citizen.Identity.Id] = Time.unscaledTime;
