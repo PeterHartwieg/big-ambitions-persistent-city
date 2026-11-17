@@ -807,7 +807,9 @@ namespace PersistentCity.Core
             int work = 0;
             var state = new TrafficKernelState
             {
-                Clock = Clock, RequestedTime = RequestedTime, NextEventOrder = nextEventOrder, NextVehicleOrder = nextVehicleOrder
+                Clock = Clock, RequestedTime = RequestedTime, NextEventOrder = nextEventOrder, NextVehicleOrder = nextVehicleOrder,
+                Definitions = new List<TrafficLinkDefinition>(orderedLinks.Count), Links = new List<TrafficLinkState>(orderedLinks.Count),
+                Vehicles = new List<TrafficVehicleState>(vehicles.Count), Events = new List<TrafficEventState>(events.Count)
             };
             foreach (Link link in orderedLinks)
             {

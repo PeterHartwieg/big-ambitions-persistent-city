@@ -867,6 +867,7 @@ namespace PersistentCity.Runtime
         {
             if (failed || simulation == null) return SaveEpochCapture.Refused("Population is not active.");
             var cost = saveCost;
+            var heap = cost == null ? default : BeginSaveHeap();
             cost?.Begin();
             var capture = SaveEpochCapture.Refused("Population save failed.");
             try { capture = CaptureSteps(ticket, cost); return capture; }
@@ -876,6 +877,7 @@ namespace PersistentCity.Runtime
                 if (cost != null)
                 {
                     cost.End(capture.Error == null, capture.Error ?? "");
+                    EndSaveHeap(heap);
                     if (capture.Error == null && capture.Pending == null) CountSavedRecords(cost, payload => SaveCodec.CountRecords(simulation!.State, payload));
                 }
             }
@@ -884,21 +886,29 @@ namespace PersistentCity.Runtime
         private SaveEpochCapture CaptureSteps(SaveEpochTicket ticket, SaveCostRecorder? cost)
         {
             if (!BeginAccountingObservations()) return SaveEpochCapture.Refused("Accounting observations could not begin before saving.");
+            cost?.Step(SaveCostStep.Accounting);
             var source = ReadRlo("save");
             var saveContinuity = source.Continuity(simulation!.State);
             rloDiffers = saveContinuity == DonorContinuity.Different;
             if (!DonorReads.Continues(saveContinuity))
                 return SaveEpochCapture.Refused("RLO changed before saving; original population payload retained.");
+            cost?.Step(SaveCostStep.Rlo);
             RunPhysical(() => physical?.BeforeSave());
+            cost?.Step(SaveCostStep.Physical);
             foodMarket?.CompleteCampaignsForSave();
             foodMarket?.RefreshKnownOwnership();
+            cost?.Step(SaveCostStep.FoodMarket);
             if (!NativeCityClock.CheckInputEpoch(Now(), simulation.State.Minute))
                 return SaveEpochCapture.Refused("Accounting input epoch changed before saving.");
             if (saveEpoch?.CanPublish(ticket, SaveGameManager.Current, SaveGameManager.Current.modData) != true)
                 return SaveEpochCapture.Refused("Save epoch changed during capture; previous payload retained.");
+            cost?.Step(SaveCostStep.EpochCheck);
             vendorMarket?.CompleteForSave();
+            cost?.Step(SaveCostStep.Vendors);
             var session = saveSession ?? throw new InvalidOperationException("Save session is missing.");
-            if (BackgroundSaveAvailable()) return BeginBackgroundWrite(session, cost);
+            bool background = BackgroundSaveAvailable();
+            cost?.Step(SaveCostStep.HandOffCheck);
+            if (background) return BeginBackgroundWrite(session, cost);
             synchronousSaves++;
             lastSaveBackground = false;
             var result = session.WriteTo(SaveGameManager.Current.modData, simulation.State, cost);
