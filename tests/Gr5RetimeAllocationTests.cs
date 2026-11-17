@@ -67,4 +67,32 @@ public sealed class Gr5RetimeAllocationTests
         for (int i = 0; i < 10000; i++) driver.Update(state, state.TravelClockRate, i % 2 == 0, 2, 4);
         Assert.Equal(0, GC.GetAllocatedBytesForCurrentThread() - before);
     }
+
+    [Fact]
+    public void RetimeAllocationSplitsIntoSnapshotRetimeCommitAndRebuild()
+    {
+        var (state, _) = TravelTimingMaximumRouteTests.RigScaleCity(TravelTimingMaximumRouteTests.FixtureLinks);
+        var simulator = new CitySimulator(state, new NoRoutes());
+        var driver = new ClockRetimeDriver();
+        foreach (double rate in new[] { 3.0, 20, 1, 20 })
+        {
+            var bytes = new Dictionary<ClockRetimeOutcome, long>();
+            long rebuild = 0;
+            while (true)
+            {
+                long before = GC.GetAllocatedBytesForCurrentThread();
+                int snapshots = driver.SnapshotSlices;
+                var outcome = driver.Update(state, rate, false, 2, ClockRetimeStages.SliceMilliseconds);
+                if (outcome == ClockRetimeOutcome.Preparing && driver.SnapshotSlices > snapshots) outcome = ClockRetimeOutcome.None;
+                bytes[outcome] = (bytes.TryGetValue(outcome, out long b) ? b : 0) + GC.GetAllocatedBytesForCurrentThread() - before;
+                if (outcome != ClockRetimeOutcome.Committed) continue;
+                before = GC.GetAllocatedBytesForCurrentThread();
+                simulator = simulator.RebuildRoutes(new NoRoutes(), driver.TakeRetimedTraffic());
+                rebuild = GC.GetAllocatedBytesForCurrentThread() - before;
+                break;
+            }
+            output.WriteLine("rate " + rate + ": " + string.Join(", ", bytes.Select(p => p.Key + " " + (p.Value / 1e6).ToString("0.00") + " MB"))
+                + ", rebuild " + (rebuild / 1e6).ToString("0.00") + " MB");
+        }
+    }
 }

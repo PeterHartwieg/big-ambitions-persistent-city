@@ -330,11 +330,29 @@ namespace PersistentCity.Core
             return startFraction < endFraction;
         }
 
-        public void ValidateMapping(Route journey, IReadOnlyList<TrafficRouteLeg> traffic)
+        [ThreadStatic] private static double[]? validationOffsets;
+
+        public void ValidateMapping(Route journey, IReadOnlyList<TrafficRouteLeg> traffic) => ValidateMapping(journey, traffic, out _);
+
+        private static Position PositionAt(Route journey, double[] offsets, double minute, ref int hint)
+        {
+            var legs = journey.Legs;
+            for (; hint < legs.Count; hint++)
+            {
+                RouteLeg leg = legs[hint];
+                double elapsed = minute - offsets[hint];
+                if (elapsed <= leg.Minutes) return Position.Lerp(leg.From, leg.To, Math.Max(0, elapsed / leg.Minutes));
+            }
+            return legs[legs.Count - 1].To;
+        }
+
+        private void ValidateMapping(Route journey, IReadOnlyList<TrafficRouteLeg> traffic, out double[] offsets)
         {
             if (journey == null || journey.Legs == null || journey.Legs.Count == 0 || traffic == null || traffic.Count == 0)
                 throw new ArgumentException("A committed journey and traffic mapping are required.");
-            var offsets = new double[journey.Legs.Count + 1];
+            offsets = validationOffsets ??= new double[64];
+            if (offsets.Length < journey.Legs.Count + 1) offsets = validationOffsets = new double[Math.Max(journey.Legs.Count + 1, offsets.Length * 2)];
+            offsets[0] = 0;
             for (int i = 0; i < journey.Legs.Count; i++)
             {
                 RouteLeg leg = journey.Legs[i];
@@ -345,21 +363,22 @@ namespace PersistentCity.Core
                 offsets[i + 1] = offsets[i] + leg.Minutes;
             }
             double previousEnd = 0;
-            int firstLeg = 0;
-            foreach (TrafficRouteLeg span in traffic)
+            int firstLeg = 0, positionLeg = 0;
+            for (int spanIndex = 0; spanIndex < traffic.Count; spanIndex++)
             {
+                TrafficRouteLeg span = traffic[spanIndex];
                 if (span == null || span.LinkId < 0 || span.LinkId >= sectionGeometry.Count ||
                     !Position.Finite(span.StartNominalMinutes) || !Position.Finite(span.EndNominalMinutes) ||
                     span.StartNominalMinutes < previousEnd || span.EndNominalMinutes <= span.StartNominalMinutes ||
-                    span.EndNominalMinutes > offsets[offsets.Length - 1] + 0.0000001 ||
+                    span.EndNominalMinutes > offsets[journey.Legs.Count] + 0.0000001 ||
                     !Position.Finite(span.StartLinkFraction) || !Position.Finite(span.EndLinkFraction) ||
                     span.StartLinkFraction < 0 || span.EndLinkFraction > 1 || span.StartLinkFraction >= span.EndLinkFraction)
                     throw new ArgumentException("Invalid traffic mapping span.", nameof(traffic));
                 SectionGeometry section = sectionGeometry[span.LinkId];
                 double cursor = span.StartLinkFraction * section.Length;
                 double endDistance = span.EndLinkFraction * section.Length;
-                if (!Near(journey.PositionAt(span.StartNominalMinutes), SectionPoint(section, cursor)) ||
-                    !Near(journey.PositionAt(span.EndNominalMinutes), SectionPoint(section, endDistance)))
+                if (!Near(PositionAt(journey, offsets, span.StartNominalMinutes, ref positionLeg), SectionPoint(section, cursor)) ||
+                    !Near(PositionAt(journey, offsets, span.EndNominalMinutes, ref positionLeg), SectionPoint(section, endDistance)))
                     throw new ArgumentException("Traffic section endpoints disagree with the committed journey.", nameof(traffic));
                 while (firstLeg < journey.Legs.Count && offsets[firstLeg + 1] <= span.StartNominalMinutes) firstLeg++;
                 bool moved = false;
@@ -394,13 +413,16 @@ namespace PersistentCity.Core
 
         public void ValidateRemainingMapping(Route journey, IReadOnlyList<TrafficRouteLeg> traffic, double progress)
         {
-            ValidateMapping(journey, traffic);
+            ValidateMapping(journey, traffic, out var offsets);
             if (!Position.Finite(progress) || progress < 0 || progress > journey.Minutes)
                 throw new ArgumentException("Invalid traffic journey progress.");
-            foreach (TrafficRouteLeg span in traffic)
+            int firstLeg = 0;
+            for (int spanIndex = 0; spanIndex < traffic.Count; spanIndex++)
             {
+                TrafficRouteLeg span = traffic[spanIndex];
                 if (span.EndNominalMinutes <= progress) continue;
-                ValidateRemainingTiming(journey, span, progress);
+                while (firstLeg < journey.Legs.Count && offsets[firstLeg + 1] <= span.StartNominalMinutes) firstLeg++;
+                ValidateRemainingTiming(journey, offsets, firstLeg, span, progress);
             }
             double offset = 0;
             int claim = 0;
@@ -444,7 +466,7 @@ namespace PersistentCity.Core
                 throw new ArgumentException("Traffic travel duration disagrees with its committed journey timing.");
         }
 
-        private void ValidateRemainingTiming(Route journey, TrafficRouteLeg span, double progress)
+        private void ValidateRemainingTiming(Route journey, double[] offsets, int firstLeg, TrafficRouteLeg span, double progress)
         {
             const double maximumSlowdown = 1.75;
             const double relativeTolerance = 1e-8;
@@ -454,39 +476,42 @@ namespace PersistentCity.Core
             double clockNoise = 8 * doubleEpsilon * Math.Max(Math.Abs(span.StartNominalMinutes), Math.Abs(span.EndNominalMinutes));
             ValidateCommittedSpanTiming(span);
 
-            var pieces = new List<(RouteLeg Leg, double Metres)>();
+            var legs = journey.Legs;
             RouteLeg? reference = null;
-            double referenceMetres = 0, offset = 0;
-            foreach (RouteLeg leg in journey.Legs)
+            double referenceMetres = 0;
+            int lastLeg = firstLeg;
+            for (int i = firstLeg; i < legs.Count && offsets[i] < span.EndNominalMinutes; i++)
             {
-                double end = offset + leg.Minutes;
-                if (end > progress && end > span.StartNominalMinutes && offset < span.EndNominalMinutes)
-                {
-                    double distance = Position.Distance(leg.From, leg.To);
-                    if (!Position.Finite(distance) || distance <= 0)
-                        throw new ArgumentException("Traffic timing requires moving committed geometry.");
-                    pieces.Add((leg, distance));
-                    if (distance > referenceMetres) { reference = leg; referenceMetres = distance; }
-                }
-                offset = end;
+                lastLeg = i + 1;
+                double end = offsets[i + 1];
+                if (end <= progress || end <= span.StartNominalMinutes) continue;
+                RouteLeg leg = legs[i];
+                double distance = Position.Distance(leg.From, leg.To);
+                if (!Position.Finite(distance) || distance <= 0)
+                    throw new ArgumentException("Traffic timing requires moving committed geometry.");
+                if (distance > referenceMetres) { reference = leg; referenceMetres = distance; }
             }
             if (reference == null) throw new ArgumentException("Traffic timing has no unfinished committed geometry.");
             double canonicalDensity = section.FreeFlowMinutes / section.Length;
             double density = reference.Minutes / referenceMetres;
-            foreach (var piece in pieces)
+            for (int i = firstLeg; i < lastLeg; i++)
             {
-                double coordinate = Math.Max(1, Math.Max(Math.Max(Math.Abs(piece.Leg.From.X), Math.Abs(piece.Leg.To.X)),
-                    Math.Max(Math.Max(Math.Abs(piece.Leg.From.Y), Math.Abs(piece.Leg.To.Y)),
-                        Math.Max(Math.Abs(piece.Leg.From.Z), Math.Abs(piece.Leg.To.Z)))));
+                double end = offsets[i + 1];
+                if (end <= progress || end <= span.StartNominalMinutes) continue;
+                RouteLeg leg = legs[i];
+                double legMetres = Position.Distance(leg.From, leg.To);
+                double coordinate = Math.Max(1, Math.Max(Math.Max(Math.Abs(leg.From.X), Math.Abs(leg.To.X)),
+                    Math.Max(Math.Max(Math.Abs(leg.From.Y), Math.Abs(leg.To.Y)),
+                        Math.Max(Math.Abs(leg.From.Z), Math.Abs(leg.To.Z)))));
                 double spatialNoise = 8 * doubleEpsilon * coordinate;
                 if (spatialNoise > MappingMetresTolerance)
                     throw new ArgumentException("Traffic timing cannot be verified at this coordinate precision.");
-                double canonical = canonicalDensity * piece.Metres;
-                double tolerance = relativeTolerance * Math.Max(canonical, piece.Leg.Minutes)
+                double canonical = canonicalDensity * legMetres;
+                double tolerance = relativeTolerance * Math.Max(canonical, leg.Minutes)
                     + Math.Max(canonicalDensity, density) * spatialNoise;
                 if (!Position.Finite(density) || density <= 0 || !Position.Finite(canonical)
-                    || piece.Leg.Minutes < canonical - tolerance || piece.Leg.Minutes > maximumSlowdown * canonical + tolerance
-                    || Math.Abs(piece.Leg.Minutes - density * piece.Metres) > tolerance)
+                    || leg.Minutes < canonical - tolerance || leg.Minutes > maximumSlowdown * canonical + tolerance
+                    || Math.Abs(leg.Minutes - density * legMetres) > tolerance)
                     throw new ArgumentException("Unfinished traffic timing must use one bounded slowdown per section metre.");
             }
             double expected = density * metres;

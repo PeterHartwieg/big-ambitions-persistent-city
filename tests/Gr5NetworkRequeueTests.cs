@@ -178,6 +178,41 @@ public sealed class Gr5NetworkRequeueTests
     }
 
     [Fact]
+    public void ValidatingLiveRigScaleDriversOnASwappedNetworkIsLinearAndAllocatesNothingAfterWarmUp()
+    {
+        const int drivers = 300, roadLegs = 480;
+        var network = Road();
+        double edgeMinutes = network.Links[0].FreeFlowMinutes / 4;
+        var journeys = new List<(Route Journey, List<TrafficRouteLeg> Spans, double Progress)>();
+        for (int i = 0; i < drivers; i++)
+        {
+            int start = i * 37 % (RoadNodes - roadLegs - 1) / 4 * 4;
+            var route = new Route();
+            route.Legs.Add(new RouteLeg { From = new Position(-4, 0, 0), To = new Position(start * 12, 0, 0), Minutes = 2, Mode = TravelMode.Walk });
+            for (int k = start; k < start + roadLegs; k++)
+                route.Legs.Add(new RouteLeg { From = new Position(k * 12, 0, 0), To = new Position((k + 1) * 12, 0, 0), Minutes = edgeMinutes, Mode = TravelMode.Car,
+                    ServiceId = "native:road:v1:" + Native + ":" + k + ":" + (k + 1) });
+            route.Legs.Add(new RouteLeg { From = new Position((start + roadLegs) * 12, 0, 0), To = new Position(-8, 0, 0), Minutes = 3, Mode = TravelMode.Walk });
+            route = route.Commit();
+            Assert.True(network.TryMap(route, out var spans));
+            journeys.Add((route, spans, 2 + edgeMinutes * (i % (roadLegs - 4)) + edgeMinutes / 3));
+        }
+        foreach (var j in journeys) network.ValidateRemainingMapping(j.Journey, j.Spans, j.Progress);
+        long bytes = GC.GetAllocatedBytesForCurrentThread();
+        long started = Stopwatch.GetTimestamp();
+        foreach (var j in journeys) network.ValidateRemainingMapping(j.Journey, j.Spans, j.Progress);
+        double elapsed = (Stopwatch.GetTimestamp() - started) * 1000.0 / Stopwatch.Frequency;
+        bytes = GC.GetAllocatedBytesForCurrentThread() - bytes;
+        output.WriteLine("validate " + drivers + " live drivers x " + roadLegs + " road legs (" + journeys[0].Spans.Count + " spans each): "
+            + elapsed.ToString("0.00") + " ms, " + bytes + " B (.NET)");
+        Assert.Equal(0, bytes);
+        PerfGate.Under(elapsed, 250, "validating 300 live drivers x 480 legs on a swapped network (.NET Debug; 400 ms before the linear walk)");
+        var broken = journeys[0].Spans.Select(s => new TrafficRouteLeg { LinkId = s.LinkId, StartNominalMinutes = s.StartNominalMinutes,
+            EndNominalMinutes = s.EndNominalMinutes, FreeFlowMinutes = s.FreeFlowMinutes * 1.01, StartLinkFraction = s.StartLinkFraction, EndLinkFraction = s.EndLinkFraction }).ToList();
+        Assert.Throws<ArgumentException>(() => network.ValidateRemainingMapping(journeys[0].Journey, broken, journeys[0].Progress));
+    }
+
+    [Fact]
     public void AStaleQueueEntryTakesTheFullRebuildAndMatchesASteadyCity()
     {
         var steadyPlanner = new SwappablePlanner();
