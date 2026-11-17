@@ -93,6 +93,10 @@ public sealed class Gr5RetimeAllocationTests
             }
             output.WriteLine("rate " + rate + ": " + string.Join(", ", bytes.Select(p => p.Key + " " + (p.Value / 1e6).ToString("0.00") + " MB"))
                 + ", rebuild " + (rebuild / 1e6).ToString("0.00") + " MB");
+            long total = bytes.Values.Sum() + rebuild;
+            Assert.True(bytes[ClockRetimeOutcome.Preparing] > 0.8 * total, "journey and traffic retime slices carry the retime allocation");
+            Assert.True(bytes[ClockRetimeOutcome.Committed] < 1_000_000, "commit " + bytes[ClockRetimeOutcome.Committed]);
+            Assert.True(rebuild < 2_000_000, "rebuild " + rebuild);
         }
     }
 }
