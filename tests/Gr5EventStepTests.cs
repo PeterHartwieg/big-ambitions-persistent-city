@@ -96,4 +96,29 @@ public sealed class Gr5EventStepTests
         PerfGate.Under(foodMax, 10, "slowest food continuation unit");
         PerfGate.Under(citizenMax, 10, "slowest citizen event unit");
     }
+
+    [Fact]
+    public void EveryCompleteAdvanceFrameThroughTheLunchFoodWindowStaysUnder30Ms()
+    {
+        const double from = 2 * 1440 + 11.5 * 60, to = 2 * 1440 + 13.5 * 60;
+        string uninterrupted = RushSpikeReplay.RunUninterrupted(from, to);
+        RushSpikeReplay.Result? result = null;
+        try
+        {
+            TimingBudget.Run(timing =>
+            {
+                result = RushSpikeReplay.Run(from, to);
+                Assert.Equal(uninterrupted, result.SaveSha256);
+                Assert.True(result.Purchases > 0 && result.Frames > 10000, result.Purchases + " purchases, " + result.Frames + " frames");
+                timing.Under("complete advance frame max", result.FrameMax, 30);
+                timing.Under("complete advance frame p95", result.FrameP95, 5);
+                timing.Under("single unit max", result.UnitMax, 10);
+            });
+        }
+        finally
+        {
+            if (result != null)
+                output.WriteLine($"frames={result.Frames}; p95={result.FrameP95:F4}ms; frameMax={result.FrameMax:F4}ms at minute {result.MaxFrameMinute} with {result.CollectionsInMaxFrame} gen0; unitMax={result.UnitMax:F4}ms ({result.MaxUnitKind}); spikes30 frame/unit={result.FrameSpikes30}/{result.UnitSpikes30}; maxUnitsInFrame={result.MaxUnitsInFrame}");
+        }
+    }
 }
