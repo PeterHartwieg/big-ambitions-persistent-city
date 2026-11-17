@@ -34,7 +34,8 @@ namespace PersistentCity.Runtime
         }
 
         public void Clear() { DropGeometry(); observed = null; }
-        private void DropGeometry() { cache.Clear(); insertionOrder.Clear(); Metrics.WalkingCacheClears++; }
+        private void DropGeometry() { cache.Clear(); insertionOrder.Clear(); Metrics.WalkingCacheClears++; Generation++; }
+        public long Generation { get; private set; }
 
         public void BeginWalkingQuote()
         {

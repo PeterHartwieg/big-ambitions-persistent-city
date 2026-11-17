@@ -12,6 +12,11 @@ namespace PersistentCity.Core
         bool IsWalkingQuoteValid(Place from, Place to, Route route, TravelPreferences preferences);
     }
 
+    public interface IWalkingQuoteRevision
+    {
+        long WalkingQuoteRevision { get; }
+    }
+
     public interface IWalkingQuoteOperation
     {
         void BeginWalkingQuote();

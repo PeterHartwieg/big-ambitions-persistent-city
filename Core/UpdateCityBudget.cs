@@ -34,4 +34,36 @@ namespace PersistentCity.Core
             ReserveMilliseconds = sample >= ReserveMilliseconds ? sample : ReserveMilliseconds + (sample - ReserveMilliseconds) * .05;
         }
     }
+
+    public sealed class FrameDeferral
+    {
+        public const double DefaultFrameMilliseconds = 8;
+        private readonly double frameLimit;
+        private double firstDeferred = double.NaN;
+
+        public FrameDeferral(double frameMilliseconds = DefaultFrameMilliseconds)
+        {
+            if (!(frameMilliseconds > 0) || double.IsInfinity(frameMilliseconds)) throw new ArgumentOutOfRangeException(nameof(frameMilliseconds));
+            frameLimit = frameMilliseconds;
+        }
+
+        public double FrameMilliseconds => frameLimit;
+        public long Deferred { get; private set; }
+        public double LongestWaitSeconds { get; private set; }
+
+        public bool Spent(double frameMilliseconds) => !(frameMilliseconds < frameLimit);
+
+        public bool Allows(double frameMilliseconds, double seconds)
+        {
+            if (Spent(frameMilliseconds))
+            {
+                if (double.IsNaN(firstDeferred)) firstDeferred = seconds;
+                LongestWaitSeconds = Math.Max(LongestWaitSeconds, seconds - firstDeferred);
+                Deferred++;
+                return false;
+            }
+            firstDeferred = double.NaN;
+            return true;
+        }
+    }
 }

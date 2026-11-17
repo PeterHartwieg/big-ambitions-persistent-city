@@ -16,6 +16,7 @@ namespace PersistentCity.Runtime
         internal const int DistanceReleasesPerFrame = 4;
         internal const double AcquireStopMilliseconds = 8;
         private long acquireStops;
+        private readonly FrameDeferral selectionGate = new FrameDeferral(), parkedGate = new FrameDeferral();
         internal long AcquireStops => acquireStops;
 
         public void BeforeAdvance()
@@ -162,7 +163,7 @@ namespace PersistentCity.Runtime
             }
             finally { snapshot.Clear(); bindingSnapshot = snapshot; }
             PhysicalAllocation.Charge(GcAllocationSegment.PhysicalBindings);
-            if (!interior && Time.unscaledTime >= nextParked)
+            if (!interior && Time.unscaledTime >= nextParked && parkedGate.Allows(UpdateCityClock.Elapsed(), Time.unscaledTime))
             {
                 bool scan = Time.unscaledTime >= nextParkedScan;
                 if (scan) nextParkedScan = Time.unscaledTime + ParkedRefreshSeconds;
@@ -170,7 +171,7 @@ namespace PersistentCity.Runtime
                 nextParked = complete ? nextParkedScan : Time.unscaledTime + ParkedRetrySeconds;
                 PhysicalAllocation.Charge(GcAllocationSegment.PhysicalParked);
             }
-            if (Time.unscaledTime < nextSelection || !routes.ReadyForPopulation)
+            if (Time.unscaledTime < nextSelection || !routes.ReadyForPopulation || !selectionGate.Allows(UpdateCityClock.Elapsed(), Time.unscaledTime))
             {
                 if (pedestrians.TrimIdle(Time.unscaledTime)) PhysicalAllocation.Charge(GcAllocationSegment.PhysicalRelease);
                 return;
@@ -183,6 +184,8 @@ namespace PersistentCity.Runtime
                 nextJourneyIndexCheck = Time.unscaledTime + JourneyIndexCheckSeconds;
                 CheckJourneyIndex();
                 PruneFadeRestrictions();
+                PhysicalAllocation.Charge(GcAllocationSegment.PhysicalIndex);
+                if (selectionGate.Spent(UpdateCityClock.Elapsed())) { nextSelection = Time.unscaledTime; return; }
             }
             PhysicalAllocation.Charge(GcAllocationSegment.PhysicalIndex);
             PlanQueues(focus, radius);
@@ -233,7 +236,8 @@ namespace PersistentCity.Runtime
                     if (dressScans < DressScanLimit) { dressScans++; pedestrians.NoteDeferred(); }
                     continue;
                 }
-                if (attempts > 0 && (System.Diagnostics.Stopwatch.GetTimestamp() - updateStarted) * 1000.0 / System.Diagnostics.Stopwatch.Frequency >= AcquireStopMilliseconds)
+                if (selectionGate.Spent(UpdateCityClock.Elapsed())
+                    || attempts > 0 && (System.Diagnostics.Stopwatch.GetTimestamp() - updateStarted) * 1000.0 / System.Diagnostics.Stopwatch.Frequency >= AcquireStopMilliseconds)
                 { acquireStops++; break; }
                 if (++attempts > 4) break;
                 attempted[citizen.Identity.Id] = Time.unscaledTime;

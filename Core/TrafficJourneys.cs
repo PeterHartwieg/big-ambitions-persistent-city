@@ -12,6 +12,86 @@ namespace PersistentCity.Core
         private bool refreshingClosures;
         public TrafficKernel? Traffic => traffic;
 
+        private TrafficNetwork? preparedNetwork;
+        private int preparedStage, preparedIndex;
+        private double preparedMinute = double.NaN;
+        private long preparedHolds;
+        private bool PreparedFor(TrafficNetwork network) => ReferenceEquals(preparedNetwork, network) && preparedMinute == State.Minute && preparedHolds == State.PlayerHoldSequence;
+        private bool NetworkPrepared(TrafficNetwork network) => preparedStage == 2 && PreparedFor(network);
+        public int NetworkPreparationUpdates { get; private set; }
+
+        public bool TryRefreshTrafficClosures(double budgetMilliseconds)
+        {
+            if (double.IsNaN(budgetMilliseconds) || budgetMilliseconds < 0) throw new ArgumentOutOfRangeException(nameof(budgetMilliseconds));
+            long deadline = double.IsPositiveInfinity(budgetMilliseconds) ? long.MaxValue
+                : System.Diagnostics.Stopwatch.GetTimestamp() + (long)(budgetMilliseconds * System.Diagnostics.Stopwatch.Frequency / 1000);
+            if (!PrepareTrafficNetwork(deadline)) return false;
+            RefreshTrafficClosures();
+            return true;
+        }
+
+        private void ForgetPreparedNetwork()
+        {
+            if (preparedNetwork == null) return;
+            preparedNetwork = null; preparedStage = preparedIndex = 0; preparedMinute = double.NaN;
+            liveVehicles.Clear();
+        }
+
+        private bool PrepareTrafficNetwork(long deadline)
+        {
+            if (!(routes is ITrafficRoutePlanner planner) || planner.TrafficNetwork == null) return true;
+            var network = planner.TrafficNetwork;
+            if (ReferenceEquals(network, trafficNetwork)) { ForgetPreparedNetwork(); return true; }
+            if (!PreparedFor(network))
+            {
+                ForgetPreparedNetwork();
+                preparedNetwork = network; preparedMinute = State.Minute; preparedHolds = State.PlayerHoldSequence;
+                networkMinutes.Clear();
+            }
+            if (preparedStage == 2) return true;
+            NetworkPreparationUpdates++;
+            bool first = true;
+            while (preparedStage < 2)
+            {
+                if (!first && System.Diagnostics.Stopwatch.GetTimestamp() >= deadline) return false;
+                first = false;
+                if (preparedStage == 0)
+                {
+                    if (preparedIndex < State.Citizens.Count) { MapForNetwork(network, State.Citizens[preparedIndex++]); continue; }
+                    preparedStage = 1; preparedIndex = 0;
+                    if (traffic != null && traffic.VehicleCount != 0 && State.TrafficTopologyId == network.TopologyId) traffic.CopyVehiclesInOrder(liveVehicles);
+                    continue;
+                }
+                if (preparedIndex < liveVehicles.Count)
+                {
+                    var vehicle = liveVehicles[preparedIndex++];
+                    if (!ThroughTraffic.IsThroughVehicle(vehicle.VehicleId)) network.ValidateRemainingMapping(trafficCitizens[vehicle.VehicleId].Journey!, vehicle.Route, vehicle.NominalMinutes);
+                    continue;
+                }
+                liveVehicles.Clear();
+                preparedStage = 2;
+            }
+            return true;
+        }
+
+        private void MapForNetwork(TrafficNetwork network, CitizenState citizen)
+        {
+            if (citizen.Phase != CitizenPhase.Travelling || citizen.Journey == null || trafficCitizens.ContainsKey(citizen.Identity.Id)) return;
+            double progress = JourneyProgress(citizen), offset = 0;
+            bool needsRoad = false;
+            double totalMinutes = citizen.Journey.Minutes;
+            foreach (var leg in citizen.Journey.Legs)
+            {
+                offset += leg.Minutes;
+                if (offset > progress + JourneyClockTolerance(State.Minute, totalMinutes)
+                    && leg.ServiceId.StartsWith("native:road:", StringComparison.Ordinal)) needsRoad = true;
+            }
+            if (!needsRoad) return;
+            if (!network.TryMapRemainingSpans(citizen.Journey, MappingProgress(citizen, progress), mappingSpans))
+                throw new InvalidOperationException("Committed road geometry no longer matches the native network; preserve the saved journey.");
+            networkMinutes[citizen] = SpanMinute(citizen, progress);
+        }
+
         public void RefreshTrafficClosures()
         {
             if (refreshingClosures) throw new InvalidOperationException("Traffic closure refresh cannot be nested.");
@@ -56,28 +136,18 @@ namespace PersistentCity.Core
             if (!(routes is ITrafficRoutePlanner planner) || planner.TrafficNetwork == null) return;
             var network = planner.TrafficNetwork;
             if (ReferenceEquals(network, trafficNetwork)) return;
-            networkMinutes.Clear();
-            foreach (var citizen in State.Citizens)
+            bool prepared = NetworkPrepared(network);
+            if (!prepared)
             {
-                if (citizen.Phase != CitizenPhase.Travelling || citizen.Journey == null || trafficCitizens.ContainsKey(citizen.Identity.Id)) continue;
-                double progress = JourneyProgress(citizen), offset = 0;
-                bool needsRoad = false;
-                double totalMinutes = citizen.Journey.Minutes;
-                foreach (var leg in citizen.Journey.Legs)
-                {
-                    offset += leg.Minutes;
-                    if (offset > progress + JourneyClockTolerance(State.Minute, totalMinutes)
-                        && leg.ServiceId.StartsWith("native:road:", StringComparison.Ordinal)) needsRoad = true;
-                }
-                if (!needsRoad) continue;
-                if (!network.TryMapRemainingSpans(citizen.Journey, MappingProgress(citizen, progress), mappingSpans))
-                    throw new InvalidOperationException("Committed road geometry no longer matches the native network; preserve the saved journey.");
-                networkMinutes[citizen] = SpanMinute(citizen, progress);
+                ForgetPreparedNetwork();
+                networkMinutes.Clear();
+                foreach (var citizen in State.Citizens) MapForNetwork(network, citizen);
             }
+            ForgetPreparedNetwork();
             if (throughTraffic != null && traffic != null) DropThroughCars(throughTraffic);
             if (traffic != null && State.TrafficTopologyId != network.TopologyId && traffic.VehicleCount != 0)
                 throw new InvalidOperationException("The road topology changed during committed traffic; preserve the saved state.");
-            if (traffic != null && traffic.VehicleCount != 0)
+            if (!prepared && traffic != null && traffic.VehicleCount != 0)
             {
                 traffic.CopyVehiclesInOrder(liveVehicles);
                 try

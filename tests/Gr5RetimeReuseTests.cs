@@ -223,7 +223,9 @@ public sealed class Gr5NetworkSwapTests
         return state;
     }
 
-    private static string Run(bool swap)
+    private static string Run(bool swap) => Run(swap, false);
+
+    private static string Run(bool swap, bool sliced)
     {
         var network = Line();
         var planner = new Planner { TrafficNetwork = network };
@@ -236,11 +238,13 @@ public sealed class Gr5NetworkSwapTests
                 Assert.True(city.Traffic!.VehicleCount > 0);
                 planner.TrafficNetwork = network.Rerated(1, _ => null);
             }
-            city.RefreshTrafficClosures();
+            if (sliced) { while (!city.TryRefreshTrafficClosures(0)) { } }
+            else city.RefreshTrafficClosures();
             city.AdvanceTo(minute);
             city.SynchronizeSnapshot();
             saves.Add(PersistentCity.Persistence.SaveCodec.Write(city.State));
         }
+        if (sliced && swap) Assert.True(city.NetworkPreparationUpdates >= 3, "updates " + city.NetworkPreparationUpdates);
         return string.Join("\n", saves);
     }
 
@@ -260,5 +264,11 @@ public sealed class Gr5NetworkSwapTests
     public void SwappingInARetimedNetworkMidJourneyKeepsTheCityIdentical()
     {
         Assert.Equal(Run(false), Run(true));
+    }
+
+    [Fact]
+    public void ALiveDriverSwapValidatedOneItemPerUpdateKeepsTheCityIdentical()
+    {
+        Assert.Equal(Run(true), Run(true, sliced: true));
     }
 }

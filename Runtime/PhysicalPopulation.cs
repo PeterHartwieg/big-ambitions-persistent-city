@@ -159,7 +159,7 @@ namespace PersistentCity.Runtime
             + ", queueing=" + queueBindings + ", queued=" + queued + ", walkersResumed=" + ambient.Resumed
             + ", journeyIndex=" + simulation.ActiveJourneys.Count + ", journeyIndexWithheldVisitors=" + simulation.ActiveJourneys.WithheldVisitors
             + ", journeyIndexChecks=" + journeyIndexChecks + ", journeyIndexMismatches=" + journeyIndexMismatches + ", journeyIndexFallback=" + journeyIndexFallback
-            + ", leaving=" + leaving.Count + ", parkedScans=" + ParkedScans + ", acquireStops=" + acquireStops + ", pedestrianLooks=" + pedestrians.LookDiagnostics + ", " + vehicles.OwnershipDiagnostics
+            + ", leaving=" + leaving.Count + ", parkedScans=" + ParkedScans + ", acquireStops=" + acquireStops + ", frameDeferrals=" + selectionGate.Deferred + "/" + parkedGate.Deferred + " (longest wait " + Math.Max(selectionGate.LongestWaitSeconds, parkedGate.LongestWaitSeconds).ToString("0.00", System.Globalization.CultureInfo.InvariantCulture) + " s)" + ", pedestrianLooks=" + pedestrians.LookDiagnostics + ", " + vehicles.OwnershipDiagnostics
             + ", carAdmission=" + vehicles.LastAdmissionResident + ":" + vehicles.LastAdmissionStage + ":" + vehicles.LastAdmissionError;
         public void ObserveForSave()
         {
