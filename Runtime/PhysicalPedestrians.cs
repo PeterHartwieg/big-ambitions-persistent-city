@@ -113,7 +113,7 @@ namespace PersistentCity.Runtime
             !disposed && identity != null && identity.AppearanceSeed != 0
             && idle.WouldDefer(new PersonDressing(identity, DaysPerYear()), all.Count, ceiling, budget, Time.frameCount, Time.unscaledTimeAsDouble);
 
-        public bool TryAcquire(CitizenIdentity identity, Position position, out PhysicalPedestrianBody? body, bool immediate = false)
+        public bool TryAcquire(CitizenIdentity identity, Position position, out PhysicalPedestrianBody? body, bool immediate = false, IdentityDonor donor = default)
         {
             body = null; LastDeferred = false;
             if (disposed || identity == null || string.IsNullOrEmpty(identity.Id) || identity.AppearanceSeed == 0
@@ -194,6 +194,7 @@ namespace PersistentCity.Runtime
                 var relay = character.capsuleCollider.gameObject.GetComponent<PhysicalPedestrianCrosswalk>();
                 if (relay == null) relay = character.capsuleCollider.gameObject.AddComponent<PhysicalPedestrianCrosswalk>();
                 relay.Body = body;
+                relay.Show(identity.Id, donor);
                 active.Add(identity.Id, body);
                 return true;
             }
@@ -342,7 +343,7 @@ namespace PersistentCity.Runtime
             body.Invalidate();
             if (character == null) return;
             var relay = character.capsuleCollider.gameObject.GetComponent<PhysicalPedestrianCrosswalk>();
-            if (relay != null) relay.Body = null;
+            if (relay != null) { relay.Body = null; relay.Clear(); }
             character.RemoveHandObject(); character.RemoveHeadObject(); character.RemoveUpperChestObject();
             if (character.navmeshAgent.enabled && character.navmeshAgent.isOnNavMesh)
             { character.navmeshAgent.isStopped = true; character.navmeshAgent.ResetPath(); }
@@ -729,6 +730,23 @@ namespace PersistentCity.Runtime
     internal sealed class PhysicalPedestrianCrosswalk : MonoBehaviour
     {
         internal PhysicalPedestrianBody? Body;
+        public string ResidentId = "";
+        public string DonorId = "";
+        public string SurnameDonorId = "";
+        public string PersonaDonorId = "";
+        public string DonorKind = "";
+        public int IdentityPolicyVersion;
+
+        internal void Show(string residentId, in IdentityDonor donor)
+        {
+            ResidentId = residentId; DonorId = donor.AppearanceId; SurnameDonorId = donor.SurnameId; PersonaDonorId = donor.PersonaId;
+            DonorKind = DonorKinds.Name(donor.Kind); IdentityPolicyVersion = donor.PolicyVersion;
+        }
+
+        internal void Clear()
+        {
+            ResidentId = ""; DonorId = ""; SurnameDonorId = ""; PersonaDonorId = ""; DonorKind = ""; IdentityPolicyVersion = 0;
+        }
         private void OnTriggerEnter(Collider other) { Body?.Enter(other); }
         private void OnTriggerExit(Collider other) { Body?.Exit(other); }
     }

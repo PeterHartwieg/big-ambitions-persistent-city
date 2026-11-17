@@ -61,6 +61,32 @@ namespace PersistentCity.Core
 
         public Persona PersonaOf(int seed, string personId) => donors[Draw(seed, personId).Persona].Persona;
 
+        public IdentityDraw DrawResident(int seed, string personId)
+        {
+            if (string.IsNullOrEmpty(personId)) throw new ArgumentException("A derived identity needs a PersonId.", nameof(personId));
+            int appearance = (int)(Hash(seed, personId, ":appearance") % (uint)donors.Length);
+            int surname = (int)(Hash(seed, personId, ":surname") % (uint)donors.Length);
+            var compatible = compatibleByAge[donors[appearance].Age];
+            int persona = compatible.Length == 0 ? appearance
+                : compatible[Hash(seed, personId, ":persona") % (uint)compatible.Length];
+            return new IdentityDraw(Version1, appearance, surname, persona);
+        }
+
+        public string DonorId(int index) => donors[index].Id;
+
+        public int IndexOf(string donorId)
+        {
+            int low = 0, high = donors.Length - 1;
+            while (low <= high)
+            {
+                int middle = low + ((high - low) >> 1);
+                int order = string.CompareOrdinal(donors[middle].Id, donorId);
+                if (order == 0) return middle;
+                if (order < 0) low = middle + 1; else high = middle - 1;
+            }
+            return -1;
+        }
+
         public CitizenIdentity Derive(int seed, string personId)
         {
             var draw = Draw(seed, personId);

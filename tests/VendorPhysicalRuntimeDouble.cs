@@ -277,6 +277,14 @@ namespace PersistentCity.Runtime
     internal sealed class Actor
     {
         internal readonly Transform transform = new();
+        internal string ResidentId = "", DonorId = "", SurnameDonorId = "", PersonaDonorId = "", DonorKind = "";
+        internal int IdentityPolicyVersion;
+        internal void Show(string residentId, in IdentityDonor donor)
+        {
+            ResidentId = residentId; DonorId = donor.AppearanceId; SurnameDonorId = donor.SurnameId; PersonaDonorId = donor.PersonaId;
+            DonorKind = DonorKinds.Name(donor.Kind); IdentityPolicyVersion = donor.PolicyVersion;
+        }
+        internal void Clear() { ResidentId = ""; DonorId = ""; SurnameDonorId = ""; PersonaDonorId = ""; DonorKind = ""; IdentityPolicyVersion = 0; }
     }
     internal sealed class PhysicalPedestrianBody
     {
@@ -342,7 +350,7 @@ namespace PersistentCity.Runtime
         internal bool Visible(Position at) => VisiblePoint?.Invoke(at) == true;
         internal int TrimCalls;
         internal bool TrimIdle(double seconds) { TrimCalls++; return false; }
-        internal bool TryAcquire(CitizenIdentity identity, Position position, out PhysicalPedestrianBody? body, bool immediate = false)
+        internal bool TryAcquire(CitizenIdentity identity, Position position, out PhysicalPedestrianBody? body, bool immediate = false, IdentityDonor donor = default)
         {
             body = null; AcquireCalls++;
             if (Active.ContainsKey(identity.Id) || Active.Count >= maximum) return false;
@@ -350,6 +358,7 @@ namespace PersistentCity.Runtime
             if (idle.Count > 0) actor = idle.Pop();
             else { if (actors >= maximum) return false; actors++; actor = new(); }
             actor.transform.position = PhysicalPedestrianBody.Vector(position);
+            actor.Show(identity.Id, donor);
             body = new(actor, identity.Id, ++generation) { OnScreen = AppearOnScreen }; Active.Add(identity.Id, body);
             Acquisitions.Add((identity, actor, generation)); return true;
         }
@@ -360,7 +369,7 @@ namespace PersistentCity.Runtime
         {
             if (!Active.TryGetValue(body.IdentityId, out var current) || !ReferenceEquals(current, body)) return;
             Released.Add((body.IdentityId, wanted));
-            Active.Remove(body.IdentityId); body.Valid = false; idle.Push(body.Character);
+            Active.Remove(body.IdentityId); body.Valid = false; body.Character.Clear(); idle.Push(body.Character);
         }
         public void Dispose() { foreach (var body in Active.Values) body.Valid = false; Active.Clear(); }
     }
