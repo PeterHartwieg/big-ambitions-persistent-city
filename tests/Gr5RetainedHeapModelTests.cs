@@ -47,6 +47,20 @@ public sealed class Gr5RetainedHeapModelTests
     }
 
     [Fact]
+    public void ALiveRigScaleTrafficKernelRetainsNoUnusedLinkState()
+    {
+        var (state, owned) = TravelTimingMaximumRouteTests.RigScaleCity(TravelTimingMaximumRouteTests.FixtureLinks);
+        var restore = TrafficKernel.RestoreInSteps(state.Traffic!, int.MaxValue);
+        TrafficKernel? kernel = null;
+        while (restore.MoveNext()) kernel = restore.Current ?? kernel;
+        var heap = new RetainedHeap();
+        heap.Add("kernel", kernel);
+        Print("live kernel, " + TravelTimingMaximumRouteTests.FixtureLinks + " links, " + owned + " vehicles", heap);
+        Assert.DoesNotContain(heap.Types, row => row.Name == nameof(TrafficLinkState));
+        Assert.True(heap.Objects < 12 * TravelTimingMaximumRouteTests.FixtureLinks + 8 * owned * 4, "objects " + heap.Objects);
+    }
+
+    [Fact]
     public void TheGcSamplerAndFrameRecorderRetainOnlyPointerFreeArrays()
     {
         var heap = new RetainedHeap();

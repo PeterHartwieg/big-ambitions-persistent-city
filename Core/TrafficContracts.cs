@@ -129,9 +129,11 @@ namespace PersistentCity.Core
     }
     public sealed class TrafficVehicleState
     {
+        public TrafficVehicleState() : this(new List<TrafficRouteLeg>()) { }
+        internal TrafficVehicleState(List<TrafficRouteLeg> route) { Route = route; }
         public string VehicleId { get; set; } = "";
         public long Order { get; set; }
-        public List<TrafficRouteLeg> Route { get; set; } = new List<TrafficRouteLeg>();
+        public List<TrafficRouteLeg> Route { get; set; }
         public int RouteIndex { get; set; } = -1;
         public double EnqueuedAt { get; set; }
         public double EnteredAt { get; set; }

@@ -9,7 +9,9 @@ namespace PersistentCity.Core
         private sealed class Link
         {
             internal readonly TrafficLinkDefinition Definition;
-            internal readonly TrafficLinkState State;
+            internal bool Closed;
+            internal double NextDischargeAt;
+            internal int MergeCursor = -1;
             internal readonly LinkedList<TrafficVehicleState> Queue = new LinkedList<TrafficVehicleState>();
             internal readonly Queue<string> Sources = new Queue<string>();
             internal readonly SortedIds Incoming = new SortedIds();
@@ -18,7 +20,7 @@ namespace PersistentCity.Core
             internal bool Scheduled => HeapIndex >= 0;
             internal Link(TrafficLinkDefinition definition)
             {
-                Definition = definition; State = new TrafficLinkState { LinkId = definition.Id };
+                Definition = definition;
                 Event = new TrafficEventState { LinkId = definition.Id };
             }
         }
@@ -374,8 +376,8 @@ namespace PersistentCity.Core
         public void SetLinkClosed(int linkId, bool closed)
         {
             Link link = FindLink(linkId);
-            if (link.State.Closed == closed) return;
-            link.State.Closed = closed;
+            if (link.Closed == closed) return;
+            link.Closed = closed;
             if (closed) closedLinks.Add(linkId); else closedLinks.Remove(linkId);
             Reconsider(link);
         }
@@ -383,10 +385,10 @@ namespace PersistentCity.Core
         internal bool IsBlockedByClosure(string vehicleId)
         {
             if (!vehicles.TryGetValue(vehicleId, out TrafficVehicleState? vehicle) || vehicle.Completed) return false;
-            if (vehicle.RouteIndex < 0) return links[vehicle.Route[0].LinkId].State.Closed;
+            if (vehicle.RouteIndex < 0) return links[vehicle.Route[0].LinkId].Closed;
             Link link = links[vehicle.Route[vehicle.RouteIndex].LinkId];
             return vehicle.RouteIndex + 1 < vehicle.Route.Count && ReferenceEquals(link.Queue.First?.Value, vehicle)
-                && links[vehicle.Route[vehicle.RouteIndex + 1].LinkId].State.Closed;
+                && links[vehicle.Route[vehicle.RouteIndex + 1].LinkId].Closed;
         }
 
         public bool RemoveCompleted(string vehicleId)
@@ -399,10 +401,10 @@ namespace PersistentCity.Core
         {
             RequireTime(entryMinute, nameof(entryMinute));
             Link link = FindLink(linkId);
-            double delay = link.State.Closed ? double.PositiveInfinity :
-                Math.Max(0, link.State.NextDischargeAt - entryMinute) +
+            double delay = link.Closed ? double.PositiveInfinity :
+                Math.Max(0, link.NextDischargeAt - entryMinute) +
                 (link.Queue.Count + link.Sources.Count) * link.Definition.HeadwayMinutes;
-            if (!link.State.Closed)
+            if (!link.Closed)
             {
                 double ready = Math.Max(Clock, entryMinute) + link.Definition.FreeFlowMinutes + delay;
                 double green = link.Definition.Signal?.NextGreen(ready) ?? ready;
@@ -410,12 +412,12 @@ namespace PersistentCity.Core
                 if (link.Queue.Count >= link.Definition.Capacity && link.Queue.First != null)
                 {
                     TrafficVehicleState head = link.Queue.First.Value;
-                    if (head.RouteIndex + 1 < head.Route.Count && links[head.Route[head.RouteIndex + 1].LinkId].State.Closed)
+                    if (head.RouteIndex + 1 < head.Route.Count && links[head.Route[head.RouteIndex + 1].LinkId].Closed)
                         delay = double.PositiveInfinity;
                 }
             }
             if (link.Queue.Count >= link.Definition.Capacity && HasBlockedCycle(link)) delay = double.PositiveInfinity;
-            return new TrafficLinkForecast(linkId, link.Queue.Count, link.Sources.Count, delay, link.State.Closed);
+            return new TrafficLinkForecast(linkId, link.Queue.Count, link.Sources.Count, delay, link.Closed);
         }
 
         public double ForecastEntry(int linkId, double entryMinute, double startFraction, double sectionShare = 1)
@@ -425,7 +427,7 @@ namespace PersistentCity.Core
             if (!Finite(sectionShare) || sectionShare <= 0 || sectionShare > 1) throw new ArgumentOutOfRangeException(nameof(sectionShare));
             Link link = FindLink(linkId);
             if (startFraction == 0) return 0;
-            if (link.State.Closed) return double.PositiveInfinity;
+            if (link.Closed) return double.PositiveInfinity;
             if (link.Queue.Count == 0 && link.Sources.Count == 0) return 0;
             if (link.Queue.Count + link.Sources.Count > ForecastMaximumVehicles) return double.PositiveInfinity;
             TrafficKernel? projection = BuildEntryProjection(linkId);
@@ -441,7 +443,7 @@ namespace PersistentCity.Core
                 if (remaining-- == 0 || !projection.NextEventTime.HasValue) return double.PositiveInfinity;
                 projection.AdvanceTo(Math.Max(target, projection.NextEventMinute), 1);
             }
-            double included = Math.Max(0, link.State.NextDischargeAt - entryMinute)
+            double included = Math.Max(0, link.NextDischargeAt - entryMinute)
                 + (link.Queue.Count + link.Sources.Count) * link.Definition.HeadwayMinutes;
             return Math.Max(0, projection.Clock - entryMinute - included * sectionShare);
         }
@@ -505,9 +507,9 @@ namespace PersistentCity.Core
                 Link original = links[id];
                 if (!projection.links.TryGetValue(id, out Link? copy)) { copy = new Link(original.Definition); projection.links.Add(id, copy); }
                 scratch.Used.Add(id);
-                copy.State.Closed = original.State.Closed;
-                copy.State.NextDischargeAt = original.State.NextDischargeAt;
-                copy.State.MergeCursor = original.State.MergeCursor;
+                copy.Closed = original.Closed;
+                copy.NextDischargeAt = original.NextDischargeAt;
+                copy.MergeCursor = original.MergeCursor;
                 foreach (string vehicle in original.Sources) copy.Sources.Enqueue(vehicle);
             }
             List<TrafficVehicleState> copies = scratch.Copies;
@@ -570,7 +572,7 @@ namespace PersistentCity.Core
                 TrafficVehicleState head = current.Queue.First.Value;
                 if (head.RouteIndex + 1 >= head.Route.Count) return false;
                 current = links[head.Route[head.RouteIndex + 1].LinkId];
-                if (current.State.Closed) return true;
+                if (current.Closed) return true;
             }
             return false;
         }
@@ -607,7 +609,7 @@ namespace PersistentCity.Core
                 completedId = vehicle.VehicleId;
                 break;
             }
-            if (!link.State.Closed && link.Queue.Count < link.Definition.Capacity)
+            if (!link.Closed && link.Queue.Count < link.Definition.Capacity)
             {
                 int? candidate = SelectIncoming(link);
                 if (candidate.HasValue)
@@ -626,7 +628,7 @@ namespace PersistentCity.Core
                         vehicle.RouteIndex++;
                         Reconsider(source);
                     }
-                    link.State.MergeCursor = candidate.Value;
+                    link.MergeCursor = candidate.Value;
                     TrafficRouteLeg leg = vehicle.Route[vehicle.RouteIndex];
                     vehicle.EnteredAt = vehicle.MotionStartedAt = Clock;
                     vehicle.MotionStartFraction = 0;
@@ -642,7 +644,7 @@ namespace PersistentCity.Core
         private void RemoveHead(Link source)
         {
             Detach(source, source.Queue.First!);
-            source.State.NextDischargeAt = Clock + source.Definition.HeadwayMinutes;
+            source.NextDischargeAt = Clock + source.Definition.HeadwayMinutes;
         }
 
         private int? SelectIncoming(Link destination)
@@ -656,9 +658,9 @@ namespace PersistentCity.Core
                 if (!Feeds(source, destination.Definition.Id, out TrafficVehicleState? vehicle) || EligibleAt(source, vehicle!) > Clock ||
                     !CanReceive(destination, vehicle!, vehicle!.RouteIndex + 1)) continue;
                 if (!wrap.HasValue) wrap = id;
-                if (id > destination.State.MergeCursor && !after.HasValue) after = id;
+                if (id > destination.MergeCursor && !after.HasValue) after = id;
             }
-            if (sourceEligible && -1 > destination.State.MergeCursor) return -1;
+            if (sourceEligible && -1 > destination.MergeCursor) return -1;
             return after ?? wrap;
         }
 
@@ -679,7 +681,7 @@ namespace PersistentCity.Core
             }
             for (var node = link.Queue.First; node != null; node = node.Next)
                 if (IsCurbExit(node.Value)) Schedule(link, CurbExitAt(link, node));
-            if (link.State.Closed || link.Queue.Count >= link.Definition.Capacity) return;
+            if (link.Closed || link.Queue.Count >= link.Definition.Capacity) return;
             if (link.Sources.Count > 0 && CanReceive(link, vehicles[link.Sources.Peek()], 0)) Schedule(link, Clock);
             foreach (int sourceId in link.Incoming)
             {
@@ -697,7 +699,7 @@ namespace PersistentCity.Core
 
         private static bool CanReceive(Link destination, TrafficVehicleState vehicle, int routeIndex)
         {
-            return !destination.State.Closed && destination.Queue.Count < destination.Definition.Capacity &&
+            return !destination.Closed && destination.Queue.Count < destination.Definition.Capacity &&
                 (vehicle.Route[routeIndex].StartLinkFraction == 0 || destination.Queue.Count == 0);
         }
 
@@ -711,7 +713,7 @@ namespace PersistentCity.Core
         private double EligibleAt(Link source, TrafficVehicleState vehicle)
         {
             TrafficRouteLeg leg = vehicle.Route[vehicle.RouteIndex];
-            double ready = Math.Max(Clock, Math.Max(vehicle.ReadyAt, source.State.NextDischargeAt));
+            double ready = Math.Max(Clock, Math.Max(vehicle.ReadyAt, source.NextDischargeAt));
             var signal = source.Definition.Signal;
             return signal == null ? ready : signal.NextGreen(ready);
         }
@@ -788,7 +790,7 @@ namespace PersistentCity.Core
                 rank++;
             }
             bool green = (link.Definition.Signal?.NextGreen(Clock) ?? Clock) <= Clock;
-            bool cross = rank == 0 && Math.Max(vehicle.ReadyAt, link.State.NextDischargeAt) <= Clock && green;
+            bool cross = rank == 0 && Math.Max(vehicle.ReadyAt, link.NextDischargeAt) <= Clock && green;
             if (cross && vehicle.RouteIndex + 1 < vehicle.Route.Count)
             {
                 Link destination = links[vehicle.Route[vehicle.RouteIndex + 1].LinkId];
@@ -818,8 +820,8 @@ namespace PersistentCity.Core
                 foreach (var vehicle in link.Queue) queuedIds.Add(vehicle.VehicleId);
                 state.Links.Add(new TrafficLinkState(queuedIds, link.Sources.ToList(), link.Incoming.ToList())
                 {
-                    LinkId = link.Definition.Id, Closed = link.State.Closed, NextDischargeAt = link.State.NextDischargeAt,
-                    MergeCursor = link.State.MergeCursor
+                    LinkId = link.Definition.Id, Closed = link.Closed, NextDischargeAt = link.NextDischargeAt,
+                    MergeCursor = link.MergeCursor
                 });
                 if (++work % linksPerStep == 0) yield return null;
             }
@@ -965,8 +967,7 @@ namespace PersistentCity.Core
                     if (!Finite(motionReady) || vehicle.ReadyAt < motionReady - tolerance)
                         throw new ArgumentException("Traffic readiness precedes its committed motion schedule.", nameof(state));
                 }
-                TrafficVehicleState copy = CopyVehicle(vehicle);
-                copy.Route = route;
+                TrafficVehicleState copy = CopyVehicle(vehicle, route);
                 kernel.vehicles.Add(vehicle.VehicleId, copy);
             }
             var seenLinks = new HashSet<int>();
@@ -979,10 +980,10 @@ namespace PersistentCity.Core
                     (saved.MergeCursor >= 0 && !kernel.links.ContainsKey(saved.MergeCursor)))
                     throw new ArgumentException("Invalid traffic link state.", nameof(state));
                 RequireTime(saved.NextDischargeAt, nameof(state));
-                link.State.Closed = saved.Closed;
+                link.Closed = saved.Closed;
                 if (saved.Closed) kernel.closedLinks.Add(saved.LinkId);
-                link.State.NextDischargeAt = saved.NextDischargeAt;
-                link.State.MergeCursor = saved.MergeCursor;
+                link.NextDischargeAt = saved.NextDischargeAt;
+                link.MergeCursor = saved.MergeCursor;
                 foreach (int source in saved.IncomingLinks)
                     if (!kernel.links.ContainsKey(source) || source == saved.LinkId || !link.Incoming.Add(source))
                         throw new ArgumentException("Invalid traffic predecessor.", nameof(state));
@@ -1179,7 +1180,7 @@ namespace PersistentCity.Core
                 }
                 for (var node = link.Queue.First; node != null; node = node.Next)
                     if (IsCurbExit(node.Value)) RequireScheduled(link, CurbExitAt(link, node));
-                if (link.State.Closed || link.Queue.Count >= link.Definition.Capacity) continue;
+                if (link.Closed || link.Queue.Count >= link.Definition.Capacity) continue;
                 if (link.Sources.Count > 0 && CanReceive(link, vehicles[link.Sources.Peek()], 0)) RequireScheduled(link, Clock);
                 foreach (int incoming in link.Incoming)
                 {
@@ -1250,10 +1251,17 @@ namespace PersistentCity.Core
                 GreenDurationMinutes = value.Signal.GreenDurationMinutes, PhaseOffsetMinutes = value.Signal.PhaseOffsetMinutes
             }
         };
-        private static TrafficVehicleState CopyVehicle(TrafficVehicleState value) => new TrafficVehicleState
+        private static List<TrafficRouteLeg> CopyRoute(List<TrafficRouteLeg> route)
+        {
+            var copy = new List<TrafficRouteLeg>(route.Count);
+            foreach (var leg in route)
+                copy.Add(new TrafficRouteLeg { LinkId = leg.LinkId, StartNominalMinutes = leg.StartNominalMinutes, EndNominalMinutes = leg.EndNominalMinutes,
+                    FreeFlowMinutes = leg.FreeFlowMinutes, StartLinkFraction = leg.StartLinkFraction, EndLinkFraction = leg.EndLinkFraction });
+            return copy;
+        }
+        private static TrafficVehicleState CopyVehicle(TrafficVehicleState value, List<TrafficRouteLeg>? route = null) => new TrafficVehicleState(route ?? CopyRoute(value.Route))
         {
             VehicleId = value.VehicleId, Order = value.Order,
-            Route = value.Route.Select(leg => new TrafficRouteLeg { LinkId = leg.LinkId, StartNominalMinutes = leg.StartNominalMinutes, EndNominalMinutes = leg.EndNominalMinutes, FreeFlowMinutes = leg.FreeFlowMinutes, StartLinkFraction = leg.StartLinkFraction, EndLinkFraction = leg.EndLinkFraction }).ToList(),
             RouteIndex = value.RouteIndex, EnqueuedAt = value.EnqueuedAt, EnteredAt = value.EnteredAt,
             ReadyAt = value.ReadyAt, MotionStartedAt = value.MotionStartedAt, MotionStartFraction = value.MotionStartFraction,
             NominalMinutes = value.NominalMinutes,
