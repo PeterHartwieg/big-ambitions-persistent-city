@@ -508,16 +508,21 @@ namespace PersistentCity.Core
         }
         private void CommitFoodDecision(ResidentMeal meal,CitizenState person,FoodRoutineStop stop,FoodDecisionState d,bool atStop,TravelPreferences preferences)
         {
-            bool sliced=!atStop && routes is IWalkingQuoteValidity;
-            if(sliced && d.Result==FoodDecisionResult.Selected && d.RoutesValidated<2)
+            bool sliced=!atStop && routes is IWalkingQuoteValidity && routes is IWalkingQuoteRevision;
+            if(sliced && d.Result==FoodDecisionResult.Selected)
             {
-                var held=ShopById(d.Shops,d.BusinessId);
-                bool outward=d.RoutesValidated==0;
-                if(!ValidateCapturedRoute(city.FindPlace(outward ? stop.PlaceId : held.PlaceId),city.FindPlace(outward ? held.PlaceId : stop.PlaceId),
-                    outward ? held.Outward! : held.Return!,preferences,false))
-                {EndDecision(meal);Finish(meal,MealStatus.Missed,"Schedule or shop changed before departure");return;}
-                d.RoutesValidated++;
-                return;
+                long revision=((IWalkingQuoteRevision)routes).WalkingQuoteRevision;
+                if(d.RoutesValidated>0 && (!ReferenceEquals(d.RoutesValidatedBy,routes) || d.RoutesValidatedRevision!=revision)) d.RoutesValidated=0;
+                if(d.RoutesValidated<2)
+                {
+                    var held=ShopById(d.Shops,d.BusinessId);
+                    bool outward=d.RoutesValidated==0;
+                    if(!ValidateCapturedRoute(city.FindPlace(outward ? stop.PlaceId : held.PlaceId),city.FindPlace(outward ? held.PlaceId : stop.PlaceId),
+                        outward ? held.Outward! : held.Return!,preferences,false))
+                    {EndDecision(meal);Finish(meal,MealStatus.Missed,"Schedule or shop changed before departure");return;}
+                    d.RoutesValidated++;d.RoutesValidatedBy=routes;d.RoutesValidatedRevision=((IWalkingQuoteRevision)routes).WalkingQuoteRevision;
+                    return;
+                }
             }
             var intent=EvaluateDecision(meal,person,d,stop,out var businesses,out var quotes);
             if(d.Result==FoodDecisionResult.Selected)

@@ -6,8 +6,10 @@ namespace PersistentCity.Tests;
 
 public sealed class Gr5FoodCommitSliceTests
 {
-    private sealed class Validating : IRoutePlanner, IFoodWalkingPace, IWalkingQuoteValidity
+    private sealed class Validating : IRoutePlanner, IFoodWalkingPace, IWalkingQuoteValidity, IWalkingQuoteRevision
     {
+        public long Revision;
+        public long WalkingQuoteRevision => Revision;
         private readonly WeightedFoodChoiceTests.Planner inner;
         public Validating(WeightedFoodChoiceTests.Planner inner) { this.inner = inner; }
         public int Validations;
@@ -56,5 +58,43 @@ public sealed class Gr5FoodCommitSliceTests
         Assert.Equal(2, planner.Validations);
         Assert.Equal(MealStatus.Missed, meal.Status);
         Assert.Equal("Schedule or shop changed before departure", meal.Reason);
+    }
+
+    [Theory]
+    [InlineData(1)] [InlineData(2)]
+    public void ChangedWalkingInputsAfterEitherValidationUpdateValidateAgainBeforeDeparture(int validatedBeforeChange)
+    {
+        var (city, planner) = Validated(7);
+        var meal = city.State.Food!.Residents[0];
+        while (planner.Validations < validatedBeforeChange) city.AdvanceFrameSlice(meal.DesiredAt, 1);
+        planner.Valid = false; planner.Revision++;
+        while (meal.Status != MealStatus.Missed && meal.Status != MealStatus.Travelling) city.AdvanceFrameSlice(meal.DesiredAt, 1);
+        Assert.Equal(MealStatus.Missed, meal.Status);
+        Assert.Equal(validatedBeforeChange + 1, planner.Validations);
+        Assert.Equal("Schedule or shop changed before departure", meal.Reason);
+    }
+
+    [Fact]
+    public void AReplacedPlannerValidatesBothWalksItselfBeforeDeparture()
+    {
+        var (city, planner) = Validated(7);
+        var meal = city.State.Food!.Residents[0];
+        while (planner.Validations < 2) city.AdvanceFrameSlice(meal.DesiredAt, 1);
+        var replacement = new Validating(new WeightedFoodChoiceTests.Planner()) { Valid = false };
+        city = city.RebuildRoutes(replacement);
+        meal = city.State.Food!.Residents[0];
+        while (meal.Status != MealStatus.Missed && meal.Status != MealStatus.Travelling) city.AdvanceFrameSlice(meal.DesiredAt, 1);
+        Assert.Equal(MealStatus.Missed, meal.Status);
+        Assert.Equal(1, replacement.Validations);
+    }
+
+    [Fact]
+    public void UnchangedInputsDepartAfterExactlyTwoValidations()
+    {
+        var (city, planner) = Validated(7);
+        var meal = city.State.Food!.Residents[0];
+        while (meal.Status != MealStatus.Missed && meal.Status != MealStatus.Travelling) city.AdvanceFrameSlice(meal.DesiredAt, 1);
+        Assert.Equal(MealStatus.Travelling, meal.Status);
+        Assert.Equal(2, planner.Validations);
     }
 }

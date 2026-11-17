@@ -20,7 +20,7 @@ namespace PersistentCity.Runtime
         SubwayStation[] Stations { get; }
         void RequestSweep();
     }
-    internal sealed class MultimodalRoutes : ICitizenRoutePlanner, ICommuteTimingPlanner, ITrafficRoutePlanner, ITrafficEntryRoutePlanner, ITrafficClosureBatchPlanner, IWalkingTimeBound, IFoodWalkingPace, IWalkingQuoteValidity, IWalkingQuoteOperation, IResumableRoutePlanner, IRouteEventInputs
+    internal sealed class MultimodalRoutes : ICitizenRoutePlanner, ICommuteTimingPlanner, ITrafficRoutePlanner, ITrafficEntryRoutePlanner, ITrafficClosureBatchPlanner, IWalkingTimeBound, IFoodWalkingPace, IWalkingQuoteValidity, IWalkingQuoteRevision, IWalkingQuoteOperation, IResumableRoutePlanner, IRouteEventInputs
     {
         private readonly double subwayMetresPerMinute;
         private readonly double clockRate;
@@ -267,6 +267,7 @@ namespace PersistentCity.Runtime
 
         public bool IsWalkingQuoteValid(Place from, Place to, Route route, TravelPreferences preferences)
             => ReadyForPopulation && walking.IsWalkingQuoteValid(from, to, route, preferences);
+        public long WalkingQuoteRevision => walking.Generation;
         public void BeginWalkingQuote() => walking.BeginWalkingQuote();
         public void EndWalkingQuote() => walking.EndWalkingQuote();
 
