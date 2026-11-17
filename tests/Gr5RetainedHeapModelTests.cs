@@ -44,6 +44,9 @@ public sealed class Gr5RetainedHeapModelTests
         heap.Add("state other", state);
         Print("rig-scale city at 15:30 (.NET layout, Mono 64-bit header model)", heap);
         Assert.Equal(CityBalance.CityResidentTotal, state.Citizens.Count);
+        int persons = state.Citizens.Count + state.Visitors.Count;
+        Assert.True(heap.Objects < 60L * persons, "objects " + heap.Objects);
+        Assert.True(heap.ScannedBytes < 4500L * persons, "scanned bytes " + heap.ScannedBytes);
     }
 
     [Fact]
