@@ -8,6 +8,8 @@ Detailed specs: [F8 §7](https://github.com/PeterHartwieg/big-ambitions-persiste
 
 ## Latest evidence
 
+- **17 November m, Mac (rig 16i), build `604cdf3f`:** 3 passed / 0 partial / 0 failed / 1 NOT RUN scoped checks; A donor sameness 4/5, B reload 1/5; released-relay RIG GAP; correctness-only; restored ([17m results](#rig-results--17-november-2026-m-mac-rig-16i-gr-9-238-5--295-donor-readback-checks-1-3-at-604cdf3f)).
+
 - **17 November l, Mac (rig 16h), build `e883e04d`:** 3 passed / 1 partial / 3 failed / 5 NOT RUN groups; steady day/night mod 104.612/45.719 MB; save callback p95 29.444 ms; street p95 4.2911 ms, 3 spikes; **PROVISIONAL (shared Mac)**; restored ([17l results](#rig-results--17-november-2026-l-mac-rig-16h-292-gcstreetlook-checks-1-4-and-293-save-recheck-at-e883e04d)).
 - **17 November k, Mac (rig 16g), build `d1630106`:** 5 passed / 1 partial / 4 failed / 4 NOT RUN groups; #293 A/B/C, fresh GC/street baseline; timing **PROVISIONAL (shared Mac)**; restored ([17k results](#rig-results--15-november-2026-i-mac-rig-16g-286-save-checks-1-5-and-gcstreet-baseline-at-d1630106)).
 - **15 November j, Mac (rig 16f), build `b15ec607`:** 5 passed / 1 partial / 4 failed / 3 NOT RUN groups; #290 background/Spliced 20/20, callback p95 62.183 ms; street p95 3.994 ms with 1 spike; **PROVISIONAL (shared Mac)**; restored ([15j results](#rig-results--15-november-2026-j-mac-rig-16f-289-290-checks-1-5-and-gcstreet-baseline-at-b15ec607)).
@@ -11257,3 +11259,227 @@ Raw evidence manifest: `<stage>/raw-evidence-manifest.json`, SHA-256 `64ab43caf3
 The 16g before baseline used d1630106. #295 merged during preparation and was included in e883e04d before the correct candidate build. Final origin a194b84d is only the #294 docs merge; the evidence branch was fast-forwarded before appending this report. The tested DLL never changed during the measurements.
 
 Refs #248 #292 #293
+
+## Rig results — 17 November 2026 m, Mac (rig 16i; GR-9 #238-5 / #295 donor readback checks 1-3 at 604cdf3f)
+
+**RESULT: DONE. 3 passed / 0 partial / 0 failed / 1 NOT RUN (four scoped checks A–D); four additional NOT RUN groups.** Correctness-only, role `rig_test`, run `persistent-city-rig-2026-11-17m-mac`, `where: mac`. Peter approved this Mac stand-in for the PR's locked-PC donor checks. A and B split original #295 check 1; C is original check 2; D is original check 3. No donor mismatch or false `ops_view_walker_donor_unexposed` was observed. C is a RIG GAP, not a Persistent City product failure.
+
+`MarkdownBanTests` / `tools/md-ban.py` ban new Markdown paths without `docs-approved`, including `docs/checks`; this report appends to the existing checklist. Raw commands, replies, logs, screenshots, native save bytes and backups stay outside Git in `~/HART-Builds/persistent-city-rig-2026-11-17m-mac/` (`<stage>`). The report is copied to `~/Coding_Projects/.agent-logs/persistent-city-rig-2026-11-17m-mac.md`.
+
+No production code, schema (1), food weights (price 1.2; household 1.0), RLO files, overlay or OS settings changed. Windows was not contacted, started or used. No release, Workshop upload, version/changelog change, issue or merge. Incidental timing, FPS, memory allocation and GC figures in raw logs are **PROVISIONAL / not used as evidence or gates**.
+
+### Build, rig and staging
+
+| Item | Evidence |
+| --- | --- |
+| Tested head | `604cdf3f6d4edc383a33d331f35cf0bc949c77cc`; fetched and re-verified with `git rev-parse origin/codex/persistent-city` before the build |
+| Branch / worktree | `codex/mac-rig-2026-11-17m` / sibling `big-ambitions-persistent-city-worktrees/rig-2026-11-17m-mac-evidence`; removed after commit/push/PR |
+| Agent-rig HEAD | `2839da0661ca6132f2e90731e2d37c6b0a909c25` (#103); clean, fetch and ff-only pull already current; no checkout edits or overlay update |
+| Live AgentRigOps SHA-256 | `8175f55a13b19f828dee2a4024cda29711295c273ba9b8950254f2ba14070393`; unchanged at cleanup |
+| Build | Homebrew PATH/DOTNET_ROOT; `python3 tools/build.py --game-managed "~/Library/Application Support/BigAmbitionsMCP/dll-import-shim/Big Ambitions_Data/Managed"`; exit 0 |
+| PersistentCity DLL SHA-256 | `032bb166f6760225c1bdc9717484971a6a3f74cfe901a2a27ec608bcab8bb8d7`; worktree, package, stage and Player.log agree |
+| Stage command | `BA_LOCK_OWNER=persistent-city-rig-2026-11-17m-mac python3 scripts/install-mac.py --stage-mod PersistentCity ~/HART-Builds/persistent-city-rig-2026-11-17m-mac/package` |
+| Receipt backup | `~/Library/Application Support/BigAmbitionsAgentTestsMac/receipt-backups/20261117T205123Z`; stopped and lease held; first staging attempt succeeded; exact rollback retained in `stage.log` |
+| Lease | Free/stopped, acquired at `2026-11-17T20:50:25.434017Z`; owner `persistent-city-rig-2026-11-17m-mac` retained for all rig/install commands |
+| Pre-stage manifest | `pre-stage-manifest.json`, SHA-256 `8265c9037a3e045ff4c6506fac195bda656c42c8986d6dcc2789b0f1781d16b8`; 34 file states backed up; 53 RLO / 4 sealed fixture files hashed read-only |
+| Configuration | Standard candidate; PhysicalEnabled=true, pedestrians=96, vehicles=24, radius=120 m; SaveCostDiagnostics=false throughout |
+| Start | `python3 scripts/mac-agent start --mode background --rig-test`; first attempt succeeded at 75% reported free memory; Metal; own game PID 26155 |
+| RLO | `[Mod:RealLifeOverhaul] Real Life Overhaul 1.0.6 initialised.`; options before/after: living_population absent/true, social_media 1/true, social_media_notices 0/false |
+| Autosave | Original native 5 minutes / maximum 3; prevent_autosave=false. #70 process guard suppressed natural saves, checked in menu and after every load, after A/B and at cleanup. Process guard ends at stop; original file states restored |
+| Cities | Sealed `FT GR5 13f Timing v1` and disposable `FT RIGTMP-GR9-17m-mac`: 1,000 residents / 2,000 visitors / 1,683 places; sealed fixture never saved over |
+| Disposable copy | Exclusive native-byte copy using `rig_flows.Rig.fixture` flow with requested FT name; source/copy SHA-256 `2c7049452e843925399c5d8e7cb3460cf7304d6ecb9439258881d437b79fe6c4`; B Default save targets that copy only |
+
+Player.log / stage identity:
+
+```text
+[AgentRigOps] staged_mod name=PersistentCity version=absent informational=0.10.0-persistent-city-candidate sha256=032bb166f6760225c1bdc9717484971a6a3f74cfe901a2a27ec608bcab8bb8d7
+[Mod:PersistentCity] Persistent population active: 1000 residents, 2000 visitors, 1683 places.
+```
+
+No separate commit-stamped Persistent City build line is emitted. Printed rollback, home prefix shortened to `~` (expand before using quoted paths):
+
+```sh
+rm -rf "~/Library/Application Support/com.hovgaardgames.bigambitions.agenttests.mac/ModsLocal/PersistentCity" && cp -Rp "~/Library/Application Support/BigAmbitionsAgentTestsMac/receipt-backups/20261117T205123Z/mod" "~/Library/Application Support/com.hovgaardgames.bigambitions.agenttests.mac/ModsLocal/PersistentCity" && cp "~/Library/Application Support/BigAmbitionsAgentTestsMac/receipt-backups/20261117T205123Z/install.json" "~/Library/Application Support/BigAmbitionsAgentTestsMac/install.json"
+```
+
+### A — release and reacquire
+
+Cold loaded the sealed fixture, confirmed autosave suppression, replayed at 1× and waited for physical population preflight. Initial discovery ran before that preflight and found 45 unbound non-evidence walkers; fresh discovery after `Physical population active` selected five travelling residents with `binding.source: persistent_city`. All subsequent comparisons use resident targets, never a recycled walker handle.
+
+Camera-only movement to x=-500/z=-400 left the bodies active. The physical radius follows the player, so the isolated test player was moved there with the camera. All five `get` calls then returned `ops_view_resident_absent`, confirming body loss. After returning player/camera to x=215/z=0, handles were re-listed and `get` retried at 1×. Four bodies reacquired. Their donor fields equal the pre-release fields and all generations changed. `pc:282` had no current body during retries and is omitted, as required by the brief. The initial `Clock retime:` completed before the judged reads; speed stayed 1× during A and its release/reacquire window.
+
+Before release (`before-0.json` … `before-4.json`):
+
+| Resident | Generation | Present | Donor | Surname donor | Persona donor | Kind | Policy | donor_reason | Stable reload |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `pc:403` | `9` | `true` | `c360` | `c95` | `c203` | `remixed` | `1` | `null` | `true` |
+| `c3` | `8` | `true` | `c3` | `c3` | `c3` | `imported` | `1` | `null` | `true` |
+| `c370` | `7` | `true` | `c370` | `c370` | `c370` | `imported` | `1` | `null` | `true` |
+| `pc:282` | `5` | `true` | `c73` | `c341` | `c368` | `remixed` | `1` | `null` | `true` |
+| `c266` | `3` | `true` | `c266` | `c266` | `c266` | `imported` | `1` | `null` | `true` |
+
+After reacquire (last successful resident-target identity per resident):
+
+| Resident | Generation | Present | Donor | Surname donor | Persona donor | Kind | Policy | donor_reason | Stable reload |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `pc:403` | `13` | `true` | `c360` | `c95` | `c203` | `remixed` | `1` | `null` | `true` |
+| `c3` | `14` | `true` | `c3` | `c3` | `c3` | `imported` | `1` | `null` | `true` |
+| `c370` | `11` | `true` | `c370` | `c370` | `c370` | `imported` | `1` | `null` | `true` |
+| `pc:282` | not read / no body | — | — | — | — | — | — | — | — |
+| `c266` | `10` | `true` | `c266` | `c266` | `c266` | `imported` | `1` | `null` | `true` |
+
+Imported donors equal their resident IDs. The judged remixed resident has non-empty source donor IDs. Every bound read has policy 1, `donor_present: true`, `donor_reason: null` and stable reload true. No visitor was selected; no visitor or visual appearance-seed/age/gender comparison is claimed.
+
+### C — released / pooled donor clearing: RIG GAP
+
+All five released resident-target identity reads failed with `ops_view_resident_absent`. They returned no binding, so **donor_reason and cleared string/version values were not read**. This is not `ops_view_walker_donor_absent`, and is not a donor-clearing pass. `screen_pos list` discovers active walkers only; the away list supplies no inactive pooled-body target. Stale pre-release handles were not reused. Idle-body clearing and a reused body's exclusive new donor remain NOT RUN.
+
+| Resident target | Identity reply error | donor_reason | Donor / surname / persona / kind / policy |
+| --- | --- | --- | --- |
+| `pc:403` | `ops_view_resident_absent` | not returned | not read |
+| `c3` | `ops_view_resident_absent` | not returned | not read |
+| `c370` | `ops_view_resident_absent` | not returned | not read |
+| `pc:282` | `ops_view_resident_absent` | not returned | not read |
+| `c266` | `ops_view_resident_absent` | not returned | not read |
+
+Exact C commands (each reply is retained in the matching `<stage>/released-identity-N.json`):
+
+```sh
+python3 ~/Coding_Projects/big-ambitions/big-ambitions-agent-rig/scripts/mac-agent op screen_pos '{"action": "identity", "target": {"kind": "resident", "id": "pc:403"}}'
+python3 ~/Coding_Projects/big-ambitions/big-ambitions-agent-rig/scripts/mac-agent op screen_pos '{"action": "identity", "target": {"kind": "resident", "id": "c3"}}'
+python3 ~/Coding_Projects/big-ambitions/big-ambitions-agent-rig/scripts/mac-agent op screen_pos '{"action": "identity", "target": {"kind": "resident", "id": "c370"}}'
+python3 ~/Coding_Projects/big-ambitions/big-ambitions-agent-rig/scripts/mac-agent op screen_pos '{"action": "identity", "target": {"kind": "resident", "id": "pc:282"}}'
+python3 ~/Coding_Projects/big-ambitions/big-ambitions-agent-rig/scripts/mac-agent op screen_pos '{"action": "identity", "target": {"kind": "resident", "id": "c266"}}'
+```
+
+First raw reply, unchanged:
+
+```json
+{"error":"ops_view_resident_absent","reply":{"ok":false,"id":"72f0e2223c2e4e7b919db8fcdd6de547","session":"90d7e134b1a941578463eb8784fcb47d","error":"ops_view_resident_absent"}}
+```
+
+Player.log excerpt from `released-Player.log` (the identity failures themselves emit no matching Player.log diagnostic):
+
+```text
+[AgentRigOps] staged_mod name=PersistentCity version=absent informational=0.10.0-persistent-city-candidate sha256=032bb166f6760225c1bdc9717484971a6a3f74cfe901a2a27ec608bcab8bb8d7
+[Mod:PersistentCity] Physical population active: ordinary pedestrian and vehicle spawns replaced by own bodies and own cars; RLO scenes, customers, workers, taxis and service vehicles retained.
+[Mod:FoodTrucks] Test bridge: teleport to x -500.0, z -400.0: y 0.02, the only ground surface, walkable; walking routes not checked (more than 100 m from the player).
+```
+
+The readback's resident lookup requires relay ResidentId or a valid body IdentityId. The product's release clears ResidentId and drops the body lease, leaving this lookup no key for a released relay. The [rig lookup](https://github.com/PeterHartwieg/big-ambitions-agent-rig/blob/2839da0/rig-ops/Runtime/ViewWorld.cs#L135) and [relay clear](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/604cdf3f/Runtime/PhysicalPedestrians.cs#L746) explain the missing readback without establishing the released donor values in game. Agent-rig #103's inactive-relay readback remains unverified for this live case. No unexposed reply, crash or clearly wrong relay field was observed.
+
+### B — save and reload
+
+Saved the exclusive disposable FT copy with `save {"action":"trigger","type":"Default","name":"FT RIGTMP-GR9-17m-mac","overwrite":true}`. The returned destination was checked against that exact copy; native save/compression finished. The bridge load went through the menu, as Player.log records. Handles were re-listed after every reload.
+
+The first load reached `done`, but replay began before Persistent City attached, followed by `Accounting input epoch was lost`. It supplies no donor comparison. This sequence is retained as a startup/setup gap; the saved copy was not overwritten. A second menu/reload of the same copy kept native time paused until physical population activation, then replayed at 1× for six seconds before the reads. No cold restart or overlay change was used.
+
+| Resident | Generation | Present | Donor | Surname donor | Persona donor | Kind | Policy | donor_reason | Stable reload |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `pc:403` | `2` | `true` | `c360` | `c95` | `c203` | `remixed` | `1` | `null` | `true` |
+| `c3` | not read / no body | — | — | — | — | — | — | — | — |
+| `c370` | not read / no body | — | — | — | — | — | — | — | — |
+| `pc:282` | not read / no body | — | — | — | — | — | — | — | — |
+| `c266` | not read / no body | — | — | — | — | — | — | — | — |
+
+1/5 selected residents had a current Persistent City body and were judged after the valid reload; `pc:403`. Every judged donor field matches A, and `binding.stable_across_reload` is true. The other four (c3, c370, pc:282, c266) are AtPlace/Leisure and have no current body; they are omitted, not mismatches. Raw per-person phase reads and all 1× get retries are retained in `<stage>`.
+
+First B setup failure, exact command:
+
+```sh
+python3 ~/Coding_Projects/big-ambitions/big-ambitions-agent-rig/scripts/mac-agent call time '{"pause": false, "speed": 1, "keep_needs": true}'
+```
+
+The command itself returned success. Player.log subsequently recorded:
+
+```text
+[Mod:PersistentCity] Persistent City stopped: Load a synchronized pre-failure checkpoint or another city to restart Persistent City. This stopped save stays refused; native time continues. Accounting input epoch was lost. Native calendar continues; Persistent City is stopped. Unprocessed Persistent City demand is lost, not replayed. The original population payload is retained. Native saves remain playable with Persistent City stopped.
+```
+
+### D — appearance/log hygiene
+
+All retained population `pedestrianLooks` rows report **0 failed merges**. Across the complete owned session log: `Empty appearance`=0, `Appearance meshes unavailable`=0, `NPC warp failed`=0. This verifies log hygiene only.
+
+Background `capture take` succeeded using Metal / RenderTexture with `fallback_reason: ops_view_capture_background`. The before image shows Campaigns UI over a white scene, so it supplies no same-look evidence. The later c266 camera request returned `ops_view_resident_absent`. The two PNGs remain raw artifacts outside Git. Full five-resident visual sameness / normal animation are NOT RUN; pointer/hover stays with Peter.
+
+### Shared-host sessions and boundary load
+
+Launch read at 21:50 Europe/Berlin: uptime 4 days / 3:28, load averages 11.93 / 12.63 / 9.47, reported free memory 74%. Initial top processes: dotnet 276.3%, node 84.1%, VirtualMachine 22.5%, loginwindow 14.4%, gh 9.9%, coreaudiod 7.9%, DriverKit-AppleBCMWLAN 4.2%. The detailed owned-run boundary records follow.
+
+All commands ran in foreground controllers which were waited for. No other session or process was paused, killed or changed. `memory_pressure -Q` values below are the exact reported free percentage, not a game memory budget. Each raw host record retains uptime, memory pressure, `ps -Arco pid,pcpu,comm | head -8`, process inventory and harness state.
+
+| Window | UTC | Uptime / load | Memory | Other live sessions / phase | Top seven processes |
+| --- | --- | --- | --- | --- | --- |
+| host-start | 2026-11-17T20:51:22.410038+00:00 | 21:51  up 4 days,  3:29, 1 user, load averages: 18.48 14.40 10.43 | System-wide memory free percentage: 75% | 20261117-213250-ux-import-leftovers-2-sync / review; 20261117-212201-mac-fix-gr5-gc-pause-18 / implement; 20261117-212640-ux-schreiben-post-2 / implement | 23569 291.0 dotnet; 25975 100.1 node; 50220  99.8 com.apple.Virtualization.VirtualMachine; 26011  91.3 node; 50209  23.2 limactl; 26025  14.1 Python; 25971  11.3 node |
+| host-load-busy | 2026-11-17T20:53:53.161557+00:00 | 21:53  up 4 days,  3:32, 1 user, load averages: 40.34 22.79 14.32 | System-wide memory free percentage: 38% | 20261117-213250-ux-import-leftovers-2-sync / coordinate; 20261117-212201-mac-fix-gr5-gc-pause-18 / implement; 20261117-212640-ux-schreiben-post-2 / implement | 23569 136.0 dotnet; 50220 108.7 com.apple.Virtualization.VirtualMachine; 26155  81.0 Big Ambitions Agent Tests Mac; 27093  70.0 node; 27095  58.4 node; 27094  54.2 node; 27098  10.6 Python |
+| host-before-release | 2026-11-17T20:56:28.727762+00:00 | 21:56  up 4 days,  3:34, 1 user, load averages: 21.83 25.16 16.95 | System-wide memory free percentage: 37% | 20261117-213250-ux-import-leftovers-2-sync / fix; 20261117-212201-mac-fix-gr5-gc-pause-18 / implement; 20261117-212640-ux-schreiben-post-2 / implement | 50220 139.3 com.apple.Virtualization.VirtualMachine; 23569 112.2 dotnet; 26155 104.4 Big Ambitions Agent Tests Mac; 50209  32.5 limactl; 31685  21.0 node; 31182  17.6 node; 31181  16.4 node |
+| host-release-window | 2026-11-17T20:57:34.837019+00:00 | 21:57  up 4 days,  3:35, 1 user, load averages: 16.00 22.74 16.64 | System-wide memory free percentage: 43% | 20261117-213250-ux-import-leftovers-2-sync / fix; 20261117-212201-mac-fix-gr5-gc-pause-18 / implement; 20261117-212640-ux-schreiben-post-2 / implement | 50220 148.4 com.apple.Virtualization.VirtualMachine; 36213 105.4 node; 23569 100.5 dotnet; 26155  90.9 Big Ambitions Agent Tests Mac; 36215  76.9 node; 36216  34.9 node; 50209  29.3 limactl |
+| host-reacquired | 2026-11-17T20:59:01.484022+00:00 | 21:59  up 4 days,  3:37, 1 user, load averages: 14.72 20.30 16.29 | System-wide memory free percentage: 39% | 20261117-213250-ux-import-leftovers-2-sync / fix; 20261117-212201-mac-fix-gr5-gc-pause-18 / local_tests; 20261117-212640-ux-schreiben-post-2 / implement | 50220 169.9 com.apple.Virtualization.VirtualMachine; 26155 109.3 Big Ambitions Agent Tests Mac; 36649  80.6 dotnet; 36662  59.4 dotnet; 36663  38.9 dotnet; 50209  31.5 limactl; 36550  16.6 node |
+| host-before-save-reload | 2026-11-17T20:59:11.980394+00:00 | 21:59  up 4 days,  3:37, 1 user, load averages: 15.63 20.31 16.34 | System-wide memory free percentage: 35% | 20261117-213250-ux-import-leftovers-2-sync / fix; 20261117-212201-mac-fix-gr5-gc-pause-18 / local_tests; 20261117-212640-ux-schreiben-post-2 / implement | 95289 250.4 Claude Helper (Renderer); 36679 102.9 dotnet; 26155  85.3 Big Ambitions Agent Tests Mac; 50220  61.8 com.apple.Virtualization.VirtualMachine; 36741  27.6 node; 36738  26.9 node;   444   8.4 coreaudiod |
+| host-reload-start | 2026-11-17T20:59:20.897697+00:00 | 21:59  up 4 days,  3:37, 1 user, load averages: 15.58 20.22 16.33 | System-wide memory free percentage: 39% | 20261117-213250-ux-import-leftovers-2-sync / fix; 20261117-212201-mac-fix-gr5-gc-pause-18 / local_tests; 20261117-212640-ux-schreiben-post-2 / implement | 36679 270.0 dotnet; 50220 134.7 com.apple.Virtualization.VirtualMachine; 26155 105.6 Big Ambitions Agent Tests Mac; 36777  35.5 node; 36785  27.6 node; 50209  19.0 limactl; 36476  14.6 node |
+| host-reload-wait | 2026-11-17T20:59:46.858700+00:00 | 21:59  up 4 days,  3:37, 1 user, load averages: 17.64 20.26 16.48 | System-wide memory free percentage: 35% | 20261117-213250-ux-import-leftovers-2-sync / fix; 20261117-212201-mac-fix-gr5-gc-pause-18 / local_tests; 20261117-212640-ux-schreiben-post-2 / implement | 36679 201.4 dotnet; 50220  90.2 com.apple.Virtualization.VirtualMachine; 26155  88.9 Big Ambitions Agent Tests Mac; 36873  69.6 node; 36876  38.4 node; 36875  33.5 node;   915  16.6 sysmond |
+| host-reload-mid | 2026-11-17T21:01:11.493567+00:00 | 22:01  up 4 days,  3:39, 1 user, load averages: 23.96 21.28 17.18 | System-wide memory free percentage: 35% | 20261117-213250-ux-import-leftovers-2-sync / fix; 20261117-212201-mac-fix-gr5-gc-pause-18 / local_tests; 20261117-212640-ux-schreiben-post-2 / implement | 36679 288.4 dotnet; 50220 108.7 com.apple.Virtualization.VirtualMachine; 37264  52.3 BackgroundShortcutRunner; 26155  49.1 Big Ambitions Agent Tests Mac; 37269  43.5 node; 37221  23.9 siriactionsd; 37280  14.0 (node) |
+| host-reload-complete | 2026-11-17T21:02:36.551247+00:00 | 22:02  up 4 days,  3:40, 1 user, load averages: 21.90 21.74 17.78 | System-wide memory free percentage: 35% | 20261117-213250-ux-import-leftovers-2-sync / fix; 20261117-212201-mac-fix-gr5-gc-pause-18 / local_tests; 20261117-212640-ux-schreiben-post-2 / implement | 36679 273.9 dotnet; 26155 103.3 Big Ambitions Agent Tests Mac; 50220  83.0 com.apple.Virtualization.VirtualMachine; 37481  70.0 node; 37489  14.2 Python; 37601  13.6 node; 50209  11.0 limactl |
+| host-B2-start | 2026-11-17T21:04:54.464057+00:00 | 22:04  up 4 days,  3:43, 1 user, load averages: 14.56 18.91 17.23 | System-wide memory free percentage: 56% | 20261117-213250-ux-import-leftovers-2-sync / fix; 20261117-212201-mac-fix-gr5-gc-pause-18 / local_tests; 20261117-212640-ux-schreiben-post-2 / implement | 36679 268.7 dotnet; 50220 140.3 com.apple.Virtualization.VirtualMachine; 38207 122.3 node; 26155 106.2 Big Ambitions Agent Tests Mac; 50209  15.3 limactl; 37601   9.1 node; 38160   8.1 node |
+| host-B2-loaded | 2026-11-17T21:07:01.020926+00:00 | 22:07  up 4 days,  3:45, 1 user, load averages: 13.46 17.33 16.86 | System-wide memory free percentage: 40% | 20261117-213250-ux-import-leftovers-2-sync / fix; 20261117-212201-mac-fix-gr5-gc-pause-18 / local_tests; 20261117-212640-ux-schreiben-post-2 / implement | 36679 119.8 dotnet; 50220 110.9 com.apple.Virtualization.VirtualMachine; 26155  98.6 Big Ambitions Agent Tests Mac; 38710  92.6 node; 38685  36.3 node; 38705  28.5 node;   432  17.8 loginwindow |
+| host-after-B2 | 2026-11-17T21:08:39.615547+00:00 | 22:08  up 4 days,  3:46, 1 user, load averages: 22.82 18.60 17.34 | System-wide memory free percentage: 44% | 20261117-213250-ux-import-leftovers-2-sync / fix; 20261117-212201-mac-fix-gr5-gc-pause-18 / local_tests; 20261117-212640-ux-schreiben-post-2 / implement | 26155  96.2 Big Ambitions Agent Tests Mac; 39214  83.4 node; 39228  74.1 node; 36679  66.7 dotnet; 50220  65.9 com.apple.Virtualization.VirtualMachine; 39222  59.7 node; 39226  59.1 node |
+| host-cleanup-start | 2026-11-17T21:09:01.719150+00:00 | 22:09  up 4 days,  3:47, 1 user, load averages: 26.14 19.67 17.76 | System-wide memory free percentage: 52% | 20261117-213250-ux-import-leftovers-2-sync / fix; 20261117-212201-mac-fix-gr5-gc-pause-18 / local_tests; 20261117-212640-ux-schreiben-post-2 / implement | 39440 170.2 node; 26155 104.9 Big Ambitions Agent Tests Mac; 36679  98.5 dotnet; 22434  24.1 cloudd;   384  22.6 mds; 50220  19.4 com.apple.Virtualization.VirtualMachine; 39371  18.2 deleted |
+| host-cleanup-wait | 2026-11-17T21:10:20.656909+00:00 | 22:10  up 4 days,  3:48, 1 user, load averages: 14.75 17.53 17.11 | System-wide memory free percentage: 34% | 20261117-213250-ux-import-leftovers-2-sync / fix; 20261117-212201-mac-fix-gr5-gc-pause-18 / local_tests; 20261117-212640-ux-schreiben-post-2 / implement | 50220 185.6 com.apple.Virtualization.VirtualMachine; 36679  93.8 dotnet; 26155  86.2 Big Ambitions Agent Tests Mac; 39781  44.4 node; 50209  33.1 limactl; 39948  15.0 Python; 39931  12.8 BackgroundShortcutRunner |
+| host-cleanup-end | 2026-11-17T21:11:33.628956+00:00 | 22:11  up 4 days,  3:49, 1 user, load averages: 15.94 16.99 16.92 | System-wide memory free percentage: 36% | 20261117-213250-ux-import-leftovers-2-sync / fix; 20261117-212201-mac-fix-gr5-gc-pause-18 / review; 20261117-212640-ux-schreiben-post-2 / implement | 50220 189.0 com.apple.Virtualization.VirtualMachine; 26155 106.0 Big Ambitions Agent Tests Mac; 50209  27.5 limactl; 39780  18.0 node; 40484  17.3 node; 39985  15.9 node; 50359  13.2 ssh.sock [mux] |
+
+Session/build inventory (repository HEAD snapshots; working trees may be changing):
+
+| Session | Branch | PID | Phases observed | Build HEAD snapshots |
+| --- | --- | --- | --- | --- |
+| 20261117-213250-ux-import-leftovers-2-sync | `harness/ux-import-leftovers-2` | 18084 | coordinate, fix, review | `1817a3eb5e71a58cdba29cfc05e500014c882cd0`, `a841a5684b334b678299dc45ca89fcff256a7d0c` |
+| 20261117-212201-mac-fix-gr5-gc-pause-18 | `codex/mac-fix-gr5-gc-pause-18` | 13271 | implement, local_tests, review | `4666b354aea1ae3a6d987efbecdef9783d5a841e` |
+| 20261117-212640-ux-schreiben-post-2 | `harness/ux-schreiben-post-2` | 16032 | implement | `fc696ca49ea4ba7d47a2017e851cfd5230ee8b87` |
+
+This rig ran candidate `604cdf3f` / DLL `032bb166…8bb8d7` with agent-rig `2839da0` / AgentRigOps `8175f55a…070393`. Launch-time other builds were GR-5 `4666b354`, UX Schreiben `008f779b`, UX import leftovers `a841a568`; later observed heads are in the table. The GR-5 harness is explicitly the eighteenth fix run. Other-project build/test processes belong to those sessions; no separate game was started for them.
+
+### NOT RUN groups and exact operation failures
+
+| Group | Reason |
+| --- | --- |
+| GR-5 GC / street / save-callback / 60 fps / locked-PC arms | Outside this correctness-only brief; Peter gaming on the PC; no Windows contact |
+| #246 check 4 | Explicitly excluded; no unrentable fixture applied |
+| #295 locked-PC arms | Approved Mac stand-in used; no Windows parity claimed |
+| Other checklist items / full visual proof / pointer-hover | Outside A–D; Campaigns/white capture prevents visual comparison; pointer/hover reserved for Peter |
+
+Failures are grouped by exact error code; every individual command/reply remains in raw evidence. Resident absence after replay/move is omitted from donor equality, never counted as changed identity.
+
+| Operation | Count | Exact error | Example exact command | Raw record labels |
+| --- | --- | --- | --- | --- |
+| op camera | 1 | `ops_view_resident_absent` | `python3 ~/Coding_Projects/big-ambitions/big-ambitions-agent-rig/scripts/mac-agent op camera '{"action": "look_at", "target": {"kind": "resident", "id": "c266"}, "offset": {"x": 0, "y": 4, "z": -5}, "seconds": 10}'` | reacquired-visual-camera |
+| op screen_pos | 71 | `ops_view_resident_absent` | `python3 ~/Coding_Projects/big-ambitions/big-ambitions-agent-rig/scripts/mac-agent op screen_pos '{"action": "get", "target": {"kind": "resident", "id": "pc:282"}}'` | B2-get-3, B-get-3-3, reacquire-get-4-5 … |
+| op screen_pos | 45 | `ops_view_walker_unbound` | `python3 ~/Coding_Projects/big-ambitions/big-ambitions-agent-rig/scripts/mac-agent op screen_pos '{"action": "identity", "target": {"kind": "walker", "id": "walker-e60290a804384a818803e2d9a64ac94f"}}'` | discover-25, discover-33, discover-1 … |
+
+A controller helper was initially named `select.py`, shadowing Python’s standard module; its exact error was `NameError: name 'call' is not defined. Did you mean: 'all'?`. It was renamed before retrying; no game operation ran from that failed helper. `pc status` also returned `Warning: ERROR: 'pc' doesn't take 1 parameter(s).` and was corrected to `pc population census` / `pc movement status`. These are operator/tooling errors, not product failures.
+
+### Cleanup, restoration and validation
+
+| Field | Result |
+| --- | --- |
+| utc | `2026-11-17T21:12:12.584384+00:00` |
+| files_verified | `34` |
+| rlo_files_verified | `53` |
+| sealed_files_verified | `4` |
+| mismatches | `[]` |
+| sidecars | `0` |
+| agent_rig_ops_sha256 | `8175f55a13b19f828dee2a4024cda29711295c273ba9b8950254f2ba14070393` |
+| install_json_sha256 | `69ebc8d149b1600dbeb5d35e8fd077c68c85b852d21c75237234b34ce8ab82f5` |
+| save_mode_original_restored | `true` |
+| mod_file_set_equal | `true` |
+
+The own FT copy was deleted only through `disposable_save` after loading the sealed fixture. Final read: `exists:false`, `loaded:false`, `files:[]`. No unrentable sidecar was applied or left behind. Only the owned agentmac game was stopped normally. The exact printed stage rollback restored the whole original mod folder and install receipt; own backed-up profile/preferences/config/frame-cap states were restored and hashed. RLO option final reads match their original values. AgentRigOps and sealed/RLO files are unchanged. Lease release and stopped status are retained in `lease-release.json` / `final-status.json`. No owned game process remains.
+
+Offline checks: candidate build PASS; `python3 tools/md-ban.py` PASS; `python3 tools/docs-links/check.py` PASS; `git diff --check` PASS. No test files changed; no full unit suite run, following repository rules. These are offline checks, separate from the game evidence.
+
+| Check | Outcome | Finding |
+| --- | --- | --- |
+| A — donor release/reacquire | PASS | 4/5 bodies reacquired; all donor fields match, policy 1, reason null; pc:282 omitted for no current body |
+| C — released/pooled donor clearing | NOT RUN / RIG GAP | 5/5 released identity targets return ops_view_resident_absent; no donor_reason returned; inactive pooled/reused-body proof unavailable |
+| B — donor save/reload | PASS | 1/5 current bodies judged after valid paused-attach reload; same resident/donor fields; others omitted |
+| D — merge / log hygiene | PASS | 0 failed merges; all three forbidden strings absent; visual equality not proved |
+
+Refs #238 #295
