@@ -9992,7 +9992,7 @@ Combined GC JSON exceeds 20 KB, so no new perf JSON is committed. The allocation
 
 ## Rig results — 15 November 2026 i, Mac (rig 16g; #286 save checks 1-5 and GC/street baseline at d1630106)
 
-**RESULT: DONE. 5 passed / 1 partial / 4 failed / 4 NOT RUN groups.** Counted checks: A; B cold/reload/quit; C; D day/night/street; E; cleanup. All timing/GC/street numbers are **PROVISIONAL (shared Mac)**. Locked-PC and 60 FPS arms are NOT RUN: Peter is gaming. Leave this results PR unmerged.
+**RESULT: DONE. 5 passed / 1 partial / 4 failed / 4 NOT RUN groups.** Counted checks: A; B cold/reload/quit; C; D day/night/street; E; cleanup. All timing/GC/street numbers are **PROVISIONAL (shared Mac)**. Locked-PC and 60 FPS arms are NOT RUN: Peter is gaming. The failed and NOT RUN checks remain open product proof; this docs-only report can merge after current-head reviewer approval.
 
 Actual run: **17 November 2026 k / rig 16g**, `persistent-city-rig-2026-11-17k-mac`, role `rig_test`, where `mac`. The heading retains the literal launch-template title; A/B/C map to **#293 checks 1/2/3**. B additionally covers #290 checks 2–4; C follows #290 check 5. D/E refresh #289’s baseline at `d1630106`; #292 was absent from the tested head at launch. All timing/GC/street values are **PROVISIONAL (shared Mac)**.
 
@@ -10400,7 +10400,7 @@ Whole-frame duration is separate from mod work. At a 30 FPS pump many whole fram
 | street | rig mod-work | 2 | 2 | False | 1024 |
 | street | rig whole-frame | 4547 | 1024 | True | 1024 |
 
-The PC phase buffer is capped at 64; rig mod-work and whole-frame buffers are capped at 1,024 (#94). Every retained PC phase row and every rig ≥30 ms mod-work row follows. A missing phase match is recorded as unavailable, never inferred from a neighboring frame. Retained whole-frame rows remain in raw evidence; the table above gives their counted/retained/truncated status.
+The PC phase buffer is capped at 1,024 (`ModFrameRecorder.SpikeCapacity`); rig mod-work and whole-frame buffers are capped at 1,024 (#94). Every retained PC phase row and every rig ≥30 ms mod-work row follows. A missing phase match is recorded as unavailable, never inferred from a neighboring frame. Retained whole-frame rows remain in raw evidence; the table above gives their counted/retained/truncated status.
 
 gc-day — every rig mod-work row:
 
@@ -10668,4 +10668,4 @@ Rollback ran stopped and leased from the original stage’s printed command; com
 | restore-verification.json | 423 | 3bc904fda1d251e6bf5388c60a9817632463e2d8f6c0df7080e9dcc933ef46e6 |
 | raw-evidence-manifest.json | 261809 | 9c202a8ea421875c47ff503e745d28f6afc8d590b2b73e547e9839cc74a5d9e0 |
 
-Raw records are retained in `~/HART-Builds/persistent-city-rig-2026-11-17k-mac/` (`<stage>`). Full GC JSON stays there with hashes above; no new docs/perf file is added. No logs, screenshots, game data, saves, binaries or controller scripts are committed. No new Markdown path: MarkdownBanTests / tools/md-ban.py require an owner-applied docs-approved label, so this report appends to the existing checklist as requested. Diff is constrained to this section and one summary pointer, below 100,000 characters. In-game proof gates no merge; leave this results PR open.
+Raw records are retained in `~/HART-Builds/persistent-city-rig-2026-11-17k-mac/` (`<stage>`). Full GC JSON stays there with hashes above; no new docs/perf file is added. No logs, screenshots, game data, saves, binaries or controller scripts are committed. No new Markdown path: MarkdownBanTests / tools/md-ban.py require an owner-applied docs-approved label, so this report appends to the existing checklist as requested. Diff is constrained to this section and one summary pointer, below 100,000 characters. In-game proof gates no merge; this report can merge after current-head reviewer approval, and the failed and NOT RUN checks stay open.
