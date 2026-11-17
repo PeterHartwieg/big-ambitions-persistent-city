@@ -20,7 +20,7 @@ public sealed class Gr5SaveCallbackMeasure
         string? output = PerfGate.Variable("PC_GR5_SAVE_CALLBACK_MEASURE");
         if (string.IsNullOrEmpty(output)) return;
         int samples = int.TryParse(Environment.GetEnvironmentVariable("PC_GR5_SAVE_CALLBACK_SAMPLES"), out int n) ? n : 20;
-        foreach (string fixture in F7cMeasure.Fixtures(Environment.GetEnvironmentVariable("PC_F7C_FIXTURES") ?? "fresh-957x3,representative-957x2"))
+        foreach (string fixture in F7cMeasure.Fixtures(Environment.GetEnvironmentVariable("PC_F7C_FIXTURES") ?? "fresh-1000x3,representative-957x2"))
             File.AppendAllText(output!, JsonConvert.SerializeObject(Measure(fixture, samples)) + Environment.NewLine);
     }
 

@@ -816,11 +816,10 @@ namespace PersistentCity.Core
                 state.Definitions.Add(CopyDefinition(link.Definition));
                 var queuedIds = new List<string>(link.Queue.Count);
                 foreach (var vehicle in link.Queue) queuedIds.Add(vehicle.VehicleId);
-                state.Links.Add(new TrafficLinkState
+                state.Links.Add(new TrafficLinkState(queuedIds, link.Sources.ToList(), link.Incoming.ToList())
                 {
                     LinkId = link.Definition.Id, Closed = link.State.Closed, NextDischargeAt = link.State.NextDischargeAt,
-                    MergeCursor = link.State.MergeCursor, Vehicles = queuedIds, WaitingSources = link.Sources.ToList(),
-                    IncomingLinks = link.Incoming.ToList()
+                    MergeCursor = link.State.MergeCursor
                 });
                 if (++work % linksPerStep == 0) yield return null;
             }

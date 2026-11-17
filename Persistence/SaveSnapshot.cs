@@ -215,8 +215,8 @@ namespace PersistentCity.Persistence
                 Definitions = List(t.Definitions, d => new TrafficLinkDefinition { Id = d.Id, Capacity = d.Capacity, FreeFlowMinutes = d.FreeFlowMinutes,
                     HeadwayMinutes = d.HeadwayMinutes, Signal = d.Signal == null ? null : new TrafficSignalSchedule { CycleMinutes = d.Signal.CycleMinutes,
                         GreenStartMinutes = d.Signal.GreenStartMinutes, GreenDurationMinutes = d.Signal.GreenDurationMinutes, PhaseOffsetMinutes = d.Signal.PhaseOffsetMinutes } })!,
-                Links = List(t.Links, l => new TrafficLinkState { LinkId = l.LinkId, Closed = l.Closed, NextDischargeAt = l.NextDischargeAt,
-                    MergeCursor = l.MergeCursor, Vehicles = Values(l.Vehicles)!, WaitingSources = Values(l.WaitingSources)!, IncomingLinks = Values(l.IncomingLinks)! })!,
+                Links = List(t.Links, l => new TrafficLinkState(Values(l.Vehicles)!, Values(l.WaitingSources)!, Values(l.IncomingLinks)!)
+                    { LinkId = l.LinkId, Closed = l.Closed, NextDischargeAt = l.NextDischargeAt, MergeCursor = l.MergeCursor })!,
                 Vehicles = List(t.Vehicles, v => new TrafficVehicleState { VehicleId = v.VehicleId, Order = v.Order,
                     Route = List(v.Route, r => new TrafficRouteLeg { LinkId = r.LinkId, StartNominalMinutes = r.StartNominalMinutes,
                         EndNominalMinutes = r.EndNominalMinutes, FreeFlowMinutes = r.FreeFlowMinutes, StartLinkFraction = r.StartLinkFraction,
