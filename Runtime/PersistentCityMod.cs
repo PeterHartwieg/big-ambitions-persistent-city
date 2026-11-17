@@ -393,8 +393,17 @@ namespace PersistentCity.Runtime
                     inspector.Suspend(); return;
                 }
                 long closureStarted = Stopwatch.GetTimestamp();
-                simulation.RefreshTrafficClosures();
+                bool networkReady = simulation.TryRefreshTrafficClosures(ClockRetimeStages.SliceMilliseconds);
                 double closureElapsed = (Stopwatch.GetTimestamp() - closureStarted) * MillisecondsPerTimestamp;
+                if (!networkReady)
+                {
+                    RecordRoutingFrame(prepareElapsed, closureElapsed, false); waitingFrames++;
+                    ModFrames.Charge(GcAllocationSegment.ModClosures);
+                    PhysicalAllocation.Begin(gcSampler);
+                    try { RunPhysical(physicalUpdate ??= () => physical?.Update()); }
+                    finally { PhysicalAllocation.End(GcAllocationSegment.PhysicalUnattributedWaiting); }
+                    inspector.Suspend(); return;
+                }
                 closureFrames++; closureMilliseconds += closureElapsed;
                 maxClosureMilliseconds = Math.Max(maxClosureMilliseconds, closureElapsed);
                 RecordRoutingFrame(prepareElapsed, closureElapsed, true);

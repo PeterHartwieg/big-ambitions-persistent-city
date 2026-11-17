@@ -178,6 +178,37 @@ public sealed class Gr5NetworkRequeueTests
     }
 
     [Fact]
+    public void ARigScaleNetworkSwapPreparesAcrossUpdatesWithinTheSliceAndMatchesAWholeSwap()
+    {
+        var networks = new[] { Road(), Road() };
+        var wholePlanner = new SwappablePlanner { TrafficNetwork = networks[0] };
+        var slicedPlanner = new SwappablePlanner { TrafficNetwork = networks[0] };
+        var whole = RoadCity(750, 2250, wholePlanner);
+        var sliced = RoadCity(750, 2250, slicedPlanner);
+        whole.RefreshTrafficClosures(); sliced.RefreshTrafficClosures();
+        var updates = new List<double>();
+        for (int swap = 1; swap <= 4; swap++)
+        {
+            wholePlanner.TrafficNetwork = slicedPlanner.TrafficNetwork = networks[swap % 2];
+            whole.RefreshTrafficClosures();
+            while (true)
+            {
+                long started = Stopwatch.GetTimestamp();
+                bool done = sliced.TryRefreshTrafficClosures(ClockRetimeStages.SliceMilliseconds);
+                updates.Add((Stopwatch.GetTimestamp() - started) * 1000.0 / Stopwatch.Frequency);
+                if (done) break;
+            }
+            Assert.Equal(whole.QueuedPersonEvents, sliced.QueuedPersonEvents);
+            Assert.Equal(SaveCodec.Write(whole.State), SaveCodec.Write(sliced.State));
+        }
+        updates.Sort();
+        output.WriteLine("sliced network swap, 750 drivers x " + DriveLegs + " road legs: " + updates.Count + " updates over 4 swaps, slowest "
+            + updates[^1].ToString("0.00") + " ms (.NET Debug; whole swap median gate 25 ms)");
+        Assert.True(sliced.NetworkPreparationUpdates > 4, "preparation updates " + sliced.NetworkPreparationUpdates);
+        PerfGate.Under(updates[^1], 2 * ClockRetimeStages.SliceMilliseconds, "slowest network preparation update (.NET)");
+    }
+
+    [Fact]
     public void ValidatingLiveRigScaleDriversOnASwappedNetworkIsLinearAndAllocatesNothingAfterWarmUp()
     {
         const int drivers = 300, roadLegs = 480;
@@ -203,10 +234,17 @@ public sealed class Gr5NetworkRequeueTests
         foreach (var j in journeys) network.ValidateRemainingMapping(j.Journey, j.Spans, j.Progress);
         double elapsed = (Stopwatch.GetTimestamp() - started) * 1000.0 / Stopwatch.Frequency;
         bytes = GC.GetAllocatedBytesForCurrentThread() - bytes;
+        double slowest = 0;
+        foreach (var j in journeys)
+        {
+            long one = Stopwatch.GetTimestamp();
+            network.ValidateRemainingMapping(j.Journey, j.Spans, j.Progress);
+            slowest = Math.Max(slowest, (Stopwatch.GetTimestamp() - one) * 1000.0 / Stopwatch.Frequency);
+        }
         output.WriteLine("validate " + drivers + " live drivers x " + roadLegs + " road legs (" + journeys[0].Spans.Count + " spans each): "
-            + elapsed.ToString("0.00") + " ms, " + bytes + " B (.NET)");
+            + elapsed.ToString("0.00") + " ms in total, slowest driver " + slowest.ToString("0.000") + " ms, " + bytes + " B (.NET)");
         Assert.Equal(0, bytes);
-        PerfGate.Under(elapsed, 250, "validating 300 live drivers x 480 legs on a swapped network (.NET Debug; 400 ms before the linear walk)");
+        PerfGate.Under(slowest, ClockRetimeStages.SliceMilliseconds, "one live driver of 480 legs, the unit a sliced swap validates per step (.NET)");
         var broken = journeys[0].Spans.Select(s => new TrafficRouteLeg { LinkId = s.LinkId, StartNominalMinutes = s.StartNominalMinutes,
             EndNominalMinutes = s.EndNominalMinutes, FreeFlowMinutes = s.FreeFlowMinutes * 1.01, StartLinkFraction = s.StartLinkFraction, EndLinkFraction = s.EndLinkFraction }).ToList();
         Assert.Throws<ArgumentException>(() => network.ValidateRemainingMapping(journeys[0].Journey, broken, journeys[0].Progress));
