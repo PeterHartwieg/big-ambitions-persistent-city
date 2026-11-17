@@ -70,6 +70,7 @@ namespace PersistentCity.Runtime
         private readonly PhysicalPedestrians pedestrians;
         private readonly PhysicalVehicles vehicles;
         private readonly AmbientPedestrians ambient;
+        private readonly IdentityDonors donors;
         private readonly Dictionary<string, Binding> bindings = new Dictionary<string, Binding>(StringComparer.Ordinal);
         private readonly Dictionary<string, float> attempted = new Dictionary<string, float>(StringComparer.Ordinal);
         private readonly Dictionary<string, Place> places;
@@ -117,6 +118,7 @@ namespace PersistentCity.Runtime
             this.simulation = simulation; this.routes = routes; this.log = log;
             RefreshVendorMeals();
             this.pedestrianLimit = pedestrianLimit; this.vehicleLimit = vehicleLimit; this.radius = radius;
+            donors = IdentityDonors.For(simulation.State);
             places = simulation.State.Places.ToDictionary(p => p.Id, StringComparer.Ordinal);
             PhysicalAllocation.Detail(GcAllocationSegment.PhysicalSetupPlaces);
             pedestrians = new PhysicalPedestrians(parent, pedestrianLimit) { BeforeNavigation = BoundWalkers };
@@ -134,7 +136,7 @@ namespace PersistentCity.Runtime
                 bool tested = false;
                 foreach (var resident in view.ResidentList.Take(64))
                 {
-                    if (!pedestrians.TryAcquire(Entity(resident).Identity, places[resident.HomeId].Position, out var body, immediate: true)) continue;
+                    if (!pedestrians.TryAcquire(Entity(resident).Identity, places[resident.HomeId].Position, out var body, immediate: true, donor: donors.Of(Entity(resident)))) continue;
                     pedestrians.Release(body!); tested = true; break;
                 }
                 if (!tested) throw new InvalidOperationException("No native pedestrian body passed appearance/NavMesh preflight.");

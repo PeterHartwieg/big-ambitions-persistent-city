@@ -269,7 +269,7 @@ namespace PersistentCity.Runtime
                     }
                     else
                     {
-                        bool taken = pedestrians.TryAcquire(citizen.Identity, at, out var body);
+                        bool taken = pedestrians.TryAcquire(citizen.Identity, at, out var body, donor: donors.Of(citizen));
                         PhysicalAllocation.Charge(GcAllocationSegment.PhysicalSpawnPedestrian);
                         if (!taken && pedestrians.LastDeferred)
                         {
