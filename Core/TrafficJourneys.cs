@@ -56,6 +56,7 @@ namespace PersistentCity.Core
             if (!(routes is ITrafficRoutePlanner planner) || planner.TrafficNetwork == null) return;
             var network = planner.TrafficNetwork;
             if (ReferenceEquals(network, trafficNetwork)) return;
+            networkMinutes.Clear();
             foreach (var citizen in State.Citizens)
             {
                 if (citizen.Phase != CitizenPhase.Travelling || citizen.Journey == null || trafficCitizens.ContainsKey(citizen.Identity.Id)) continue;
@@ -68,8 +69,10 @@ namespace PersistentCity.Core
                     if (offset > progress + JourneyClockTolerance(State.Minute, totalMinutes)
                         && leg.ServiceId.StartsWith("native:road:", StringComparison.Ordinal)) needsRoad = true;
                 }
-                if (needsRoad && !network.TryMapRemainingSpans(citizen.Journey, MappingProgress(citizen, progress), mappingSpans))
+                if (!needsRoad) continue;
+                if (!network.TryMapRemainingSpans(citizen.Journey, MappingProgress(citizen, progress), mappingSpans))
                     throw new InvalidOperationException("Committed road geometry no longer matches the native network; preserve the saved journey.");
+                networkMinutes[citizen] = SpanMinute(citizen, progress);
             }
             if (throughTraffic != null && traffic != null) DropThroughCars(throughTraffic);
             if (traffic != null && State.TrafficTopologyId != network.TopologyId && traffic.VehicleCount != 0)
@@ -101,11 +104,17 @@ namespace PersistentCity.Core
 
         private void RequeueForNetwork()
         {
+            try { RequeueChanged(); }
+            finally { networkMinutes.Clear(); }
+        }
+
+        private void RequeueChanged()
+        {
             int queued = 0;
             foreach (var item in citizenEvents.Values)
             {
                 if (InProgress(item) || trafficCitizens.ContainsKey(item.Citizen.Identity.Id)) { due.Remove(item); continue; }
-                double minute = ScheduledMinute(item.Citizen);
+                double minute = networkMinutes.TryGetValue(item.Citizen, out double mapped) ? mapped : ScheduledMinute(item.Citizen);
                 queued++;
                 if (minute.Equals(item.Minute) && due.Contains(item)) continue;
                 due.Remove(item); item.Minute = minute; due.Add(item);
@@ -119,18 +128,22 @@ namespace PersistentCity.Core
 
         private readonly List<TrafficNetwork.MappedSpan> mappingSpans = new List<TrafficNetwork.MappedSpan>();
         private readonly List<TrafficVehicleState> liveVehicles = new List<TrafficVehicleState>();
+        private readonly Dictionary<CitizenState, double> networkMinutes = new Dictionary<CitizenState, double>();
 
         private double ScheduledMinute(CitizenState citizen)
         {
             if (trafficNetwork != null && citizen.Phase == CitizenPhase.Travelling && citizen.Journey != null
                 && trafficNetwork.TryMapRemainingSpans(citizen.Journey, MappingProgress(citizen, JourneyProgress(citizen)), mappingSpans))
-            {
-                double progress = JourneyProgress(citizen);
-                double totalMinutes = citizen.Journey.Minutes;
-                foreach (var leg in mappingSpans)
-                    if (progress < leg.EndNominalMinutes - JourneyClockTolerance(State.Minute, totalMinutes))
-                        return Math.Max(State.Minute, citizen.DepartureMinute + leg.StartNominalMinutes);
-            }
+                return SpanMinute(citizen, JourneyProgress(citizen));
+            return citizen.NextEventMinute;
+        }
+
+        private double SpanMinute(CitizenState citizen, double progress)
+        {
+            double totalMinutes = citizen.Journey!.Minutes;
+            foreach (var leg in mappingSpans)
+                if (progress < leg.EndNominalMinutes - JourneyClockTolerance(State.Minute, totalMinutes))
+                    return Math.Max(State.Minute, citizen.DepartureMinute + leg.StartNominalMinutes);
             return citizen.NextEventMinute;
         }
 

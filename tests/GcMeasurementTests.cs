@@ -127,7 +127,7 @@ public sealed class GcMeasurementTests
                 "advance_events_traffic", "advance_events_food", "advance_events_citizen", "advance_events_route_begin", "advance_events_other",
                 "advance_planning_slice", "advance_planning_finish",
                 "physical_setup_places", "physical_setup_bodies", "physical_setup_vehicles", "physical_setup_ambient", "physical_setup_preflight",
-                "physical_unattributed_setup", "physical_unattributed_update", "physical_unattributed_waiting", "physical_unattributed_entry" }.SelectMany(n => new[] { n + "_alloc_bytes", n + "_alloc_samples", n + "_alloc_skipped" }))
+                "physical_unattributed_setup", "physical_unattributed_update", "physical_unattributed_waiting", "physical_unattributed_entry", "mod_routes_retime" }.SelectMany(n => new[] { n + "_alloc_bytes", n + "_alloc_samples", n + "_alloc_skipped" }))
             .Concat(new[] { "phase_frames", "phase_spikes_30ms", "phase_spikes_retained", "phase_spikes_truncated", "phase_spike_cap", "top_frames", "spike_frames", "phase_ms" }).ToArray();
         foreach (string json in new[] { empty, full })
         {
