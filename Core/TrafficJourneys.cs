@@ -96,6 +96,21 @@ namespace PersistentCity.Core
             planner.SetTrafficForecast((id, at) => traffic.Forecast(id, at));
             if (routes is ITrafficEntryRoutePlanner entryPlanner)
                 entryPlanner.SetTrafficEntryForecast((id, at, fraction, share) => traffic.ForecastEntry(id, at, fraction, share));
+            RequeueForNetwork();
+        }
+
+        private void RequeueForNetwork()
+        {
+            int queued = 0;
+            foreach (var item in citizenEvents.Values)
+            {
+                if (InProgress(item) || trafficCitizens.ContainsKey(item.Citizen.Identity.Id)) { due.Remove(item); continue; }
+                double minute = ScheduledMinute(item.Citizen);
+                queued++;
+                if (minute.Equals(item.Minute) && due.Contains(item)) continue;
+                due.Remove(item); item.Minute = minute; due.Add(item);
+            }
+            if (due.Count == queued) return;
             due.Clear();
             foreach (var item in citizenEvents.Values)
                 if (!InProgress(item) && !trafficCitizens.ContainsKey(item.Citizen.Identity.Id))
