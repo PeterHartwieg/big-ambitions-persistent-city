@@ -15,7 +15,9 @@ namespace PersistentCity.Core
         private TrafficNetwork? preparedNetwork;
         private int preparedStage, preparedIndex;
         private double preparedMinute = double.NaN;
-        private bool NetworkPrepared(TrafficNetwork network) => preparedStage == 2 && ReferenceEquals(preparedNetwork, network) && preparedMinute == State.Minute;
+        private long preparedHolds;
+        private bool PreparedFor(TrafficNetwork network) => ReferenceEquals(preparedNetwork, network) && preparedMinute == State.Minute && preparedHolds == State.PlayerHoldSequence;
+        private bool NetworkPrepared(TrafficNetwork network) => preparedStage == 2 && PreparedFor(network);
         public int NetworkPreparationUpdates { get; private set; }
 
         public bool TryRefreshTrafficClosures(double budgetMilliseconds)
@@ -40,10 +42,10 @@ namespace PersistentCity.Core
             if (!(routes is ITrafficRoutePlanner planner) || planner.TrafficNetwork == null) return true;
             var network = planner.TrafficNetwork;
             if (ReferenceEquals(network, trafficNetwork)) { ForgetPreparedNetwork(); return true; }
-            if (!ReferenceEquals(preparedNetwork, network) || preparedMinute != State.Minute)
+            if (!PreparedFor(network))
             {
                 ForgetPreparedNetwork();
-                preparedNetwork = network; preparedMinute = State.Minute;
+                preparedNetwork = network; preparedMinute = State.Minute; preparedHolds = State.PlayerHoldSequence;
                 networkMinutes.Clear();
             }
             if (preparedStage == 2) return true;

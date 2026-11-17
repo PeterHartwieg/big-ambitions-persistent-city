@@ -178,6 +178,33 @@ public sealed class Gr5NetworkRequeueTests
     }
 
     [Fact]
+    public void APlayerHoldDuringASlicedNetworkSwapKeepsTheHeldRoadEntryLikeAWholeSwap()
+    {
+        var wholePlanner = new SwappablePlanner();
+        var slicedPlanner = new SwappablePlanner();
+        var whole = City(1, 0, wholePlanner);
+        var sliced = City(1, 0, slicedPlanner);
+        string id = whole.State.Citizens[0].Identity.Id;
+        whole.AdvanceTo(1440.5); sliced.AdvanceTo(1440.5);
+        whole.RefreshTrafficClosures(); sliced.RefreshTrafficClosures();
+        wholePlanner.TrafficNetwork = Network(); slicedPlanner.TrafficNetwork = Network();
+        Assert.False(sliced.TryRefreshTrafficClosures(0));
+        Assert.True(sliced.HoldForPlayer(id, 0.25, PlayerHoldCause.PlayerFoot).Applied);
+        Assert.True(whole.HoldForPlayer(id, 0.25, PlayerHoldCause.PlayerFoot).Applied);
+        while (!sliced.TryRefreshTrafficClosures(0)) { }
+        whole.RefreshTrafficClosures();
+        Assert.Equal(SaveCodec.Write(whole.State), SaveCodec.Write(sliced.State));
+        foreach (double minute in new[] { 1442.0, 1442.25, 1443.0, 1446.0, 1460.0 })
+        {
+            whole.AdvanceTo(minute); sliced.AdvanceTo(minute);
+            whole.RefreshTrafficClosures(); sliced.RefreshTrafficClosures();
+            Assert.Equal(whole.State.Citizens[0].Phase, sliced.State.Citizens[0].Phase);
+            Assert.Equal(whole.State.Citizens[0].CompletedJourneys, sliced.State.Citizens[0].CompletedJourneys);
+            Assert.Equal(SaveCodec.Write(whole.State), SaveCodec.Write(sliced.State));
+        }
+    }
+
+    [Fact]
     public void ARigScaleNetworkSwapPreparesAcrossUpdatesWithinTheSliceAndMatchesAWholeSwap()
     {
         var networks = new[] { Road(), Road() };
