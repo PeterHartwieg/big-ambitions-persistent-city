@@ -49,7 +49,10 @@ namespace PersistentCity.Runtime
 
         private void Save()
         {
+            long settling = System.Diagnostics.Stopwatch.GetTimestamp();
+            waitedForPreviousWriter = pendingSave != null && !pendingSave.Resolved;
             BeginSaveHandOff();
+            beforeSaveMilliseconds = (System.Diagnostics.Stopwatch.GetTimestamp() - settling) * MillisecondsPerTimestamp;
             var save = SaveGameManager.Current;
             var result = SaveEpochCallback.Run(saveEpoch, save, save?.modData, saveEpochUnits > 0,
                 CaptureForSave, StopAfterSaveEpochFailure, message => log?.Warn(message));

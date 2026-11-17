@@ -4,7 +4,7 @@ using PersistentCity.Core;
 
 namespace PersistentCity.Persistence
 {
-    internal enum SnapshotSection { Header, Places, Residents, Visitors, Traffic, Food, Research, Vendors, Economy }
+    public enum SnapshotSection { Header, Places, Residents, Visitors, Traffic, Food, Research, Vendors, Economy }
 
     public sealed class SaveSnapshot
     {
@@ -27,25 +27,33 @@ namespace PersistentCity.Persistence
         public int CopiedRoutes { get; }
         internal bool Published { get; set; }
 
-        internal static SaveSnapshot Capture(CityState live, IReadOnlyList<SnapshotSection>? order = null)
+        internal static SaveSnapshot Capture(CityState live, IReadOnlyList<SnapshotSection>? order = null,
+            SaveCostRecorder? cost = null, TrafficKernelState? ownedTraffic = null)
         {
-            var copier = new Copier();
+            var copier = new Copier { OwnedTraffic = ownedTraffic };
             var wire = new CityState();
             var done = new bool[DefaultOrder.Length];
             foreach (var section in order ?? DefaultOrder)
             {
                 if (done[(int)section]) throw new ArgumentException("A snapshot section is captured once.");
                 done[(int)section] = true;
+                long started = cost == null ? 0 : System.Diagnostics.Stopwatch.GetTimestamp();
                 copier.Section(section, live, wire);
+                cost?.CaptureSection(section, System.Diagnostics.Stopwatch.GetTimestamp() - started);
             }
             foreach (bool section in done) if (!section) throw new ArgumentException("A snapshot needs every section.");
+            if (cost != null) cost.SharedTraffic = copier.SharedTraffic;
+            long linking = cost == null ? 0 : System.Diagnostics.Stopwatch.GetTimestamp();
             SaveCodec.LinkWallets(wire);
+            cost?.Charge(SaveCostStep.LinkWallets, System.Diagnostics.Stopwatch.GetTimestamp() - linking);
             return new SaveSnapshot(wire, copier.SharedRoutes, copier.CopiedRoutes);
         }
 
         private sealed class Copier
         {
             public int SharedRoutes, CopiedRoutes;
+            public TrafficKernelState? OwnedTraffic;
+            public bool SharedTraffic;
             private static readonly Func<OpeningWindow, OpeningWindow> WindowCopy = Window;
             private static readonly Func<VisitRecord, VisitRecord> VisitCopy = Visit;
             private static readonly Func<CitizenIdentity, CitizenIdentity> IdentityCopy = Identity;
@@ -76,7 +84,10 @@ namespace PersistentCity.Persistence
                         wire.SourceIdentities = List(live.SourceIdentities, IdentityCopy)!;
                         return;
                     case SnapshotSection.Visitors: Visitors(live, wire); return;
-                    case SnapshotSection.Traffic: wire.Traffic = live.Traffic == null ? null : Traffic(live.Traffic); return;
+                    case SnapshotSection.Traffic:
+                        SharedTraffic = live.Traffic != null && ReferenceEquals(live.Traffic, OwnedTraffic);
+                        wire.Traffic = live.Traffic == null ? null : SharedTraffic ? live.Traffic : Traffic(live.Traffic);
+                        return;
                     case SnapshotSection.Food: wire.Food = live.Food == null ? null : Food(live.Food); return;
                     case SnapshotSection.Research: wire.Research = live.Research?.CopyForSave()!; return;
                     case SnapshotSection.Economy: wire.Economy = SaveCodec.CopyEconomy(live.Economy)!; return;
@@ -204,8 +215,8 @@ namespace PersistentCity.Persistence
                 Definitions = List(t.Definitions, d => new TrafficLinkDefinition { Id = d.Id, Capacity = d.Capacity, FreeFlowMinutes = d.FreeFlowMinutes,
                     HeadwayMinutes = d.HeadwayMinutes, Signal = d.Signal == null ? null : new TrafficSignalSchedule { CycleMinutes = d.Signal.CycleMinutes,
                         GreenStartMinutes = d.Signal.GreenStartMinutes, GreenDurationMinutes = d.Signal.GreenDurationMinutes, PhaseOffsetMinutes = d.Signal.PhaseOffsetMinutes } })!,
-                Links = List(t.Links, l => new TrafficLinkState { LinkId = l.LinkId, Closed = l.Closed, NextDischargeAt = l.NextDischargeAt,
-                    MergeCursor = l.MergeCursor, Vehicles = Values(l.Vehicles)!, WaitingSources = Values(l.WaitingSources)!, IncomingLinks = Values(l.IncomingLinks)! })!,
+                Links = List(t.Links, l => new TrafficLinkState(Values(l.Vehicles)!, Values(l.WaitingSources)!, Values(l.IncomingLinks)!)
+                    { LinkId = l.LinkId, Closed = l.Closed, NextDischargeAt = l.NextDischargeAt, MergeCursor = l.MergeCursor })!,
                 Vehicles = List(t.Vehicles, v => new TrafficVehicleState { VehicleId = v.VehicleId, Order = v.Order,
                     Route = List(v.Route, r => new TrafficRouteLeg { LinkId = r.LinkId, StartNominalMinutes = r.StartNominalMinutes,
                         EndNominalMinutes = r.EndNominalMinutes, FreeFlowMinutes = r.FreeFlowMinutes, StartLinkFraction = r.StartLinkFraction,

@@ -6,10 +6,17 @@ namespace PersistentCity.Persistence
 
     public enum SaveCostSection { Header, Places, Residents, Visitors, Traffic, Food, Economy }
 
+    public enum SaveCostStep { Accounting, Rlo, Physical, FoodMarket, EpochCheck, Vendors, HandOffCheck, Prepare, Outflow, Names, Wallets, LinkWallets }
+
     public sealed class SaveCostRecorder
     {
         public const int PhaseCount = 6;
         public const int SectionCount = 7;
+        public const int StepCount = 12;
+        public const int CaptureSectionCount = 9;
+        private readonly long[] stepTicks = new long[StepCount];
+        private readonly long[] captureTicks = new long[CaptureSectionCount];
+        private long stepStarted;
         private readonly long[] ticks = new long[PhaseCount];
         private readonly long[] sectionTicks = new long[SectionCount];
         private readonly long[] validateTicks = new long[SectionCount];
@@ -24,19 +31,39 @@ namespace PersistentCity.Persistence
             current = SaveCostPhase.Observe; visited = 1;
             for (int i = 0; i < PhaseCount; i++) ticks[i] = 0;
             for (int i = 0; i < SectionCount; i++) sectionTicks[i] = validateTicks[i] = 0;
+            for (int i = 0; i < StepCount; i++) stepTicks[i] = 0;
+            for (int i = 0; i < CaptureSectionCount; i++) captureTicks[i] = 0;
+            SharedTraffic = false;
             section = validating = -1;
             PayloadCharacters = 0; PayloadUtf8Bytes = 0; StreamingRecords = SemanticRecords = -1;
             CountMilliseconds = 0; Success = false; Error = "";
             Sequence++;
-            started = last = Stopwatch.GetTimestamp();
+            started = last = stepStarted = Stopwatch.GetTimestamp();
         }
 
         public void Enter(SaveCostPhase phase)
         {
             long now = Stopwatch.GetTimestamp();
             ticks[(int)current] += now - last;
-            last = now; current = phase; visited |= 1 << (int)phase;
+            last = stepStarted = now; current = phase; visited |= 1 << (int)phase;
         }
+
+        public void Step(SaveCostStep step)
+        {
+            long now = Stopwatch.GetTimestamp();
+            stepTicks[(int)step] += now - stepStarted;
+            stepStarted = now;
+        }
+
+        internal void Charge(SaveCostStep step, long elapsed) => stepTicks[(int)step] += elapsed;
+
+        internal void CaptureSection(SnapshotSection captured, long elapsed) => captureTicks[(int)captured] += elapsed;
+
+        public double StepMilliseconds(SaveCostStep step) => stepTicks[(int)step] * 1000.0 / Stopwatch.Frequency;
+        public long StepTicks(SaveCostStep step) => stepTicks[(int)step];
+        public double CaptureSectionMilliseconds(SnapshotSection captured) => captureTicks[(int)captured] * 1000.0 / Stopwatch.Frequency;
+        public long CaptureSectionTicks(SnapshotSection captured) => captureTicks[(int)captured];
+        public bool SharedTraffic { get; internal set; }
 
         public bool Covered(SaveCostPhase phase) => (visited & (1 << (int)phase)) != 0;
 

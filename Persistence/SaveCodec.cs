@@ -56,12 +56,18 @@ namespace PersistentCity.Persistence
         {
             if (state == null) throw new SaveValidationException("State is null.");
             cost?.Enter(SaveCostPhase.Synchronize);
+            var previousTraffic = state.Traffic;
             state.PrepareForSave();
+            var capturedTraffic = ReferenceEquals(state.Traffic, previousTraffic) ? null : state.Traffic;
+            cost?.Step(SaveCostStep.Prepare);
             InitializeOutflow24(state);
+            cost?.Step(SaveCostStep.Outflow);
             PrepareNames25(state);
+            cost?.Step(SaveCostStep.Names);
             RequireLinkedWallets(state);
+            cost?.Step(SaveCostStep.Wallets);
             cost?.Enter(SaveCostPhase.Capture);
-            return SaveSnapshot.Capture(state, order);
+            return SaveSnapshot.Capture(state, order, cost, capturedTraffic);
         }
 
         public static string Encode(SaveSnapshot snapshot, SaveCostRecorder? cost = null)

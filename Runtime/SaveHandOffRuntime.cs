@@ -18,6 +18,8 @@ namespace PersistentCity.Runtime
         private SaveSpliceOutcome lastSplice;
         private string lastSpliceError = "";
         private long writerCostSequence;
+        private double beforeSaveMilliseconds;
+        private bool waitedForPreviousWriter;
 
         private bool BackgroundSaveAvailable()
         {
@@ -198,6 +200,7 @@ namespace PersistentCity.Runtime
             fallbackReason = lastSaveBackground ? null : fallbackReason,
             acceptedCompressionPatches = NativeSaveHandOff.AcceptedCompressionPatches,
             backgroundSaves, synchronousSaves, settledSaves, splicedSaves, inFlight = pendingSave != null,
+            settlePreviousMs = beforeSaveMilliseconds, waitedForPreviousWriter,
             writer = WriterDiagnostics(),
             compress = splicedSaves == 0 ? null : new
             {

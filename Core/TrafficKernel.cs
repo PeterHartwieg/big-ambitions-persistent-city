@@ -807,18 +807,19 @@ namespace PersistentCity.Core
             int work = 0;
             var state = new TrafficKernelState
             {
-                Clock = Clock, RequestedTime = RequestedTime, NextEventOrder = nextEventOrder, NextVehicleOrder = nextVehicleOrder
+                Clock = Clock, RequestedTime = RequestedTime, NextEventOrder = nextEventOrder, NextVehicleOrder = nextVehicleOrder,
+                Definitions = new List<TrafficLinkDefinition>(orderedLinks.Count), Links = new List<TrafficLinkState>(orderedLinks.Count),
+                Vehicles = new List<TrafficVehicleState>(vehicles.Count), Events = new List<TrafficEventState>(events.Count)
             };
             foreach (Link link in orderedLinks)
             {
                 state.Definitions.Add(CopyDefinition(link.Definition));
                 var queuedIds = new List<string>(link.Queue.Count);
                 foreach (var vehicle in link.Queue) queuedIds.Add(vehicle.VehicleId);
-                state.Links.Add(new TrafficLinkState
+                state.Links.Add(new TrafficLinkState(queuedIds, link.Sources.ToList(), link.Incoming.ToList())
                 {
                     LinkId = link.Definition.Id, Closed = link.State.Closed, NextDischargeAt = link.State.NextDischargeAt,
-                    MergeCursor = link.State.MergeCursor, Vehicles = queuedIds, WaitingSources = link.Sources.ToList(),
-                    IncomingLinks = link.Incoming.ToList()
+                    MergeCursor = link.State.MergeCursor
                 });
                 if (++work % linksPerStep == 0) yield return null;
             }

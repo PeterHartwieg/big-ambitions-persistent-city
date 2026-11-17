@@ -114,13 +114,18 @@ namespace PersistentCity.Core
     }
     public sealed class TrafficLinkState
     {
+        public TrafficLinkState() : this(new List<string>(), new List<string>(), new List<int>()) { }
+        internal TrafficLinkState(List<string> vehicles, List<string> waitingSources, List<int> incomingLinks)
+        {
+            Vehicles = vehicles; WaitingSources = waitingSources; IncomingLinks = incomingLinks;
+        }
         public int LinkId { get; set; }
         public bool Closed { get; set; }
         public double NextDischargeAt { get; set; }
         public int MergeCursor { get; set; } = -1;
-        public List<string> Vehicles { get; set; } = new List<string>();
-        public List<string> WaitingSources { get; set; } = new List<string>();
-        public List<int> IncomingLinks { get; set; } = new List<int>();
+        public List<string> Vehicles { get; set; }
+        public List<string> WaitingSources { get; set; }
+        public List<int> IncomingLinks { get; set; }
     }
     public sealed class TrafficVehicleState
     {
