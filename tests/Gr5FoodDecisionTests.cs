@@ -79,7 +79,7 @@ public sealed class Gr5FoodDecisionTests
         foreach (var s in new[] { GcAllocationSegment.AdvanceEventsFood, GcAllocationSegment.AdvanceEventsCitizen, GcAllocationSegment.AdvanceEventsTraffic, GcAllocationSegment.AdvanceEventsOther })
             output.WriteLine(GcPauseSampler.SegmentName(s) + ": " + calls[(int)s] + " calls, " + Per(s).ToString("0") + " B/call");
         Assert.True(calls[(int)GcAllocationSegment.AdvanceEventsFood] > 300);
-        PerfGate.Under(Per(GcAllocationSegment.AdvanceEventsFood), 1700, "bytes per food continuation (.NET)");
+        PerfGate.Under(Per(GcAllocationSegment.AdvanceEventsFood), 1150, "bytes per food continuation (.NET)");
         PerfGate.Under(Per(GcAllocationSegment.AdvanceEventsCitizen), 2300, "bytes per citizen event (.NET)");
         PerfGate.Under(Per(GcAllocationSegment.AdvanceEventsOther), 1, "bytes per idle advance unit (.NET)");
     }

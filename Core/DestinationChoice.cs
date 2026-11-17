@@ -12,24 +12,35 @@ namespace PersistentCity.Core
             if (maximum < 1 || maximum > 16) throw new ArgumentOutOfRangeException(nameof(maximum));
             uint key = KeyState(choiceKey, seed);
             var ranked = new List<(Place Place, double Score)>(maximum + 1);
-            foreach (var place in places)
-            {
-                if (place.Kind != kind || place.Capacity <= 0) continue;
-                double attraction = Position.Finite(place.AttractionWeight) ? Math.Max(.05, Math.Min(20, place.AttractionWeight)) : 1;
-                double traffic = place.NativeTrafficIndex < 0 ? 1 : 1 + Math.Min(100, place.NativeTrafficIndex) / 100.0;
-                double distance = Position.Distance(origin.Position, place.Position) / 250.0;
-                double uniform = (StableRandom.Finish(StableRandom.Append(key, place.Id)) + 1.0) / (uint.MaxValue + 2.0);
-                double score = -Math.Log(uniform) * (1 + distance) * (1 + distance) / (attraction * traffic);
-                int index = 0;
-                while (index < ranked.Count && (score > ranked[index].Score
-                    || (score == ranked[index].Score && StringComparer.Ordinal.Compare(place.Id, ranked[index].Place.Id) >= 0))) index++;
-                if (index >= maximum) continue;
-                ranked.Insert(index, (place, score));
-                if (ranked.Count > maximum) ranked.RemoveAt(maximum);
-            }
+            foreach (var place in places) Rank(place, origin, kind, key, ranked, maximum);
             var shortlist = new Place[ranked.Count];
             for (int i = 0; i < shortlist.Length; i++) shortlist[i] = ranked[i].Place;
             return shortlist;
+        }
+
+        internal static void Shortlist(List<Place> places, Place origin, PlaceKind kind,
+            string choiceKey, int seed, List<(Place Place, double Score)> ranked, int maximum = 8)
+        {
+            if (maximum < 1 || maximum > 16) throw new ArgumentOutOfRangeException(nameof(maximum));
+            uint key = KeyState(choiceKey, seed);
+            ranked.Clear();
+            for (int i = 0; i < places.Count; i++) Rank(places[i], origin, kind, key, ranked, maximum);
+        }
+
+        private static void Rank(Place place, Place origin, PlaceKind kind, uint key, List<(Place Place, double Score)> ranked, int maximum)
+        {
+            if (place.Kind != kind || place.Capacity <= 0) return;
+            double attraction = Position.Finite(place.AttractionWeight) ? Math.Max(.05, Math.Min(20, place.AttractionWeight)) : 1;
+            double traffic = place.NativeTrafficIndex < 0 ? 1 : 1 + Math.Min(100, place.NativeTrafficIndex) / 100.0;
+            double distance = Position.Distance(origin.Position, place.Position) / 250.0;
+            double uniform = (StableRandom.Finish(StableRandom.Append(key, place.Id)) + 1.0) / (uint.MaxValue + 2.0);
+            double score = -Math.Log(uniform) * (1 + distance) * (1 + distance) / (attraction * traffic);
+            int index = 0;
+            while (index < ranked.Count && (score > ranked[index].Score
+                || (score == ranked[index].Score && StringComparer.Ordinal.Compare(place.Id, ranked[index].Place.Id) >= 0))) index++;
+            if (index >= maximum) return;
+            ranked.Insert(index, (place, score));
+            if (ranked.Count > maximum) ranked.RemoveAt(maximum);
         }
 
         public static string Choose(IEnumerable<Place> places, Place origin, PlaceKind kind,

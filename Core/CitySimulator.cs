@@ -386,8 +386,10 @@ namespace PersistentCity.Core
 
         private sealed class PendingEvent
         {
-            public PendingEvent Start(Due item, CitizenState working, IEnumerator<RouteRequest> steps)
-            { Item = item; Working = working; Steps = steps; Request = null; Job = null; InputLease = false; return this; }
+            public PendingEvent(CitySimulator city) { Stepper = new EventSteps(city); }
+            public PendingEvent Start(Due item, CitizenState working, double now)
+            { Item = item; Working = working; Steps = Stepper.Start(working, now); Request = null; Job = null; InputLease = false; return this; }
+            private readonly EventSteps Stepper;
             public Due Item = null!;
             public CitizenState Working = null!;
             public IEnumerator<RouteRequest> Steps = null!;
@@ -409,8 +411,8 @@ namespace PersistentCity.Core
         private bool RunEvent(Due item, bool inline)
         {
             var working = EventCopy(item.Citizen);
-            var shell = spareEvent ?? new PendingEvent(); spareEvent = null;
-            var evt = shell.Start(item, working, StepEvent(working, item.Minute).GetEnumerator());
+            var shell = spareEvent ?? new PendingEvent(this); spareEvent = null;
+            var evt = shell.Start(item, working, item.Minute);
             try
             {
                 if (routes is IRouteEventInputs inputs) { inputs.BeginRouteEvent(); evt.InputLease = true; }
@@ -714,8 +716,9 @@ namespace PersistentCity.Core
         private RouteRequest CitizenRequest(Place from, Place to, double now, CitizenState person)
             => new RouteRequest(from, to, now, person, person.Preferences);
 
-        private IEnumerable<RouteRequest> StepEvent(CitizenState person, double now)
+        private bool StepBegin(EventSteps s)
         {
+            var person = s.Person; double now = s.Now;
             var planBefore = person.Plan;
             var needPlanning = NeedPlanningNow();
             DayPlanExecutor.Ensure(person, State.Seed, now, State.Places, places, State.Food != null, needPlanning, HouseholdLookup);
@@ -724,18 +727,14 @@ namespace PersistentCity.Core
             person.OptionalStopChoice = null;
             person.OptionalStop = null;
             var outing = BeginMealOuting(person, now);
-            if (outing == MealOutingStep.Handled) yield break;
+            if (outing == MealOutingStep.Handled) return false;
             if (outing == MealOutingStep.NeedsReturnRoute)
             {
-                var returnRequest = new RouteRequest(places[person.PlaceId], places[person.MealOuting!.OriginId], now, null,
+                s.Request = new RouteRequest(places[person.PlaceId], places[person.MealOuting!.OriginId], now, null,
                     food?.ReturnPreferences(person) ?? new TravelPreferences { OwnsCar = false, AllowTransit = false, WalkingToleranceMetres = person.Preferences.WalkingToleranceMetres });
-                yield return returnRequest;
-                FinishMealReturn(person, now, returnRequest.Result);
-                yield break;
+                s.Stage = EventSteps.MealReturn;
+                return true;
             }
-            RoutineSlot? missedArrival = null;
-            bool paidRefusedArrival = false;
-            bool arrived = false;
             if ((person.Phase == CitizenPhase.WaitingForRoute || person.Phase == CitizenPhase.WaitingForOpening)
                 && person.DestinationActivity != Activity.Home && now >= person.ActivityUntilMinute)
                 MissRoutine(person, new RoutineSlot(person.DestinationId, person.DestinationActivity, person.ActivityUntilMinute),
@@ -752,7 +751,7 @@ namespace PersistentCity.Core
                 bool admitted = person.DestinationActivity == Activity.Home
                     || (!closedWorkShift && now >= admissionFrom && now < person.ActivityUntilMinute && DailyRoutine.Open(places[person.PlaceId], now));
                 bool affordable = !admitted || CanAdmitOrdinary(person, person.PlaceId, person.Activity, now);
-                admitted &= affordable; paidRefusedArrival = !affordable;
+                admitted &= affordable; s.PaidRefusedArrival = !affordable;
                 if (admitted)
                 {
                     VisitorSchedules.RecordArrival(person, now, person.PlaceId, person.Activity);
@@ -765,72 +764,105 @@ namespace PersistentCity.Core
                     if (opening.HasValue)
                     {
                         WaitForOpening(person, new RoutineSlot(person.PlaceId, person.Activity, person.ActivityUntilMinute), opening.Value);
-                        yield break;
+                        return false;
                     }
                     MissRoutine(person, new RoutineSlot(person.PlaceId, person.Activity, person.ActivityUntilMinute),
                         now, now >= person.ActivityUntilMinute ? "arrival-after-deadline" : "arrival-no-opening");
-                    missedArrival = new RoutineSlot(person.PlaceId, person.Activity, person.ActivityUntilMinute);
+                    s.MissedArrival = new RoutineSlot(person.PlaceId, person.Activity, person.ActivityUntilMinute);
                 }
                 person.Journey = null;
                 person.DestinationId = "";
                 person.DepartureMinute = 0;
-                arrived = true;
+                s.Arrived = true;
             }
             var candidates = ResidentLifecycle.BeginEmploymentCheck(State, person, now, places, occupancy);
-            if (candidates != null)
-                foreach (var candidate in candidates)
-                {
-                    var probe = WorkplaceProbe(person, candidate);
-                    yield return probe;
-                    if (!ReachableWorkplace(probe)) continue;
-                    ResidentLifecycle.AssignWorkplace(person, candidate);
-                    break;
-                }
+            if (candidates == null) return StepAfterEmployment(s);
+            s.Candidates = candidates.GetEnumerator();
+            return StepNextCandidate(s);
+        }
+
+        private bool StepNextCandidate(EventSteps s)
+        {
+            if (s.Candidates!.MoveNext())
+            {
+                s.Candidate = s.Candidates.Current;
+                s.Request = WorkplaceProbe(s.Person, s.Candidate);
+                s.Stage = EventSteps.Probe;
+                return true;
+            }
+            s.EndCandidates();
+            return StepAfterEmployment(s);
+        }
+
+        private bool StepAfterProbe(EventSteps s)
+        {
+            if (!ReachableWorkplace(s.Request!)) return StepNextCandidate(s);
+            ResidentLifecycle.AssignWorkplace(s.Person, s.Candidate!);
+            s.EndCandidates();
+            return StepAfterEmployment(s);
+        }
+
+        private bool StepAfterEmployment(EventSteps s)
+        {
+            var person = s.Person; double now = s.Now;
             DayPlanExecutor.Ensure(person, State.Seed, now, State.Places, places, State.Food != null, NeedPlanningNow(), HouseholdLookup);
-            if (arrived && person.Activity == Activity.Home && now < person.ActivityUntilMinute)
+            if (s.Arrived && person.Activity == Activity.Home && now < person.ActivityUntilMinute)
             {
                 person.NextEventMinute = HomeEvent(person, person.ActivityUntilMinute, now);
-                yield break;
+                return false;
             }
             if (person.CommutePreparation.PlaceId != person.DayPlaceId)
                 person.CommutePreparation = new CommutePreparation();
-            bool attending = !paidRefusedArrival && person.Phase == CitizenPhase.AtPlace && person.Activity != Activity.Home
+            bool attending = !s.PaidRefusedArrival && person.Phase == CitizenPhase.AtPlace && person.Activity != Activity.Home
                 && !(person.Activity == Activity.Work && person.Accrual.Shift == EmploymentWages.Closed)
                 && now < person.ActivityUntilMinute;
             double? currentClose = attending ? DailyRoutine.NextClose(places[person.PlaceId], now) : null;
             if (attending && currentClose.HasValue)
             {
                 person.NextEventMinute = Math.Min(person.ActivityUntilMinute, currentClose.Value);
-                yield break;
+                return false;
             }
             bool committedWait = (person.Phase == CitizenPhase.WaitingForRoute || person.Phase == CitizenPhase.WaitingForOpening)
                 && person.DestinationId != "" && now < person.ActivityUntilMinute
                 && !(person.DestinationActivity == Activity.Work && person.Accrual.Shift == EmploymentWages.Closed);
             bool homeFallback = IsHomeRoutineFallback(person, now);
-            var slot = committedWait
+            s.Attending = attending; s.CommittedWait = committedWait; s.HomeFallback = homeFallback;
+            s.Slot = committedWait
                 ? new RoutineSlot(person.DestinationId, person.DestinationActivity, person.ActivityUntilMinute)
                 : attending || homeFallback ? new RoutineSlot(person.HomeId, Activity.Home, person.ActivityUntilMinute)
                 : DailyRoutine.At(person, State.Seed, now, State.Places, places.TryGetValue(person.HomeId, out var home) ? home : null, places);
-            Route? commuteRoute = null;
-            bool earlyCommute = false;
-            double commuteAt = double.PositiveInfinity;
-            if (!homeFallback)
+            s.CommuteRoute = null;
+            s.EarlyCommute = false;
+            s.CommuteAt = double.PositiveInfinity;
+            if (homeFallback) return StepAfterCommute(s);
+            var commute = DecideCommute(person, now, allowPlanning: true);
+            if (commute.Plan == CommutePlanPoint.None) return StepApplyCommute(s, commute);
+            s.Commute = commute;
+            s.Request = CitizenRequest(places[person.HomeId], places[commute.Window.PlaceId], now, person);
+            s.Stage = EventSteps.CommuteAnswer;
+            return true;
+        }
+
+        private bool StepCommuteAnswered(EventSteps s)
+        {
+            s.CommuteRoute = ValidatedCommute(s.Request!, s.Person);
+            return StepApplyCommute(s, FinishCommute(s.Person, s.Commute, s.CommuteRoute, s.Now));
+        }
+
+        private bool StepApplyCommute(EventSteps s, CommuteDecision commute)
+        {
+            s.CommuteAt = commute.LeaveAt;
+            if (commute.Prepared && s.Now >= s.CommuteAt)
             {
-                var commute = DecideCommute(person, now, allowPlanning: true);
-                if (commute.Plan != CommutePlanPoint.None)
-                {
-                    var request = CitizenRequest(places[person.HomeId], places[commute.Window.PlaceId], now, person);
-                    yield return request;
-                    commuteRoute = ValidatedCommute(request, person);
-                    commute = FinishCommute(person, commute, commuteRoute, now);
-                }
-                commuteAt = commute.LeaveAt;
-                if (commute.Prepared && now >= commuteAt)
-                {
-                    slot = new RoutineSlot(commute.Window.PlaceId, commute.Window.Activity, commute.Window.EndsAt);
-                    earlyCommute = true;
-                }
+                s.Slot = new RoutineSlot(commute.Window.PlaceId, commute.Window.Activity, commute.Window.EndsAt);
+                s.EarlyCommute = true;
             }
+            return StepAfterCommute(s);
+        }
+
+        private bool StepAfterCommute(EventSteps s)
+        {
+            var person = s.Person; double now = s.Now; var slot = s.Slot;
             if (slot.Activity == Activity.Work)
             {
                 var work = DailyRoutine.WorkOnDay(person, State.Seed, Math.Max(0, slot.EndsAt - 480), places);
@@ -839,26 +871,47 @@ namespace PersistentCity.Core
                 {
                     DayPlanExecutor.Mark(person, slot.Activity, slot.EndsAt, PlanItemState.Missed, PlanMissCause.Closed);
                     ObserveRoutine(person, slot, now, "closed", "workplace-closed");
-                    slot = new RoutineSlot(person.HomeId, Activity.Home, slot.EndsAt);
-                    earlyCommute = false; commuteAt = double.PositiveInfinity;
+                    s.Slot = slot = new RoutineSlot(person.HomeId, Activity.Home, slot.EndsAt);
+                    s.EarlyCommute = false; s.CommuteAt = double.PositiveInfinity;
                 }
             }
-            Route? optionalRoute = null;
-            bool optionalSelected = false;
-            if (!committedWait && !attending && !homeFallback && !earlyCommute
+            s.OptionalRoute = null;
+            s.OptionalSelected = false;
+            if (!s.CommittedWait && !s.Attending && !s.HomeFallback && !s.EarlyCommute
                 && (slot.Activity == Activity.Shop || slot.Activity == Activity.Leisure))
             {
-                var choice = new OptionalChoice(slot);
-                foreach (var request in ChooseOptionalDestination(person, slot, now, choice)) yield return request;
-                optionalSelected = choice.Selected; slot = choice.Slot; optionalRoute = choice.Route;
+                s.Choice.Slot = slot; s.Choice.Route = null; s.Choice.Selected = false;
+                s.Optional = ChooseOptionalDestination(person, slot, now, s.Choice).GetEnumerator();
+                return StepNextOptional(s);
             }
+            return StepAfterOptional(s);
+        }
+
+        private bool StepNextOptional(EventSteps s)
+        {
+            if (s.Optional!.MoveNext())
+            {
+                s.Request = s.Optional.Current;
+                s.Stage = EventSteps.OptionalAnswer;
+                return true;
+            }
+            s.EndOptional();
+            s.OptionalSelected = s.Choice.Selected; s.Slot = s.Choice.Slot; s.OptionalRoute = s.Choice.Route;
+            s.Choice.Route = null;
+            return StepAfterOptional(s);
+        }
+
+        private bool StepAfterOptional(EventSteps s)
+        {
+            var person = s.Person; double now = s.Now; var slot = s.Slot;
             if (!places.TryGetValue(slot.PlaceId, out var destination)) throw new InvalidOperationException("Unknown destination " + slot.PlaceId);
             bool commutingToWork = routes is ICommuteTimingPlanner && person.PlaceId == person.HomeId && person.Journey == null
                 && (slot.Activity == Activity.Work || slot.Activity == Activity.Study) && slot.PlaceId != person.PlaceId;
-            if (!earlyCommute && !commutingToWork && (!optionalSelected || slot.PlaceId == person.PlaceId) && slot.Activity != Activity.Home && !DailyRoutine.Open(destination, now))
+            if (!s.EarlyCommute && !commutingToWork && (!s.OptionalSelected || slot.PlaceId == person.PlaceId) && slot.Activity != Activity.Home && !DailyRoutine.Open(destination, now))
             {
                 bool attendedUntilClosure = person.Phase == CitizenPhase.AtPlace
                     && person.PlaceId == slot.PlaceId && person.Activity == slot.Activity;
+                var missedArrival = s.MissedArrival;
                 bool alreadyMissedArrival = missedArrival.HasValue && missedArrival.Value.PlaceId == slot.PlaceId
                     && missedArrival.Value.Activity == slot.Activity && missedArrival.Value.EndsAt == slot.EndsAt;
                 double? retryAt = !attendedUntilClosure && !alreadyMissedArrival
@@ -866,7 +919,7 @@ namespace PersistentCity.Core
                 if (retryAt.HasValue)
                 {
                     WaitForOpening(person, slot, retryAt.Value);
-                    yield break;
+                    return false;
                 }
                 if (!attendedUntilClosure && !alreadyMissedArrival)
                     MissRoutine(person, slot, now, "no-opening-in-window");
@@ -894,28 +947,30 @@ namespace PersistentCity.Core
                 person.ActivityUntilMinute = slot.Activity == Activity.Home ? slot.EndsAt
                     : Math.Min(slot.EndsAt, DailyRoutine.NextClose(destination, now)!.Value);
                 person.NextEventMinute = ResidentLifecycle.NextHomeEvent(person, person.ActivityUntilMinute, now);
-                if (slot.Activity == Activity.Home && commuteAt > now && commuteAt < person.NextEventMinute) person.NextEventMinute = commuteAt;
-                yield break;
+                if (slot.Activity == Activity.Home && s.CommuteAt > now && s.CommuteAt < person.NextEventMinute) person.NextEventMinute = s.CommuteAt;
+                return false;
             }
             person.DestinationId = slot.PlaceId;
             person.DestinationActivity = slot.Activity;
-            Route? route;
-            if (optionalSelected) route = optionalRoute;
-            else if (earlyCommute) route = commuteRoute;
-            else
-            {
-                var request = CitizenRequest(places[person.PlaceId], destination, now, person);
-                yield return request;
-                route = request.Result;
-            }
+            s.Slot = slot; s.Destination = destination;
+            if (s.OptionalSelected) { StepDepart(s, s.OptionalRoute); return false; }
+            if (s.EarlyCommute) { StepDepart(s, s.CommuteRoute); return false; }
+            s.Request = CitizenRequest(places[person.PlaceId], destination, now, person);
+            s.Stage = EventSteps.RouteAnswer;
+            return true;
+        }
+
+        private void StepDepart(EventSteps s, Route? route)
+        {
+            var person = s.Person; double now = s.Now; var slot = s.Slot;
             if (route == null)
             {
                 ObserveRoutine(person, slot, now, "route-rejected", "unreachable");
                 person.Phase = CitizenPhase.WaitingForRoute;
                 person.NextEventMinute = Math.Min(now + 30, slot.EndsAt);
-                yield break;
+                return;
             }
-            ValidateRoute(route, places[person.PlaceId].Position, destination.Position);
+            ValidateRoute(route, places[person.PlaceId].Position, s.Destination!.Position);
             ValidateCarRoute(route, person);
             person.Phase = CitizenPhase.Travelling;
             person.Journey = route.Commit();

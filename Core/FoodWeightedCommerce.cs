@@ -96,16 +96,21 @@ namespace PersistentCity.Core
         private bool NewChoice(ResidentMeal meal) => meal.Day>=state.ChoiceStartsDay && state.ChoicePolicyVersion==FoodChoicePolicy.Version;
         private ResidentTraits Traits(ResidentMeal meal,CitizenState person) => meal.RepresentedTraits ?? person.Traits!;
 
-        private FoodRoutineStop ChoiceStop(ResidentMeal meal,CitizenState p)
+        private FoodRoutineStop ChoiceStop(ResidentMeal meal,CitizenState p,FoodRoutineStop? into=null)
         {
             if(meal.HostSlot>0) return routineStops[p.Identity.Id];
             double admission=0;
             for(int i=p.RecentVisits.Count-1;i>=0;i--)
                 if(p.RecentVisits[i].PlaceId==p.PlaceId && p.RecentVisits[i].Activity==p.Activity)
                 {admission=p.RecentVisits[i].AtMinute;break;}
-            return new FoodRoutineStop {AnchorId=p.Identity.Id,PlaceId=p.PlaceId,Activity=p.Activity,
-                CapturedAt=admission,DepartureAt=Math.Min(p.NextEventMinute,p.ActivityUntilMinute)};
+            var stop=into ?? new FoodRoutineStop();
+            stop.AnchorId=p.Identity.Id;stop.PlaceId=p.PlaceId;stop.Activity=p.Activity;
+            stop.CapturedAt=admission;stop.DepartureAt=Math.Min(p.NextEventMinute,p.ActivityUntilMinute);
+            return stop;
         }
+        private readonly FoodRoutineStop continuationStop=new FoodRoutineStop();
+        private readonly FoodConsumer quoteConsumer=new FoodConsumer();
+        private TravelPreferences? quotePreferences;
         private static string Context(FoodRoutineStop stop,bool atStop)
         {
             var hash=TextDigest.Begin().Append(stop.PlaceId.Length).Append(':').Append(stop.PlaceId).Append('|')
@@ -139,6 +144,13 @@ namespace PersistentCity.Core
         }
         private TravelPreferences FoodPreferences(double minutes) => new TravelPreferences {
             AllowTransit=false,OwnsCar=false,WalkingToleranceMetres=SearchAllowance(minutes) };
+        private TravelPreferences QuotePreferences(double minutes)
+        {
+            double tolerance=SearchAllowance(minutes);
+            var held=quotePreferences;
+            if(held!=null && !held.AllowTransit && !held.OwnsCar && held.WalkingToleranceMetres==tolerance && held.FareWeightMinutes==2) return held;
+            return quotePreferences=FoodPreferences(minutes);
+        }
         internal TravelPreferences ReturnPreferences(CitizenState person,ResidentMeal? meal=null)
         {
             if(meal==null) records.TryGetValue(person.Identity.Id,out meal);
@@ -304,13 +316,26 @@ namespace PersistentCity.Core
             return list;
         }
 
-        private FoodIntent DecisionIntent(ResidentMeal meal,CitizenState person,FoodDecisionState d,FoodRoutineStop stop)
+        private FoodIntent DecisionIntent(ResidentMeal meal,CitizenState person,FoodDecisionState d,FoodRoutineStop stop,FoodIntent? reuse=null)
         {
-            var intent=new FoodIntent {Id=meal.IntentId,ConsumerId=meal.ResidentId,Day=meal.Day,DesiredAt=meal.DesiredAt,RequestedAt=d.OriginAt,
-                Deadline=d.Deadline,OriginPlaceId=stop.PlaceId,OriginActivity=stop.Activity,EatingMinutes=MealRhythm.EatingMinutes(meal.Kind),
-                MaximumQueueMinutes=MealRhythm.QueueMinutes(meal.Kind,stop.Activity),TimeCostMultiplier=1+Math.Min(1,(d.OriginAt-meal.DesiredAt)/120)};
+            var intent=reuse==null ? new FoodIntent() : FreshIntent(reuse);
+            intent.Id=meal.IntentId;intent.ConsumerId=meal.ResidentId;intent.Day=meal.Day;intent.DesiredAt=meal.DesiredAt;intent.RequestedAt=d.OriginAt;
+            intent.Deadline=d.Deadline;intent.OriginPlaceId=stop.PlaceId;intent.OriginActivity=stop.Activity;intent.EatingMinutes=MealRhythm.EatingMinutes(meal.Kind);
+            intent.MaximumQueueMinutes=MealRhythm.QueueMinutes(meal.Kind,stop.Activity);intent.TimeCostMultiplier=1+Math.Min(1,(d.OriginAt-meal.DesiredAt)/120);
             if(meal.Budget?.HomeFoodFundedDay==meal.Day)
             {intent.OutsideOption=FoodOutsideOption.FundedHouseholdFood;intent.OutsideOptionScoreCents=0;}
+            return intent;
+        }
+        internal static FoodIntent FreshIntent(FoodIntent intent)
+        {
+            if(intent.Choices.Count!=0) throw new InvalidOperationException("A reused food intent still holds choices.");
+            var choices=intent.Choices;
+            intent.Id="";intent.ConsumerId="";intent.Day=0;intent.RequestedAt=0;intent.Deadline=0;intent.Status=default;
+            intent.BusinessId="";intent.ProductId="";intent.ArrivalMinute=null;intent.Spent=default;intent.Outcome="";
+            intent.OriginPlaceId="";intent.OriginActivity=default;intent.ContextEvidence="Fixed daily reference; no activity observation";
+            intent.DesiredAt=0;intent.EatingMinutes=0;intent.MaximumQueueMinutes=0;intent.TimeCostMultiplier=1;intent.ReturnTravelMinutes=null;
+            intent.ServiceEndsAt=null;intent.ReturnBy=null;intent.OutsideOption=default;intent.OutsideOptionScoreCents=null;
+            intent.OutsideOptionEvidence="No outside option modeled";intent.Choices=choices;
             return intent;
         }
 
@@ -319,11 +344,11 @@ namespace PersistentCity.Core
             var d=meal.Decision!;
             if(d.Tuning==null) d.Tuning=FoodDecisionTuning.Capture(ChoiceSettings);
             bool atStop=d.ContextKey.StartsWith("stop:",StringComparison.Ordinal);
-            var stop=ChoiceStop(meal,person);
+            var stop=ChoiceStop(meal,person,continuationStop);
             if(!MatchesStop(stop,d,atStop) || city.State.Minute!=d.OriginAt)
             {EndDecision(meal);Finish(meal,MealStatus.Missed,"Schedule or shop changed before departure");return;}
             var origin=city.FindPlace(stop.PlaceId);
-            var preferences=FoodPreferences(d.Deadline-d.OriginAt);
+            var preferences=QuotePreferences(d.Deadline-d.OriginAt);
             if(d.Result!=FoodDecisionResult.Evaluating) {CommitFoodDecision(meal,person,stop,d,atStop,preferences);return;}
             bool requested=false;
             while(d.QuotesDone<2*d.Shops.Count)
@@ -333,8 +358,8 @@ namespace PersistentCity.Core
                 Route? result=null; FoodQuoteState progress;
                 if(outward)
                 {
-                    var consumer=Consumer(person,AvailableForMeal(meal),meal);
-                    string? rejection=FoodDemand.KnownUnavailable(CapturedBusiness(s),consumer,d.OriginAt,d.Deadline);
+                    quoteConsumer.DailyAllowance=AvailableForMeal(meal);
+                    string? rejection=FoodDemand.KnownUnavailable(CapturedBusiness(s),quoteConsumer,d.OriginAt,d.Deadline);
                     bool impossible=routes is IWalkingTimeBound bound && (s.MealsPerHour>0 || s.AlternativeKind==FoodAlternativeKind.Rival)
                         && d.OriginAt+bound.MinimumWalkingMinutes(origin,shop)+bound.MinimumWalkingMinutes(shop,origin)
                             +s.ServiceMinutes+MealRhythm.EatingMinutes(meal.Kind)>d.Deadline;
@@ -427,7 +452,8 @@ namespace PersistentCity.Core
                     quotes.Add(quote);
                 }
             var consumer=Consumer(person,AvailableForMeal(meal),meal);MealRhythm.Apply(consumer,meal.Kind);
-            var intent=DecisionIntent(meal,person,d,stop);
+            var intent=DecisionIntent(meal,person,d,stop,reuse ? spareIntent : null);
+            if(reuse) recycledIntent=spareIntent=intent;
             var refusals=scratchRefusals;refusals.Clear();
             foreach(var shop in d.Shops)
                 if(shop.OutwardQuote==FoodQuoteState.Refused) refusals[shop.BusinessId]="Unreachable";
@@ -436,7 +462,6 @@ namespace PersistentCity.Core
                     refusals[shop.BusinessId]="Service and return do not fit available time";
             FoodDemand.ChooseObserved(consumer,businesses,quotes,intent,d.OriginAt,refusals,meal.Kind,true,reuse ? spareChoices : null);
             refusals.Clear();
-            if(reuse) recycledIntent=intent;
             rivalSoldOutShops.Clear();
             foreach(var c in intent.Choices)
             {
@@ -453,7 +478,7 @@ namespace PersistentCity.Core
         private readonly Dictionary<string,string> scratchRefusals=new Dictionary<string,string>(StringComparer.Ordinal);
         private readonly List<FoodChoice> spareChoices=new List<FoodChoice>();
         private readonly List<EvaluatedFoodOffer> evaluatedOffers=new List<EvaluatedFoodOffer>();
-        private FoodIntent? recycledIntent;
+        private FoodIntent? recycledIntent,spareIntent;
         private void RecycleChoices()
         {
             var intent=recycledIntent;recycledIntent=null;
