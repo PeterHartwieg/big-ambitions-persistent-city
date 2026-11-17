@@ -508,14 +508,25 @@ namespace PersistentCity.Core
         }
         private void CommitFoodDecision(ResidentMeal meal,CitizenState person,FoodRoutineStop stop,FoodDecisionState d,bool atStop,TravelPreferences preferences)
         {
+            bool sliced=!atStop && routes is IWalkingQuoteValidity;
+            if(sliced && d.Result==FoodDecisionResult.Selected && d.RoutesValidated<2)
+            {
+                var held=ShopById(d.Shops,d.BusinessId);
+                bool outward=d.RoutesValidated==0;
+                if(!ValidateCapturedRoute(city.FindPlace(outward ? stop.PlaceId : held.PlaceId),city.FindPlace(outward ? held.PlaceId : stop.PlaceId),
+                    outward ? held.Outward! : held.Return!,preferences,false))
+                {EndDecision(meal);Finish(meal,MealStatus.Missed,"Schedule or shop changed before departure");return;}
+                d.RoutesValidated++;
+                return;
+            }
             var intent=EvaluateDecision(meal,person,d,stop,out var businesses,out var quotes);
             if(d.Result==FoodDecisionResult.Selected)
             {
                 var shop=ShopById(d.Shops,d.BusinessId);
                 var choice=ChoiceFor(intent.Choices,d.BusinessId,d.ProductId);
                 if(!choice.ScoreCents.HasValue || (shop.AlternativeKind==FoodAlternativeKind.Rival ? !RivalCommitAllowed(meal,shop,choice.Price,d.OriginAt) : market is IFoodBusinessAuthority authority && !authority.CanServe(shop.BusinessId))
-                    || !ValidateCapturedRoute(city.FindPlace(stop.PlaceId),city.FindPlace(shop.PlaceId),shop.Outward!,preferences,atStop)
-                    || !ValidateCapturedRoute(city.FindPlace(shop.PlaceId),city.FindPlace(stop.PlaceId),shop.Return!,preferences,atStop))
+                    || !sliced && (!ValidateCapturedRoute(city.FindPlace(stop.PlaceId),city.FindPlace(shop.PlaceId),shop.Outward!,preferences,atStop)
+                    || !ValidateCapturedRoute(city.FindPlace(shop.PlaceId),city.FindPlace(stop.PlaceId),shop.Return!,preferences,atStop)))
                 {EndDecision(meal);Finish(meal,MealStatus.Missed,"Schedule or shop changed before departure");return;}
                 double stay=choice.ServiceEndsAt!.Value-(d.OriginAt+shop.Outward!.Minutes)+intent.EatingMinutes;
                 if(!atStop && meal.HostSlot==0 && !city.TryBeginMealVisit(person.Identity.Id,shop.PlaceId,shop.Outward,shop.Return!.Minutes,stay,d.Deadline,

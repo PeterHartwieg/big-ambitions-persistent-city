@@ -175,6 +175,7 @@ namespace PersistentCity.Core
         public double OriginAt { get; set; }
         public double Deadline { get; set; }
         public int QuotesDone { get; set; }
+        internal int RoutesValidated { get; set; }
         public List<FoodDecisionShop> Shops { get; set; } = new List<FoodDecisionShop>();
         public bool RouteBearing => Shops.Count > 0;
     }
