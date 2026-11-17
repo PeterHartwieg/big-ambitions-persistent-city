@@ -24,6 +24,8 @@ namespace PersistentCity.Core
             public RoutineSlot Slot;
             public Route? Route;
             public bool Selected;
+            public readonly List<Place> Candidates = new List<Place>(9);
+            public readonly List<(Place Place, double Score)> Ranked = new List<(Place Place, double Score)>(9);
         }
 
         private IEnumerable<RouteRequest> ChooseOptionalDestination(CitizenState person, RoutineSlot proposed, double now, OptionalChoice choice)
@@ -40,11 +42,13 @@ namespace PersistentCity.Core
                 ObserveRoutine(person,proposed,now,"weather-declined","captured-rain");
                 yield break;
             }
-            var candidates = new List<Place>();
+            var candidates = choice.Candidates; candidates.Clear();
             if (places.TryGetValue(proposed.PlaceId, out var preferred) && preferred.Kind == kind && preferred.Capacity > 0)
                 candidates.Add(preferred);
-            foreach (var candidate in DestinationChoice.Shortlist(optionalPlaces, origin, kind, key, State.Seed))
-                if (candidate.Id != proposed.PlaceId && candidates.Count < 8) candidates.Add(candidate);
+            DestinationChoice.Shortlist(optionalPlaces, origin, kind, key, State.Seed, choice.Ranked);
+            foreach (var ranked in choice.Ranked)
+                if (ranked.Place.Id != proposed.PlaceId && candidates.Count < 8) candidates.Add(ranked.Place);
+            choice.Ranked.Clear();
             int routeCalls = 0;
             double stay = MinimumOptionalStay(proposed.Activity);
             var cause = PlanMissCause.None;

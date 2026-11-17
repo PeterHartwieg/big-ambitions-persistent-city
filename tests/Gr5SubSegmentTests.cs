@@ -174,6 +174,30 @@ namespace PersistentCity.Tests
         }
 
         [Fact]
+        public void ClockRetimeWorkIsChargedToRetimeNotToTheRouteRebuild()
+        {
+            var sampler = new GcPauseSampler(64);
+            sampler.Start(1);
+            var recorder = sampler.FrameRecorder;
+            recorder.Arm(1000);
+            recorder.Begin(1, 0, 0, 0);
+            recorder.Charge(GcAllocationSegment.ModOptionalStops, 1, 100, 0);
+            recorder.Detail(GcAllocationSegment.ModRoutesRetime, 200, 5_000_100, 0);
+            recorder.Detail(GcAllocationSegment.ModRoutesRebuild, 201, 5_000_164, 0);
+            recorder.Detail(GcAllocationSegment.ModRoutesSpeeds, 202, 5_000_164, 0);
+            recorder.Detail(GcAllocationSegment.ModRoutesNodes, 203, 5_000_164, 0);
+            recorder.Detail(GcAllocationSegment.ModRoutesSweep, 204, 5_000_164, 0);
+            recorder.Charge(GcAllocationSegment.ModRoutes, 205, 5_000_164, 0);
+            recorder.End(206, 5_000_164, 0, sampler);
+            Assert.Equal(5_000_000, sampler.SegmentBytes(GcAllocationSegment.ModRoutesRetime));
+            Assert.Equal(64, sampler.SegmentBytes(GcAllocationSegment.ModRoutesRebuild));
+            Assert.Equal(5_000_064, sampler.SegmentBytes(GcAllocationSegment.ModRoutes));
+            Assert.Equal(GcAllocationSegment.ModRoutes, GcPauseSampler.SubParent(GcAllocationSegment.ModRoutesRetime));
+            Assert.Equal((int)GcAllocationSegment.ModRoutesRetime, recorder.Top(0).Sub);
+            Assert.Contains("\"sub\":\"mod_routes_retime\"", recorder.ReportJson());
+        }
+
+        [Fact]
         public void ModSubSegmentsReachTheSamplerThroughTheFrameRecorder()
         {
             var sampler = new GcPauseSampler(64);

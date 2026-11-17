@@ -363,6 +363,7 @@ namespace PersistentCity.Runtime
                     }
                     WaitForRetime(); return;
                 }
+                ModFrames.Detail(GcAllocationSegment.ModRoutesRetime);
                 long prepareStarted = Stopwatch.GetTimestamp();
                 bool prepared = routes == null || routes.Prepare();
                 if (routes != null && routes.LastDiscoveryGateChange.Length > 0)
@@ -615,7 +616,7 @@ namespace PersistentCity.Runtime
         private static string Milliseconds(double value) => value.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture);
         private void WaitForRetime()
         {
-            ModFrames.Detail(GcAllocationSegment.ModRoutesRebuild);
+            ModFrames.Detail(GcAllocationSegment.ModRoutesRetime);
             ModFrames.Charge(GcAllocationSegment.ModRoutes);
             waitingFrames++;
             inspector.Suspend();
