@@ -319,7 +319,7 @@ namespace PersistentCity.Core
         private FoodIntent DecisionIntent(ResidentMeal meal,CitizenState person,FoodDecisionState d,FoodRoutineStop stop,FoodIntent? reuse=null)
         {
             var intent=reuse==null ? new FoodIntent() : FreshIntent(reuse);
-            intent.Id=meal.IntentId;intent.ConsumerId=meal.ResidentId;intent.Day=meal.Day;intent.DesiredAt=meal.DesiredAt;intent.RequestedAt=d.OriginAt;
+            intent.Id=d.IntentId??meal.IntentId;intent.ConsumerId=meal.ResidentId;intent.Day=meal.Day;intent.DesiredAt=meal.DesiredAt;intent.RequestedAt=d.OriginAt;
             intent.Deadline=d.Deadline;intent.OriginPlaceId=stop.PlaceId;intent.OriginActivity=stop.Activity;intent.EatingMinutes=MealRhythm.EatingMinutes(meal.Kind);
             intent.MaximumQueueMinutes=MealRhythm.QueueMinutes(meal.Kind,stop.Activity);intent.TimeCostMultiplier=1+Math.Min(1,(d.OriginAt-meal.DesiredAt)/120);
             if(meal.Budget?.HomeFoodFundedDay==meal.Day)
@@ -395,14 +395,14 @@ namespace PersistentCity.Core
                 if(!c.ScoreCents.HasValue) continue;
                 var b=BusinessById(businesses,c.BusinessId);
                 var heldShop=ShopById(d.Shops,c.BusinessId);
-                var ticket=CandidateTicket(meal,person,heldShop,c.ProductId,c.Price,allowance);
+                var ticket=CandidateTotal(meal,person,heldShop,c.ProductId,c.Price,allowance);
                 double queue=Math.Max(0,b.NextServiceMinute-c.AdmissionMinute!.Value);
                 var dynamic=HeldDynamic(heldShop,c.ProductId);
                 evaluated.Add(new EvaluatedFoodOffer(c.BusinessId,c.ProductId,c.Price,c.TravelMinutes!.Value,queue,
                     c.ServiceEndsAt!.Value-d.OriginAt+c.ReturnMinutes!.Value+intent.EatingMinutes,d.Deadline-d.OriginAt,
                     c.CustomerServicePercent,c.DistrictDemandPercent,meal.Kind,heldShop.MemoryContribution,heldShop.AlternativeWeight,
                     dynamic.HasValue ? dynamic.Value.TasteBand : FoodMenuPolicy.Code(c.ProductId)>3 ? FoodMenuPolicy.Taste(city.State.Seed,meal.ResidentId,FoodMenuPolicy.Code(c.ProductId)) : -1,
-                    campaignActive: d.Awareness?.CampaignActive(c.BusinessId)==true, ticket: ticket?.Total, metadata: dynamic));
+                    campaignActive: d.Awareness?.CampaignActive(c.BusinessId)==true, ticket: ticket, metadata: dynamic));
             }
             long choiceStarted=city.ObservingFood ? System.Diagnostics.Stopwatch.GetTimestamp() : 0;
             var pick=FoodChoicePolicy.Select(evaluated,Traits(meal,person),allowance,Draw(meal,d),d.Tuning.Settings,intent.OutsideOption!=FoodOutsideOption.None,d.WeatherTravelMultiplier);
@@ -441,13 +441,14 @@ namespace PersistentCity.Core
             foreach(var s in d.Shops) businesses.Add(CapturedBusiness(s));
             for(int i=0;i<d.Shops.Count;i++)
                 if(d.Shops[i].AlternativeKind==FoodAlternativeKind.Rival) businesses[i].NextServiceMinute=RivalNextService(d.Shops[i],d.OriginAt);
+            string intentId=d.IntentId??meal.IntentId;
             foreach(var s in d.Shops)
                 if(s.Outward!=null && s.Return!=null)
                 {
                     FoodTravelQuote quote;
                     if(reuse && spareQuotes.Count>0) {quote=spareQuotes[spareQuotes.Count-1];spareQuotes.RemoveAt(spareQuotes.Count-1);}
                     else quote=new FoodTravelQuote();
-                    quote.BusinessId=s.BusinessId;quote.ConsumerId=meal.ResidentId;quote.IntentId=meal.IntentId;quote.OriginPlaceId=stop.PlaceId;
+                    quote.BusinessId=s.BusinessId;quote.ConsumerId=meal.ResidentId;quote.IntentId=intentId;quote.OriginPlaceId=stop.PlaceId;
                     quote.Minutes=s.Outward.Minutes;quote.ReturnMinutes=s.Return.Minutes;quote.Evidence="Captured complete walking paths";
                     quotes.Add(quote);
                 }

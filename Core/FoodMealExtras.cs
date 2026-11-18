@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 
 namespace PersistentCity.Core
 {
@@ -65,45 +64,96 @@ namespace PersistentCity.Core
         public static FoodMealTicket Plan(int seed, string consumerId, int day, MealKind kind, string businessId,
             FoodTicketLine main, IEnumerable<FoodExtraOffer> menu, Money allowance)
         {
-            var liked = new List<(FoodExtraOffer Offer, FoodExtraBand Band, double Rank)>();
-            var seen = new HashSet<string>(StringComparer.Ordinal) { main.ProductId };
-            uint prefix = Prefix(seed, consumerId, day, kind, businessId, main.ProductId);
-            foreach (var offer in menu)
-            {
-                if (!seen.Add(offer.ProductId) || offer.Price <= Money.Zero || offer.Units.HasValue && offer.Units.Value <= 0) continue;
-                var band = Band(main.Price, offer.Price);
-                double chance = Chance(band, offer.TasteBand);
-                if (chance <= 0 || Uniform(prefix, "like", offer.ProductId) >= chance) continue;
-                double weight = TasteRatios[Math.Max(0, Math.Min(ResidentTraits.MaximumBand, offer.TasteBand))];
-                liked.Add((offer, band, -Math.Log(1 - Uniform(prefix, "order", offer.ProductId)) / weight));
-            }
-            liked.Sort((a, b) =>
-            {
-                int c = a.Band.CompareTo(b.Band);
-                if (c == 0) c = a.Rank.CompareTo(b.Rank);
-                return c != 0 ? c : StringComparer.Ordinal.Compare(a.Offer.ProductId, b.Offer.ProductId);
-            });
             var extras = new List<FoodTicketLine>(MaximumExtras);
-            var total = main.Price;
-            foreach (var (offer, _, _) in liked)
-            {
-                if (extras.Count == MaximumExtras) break;
-                if (!Money.TryAdd(total, offer.Price, out var next) || next > allowance) continue;
-                total = next; extras.Add(new FoodTicketLine(offer.ProductId, offer.Price));
-            }
+            Choose(seed, consumerId, day, kind, businessId, main, Listed(menu), allowance, extras);
             return new FoodMealTicket(businessId, main, extras);
+        }
+
+        internal static Money PlanTotal(int seed, string consumerId, int day, MealKind kind, string businessId,
+            FoodTicketLine main, List<FoodExtraOffer> menu, Money allowance)
+            => Choose(seed, consumerId, day, kind, businessId, main, menu, allowance, null);
+
+        [ThreadStatic] private static List<FoodExtraOffer>? menuScratch;
+        [ThreadStatic] private static List<(FoodExtraOffer Offer, FoodExtraBand Band, double Rank)>? likedScratch;
+        [ThreadStatic] private static List<string>? seenScratch;
+
+        private static readonly Comparison<(FoodExtraOffer Offer, FoodExtraBand Band, double Rank)> LikedOrder = (a, b) =>
+        {
+            int c = a.Band.CompareTo(b.Band);
+            if (c == 0) c = a.Rank.CompareTo(b.Rank);
+            return c != 0 ? c : StringComparer.Ordinal.Compare(a.Offer.ProductId, b.Offer.ProductId);
+        };
+
+        private static List<FoodExtraOffer> Listed(IEnumerable<FoodExtraOffer> menu)
+        {
+            if (menu is List<FoodExtraOffer> list) return list;
+            var copy = menuScratch ??= new List<FoodExtraOffer>();
+            copy.Clear();
+            foreach (var offer in menu) copy.Add(offer);
+            return copy;
+        }
+
+        private static bool Seen(List<string> seen, string product)
+        {
+            for (int i = 0; i < seen.Count; i++) if (string.Equals(seen[i], product, StringComparison.Ordinal)) return true;
+            seen.Add(product);
+            return false;
+        }
+
+        private static Money Choose(int seed, string consumerId, int day, MealKind kind, string businessId,
+            FoodTicketLine main, List<FoodExtraOffer> menu, Money allowance, List<FoodTicketLine>? extras)
+        {
+            var liked = likedScratch ??= new List<(FoodExtraOffer Offer, FoodExtraBand Band, double Rank)>();
+            var seen = seenScratch ??= new List<string>();
+            liked.Clear(); seen.Clear(); seen.Add(main.ProductId);
+            try
+            {
+                uint prefix = Prefix(seed, consumerId, day, kind, businessId, main.ProductId);
+                for (int i = 0; i < menu.Count; i++)
+                {
+                    var offer = menu[i];
+                    if (Seen(seen, offer.ProductId) || offer.Price <= Money.Zero || offer.Units.HasValue && offer.Units.Value <= 0) continue;
+                    var band = Band(main.Price, offer.Price);
+                    double chance = Chance(band, offer.TasteBand);
+                    if (chance <= 0 || Uniform(prefix, "like", offer.ProductId) >= chance) continue;
+                    double weight = TasteRatios[Math.Max(0, Math.Min(ResidentTraits.MaximumBand, offer.TasteBand))];
+                    liked.Add((offer, band, -Math.Log(1 - Uniform(prefix, "order", offer.ProductId)) / weight));
+                }
+                liked.Sort(LikedOrder);
+                var total = main.Price;
+                int taken = 0;
+                for (int i = 0; i < liked.Count; i++)
+                {
+                    if (taken == MaximumExtras) break;
+                    var offer = liked[i].Offer;
+                    if (!Money.TryAdd(total, offer.Price, out var next) || next > allowance) continue;
+                    total = next; taken++;
+                    extras?.Add(new FoodTicketLine(offer.ProductId, offer.Price));
+                }
+                return total;
+            }
+            finally { liked.Clear(); seen.Clear(); }
         }
 
         private static uint Prefix(int seed, string consumer, int day, MealKind kind, string business, string main)
         {
             uint h = StableRandom.Append(StableRandom.Begin(seed), "pc:food-extra:v1");
-            h = Field(h, consumer); h = Field(h, day.ToString(CultureInfo.InvariantCulture));
-            h = Field(h, ((int)kind).ToString(CultureInfo.InvariantCulture)); h = Field(h, business);
+            h = Field(h, consumer); h = Field(h, day);
+            h = Field(h, (int)kind); h = Field(h, business);
             return Field(h, main);
         }
         private static double Uniform(uint prefix, string purpose, string product)
             => StableRandom.Finish(Field(Field(prefix, purpose), product)) / 4294967296.0;
         private static uint Field(uint h, string s)
             => StableRandom.Append(StableRandom.Append(StableRandom.AppendDecimal(StableRandom.Append(h, '|'), s.Length), ':'), s);
+        private static uint Field(uint h, int value)
+            => StableRandom.AppendDecimal(StableRandom.Append(StableRandom.AppendDecimal(StableRandom.Append(h, '|'), DecimalLength(value)), ':'), value);
+        private static int DecimalLength(int value)
+        {
+            uint magnitude = value < 0 ? unchecked((uint)(-(long)value)) : (uint)value;
+            int length = value < 0 ? 2 : 1;
+            while (magnitude >= 10) { magnitude /= 10; length++; }
+            return length;
+        }
     }
 }

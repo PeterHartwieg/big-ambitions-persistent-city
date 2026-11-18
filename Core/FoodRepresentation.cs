@@ -223,7 +223,7 @@ namespace PersistentCity.Core
         private static Route CopyWalkingRoute(Route source)
         {
             var copy = new Route(new RouteLegs(source.Legs.Count));
-            foreach (var leg in source.Legs) copy.Legs.Add(new RouteLeg {
+            foreach (var leg in source.Legs) copy.Legs.Add(leg.Frozen ? leg : new RouteLeg {
                 From = leg.From, To = leg.To, Minutes = leg.Minutes, Mode = leg.Mode, ServiceId = leg.ServiceId });
             return copy;
         }

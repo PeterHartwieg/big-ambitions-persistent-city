@@ -117,10 +117,8 @@ namespace PerfUnionProbe
         internal static long shimTicks, shimMultiplied;
         private static bool shimInstalled;
 
-        public static bool Isolated() => Environment.GetCommandLineArgs().Contains("-agent-tests") && Environment.GetCommandLineArgs().Contains("-rig-test")
-            && Application.productName == "Big Ambitions Agent Tests"
-            && string.Equals(Application.persistentDataPath.Replace('\\', '/'),
-                (Environment.GetFolderPath(Environment.SpecialFolder.UserProfile) + "/AppData/LocalLow/Hovgaard Games/Big Ambitions Agent Tests").Replace('\\', '/'), StringComparison.OrdinalIgnoreCase);
+        public static bool Isolated() => RigProfile.Isolated(Environment.GetCommandLineArgs(), Application.productName, Application.persistentDataPath,
+            Environment.GetFolderPath(Environment.SpecialFolder.UserProfile));
         private static void Require(bool condition, string code) { if (!condition) throw new InvalidOperationException(code); }
         private static bool FtCity() => SaveGameManager.Current?.SaveGameName?.StartsWith("FT", StringComparison.Ordinal) == true;
         private static void Guard()

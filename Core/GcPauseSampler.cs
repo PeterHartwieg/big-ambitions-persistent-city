@@ -118,6 +118,7 @@ namespace PersistentCity.Core
         private readonly float[] frameMs;
         private readonly float[] modMs;
         private readonly bool[] collected;
+        private double[] spreadScratch = Array.Empty<double>();
         private readonly long[] collections = new long[Generations];
         private int stored;
         private long heapBeforeSum, heapAfterSum, heapPairs;
@@ -368,18 +369,21 @@ namespace PersistentCity.Core
             int count = 0;
             for (int i = 0; i < stored; i++) if (collected[i] == withCollection) count++;
             if (count == 0) return new GcSpread(0, 0, 0, 0);
-            var values = new double[count];
+            if (spreadScratch.Length < count) spreadScratch = new double[stored];
+            var values = spreadScratch;
             int at = 0;
             for (int i = 0; i < stored; i++) if (collected[i] == withCollection) values[at++] = Math.Max(0, source[i] - baseline - (less == null ? 0 : less[i]));
-            Array.Sort(values);
-            return new GcSpread(count, Rank(values, .50), Rank(values, .95), values[count - 1]);
+            Array.Sort(values, 0, count);
+            return new GcSpread(count, Rank(values, count, .50), Rank(values, count, .95), values[count - 1]);
         }
 
-        internal static double Rank(double[] sorted, double fraction)
+        internal static double Rank(double[] sorted, int count, double fraction)
         {
-            int index = (int)Math.Ceiling(fraction * sorted.Length) - 1;
-            return sorted[Math.Max(0, Math.Min(sorted.Length - 1, index))];
+            int index = (int)Math.Ceiling(fraction * count) - 1;
+            return sorted[Math.Max(0, Math.Min(count - 1, index))];
         }
+
+        public long SpreadScratchBytes => (long)spreadScratch.Length * sizeof(double);
 
         public string ReportJson(GcReportContext context)
         {

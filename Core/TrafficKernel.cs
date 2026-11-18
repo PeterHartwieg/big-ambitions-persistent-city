@@ -25,6 +25,7 @@ namespace PersistentCity.Core
             internal readonly SortedIds Incoming = new SortedIds();
             internal TrafficEventState Event => linkEvent ??= new TrafficEventState { LinkId = Definition.Id };
             internal int HeapIndex = -1;
+            internal bool Seen;
             internal bool Scheduled => HeapIndex >= 0;
             internal Link(TrafficLinkDefinition definition) { Definition = definition; }
         }
@@ -998,15 +999,17 @@ namespace PersistentCity.Core
                 TrafficVehicleState copy = CopyVehicle(vehicle, route);
                 kernel.vehicles.Add(vehicle.VehicleId, copy);
             }
-            var seenLinks = new HashSet<int>(linkSource?.orderedLinks.Count ?? state.Links.Count);
+            var seenLinks = linkSource == null ? new HashSet<int>(state.Links.Count) : null;
+            int seenCount = 0;
             var occupied = new HashSet<string>(state.Vehicles.Count, StringComparer.Ordinal);
             if (linkSource != null)
                 foreach (Link original in linkSource.orderedLinks)
                 {
                     int linkId = original.Definition.Id;
-                    if (!kernel.links.TryGetValue(linkId, out Link? link) || !seenLinks.Add(linkId) || original.Queue.Count > link.Definition.Capacity ||
+                    if (!kernel.links.TryGetValue(linkId, out Link? link) || link.Seen || original.Queue.Count > link.Definition.Capacity ||
                         (original.MergeCursor >= 0 && !kernel.links.ContainsKey(original.MergeCursor)))
                         throw new ArgumentException("Invalid traffic link state.", nameof(state));
+                    link.Seen = true; seenCount++;
                     double discharge = linkSource.Clock + Math.Max(0, original.NextDischargeAt - linkSource.Clock) * dischargeFactor;
                     RequireTime(discharge, nameof(state));
                     link.Closed = original.Closed;
@@ -1034,7 +1037,7 @@ namespace PersistentCity.Core
                 }
             else foreach (TrafficLinkState saved in state.Links)
             {
-                if (saved == null || !kernel.links.TryGetValue(saved.LinkId, out Link? link) || !seenLinks.Add(saved.LinkId) ||
+                if (saved == null || !kernel.links.TryGetValue(saved.LinkId, out Link? link) || !seenLinks!.Add(saved.LinkId) ||
                     saved.Vehicles == null || saved.WaitingSources == null || saved.IncomingLinks == null ||
                     saved.Vehicles.Count > link.Definition.Capacity || saved.MergeCursor < -1 ||
                     (saved.MergeCursor >= 0 && !kernel.links.ContainsKey(saved.MergeCursor)))
@@ -1063,7 +1066,7 @@ namespace PersistentCity.Core
                 }
                 if (++work % linksPerStep == 0) yield return null;
             }
-            if (seenLinks.Count != kernel.links.Count || occupied.Count != kernel.vehicles.Values.Count(v => !v.Completed))
+            if ((seenLinks?.Count ?? seenCount) != kernel.links.Count || occupied.Count != kernel.vehicles.Values.Count(v => !v.Completed))
                 throw new ArgumentException("Traffic occupancy is incomplete.", nameof(state));
             foreach (TrafficVehicleState vehicle in kernel.vehicles.Values)
                 for (int i = 1; i < vehicle.Route.Count; i++)
