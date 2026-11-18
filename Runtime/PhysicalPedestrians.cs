@@ -306,8 +306,15 @@ namespace PersistentCity.Runtime
         {
             if (hierarchySized) return;
             hierarchySized = true;
-            int wanted = parent.hierarchyCount + Math.Max(0, ceiling - all.Count) * body.hierarchyCount;
+            int wanted = BodyHierarchy.Capacity(parent.hierarchyCount, SubtreeCount(body), Math.Max(0, ceiling - all.Count - 1));
             if (parent.hierarchyCapacity < wanted) parent.hierarchyCapacity = wanted;
+        }
+
+        private static int SubtreeCount(Transform body)
+        {
+            int count = 1;
+            for (int i = 0; i < body.childCount; i++) count += SubtreeCount(body.GetChild(i));
+            return count;
         }
 
         private void Dress(AppearanceSetter appearance, CitizenIdentity identity, int daysPerYear)

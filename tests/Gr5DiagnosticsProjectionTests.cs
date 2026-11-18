@@ -186,5 +186,22 @@ public sealed class Gr5DiagnosticsProjectionTests
         Assert.Contains("\" ms grow start max/\"", pedestrians);
         Assert.Contains("\" ms grow finish max\";", pedestrians);
         Assert.Contains("SizeHierarchy(character.transform);", pedestrians);
+        Assert.Contains("BodyHierarchy.Capacity(parent.hierarchyCount, SubtreeCount(body), Math.Max(0, ceiling - all.Count - 1))", pedestrians);
+        Assert.DoesNotContain("body.hierarchyCount", pedestrians);
+    }
+
+    [Fact]
+    public void TheBodyRootIsSizedFromOneBodySubtreeNotFromTheSharedHierarchy()
+    {
+        const int body = 150, ceiling = 128;
+        Assert.Equal(2 + body + (ceiling - 1) * body, BodyHierarchy.Capacity(2 + body, body, ceiling - 1));
+        int adopted = 60, rootAfterReserve = 2 + (adopted + 1) * body;
+        int wanted = BodyHierarchy.Capacity(rootAfterReserve, body, ceiling - adopted - 1);
+        Assert.Equal(2 + ceiling * body, wanted);
+        Assert.True(wanted < 2 * (2 + ceiling * body), "sizing after a reserve adoption stays at one body ceiling");
+        Assert.Equal(rootAfterReserve, BodyHierarchy.Capacity(rootAfterReserve, body, 0));
+        Assert.Equal(int.MaxValue, BodyHierarchy.Capacity(int.MaxValue - 1, body, ceiling));
+        Assert.Throws<ArgumentOutOfRangeException>(() => BodyHierarchy.Capacity(10, 0, 1));
+        Assert.Throws<ArgumentOutOfRangeException>(() => BodyHierarchy.Capacity(10, 1, -1));
     }
 }
