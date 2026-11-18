@@ -9,6 +9,7 @@ namespace PerfUnionProbe
     {
         private readonly Dictionary<MethodBase, byte[]> state;
         private readonly Dictionary<MethodBase, byte[]> seen = new Dictionary<MethodBase, byte[]>();
+        private readonly Dictionary<MethodBase, byte[]> scanning = new Dictionary<MethodBase, byte[]>();
 
         public PatchStateWatch(Dictionary<MethodBase, byte[]> state) { this.state = state ?? throw new ArgumentNullException(nameof(state)); }
 
@@ -22,14 +23,23 @@ namespace PerfUnionProbe
         public long Checks { get; private set; }
         public long Changes { get; private set; }
 
-        public void Capture()
+        public void BeginScan()
         {
             lock (state)
             {
-                seen.Clear();
-                foreach (var pair in state) seen.Add(pair.Key, pair.Value);
+                scanning.Clear();
+                foreach (var pair in state) scanning.Add(pair.Key, pair.Value);
             }
         }
+
+        public void CommitScan()
+        {
+            seen.Clear();
+            foreach (var pair in scanning) seen.Add(pair.Key, pair.Value);
+            scanning.Clear();
+        }
+
+        public void Capture() { BeginScan(); CommitScan(); }
 
         public bool Changed()
         {

@@ -189,6 +189,7 @@ namespace PerfUnionProbe
             string requested = (string)args["mode"];
             Require(requested == "candidate" || requested == "reference", "f4b_mode_candidate_or_reference_required");
             Disarm();
+            ReadMonoHeap(out armHeapBefore, out armUsedBefore); armHeapAfter = armUsedAfter = -1;
             armThread = Thread.CurrentThread.ManagedThreadId; offMainCallbacks = 0; error = "";
             save = SaveGameManager.Current;
             pc = AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault(a => a.GetName().Name == "PersistentCity");
@@ -223,6 +224,7 @@ namespace PerfUnionProbe
                 SceneManager.sceneLoaded += SceneLoaded; SceneManager.sceneUnloaded += SceneUnloaded;
                 GlobalEvents.onSaveGame += SaveObserved; eventsSubscribed = true;
                 mode = requested; armed = true; stopReason = "armed";
+                ReadMonoHeap(out armHeapAfter, out armUsedAfter);
             }
             catch { Disarm(); throw; }
         }
@@ -339,10 +341,11 @@ namespace PerfUnionProbe
         private static void ScanPatches()
         {
             if (coverage == null) return;
-            patchWatch?.Capture();
+            patchWatch?.BeginScan();
             var observed = new List<ObservedPatch>();
             foreach (var target in Harmony.GetAllPatchedMethods().ToArray()) HarmonyScan.Observe(target, Harmony.GetPatchInfo(target), pc, observed);
             coverage.Observe(observed);
+            patchWatch?.CommitScan();
         }
 
         private static bool CoverageComplete() => coverage != null && coverage.Complete && bindings.All(b => b.Status != "unbindable");
@@ -511,6 +514,7 @@ namespace PerfUnionProbe
         }
 
         private static long monoHeapStart = -1, monoUsedStart = -1, monoHeapStop = -1, monoUsedStop = -1;
+        private static long armHeapBefore = -1, armUsedBefore = -1, armHeapAfter = -1, armUsedAfter = -1;
 
         private static void ReadMonoHeap(out long heap, out long used)
         {
@@ -526,10 +530,10 @@ namespace PerfUnionProbe
             Require(label.Length <= 64 && label.All(ch => char.IsLetterOrDigit(ch) || ch == '-' || ch == '_' || ch == '.'), "f4b_invalid_window_label");
             window = label; error = ""; stopReason = "measuring";
             frameRing.Reset(); tickRing.Reset(); sampleRing.Reset(); callCount = 0; callDropped = sampleFailures = advanceCalls = 0;
+            ReadMonoHeap(out monoHeapStart, out monoUsedStart); monoHeapStop = monoUsedStop = -1;
             Rescan(true); unexpectedAtWindowStart = coverage?.Unexpected.Count ?? 0; patchSetChanged = false;
             crossFrame = timedExceptions = 0; unknownScopeCalls = 0; totalSaves = totalSceneEvents = 0;
             union.ResetAll();
-            ReadMonoHeap(out monoHeapStart, out monoUsedStart); monoHeapStop = monoUsedStop = -1;
             long now = Stopwatch.GetTimestamp();
             currentFrame = firstMeasureFrame = Time.frameCount; frameStartQpc = now; nextDiagnosticQpc = now;
             observerTicks = boundaryTicks = 0; frameDiagnostic = true;
@@ -539,12 +543,12 @@ namespace PerfUnionProbe
         private static void StopMeasurement(string reason, bool writeStopFrame = true)
         {
             if (!measuring) return;
+            ReadMonoHeap(out monoHeapStop, out monoUsedStop);
             if (reason == "explicit-stop") Rescan(true);
             long now = Stopwatch.GetTimestamp();
             if (writeStopFrame && currentFrame > firstMeasureFrame) { frameDiagnostic = true; WriteFrame(currentFrame + 1, now, true); }
             if (pendingWindowStart) pendingWindowStart = false;
             else holds.EndWindow(currentFrame, now);
-            ReadMonoHeap(out monoHeapStop, out monoUsedStop);
             measuring = false; stopReason = reason;
         }
 
@@ -613,7 +617,9 @@ namespace PerfUnionProbe
                 ["unknown_scope_calls"] = unknownScopeCalls, ["union_underflows"] = union.Underflows, ["components_outside_union"] = union.ComponentsOutsideUnion,
                 ["saves_in_window"] = totalSaves, ["scene_events_in_window"] = totalSceneEvents,
                 ["mono_heap"] = new JObject { ["start_bytes"] = monoHeapStart, ["start_used_bytes"] = monoUsedStart, ["stop_bytes"] = monoHeapStop, ["stop_used_bytes"] = monoUsedStop,
-                    ["now_bytes"] = MonoHeapNow(true), ["now_used_bytes"] = MonoHeapNow(false), ["qualification"] = "Profiler Mono heap size and used size at window start, stop and read time; no forced collection." },
+                    ["now_bytes"] = MonoHeapNow(true), ["now_used_bytes"] = MonoHeapNow(false), ["arm_before_bytes"] = armHeapBefore, ["arm_before_used_bytes"] = armUsedBefore,
+                    ["arm_after_bytes"] = armHeapAfter, ["arm_after_used_bytes"] = armUsedAfter, ["frame_components_bytes"] = (long)frameComponents.Length * sizeof(float),
+                    ["qualification"] = "Profiler Mono heap size and used size before and after arm, at window start before the forced patch scan, at stop before the forced patch scan, and at read time; no forced collection." },
                 ["boundary_source"] = boundarySource, ["probe_patches_installed"] = Harmony.HasAnyPatches(PatchId), ["player_loop_entry"] = LoopEntryPresent(), ["stopwatch_frequency"] = Stopwatch.Frequency, ["stopwatch_high_resolution"] = Stopwatch.IsHighResolution,
                 ["harmony_version"] = typeof(Harmony).Assembly.GetName().Version?.ToString(),
                 ["limits"] = "Mod work is the nested union of every timed Persistent City scope. The union includes nested probe cost; observerMs measures only part of it. "

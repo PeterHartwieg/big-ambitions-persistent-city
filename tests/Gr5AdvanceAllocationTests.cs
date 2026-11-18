@@ -244,6 +244,43 @@ public sealed class Gr5AdvanceAllocationTests
         Assert.Equal(Reference, hash);
     }
 
+    [Fact]
+    public void ARepeatRetimeWindowStaysUnderItsMeasuredBytesPerCall()
+    {
+        var (state, city, planner) = City();
+        while (!city.AdvanceTo(Start - 30, 256).CaughtUp) { }
+        Run(city, planner, Start - 30, Start, null);
+        var driver = new ClockRetimeDriver();
+        long retime = 0;
+        foreach (double rate in new[] { 2.0, 1.0 })
+        {
+            long before = GC.GetAllocatedBytesForCurrentThread();
+            while (true)
+            {
+                var outcome = driver.Update(state, rate, false, WalkMetresPerMinute / 60, 4);
+                Assert.NotEqual(ClockRetimeOutcome.Restarted, outcome);
+                if (outcome != ClockRetimeOutcome.Committed) continue;
+                var rebuild = city.BeginRebuildRoutes(planner, driver.TakeRetimedTraffic());
+                while (!rebuild.Step(0)) { }
+                city = rebuild.Result!;
+                break;
+            }
+            if (rate == 1.0) retime = GC.GetAllocatedBytesForCurrentThread() - before;
+        }
+        Assert.Equal(1.0, state.TravelClockRate);
+        var window = new Window();
+        Run(city, planner, Start, Start + 240, window);
+        Print("repeat-15:30", window);
+        output.WriteLine("repeat-15:30 retime 2->1 " + retime + " B, window total with retime " + (window.Total + retime) + " B (.NET)");
+        Assert.True(window.Per(GcAllocationSegment.AdvanceEventsFood) < 650, "food bytes per call " + window.Per(GcAllocationSegment.AdvanceEventsFood));
+        Assert.True(window.Per(GcAllocationSegment.AdvanceEventsCitizen) < 1000, "citizen bytes per call " + window.Per(GcAllocationSegment.AdvanceEventsCitizen));
+        Assert.True(window.Per(GcAllocationSegment.AdvanceEventsRouteBegin) < 650, "route begin bytes per call " + window.Per(GcAllocationSegment.AdvanceEventsRouteBegin));
+        Assert.True(window.Per(GcAllocationSegment.AdvancePlanningFinish) < 600, "planning finish bytes per call " + window.Per(GcAllocationSegment.AdvancePlanningFinish));
+        Assert.True(window.Per(GcAllocationSegment.AdvancePlanningSlice) < 2, "planning slice bytes per call " + window.Per(GcAllocationSegment.AdvancePlanningSlice));
+        Assert.True(window.Per(GcAllocationSegment.AdvanceEventsOther) < 1, "idle bytes per call " + window.Per(GcAllocationSegment.AdvanceEventsOther));
+        Assert.True(retime < 3_400_000, "retime bytes " + retime);
+    }
+
     private sealed class Types : EventListener
     {
         public readonly Dictionary<(GcAllocationSegment, string), long> Bytes = new Dictionary<(GcAllocationSegment, string), long>();

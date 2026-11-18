@@ -368,12 +368,33 @@ internal static class Program
         state.Remove(methods[5]); state[typeof(int).GetMethods()[0]] = new byte[16];
         Check(watch.Changed(), "one method removed and another added at the same count is a change");
         watch.Capture();
+        state[methods[9]] = new byte[16];
+        int attempts = 0, published = 0;
+        void Rescan(bool fail)
+        {
+            if (!watch.Changed()) return;
+            attempts++;
+            watch.BeginScan();
+            try { if (fail) throw new InvalidOperationException("scan failed"); published++; watch.CommitScan(); }
+            catch (InvalidOperationException) { }
+        }
+        Rescan(true);
+        Check(attempts == 1 && published == 0 && watch.Changed(), "a scan that failed leaves the change pending");
+        Rescan(false);
+        Check(attempts == 2 && published == 1 && !watch.Changed(), "the next periodic check retries with identical Harmony state and publishes");
+        state[methods[11]] = new byte[16];
+        watch.Changed(); watch.BeginScan();
+        state[methods[12]] = new byte[16];
+        watch.CommitScan();
+        Check(watch.Changed(), "a patch change during a scan triggers a follow-up scan");
+        watch.Capture();
+        long checksBefore = watch.Checks, changesBefore = watch.Changes;
         for (int i = 0; i < 64; i++) watch.Changed();
         long before = GC.GetAllocatedBytesForCurrentThread();
         for (int i = 0; i < 600; i++) watch.Changed();
         long bytes = GC.GetAllocatedBytesForCurrentThread() - before;
         Check(bytes == 0, "600 unchanged checks over 600 patched methods allocate nothing after warm-up (" + bytes + " B)");
-        Check(watch.Checks == 64 + 600 + 6 && watch.Changes == 4, "checks and changes are counted (" + watch.Checks + "/" + watch.Changes + ")");
+        Check(watch.Checks - checksBefore == 64 + 600 && watch.Changes == changesBefore, "unchanged checks are counted and are not changes (" + watch.Checks + "/" + watch.Changes + ")");
 
         var infos = Enumerable.Range(0, 600).Select(i => NewPatches(new[] { NewPatch("a" + i) }, new[] { NewPatch("b" + i) }, new HarmonyLib.Patch[0],
             new HarmonyLib.Patch[0], new HarmonyLib.Patch[0], new HarmonyLib.Patch[0])).ToArray();
