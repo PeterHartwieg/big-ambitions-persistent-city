@@ -368,24 +368,23 @@ internal static class Program
         state.Remove(methods[5]); state[typeof(int).GetMethods()[0]] = new byte[16];
         Check(watch.Changed(), "one method removed and another added at the same count is a change");
         watch.Capture();
-        state[methods[9]] = new byte[16];
         int attempts = 0, published = 0;
-        void Rescan(bool fail)
-        {
-            if (!watch.Changed()) return;
-            attempts++;
-            watch.BeginScan();
-            try { if (fail) throw new InvalidOperationException("scan failed"); published++; watch.CommitScan(); }
-            catch (InvalidOperationException) { }
-        }
-        Rescan(true);
-        Check(attempts == 1 && published == 0 && watch.Changed(), "a scan that failed leaves the change pending");
-        Rescan(false);
-        Check(attempts == 2 && published == 1 && !watch.Changed(), "the next periodic check retries with identical Harmony state and publishes");
+        bool failNext = false;
+        void Attempt() { attempts++; if (failNext) { failNext = false; throw new InvalidOperationException("scan failed"); } published++; }
+        bool Periodic() { try { return PatchStateWatch.Run(watch, false, Attempt); } catch (InvalidOperationException) { return true; } }
+        Check(!Periodic() && attempts == 0, "an unchanged periodic check runs no scan");
+        failNext = true;
+        try { PatchStateWatch.Run(watch, true, Attempt); } catch (InvalidOperationException) { }
+        Check(attempts == 1 && published == 0 && watch.Pending, "a forced start scan that fails against an unchanged snapshot stays pending");
+        Check(Periodic() && attempts == 2 && published == 1 && !watch.Pending, "the next periodic check retries it with identical Harmony state");
+        Check(!Periodic() && attempts == 2, "after publishing, an unchanged check runs no scan");
+        state[methods[9]] = new byte[16];
+        failNext = true;
+        Periodic();
+        Check(attempts == 3 && published == 1 && watch.Pending, "a periodic scan that fails after a patch change stays pending");
+        Check(Periodic() && attempts == 4 && published == 2, "and is retried on the next periodic check");
         state[methods[11]] = new byte[16];
-        watch.Changed(); watch.BeginScan();
-        state[methods[12]] = new byte[16];
-        watch.CommitScan();
+        PatchStateWatch.Run(watch, false, () => { Attempt(); state[methods[12]] = new byte[16]; });
         Check(watch.Changed(), "a patch change during a scan triggers a follow-up scan");
         watch.Capture();
         long checksBefore = watch.Checks, changesBefore = watch.Changes;

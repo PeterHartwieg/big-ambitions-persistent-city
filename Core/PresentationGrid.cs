@@ -32,7 +32,7 @@ namespace PersistentCity.Core
             public int K { get; }
         }
 
-        private readonly Func<string, Position?>? placePosition;
+        private Func<string, Position?>? placePosition;
         private readonly Dictionary<CitizenState, Entry> entries = new Dictionary<CitizenState, Entry>();
         private readonly Dictionary<long, List<Slot>> cells = new Dictionary<long, List<Slot>>();
         private readonly List<Entry> unplaced = new List<Entry>();
@@ -43,6 +43,8 @@ namespace PersistentCity.Core
         private int slotCount;
 
         public PresentationGrid(Func<string, Position?>? placePosition = null) => this.placePosition = placePosition;
+
+        internal void Rebind(Func<string, Position?>? position) => placePosition = position;
 
         public int Count => entries.Count;
         public int Unplaced => unplaced.Count;

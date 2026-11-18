@@ -20,11 +20,24 @@ namespace PerfUnionProbe
             return field?.GetValue(null) is Dictionary<MethodBase, byte[]> state ? new PatchStateWatch(state) : null;
         }
 
+        private bool pending;
+
+        public static bool Run(PatchStateWatch watch, bool full, Action scan)
+        {
+            if (watch != null && !full && !watch.pending && !watch.Changed()) return false;
+            watch?.BeginScan();
+            scan();
+            watch?.CommitScan();
+            return true;
+        }
+
+        public bool Pending => pending;
         public long Checks { get; private set; }
         public long Changes { get; private set; }
 
         public void BeginScan()
         {
+            pending = true;
             lock (state)
             {
                 scanning.Clear();
@@ -37,6 +50,7 @@ namespace PerfUnionProbe
             seen.Clear();
             foreach (var pair in scanning) seen.Add(pair.Key, pair.Value);
             scanning.Clear();
+            pending = false;
         }
 
         public void Capture() { BeginScan(); CommitScan(); }

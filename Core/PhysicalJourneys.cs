@@ -428,9 +428,19 @@ namespace PersistentCity.Core
         private readonly List<CitizenState> eligible = new List<CitizenState>();
         private readonly List<CitizenState> withheld = new List<CitizenState>();
         private readonly Dictionary<CitizenState, int> positions = new Dictionary<CitizenState, int>();
-        private readonly PresentationGrid grid;
+        private PresentationGrid grid;
+        private readonly Func<string, Position?>? placePosition;
 
-        public ActiveJourneyIndex(Func<string, Position?>? placePosition = null) => grid = new PresentationGrid(placePosition);
+        public ActiveJourneyIndex(Func<string, Position?>? placePosition = null) { this.placePosition = placePosition; grid = new PresentationGrid(placePosition); }
+
+        internal void AdoptGrid(ActiveJourneyIndex source)
+        {
+            if (ReferenceEquals(source, this)) return;
+            Clear(); source.Clear();
+            var spare = grid;
+            grid = source.grid; grid.Rebind(placePosition);
+            source.grid = spare; spare.Rebind(source.placePosition);
+        }
 
         public static bool Member(CitizenState c)
             => c.Phase == CitizenPhase.Travelling || c.Phase == CitizenPhase.WaitingForOpening

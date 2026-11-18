@@ -167,6 +167,8 @@ public sealed class Gr5AdvanceAllocationTests
     internal sealed class Window
     {
         public readonly long[] Bytes = new long[GcPauseSampler.Segments], Calls = new long[GcPauseSampler.Segments];
+        public readonly double[] Slowest = new double[GcPauseSampler.Segments];
+        public long CollectedCalls;
         public long PlannerBytes;
         public double Per(GcAllocationSegment s) => Calls[(int)s] == 0 ? 0 : Bytes[(int)s] / (double)Calls[(int)s];
         public long Total => Reported.Sum(s => Bytes[(int)s]);
@@ -180,6 +182,8 @@ public sealed class Gr5AdvanceAllocationTests
             for (int unit = 0; unit < 64; unit++)
             {
                 long plannerBefore = planner.PlannerBytes;
+                int collections = GC.CollectionCount(0);
+                long started = System.Diagnostics.Stopwatch.GetTimestamp();
                 long before = GC.GetAllocatedBytesForCurrentThread();
                 GcAllocationSegment kind;
                 bool stop = false;
@@ -197,7 +201,13 @@ public sealed class Gr5AdvanceAllocationTests
                     stop = result.CaughtUp;
                 }
                 long used = GC.GetAllocatedBytesForCurrentThread() - before - (planner.PlannerBytes - plannerBefore);
-                if (window != null) { window.Bytes[(int)kind] += used; window.Calls[(int)kind]++; window.PlannerBytes += planner.PlannerBytes - plannerBefore; }
+                double elapsed = (System.Diagnostics.Stopwatch.GetTimestamp() - started) * 1000.0 / System.Diagnostics.Stopwatch.Frequency;
+                if (window != null)
+                {
+                    window.Bytes[(int)kind] += used; window.Calls[(int)kind]++; window.PlannerBytes += planner.PlannerBytes - plannerBefore;
+                    if (GC.CollectionCount(0) != collections) window.CollectedCalls++;
+                    else window.Slowest[(int)kind] = Math.Max(window.Slowest[(int)kind], elapsed);
+                }
                 if (stop) break;
             }
             city.SynchronizeSnapshot();
@@ -272,13 +282,20 @@ public sealed class Gr5AdvanceAllocationTests
         Run(city, planner, Start, Start + 240, window);
         Print("repeat-15:30", window);
         output.WriteLine("repeat-15:30 retime 2->1 " + retime + " B, window total with retime " + (window.Total + retime) + " B (.NET)");
+        foreach (var kind in Reported)
+            output.WriteLine("repeat-15:30 slowest " + GcPauseSampler.SegmentName(kind) + " call without a collection " + window.Slowest[(int)kind].ToString("0.000") + " ms (.NET Debug)");
+        output.WriteLine("repeat-15:30 calls containing a test-process collection, not timed: " + window.CollectedCalls);
         Assert.True(window.Per(GcAllocationSegment.AdvanceEventsFood) < 650, "food bytes per call " + window.Per(GcAllocationSegment.AdvanceEventsFood));
         Assert.True(window.Per(GcAllocationSegment.AdvanceEventsCitizen) < 1000, "citizen bytes per call " + window.Per(GcAllocationSegment.AdvanceEventsCitizen));
         Assert.True(window.Per(GcAllocationSegment.AdvanceEventsRouteBegin) < 650, "route begin bytes per call " + window.Per(GcAllocationSegment.AdvanceEventsRouteBegin));
-        Assert.True(window.Per(GcAllocationSegment.AdvancePlanningFinish) < 600, "planning finish bytes per call " + window.Per(GcAllocationSegment.AdvancePlanningFinish));
+        Assert.True(window.Per(GcAllocationSegment.AdvancePlanningFinish) < 110, "planning finish bytes per call " + window.Per(GcAllocationSegment.AdvancePlanningFinish));
         Assert.True(window.Per(GcAllocationSegment.AdvancePlanningSlice) < 2, "planning slice bytes per call " + window.Per(GcAllocationSegment.AdvancePlanningSlice));
         Assert.True(window.Per(GcAllocationSegment.AdvanceEventsOther) < 1, "idle bytes per call " + window.Per(GcAllocationSegment.AdvanceEventsOther));
         Assert.True(retime < 3_400_000, "retime bytes " + retime);
+        Assert.True(window.Total + retime < 26_000_000, "repeat window bytes with retime " + (window.Total + retime));
+        PerfGate.Under(window.Slowest[(int)GcAllocationSegment.AdvanceEventsFood], 4, "slowest food event call");
+        PerfGate.Under(window.Slowest[(int)GcAllocationSegment.AdvancePlanningFinish], 4, "slowest planning finish call");
+        PerfGate.Under(window.Slowest[(int)GcAllocationSegment.AdvanceEventsCitizen], 4, "slowest citizen event call");
     }
 
     private sealed class Types : EventListener

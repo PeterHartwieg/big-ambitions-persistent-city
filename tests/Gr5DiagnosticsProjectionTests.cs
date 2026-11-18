@@ -182,6 +182,16 @@ public sealed class Gr5DiagnosticsProjectionTests
         string probe = System.IO.File.ReadAllText(System.IO.Path.Combine(root, "tools", "perf-union-probe", "Probe.cs"));
         Assert.Contains("[\"mono_heap\"] = new JObject { [\"start_bytes\"] = monoHeapStart", probe);
         Assert.Contains("ReadMonoHeap(out monoHeapStop, out monoUsedStop);", probe);
+        int heap = probe.IndexOf("if (action == \"heap\") return Wrap(Status(), Heap());", StringComparison.Ordinal);
+        int armedGate = probe.IndexOf("Require(armed, \"f4b_not_armed\");", StringComparison.Ordinal);
+        Assert.True(heap > 0 && armedGate > heap, "the forced-collection heap read is available before arm");
+        int scanBefore = probe.IndexOf("ReadMonoHeap(out startScanHeap, out startScanUsed);", StringComparison.Ordinal);
+        int startScan = probe.IndexOf("Rescan(true); unexpectedAtWindowStart", StringComparison.Ordinal);
+        int start = probe.IndexOf("ReadMonoHeap(out monoHeapStart, out monoUsedStart);", StringComparison.Ordinal);
+        Assert.True(scanBefore > 0 && startScan > scanBefore && start > startScan, "the window baseline is read after the forced start scan, which is bracketed");
+        int stop = probe.IndexOf("ReadMonoHeap(out monoHeapStop, out monoUsedStop);", StringComparison.Ordinal);
+        int stopScan = probe.IndexOf("if (reason == \"explicit-stop\") Rescan(true);", StringComparison.Ordinal);
+        Assert.True(stop > 0 && stopScan > stop, "the stop reading precedes the forced stop scan");
         string pedestrians = System.IO.File.ReadAllText(System.IO.Path.Combine(root, "Runtime", "PhysicalPedestrians.cs"));
         Assert.Contains("\" ms grow start max/\"", pedestrians);
         Assert.Contains("\" ms grow finish max\";", pedestrians);

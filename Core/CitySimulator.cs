@@ -231,6 +231,7 @@ namespace PersistentCity.Core
                 }
             }
             yield return false;
+            if (source != null) activeJourneys.AdoptGrid(source.activeJourneys);
             activeJourneys.Clear();
             for (int i = 0; i < state.Citizens.Count + state.VisitorRoutines.Count; i++)
             {
