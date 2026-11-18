@@ -30,7 +30,27 @@ public sealed class Gr5OwnedMemoryTests
         Assert.Contains("owned.Remove(combiner!);", releaseBody);
         Assert.Contains("combiner.resultMergeGameObject", releaseBody);
         Assert.Contains("Object.Destroy(mesh);", releaseBody);
-        Assert.Contains("mergedMeshes.Add(combined);", merge);
+        Assert.Contains("mergedMeshes.Remove(combiner!);", releaseBody);
+        int keyed = merge.IndexOf("mergedMeshes[combiner] = combined;", StringComparison.Ordinal);
+        Assert.True(keyed > 0, "a redress replaces the combiner's previous mesh instead of adding another");
+        Assert.True(keyed < merge.IndexOf("Fast++;", keyed, StringComparison.Ordinal), "only a finished merge is tracked, so Discard never leaves an entry");
+        Assert.DoesNotContain("HashSet<Mesh>", merge);
+        Assert.Contains("PruneMeshes();\n            if (hooked", merge.Replace("\r", ""));
+    }
+
+    [Fact]
+    public void ASaveDuringTheStagedRebuildFinishesTheRebuildBeforeAnyMarketCompletion()
+    {
+        string mod = Source("Runtime", "PersistentCityMod.cs");
+        int capture = mod.IndexOf("private SaveEpochCapture CaptureSteps(", StringComparison.Ordinal);
+        int finish = mod.IndexOf("if (routeRebuild != null) FinishRouteRebuild(routeRebuild);", capture, StringComparison.Ordinal);
+        Assert.True(finish > capture);
+        Assert.True(finish < mod.IndexOf("BeginAccountingObservations()", capture, StringComparison.Ordinal));
+        Assert.True(finish < mod.IndexOf("CompleteCampaignsForSave()", capture, StringComparison.Ordinal));
+        int helper = mod.IndexOf("private void FinishRouteRebuild(RouteRebuild rebuild)", StringComparison.Ordinal);
+        string body = mod.Substring(helper, mod.IndexOf("private void WaitForRetime()", helper, StringComparison.Ordinal) - helper);
+        Assert.Contains("rebuild.Step(long.MaxValue)", body);
+        Assert.Contains("vendorMarket?.Rebind(simulation);", body);
     }
 
     [Fact]

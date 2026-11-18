@@ -58,6 +58,7 @@ namespace PersistentCity.Runtime
         public static void Install()
         {
             owned.RemoveWhere(combiner => combiner == null);
+            PruneMeshes();
             if (hooked || LastError.Length != 0) return;
             try
             {
@@ -77,10 +78,10 @@ namespace PersistentCity.Runtime
 
         public static void Own(SkinnedMeshCombiner? combiner) { if (combiner != null) owned.Add(combiner); }
 
-        public static void Forget(SkinnedMeshCombiner? combiner) { if (!ReferenceEquals(combiner, null)) owned.Remove(combiner!); }
+        public static void Forget(SkinnedMeshCombiner? combiner) { if (!ReferenceEquals(combiner, null)) { owned.Remove(combiner!); mergedMeshes.Remove(combiner!); } }
 
-        private static readonly HashSet<Mesh> mergedMeshes = new HashSet<Mesh>();
-        private static readonly Predicate<Mesh> Destroyed = mesh => mesh == null;
+        private static readonly Dictionary<SkinnedMeshCombiner, Mesh> mergedMeshes = new Dictionary<SkinnedMeshCombiner, Mesh>();
+        private static readonly List<SkinnedMeshCombiner> stale = new List<SkinnedMeshCombiner>();
         public static long ReleasedMeshes { get; private set; }
         public static long ReleasedVertices { get; private set; }
 
@@ -88,23 +89,30 @@ namespace PersistentCity.Runtime
         {
             if (ReferenceEquals(combiner, null)) return;
             owned.Remove(combiner!);
+            mergedMeshes.Remove(combiner!);
             if (combiner == null) return;
             var result = combiner.resultMergeGameObject;
             if (result == null) return;
             var renderer = result.GetComponent<SkinnedMeshRenderer>();
             var mesh = renderer != null ? renderer.sharedMesh : null;
             if (mesh == null) return;
-            mergedMeshes.Remove(mesh);
             ReleasedMeshes++; ReleasedVertices += mesh.vertexCount;
             Object.Destroy(mesh);
         }
 
         public static int LiveMeshes(out long vertices)
         {
-            mergedMeshes.RemoveWhere(Destroyed);
+            PruneMeshes();
             vertices = 0;
-            foreach (var mesh in mergedMeshes) vertices += mesh.vertexCount;
+            foreach (var mesh in mergedMeshes.Values) vertices += mesh.vertexCount;
             return mergedMeshes.Count;
+        }
+
+        private static void PruneMeshes()
+        {
+            foreach (var pair in mergedMeshes) if (pair.Key == null || pair.Value == null) stale.Add(pair.Key!);
+            foreach (var combiner in stale) mergedMeshes.Remove(combiner);
+            stale.Clear();
         }
 
         private static bool MergePrefix(SkinnedMeshCombiner __instance)
@@ -258,7 +266,6 @@ namespace PersistentCity.Runtime
                 combined.CombineMeshes(final, mergeSubMeshes: false);
                 DestroyGroups();
                 combined.RecalculateBounds();
-                mergedMeshes.Add(combined);
                 result = new GameObject(combiner.nameOfThisMerge);
                 result.transform.SetParent(root);
                 var merged = result.AddComponent<SkinnedMeshRenderer>();
@@ -285,6 +292,7 @@ namespace PersistentCity.Runtime
                 combiner.resultMergeGameObject = result;
                 combiner.resultMergeOriginalGameObjects = originals;
                 if (combiner.onCombineMeshs != null) combiner.onCombineMeshs.Invoke();
+                mergedMeshes[combiner] = combined;
                 Fast++;
             }
             catch (Exception error)

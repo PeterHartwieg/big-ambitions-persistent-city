@@ -633,7 +633,12 @@ namespace PersistentCity.Runtime
             long deadline = rebuildOvershoot.Deadline(Stopwatch.GetTimestamp(), frameBudget.Exclusive(UpdateCityClock.Elapsed(), ClockRetimeStages.SliceMilliseconds));
             bool done = rebuild.Step(deadline);
             rebuildOvershoot.Observe(deadline, Stopwatch.GetTimestamp());
-            if (!done) return;
+            if (done) FinishRouteRebuild(rebuild);
+        }
+
+        private void FinishRouteRebuild(RouteRebuild rebuild)
+        {
+            if (!rebuild.Step(long.MaxValue)) throw new InvalidOperationException("The route rebuild did not finish.");
             routeRebuild = null;
             simulation = rebuild.Result!;
             vendorMarket?.Rebind(simulation);
@@ -921,6 +926,7 @@ namespace PersistentCity.Runtime
 
         private SaveEpochCapture CaptureSteps(SaveEpochTicket ticket, SaveCostRecorder? cost)
         {
+            if (routeRebuild != null) FinishRouteRebuild(routeRebuild);
             if (!BeginAccountingObservations()) return SaveEpochCapture.Refused("Accounting observations could not begin before saving.");
             cost?.Step(SaveCostStep.Accounting);
             var source = ReadRlo("save");
