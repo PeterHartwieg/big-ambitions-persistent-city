@@ -25,6 +25,9 @@ SECTION_2 = {
     ('ResidentInspector', 'UiRaycastPrefix'),
     ('ResearchBilling', 'RunDailyPostfix'), ('ResearchAgencyDialog', 'CampaignSettingsPostfix'),
 }
+LATER_PATCHES = {('BodyMerge', 'MergePrefix'), ('NativeSalePath', 'DeferRefillWhileSelling'),
+                 ('NativeSaveHandOff', 'CompressPrefix'), ('NativeSaveHandOff', 'SavePrefix'), ('NativeSaveHandOff', 'SavePostfix')}
+LATER_MESSAGES = {('PopulationRuntime', 'OnDestroy'), ('PopulationRuntime', 'LateUpdate'), ('PopulationRuntime', 'OnApplicationQuit')}
 SECTION_2_MESSAGES = {('PopulationRuntime', 'Update'), ('PopulationRuntime', 'OnGUI'),
                       ('PhysicalPedestrianCrosswalk', 'OnTriggerEnter'), ('PhysicalPedestrianCrosswalk', 'OnTriggerExit')}
 DECISION_5_COMPONENTS = {'AdvancePopulation', 'Prepare', 'RefreshOptionalStops', 'RefreshTrafficClosures', 'Update', 'UpdateInspector',
@@ -143,13 +146,106 @@ class CheckScopesTests(unittest.TestCase):
     def test_fails_on_a_second_registration_inside_a_helper(self):
         with SourceCopy() as src:
             src.edit('Runtime/NativeFoodOwnership.cs',
-                     'private static void Patch(Type type, string method, string prefix) => patches.Patch(AccessTools.Method(type, method),',
-                     'private static void Patch(Type type, string method, string prefix) { patches.Patch(AccessTools.Method(type, method), '
-                     'prefix: new HarmonyMethod(typeof(NativeFoodOwnership), prefix) { priority = Priority.First }); patches.Patch(AccessTools.Method(type, method),')
-            src.edit('Runtime/NativeFoodOwnership.cs', 'prefix: new HarmonyMethod(typeof(NativeFoodOwnership), prefix) { priority = Priority.First });\n',
-                     'prefix: new HarmonyMethod(typeof(NativeFoodOwnership), prefix) { priority = Priority.First }); }\n')
+                     'private static void Patch(Type type, string method, string patch, bool postfix = false) => patches.Patch(',
+                     'private static void Patch(Type type, string method, string patch, bool postfix = false) { patches.Patch(NativeFoodContract.AuthorityTarget(type, method), '
+                     'prefix: new HarmonyMethod(typeof(NativeFoodOwnership), patch)); patches.Patch(')
+            src.edit('Runtime/NativeFoodOwnership.cs', 'postfix: postfix ? new HarmonyMethod(typeof(NativeFoodOwnership), patch) : null);',
+                     'postfix: postfix ? new HarmonyMethod(typeof(NativeFoodOwnership), patch) : null); }')
             problems = src.problems()
         self.assertTrue(any('unsupported helper Patch shape' in p for p in problems), problems)
+
+    def test_conditional_helper_selects_the_kind_per_call(self):
+        rows = [r for r in check_scopes.scan(REPO)[1]['patches'] if r[2] == 'NativeFoodOwnership']
+        self.assertIn(('persistentcity.food-authority', 'Postfix', 'NativeFoodOwnership', 'AfterNativeTick', 'GameManager.RunMainGameTick',
+                       'Runtime/NativeFoodOwnership.cs'), rows)
+        self.assertIn(('persistentcity.food-authority', 'Prefix', 'NativeFoodOwnership', 'ResetRegistration', 'BuildingRegistration.Reset',
+                       'Runtime/NativeFoodOwnership.cs'), rows)
+        with SourceCopy() as src:
+            src.edit('Runtime/NativeFoodOwnership.cs', 'Patch(typeof(BuildingRegistration), "Reset", nameof(ResetRegistration));',
+                     'Patch(typeof(BuildingRegistration), "Reset", nameof(ResetRegistration), postfix: true);')
+            problems = src.problems()
+        self.assertTrue(any('Postfix NativeFoodOwnership ResetRegistration BuildingRegistration.Reset' in p and 'not in ScopeInventory' in p for p in problems), problems)
+
+    def test_helper_fails_closed_on_unknown_shapes(self):
+        cases = [
+            ('Patch(typeof(BuildingRegistration), "Reset", nameof(ResetRegistration));',
+             'Patch(typeof(BuildingRegistration), "Reset", nameof(ResetRegistration), postfix: installed);', 'non-literal'),
+            ('Patch(typeof(BuildingRegistration), "Reset", nameof(ResetRegistration));',
+             'Patch(typeof(BuildingRegistration), "Reset", nameof(ResetRegistration), extra: true);', 'unrecognised Patch call'),
+            ('postfix: postfix ? new HarmonyMethod(typeof(NativeFoodOwnership), patch) : null);',
+             'postfix: postfix ? new HarmonyMethod(typeof(NativeFoodOwnership), patch) : new HarmonyMethod(typeof(NativeFoodOwnership), patch));',
+             'unsupported helper Patch shape'),
+            ('patches.Patch(NativeFoodContract.AuthorityTarget(type, method),', 'patches.Patch(NativeFoodContract.OtherTarget(type, method),',
+             'cannot resolve the native target of this helper Patch call'),
+        ]
+        for old, new, expected in cases:
+            with self.subTest(expected=expected), SourceCopy() as src:
+                src.edit('Runtime/NativeFoodOwnership.cs', old, new)
+                problems = src.problems()
+                self.assertTrue(any(expected in p for p in problems), problems)
+
+    def test_fails_when_a_pinned_target_resolver_changes(self):
+        with SourceCopy() as src:
+            src.edit('Runtime/NativeFoodContract.cs', 'if (result.Members[i] is MethodInfo target && target.Name == method && target.DeclaringType == type) return target;',
+                     'if (result.Members[i] is MethodInfo target && target.DeclaringType == type) return target;')
+            problems = src.problems()
+        self.assertTrue(any('target resolver NativeFoodContract.AuthorityTarget' in p for p in problems), problems)
+
+    def test_cross_file_owner_constant(self):
+        rows = [r for r in check_scopes.scan(REPO)[1]['patches'] if r[2] == 'NativeSaveHandOff']
+        self.assertEqual({r[0] for r in rows}, {'persistentcity.save-handoff'})
+        cases = [
+            ('Persistence/SaveCompressionPatches.cs', 'public const string HandOffOwner = "persistentcity.save-handoff";',
+             'public const string HandOffOwner = "persistentcity.save-handoff-v2";', 'persistentcity.save-handoff-v2 Prefix NativeSaveHandOff'),
+            ('Runtime/NativeSaveHandOff.cs', 'private const string PatchId = SaveCompressionPatches.HandOffOwner;',
+             'private const string PatchId = SaveCompressionPatches.MissingOwner;', 'is not a string constant'),
+            ('Runtime/NativeSaveHandOff.cs', 'private const string PatchId = SaveCompressionPatches.HandOffOwner;',
+             'private static readonly string PatchId = SaveCompressionPatches.HandOffOwner;', 'is not a string constant'),
+        ]
+        for rel, old, new, expected in cases:
+            with self.subTest(expected=expected), SourceCopy() as src:
+                src.edit(rel, old, new)
+                problems = src.problems()
+                self.assertTrue(any(expected in p for p in problems), problems)
+
+    def test_method_info_field_target(self):
+        rows = [r for r in check_scopes.scan(REPO)[1]['patches'] if r[2] in ('NativeSalePath', 'BodyMerge')]
+        self.assertEqual({r[4] for r in rows}, {'ReStockingHelper.RefillSingleItemWithLimit', 'SkinnedMeshCombiner.DoCombineMeshs_OneMeshPerMaterial'})
+        with SourceCopy() as src:
+            src.edit('Runtime/NativeSalePath.cs', 'refill ??= AccessTools.Method(typeof(ReStockingHelper), "RefillSingleItemWithLimit"',
+                     'refill ??= AccessTools.Method(typeof(ReStockingHelper), "TryAddStockAmount"')
+            problems = src.problems()
+        self.assertTrue(any('DeferRefillWhileSelling ReStockingHelper.TryAddStockAmount' in p and 'not in ScopeInventory' in p for p in problems), problems)
+        with SourceCopy() as src:
+            src.edit('Runtime/NativeSalePath.cs', 'if (refill == null) return false;', 'if (refill == null) return false; refill = Other();')
+            problems = src.problems()
+        self.assertTrue(any('cannot resolve the native target' in p for p in problems), problems)
+
+    def test_player_loop_entry(self):
+        loops = check_scopes.scan(REPO)[1]['loops']
+        self.assertEqual(loops, [('PersistentCityWalkerBound', 'NavigationHook', 'Run', 'Runtime/PhysicalPedestrians.cs')])
+        cases = [
+            ('updateDelegate = Run }', 'updateDelegate = () => Run() }', 'player-loop updateDelegate must name'),
+            ('updateDelegate = Run }', 'updateDelegate = Missing }', 'player-loop updateDelegate must name'),
+            ('if (child.type != typeof(PersistentCityWalkerBound)) list.Add(Remove(child));',
+             'if (child.type != typeof(PersistentCityWalkerBound)) list.Add(Remove(child)); else child.updateFunction = default;', 'updateFunction'),
+            ('private static void Run()', 'private static void Walk()', 'player-loop updateDelegate must name'),
+        ]
+        for old, new, expected in cases:
+            with self.subTest(expected=expected), SourceCopy() as src:
+                src.edit('Runtime/PhysicalPedestrians.cs', old, new)
+                problems = src.problems()
+                self.assertTrue(any(expected in p for p in problems), problems)
+        with SourceCopy() as src:
+            src.add('Runtime/ExtraLoop.cs', 'namespace PersistentCity.Runtime { internal static class ExtraLoop { internal static void Go() '
+                    '{ UnityEngine.LowLevel.PlayerLoop.SetPlayerLoop(UnityEngine.LowLevel.PlayerLoop.GetCurrentPlayerLoop()); } } }\n')
+            problems = src.problems()
+        self.assertTrue(any('ExtraLoop.cs' in p and 'player-loop entry point without a recognised updateDelegate' in p for p in problems), problems)
+        with SourceCopy() as src:
+            src.add('Runtime/ExtraLoop.cs', 'namespace PersistentCity.Runtime { internal static class ExtraLoop { private struct Marker { } private static void Tick() { } '
+                    'internal static UnityEngine.LowLevel.PlayerLoopSystem Make() => new UnityEngine.LowLevel.PlayerLoopSystem { type = typeof(Marker), updateDelegate = Tick }; } }\n')
+            problems = src.problems()
+        self.assertTrue(any('loops: in source but not in ScopeInventory.cs: Marker ExtraLoop Tick' in p for p in problems), problems)
 
     def test_fails_on_extra_helper_patch_call(self):
         with SourceCopy() as src:
@@ -171,9 +267,9 @@ class CheckScopesTests(unittest.TestCase):
         cases = [
             ('Runtime/StationaryCrowds.cs', 'harmony.Patch(spawn, prefix: new HarmonyMethod(typeof(StationaryCrowds), nameof(SpawnPrefix)));',
              'var m = new HarmonyMethod(typeof(StationaryCrowds), nameof(SpawnPrefix)); harmony.Patch(spawn, prefix: m);', 'HarmonyMethod outside a recognised Patch call'),
-            ('Runtime/StationaryCrowds.cs', 'active = true;', 'active = true; harmony.PatchAll();', 'PatchAll'),
-            ('Runtime/StationaryCrowds.cs', 'active = true;', 'active = true; harmony.Patch(spawn, SpawnMethod);', 'without HarmonyMethod'),
-            ('Runtime/StationaryCrowds.cs', 'active = true;', 'active = true; StartCoroutine(null);', 'coroutine'),
+            ('Runtime/StationaryCrowds.cs', 'active = Overruling = true;', 'active = Overruling = true; harmony.PatchAll();', 'PatchAll'),
+            ('Runtime/StationaryCrowds.cs', 'active = Overruling = true;', 'active = Overruling = true; harmony.Patch(spawn, SpawnMethod);', 'without HarmonyMethod'),
+            ('Runtime/StationaryCrowds.cs', 'active = Overruling = true;', 'active = Overruling = true; StartCoroutine(null);', 'coroutine'),
         ]
         for rel, old, new, expected in cases:
             with self.subTest(expected=expected), SourceCopy() as src:
@@ -206,8 +302,8 @@ class CheckScopesTests(unittest.TestCase):
 
     def test_fails_when_f2e_hold_call_site_moves(self):
         with SourceCopy() as src:
-            src.edit('Runtime/PhysicalPopulation.cs', 'if (player) ObservePlayerContact(binding, playerPose);', 'if (player) { }')
-            src.edit('Runtime/PersistentCityMod.cs', 'ApplyHoldReplay(); // F2e', '// F2e')
+            src.edit('Runtime/PhysicalPopulation.Selection.cs', 'if (player) ObservePlayerContact(binding, playerPose);', 'if (player) { }')
+            src.edit('Runtime/PersistentCityMod.cs', 'ApplyHoldReplay();', '')
             problems = src.problems()
         self.assertTrue(any('ObservePlayerContact' in p and 'call sites' in p for p in problems), problems)
         self.assertTrue(any('ApplyHoldReplay' in p and 'call sites' in p for p in problems), problems)
@@ -220,8 +316,8 @@ class CheckScopesTests(unittest.TestCase):
 
     def test_comments_and_strings_do_not_count(self):
         with SourceCopy() as src:
-            src.edit('Runtime/StationaryCrowds.cs', 'active = true;',
-                     'active = true; // harmony.Patch(spawn, prefix: new HarmonyMethod(typeof(StationaryCrowds), nameof(Ghost)));\n'
+            src.edit('Runtime/StationaryCrowds.cs', 'active = Overruling = true;',
+                     'active = Overruling = true; // harmony.Patch(spawn, prefix: new HarmonyMethod(typeof(StationaryCrowds), nameof(Ghost)));\n'
                      '                var note = $"harmony.Patch({spawn}) {{HarmonyMethod}}";')
             self.assertEqual(src.problems(), [])
 
@@ -232,9 +328,10 @@ class InventoryTests(unittest.TestCase):
 
     def test_expected_list_equals_plan_section_2_inventory(self):
         planned = {(check_scopes.short(t), m) for owner, kind, t, m, target, f in self.rows['P'] if owner != 'persistentcity.food-contract'}
-        self.assertEqual(planned, SECTION_2)
+        self.assertEqual(planned, SECTION_2 | LATER_PATCHES)
         messages = {(check_scopes.short(t), m) for t, m, f in self.rows['M']}
-        self.assertEqual(messages - {('PopulationRuntime', 'OnDestroy')}, SECTION_2_MESSAGES)
+        self.assertEqual(messages, SECTION_2_MESSAGES | LATER_MESSAGES)
+        self.assertEqual({(check_scopes.short(t), m) for marker, t, m, f in self.rows['L']}, {('NavigationHook', 'Run')})
         components = {m for t, m, p, f in self.rows['C']}
         self.assertEqual(components, DECISION_5_COMPONENTS | F2E_COMPONENTS)
 
@@ -259,7 +356,7 @@ class InventoryTests(unittest.TestCase):
         self.assertEqual(self.version, 'f4b-scope-inventory/1')
         self.assertEqual(check_scopes.inventory_hash(), check_scopes.inventory_hash())
         self.assertEqual(len(check_scopes.canonical().splitlines()),
-                         1 + sum(len(self.rows[k]) for k in 'PMEHCS'))
+                         1 + sum(len(self.rows[k]) for k in 'PMEHCLS'))
 
 
 class ProbeSourceTests(unittest.TestCase):

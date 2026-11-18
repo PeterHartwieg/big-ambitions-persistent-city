@@ -192,12 +192,14 @@ internal static class Program
     private static void Inventory(string expectHash)
     {
         var all = ScopeInventory.All.ToArray();
-        Check(ScopeInventory.Patches.Count == 58, "58 expected patches (35 from the plan's section 2, 23 food-contract)");
+        Check(ScopeInventory.Patches.Count == 50, "50 expected patches (27 named hooks, 23 food-contract)");
         Check(ScopeInventory.Patches.Select(p => p.Owner + "|" + p.Kind + "|" + p.Type + "|" + p.Method).Distinct().Count() == ScopeInventory.Patches.Count, "patch keys are unique");
         Check(ScopeInventory.Owners.All(o => o.StartsWith("hart.persistentcity.") || o.StartsWith("persistentcity.")), "every expected owner is a Persistent City owner");
         Check(!ScopeInventory.Owners.Contains("f4b.perf-union-probe"), "the probe's own owner is outside the inventory");
         Check(ScopeInventory.Components.Any(c => c.Method == "ApplyHoldReplay") && ScopeInventory.Components.Any(c => c.Method == "ObservePlayerContact"), "F2e hold call sites are components");
-        Check(ScopeInventory.Patches.Count(p => p.Kind == ScopeKind.Transpiler) == 2 && ScopeInventory.TranspilerHelpers.Count == 3, "two transpilers, three timed helpers");
+        Check(ScopeInventory.Patches.Count(p => p.Kind == ScopeKind.Transpiler) == 0 && ScopeInventory.TranspilerHelpers.Count == 0, "no transpilers and no transpiler helpers");
+        Check(ScopeInventory.PlayerLoops.Count == 1 && ScopeInventory.PlayerLoops.All(l => l.Kind == ScopeKind.PlayerLoop && l.Target.Length > 0), "one player-loop delegate row naming its marker type");
+        Check(ScopeKind.PlayerLoop > ScopeKind.Transpiler && ScopeKind.PlayerLoop > ScopeKind.Finalizer, "player-loop rows are never treated as Harmony patches");
         Check(all.All(s => s.File.Length > 0 && s.Type.Length > 0 && s.Method.Length > 0), "every row names a file, type and method");
         Check(ScopeInventory.Hash() == ScopeInventory.Hash() && ScopeInventory.Hash().Length == 64, "hash is stable");
         if (expectHash != null) Check(ScopeInventory.Hash() == expectHash, "C# canonical hash equals check_scopes.py's (" + expectHash + ")");

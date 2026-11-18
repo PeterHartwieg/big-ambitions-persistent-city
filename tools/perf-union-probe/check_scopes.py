@@ -1,7 +1,7 @@
 """Fail-closed check that the F4b probe's expected scope list matches Persistent City's source.
 
 Scans Core/, Compatibility/, Persistence/ and Runtime/ for Harmony patch calls, HarmonyMethod uses,
-MonoBehaviour messages, native event subscriptions and transpiler helpers, and compares them with
+MonoBehaviour messages, native event subscriptions, player-loop entries and transpiler helpers, and compares them with
 ScopeInventory.cs in both directions. Component methods and their call sites (including F2e's
 player-hold calls) must still exist where the list says. Any construct the scanner does not
 recognise is a failure, never a silent pass. Exit 0 only when everything matches.
@@ -35,7 +35,12 @@ FORBIDDEN = [(r'\bPatchAll\s*\(', 'Harmony PatchAll'), (r'\bCreateClassProcessor
              (r'\bHarmonyPatch\b', 'Harmony attribute patch'), (r'\bilmanipulator\s*:', 'Harmony IL manipulator'),
              (r'\bReversePatch\b', 'Harmony reverse patch'), (r'\bCreateReversePatcher\b', 'Harmony reverse patch'),
              (r'\bRuntimeInitializeOnLoadMethod\b', 'Unity load-time entry point'), (r'\bStartCoroutine\s*\(', 'Unity coroutine'),
-             (r'\bInvokeRepeating\s*\(', 'Unity repeating invoke'), (r'\bPlayerLoop\.SetPlayerLoop\b', 'player-loop entry point')]
+             (r'\bInvokeRepeating\s*\(', 'Unity repeating invoke')]
+PLAYER_LOOP_SYSTEM = re.compile(r'\bnew\s+(?:UnityEngine\s*\.\s*LowLevel\s*\.\s*)?PlayerLoopSystem\s*(?:\(\s*\))?\s*\{')
+PLAYER_LOOP_MEMBERS = re.compile(r'\b(updateDelegate|updateFunction|loopConditionFunction)\b')
+PINNED_RESOLVERS = {
+    'NativeFoodContract.AuthorityTarget': '47690dc9c21ccbb6c149881d5350f9a14c8d0436d680f69eb8bc492bda1339b7',
+}
 NOT_DEFINITION_PREFIX = {'new', 'return', 'await', 'throw', 'in', 'is', 'as', 'else', 'case', 'nameof', 'typeof', 'when', 'yield', 'out', 'ref'}
 
 
@@ -219,19 +224,40 @@ def load(root):
     return files
 
 
-def owner_of(f, problems):
+def class_constant(files, cls, name):
+    values = []
+    for g in files:
+        for c in g.classes:
+            if c[0] != cls:
+                continue
+            for m in re.finditer(r'\bconst\s+string\s+' + re.escape(name) + r'\s*=\s*"([^"]+)"\s*;', g.raw[c[1]:c[2]]):
+                if not g.enclosing_method(c[1] + m.start()):
+                    values.append(m.group(1))
+    return values[0] if len(values) == 1 else None
+
+
+def owner_of(f, problems, files=()):
     owners = set()
     for m in re.finditer(r'new\s+Harmony\s*\(', f.code):
         close = match_close(f.code, m.end() - 1)
         arg = f.raw[m.end():close - 1].strip()
-        if arg.startswith('"'):
+        if re.fullmatch(r'"[^"]+"', arg):
             owners.add(arg.strip('"'))
             continue
-        const = re.search(r'const\s+string\s+' + re.escape(arg) + r'\s*=\s*"([^"]+)"', f.raw)
-        if not const:
-            problems.append(f'{f.rel}: Harmony owner {arg!r} is not a string constant in this file')
+        value = None
+        if re.fullmatch(r'\w+', arg):
+            const = re.search(r'\bconst\s+string\s+' + re.escape(arg) + r'\s*=\s*(?:"([^"]+)"|(\w+)\s*\.\s*(\w+))\s*;', f.raw)
+            if const and const.group(1):
+                value = const.group(1)
+            elif const:
+                value = class_constant(files, const.group(2), const.group(3))
+        elif re.fullmatch(r'(\w+)\s*\.\s*(\w+)', arg):
+            qualified = re.fullmatch(r'(\w+)\s*\.\s*(\w+)', arg)
+            value = class_constant(files, qualified.group(1), qualified.group(2))
+        if value is None:
+            problems.append(f'{f.rel}: Harmony owner {arg!r} is not a string constant (in this file or one declared class constant)')
             continue
-        owners.add(const.group(1))
+        owners.add(value)
     if len(owners) > 1:
         problems.append(f'{f.rel}: more than one Harmony owner ({", ".join(sorted(owners))}); the scanner cannot attribute patches')
     return next(iter(owners)) if len(owners) == 1 else None
@@ -275,7 +301,7 @@ def statement_end(code, start):
 
 def assignments(f, name, pos):
     found = []
-    for m in re.finditer(r'(?<![\w.])' + re.escape(name) + r'\s*=(?![=>])', f.code):
+    for m in re.finditer(r'(?<![\w.])' + re.escape(name) + r'\s*(?:\?\?)?=(?![=>])', f.code):
         rhs = f.raw[m.end():statement_end(f.code, m.end())].strip()
         if not re.fullmatch(r'(?:\w+\s*=\s*)*(?:null!?|default)', rhs):
             found.append((m.start(), rhs))
@@ -304,6 +330,12 @@ def target_of(f, expr, pos, depth=0):
     if re.fullmatch(r'\w+', expr):
         targets = {target_of(f, text, at, depth + 1) for at, text in assignments(f, expr, pos)}
         return targets.pop() if len(targets) == 1 and None not in targets else None
+    resolver = re.fullmatch(r'(?:[\w.]+\.)?(\w+)\s*\.\s*(\w+)\s*\((.*)\)', expr, re.S)
+    if resolver and f'{resolver.group(1)}.{resolver.group(2)}' in PINNED_RESOLVERS and match_close(expr, resolver.start(3) - 1) == len(expr):
+        args = split_args(resolver.group(3))
+        t = re.fullmatch(r'typeof\s*\(\s*([\w.]+)\s*\)', args[0]) if len(args) == 2 else None
+        name = nameof(args[1], args[1]) if t else None
+        return f'{short(t.group(1))}.{name}' if t and name else None
     m = METHOD_CALL.search(expr)
     if not m:
         return None
@@ -364,10 +396,191 @@ def body_fingerprint(raw):
 NON_METHOD_ACCESS = {'Field', 'DeclaredField', 'FieldRefAccess', 'StaticFieldRefAccess', 'TypeByName', 'Inner'}
 
 
+def parameters(params):
+    out = []
+    for p in split_args(params, generics=True):
+        decl, _, default = p.partition('=')
+        out.append((decl.split()[-1], default.strip() or None))
+    return out
+
+
+def top_level_split(expr, token):
+    depth = 0
+    for k, c in enumerate(expr):
+        if c in '([{':
+            depth += 1
+        elif c in ')]}':
+            depth -= 1
+        elif depth == 0 and c == token:
+            return expr[:k].strip(), expr[k + 1:].strip()
+    return None
+
+
+def harmony_method(expr, names):
+    hm = re.match(r'new\s+HarmonyMethod\s*\(', expr)
+    if not hm:
+        return None
+    close = match_close(expr, hm.end() - 1)
+    rest = expr[close:].strip()
+    if close < 0 or (rest and not (rest.startswith('{') and match_close(rest, 0, '{', '}') == len(rest))):
+        return None
+    inner = split_args(expr[hm.end():close - 1])
+    t = re.fullmatch(r'typeof\s*\(\s*([\w.]+)\s*\)', inner[0]) if len(inner) == 2 else None
+    return (short(t.group(1)), inner[1]) if t and inner[1] in names else None
+
+
+def parse_helper(f, pos, body, end, params, problems):
+    """A local Patch(...) wrapper: one Harmony Patch call whose HarmonyMethods take typeof(T) and a parameter.
+
+    Either one unconditional kind (prefix: new HarmonyMethod(typeof(T), p)) or two kinds selected by one bool
+    parameter (prefix: flag ? null : new HarmonyMethod(...), postfix: flag ? new HarmonyMethod(...) : null).
+    """
+    line = f.code.count('\n', 0, pos) + 1
+    declared = parameters(params)
+    names = [n for n, _ in declared]
+    calls = list(re.finditer(r'\bPatch\s*\(', f.code[body:end]))
+    methods = len(re.findall(r'\bHarmonyMethod\b', f.code[body:end]))
+    if len(calls) != 1:
+        problems.append(f'{f.rel}:{line}: unsupported helper Patch shape ({len(calls)} Patch calls, {methods} HarmonyMethod uses; exactly one Patch call)')
+        return None
+    open_at = body + calls[0].end() - 1
+    close = match_close(f.code, open_at)
+    parts = split_args(f.code[open_at + 1:close - 1])
+    raw_parts = split_args(f.raw[open_at + 1:close - 1])
+    template = raw_parts[0] if raw_parts else ''
+    if re.fullmatch(r'\w+', template) and template not in names:
+        local = assignments(f, template, body + calls[0].start())
+        template = local[-1][1] if len(local) == 1 else ''
+    entries = []
+    for part in parts[1:]:
+        named = re.match(r'(\w+)\s*:\s*', part)
+        if not named or named.group(1) not in PATCH_KINDS:
+            entries = None
+            break
+        expr = part[named.end():].strip()
+        method = harmony_method(expr, names)
+        if method:
+            entries.append((None, None, named.group(1)) + method)
+            continue
+        cond = re.match(r'(\w+)\s*\?', expr)
+        branches = top_level_split(expr[cond.end():], ':') if cond else None
+        if not branches or cond.group(1) not in names:
+            entries = None
+            break
+        when, other = branches
+        if other == 'null' and harmony_method(when, names):
+            entries.append((cond.group(1), True, named.group(1)) + harmony_method(when, names))
+        elif when == 'null' and harmony_method(other, names):
+            entries.append((cond.group(1), False, named.group(1)) + harmony_method(other, names))
+        else:
+            entries = None
+            break
+    shape = None
+    if entries and len(entries) == methods and len({(e[3], e[4]) for e in entries}) == 1:
+        flags = {e[0] for e in entries}
+        if flags == {None} and len(entries) == 1:
+            shape = dict(flag=None, kinds={None: entries[0][2]})
+        elif len(flags) == 1 and None not in flags and len(entries) == 2 and {e[1] for e in entries} == {True, False}:
+            shape = dict(flag=entries[0][0], kinds={e[1]: e[2] for e in entries})
+    if shape is None:
+        problems.append(f'{f.rel}:{line}: unsupported helper Patch shape (each HarmonyMethod must be typeof(T) and one parameter, '
+                        'unconditional or selected by one bool parameter)')
+        return None
+    return dict(declared=declared, names=names, typ=entries[0][3], patch=entries[0][4], template=template, **shape)
+
+
+def helper_call(f, helper, args_text, raw_args, line, problems):
+    parts, raw_parts = split_args(args_text), split_args(raw_args)
+    values, raw_values = {}, {}
+    if len(parts) != len(raw_parts):
+        problems.append(f'{f.rel}:{line}: unrecognised Patch call {raw_args.strip()[:80]!r}')
+        return None
+    for index, (part, raw) in enumerate(zip(parts, raw_parts)):
+        named = re.match(r'(\w+)\s*:(?!:)\s*', part)
+        if named:
+            key, part, raw = named.group(1), part[named.end():], re.sub(r'^\w+\s*:\s*', '', raw)
+        elif values.keys() - set(helper['names'][:index]) or index >= len(helper['names']):
+            key = None
+        else:
+            key = helper['names'][index]
+        if key not in helper['names'] or key in values:
+            problems.append(f'{f.rel}:{line}: unrecognised Patch call {raw_args.strip()[:80]!r}')
+            return None
+        values[key], raw_values[key] = part.strip(), raw.strip()
+    for name, default in helper['declared']:
+        if name not in values:
+            if default is None:
+                problems.append(f'{f.rel}:{line}: helper Patch call is missing argument {name!r}')
+                return None
+            values[name] = raw_values[name] = default
+    flag = None
+    if helper['flag']:
+        if values[helper['flag']] not in ('true', 'false'):
+            problems.append(f'{f.rel}:{line}: helper Patch call selects its kind with a non-literal {helper["flag"]!r}')
+            return None
+        flag = values[helper['flag']] == 'true'
+    method = nameof(values[helper['patch']], raw_values[helper['patch']])
+    if not method:
+        problems.append(f'{f.rel}:{line}: helper Patch call without a nameof/literal patch method')
+        return None
+    names = helper['names']
+    target = target_of(f, substitute(helper['template'], names, [raw_values[n] for n in names]), None) if helper['template'] else None
+    if target is None:
+        problems.append(f'{f.rel}:{line}: cannot resolve the native target of this helper Patch call')
+    return (helper['kinds'][flag].capitalize(), helper['typ'], method, target, f.rel)
+
+
+def player_loop_entries(f, problems, found):
+    entries = 0
+    for m in PLAYER_LOOP_MEMBERS.finditer(f.code):
+        line = f.code.count('\n', 0, m.start()) + 1
+        init = None
+        for s in PLAYER_LOOP_SYSTEM.finditer(f.code):
+            close = match_close(f.code, s.end() - 1, '{', '}')
+            if s.end() <= m.start() < close:
+                init = (s.end(), close - 1)
+        if m.group(1) != 'updateDelegate' or init is None:
+            problems.append(f'{f.rel}:{line}: unrecognised entry point (player-loop {m.group(1)} outside a PlayerLoopSystem initializer\'s updateDelegate)')
+            continue
+        fields = {}
+        for part in split_args(f.code[init[0]:init[1]]):
+            assign = re.fullmatch(r'(\w+)\s*=\s*(.+)', part, re.S)
+            if assign:
+                fields[assign.group(1)] = assign.group(2).strip()
+        handler = re.fullmatch(r'(?:this\s*\.\s*)?(\w+)', fields.get('updateDelegate', ''))
+        marker = re.fullmatch(r'typeof\s*\(\s*([\w.]+)\s*\)', fields.get('type', ''))
+        cls = f.enclosing_class(m.start())
+        defs = [] if not (handler and cls) else [d for d in f.methods if d[0] == handler.group(1) and f.enclosing_class(d[1]) == cls]
+        if not handler or not marker or len(defs) != 1 or split_args(defs[0][4]):
+            problems.append(f'{f.rel}:{line}: unrecognised entry point (player-loop updateDelegate must name one parameterless method of '
+                            'the enclosing class, with type = typeof(Marker))')
+            continue
+        found['loops'].append((short(marker.group(1)), cls[0], handler.group(1), f.rel))
+        entries += 1
+    for m in re.finditer(r'\bSetPlayerLoop\b', f.code):
+        if entries == 0:
+            problems.append(f'{f.rel}:{f.code.count(chr(10), 0, m.start()) + 1}: unrecognised entry point (player-loop entry point without a recognised updateDelegate)')
+
+
+def check_resolvers(files, problems):
+    for key, pinned in PINNED_RESOLVERS.items():
+        cls, name = key.split('.')
+        defs = [(f, d) for f in files for d in f.methods if d[0] == name and (c := f.enclosing_class(d[1])) and c[0] == cls]
+        if len(defs) != 1:
+            problems.append(f'target resolver {key} definition not found exactly once; remove it from PINNED_RESOLVERS or restore it')
+            continue
+        f, d = defs[0]
+        fingerprint = body_fingerprint(f.raw[d[2]:d[3]])
+        if fingerprint != pinned:
+            problems.append(f'{f.rel}: target resolver {key} body is not the pinned, reviewed shape (fingerprint {fingerprint}); '
+                            'check it still returns the (type, name) method and re-pin PINNED_RESOLVERS')
+
+
 def scan(root):
     files = load(root)
     problems = []
-    found = dict(patches=[], messages=[], events=[], helpers=[])
+    found = dict(patches=[], messages=[], events=[], helpers=[], loops=[])
+    check_resolvers(files, problems)
     table = contract_table(files)
     behaviours = set()
     for f in files:
@@ -393,33 +606,16 @@ def scan(root):
             if re.search(r'\bHarmonyMethod\b|\bnew\s+Harmony\s*\(', f.code):
                 problems.append(f'{f.rel}: Harmony use without HarmonyLib in the file')
         else:
-            owner = owner_of(f, problems)
+            owner = owner_of(f, problems, files)
             covered = []
             helpers = {}
             for name, pos, body, end, params in f.methods:
-                if name != 'Patch':
-                    continue
-                names = [p.split()[-1] for p in split_args(params, generics=True)]
-                for m in re.finditer(r'new\s+HarmonyMethod\s*\(', f.code[body:end]):
-                    start = body + m.end() - 1
-                    inner = split_args(f.code[start + 1:match_close(f.code, start) - 1])
-                    kind = re.search(r'(\w+)\s*:\s*$', f.code[body:body + m.start()])
-                    t = re.fullmatch(r'typeof\s*\(\s*([\w.]+)\s*\)', inner[0]) if inner else None
-                    if len(inner) == 2 and t and inner[1] in names and kind and kind.group(1) in PATCH_KINDS:
-                        calls = list(re.finditer(r'\bPatch\s*\(', f.code[body:body + m.start()]))
-                        template = ''
-                        if calls:
-                            open_at = body + calls[-1].end() - 1
-                            template = split_args(f.raw[open_at + 1:match_close(f.code, open_at) - 1])[0]
-                            if re.fullmatch(r'\w+', template) and template not in names:
-                                local = assignments(f, template, body + calls[-1].start())
-                                template = local[-1][1] if len(local) == 1 else ''
-                        registrations = len(re.findall(r'\bPatch\s*\(', f.code[body:end]))
-                        methods = len(re.findall(r'\bHarmonyMethod\s*\(', f.code[body:end]))
-                        if registrations != 1 or methods != 1:
-                            line = f.code.count('\n', 0, pos) + 1
-                            problems.append(f'{f.rel}:{line}: unsupported helper Patch shape ({registrations} Patch calls, {methods} HarmonyMethod uses; exactly one each)')
-                        helpers[pos] = (names, kind.group(1), short(t.group(1)), names.index(inner[1]), template)
+                names = [n for n, _ in parameters(params)]
+                if name == 'Patch' and any(re.fullmatch(r'\s*(\w+)\s*', m.group(1)) and m.group(1).strip() in names
+                                           for m in re.finditer(r'\bnew\s+HarmonyMethod\s*\(\s*typeof\s*\(\s*[\w.]+\s*\)\s*,([^,()]*)\)', f.code[body:end])):
+                    helper = parse_helper(f, pos, body, end, params, problems)
+                    if helper:
+                        helpers[pos] = helper
             for m in re.finditer(r'\bPatch\s*\(', f.code):
                 if any(m.start() == pos for name, pos, *_ in f.methods if name == 'Patch'):
                     continue
@@ -493,25 +689,19 @@ def scan(root):
                         problems.append(f'{f.rel}:{line}: Patch call with no Harmony owner in the file')
                 elif not qualified:
                     helper = next((helpers[pos] for name, pos, *_ in f.methods if name == 'Patch' and pos in helpers), None)
-                    parts = split_args(args_text)
-                    raw_parts = split_args(raw_args)
-                    if helper is None or len(parts) != len(helper[0]):
-                        problems.append(f'{f.rel}:{line}: unrecognised Patch call {args_text.strip()[:80]!r}')
+                    if helper is None:
+                        problems.append(f'{f.rel}:{line}: unrecognised Patch call {raw_args.strip()[:80]!r}')
                         continue
-                    method = nameof(parts[helper[3]], raw_parts[helper[3]])
-                    if not method:
-                        problems.append(f'{f.rel}:{line}: helper Patch call without a nameof/literal patch method')
-                        continue
-                    hook_target = target_of(f, substitute(helper[4], helper[0], raw_parts), None) if helper[4] else None
-                    if hook_target is None:
-                        problems.append(f'{f.rel}:{line}: cannot resolve the native target of this helper Patch call')
-                    found['patches'].append((owner, helper[1].capitalize(), helper[2], method, hook_target, f.rel))
+                    row = helper_call(f, helper, args_text, raw_args, line, problems)
+                    if row:
+                        found['patches'].append((owner,) + row)
                 else:
                     problems.append(f'{f.rel}:{line}: unrecognised Patch call without HarmonyMethod {args_text.strip()[:80]!r}')
             for m in re.finditer(r'\bHarmonyMethod\b', f.code):
                 if not any(a <= m.start() < b for a, b in covered):
                     if not any(name == 'Patch' and body <= m.start() < end for name, _, body, end, _ in f.methods):
                         problems.append(f'{f.rel}:{f.code.count(chr(10), 0, m.start()) + 1}: HarmonyMethod outside a recognised Patch call')
+        player_loop_entries(f, problems, found)
         for name, start, end, _ in f.classes:
             if name not in behaviours:
                 continue
@@ -600,9 +790,9 @@ def parse_inventory(path=INVENTORY):
         if m.group(2) in constants:
             constants[m.group(1)] = constants[m.group(2)] + m.group(3)
     version = re.search(r'Version\s*=\s*"([^"]+)"', text).group(1)
-    rows = dict(P=[], M=[], E=[], H=[], C=[], S=[])
+    rows = dict(P=[], M=[], E=[], H=[], C=[], L=[], S=[])
     for line in text.splitlines():
-        m = re.match(r'\s*([PMEHCS])\((.*)\),?\s*$', line)
+        m = re.match(r'\s*([PMEHCLS])\((.*)\),?\s*$', line)
         if not m:
             continue
         args = []
@@ -621,6 +811,7 @@ def canonical(path=INVENTORY):
     lines += ['|'.join(['Event', evt, typ, method, '', file]) for evt, typ, method, file in rows['E']]
     lines += ['|'.join(['TranspilerHelper', '', typ, method, transpiler, file]) for transpiler, typ, method, file in rows['H']]
     lines += ['|'.join(['Component', '', typ, method, params, file]) for typ, method, params, file in rows['C']]
+    lines += ['|'.join(['PlayerLoop', '', typ, method, marker, file]) for marker, typ, method, file in rows['L']]
     lines += ['|'.join(['CallSite', file, caller, call]) for file, caller, call in rows['S']]
     return '\n'.join(lines) + '\n'
 
@@ -636,6 +827,7 @@ def expected_sets(path=INVENTORY):
         messages=[(short(typ), method, file) for typ, method, file in rows['M']],
         events=[(evt, short(typ), method, file) for evt, typ, method, file in rows['E']],
         helpers=[(transpiler, short(typ), method, file) for transpiler, typ, method, file in rows['H']],
+        loops=[(marker, short(typ), method, file) for marker, typ, method, file in rows['L']],
     ), rows
 
 
@@ -643,7 +835,7 @@ def check(root, inventory=INVENTORY):
     root = Path(root)
     files, found, problems = scan(root)
     expected, rows = expected_sets(inventory)
-    for key in ('patches', 'messages', 'events', 'helpers'):
+    for key in ('patches', 'messages', 'events', 'helpers', 'loops'):
         source, listed = Counter(found[key]), Counter(expected[key])
         for row in sorted((source - listed).elements(), key=str):
             problems.append(f'{key}: in source but not in ScopeInventory.cs: {" ".join(str(x) for x in row)}')

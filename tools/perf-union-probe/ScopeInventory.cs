@@ -6,7 +6,7 @@ using System.Text;
 
 namespace PerfUnionProbe
 {
-    public enum ScopeKind { Prefix, Postfix, Finalizer, Transpiler, Message, Event, TranspilerHelper, Component }
+    public enum ScopeKind { Prefix, Postfix, Finalizer, Transpiler, Message, Event, TranspilerHelper, Component, PlayerLoop }
 
     public sealed class ExpectedScope
     {
@@ -31,7 +31,8 @@ namespace PerfUnionProbe
             Ambient = "hart.persistentcity.ambientpedestrians.v1", Crowds = "hart.persistentcity.stationarycrowds.v1",
             Inspector = "persistentcity.resident-inspector-input",
             Billing = "persistentcity.research-billing",
-            Dialog = "persistentcity.research-dialog", Contract = "persistentcity.food-contract";
+            Dialog = "persistentcity.research-dialog", Contract = "persistentcity.food-contract",
+            BodyMerge = "hart.persistentcity.bodymerge.v1", SalePath = "persistentcity.sale-path", SaveHandOff = "persistentcity.save-handoff";
         private const string Hooks = R + "LoadedCatalogueLifecycleMembers+Postfixes", ContractFile = "Runtime/LoadedCatalogueLifecycleMembers.cs";
 
         private static ExpectedScope P(string owner, ScopeKind kind, string type, string method, string target, string file)
@@ -44,6 +45,8 @@ namespace PerfUnionProbe
             => new ExpectedScope { Kind = ScopeKind.TranspilerHelper, Type = type, Method = method, Target = transpiler, File = file };
         private static ExpectedScope C(string type, string method, string parameters, string file)
             => new ExpectedScope { Kind = ScopeKind.Component, Type = type, Method = method, Target = parameters, File = file };
+        private static ExpectedScope L(string marker, string type, string method, string file)
+            => new ExpectedScope { Kind = ScopeKind.PlayerLoop, Type = type, Method = method, Target = marker, File = file };
         private static ExpectedCallSite S(string file, string caller, string call)
             => new ExpectedCallSite { File = file, Caller = caller, Call = call };
 
@@ -71,6 +74,11 @@ namespace PerfUnionProbe
             P(Inspector, ScopeKind.Prefix, R + "ResidentInspector", "UiRaycastPrefix", "GraphicRaycaster.Raycast", "Runtime/ResidentInspector.cs"),
             P(Billing, ScopeKind.Postfix, R + "ResearchBilling", "RunDailyPostfix", "MarketingHelper.RunDaily", "Runtime/ResearchBilling.cs"),
             P(Dialog, ScopeKind.Postfix, R + "ResearchAgencyDialog", "CampaignSettingsPostfix", "MarketingAgencyDialog.CampaignSettings", "Runtime/ResearchAgencyDialog.cs"),
+            P(BodyMerge, ScopeKind.Prefix, R + "BodyMerge", "MergePrefix", "SkinnedMeshCombiner.DoCombineMeshs_OneMeshPerMaterial", "Runtime/BodyMerge.cs"),
+            P(SalePath, ScopeKind.Prefix, R + "NativeSalePath", "DeferRefillWhileSelling", "ReStockingHelper.RefillSingleItemWithLimit", "Runtime/NativeSalePath.cs"),
+            P(SaveHandOff, ScopeKind.Prefix, R + "NativeSaveHandOff", "CompressPrefix", "SaveGameSerializationHelper.CompressBinaryData", "Runtime/NativeSaveHandOff.cs"),
+            P(SaveHandOff, ScopeKind.Prefix, R + "NativeSaveHandOff", "SavePrefix", "SaveGameManager.Save", "Runtime/NativeSaveHandOff.cs"),
+            P(SaveHandOff, ScopeKind.Postfix, R + "NativeSaveHandOff", "SavePostfix", "SaveGameManager.Save", "Runtime/NativeSaveHandOff.cs"),
             P(Contract, ScopeKind.Postfix, Hooks, "Hook0", "ItemsGetter.OnItemsLoaded", ContractFile),
             P(Contract, ScopeKind.Postfix, Hooks, "Hook1", "ItemsGetter.RegisterModItem", ContractFile),
             P(Contract, ScopeKind.Postfix, Hooks, "Hook2", "ItemsGetter.UnregisterModItem", ContractFile),
@@ -101,6 +109,8 @@ namespace PerfUnionProbe
             M(R + "PopulationRuntime", "Update", "Runtime/SaveEpochRuntime.cs"),
             M(R + "PopulationRuntime", "OnGUI", "Runtime/FoodEconomyPanel.cs"),
             M(R + "PopulationRuntime", "OnDestroy", "Runtime/PersistentCityMod.cs"),
+            M(R + "PopulationRuntime", "LateUpdate", "Runtime/PhysicalPopulation.Loads.cs"),
+            M(R + "PopulationRuntime", "OnApplicationQuit", "Runtime/SaveHandOffRuntime.cs"),
             M(R + "PhysicalPedestrianCrosswalk", "OnTriggerEnter", "Runtime/PhysicalPedestrians.cs"),
             M(R + "PhysicalPedestrianCrosswalk", "OnTriggerExit", "Runtime/PhysicalPedestrians.cs"),
         });
@@ -125,13 +135,18 @@ namespace PerfUnionProbe
             C(R + "MultimodalRoutes", "Prepare", "", "Runtime/MultimodalRoutes.cs"),
             C(Core + "CitySimulator", "RefreshOptionalStops", "", "Core/OptionalStopScheduling.cs"),
             C(Core + "CitySimulator", "RefreshTrafficClosures", "", "Core/TrafficJourneys.cs"),
-            C(R + "PhysicalPopulation", "Update", "", "Runtime/PhysicalPopulation.cs"),
+            C(R + "PhysicalPopulation", "Update", "", "Runtime/PhysicalPopulation.Selection.cs"),
             C(R + "PopulationRuntime", "UpdateInspector", "", "Runtime/PersistentCityMod.cs"),
             C(R + "NativeFoodMarket", "RefreshDiscovery", "", "Runtime/NativeFoodCandidates.cs"),
             C(R + "NativeFoodMarket", "RefreshRoutineHours", "Double,Boolean", "Runtime/NativeFoodHours.cs"),
             C(R + "StreetFoodVendorMarket", "Prepare", "Int64", "Runtime/StreetFoodVendorMarket.cs"),
             C(R + "PopulationRuntime", "ApplyHoldReplay", "", "Runtime/MovementDiagnostics.cs"),
-            C(R + "PhysicalPopulation", "ObservePlayerContact", "Binding,PlayerPose&", "Runtime/PhysicalPopulation.cs"),
+            C(R + "PhysicalPopulation", "ObservePlayerContact", "Binding,PlayerPose&", "Runtime/PhysicalPopulation.Following.cs"),
+        });
+
+        public static readonly IReadOnlyList<ExpectedScope> PlayerLoops = Array.AsReadOnly(new[]
+        {
+            L("PersistentCityWalkerBound", R + "NavigationHook", "Run", "Runtime/PhysicalPedestrians.cs"),
         });
 
         public static readonly IReadOnlyList<ExpectedCallSite> CallSites = Array.AsReadOnly(new[]
@@ -142,16 +157,17 @@ namespace PerfUnionProbe
             S("Runtime/PersistentCityMod.cs", "UpdateCity", "foodMarket?.RefreshRoutineHours("),
             S("Runtime/PersistentCityMod.cs", "UpdateCity", "simulation.RefreshOptionalStops("),
             S("Runtime/PersistentCityMod.cs", "UpdateCity", "routes.Prepare("),
-            S("Runtime/PersistentCityMod.cs", "UpdateCity", "simulation.RefreshTrafficClosures("),
+            S("Runtime/PersistentCityMod.cs", "UpdateCity", "simulation.TryRefreshTrafficClosures("),
+            S("Core/TrafficJourneys.cs", "TryRefreshTrafficClosures", "RefreshTrafficClosures("),
             S("Runtime/PersistentCityMod.cs", "UpdateCity", "AdvancePopulation("),
             S("Runtime/PersistentCityMod.cs", "UpdateCity", "ApplyHoldReplay("),
             S("Runtime/PersistentCityMod.cs", "UpdateCity", "physical?.Update("),
             S("Runtime/PersistentCityMod.cs", "UpdateCity", "UpdateInspector("),
-            S("Runtime/PhysicalPopulation.cs", "Update", "PlayerContact.TryReadPlayer("),
-            S("Runtime/PhysicalPopulation.cs", "Update", "ObservePlayerContact("),
+            S("Runtime/PhysicalPopulation.Selection.cs", "Update", "PlayerContact.TryReadPlayer("),
+            S("Runtime/PhysicalPopulation.Selection.cs", "Update", "ObservePlayerContact("),
         });
 
-        public static IEnumerable<ExpectedScope> All => Patches.Concat(Messages).Concat(Events).Concat(TranspilerHelpers).Concat(Components);
+        public static IEnumerable<ExpectedScope> All => Patches.Concat(Messages).Concat(Events).Concat(TranspilerHelpers).Concat(Components).Concat(PlayerLoops);
 
         public static IReadOnlyList<string> Owners => Patches.Select(p => p.Owner).Distinct().OrderBy(o => o, StringComparer.Ordinal).ToArray();
 
