@@ -306,7 +306,7 @@ public sealed class Gr5AdvanceAllocationTests
 
     private sealed class FrameSamples
     {
-        public readonly List<double> Advance = new List<double>(), FoodRefill = new List<double>(), FoodTraffic = new List<double>(), FoodTrafficWork = new List<double>(), Refill = new List<double>(), Sync = new List<double>();
+        public readonly List<double> Advance = new List<double>(), FoodRefill = new List<double>(), FoodWork = new List<double>(), FoodTraffic = new List<double>(), FoodTrafficWork = new List<double>(), Refill = new List<double>(), Sync = new List<double>();
         public int Frames, Collected, MostTrafficJourneys;
         public double SlowestUnit;
     }
@@ -389,10 +389,10 @@ public sealed class Gr5AdvanceAllocationTests
             samples.Advance.Add(advanced);
             samples.Sync.Add(synced);
             samples.MostTrafficJourneys = Math.Max(samples.MostTrafficJourneys, journeys);
-            if (foodFrame) { samples.FoodRefill.Add(frame); if (journeys > 0) { samples.FoodTraffic.Add(frame); samples.FoodTrafficWork.Add(frame - physical); } }
+            if (foodFrame) { samples.FoodRefill.Add(frame); samples.FoodWork.Add(frame - physical); if (journeys > 0) { samples.FoodTraffic.Add(frame); samples.FoodTrafficWork.Add(frame - physical); } }
             else if (heavy) samples.Refill.Add(frame);
         }
-        samples.Advance.Sort(); samples.FoodRefill.Sort(); samples.FoodTraffic.Sort(); samples.FoodTrafficWork.Sort(); samples.Refill.Sort(); samples.Sync.Sort();
+        samples.Advance.Sort(); samples.FoodRefill.Sort(); samples.FoodWork.Sort(); samples.FoodTraffic.Sort(); samples.FoodTrafficWork.Sort(); samples.Refill.Sort(); samples.Sync.Sort();
         return samples;
     }
 
@@ -402,7 +402,8 @@ public sealed class Gr5AdvanceAllocationTests
         static double P(List<double> v, double q) => v[(int)Math.Ceiling(v.Count * q) - 1];
         string Line(string label, FrameSamples f) => label + ": " + f.Frames + " frames (" + f.Collected + " with a test-process collection, not timed); advance p95 "
             + P(f.Advance, .95).ToString("0.000") + " / p99 " + P(f.Advance, .99).ToString("0.000") + " ms; snapshot sync max " + f.Sync[^1].ToString("0.000")
-            + " ms with up to " + f.MostTrafficJourneys + " traffic journeys; food frames with a 22 ms refill " + f.FoodRefill.Count + ", whole frame p95 "
+            + " ms with up to " + f.MostTrafficJourneys + " traffic journeys; food frames with a 22 ms refill " + f.FoodRefill.Count + ", prelude + advance + snapshot sync max "
+            + f.FoodWork[^1].ToString("0.000") + " ms (with the fixed 22 ms refill " + (f.FoodWork[^1] + 22).ToString("0.000") + " ms), observed wall-clock frame p95 "
             + P(f.FoodRefill, .95).ToString("0.000") + " / max " + f.FoodRefill[^1].ToString("0.000") + " ms; of those with traffic journeys " + f.FoodTraffic.Count
             + ", p95 " + P(f.FoodTraffic, .95).ToString("0.000") + " / max " + f.FoodTraffic[^1].ToString("0.000")
             + " ms, prelude + advance + snapshot sync p95 " + P(f.FoodTrafficWork, .95).ToString("0.000") + " / max " + f.FoodTrafficWork[^1].ToString("0.000")
@@ -414,8 +415,8 @@ public sealed class Gr5AdvanceAllocationTests
         Assert.True(with.FoodRefill.Count >= 100, "food frames " + with.FoodRefill.Count);
         Assert.True(with.FoodTraffic.Count >= 20, "food frames with traffic journeys " + with.FoodTraffic.Count + " of " + with.FoodRefill.Count);
         Assert.True(with.MostTrafficJourneys >= 20, "traffic journeys " + with.MostTrafficJourneys);
-        PerfGate.Under(P(with.FoodTrafficWork, .95), 30 - 22, "prelude, advance and snapshot sync p95 on food frames with traffic journeys beside a 22 ms refill");
-        PerfGate.Under(P(with.FoodTraffic, .95), 30, "measured food frame with traffic journeys and a 22 ms refill, p95");
+        PerfGate.Under(with.FoodWork[^1] + 22, 30, "slowest food frame: measured prelude, advance and snapshot sync plus the fixed 22 ms refill");
+        PerfGate.Under(with.FoodTrafficWork[^1] + 22, 30, "slowest food frame with traffic journeys: measured prelude, advance and snapshot sync plus the fixed 22 ms refill");
         PerfGate.Under(P(with.Advance, .99), UpdateCityBudget.DefaultTargetMilliseconds + 4, "post-retime advance p99");
     }
 
