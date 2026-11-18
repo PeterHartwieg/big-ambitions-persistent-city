@@ -12,8 +12,8 @@ namespace PersistentCity.Runtime
     public sealed partial class PopulationRuntime
     {
         private bool vendorCommands;
-        private readonly Queue<string> vendorDecisions = new Queue<string>();
-        private CitySimulator? vendorObservedCity;
+        private FoodDecisionRecorder? foodDecisionRecorder;
+        private FoodDecisionRecorder foodDecisions => foodDecisionRecorder ??= NewFoodDecisionRecorder();
         private static bool VendorDiagnosticCity(string? name) => name?.StartsWith("FT", StringComparison.Ordinal) == true;
         private void RegisterVendorDiagnostics()
         {
@@ -36,57 +36,26 @@ namespace PersistentCity.Runtime
             catch (Exception e) { log?.Warn("Vendor diagnostics detail command removal failed: " + e.Message); }
             try { CommandHelper.RemoveCommand<string, string, string, string>(RoutePcMovement); }
             catch (Exception e) { log?.Warn("Movement diagnostics command removal failed: " + e.Message); }
-            StopVendorDecisions(); vendorDecisions.Clear();
+            foodDecisions.Detach();
         }
-        private void AttachVendorDecisionDiagnostics(CitySimulator city) { StopVendorDecisions(); vendorDecisions.Clear(); }
-        private void StartVendorDecisions(CitySimulator city)
-        {
-            if (ReferenceEquals(vendorObservedCity, city)) return;
-            StopVendorDecisions();
-            vendorObservedCity = city;
-            city.FoodDecisionObserved += RecordVendorDecision;
-        }
-        private void StopVendorDecisions()
-        {
-            if (vendorObservedCity != null) vendorObservedCity.FoodDecisionObserved -= RecordVendorDecision;
-            vendorObservedCity = null;
-        }
-        private void RebindVendorDecisionDiagnostics(CitySimulator city)
-        {
-            var observed = vendorObservedCity;
-            if (observed == null || ReferenceEquals(observed, city)) return;
-            observed.FoodDecisionObserved -= RecordVendorDecision;
-            vendorObservedCity = city;
-            city.FoodDecisionObserved += RecordVendorDecision;
-        }
-        private void RecordVendorDecision(FoodDecisionTrace trace)
-        {
-            if (!VendorDiagnosticCity(SaveGameManager.Current?.SaveGameName)) return;
-            try
-            {
-                string line = JsonConvert.SerializeObject(new { resident = trace.Consumer.Id, trace.Intent.Id, trace.MealKind,
-                    trace.Intent.BusinessId, vendors = trace.Businesses.Where(b => VendorNames.IsVendorPlace(b.PlaceId)),
-                    trace.ChoiceCosts, trace.Decision, trace.RouteChecks });
-                if (vendorDecisions.Count == 50) vendorDecisions.Dequeue();
-                vendorDecisions.Enqueue(line);
-            }
-            catch (Exception error)
-            {
-                StopVendorDecisions();
-                log?.Warn("Vendor decision diagnostics stopped: " + error.Message);
-            }
-        }
+        private void AttachVendorDecisionDiagnostics(CitySimulator city) => foodDecisions.Detach();
+        private void RebindVendorDecisionDiagnostics(CitySimulator city) => foodDecisions.Rebind(city);
+        private FoodDecisionRecorder NewFoodDecisionRecorder() => new FoodDecisionRecorder(trace => !VendorDiagnosticCity(SaveGameManager.Current?.SaveGameName) ? null
+            : JsonConvert.SerializeObject(new { resident = trace.Consumer.Id, trace.Intent.Id, trace.MealKind,
+                trace.Intent.BusinessId, vendors = trace.Businesses.Where(b => VendorNames.IsVendorPlace(b.PlaceId)),
+                trace.ChoiceCosts, trace.Decision, trace.RouteChecks }),
+            error => log?.Warn("Vendor decision diagnostics stopped: " + error.Message));
         private void FoodDecisionsCommand(string detail)
         {
             if (detail == "start")
             {
-                StartVendorDecisions(simulation!);
+                foodDecisions.Start(simulation!);
                 Debug.Log("[Persistent City] food decisions recording started (diagnostic only; traces every food decision and keeps the last 50). Use pc food decisions stop when done.");
                 return;
             }
-            if (detail == "stop") { StopVendorDecisions(); Debug.Log("[Persistent City] food decisions recording stopped; the last 50 stay readable."); return; }
+            if (detail == "stop") { foodDecisions.Stop(); Debug.Log("[Persistent City] food decisions recording stopped; the last 50 stay readable."); return; }
             if (detail.Length > 0) { Debug.LogWarning("[Persistent City] Unknown command. Use: pc food decisions [start|stop]"); return; }
-            Debug.Log("[Persistent City] food decisions (recording " + (vendorObservedCity != null ? "on" : "off; use pc food decisions start") + ")\n" + string.Join("\n", vendorDecisions));
+            Debug.Log("[Persistent City] food decisions (recording " + (foodDecisions.Recording ? "on" : "off; use pc food decisions start") + ")\n" + string.Join("\n", foodDecisions.Lines));
         }
         private void RoutePcCommand(string area, string action) => RoutePcDetail(area, action, "");
         private void RoutePcMovement(string area, string action, string detail, string value)

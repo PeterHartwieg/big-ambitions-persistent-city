@@ -1019,6 +1019,7 @@ namespace PersistentCity.Runtime
 
         private void Detach()
         {
+            foodDecisions.Detach(); ForgetResearchSnapshot();
             FlushSaveHandOff();
             settings.MarketResearch.ClearAvailability(); ResearchAgencyDialog.Detach(); ResearchBilling.Detach();
             DetachSaveEpoch();

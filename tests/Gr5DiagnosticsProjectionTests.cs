@@ -222,4 +222,33 @@ public sealed class Gr5DiagnosticsProjectionTests
         Assert.Throws<ArgumentOutOfRangeException>(() => BodyHierarchy.Capacity(10, 0, 1));
         Assert.Throws<ArgumentOutOfRangeException>(() => BodyHierarchy.Capacity(10, 1, -1));
     }
+
+    [Fact]
+    public void ThePauseOverNeighboursUsesOnlyAdjacentPlainFrames()
+    {
+        var sampler = new GcPauseSampler(256);
+        sampler.Start(1000);
+        sampler.Frame(16, 0, 0, 0, 0, 1000);
+        sampler.Frame(116, 0, 1, 0, 0, 1000);
+        sampler.Frame(16, 0, 0, 0, 0, 1000);
+        sampler.Frame(16, 0, 0, 0, 0, 1000);
+        sampler.Frame(96, 0, 1, 0, 0, 1000);
+        sampler.Frame(86, 0, 1, 0, 0, 1000);
+        sampler.Frame(16, 0, 0, 0, 0, 1000);
+        sampler.Frame(76, 0, 1, 0, 0, 1000);
+        sampler.Rebaseline();
+        sampler.Frame(16, 0, 0, 0, 0, 1000);
+        sampler.Frame(56, 0, 1, 0, 0, 1000);
+        sampler.Frame(16, 0, 0, 0, 0, 1000);
+        Assert.Equal(5, sampler.CollectionRowCount);
+        Assert.Equal((16.0, 16.0), (sampler.CollectionRow(0).PreviousFrameMs, sampler.CollectionRow(0).NextFrameMs));
+        Assert.Equal((16.0, -1.0), (sampler.CollectionRow(1).PreviousFrameMs, sampler.CollectionRow(1).NextFrameMs));
+        Assert.Equal((-1.0, 16.0), (sampler.CollectionRow(2).PreviousFrameMs, sampler.CollectionRow(2).NextFrameMs));
+        Assert.Equal((16.0, -1.0), (sampler.CollectionRow(3).PreviousFrameMs, sampler.CollectionRow(3).NextFrameMs));
+        Assert.Equal((16.0, 16.0), (sampler.CollectionRow(4).PreviousFrameMs, sampler.CollectionRow(4).NextFrameMs));
+        var spread = sampler.PauseOverNeighboursSpread();
+        Assert.Equal(2, spread.Count);
+        Assert.Equal(40, spread.P50, 6);
+        Assert.Equal(100, spread.Max, 6);
+    }
 }

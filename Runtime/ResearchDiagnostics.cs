@@ -139,22 +139,10 @@ namespace PersistentCity.Runtime
             catch (Exception error) { log?.Warn("Research console detail command not removed: " + error.Message); }
         }
 
-        private ResearchLedger? researchSnapshot;
-        private CitySimulator? researchSnapshotCity;
-        private float researchSnapshotUntil;
-        private void ForgetResearchSnapshot() { researchSnapshot = null; researchSnapshotCity = null; }
+        private readonly ResearchSnapshotCache researchSnapshots = new ResearchSnapshotCache();
+        private void ForgetResearchSnapshot() => researchSnapshots.Forget();
         private ResearchLedger? ResearchLedgerNow
-        {
-            get
-            {
-                var city = failed || !ReferenceEquals(saveIdentity, SaveGameManager.Current) ? null : simulation;
-                if (city == null) { researchSnapshot = null; researchSnapshotCity = null; return null; }
-                float now = Time.unscaledTime;
-                if (!ReferenceEquals(city, researchSnapshotCity) || now >= researchSnapshotUntil)
-                { researchSnapshot = CityViewReports.ResearchSnapshot(city.View); researchSnapshotCity = city; researchSnapshotUntil = now + .25f; }
-                return researchSnapshot;
-            }
-        }
+            => researchSnapshots.Get(failed || !ReferenceEquals(saveIdentity, SaveGameManager.Current) ? null : simulation, Time.unscaledTime);
         private ResearchLedger? ResearchLedgerFresh => failed || simulation == null || !ReferenceEquals(saveIdentity, SaveGameManager.Current)
             ? null : CityViewReports.ResearchSnapshot(simulation.View);
         private IResearchView? ResearchViewNow => failed || simulation == null || !ReferenceEquals(saveIdentity, SaveGameManager.Current)

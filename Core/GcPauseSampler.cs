@@ -117,7 +117,7 @@ namespace PersistentCity.Core
         private int collectionRowCount;
         private readonly double[] neighbourScratch = new double[CollectionRowCapacity];
         private double previousFrameMs = -1;
-        private bool rowAwaitsNext;
+        private bool rowAwaitsNext, previousCollected;
         private long frameNumber = -1, lastFrameNumber = -1;
 
         private readonly float[] frameMs;
@@ -169,7 +169,7 @@ namespace PersistentCity.Core
             AllocationCounter = allocationCounter ?? "heap_used";
             nested = false; lastCounter = -1; counterFrameBytes = counterFrames = 0;
             Array.Clear(collections, 0, collections.Length);
-            stored = 0; collectionRowCount = 0; previousFrameMs = -1; rowAwaitsNext = false; lastFrameNumber = -1; Frames = 0; CollectionFrames = 0; heapBeforeSum = heapAfterSum = heapPairs = 0;
+            stored = 0; collectionRowCount = 0; previousFrameMs = -1; rowAwaitsNext = previousCollected = false; lastFrameNumber = -1; Frames = 0; CollectionFrames = 0; heapBeforeSum = heapAfterSum = heapPairs = 0;
             MaxFrameMs = MaxModMs = 0; collectionSpikes = frameSpikes = 0;
             frameAllocatedBytes = allocationFrames = 0;
             FrameRecorder.Reset();
@@ -327,7 +327,7 @@ namespace PersistentCity.Core
         public long SegmentSamples(GcAllocationSegment segment) => segmentSamples[(int)segment];
         public long SegmentSkipped(GcAllocationSegment segment) => segmentSkipped[(int)segment];
 
-        public void Rebaseline() { baselined = false; pendingModMs = 0; lastCounter = -1; }
+        public void Rebaseline() { baselined = false; pendingModMs = 0; lastCounter = -1; previousFrameMs = -1; previousCollected = rowAwaitsNext = false; }
 
         public void Frame(double frameMilliseconds, double modMilliseconds, int gen0, int gen1, int gen2, long heapBytes)
         {
@@ -337,7 +337,7 @@ namespace PersistentCity.Core
             Frames++;
             if (frameMilliseconds > MaxFrameMs) MaxFrameMs = frameMilliseconds;
             if (modMilliseconds > MaxModMs) MaxModMs = modMilliseconds;
-            if (rowAwaitsNext) { collectionRows[collectionRowCount - 1].NextFrameMs = frameMilliseconds; rowAwaitsNext = false; }
+            if (rowAwaitsNext) { collectionRows[collectionRowCount - 1].NextFrameMs = gc ? -1 : frameMilliseconds; rowAwaitsNext = false; }
             if (gc)
             {
                 CollectionFrames++;
@@ -345,12 +345,12 @@ namespace PersistentCity.Core
                 if (collectionRowCount < CollectionRowCapacity)
                 {
                     collectionRows[collectionRowCount++] = new GcCollectionRow { Frame = frameNumber, FrameMs = frameMilliseconds, ModMs = modMilliseconds,
-                        Gen0 = gen0, Gen1 = gen1, Gen2 = gen2, HeapBefore = lastHeap, HeapAfter = heapBytes, PreviousFrameMs = previousFrameMs, NextFrameMs = -1 };
+                        Gen0 = gen0, Gen1 = gen1, Gen2 = gen2, HeapBefore = lastHeap, HeapAfter = heapBytes, PreviousFrameMs = previousCollected ? -1 : previousFrameMs, NextFrameMs = -1 };
                     rowAwaitsNext = true;
                 }
             }
             else if (lastHeap >= 0 && heapBytes >= lastHeap) { frameAllocatedBytes += heapBytes - lastHeap; allocationFrames++; }
-            previousFrameMs = frameMilliseconds;
+            previousFrameMs = frameMilliseconds; previousCollected = gc;
             if (heapBytes > HeapPeak) HeapPeak = heapBytes;
             if (heapBytes >= 0) { lastHeap = heapBytes; HeapEnd = heapBytes; }
             if (frameMilliseconds >= SpikeMilliseconds) { frameSpikes++; if (gc) collectionSpikes++; }

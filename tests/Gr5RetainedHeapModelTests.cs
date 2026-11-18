@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
 using PersistentCity.Core;
@@ -136,5 +137,28 @@ public sealed class Gr5RetainedHeapModelTests
         output.WriteLine(title + ": objects " + census.Objects + ", MB " + M(census.Bytes) + ", scanned MB " + M(census.ScannedBytes));
         foreach (var row in census.Roots) output.WriteLine("  root " + row.Name + ": objects " + row.Objects + ", MB " + M(row.Bytes) + ", scanned MB " + M(row.ScannedBytes));
         foreach (var row in census.Types.Take(15)) output.WriteLine("  type " + row.Name + ": objects " + row.Objects + ", MB " + M(row.Bytes));
+    }
+
+    private sealed class RuntimeShape { public IDictionary<string, string>? Validated; public ReceiptsShape? Receipts; public string? Payload; }
+    private sealed class ReceiptsShape { public IDictionary<string, string>? Data; }
+
+    [Fact]
+    public void TheCensusCountsOnlyTheModsOwnSaveEntriesThroughTheSharedDictionary()
+    {
+        string mine = new string('p', 100_000), receipt = new string('r', 10_000), foreign = new string('f', 1_000_000);
+        var modData = new Dictionary<string, string> { ["persistentcity:state_v1"] = mine, ["persistentcity:food-sale-v1:a"] = receipt, ["othermod:state"] = foreign };
+        var runtime = new RuntimeShape { Validated = modData, Receipts = new ReceiptsShape { Data = modData }, Payload = mine };
+        var census = new RetainedCensus();
+        census.AddOwnedEntries(modData, "persistentcity", "save.modData.");
+        census.AddFields("runtime.", runtime, null);
+        var roots = census.Roots.ToDictionary(r => r.Name, r => r);
+        long Text(string value) => (16 + 4 + 2L * (value.Length + 1) + 7) / 8 * 8;
+        Assert.Equal(Text(mine), roots["save.modData.persistentcity:state_v1"].Bytes);
+        Assert.Equal(Text(receipt), roots["save.modData.persistentcity:food-sale-v1:a"].Bytes);
+        Assert.DoesNotContain(census.Roots, r => r.Name.Contains("othermod"));
+        Assert.True(census.Bytes < Text(mine) + Text(receipt) + 1024, "census counted the shared dictionary: " + census.Bytes);
+        Assert.Equal(0, roots["runtime.Validated"].Objects);
+        Assert.Equal(0, roots["runtime.Payload"].Objects);
+        Assert.Equal(1, roots["runtime.Receipts"].Objects);
     }
 }

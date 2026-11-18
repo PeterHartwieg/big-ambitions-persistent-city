@@ -27,6 +27,7 @@ namespace PersistentCity.Core
         private readonly Dictionary<Type, Row> foreign = new Dictionary<Type, Row>();
         private readonly List<Row> byRoot = new List<Row>();
         private readonly Func<Type, bool> walkable;
+        private readonly Dictionary<Type, bool> walkableTypes = new Dictionary<Type, bool>();
         private readonly Stack<object> stack = new Stack<object>();
 
         public RetainedCensus(Func<Type, bool>? walkable = null) { this.walkable = walkable ?? (_ => true); }
@@ -113,7 +114,7 @@ namespace PersistentCity.Core
             seen.Add(value, true);
             var type = value.GetType();
             if (value is Type || value is MemberInfo || value is Assembly || value is Module || value is Delegate d && d.Target == null) return false;
-            if (!type.IsArray && !(value is string) && !walkable(type))
+            if (!type.IsArray && !(value is string) && !Walkable(type))
             {
                 if (!foreign.TryGetValue(type, out var kind)) foreign.Add(type, kind = new Row(Name(type)));
                 kind.Objects++;
@@ -121,6 +122,25 @@ namespace PersistentCity.Core
             }
             stack.Push(value);
             return true;
+        }
+
+        private bool Walkable(Type type)
+        {
+            if (walkableTypes.TryGetValue(type, out bool known)) return known;
+            bool walk = walkable(type);
+            walkableTypes.Add(type, walk);
+            return walk;
+        }
+
+        public void AddOwnedEntries(IDictionary<string, string>? shared, string ownedKeyPrefix, string rootPrefix)
+        {
+            if (shared == null) return;
+            Exclude(shared);
+            var owned = new List<KeyValuePair<string, string>>();
+            foreach (var entry in shared)
+                if (entry.Key != null && entry.Key.StartsWith(ownedKeyPrefix, StringComparison.Ordinal)) owned.Add(entry);
+            owned.Sort((a, b) => StringComparer.Ordinal.Compare(a.Key, b.Key));
+            foreach (var entry in owned) Add(rootPrefix + entry.Key, entry.Value);
         }
 
         private void Measure(object value, Row row)
