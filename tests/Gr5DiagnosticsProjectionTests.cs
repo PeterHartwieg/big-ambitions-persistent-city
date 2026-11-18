@@ -113,6 +113,8 @@ public sealed class Gr5DiagnosticsProjectionTests
         Assert.Equal(1, row.Gen0);
         Assert.Equal(1104, row.HeapBefore);
         Assert.Equal(1105, row.HeapAfter);
+        Assert.Equal(16, row.PreviousFrameMs, 6);
+        Assert.Equal(16, row.NextFrameMs, 6);
         Assert.Equal(200, sampler.PauseSpread().P95, 6);
         Assert.Equal(188, sampler.PauseWithoutModSpread().P95, 6);
         using var report = JsonDocument.Parse(sampler.ReportJson(new GcReportContext(1000, 2000, null, 2, false, 1_470_000_000, 1_350_000_000)));
@@ -121,7 +123,11 @@ public sealed class Gr5DiagnosticsProjectionTests
         Assert.Equal(3, root.GetProperty("collection_rows_retained").GetInt64());
         Assert.False(root.GetProperty("collection_rows_truncated").GetBoolean());
         var first = root.GetProperty("collection_rows")[0];
-        Assert.Equal(new[] { "frame", "frame_ms", "mod_ms", "gen0", "gen1", "gen2", "heap_before_bytes", "heap_after_bytes" }, first.EnumerateObject().Select(p => p.Name).ToArray());
+        Assert.Equal(new[] { "frame", "frame_ms", "mod_ms", "gen0", "gen1", "gen2", "heap_before_bytes", "heap_after_bytes", "previous_frame_ms", "next_frame_ms" }, first.EnumerateObject().Select(p => p.Name).ToArray());
+        Assert.Equal(16, first.GetProperty("previous_frame_ms").GetDouble(), 3);
+        Assert.Equal(16, first.GetProperty("next_frame_ms").GetDouble(), 3);
+        Assert.Equal(200, root.GetProperty("pause_ms_over_neighbours").GetProperty("p95").GetDouble(), 3);
+        Assert.Equal(3, root.GetProperty("pause_ms_over_neighbours").GetProperty("count").GetInt64());
         Assert.Equal(104, first.GetProperty("frame").GetInt64());
         Assert.Equal(1_470_000_000, root.GetProperty("mono_heap_bytes").GetInt64());
         Assert.Contains("outside UpdateCity p95/max=188.00/188.00 ms", sampler.ReportHuman(new GcReportContext(1000, 2000, null, 2, false, -1, -1)));
