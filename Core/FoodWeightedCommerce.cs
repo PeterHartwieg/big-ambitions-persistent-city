@@ -395,14 +395,14 @@ namespace PersistentCity.Core
                 if(!c.ScoreCents.HasValue) continue;
                 var b=BusinessById(businesses,c.BusinessId);
                 var heldShop=ShopById(d.Shops,c.BusinessId);
-                var ticket=CandidateTicket(meal,person,heldShop,c.ProductId,c.Price,allowance);
+                var ticket=CandidateTotal(meal,person,heldShop,c.ProductId,c.Price,allowance);
                 double queue=Math.Max(0,b.NextServiceMinute-c.AdmissionMinute!.Value);
                 var dynamic=HeldDynamic(heldShop,c.ProductId);
                 evaluated.Add(new EvaluatedFoodOffer(c.BusinessId,c.ProductId,c.Price,c.TravelMinutes!.Value,queue,
                     c.ServiceEndsAt!.Value-d.OriginAt+c.ReturnMinutes!.Value+intent.EatingMinutes,d.Deadline-d.OriginAt,
                     c.CustomerServicePercent,c.DistrictDemandPercent,meal.Kind,heldShop.MemoryContribution,heldShop.AlternativeWeight,
                     dynamic.HasValue ? dynamic.Value.TasteBand : FoodMenuPolicy.Code(c.ProductId)>3 ? FoodMenuPolicy.Taste(city.State.Seed,meal.ResidentId,FoodMenuPolicy.Code(c.ProductId)) : -1,
-                    campaignActive: d.Awareness?.CampaignActive(c.BusinessId)==true, ticket: ticket?.Total, metadata: dynamic));
+                    campaignActive: d.Awareness?.CampaignActive(c.BusinessId)==true, ticket: ticket, metadata: dynamic));
             }
             long choiceStarted=city.ObservingFood ? System.Diagnostics.Stopwatch.GetTimestamp() : 0;
             var pick=FoodChoicePolicy.Select(evaluated,Traits(meal,person),allowance,Draw(meal,d),d.Tuning.Settings,intent.OutsideOption!=FoodOutsideOption.None,d.WeatherTravelMultiplier);

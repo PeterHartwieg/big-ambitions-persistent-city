@@ -213,10 +213,26 @@ namespace PersistentCity.Core
             return intervals;
         }
 
+        private static readonly Comparison<OpeningInterval> IntervalOrder = (a, b) => { int from = a.From.CompareTo(b.From); return from != 0 ? from : a.To.CompareTo(b.To); };
+
         private static OpeningInterval[] BuildOpeningIntervals(Place place, int day)
         {
-            bool weekly = place.WeeklyHours.Count != 0;
-            var intervals = new List<OpeningInterval>();
+            var hours = place.WeeklyHours;
+            bool weekly = hours.Count != 0;
+            int count = 0;
+            for (int offset = -1; offset <= 8; offset++)
+            {
+                if (weekly)
+                {
+                    int weekday = ((day + offset - 1) % 7 + 7) % 7;
+                    for (int i = 0; i < hours.Count; i++)
+                        if (hours[i].Day == weekday && hours[i].FromMinute != hours[i].ToMinute) count++;
+                }
+                else if (place.OpenMinute != place.CloseMinute) count++;
+            }
+            if (count == 0) return Array.Empty<OpeningInterval>();
+            var intervals = new OpeningInterval[count];
+            int at = 0;
             for (int offset = -1; offset <= 8; offset++)
             {
                 int currentDay = day + offset;
@@ -224,19 +240,22 @@ namespace PersistentCity.Core
                 if (weekly)
                 {
                     int weekday = ((currentDay - 1) % 7 + 7) % 7;
-                    foreach (var window in place.WeeklyHours)
-                        if (window.Day == weekday) AddInterval(intervals, midnight, window.FromMinute, window.ToMinute);
+                    for (int i = 0; i < hours.Count; i++)
+                    {
+                        var window = hours[i];
+                        if (window.Day == weekday) AddInterval(intervals, ref at, midnight, window.FromMinute, window.ToMinute);
+                    }
                 }
-                else AddInterval(intervals, midnight, place.OpenMinute, place.CloseMinute);
+                else AddInterval(intervals, ref at, midnight, place.OpenMinute, place.CloseMinute);
             }
-            intervals.Sort((a, b) => { int from = a.From.CompareTo(b.From); return from != 0 ? from : a.To.CompareTo(b.To); });
-            return intervals.ToArray();
+            Array.Sort(intervals, IntervalOrder);
+            return intervals;
         }
 
-        private static void AddInterval(List<OpeningInterval> intervals, double midnight, int from, int to)
+        private static void AddInterval(OpeningInterval[] intervals, ref int at, double midnight, int from, int to)
         {
             if (from == to) return;
-            intervals.Add(new OpeningInterval(midnight + from, midnight + to + (to < from ? 1440 : 0)));
+            intervals[at++] = new OpeningInterval(midnight + from, midnight + to + (to < from ? 1440 : 0));
         }
 
         internal readonly struct OpeningInterval

@@ -300,6 +300,7 @@ namespace PersistentCity.Core
             uint h=StableRandom.AppendDecimal(StableRandom.Append(prefix,'|'),slot);
             return StableRandom.Finish(StableRandom.Append(StableRandom.Append(h,'|'),Revision));
         }
+        [ThreadStatic] private static Bucket[]? bucketScratch;
         public FoodAwarenessImage Sample(int seed,string consumer,int day,Position? home,Position? routine,Position? origin,
             FoodAwarenessSettings settings,Func<Entry,bool> eligible,IFoodAwarenessProvider? memory=null,
             IFoodAwarenessProvider? campaign=null,FoodAwarenessDump? diagnostic=null,string? presentPlace=null)
@@ -324,7 +325,7 @@ namespace PersistentCity.Core
             {
                 uint prefix=Prefix(seed,consumer,day,source,false);
                 int level=0;while(level<Scales.Length-1 && Scales[level]<settings.RadiusMetres) level++;
-                var buckets=new Bucket[9];int mass=0,n=0;
+                var buckets=bucketScratch ??= new Bucket[9];int mass=0,n=0;
                 if(anchor.HasValue && anchor.Value.IsFinite)
                 {
                     var cell=Cell(anchor.Value,Scales[level]);

@@ -120,7 +120,26 @@ namespace PersistentCity.Core
         public Money LegacyExternalFoodSpent { get; set; }
         public FoodAlternativeKind TargetKind => External.Length == 0 ? FoodAlternativeKind.Player : FoodAlternativeKind.Rival;
         public FoodAvailabilityEvidenceKind AvailabilityEvidence => TargetKind == FoodAlternativeKind.Rival ? FoodAvailabilityEvidenceKind.EstimatedFromPriceAndHours : FoodAvailabilityEvidenceKind.ObservedPlayerSupply;
-        public string IntentId => MealRhythm.IntentId(ResidentId, Day, Kind);
+        private sealed class IntentName
+        {
+            public IntentName(string resident, int day, MealKind kind) { Resident = resident; Day = day; Kind = kind; Id = MealRhythm.IntentId(resident, day, kind); }
+            public readonly string Resident, Id;
+            public readonly int Day;
+            public readonly MealKind Kind;
+        }
+        private IntentName? intentName;
+        public string IntentId
+        {
+            get
+            {
+                var resident = ResidentId; int day = Day; var kind = Kind;
+                var name = intentName;
+                if (name != null && ReferenceEquals(name.Resident, resident) && name.Day == day && name.Kind == kind) return name.Id;
+                name = new IntentName(resident, day, kind);
+                intentName = name;
+                return name.Id;
+            }
+        }
     }
     public sealed class FoodCommerceState
     {

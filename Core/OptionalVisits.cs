@@ -1,5 +1,4 @@
 using System;
-using System.Linq;
 
 namespace PersistentCity.Core
 {
@@ -23,7 +22,7 @@ namespace PersistentCity.Core
             ValidateRoute(outward, places[person.PlaceId].Position, shop.Position);
             var hours = capturedHours ?? shop;
             double arrival = now + outward.Minutes, leave = arrival + stayMinutes;
-            if (outward.Legs.Any(l => l.Mode != TravelMode.Walk) || leave + returnMinutes > latestReturnMinute
+            if (!AllWalking(outward) || leave + returnMinutes > latestReturnMinute
                 || !DailyRoutine.Open(hours, arrival) || DailyRoutine.NextClose(hours, arrival) < leave) return false;
             var outing = new MealOuting { OriginId = person.PlaceId, OriginActivity = person.Activity,
                 ResumeUntil = person.ActivityUntilMinute, ResumeEvent = person.NextEventMinute };
@@ -32,13 +31,31 @@ namespace PersistentCity.Core
             food?.AccrueWorkDeparture(person);
             person.MealOuting = outing; person.DestinationId = shopId; person.DestinationActivity = Activity.Shop;
             person.ActivityUntilMinute = leave; person.Phase = CitizenPhase.Travelling;
-            person.Journey = new Route { Legs = outward.Legs.Select(l => new RouteLeg { From = l.From, To = l.To,
-                Minutes = l.Minutes, Mode = l.Mode, ServiceId = l.ServiceId }).ToList() }.Commit();
+            person.Journey = CommittedCopy(outward).Commit();
             person.DepartureMinute = now; person.NextEventMinute = arrival;
             item.Minute = ScheduledMinute(person); due.Add(item); FileOptionalStop(person);
             if(!deferObservation) ObserveFoodDeparture(person);
             SynchronizeSnapshot(); return true;
         }
+        private static bool AllWalking(Route route)
+        {
+            var legs = route.Legs;
+            for (int i = 0; i < legs.Count; i++) if (legs[i].Mode != TravelMode.Walk) return false;
+            return true;
+        }
+
+        private static Route CommittedCopy(Route source)
+        {
+            var legs = source.Legs;
+            var copy = new Route(new RouteLegs(legs.Count));
+            for (int i = 0; i < legs.Count; i++)
+            {
+                var l = legs[i];
+                copy.Legs.Add(l.Frozen ? l : new RouteLeg { From = l.From, To = l.To, Minutes = l.Minutes, Mode = l.Mode, ServiceId = l.ServiceId });
+            }
+            return copy;
+        }
+
         internal void ObserveFoodDeparture(CitizenState person) => activityObservers.Handlers?.Invoke(person.Identity.Id,person,State.Minute);
 
         internal void ExtendMealStay(CitizenState person, double until)
@@ -98,7 +115,7 @@ namespace PersistentCity.Core
             if (route == null)
             { person.Phase = CitizenPhase.WaitingForRoute; person.NextEventMinute = now + 5; return; }
             ValidateRoute(route, places[person.PlaceId].Position, places[outing.OriginId].Position);
-            if (route.Legs.Any(l => l.Mode != TravelMode.Walk)) throw new InvalidOperationException("Meal return must be walking.");
+            if (!AllWalking(route)) throw new InvalidOperationException("Meal return must be walking.");
             person.Phase = CitizenPhase.Travelling; person.Journey = route.Commit(); person.DepartureMinute = now;
             person.NextEventMinute = now + route.Minutes;
         }
@@ -117,12 +134,11 @@ namespace PersistentCity.Core
                 || trafficCitizens.ContainsKey(citizenId)
                 || latestReturnMinute > Math.Min(person.NextEventMinute, person.ActivityUntilMinute)) return false;
             ValidateRoute(outward, places[person.HomeId].Position, shop.Position);
-            if (outward.Legs.Any(l => l.Mode != TravelMode.Walk)) return false;
+            if (!AllWalking(outward)) return false;
             double arrival = now + outward.Minutes, leave = arrival + stayMinutes;
             if (leave + returnMinutes > latestReturnMinute || !DailyRoutine.Open(shop, arrival)
                 || DailyRoutine.NextClose(shop, arrival) < leave) return false;
-            var committed = new Route { Legs = outward.Legs.Select(l => new RouteLeg { From = l.From, To = l.To,
-                Minutes = l.Minutes, Mode = l.Mode, ServiceId = l.ServiceId }).ToList() };
+            var committed = CommittedCopy(outward);
             if (!due.Remove(item)) throw new InvalidOperationException("Resident has no queued activity.");
             person.DestinationId = shopId;
             person.DestinationActivity = Activity.Shop;

@@ -68,17 +68,39 @@ namespace PersistentCity.Core
 
         private FoodMealTicket? CandidateTicket(ResidentMeal meal, CitizenState person, FoodDecisionShop shop, string product, Money price, Money allowance)
         {
-            bool rival = shop.AlternativeKind == FoodAlternativeKind.Rival;
-            if (!rival && !(market is IFoodTicketMarket t && t.SellsExtras(shop.BusinessId))) return null;
             var menu = new List<FoodExtraOffer>(shop.Offers.Count);
-            foreach (var o in shop.Offers)
+            if (!CandidateMenu(meal, person, shop, menu)) return null;
+            return PlanTicket(meal, person, shop.BusinessId, product, price, menu, allowance);
+        }
+
+        private readonly List<FoodExtraOffer> candidateMenu = new List<FoodExtraOffer>(FoodMenuPolicy.MaximumOffers);
+
+        private Money? CandidateTotal(ResidentMeal meal, CitizenState person, FoodDecisionShop shop, string product, Money price, Money allowance)
+        {
+            var menu = candidateMenu;
+            menu.Clear();
+            try
             {
+                if (!CandidateMenu(meal, person, shop, menu)) return null;
+                return FoodMealExtras.PlanTotal(city.State.Seed, meal.ResidentId, meal.Day, meal.Kind, shop.BusinessId, new FoodTicketLine(product, price), menu, allowance);
+            }
+            finally { menu.Clear(); }
+        }
+
+        private bool CandidateMenu(ResidentMeal meal, CitizenState person, FoodDecisionShop shop, List<FoodExtraOffer> menu)
+        {
+            bool rival = shop.AlternativeKind == FoodAlternativeKind.Rival;
+            if (!rival && !(market is IFoodTicketMarket t && t.SellsExtras(shop.BusinessId))) return false;
+            var offers = shop.Offers;
+            for (int i = 0; i < offers.Count; i++)
+            {
+                var o = offers[i];
                 bool dynamic = o.Metadata != null && o.Metadata.Revision == 2 && o.Metadata.MealClass == FoodMealClass.Food;
                 if ((FoodProducts.Known(o.ProductId) || dynamic) && (rival || o.Units >= 0))
                     menu.Add(new FoodExtraOffer(o.ProductId, o.Price, rival ? (int?)null : o.Units,
                         dynamic && !FoodProducts.Known(o.ProductId) ? o.Metadata!.TasteBand : ExtraTaste(meal, person, o.ProductId)));
             }
-            return PlanTicket(meal, person, shop.BusinessId, product, price, menu, allowance);
+            return true;
         }
 
         private IReadOnlyList<FoodMealTicket> CandidateTickets(ResidentMeal meal, CitizenState person, FoodDecisionState d, FoodIntent intent)
