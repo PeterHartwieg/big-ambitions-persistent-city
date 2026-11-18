@@ -22,7 +22,14 @@ namespace PersistentCity.Core
             var result = Result ?? throw new InvalidOperationException("The route rebuild has not finished.");
             var retired = source;
             source = null;
-            if (retired != null) result.ActiveJourneys.TakeSpareCells(retired.ActiveJourneys);
+            if (retired == null) return result;
+            long started = Stopwatch.GetTimestamp();
+            result.ActiveJourneys.TakeSpareCells(retired.ActiveJourneys);
+            double elapsed = (Stopwatch.GetTimestamp() - started) * 1000.0 / Stopwatch.Frequency;
+            Milliseconds += elapsed;
+            HandOverMilliseconds = elapsed;
+            lastUpdateMilliseconds += elapsed;
+            SlowestUpdateMilliseconds = Math.Max(SlowestUpdateMilliseconds, lastUpdateMilliseconds);
             return result;
         }
 
@@ -31,6 +38,8 @@ namespace PersistentCity.Core
         public int Units { get; private set; }
         public double Milliseconds { get; private set; }
         public double SlowestUpdateMilliseconds { get; private set; }
+        public double HandOverMilliseconds { get; private set; }
+        private double lastUpdateMilliseconds;
 
         public bool Step(long deadlineTimestamp)
         {
@@ -53,6 +62,7 @@ namespace PersistentCity.Core
             {
                 double elapsed = (Stopwatch.GetTimestamp() - started) * 1000.0 / Stopwatch.Frequency;
                 Milliseconds += elapsed;
+                lastUpdateMilliseconds = elapsed;
                 SlowestUpdateMilliseconds = Math.Max(SlowestUpdateMilliseconds, elapsed);
             }
         }

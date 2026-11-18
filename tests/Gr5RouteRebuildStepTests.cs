@@ -272,4 +272,54 @@ public sealed class Gr5RouteRebuildStepTests
         Assert.True(replacement.ActiveJourneyIndexMatchesState(), "source index after a failed rebuild");
         Assert.Equal(indexed, replacement.ActiveJourneys.Count);
     }
+
+    private static CitizenState Walker(string id, double x)
+    {
+        var route = new Route();
+        route.Legs.Add(new RouteLeg { From = new Position(x, 0, 0), To = new Position(x + 1, 0, 0), Minutes = 1, Mode = TravelMode.Walk });
+        return new CitizenState { Identity = new CitizenIdentity { Id = id }, Phase = CitizenPhase.Travelling, Journey = route.Commit() };
+    }
+
+    [Fact]
+    public void AnEntryTakenFromARetiredGridIsFoundByTheFirstQuery()
+    {
+        var first = Walker("a", 1); var second = Walker("b", 2);
+        var source = new ActiveJourneyIndex();
+        source.File(first); source.File(second);
+        var output = new List<IPersonView>();
+        Assert.Equal(2, source.Grid.Query(new Position(1.5, 0, 0), 5, output).Count);
+        var replacement = new ActiveJourneyIndex();
+        replacement.File(first);
+        replacement.TakeSpareCells(source);
+        replacement.File(second);
+        var found = replacement.Grid.Query(new Position(1.5, 0, 0), 5, output);
+        Assert.Contains(second, found);
+        Assert.Equal(2, found.Count);
+        Assert.Equal(0, replacement.Grid.Pooled);
+    }
+
+    [Fact]
+    public void RepeatedRebuildsKeepTheGridEntryCapacityAtAPlateauAndTimeTheHandOver()
+    {
+        var (state, city, planner) = Gr5AdvanceAllocationTests.City();
+        while (!city.AdvanceTo(2 * 1440 + 15.5 * 60, 256).CaughtUp) { }
+        int live = city.ActiveJourneys.Grid.Count;
+        var capacity = new List<int>();
+        for (int round = 0; round < 6; round++)
+        {
+            var rebuild = city.BeginRebuildRoutes(planner, null);
+            while (!rebuild.Step(0)) { }
+            double before = rebuild.SlowestUpdateMilliseconds;
+            city = rebuild.TakeResult();
+            Assert.True(rebuild.HandOverMilliseconds >= 0);
+            Assert.True(rebuild.SlowestUpdateMilliseconds >= before);
+            Assert.True(rebuild.Milliseconds >= rebuild.HandOverMilliseconds);
+            Assert.Equal(live, city.ActiveJourneys.Grid.Count);
+            Assert.True(city.ActiveJourneyIndexMatchesState());
+            capacity.Add(city.ActiveJourneys.Grid.Count + city.ActiveJourneys.Grid.Pooled);
+            output.WriteLine("rebuild " + round + ": live " + city.ActiveJourneys.Grid.Count + ", pooled " + city.ActiveJourneys.Grid.Pooled
+                + ", hand-over " + rebuild.HandOverMilliseconds.ToString("0.000") + " ms, slowest update " + rebuild.SlowestUpdateMilliseconds.ToString("0.000") + " ms");
+        }
+        Assert.All(capacity, c => Assert.Equal(capacity[0], c));
+    }
 }
