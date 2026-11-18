@@ -39,7 +39,9 @@ namespace PersistentCity.Runtime
             + budget.Gate.EstimateMilliseconds.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture) + " ms build/"
             + BodyMerge.Fast + " fast merges/" + BodyMerge.Native + " native merges/" + BodyMerge.Failed + " failed merges" + (BodyMerge.Disabled ? "/fast merge off" : "")
             + (BodyMerge.LastError.Length == 0 ? "" : " (" + BodyMerge.LastError + ")")
-            + "/fallbacks: " + BodyMerge.Fallbacks + (BodyMerge.LastCollectError.Length == 0 ? "" : " (collect: " + BodyMerge.LastCollectError + ")");
+            + "/fallbacks: " + BodyMerge.Fallbacks + (BodyMerge.LastCollectError.Length == 0 ? "" : " (collect: " + BodyMerge.LastCollectError + ")")
+            + "/" + GrowStartMaximum.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture) + " ms grow start max/"
+            + GrowFinishMaximum.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture) + " ms grow finish max";
         private readonly Dictionary<string, PhysicalPedestrianBody> active = new Dictionary<string, PhysicalPedestrianBody>(StringComparer.Ordinal);
         private bool disposed;
 
@@ -213,6 +215,10 @@ namespace PersistentCity.Runtime
 
         private AsyncInstantiateOperation<GameObject>? growing;
         public long GrowsStarted { get; private set; }
+        public double GrowStartMaximum { get; private set; }
+        public double GrowFinishMaximum { get; private set; }
+        private bool hierarchySized;
+        private static double Since(long started) => (System.Diagnostics.Stopwatch.GetTimestamp() - started) * 1000.0 / System.Diagnostics.Stopwatch.Frequency;
 
         private bool Staged()
         {
@@ -232,15 +238,24 @@ namespace PersistentCity.Runtime
         private ThirdPersonCharacter? Grow(out bool failed)
         {
             failed = false;
+            long started = System.Diagnostics.Stopwatch.GetTimestamp();
             if (growing == null)
             {
                 if (!Staged()) { failed = true; return null; }
                 growing = UnityEngine.Object.InstantiateAsync(prefab!, staging!.transform);
                 GrowsStarted++;
+                GrowStartMaximum = Math.Max(GrowStartMaximum, Since(started));
                 return null;
             }
             if (!growing.isDone) return null;
-            var made = growing.Result;
+            try { return Finish(out failed); }
+            finally { GrowFinishMaximum = Math.Max(GrowFinishMaximum, Since(started)); }
+        }
+
+        private ThirdPersonCharacter? Finish(out bool failed)
+        {
+            failed = false;
+            var made = growing!.Result;
             growing = null;
             if (made == null || made.Length != 1 || made[0] == null)
             {
@@ -279,11 +294,20 @@ namespace PersistentCity.Runtime
             }
             character.gameObject.SetActive(false);
             character.isPlayer = false; character.updatePlayerPos = false;
+            SizeHierarchy(character.transform);
             character.transform.SetParent(parent, false);
             all.Add(character);
             if (BlendshapeBake.Adopt(character.appearanceSetter.meshCombiner)) baked.Add(character.appearanceSetter);
             BodyMerge.Own(character.appearanceSetter.meshCombiner);
             return character;
+        }
+
+        private void SizeHierarchy(Transform body)
+        {
+            if (hierarchySized) return;
+            hierarchySized = true;
+            int wanted = parent.hierarchyCount + Math.Max(0, ceiling - all.Count) * body.hierarchyCount;
+            if (parent.hierarchyCapacity < wanted) parent.hierarchyCapacity = wanted;
         }
 
         private void Dress(AppearanceSetter appearance, CitizenIdentity identity, int daysPerYear)

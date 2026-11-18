@@ -182,5 +182,9 @@ public sealed class Gr5DiagnosticsProjectionTests
         string probe = System.IO.File.ReadAllText(System.IO.Path.Combine(root, "tools", "perf-union-probe", "Probe.cs"));
         Assert.Contains("[\"mono_heap\"] = new JObject { [\"start_bytes\"] = monoHeapStart", probe);
         Assert.Contains("ReadMonoHeap(out monoHeapStop, out monoUsedStop);", probe);
+        string pedestrians = System.IO.File.ReadAllText(System.IO.Path.Combine(root, "Runtime", "PhysicalPedestrians.cs"));
+        Assert.Contains("\" ms grow start max/\"", pedestrians);
+        Assert.Contains("\" ms grow finish max\";", pedestrians);
+        Assert.Contains("SizeHierarchy(character.transform);", pedestrians);
     }
 }
