@@ -365,5 +365,6 @@ namespace PersistentCity.Core
         }
 
         public void SynchronizeSnapshot() => SynchronizeTrafficJourneys();
+        internal int TrafficJourneyCount => traffic == null ? 0 : trafficCitizens.Count;
     }
 }

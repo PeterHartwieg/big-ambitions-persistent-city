@@ -132,6 +132,7 @@ public sealed class Gr5RouteRebuildStepTests
         var budget = new UpdateCityBudget(); var overshoot = new UnitOvershoot();
         var driver = new ClockRetimeDriver();
         var work = new List<double>(); int warmFrom = 0;
+        var handOvers = new List<double>(); var publications = new List<int>();
         foreach (double rate in new[] { 2.0, 1, 2, 1 })
         {
             if (rate == 1 && warmFrom == 0) warmFrom = work.Count;
@@ -146,8 +147,17 @@ public sealed class Gr5RouteRebuildStepTests
                     long deadline = overshoot.Deadline(started, slice);
                     bool done = rebuild.Step(deadline);
                     overshoot.Observe(deadline, Stopwatch.GetTimestamp());
+                    double stepped = rebuild.Milliseconds;
+                    if (done) city = rebuild.TakeResult();
                     work.Add(GC.CollectionCount(0) != collections ? double.NaN : (Stopwatch.GetTimestamp() - started) * 1000.0 / Stopwatch.Frequency);
-                    if (done) { city = rebuild.Result!; break; }
+                    if (done)
+                    {
+                        Assert.Equal(stepped + rebuild.HandOverMilliseconds, rebuild.Milliseconds, 9);
+                        Assert.True(rebuild.HandOverMilliseconds > 0, "hand-over timed");
+                        handOvers.Add(rebuild.HandOverMilliseconds);
+                        publications.Add(work.Count - 1);
+                        break;
+                    }
                     continue;
                 }
                 var outcome = driver.Update(state, rate, false, 1.4, slice);
@@ -160,7 +170,13 @@ public sealed class Gr5RouteRebuildStepTests
         var warm = work.Skip(warmFrom).Where(w => !double.IsNaN(w)).ToList();
         output.WriteLine(work.Count + " retime updates (" + work.Count(double.IsNaN) + " with a collection, timed by the gc sampler instead), slowest " + work.Where(w => !double.IsNaN(w)).Max().ToString("0.00") + " ms, warm slowest " + warm.Max().ToString("0.00")
             + " ms, warm p95 " + warm.OrderBy(w => w).ElementAt((int)(warm.Count * .95)).ToString("0.00") + " ms on a " + prelude + " ms prelude (.NET)");
+        var published = publications.Where(i => i >= warmFrom && !double.IsNaN(work[i])).Select(i => work[i]).ToList();
+        output.WriteLine("publication updates with the grid hand-over: " + string.Join(", ", publications.Select(i => work[i].ToString("0.00"))) + " ms; hand-overs "
+            + string.Join(", ", handOvers.Select(h => h.ToString("0.000"))) + " ms (.NET)");
+        Assert.Equal(4, handOvers.Count);
+        Assert.NotEmpty(published);
         PerfGate.Under(prelude + warm.Max(), frame, "UpdateCity with a 1 ms prelude in the slowest warm retime update (.NET)");
+        PerfGate.Under(prelude + published.Max(), frame, "UpdateCity with a 1 ms prelude in the warm publication update including the grid hand-over (.NET)");
     }
 
     [Fact]
