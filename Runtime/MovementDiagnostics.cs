@@ -140,6 +140,10 @@ namespace PersistentCity.Runtime
             { Debug.LogWarning("[Persistent City] gc retained refused: a gc measurement or frame recording is running. Use pc gc stop first."); return; }
             long started = System.Diagnostics.Stopwatch.GetTimestamp();
             var census = RetainedCensusOf(this);
+            var modData = save!.modData;
+            if (modData != null)
+                foreach (var entry in modData)
+                    if (entry.Key != null && entry.Key.StartsWith("persistentcity", StringComparison.Ordinal)) census.Add("save.modData." + entry.Key, entry.Value);
             double elapsed = (System.Diagnostics.Stopwatch.GetTimestamp() - started) * GcMillisecondsPerTimestamp;
             Debug.Log(RetainedPrefix + census.ReportJson(48, elapsed));
         }
