@@ -61,6 +61,9 @@ public sealed class Gr5RetainedHeapModelTests
         Print("live kernel, " + TravelTimingMaximumRouteTests.FixtureLinks + " links, " + owned + " vehicles", heap);
         Assert.DoesNotContain(heap.Types, row => row.Name == nameof(TrafficLinkState));
         Assert.True(heap.Objects < 12 * TravelTimingMaximumRouteTests.FixtureLinks + 8 * owned * 4, "objects " + heap.Objects);
+        Assert.True(heap.Objects < 5 * TravelTimingMaximumRouteTests.FixtureLinks, "objects " + heap.Objects);
+        Assert.DoesNotContain(heap.Types, row => row.Name.StartsWith("Queue", StringComparison.Ordinal));
+        Assert.True(heap.Types.Where(row => row.Name == nameof(TrafficEventState)).Sum(row => row.Objects) <= owned, "events");
     }
 
     [Fact]

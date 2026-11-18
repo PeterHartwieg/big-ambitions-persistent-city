@@ -246,7 +246,9 @@ namespace PersistentCity.Runtime
         public TrafficNetwork? TrafficNetwork { get; private set; }
         public void SetTrafficForecast(Func<int, double, TrafficLinkForecast>? forecast) { trafficForecast = forecast; }
         public void SetTrafficEntryForecast(Func<int, double, double, double, double>? forecast) { trafficEntryForecast = forecast; }
-        private bool closureBatch;
+        private bool closureBatch, closureBatchCurrent;
+        private readonly ClosureValidationRota closureValidation = new ClosureValidationRota();
+        public long ClosureValidationsDeferred => closureValidation.Deferred;
         private int closureGeneration;
         private int[] closureCheckedAt = Array.Empty<int>();
         private bool[] closureDisabled = Array.Empty<bool>();
@@ -259,7 +261,9 @@ namespace PersistentCity.Runtime
             if (closureGeneration == int.MaxValue)
             { Array.Clear(closureCheckedAt, 0, closureCheckedAt.Length); closureGeneration = 0; }
             closureGeneration++;
+            closureValidation.Begin(waypoints.Length);
             trafficBuilder?.BeginQuery();
+            closureBatchCurrent = Ready && IsCurrent;
             closureBatch = true;
         }
         public void EndTrafficClosureBatch()
@@ -270,7 +274,7 @@ namespace PersistentCity.Runtime
         public bool IsTrafficLinkClosed(int linkId)
         {
             var network = TrafficNetwork;
-            if (!Ready || !IsCurrent || network == null || linkId < 0 || linkId >= network.Links.Count) return true;
+            if (!Ready || (closureBatch ? unsafeTopology || !closureBatchCurrent : !IsCurrent) || network == null || linkId < 0 || linkId >= network.Links.Count) return true;
             if (!closureBatch) trafficBuilder?.BeginQuery();
             if (closureGateClear.Length != network.Links.Count) closureGateClear = new bool[network.Links.Count];
             var indices = network.NativeNodes(linkId);
@@ -282,7 +286,10 @@ namespace PersistentCity.Runtime
                 else
                 {
                     if (closureCheckedAt[index] != closureGeneration)
-                    { closureDisabled[index] = Disabled(index); closureCheckedAt[index] = closureGeneration; }
+                    {
+                        closureDisabled[index] = closureValidation.TakeFull(index) ? Disabled(index) : ClosedByFlags(index);
+                        closureCheckedAt[index] = closureGeneration;
+                    }
                     disabled = closureDisabled[index];
                 }
                 if (disabled) return true;
@@ -823,9 +830,14 @@ namespace PersistentCity.Runtime
         private bool Disabled(int index)
         {
             if (index < 0 || index >= waypoints.Length || waypoints[index] == null) return true;
-            var native = waypoints[index];
             if (!SnapshotNodeCurrent(index)) return true;
             if (trafficBuilder != null && !trafficBuilder.NodeCurrent(index)) { TrafficInvalid(); return true; }
+            return ClosedByFlags(index);
+        }
+        private bool ClosedByFlags(int index)
+        {
+            if (index < 0 || index >= waypoints.Length || waypoints[index] == null) return true;
+            var native = waypoints[index];
             if (native.temporaryDisabled || native.allowedAgents == null || !native.allowedAgents.Contains((int)VehicleTypes.Car)
                 || (native.allowedCars != null && !native.allowedCars.Contains(VehicleTypes.Car))) return true;
             return false;

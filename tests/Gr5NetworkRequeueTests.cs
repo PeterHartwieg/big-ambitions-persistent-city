@@ -236,6 +236,42 @@ public sealed class Gr5NetworkRequeueTests
     }
 
     [Fact]
+    public void NetworkPreparationGetsOnlyWhatIsLeftOfTheUpdateTargetAndStillMatchesAWholeSwap()
+    {
+        var budget = new UpdateCityBudget();
+        Assert.Equal(UpdateCityBudget.DefaultTargetMilliseconds - UpdateCityBudget.InitialReserveMilliseconds, budget.Slice(0, ClockRetimeStages.SliceMilliseconds), 9);
+        Assert.Equal(UpdateCityBudget.MinimumSliceMilliseconds, budget.Slice(3.5, ClockRetimeStages.SliceMilliseconds), 9);
+        Assert.Equal(UpdateCityBudget.MinimumSliceMilliseconds, budget.Slice(double.NaN, 1), 9);
+        budget.ObservePhysical(2);
+        Assert.Equal(UpdateCityBudget.MinimumSliceMilliseconds, budget.Slice(1, ClockRetimeStages.SliceMilliseconds), 9);
+        Assert.Throws<ArgumentOutOfRangeException>(() => budget.Slice(0, 0.5));
+        var networks = new[] { Road(), Road() };
+        var wholePlanner = new SwappablePlanner { TrafficNetwork = networks[0] };
+        var slicedPlanner = new SwappablePlanner { TrafficNetwork = networks[0] };
+        var whole = RoadCity(750, 2250, wholePlanner);
+        var sliced = RoadCity(750, 2250, slicedPlanner);
+        whole.RefreshTrafficClosures(); sliced.RefreshTrafficClosures();
+        var updates = new List<double>();
+        for (int swap = 1; swap <= 2; swap++)
+        {
+            wholePlanner.TrafficNetwork = slicedPlanner.TrafficNetwork = networks[swap % 2];
+            whole.RefreshTrafficClosures();
+            while (true)
+            {
+                long started = Stopwatch.GetTimestamp();
+                bool done = sliced.TryRefreshTrafficClosures(budget.Slice(3, ClockRetimeStages.SliceMilliseconds));
+                updates.Add((Stopwatch.GetTimestamp() - started) * 1000.0 / Stopwatch.Frequency);
+                if (done) break;
+            }
+            Assert.Equal(whole.QueuedPersonEvents, sliced.QueuedPersonEvents);
+            Assert.Equal(SaveCodec.Write(whole.State), SaveCodec.Write(sliced.State));
+        }
+        updates.Sort();
+        output.WriteLine("network swap on a 1 ms remainder: " + updates.Count + " updates over 2 swaps, slowest " + updates[^1].ToString("0.00") + " ms (.NET Debug)");
+        PerfGate.Under(updates[^1], 2 * UpdateCityBudget.MinimumSliceMilliseconds + 1, "slowest network preparation update on a 1 ms remainder (.NET)");
+    }
+
+    [Fact]
     public void ValidatingLiveRigScaleDriversOnASwappedNetworkIsLinearAndAllocatesNothingAfterWarmUp()
     {
         const int drivers = 300, roadLegs = 480;

@@ -132,6 +132,7 @@ namespace PersistentCity.Runtime
         public int RoadSnapshots { get; private set; }
         public bool LastRoadSnapshotReused => roads?.AdoptedSnapshot == true;
         public bool LastRoadGateClearanceReused => roads?.AdoptedGateClearance == true;
+        public long ClosureValidationsDeferred => roads?.ClosureValidationsDeferred ?? 0;
         public TrafficNetwork? TrafficNetwork => roads?.TrafficNetwork;
         public bool IsTrafficLinkClosed(int linkId) => roads?.IsTrafficLinkClosed(linkId) ?? true;
         private RoadRoutes? closureRoads;
