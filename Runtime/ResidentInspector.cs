@@ -39,9 +39,7 @@ namespace PersistentCity.Runtime
         private Vector2 scroll;
         private bool visible;
         private GUIStyle? text, link, title;
-        private readonly long[] updateTicks = new long[3], updateCalls = new long[3], updateMaxTicks = new long[3];
-        private readonly long[] drawTicks = new long[3], drawCalls = new long[3], drawMaxTicks = new long[3];
-        private long builds, buildTicks, buildMaxTicks;
+        private readonly InspectorTiming timing = new InspectorTiming(Stopwatch.Frequency);
         private const string ClickGuardOwner = "persistentcity.resident-inspector-input";
         private static ResidentInspector? guarded;
         private Harmony? clickGuard;
@@ -246,8 +244,7 @@ namespace PersistentCity.Runtime
             }
             finally
             {
-                long elapsed = Stopwatch.GetTimestamp() - started;
-                updateTicks[mode] += elapsed; updateCalls[mode]++; if (elapsed > updateMaxTicks[mode]) updateMaxTicks[mode] = elapsed;
+                timing.Update(mode, Stopwatch.GetTimestamp() - started);
             }
         }
 
@@ -273,8 +270,7 @@ namespace PersistentCity.Runtime
                 homeLabel = insight.Home == null ? "" : insight.Home.Label + (insight.Home.CanNavigate ? "  ↗" : "");
                 workLabel = insight.Work == null ? "" : insight.Work.Label + (insight.Work.CanNavigate ? "  ↗" : "");
             }
-            long elapsed = Stopwatch.GetTimestamp() - started;
-            builds++; buildTicks += elapsed; if (elapsed > buildMaxTicks) buildMaxTicks = elapsed;
+            timing.Build(Stopwatch.GetTimestamp() - started);
         }
 
         public void Draw()
@@ -307,8 +303,7 @@ namespace PersistentCity.Runtime
             }
             finally
             {
-                long elapsed = Stopwatch.GetTimestamp() - started;
-                drawTicks[mode] += elapsed; drawCalls[mode]++; if (elapsed > drawMaxTicks[mode]) drawMaxTicks[mode] = elapsed;
+                timing.Draw(mode, Stopwatch.GetTimestamp() - started);
             }
         }
 
@@ -387,34 +382,11 @@ namespace PersistentCity.Runtime
         private static readonly Func<string, int, string> FormattedAddress = (street, number) =>
             Streets.AddressHelper.ToFormattedString(new Address(street, number));
 
-        private static double Milliseconds(long ticks) => ticks * 1000.0 / Stopwatch.Frequency;
-        private static object Modes(long[] ticks, long[] calls, long[] max) => new
-        {
-            closed = new { calls = calls[0], totalMilliseconds = Milliseconds(ticks[0]), maxMilliseconds = Milliseconds(max[0]) },
-            hover = new { calls = calls[1], totalMilliseconds = Milliseconds(ticks[1]), maxMilliseconds = Milliseconds(max[1]) },
-            open = new { calls = calls[2], totalMilliseconds = Milliseconds(ticks[2]), maxMilliseconds = Milliseconds(max[2]) }
-        };
-
-        public object Timing
-        {
-            get
-            {
-                return new
-                {
-                    update = Modes(updateTicks, updateCalls, updateMaxTicks),
-                    draw = Modes(drawTicks, drawCalls, drawMaxTicks),
-                    picks = throttle.Picks,
-                    builds, buildMilliseconds = Milliseconds(buildTicks), buildMaxMilliseconds = Milliseconds(buildMaxTicks),
-                    hovered = hoveredId, selected = selectedId
-                };
-            }
-        }
+        public object Timing => timing.Projection(throttle.Picks, hoveredId, selectedId);
 
         public void ResetTiming()
         {
-            Array.Clear(updateTicks, 0, 3); Array.Clear(updateCalls, 0, 3); Array.Clear(updateMaxTicks, 0, 3);
-            Array.Clear(drawTicks, 0, 3); Array.Clear(drawCalls, 0, 3); Array.Clear(drawMaxTicks, 0, 3);
-            builds = buildTicks = buildMaxTicks = 0;
+            timing.Reset();
             throttle.ResetPicks();
         }
     }

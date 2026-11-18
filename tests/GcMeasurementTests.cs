@@ -128,13 +128,15 @@ public sealed class GcMeasurementTests
                 "advance_planning_slice", "advance_planning_finish",
                 "physical_setup_places", "physical_setup_bodies", "physical_setup_vehicles", "physical_setup_ambient", "physical_setup_preflight",
                 "physical_unattributed_setup", "physical_unattributed_update", "physical_unattributed_waiting", "physical_unattributed_entry", "mod_routes_retime" }.SelectMany(n => new[] { n + "_alloc_bytes", n + "_alloc_samples", n + "_alloc_skipped" }))
-            .Concat(new[] { "phase_frames", "phase_spikes_30ms", "phase_spikes_retained", "phase_spikes_truncated", "phase_spike_cap", "top_frames", "spike_frames", "phase_ms" }).ToArray();
+            .Concat(new[] { "phase_frames", "phase_spikes_30ms", "phase_spikes_retained", "phase_spikes_truncated", "phase_spike_cap", "top_frames", "spike_frames", "phase_ms",
+                "phase_near_spikes_15ms", "phase_near_spikes_retained", "phase_near_spikes_truncated", "near_spike_frames",
+                "pause_ms_without_mod", "collection_rows_retained", "collection_rows_truncated", "collection_rows" }).ToArray();
         foreach (string json in new[] { empty, full })
         {
             Assert.DoesNotContain('\n', json);
             using var document = JsonDocument.Parse(json);
             Assert.Equal(keys, document.RootElement.EnumerateObject().Select(p => p.Name).ToArray());
-            foreach (string spread in new[] { "frame_ms_gc", "frame_ms_plain", "pause_ms", "mod_ms_gc", "mod_ms_plain" })
+            foreach (string spread in new[] { "frame_ms_gc", "frame_ms_plain", "pause_ms", "mod_ms_gc", "mod_ms_plain", "pause_ms_without_mod" })
                 Assert.Equal(new[] { "count", "p50", "p95", "max" }, document.RootElement.GetProperty(spread).EnumerateObject().Select(p => p.Name).ToArray());
         }
         using var report = JsonDocument.Parse(full);

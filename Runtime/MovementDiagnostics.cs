@@ -24,7 +24,7 @@ namespace PersistentCity.Runtime
             if (sampler == null || !sampler.Running) return 0;
             long now = System.Diagnostics.Stopwatch.GetTimestamp();
             sampler.CounterFrame(GcAllocationCounter.Read(), GcAllocationCounter.Collections);
-            sampler.Observe(now * GcMillisecondsPerTimestamp, GcCount(0), GcCount(1), GcCount(2), GC.GetTotalMemory(false));
+            sampler.Observe(now * GcMillisecondsPerTimestamp, GcCount(0), GcCount(1), GcCount(2), GC.GetTotalMemory(false), Time.frameCount);
             return now;
         }
 
@@ -104,6 +104,16 @@ namespace PersistentCity.Runtime
             }
             if (action == "population") { GcPopulationCommand(detail); return; }
             Debug.LogWarning("[Persistent City] Unknown command. Use: pc gc start | pc gc report | pc gc stop | pc gc frames [start|stop] | pc gc population [<persons>|off] (FT cities only)");
+        }
+
+        public object GcDiagnostics
+        {
+            get
+            {
+                var context = GcContext();
+                return new { monoHeapBytes = context.MonoHeapBytes, monoUsedBytes = context.MonoUsedBytes, totalMemoryBytes = GC.GetTotalMemory(false),
+                    gen0 = GcCount(0), gen1 = GcCount(1), gen2 = GcCount(2), incremental = context.Incremental, measuring = gcSampler?.Running == true };
+            }
         }
 
         private GcReportContext GcContext()

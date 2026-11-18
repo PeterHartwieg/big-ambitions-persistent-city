@@ -26,6 +26,7 @@ namespace PersistentCity.Core
         public const int TopFrames = 16;
         public const int SpikeCapacity = 1024;
         public const double SpikeMilliseconds = 30;
+        public const double NearSpikeMilliseconds = 15;
         private const int Segments = GcPauseSampler.Segments;
         private readonly long[] ticks = new long[Segments];
         private readonly long[] bytes = new long[Segments];
@@ -33,7 +34,7 @@ namespace PersistentCity.Core
         private readonly int[] gcAt = new int[Segments];
         private readonly ModFrameRow[] top = new ModFrameRow[TopFrames];
         private readonly ModFrameRow[] spikes = new ModFrameRow[SpikeCapacity];
-        private int topCount, spikeCount;
+        private int topCount, stored, spikeCount;
         private long frame, began, mark, detailMark, counterMark, detailCounterMark;
         private int collectionsMark, detailCollectionsMark, epochMark;
         private bool open, countersValid;
@@ -42,11 +43,22 @@ namespace PersistentCity.Core
         public bool Armed { get; private set; }
         public long Frames { get; private set; }
         public long Spikes { get; private set; }
+        public long NearSpikes { get; private set; }
         public int TopCount => topCount;
         public int SpikeCount => spikeCount;
+        public int NearSpikeCount => stored - spikeCount;
         public bool SpikesTruncated => Spikes > spikeCount;
+        public bool NearSpikesTruncated => NearSpikes > stored - spikeCount;
         public ModFrameRow Top(int index) => top[index];
-        public ModFrameRow Spike(int index) => spikes[index];
+        public ModFrameRow Spike(int index) => Stored(index, true);
+        public ModFrameRow NearSpike(int index) => Stored(index, false);
+
+        private ModFrameRow Stored(int index, bool spike)
+        {
+            for (int i = 0; i < stored; i++)
+                if (spikes[i].ModMs >= SpikeMilliseconds == spike && index-- == 0) return spikes[i];
+            throw new ArgumentOutOfRangeException(nameof(index));
+        }
         public bool Open => open;
         public double TotalMilliseconds(GcAllocationSegment segment) => totalTicks[(int)segment] / ticksPerMillisecond;
 
@@ -66,7 +78,7 @@ namespace PersistentCity.Core
         public void Reset()
         {
             Array.Clear(ticks, 0, Segments); Array.Clear(bytes, 0, Segments); Array.Clear(totalTicks, 0, Segments);
-            topCount = spikeCount = 0; Frames = Spikes = 0; open = false;
+            topCount = stored = spikeCount = 0; Frames = Spikes = NearSpikes = 0; open = false;
         }
 
         public void Begin(long frameNumber, long timestamp, long counter, int collections) => Begin(frameNumber, timestamp, counter, collections, 0);
@@ -146,12 +158,23 @@ namespace PersistentCity.Core
             row.DetailMs = detailTicks / ticksPerMillisecond;
             row.SubMs = subTicks / ticksPerMillisecond;
             Frames++;
-            if (modMilliseconds >= SpikeMilliseconds)
-            {
-                Spikes++;
-                if (spikeCount < SpikeCapacity) spikes[spikeCount++] = row;
-            }
+            if (modMilliseconds >= SpikeMilliseconds) { Spikes++; Retain(row, true); }
+            else if (modMilliseconds >= NearSpikeMilliseconds) { NearSpikes++; Retain(row, false); }
             Insert(row);
+        }
+
+        private void Retain(ModFrameRow row, bool spike)
+        {
+            if (stored == SpikeCapacity)
+            {
+                if (!spike || spikeCount == stored) return;
+                int near = 0;
+                while (spikes[near].ModMs >= SpikeMilliseconds) near++;
+                Array.Copy(spikes, near + 1, spikes, near, stored - near - 1);
+                stored--;
+            }
+            spikes[stored++] = row;
+            if (spike) spikeCount++;
         }
 
         private void Insert(ModFrameRow row)
@@ -167,13 +190,16 @@ namespace PersistentCity.Core
             string N(long value) => value.ToString(CultureInfo.InvariantCulture);
             string D(double value) => Math.Round(value, 3).ToString("0.###", CultureInfo.InvariantCulture);
             string Name(int index) => index < 0 ? "none" : GcPauseSampler.SegmentName((GcAllocationSegment)index);
-            void Rows(string key, ModFrameRow[] rows, int count)
+            void Rows(string key, ModFrameRow[] rows, int count, int keep)
             {
                 text.Append('"').Append(key).Append("\":[");
+                bool first = true;
                 for (int i = 0; i < count; i++)
                 {
                     var r = rows[i];
-                    if (i > 0) text.Append(',');
+                    if (keep != 0 && (r.ModMs >= SpikeMilliseconds) != keep > 0) continue;
+                    if (!first) text.Append(',');
+                    first = false;
                     text.Append("{\"frame\":").Append(N(r.Frame)).Append(",\"mod_ms\":").Append(D(r.ModMs))
                         .Append(",\"phase\":\"").Append(Name(r.Phase)).Append("\",\"phase_ms\":").Append(D(r.PhaseMs))
                         .Append(",\"detail\":\"").Append(Name(r.Detail)).Append("\",\"detail_ms\":").Append(D(r.DetailMs))
@@ -187,9 +213,9 @@ namespace PersistentCity.Core
             text.Append("\"phase_frames\":").Append(N(Frames)).Append(",\"phase_spikes_30ms\":").Append(N(Spikes))
                 .Append(",\"phase_spikes_retained\":").Append(N(spikeCount)).Append(",\"phase_spikes_truncated\":").Append(SpikesTruncated ? "true" : "false")
                 .Append(",\"phase_spike_cap\":").Append(N(SpikeCapacity)).Append(',');
-            Rows("top_frames", top, topCount);
+            Rows("top_frames", top, topCount, 0);
             text.Append(',');
-            Rows("spike_frames", spikes, spikeCount);
+            Rows("spike_frames", spikes, stored, 1);
             text.Append(",\"phase_ms\":{");
             for (int i = 0; i < Segments; i++)
             {
@@ -197,6 +223,9 @@ namespace PersistentCity.Core
                 text.Append('"').Append(Name(i)).Append("\":").Append(D(totalTicks[i] / ticksPerMillisecond));
             }
             text.Append('}');
+            text.Append(",\"phase_near_spikes_15ms\":").Append(N(NearSpikes)).Append(",\"phase_near_spikes_retained\":").Append(N(stored - spikeCount))
+                .Append(",\"phase_near_spikes_truncated\":").Append(NearSpikesTruncated ? "true" : "false").Append(',');
+            Rows("near_spike_frames", spikes, stored, -1);
         }
 
         public string ReportJson()
@@ -210,7 +239,9 @@ namespace PersistentCity.Core
         {
             var text = new StringBuilder(512).Append("[Persistent City] mod frames (diagnostic only): frames=").Append(Frames.ToString(CultureInfo.InvariantCulture))
                 .Append(" spikes>=30ms=").Append(Spikes.ToString(CultureInfo.InvariantCulture))
-                .Append(" retained=").Append(spikeCount.ToString(CultureInfo.InvariantCulture)).Append(SpikesTruncated ? " truncated" : "");
+                .Append(" retained=").Append(spikeCount.ToString(CultureInfo.InvariantCulture)).Append(SpikesTruncated ? " truncated" : "")
+                .Append(" near>=15ms=").Append(NearSpikes.ToString(CultureInfo.InvariantCulture))
+                .Append(" retained=").Append(NearSpikeCount.ToString(CultureInfo.InvariantCulture)).Append(NearSpikesTruncated ? " truncated" : "");
             for (int i = 0; i < topCount && i < 5; i++)
             {
                 var r = top[i];

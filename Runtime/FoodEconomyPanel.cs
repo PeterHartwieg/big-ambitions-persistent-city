@@ -19,6 +19,7 @@ namespace PersistentCity.Runtime
         private GUIStyle? economyLabel;
         private Rect economyRect;
         public object InspectorTiming => inspector.Timing;
+        public object InspectorDiagnostics => inspector.Timing;
         public void ResetInspectorTiming() => inspector.ResetTiming();
         private static string LocalizedName(string id) => string.IsNullOrWhiteSpace(id) ? "Unspecified"
             : LocalizorManager.Localize(id, (object?)null).ToString();

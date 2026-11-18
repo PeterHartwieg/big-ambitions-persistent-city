@@ -509,6 +509,14 @@ namespace PerfUnionProbe
             if (measuring && coverage.Unexpected.Count > unexpectedAtWindowStart) patchSetChanged = true;
         }
 
+        private static long monoHeapStart = -1, monoUsedStart = -1, monoHeapStop = -1, monoUsedStop = -1;
+
+        private static void ReadMonoHeap(out long heap, out long used)
+        {
+            heap = used = -1;
+            try { heap = UnityEngine.Profiling.Profiler.GetMonoHeapSizeLong(); used = UnityEngine.Profiling.Profiler.GetMonoUsedSizeLong(); } catch (Exception) { }
+        }
+
         private static void StartMeasurement(JObject args)
         {
             Require(!measuring, "f4b_already_measuring");
@@ -520,6 +528,7 @@ namespace PerfUnionProbe
             Rescan(); unexpectedAtWindowStart = coverage?.Unexpected.Count ?? 0; patchSetChanged = false;
             crossFrame = timedExceptions = 0; unknownScopeCalls = 0; totalSaves = totalSceneEvents = 0;
             union.ResetAll();
+            ReadMonoHeap(out monoHeapStart, out monoUsedStart); monoHeapStop = monoUsedStop = -1;
             long now = Stopwatch.GetTimestamp();
             currentFrame = firstMeasureFrame = Time.frameCount; frameStartQpc = now; nextDiagnosticQpc = now;
             observerTicks = boundaryTicks = 0; frameDiagnostic = true;
@@ -534,6 +543,7 @@ namespace PerfUnionProbe
             if (writeStopFrame && currentFrame > firstMeasureFrame) { frameDiagnostic = true; WriteFrame(currentFrame + 1, now, true); }
             if (pendingWindowStart) pendingWindowStart = false;
             else holds.EndWindow(currentFrame, now);
+            ReadMonoHeap(out monoHeapStop, out monoUsedStop);
             measuring = false; stopReason = reason;
         }
 
@@ -562,8 +572,10 @@ namespace PerfUnionProbe
             long before = GC.GetTotalMemory(false);
             GC.Collect(); GC.WaitForPendingFinalizers(); GC.Collect();
             return new JObject { ["section"] = "heap", ["before_bytes"] = before, ["after_forced_gc_bytes"] = GC.GetTotalMemory(true),
-                ["collections_gen0"] = GC.CollectionCount(0), ["qualification"] = "Managed (Mono) heap after a forced full collection; read outside measured windows." };
+                ["collections_gen0"] = GC.CollectionCount(0), ["mono_heap_bytes"] = MonoHeapNow(true), ["mono_used_bytes"] = MonoHeapNow(false), ["qualification"] = "Managed (Mono) heap after a forced full collection; read outside measured windows." };
         }
+
+        private static long MonoHeapNow(bool size) { ReadMonoHeap(out long heap, out long used); return size ? heap : used; }
 
         private static JObject Status()
         {
@@ -598,6 +610,8 @@ namespace PerfUnionProbe
                 ["cross_frame_scopes"] = crossFrame, ["timed_exceptions"] = timedExceptions, ["off_main_callbacks"] = Volatile.Read(ref offMainCallbacks),
                 ["unknown_scope_calls"] = unknownScopeCalls, ["union_underflows"] = union.Underflows, ["components_outside_union"] = union.ComponentsOutsideUnion,
                 ["saves_in_window"] = totalSaves, ["scene_events_in_window"] = totalSceneEvents,
+                ["mono_heap"] = new JObject { ["start_bytes"] = monoHeapStart, ["start_used_bytes"] = monoUsedStart, ["stop_bytes"] = monoHeapStop, ["stop_used_bytes"] = monoUsedStop,
+                    ["now_bytes"] = MonoHeapNow(true), ["now_used_bytes"] = MonoHeapNow(false), ["qualification"] = "Profiler Mono heap size and used size at window start, stop and read time; no forced collection." },
                 ["boundary_source"] = boundarySource, ["probe_patches_installed"] = Harmony.HasAnyPatches(PatchId), ["player_loop_entry"] = LoopEntryPresent(), ["stopwatch_frequency"] = Stopwatch.Frequency, ["stopwatch_high_resolution"] = Stopwatch.IsHighResolution,
                 ["harmony_version"] = typeof(Harmony).Assembly.GetName().Version?.ToString(),
                 ["limits"] = "Mod work is the nested union of every timed Persistent City scope. The union includes nested probe cost; observerMs measures only part of it. "
