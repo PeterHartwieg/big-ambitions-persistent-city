@@ -27,6 +27,15 @@ namespace PersistentCity.Core
             return Math.Min(nativeMilliseconds, Math.Max(AdvanceFloorMilliseconds, target - elapsedMilliseconds - ReserveMilliseconds));
         }
 
+        public const double MinimumSliceMilliseconds = 1;
+
+        public double Slice(double elapsedMilliseconds, double maximumMilliseconds)
+        {
+            if (double.IsNaN(maximumMilliseconds) || maximumMilliseconds < MinimumSliceMilliseconds) throw new ArgumentOutOfRangeException(nameof(maximumMilliseconds));
+            if (double.IsNaN(elapsedMilliseconds) || double.IsInfinity(elapsedMilliseconds) || elapsedMilliseconds < 0) elapsedMilliseconds = 0;
+            return Math.Min(maximumMilliseconds, Math.Max(MinimumSliceMilliseconds, target - elapsedMilliseconds - ReserveMilliseconds));
+        }
+
         public void ObservePhysical(double milliseconds)
         {
             if (double.IsNaN(milliseconds) || double.IsInfinity(milliseconds) || milliseconds < 0) return;

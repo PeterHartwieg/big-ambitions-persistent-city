@@ -393,7 +393,7 @@ namespace PersistentCity.Runtime
                     inspector.Suspend(); return;
                 }
                 long closureStarted = Stopwatch.GetTimestamp();
-                bool networkReady = simulation.TryRefreshTrafficClosures(ClockRetimeStages.SliceMilliseconds);
+                bool networkReady = simulation.TryRefreshTrafficClosures(frameBudget.Slice(UpdateCityClock.Elapsed(), ClockRetimeStages.SliceMilliseconds));
                 double closureElapsed = (Stopwatch.GetTimestamp() - closureStarted) * MillisecondsPerTimestamp;
                 if (!networkReady)
                 {
