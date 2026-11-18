@@ -110,11 +110,16 @@ namespace PersistentCity.Core
             finally { closureLinks.Clear(); refreshingClosures = false; }
         }
 
-        private void RestoreTraffic(TravelTiming.RetimedTraffic? retimed)
+        private void PublishTrafficSnapshot()
         {
             State.SnapshotSynchronizer = CaptureTraffic;
             State.SnapshotSteps = CaptureTrafficInSteps;
             State.TrafficSource = null; State.TrafficSourceState = null;
+        }
+
+        private void RestoreTraffic(TravelTiming.RetimedTraffic? retimed, bool publishSnapshot)
+        {
+            if (publishSnapshot) PublishTrafficSnapshot();
             if (State.Traffic == null) return;
             if (State.Traffic.Clock != State.Minute || string.IsNullOrEmpty(State.TrafficTopologyId))
                 throw new ArgumentException("Traffic and city clocks/topology do not match.");
@@ -335,7 +340,7 @@ namespace PersistentCity.Core
         private void CaptureTraffic()
         {
             SynchronizeSnapshot();
-            State.Traffic = traffic == null ? null : ThroughCarCount > 0 ? traffic.Capture(ThroughTraffic.IsThroughVehicle) : traffic.Capture();
+            State.Traffic = traffic == null ? null : ThroughCarCount > 0 ? traffic.Capture(ThroughTraffic.IsThroughVehicle) : traffic.CaptureShared();
             NoteTrafficSource(ThroughCarCount == 0);
         }
 
@@ -350,7 +355,7 @@ namespace PersistentCity.Core
             SynchronizeSnapshot();
             if (traffic == null) { State.Traffic = null; NoteTrafficSource(false); yield return true; yield break; }
             bool whole = ThroughCarCount == 0;
-            var capture = whole ? traffic.CaptureInSteps(linksPerStep) : traffic.CaptureInSteps(ThroughTraffic.IsThroughVehicle, linksPerStep);
+            var capture = whole ? traffic.CaptureSharedInSteps(linksPerStep) : traffic.CaptureInSteps(ThroughTraffic.IsThroughVehicle, linksPerStep);
             while (capture.MoveNext())
             {
                 if (capture.Current != null) { State.Traffic = capture.Current; NoteTrafficSource(whole); yield return true; yield break; }

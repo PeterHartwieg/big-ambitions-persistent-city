@@ -820,7 +820,15 @@ namespace PersistentCity.Core
             return CaptureSteps(linksPerStep, true);
         }
 
-        private IEnumerator<TrafficKernelState?> CaptureSteps(int linksPerStep, bool withLinks)
+        internal TrafficKernelState CaptureShared() => RunToEnd(CaptureSharedInSteps(int.MaxValue));
+
+        internal IEnumerator<TrafficKernelState?> CaptureSharedInSteps(int linksPerStep)
+        {
+            if (linksPerStep < 1) throw new ArgumentOutOfRangeException(nameof(linksPerStep));
+            return CaptureSteps(linksPerStep, true, shareDefinitions: true);
+        }
+
+        private IEnumerator<TrafficKernelState?> CaptureSteps(int linksPerStep, bool withLinks, bool shareDefinitions = false)
         {
             int work = 0;
             var state = new TrafficKernelState
@@ -831,7 +839,7 @@ namespace PersistentCity.Core
             };
             foreach (Link link in orderedLinks)
             {
-                state.Definitions.Add(CopyDefinition(link.Definition));
+                state.Definitions.Add(shareDefinitions ? link.Definition : CopyDefinition(link.Definition));
                 if (!withLinks) { if (++work % linksPerStep == 0) yield return null; continue; }
                 var queuedIds = new List<string>(link.Queue.Count);
                 foreach (var vehicle in link.Queue) queuedIds.Add(vehicle.VehicleId);

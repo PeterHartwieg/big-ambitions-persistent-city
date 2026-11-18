@@ -145,29 +145,42 @@ namespace PersistentCity.Core
 
         public CitySimulator RebuildRoutes(IRoutePlanner replacementRoutes, TravelTiming.RetimedTraffic? retimedTraffic)
         {
+            var rebuild = BeginRebuildRoutes(replacementRoutes, retimedTraffic);
+            rebuild.Step(long.MaxValue);
+            return rebuild.Result!;
+        }
+
+        public RouteRebuild BeginRebuildRoutes(IRoutePlanner replacementRoutes, TravelTiming.RetimedTraffic? retimedTraffic)
+        {
             AbortPending();
-            var replacement = new CitySimulator(State, replacementRoutes, retimedTraffic);
-            replacement.CopyVendorPlaces(this);
-            replacement.activityObservers = activityObservers;
-            replacement.workplaceAvailability = workplaceAvailability;
-            replacement.ordinaryOwnership = ordinaryOwnership; replacement.ordinaryPrices = ordinaryPrices;
-            replacement.ordinaryLoadedHour = ordinaryLoadedHour; replacement.ordinaryObservedHour = ordinaryObservedHour;
-            replacement.logicalWorkplaceClosures = logicalWorkplaceClosures;
-            replacement.venueFeedback = venueFeedback; replacement.throughTraffic = throughTraffic?.Fresh();
-            replacement.HouseholdOutingsEnabled = HouseholdOutingsEnabled;
-            replacement.weatherSource=weatherSource;replacement.weatherSettings=weatherSettings;
-            replacement.fillCatalogue = fillCatalogue; replacement.fillPlan = fillPlan; replacement.MeasurementPersonTarget = MeasurementPersonTarget;
-            if (fillPlan != null) fillPlan.Factory = null;
-            if (stopEnvironment != null) replacement.AttachOptionalStops(stopEnvironment, stopPercentage, stopTiming);
-            if (food != null) replacement.AttachFoodMarket(food.Market, food.ChoiceSettings, food.MemorySettings, food.AwarenessSettings, food.MemoryProvider, food.CampaignProvider, food.RivalSettings);
-            if (research != null) replacement.AttachResearch(research.Ledger, research.ConsumersPerUnit, research.BusinessPlace);
-            replacement.purchases = purchases; replacement.PurchaseFault = PurchaseFault;
-            return replacement;
+            var replacement = new CitySimulator(State, replacementRoutes, shell: true);
+            return new RouteRebuild(replacement, replacement.BuildSteps(retimedTraffic, this));
+        }
+
+        private void CopyRebuildInputs(CitySimulator source)
+        {
+            CopyVendorPlaces(source);
+            activityObservers = source.activityObservers;
+            workplaceAvailability = source.workplaceAvailability;
+            ordinaryOwnership = source.ordinaryOwnership; ordinaryPrices = source.ordinaryPrices;
+            ordinaryLoadedHour = source.ordinaryLoadedHour; ordinaryObservedHour = source.ordinaryObservedHour;
+            logicalWorkplaceClosures = source.logicalWorkplaceClosures;
+            venueFeedback = source.venueFeedback; throughTraffic = source.throughTraffic?.Fresh();
+            HouseholdOutingsEnabled = source.HouseholdOutingsEnabled;
+            weatherSource = source.weatherSource; weatherSettings = source.weatherSettings;
+            fillCatalogue = source.fillCatalogue; fillPlan = source.fillPlan; MeasurementPersonTarget = source.MeasurementPersonTarget;
+            if (source.fillPlan != null) source.fillPlan.Factory = null;
         }
 
         public CitySimulator(CityState state, IRoutePlanner routes) : this(state, routes, null) { }
 
-        private CitySimulator(CityState state, IRoutePlanner routes, TravelTiming.RetimedTraffic? retimedTraffic)
+        private CitySimulator(CityState state, IRoutePlanner routes, TravelTiming.RetimedTraffic? retimedTraffic) : this(state, routes, shell: true)
+        {
+            var steps = BuildSteps(retimedTraffic, null);
+            while (steps.MoveNext()) { }
+        }
+
+        private CitySimulator(CityState state, IRoutePlanner routes, bool shell)
         {
             activeJourneys = new ActiveJourneyIndex(FindPosition);
             State = state ?? throw new ArgumentNullException(nameof(state));
@@ -176,6 +189,13 @@ namespace PersistentCity.Core
             if (state.Schema != CityState.CurrentSchema || state.MenuPolicy != FoodNameIdentity.DynamicWire)
                 throw new InvalidOperationException("Unsupported menu product policy; preserve the payload.");
             this.routes = routes ?? throw new ArgumentNullException(nameof(routes));
+        }
+
+        internal const int RebuildPeoplePerStep = 64;
+
+        private IEnumerator<bool> BuildSteps(TravelTiming.RetimedTraffic? retimedTraffic, CitySimulator? source)
+        {
+            var state = State;
             foreach (var place in state.Places)
             {
                 if (VendorNames.IsVendorPlace(place.Id)) throw new ArgumentException("A city place uses the vendor place prefix.");
@@ -183,6 +203,7 @@ namespace PersistentCity.Core
                 if (place.Kind == PlaceKind.Shop || place.Kind == PlaceKind.Leisure) optionalPlaces.Add(place);
             }
             RestoreVendorPlaces();
+            yield return false;
             for (int citizenIndex = 0; citizenIndex < state.Citizens.Count; citizenIndex++)
             {
                 var person = state.Citizens[citizenIndex];
@@ -191,10 +212,12 @@ namespace PersistentCity.Core
                 var item = new Due(citizenIndex) { Citizen = person, Minute = person.NextEventMinute };
                 if (!due.Add(item)) throw new ArgumentException("Duplicate citizen event.");
                 citizenEvents.Add(person.Identity.Id, item);
+                if (citizenIndex % RebuildPeoplePerStep == RebuildPeoplePerStep - 1) yield return false;
             }
             if (state.VisitorRoutines.Count != 0 || state.Visitors.Count != 0)
             {
                 VisitorSchedules.LinkAll(state);
+                yield return false;
                 for (int visitorIndex = 0; visitorIndex < state.VisitorRoutines.Count; visitorIndex++)
                 {
                     var routine = state.VisitorRoutines[visitorIndex];
@@ -204,12 +227,45 @@ namespace PersistentCity.Core
                     var item = new Due(~visitorIndex) { Citizen = routine, Minute = routine.NextEventMinute };
                     if (!due.Add(item)) throw new ArgumentException("Duplicate citizen event.");
                     citizenEvents.Add(routine.Identity.Id, item);
+                    if (visitorIndex % RebuildPeoplePerStep == RebuildPeoplePerStep - 1) yield return false;
                 }
             }
-            activeJourneys.Rebuild(state.Citizens, state.VisitorRoutines);
+            yield return false;
+            activeJourneys.Clear();
+            for (int i = 0; i < state.Citizens.Count + state.VisitorRoutines.Count; i++)
+            {
+                activeJourneys.File(i < state.Citizens.Count ? state.Citizens[i] : state.VisitorRoutines[i - state.Citizens.Count]);
+                if (i % RebuildPeoplePerStep == RebuildPeoplePerStep - 1) yield return false;
+            }
+            yield return false;
             occupancy.Rebuild(state);
-            RestoreTraffic(retimedTraffic);
+            yield return false;
+            RestoreTraffic(retimedTraffic, publishSnapshot: source == null);
             EnsureTrafficNetwork();
+            if (source != null)
+            {
+                yield return false;
+                CopyRebuildInputs(source);
+                if (source.stopEnvironment != null) AttachOptionalStops(source.stopEnvironment, source.stopPercentage, source.stopTiming);
+                yield return false;
+                var sourceFood = source.food;
+                if (sourceFood != null)
+                {
+                    food = new FoodCommerce(this, sourceFood.Market, routes, sourceFood.ChoiceSettings, sourceFood.MemorySettings, sourceFood.AwarenessSettings,
+                        sourceFood.MemoryProvider, sourceFood.CampaignProvider, sourceFood.RivalSettings, staged: true);
+                    var attach = food.TakeAttachSteps();
+                    while (true)
+                    {
+                        yield return false;
+                        if (!attach.MoveNext() || attach.Current) break;
+                    }
+                }
+                yield return false;
+                if (source.research != null) AttachResearch(source.research.Ledger, source.research.ConsumersPerUnit, source.research.BusinessPlace);
+                purchases = source.purchases; PurchaseFault = source.PurchaseFault;
+                PublishTrafficSnapshot();
+            }
+            yield return true;
         }
 
         internal void ScheduleVisitors()

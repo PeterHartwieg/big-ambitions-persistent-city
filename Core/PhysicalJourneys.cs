@@ -450,9 +450,11 @@ namespace PersistentCity.Core
 
         internal void Rebuild(IReadOnlyList<CitizenState> citizens) => Rebuild(citizens, Array.Empty<CitizenState>());
 
+        internal void Clear() { eligible.Clear(); withheld.Clear(); positions.Clear(); grid.Clear(); }
+
         internal void Rebuild(IReadOnlyList<CitizenState> citizens, IReadOnlyList<CitizenState> visitors)
         {
-            eligible.Clear(); withheld.Clear(); positions.Clear(); grid.Clear();
+            Clear();
             for (int i = 0; i < citizens.Count; i++) File(citizens[i]);
             for (int i = 0; i < visitors.Count; i++) File(visitors[i]);
         }

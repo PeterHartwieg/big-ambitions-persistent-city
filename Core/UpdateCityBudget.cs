@@ -36,12 +36,39 @@ namespace PersistentCity.Core
             return Math.Min(maximumMilliseconds, Math.Max(MinimumSliceMilliseconds, target - elapsedMilliseconds - ReserveMilliseconds));
         }
 
+        public double Exclusive(double elapsedMilliseconds, double maximumMilliseconds)
+        {
+            if (double.IsNaN(maximumMilliseconds) || maximumMilliseconds < MinimumSliceMilliseconds) throw new ArgumentOutOfRangeException(nameof(maximumMilliseconds));
+            if (double.IsNaN(elapsedMilliseconds) || double.IsInfinity(elapsedMilliseconds) || elapsedMilliseconds < 0) elapsedMilliseconds = 0;
+            return Math.Min(maximumMilliseconds, Math.Max(MinimumSliceMilliseconds, target - elapsedMilliseconds));
+        }
+
         public void ObservePhysical(double milliseconds)
         {
             if (double.IsNaN(milliseconds) || double.IsInfinity(milliseconds) || milliseconds < 0) return;
             double sample = Math.Min(MaximumReserveMilliseconds, milliseconds);
             ReserveMilliseconds = sample >= ReserveMilliseconds ? sample : ReserveMilliseconds + (sample - ReserveMilliseconds) * .05;
         }
+    }
+
+    public sealed class UnitOvershoot
+    {
+        public const double Decay = .25;
+        public double Milliseconds { get; private set; }
+
+        public long Deadline(long startedTimestamp, double budgetMilliseconds)
+        {
+            double usable = double.IsNaN(budgetMilliseconds) ? 0 : Math.Max(0, budgetMilliseconds - Milliseconds);
+            return startedTimestamp + (long)(usable * System.Diagnostics.Stopwatch.Frequency / 1000);
+        }
+
+        public void Observe(long deadlineTimestamp, long finishedTimestamp)
+        {
+            double over = Math.Max(0, (finishedTimestamp - deadlineTimestamp) * 1000.0 / System.Diagnostics.Stopwatch.Frequency);
+            Milliseconds = over >= Milliseconds ? over : Milliseconds + (over - Milliseconds) * Decay;
+        }
+
+        public void Reset() => Milliseconds = 0;
     }
 
     public sealed class FrameDeferral

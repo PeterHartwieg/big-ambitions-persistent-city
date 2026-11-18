@@ -26,13 +26,13 @@ dotnet run -c Release --project tools/perf-union-probe/logic-check/LogicCheck.cs
 
 `tools/build.py` places the pinned `0Harmony.dll` the probe compiles against. `build_probe.py` runs `check_scopes.py` first and refuses to build on a mismatch. The probe has no compile reference to `PersistentCity.dll`; it binds Persistent City by reflection, so one artifact serves both modes. Two builds of the same inputs give byte-identical DLLs and manifests. The manifest and the probe's `status` report the same expected-scope hash.
 
-`check_scopes.py` scans `Core/`, `Compatibility/`, `Persistence/` and `Runtime/` for patches, MonoBehaviour messages, native event subscriptions, transpiler helpers, components and call sites, and compares them with the inventory, including each patch's native target. It fails closed on any form it cannot classify, and each transpiler body is pinned by fingerprint.
+`check_scopes.py` scans `Core/`, `Compatibility/`, `Persistence/` and `Runtime/` for patches, MonoBehaviour messages, native event subscriptions, player-loop delegates, transpiler helpers, components and call sites, and compares them with the inventory, including each patch's native target. It fails closed on any form it cannot classify, and each transpiler body and target-resolver helper (`PINNED_RESOLVERS`) is pinned by fingerprint.
 
 ## Rig op
 
 `{"rig":{"op":"perf_union","action":"...",...}}` through the rig ops extension convention. Every reply is `{before,after}`; a refusal is `after.supported:false` with `after.refusal`. It requires `-agent-tests -rig-test`, the isolated Agent Tests profile and a loaded `FT` city. Actions: `inventory`, `status`, `arm` (`mode`, `expected_scope_hash`, `factor` for reference), `measure-start`, `measure-stop`, `page` (`frames`, `ticks`, `holds`, `calls`, `diagnostics`, `scopes`), `heap` and `disarm`. `arm` needs no player business.
 
-**Candidate mode** (Persistent City active). Every prefix, postfix, finalizer, message, event handler and transpiler helper gets an inclusive scope. Each transpiled method is `untimed-transpiled`, because its code runs inside the native method. A row the probe cannot bind is `unbindable`; a PC patch missing from the inventory is `unexpected`. Either makes coverage incomplete, and the gate refuses the window.
+**Candidate mode** (Persistent City active). Every prefix, postfix, finalizer, message, event handler, player-loop delegate and transpiler helper gets an inclusive scope. Each transpiled method is `untimed-transpiled`, because its code runs inside the native method. A row the probe cannot bind is `unbindable`; a PC patch missing from the inventory is `unexpected`. Either makes coverage incomplete, and the gate refuses the window.
 
 **Reference mode** (Persistent City removed). `arm` refuses if any Persistent City assembly or inventory owner is present. The probe installs only its pace shim and frame, GC, QPC, save and scene recording; PC fields are `n/a`.
 

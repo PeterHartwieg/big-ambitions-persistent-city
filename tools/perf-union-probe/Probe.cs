@@ -179,7 +179,7 @@ namespace PerfUnionProbe
             ["owners"] = new JArray(ScopeInventory.Owners),
             ["counts"] = new JObject { ["patches"] = ScopeInventory.Patches.Count, ["messages"] = ScopeInventory.Messages.Count,
                 ["events"] = ScopeInventory.Events.Count, ["transpiler_helpers"] = ScopeInventory.TranspilerHelpers.Count,
-                ["components"] = ScopeInventory.Components.Count, ["call_sites"] = ScopeInventory.CallSites.Count },
+                ["components"] = ScopeInventory.Components.Count, ["player_loops"] = ScopeInventory.PlayerLoops.Count, ["call_sites"] = ScopeInventory.CallSites.Count },
         };
 
         private static void Arm(JObject args)
@@ -267,7 +267,7 @@ namespace PerfUnionProbe
                 }
                 bindings.Add(row);
             }
-            foreach (var exp in ScopeInventory.Messages.Concat(ScopeInventory.Events).Concat(ScopeInventory.TranspilerHelpers))
+            foreach (var exp in ScopeInventory.Messages.Concat(ScopeInventory.Events).Concat(ScopeInventory.TranspilerHelpers).Concat(ScopeInventory.PlayerLoops))
             {
                 var method = Find(exp, null);
                 var row = new Binding { Expected = exp, Label = exp.Label, Kind = exp.Kind.ToString(), Owner = exp.Owner, Target = exp.Target,

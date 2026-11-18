@@ -298,6 +298,7 @@ namespace PersistentCity.Runtime
                     Fail("Game clock moved behind the population snapshot. Reload the matching save; no state was overwritten.");
                     return;
                 }
+                if (routeRebuild != null) { ContinueRouteRebuild(); WaitForRetime(); return; }
                 if (vendorMarket?.Prepare((long)target) == true) { ModFrames.Charge(GcAllocationSegment.ModFood); return; }
                 foodMarket?.RefreshRoutineHours(target);
                 RefreshBusinessTypes(simulation.State.Places, target, "hour");
@@ -307,41 +308,42 @@ namespace PersistentCity.Runtime
                 ModFrames.Charge(GcAllocationSegment.ModOptionalStops);
                 double clockRate = NativeTravelPace.ClockRate;
                 long retimeStarted = Stopwatch.GetTimestamp();
-                var retime = retimeDriver.Update(simulation.State, clockRate, physical != null, NativeTravelPace.WalkingMetresPerSecond, ClockRetimeStages.SliceMilliseconds);
+                if (retimeDriver.Holding && physical == null && (retimedRoutes == null || retimedRoutesRate != clockRate)
+                    && ClockRetimeStages.Next(clockRate, simulation.State.TravelClockRate, false) != ClockRetimeStage.None)
+                {
+                    retimedRoutes = new MultimodalRoutes(simulation.State.Places, NativeTravelPace.WalkingMetresPerSecond / clockRate, clockRate, dependency, routeObjects);
+                    retimedRoutesRate = clockRate;
+                    WaitForRetime(); return;
+                }
+                double retimeBudget = frameBudget.Exclusive(UpdateCityClock.Elapsed(), ClockRetimeStages.SliceMilliseconds);
+                var retime = retimeDriver.Update(simulation.State, clockRate, physical != null, NativeTravelPace.WalkingMetresPerSecond, retimeBudget);
                 if (retime == ClockRetimeOutcome.None)
                 {
                     retimeReleaseMilliseconds = 0; retimeReleaseUpdates = 0; retimedRoutes = null;
                     if (physical?.ReleasingForRetime == true)
                     {
-                        if (physical.ReleaseForRetime(retimeStarted + (long)(ClockRetimeStages.SliceMilliseconds * Stopwatch.Frequency / 1000)))
-                        { physical.Dispose(); physical = null; }
+                        if (ReleaseBodiesForRetime(retimeStarted, retimeBudget)) { physical.Dispose(); physical = null; }
                         else { WaitForRetime(); return; }
                     }
+                    else releaseOvershoot.Reset();
                 }
                 else
                 {
                     if (retime == ClockRetimeOutcome.ReleaseBodies)
                     {
-                        long deadline = retimeStarted + (long)(ClockRetimeStages.SliceMilliseconds * Stopwatch.Frequency / 1000);
-                        if (physical!.ReleaseForRetime(deadline)) { physical.Dispose(); physical = null; }
+                        if (ReleaseBodiesForRetime(retimeStarted, retimeBudget)) { physical!.Dispose(); physical = null; }
                         retimeReleaseUpdates++;
                         retimeReleaseMilliseconds += (Stopwatch.GetTimestamp() - retimeStarted) * MillisecondsPerTimestamp;
                     }
                     else if (retime == ClockRetimeOutcome.Restarted)
                         log?.Info("Clock retime inputs changed between slices; the retime restarts in slices (restart "
                             + retimeDriver.Restarts.ToString(System.Globalization.CultureInfo.InvariantCulture) + ").");
-                    else if (retime == ClockRetimeOutcome.Preparing && (retimedRoutes == null || retimedRoutesRate != clockRate))
-                    {
-                        retimedRoutes = new MultimodalRoutes(simulation.State.Places, NativeTravelPace.WalkingMetresPerSecond / clockRate, clockRate, dependency, routeObjects);
-                        retimedRoutesRate = clockRate;
-                    }
                     else if (retime == ClockRetimeOutcome.Committed)
                     {
-                        double commit = (Stopwatch.GetTimestamp() - retimeStarted) * MillisecondsPerTimestamp;
+                        retimeCommitMilliseconds = (Stopwatch.GetTimestamp() - retimeStarted) * MillisecondsPerTimestamp;
                         if (retimeDriver.Degraded > 0)
                             log?.Info("Clock retime degraded " + retimeDriver.Degraded.ToString(System.Globalization.CultureInfo.InvariantCulture)
                                 + " journeys: each keeps its old pace on its current road edge or drives outside traffic until its next road section.");
-                        long rebuildStarted = Stopwatch.GetTimestamp();
                         var swapped = retimedRoutes != null && retimedRoutesRate == clockRate ? retimedRoutes
                             : new MultimodalRoutes(simulation.State.Places, NativeTravelPace.WalkingMetresPerSecond / clockRate, clockRate, dependency, routeObjects);
                         retimedRoutes = null;
@@ -349,17 +351,8 @@ namespace PersistentCity.Runtime
                         if (routes != null) swapped.ReuseRoadSceneForRetiming(routes);
                         routes = swapped;
                         seenRoadSnapshots = 0; clockRetimingRoutes = true;
-                        simulation = simulation.RebuildRoutes(routes, retimeDriver.TakeRetimedTraffic());
-                        vendorMarket?.Rebind(simulation);
-                        seenPlanningRequests = seenEventRestarts = seenInlineRestarts = 0;
-                        log?.Info("Clock retime: body release " + Milliseconds(retimeReleaseMilliseconds) + " ms over "
-                            + retimeReleaseUpdates.ToString(System.Globalization.CultureInfo.InvariantCulture) + " updates, journey retime "
-                            + Milliseconds(retimeDriver.SliceMilliseconds) + " ms over " + retimeDriver.Slices.ToString(System.Globalization.CultureInfo.InvariantCulture)
-                            + " updates (snapshot " + retimeDriver.SnapshotSlices.ToString(System.Globalization.CultureInfo.InvariantCulture)
-                            + ", slowest " + Milliseconds(retimeDriver.SlowestSliceMilliseconds) + " ms, restarts "
-                            + retimeDriver.Restarts.ToString(System.Globalization.CultureInfo.InvariantCulture) + "), final slice and commit " + Milliseconds(commit)
-                            + " ms, simulation rebuild " + Milliseconds((Stopwatch.GetTimestamp() - rebuildStarted) * MillisecondsPerTimestamp) + " ms.");
-                        retimeReleaseMilliseconds = 0; retimeReleaseUpdates = 0;
+                        routeRebuild = simulation.BeginRebuildRoutes(routes, retimeDriver.TakeRetimedTraffic());
+                        rebuildOvershoot.Reset();
                     }
                     WaitForRetime(); return;
                 }
@@ -622,7 +615,45 @@ namespace PersistentCity.Runtime
         private int retimeReleaseUpdates;
         private readonly ClockRetimeDriver retimeDriver = new ClockRetimeDriver();
         private MultimodalRoutes? retimedRoutes;
+        private RouteRebuild? routeRebuild;
+        private readonly UnitOvershoot releaseOvershoot = new UnitOvershoot(), rebuildOvershoot = new UnitOvershoot();
+        private double retimeCommitMilliseconds;
         private static string Milliseconds(double value) => value.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture);
+        private bool ReleaseBodiesForRetime(long started, double budgetMilliseconds)
+        {
+            long deadline = releaseOvershoot.Deadline(started, budgetMilliseconds);
+            bool released = physical!.ReleaseForRetime(deadline);
+            releaseOvershoot.Observe(deadline, Stopwatch.GetTimestamp());
+            return released;
+        }
+
+        private void ContinueRouteRebuild()
+        {
+            var rebuild = routeRebuild!;
+            long deadline = rebuildOvershoot.Deadline(Stopwatch.GetTimestamp(), frameBudget.Exclusive(UpdateCityClock.Elapsed(), ClockRetimeStages.SliceMilliseconds));
+            bool done = rebuild.Step(deadline);
+            rebuildOvershoot.Observe(deadline, Stopwatch.GetTimestamp());
+            if (done) FinishRouteRebuild(rebuild);
+        }
+
+        private void FinishRouteRebuild(RouteRebuild rebuild)
+        {
+            if (!rebuild.Step(long.MaxValue)) throw new InvalidOperationException("The route rebuild did not finish.");
+            routeRebuild = null;
+            simulation = rebuild.Result!;
+            vendorMarket?.Rebind(simulation);
+            seenPlanningRequests = seenEventRestarts = seenInlineRestarts = 0;
+            log?.Info("Clock retime: body release " + Milliseconds(retimeReleaseMilliseconds) + " ms over "
+                + retimeReleaseUpdates.ToString(System.Globalization.CultureInfo.InvariantCulture) + " updates, journey retime "
+                + Milliseconds(retimeDriver.SliceMilliseconds) + " ms over " + retimeDriver.Slices.ToString(System.Globalization.CultureInfo.InvariantCulture)
+                + " updates (snapshot " + retimeDriver.SnapshotSlices.ToString(System.Globalization.CultureInfo.InvariantCulture)
+                + ", slowest " + Milliseconds(retimeDriver.SlowestSliceMilliseconds) + " ms, restarts "
+                + retimeDriver.Restarts.ToString(System.Globalization.CultureInfo.InvariantCulture) + "), final slice and commit " + Milliseconds(retimeCommitMilliseconds)
+                + " ms, simulation rebuild " + Milliseconds(rebuild.Milliseconds) + " ms over "
+                + rebuild.Updates.ToString(System.Globalization.CultureInfo.InvariantCulture) + " updates (slowest " + Milliseconds(rebuild.SlowestUpdateMilliseconds) + " ms).");
+            retimeReleaseMilliseconds = 0; retimeReleaseUpdates = 0;
+        }
+
         private void WaitForRetime()
         {
             ModFrames.Detail(GcAllocationSegment.ModRoutesRetime);
@@ -741,7 +772,7 @@ namespace PersistentCity.Runtime
         private void StartCityClock(object save)
         {
             NativeCityClock.Start(save, settings.GameClockFactor,
-                () => simulation != null && !retimeDriver.Holding && routes?.ReadyForPopulation == true && simulation.IsCaughtUpTo(AccountingClock.Target(Now())),
+                () => simulation != null && !retimeDriver.Holding && routeRebuild == null && routes?.ReadyForPopulation == true && simulation.IsCaughtUpTo(AccountingClock.Target(Now())),
                 () => true, Now, () => simulation?.State.Minute ?? Now(), native => simulation == null || simulation.IsAccountingEpochDrained(native));
             NativeCityClock.StartupHold = true;
         }
@@ -895,6 +926,7 @@ namespace PersistentCity.Runtime
 
         private SaveEpochCapture CaptureSteps(SaveEpochTicket ticket, SaveCostRecorder? cost)
         {
+            if (routeRebuild != null) FinishRouteRebuild(routeRebuild);
             if (!BeginAccountingObservations()) return SaveEpochCapture.Refused("Accounting observations could not begin before saving.");
             cost?.Step(SaveCostStep.Accounting);
             var source = ReadRlo("save");
@@ -1012,7 +1044,7 @@ namespace PersistentCity.Runtime
             initialization = null;
             initializingSave = null;
             initializingPayload = null;
-            simulation = null; stopEnvironment = null; retimeDriver.Cancel(); retimedRoutes = null;
+            simulation = null; stopEnvironment = null; retimeDriver.Cancel(); retimedRoutes = null; routeRebuild = null;
             saveSession = null;
             routes = null;
             saveIdentity = null;
