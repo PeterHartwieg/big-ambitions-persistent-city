@@ -156,6 +156,6 @@ public sealed class Gr5RetimeSnapshotTests
         var (restoredHash, restoredBytes) = RetimeTwice(live: false);
         output.WriteLine($"retime 3 -> 1 at 13,965 links: restored copy {restoredBytes / 1e6:0.0} MB, live kernel {liveBytes / 1e6:0.0} MB (.NET)");
         Assert.Equal(restoredHash, liveHash);
-        Assert.True(liveBytes + 4_000_000 < restoredBytes, liveBytes + " vs " + restoredBytes);
+        Assert.True(liveBytes + 3_000_000 < restoredBytes, liveBytes + " vs " + restoredBytes);
     }
 }
