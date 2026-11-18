@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Text.Json;
 using PersistentCity.Core;
 using Xunit;
 using Xunit.Abstractions;
@@ -74,5 +75,37 @@ public sealed class Gr5RetainedHeapModelTests
         heap.Add("sampler", sampler);
         Print("gc sampler", heap);
         Assert.True(heap.ScannedBytes < 64 * 1024, "scanned bytes " + heap.ScannedBytes);
+    }
+
+    private sealed class Owned { public int[] Values = new int[1000]; public Foreign? Outside; public string Label = "owned"; }
+    private sealed class Foreign { public byte[] Payload = new byte[1_000_000]; }
+
+    [Fact]
+    public void TheRuntimeCensusMatchesTheTestModelAndStopsAtForeignObjects()
+    {
+        var (state, simulator) = DayCity();
+        var model = new RetainedHeap();
+        model.Add("state", state); model.Add("simulator", simulator);
+        var census = new RetainedCensus();
+        census.Add("state", state); census.Add("simulator", simulator);
+        output.WriteLine("census MB " + (census.Bytes / 1e6).ToString("0.000") + " vs model MB " + (model.Bytes / 1e6).ToString("0.000") + ", objects " + census.Objects + " vs " + model.Objects);
+        Assert.Equal(0, census.Failures);
+        Assert.Equal(model.Objects, census.Objects);
+        Assert.InRange(census.Bytes, model.Bytes * 0.9, model.Bytes * 1.1);
+
+        var shared = new Owned { Outside = new Foreign() };
+        var bounded = new RetainedCensus(type => type != typeof(Foreign));
+        var first = bounded.Add("first", shared);
+        var second = bounded.Add("second", new[] { shared });
+        Assert.Equal(3, first.Objects);
+        Assert.Equal(1, second.Objects);
+        Assert.Equal(1, bounded.ForeignObjects);
+        Assert.True(first.Bytes < 8 * 1024, "foreign payload walked: " + first.Bytes);
+        Assert.Equal(40L + 4032 + 32, first.Bytes);
+        using var json = JsonDocument.Parse(bounded.ReportJson(8, 1.5));
+        Assert.Equal(new[] { "policy", "layout", "objects", "bytes", "scanned_bytes", "roots", "foreign_objects", "failures", "elapsed_ms", "top_roots", "top_types", "foreign_types" },
+            json.RootElement.EnumerateObject().Select(p => p.Name).ToArray());
+        Assert.Equal("first", json.RootElement.GetProperty("top_roots")[0].GetProperty("name").GetString());
+        Assert.Equal("Foreign", json.RootElement.GetProperty("foreign_types")[0].GetProperty("name").GetString());
     }
 }
