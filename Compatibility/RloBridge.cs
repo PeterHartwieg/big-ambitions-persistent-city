@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Reflection;
+using System.Reflection.Emit;
 using PersistentCity.Core;
 
 namespace PersistentCity.Compatibility
@@ -16,11 +17,17 @@ namespace PersistentCity.Compatibility
 
         private const BindingFlags PublicStatic = BindingFlags.Public | BindingFlags.Static | BindingFlags.DeclaredOnly;
         private const BindingFlags PublicInstance = BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly;
-        private readonly MethodInfo citizens, reservedCitizens, reservedBodies, slowedLanes;
+        private delegate int CitizensCall(object into, out int citySeed);
+        private readonly CitizensCall citizens;
+        private readonly Func<List<int>, int> reservedCitizens;
+        private readonly Func<List<object>, List<object>, int> reservedBodies;
+        private readonly Func<List<object>, List<int>, List<int>, int> slowedLanes;
         private readonly PropertyInfo version;
         private readonly Type citizenType;
-        private readonly FieldInfo index, first, last, district, age, female, persona, appearance;
-        private readonly object[] citizenArgs = new object[2], indexArgs = new object[1], bodyArgs = new object[2], laneArgs = new object[3];
+        private readonly Func<object, int> index, age, appearance;
+        private readonly Func<object, bool> female;
+        private readonly Func<object, string?> first, last, district, persona;
+        private readonly IList citizenBuffer;
 
         public int ContractVersion { get; }
 
@@ -43,15 +50,20 @@ namespace PersistentCity.Compatibility
             ContractVersion = (int)version.GetValue(null)!;
             if (ContractVersion != SupportedContract) throw Unsupported(ContractVersion);
 
-            index = Field("Index", typeof(int)); first = Field("First", typeof(string)); last = Field("Last", typeof(string));
-            district = Field("District", typeof(string)); age = Field("Age", typeof(int)); female = Field("Female", typeof(bool));
-            persona = Field("Persona", typeof(string)); appearance = Field("AppearanceSeed", typeof(int));
-            citizens = Method(api, "ReadCitizens", status, typeof(List<>).MakeGenericType(citizenType), typeof(int).MakeByRefType());
-            if (!citizens.GetParameters()[1].IsOut) throw Invalid("CityApi.ReadCitizens citySeed must be an out parameter");
-            reservedCitizens = Method(api, "ReadReservedCitizens", status, typeof(List<int>));
-            reservedBodies = Method(api, "ReadReservedBodies", status, typeof(List<object>), typeof(List<object>));
-            slowedLanes = Method(api, "ReadSlowedLanes", status, typeof(List<object>), typeof(List<int>), typeof(List<int>));
-            citizenArgs[0] = Activator.CreateInstance(typeof(List<>).MakeGenericType(citizenType))!;
+            index = Reader<int>(Field("Index", typeof(int))); first = Reader<string?>(Field("First", typeof(string)));
+            last = Reader<string?>(Field("Last", typeof(string))); district = Reader<string?>(Field("District", typeof(string)));
+            age = Reader<int>(Field("Age", typeof(int))); female = Reader<bool>(Field("Female", typeof(bool)));
+            persona = Reader<string?>(Field("Persona", typeof(string))); appearance = Reader<int>(Field("AppearanceSeed", typeof(int)));
+            var citizenList = typeof(List<>).MakeGenericType(citizenType);
+            var readCitizens = Method(api, "ReadCitizens", status, citizenList, typeof(int).MakeByRefType());
+            if (!readCitizens.GetParameters()[1].IsOut) throw Invalid("CityApi.ReadCitizens citySeed must be an out parameter");
+            citizens = (CitizensCall)Call(readCitizens, typeof(CitizensCall), typeof(object), typeof(int).MakeByRefType());
+            reservedCitizens = (Func<List<int>, int>)Call(Method(api, "ReadReservedCitizens", status, typeof(List<int>)), typeof(Func<List<int>, int>), typeof(List<int>));
+            reservedBodies = (Func<List<object>, List<object>, int>)Call(Method(api, "ReadReservedBodies", status, typeof(List<object>), typeof(List<object>)),
+                typeof(Func<List<object>, List<object>, int>), typeof(List<object>), typeof(List<object>));
+            slowedLanes = (Func<List<object>, List<int>, List<int>, int>)Call(Method(api, "ReadSlowedLanes", status, typeof(List<object>), typeof(List<int>), typeof(List<int>)),
+                typeof(Func<List<object>, List<int>, List<int>, int>), typeof(List<object>), typeof(List<int>), typeof(List<int>));
+            citizenBuffer = (IList)Activator.CreateInstance(citizenList)!;
         }
 
         public static RloBridge? Find(Assembly assembly)
@@ -77,31 +89,49 @@ namespace PersistentCity.Compatibility
         public Status ReadCitizens(List<RloBridgeCitizen> read, out int citySeed)
         {
             read.Clear();
-            citizenArgs[1] = 0;
-            Status status = Call(citizens, citizenArgs);
-            citySeed = (int)citizenArgs[1];
-            var list = (IList)citizenArgs[0];
+            int seed = 0, value;
+            var list = citizenBuffer;
             try
             {
+                try { value = citizens(list, out seed); }
+                catch (Exception error) { throw Threw("ReadCitizens", error); }
+                citySeed = seed;
+                Status status = Checked("ReadCitizens", value);
                 if (status != Status.Ready) return status;
-                foreach (object? c in list)
+                for (int i = 0; i < list.Count; i++)
                 {
+                    object? c = list[i];
                     if (c == null || c.GetType() != citizenType) throw Invalid("ReadCitizens returned an unexpected element");
-                    read.Add(new RloBridgeCitizen((int)index.GetValue(c)!, (string?)first.GetValue(c), (string?)last.GetValue(c), (string?)district.GetValue(c),
-                        (int)age.GetValue(c)!, (bool)female.GetValue(c)!, (string?)persona.GetValue(c), (int)appearance.GetValue(c)!));
+                    read.Add(new RloBridgeCitizen(index(c), first(c), last(c), district(c), age(c), female(c), persona(c), appearance(c)));
                 }
                 return status;
             }
             finally { list.Clear(); }
         }
 
-        public Status ReadReservedCitizens(List<int> indexes) { indexArgs[0] = indexes; return Call(reservedCitizens, indexArgs); }
+        public Status ReadReservedCitizens(List<int> indexes)
+        {
+            int value;
+            try { value = reservedCitizens(indexes); }
+            catch (Exception error) { throw Threw("ReadReservedCitizens", error); }
+            return Checked("ReadReservedCitizens", value);
+        }
 
         public Status ReadReservedBodies(List<object> pedestrians, List<object> characters)
-        { bodyArgs[0] = pedestrians; bodyArgs[1] = characters; return Call(reservedBodies, bodyArgs); }
+        {
+            int value;
+            try { value = reservedBodies(pedestrians, characters); }
+            catch (Exception error) { throw Threw("ReadReservedBodies", error); }
+            return Checked("ReadReservedBodies", value);
+        }
 
         public Status ReadSlowedLanes(List<object> lanes, List<int> originalLimits, List<int> currentLimits)
-        { laneArgs[0] = lanes; laneArgs[1] = originalLimits; laneArgs[2] = currentLimits; return Call(slowedLanes, laneArgs); }
+        {
+            int value;
+            try { value = slowedLanes(lanes, originalLimits, currentLimits); }
+            catch (Exception error) { throw Threw("ReadSlowedLanes", error); }
+            return Checked("ReadSlowedLanes", value);
+        }
 
         private static readonly Persona[] PersonaValues = (Persona[])Enum.GetValues(typeof(Persona));
         private static readonly string[] PersonaNames = Array.ConvertAll(PersonaValues, p => p.ToString());
@@ -127,14 +157,35 @@ namespace PersistentCity.Compatibility
             }
         }
 
-        private static Status Call(MethodInfo method, object[] args)
+        private static Exception Threw(string name, Exception error) => Invalid(name + " threw, which the contract forbids", error);
+
+        private static Status Checked(string name, int value)
         {
-            object? result;
-            try { result = method.Invoke(null, args); }
-            catch (TargetInvocationException error) { throw Invalid(method.Name + " threw, which the contract forbids", error.InnerException ?? error); }
-            int value = Convert.ToInt32(result, CultureInfo.InvariantCulture);
-            if (value < (int)Status.Ready || value > (int)Status.Failed) throw Invalid(method.Name + " returned unknown status " + value);
+            if (value < (int)Status.Ready || value > (int)Status.Failed) throw Invalid(name + " returned unknown status " + value);
             return (Status)value;
+        }
+
+        private static Delegate Call(MethodInfo target, Type delegateType, params Type[] parameters)
+        {
+            var method = new DynamicMethod("PersistentCityRlo" + target.Name, typeof(int), parameters, typeof(RloBridge).Module, true);
+            var il = method.GetILGenerator();
+            var expected = target.GetParameters();
+            for (int i = 0; i < parameters.Length; i++)
+            {
+                il.Emit(OpCodes.Ldarg, (short)i);
+                if (parameters[i] != expected[i].ParameterType) il.Emit(OpCodes.Castclass, expected[i].ParameterType);
+            }
+            il.Emit(OpCodes.Call, target);
+            il.Emit(OpCodes.Ret);
+            return method.CreateDelegate(delegateType);
+        }
+
+        private static Func<object, T> Reader<T>(FieldInfo field)
+        {
+            var method = new DynamicMethod("PersistentCityRloRead" + field.Name, typeof(T), new[] { typeof(object) }, typeof(RloBridge).Module, true);
+            var il = method.GetILGenerator();
+            il.Emit(OpCodes.Ldarg_0); il.Emit(OpCodes.Castclass, field.DeclaringType!); il.Emit(OpCodes.Ldfld, field); il.Emit(OpCodes.Ret);
+            return (Func<object, T>)method.CreateDelegate(typeof(Func<object, T>));
         }
 
         private FieldInfo Field(string name, Type expected)

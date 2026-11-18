@@ -42,6 +42,7 @@ internal static class Program
         CoverageLifecycle();
         Capacity();
         HarmonyAdapter();
+        PatchWatch();
         Console.WriteLine("logic-check: " + (checks - failures) + "/" + checks + " checks passed");
         Console.WriteLine("expected_scope_hash " + ScopeInventory.Hash());
         if (perf) Perf();
@@ -343,6 +344,51 @@ internal static class Program
             new[] { NewPatch("someone.else") }, new HarmonyLib.Patch[0]), typeof(string).Assembly, other);
         foreign.Observe(other);
         Check(foreign.Complete, "a foreign owner outside the PC assembly is ignored");
+    }
+
+    private static void PatchWatch()
+    {
+        Check(PatchStateWatch.Shared() != null, "the pinned Harmony exposes its shared patch state to the watch");
+        var methods = typeof(string).GetMethods().Take(600).Cast<MethodBase>().ToArray();
+        var state = new Dictionary<MethodBase, byte[]>();
+        foreach (var m in methods) state[m] = new byte[16];
+        var watch = new PatchStateWatch(state);
+        watch.Capture();
+        Check(!watch.Changed(), "an unchanged patch state needs no rescan");
+        state[methods[7]] = new byte[16];
+        Check(watch.Changed(), "a re-serialized patch info on a known method is a change");
+        watch.Capture();
+        Check(!watch.Changed(), "the change is consumed by the next full scan");
+        state.Remove(methods[3]);
+        Check(watch.Changed(), "a method whose patches all went away is a change");
+        watch.Capture();
+        state[methods[3]] = new byte[16];
+        Check(watch.Changed(), "a newly patched method is a change");
+        watch.Capture();
+        state.Remove(methods[5]); state[typeof(int).GetMethods()[0]] = new byte[16];
+        Check(watch.Changed(), "one method removed and another added at the same count is a change");
+        watch.Capture();
+        for (int i = 0; i < 64; i++) watch.Changed();
+        long before = GC.GetAllocatedBytesForCurrentThread();
+        for (int i = 0; i < 600; i++) watch.Changed();
+        long bytes = GC.GetAllocatedBytesForCurrentThread() - before;
+        Check(bytes == 0, "600 unchanged checks over 600 patched methods allocate nothing after warm-up (" + bytes + " B)");
+        Check(watch.Checks == 64 + 600 + 6 && watch.Changes == 4, "checks and changes are counted (" + watch.Checks + "/" + watch.Changes + ")");
+
+        var infos = Enumerable.Range(0, 600).Select(i => NewPatches(new[] { NewPatch("a" + i) }, new[] { NewPatch("b" + i) }, new HarmonyLib.Patch[0],
+            new HarmonyLib.Patch[0], new HarmonyLib.Patch[0], new HarmonyLib.Patch[0])).ToArray();
+        var pc = typeof(Program).Assembly;
+        void Scan()
+        {
+            var observed = new List<ObservedPatch>();
+            foreach (var info in infos) HarmonyScan.Observe(PatchMethod, info, pc, observed);
+            new CoverageTracker(ScopeInventory.Patches, _ => true, "f4b.perf-union-probe").Observe(observed);
+        }
+        Scan();
+        before = GC.GetAllocatedBytesForCurrentThread();
+        Scan();
+        long scan = GC.GetAllocatedBytesForCurrentThread() - before;
+        Console.WriteLine("patch watch: full scan of 600 patch infos without Harmony's deserialization " + scan + " B, unchanged watch check 0 B (.NET " + Environment.Version + ")");
     }
 
     private static void ScanPerf(int infos)

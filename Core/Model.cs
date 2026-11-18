@@ -9,9 +9,12 @@ namespace PersistentCity.Core
     public enum TravelMode { Walk, Bus, Subway, Car }
     public enum CitizenPhase { AtPlace, Travelling, WaitingForRoute, WaitingForOpening }
 
-    public readonly struct Position
+    public readonly struct Position : IEquatable<Position>
     {
         public Position(double x, double y, double z) { X = x; Y = y; Z = z; }
+        public bool Equals(Position other) => X.Equals(other.X) && Y.Equals(other.Y) && Z.Equals(other.Z);
+        public override bool Equals(object? obj) => obj is Position other && Equals(other);
+        public override int GetHashCode() => HashCode.Combine(X, Y, Z);
         public double X { get; }
         public double Y { get; }
         public double Z { get; }

@@ -81,6 +81,7 @@ namespace PerfUnionProbe
         internal static readonly HoldTracker holds = new HoldTracker();
         private static bool loopInstalled, eventsSubscribed, holdsBound, advanceBound, patchSetChanged;
         private static CoverageTracker coverage;
+        private static PatchStateWatch patchWatch;
         private static int unexpectedAtWindowStart;
 
         private static readonly FrameRow[] frames = new FrameRow[FrameLimit];
@@ -293,6 +294,7 @@ namespace PerfUnionProbe
                 catch { foreach (var row in bindings.Where(b => b.Scope == pair.Value)) row.Status = "unbindable"; }
             }
             coverage = new CoverageTracker(ScopeInventory.Patches, exp => bindings.Any(b => ReferenceEquals(b.Expected, exp) && b.Status == "timed"), PatchId);
+            try { patchWatch = PatchStateWatch.Shared(); } catch { patchWatch = null; }
             ScanPatches();
             for (int i = 0; i < components.Length; i++)
             {
@@ -337,6 +339,7 @@ namespace PerfUnionProbe
         private static void ScanPatches()
         {
             if (coverage == null) return;
+            patchWatch?.Capture();
             var observed = new List<ObservedPatch>();
             foreach (var target in Harmony.GetAllPatchedMethods().ToArray()) HarmonyScan.Observe(target, Harmony.GetPatchInfo(target), pc, observed);
             coverage.Observe(observed);
@@ -452,7 +455,7 @@ namespace PerfUnionProbe
                 nextDiagnosticQpc = now + Stopwatch.Frequency;
                 frameDiagnostic = true;
                 SampleDiagnostics(now);
-                Rescan();
+                Rescan(false);
             }
             boundaryTicks += Stopwatch.GetTimestamp() - now;
         }
@@ -500,10 +503,10 @@ namespace PerfUnionProbe
             catch { sampleFailures++; }
         }
 
-        private static void Rescan()
+        private static void Rescan(bool full)
         {
             if (coverage == null) return;
-            try { ScanPatches(); } catch { error = "f4b_patch_scan_failed"; }
+            try { if (full || patchWatch == null || patchWatch.Changed()) ScanPatches(); } catch { error = "f4b_patch_scan_failed"; }
             if (measuring && coverage.Unexpected.Count > unexpectedAtWindowStart) patchSetChanged = true;
         }
 
@@ -523,7 +526,7 @@ namespace PerfUnionProbe
             Require(label.Length <= 64 && label.All(ch => char.IsLetterOrDigit(ch) || ch == '-' || ch == '_' || ch == '.'), "f4b_invalid_window_label");
             window = label; error = ""; stopReason = "measuring";
             frameRing.Reset(); tickRing.Reset(); sampleRing.Reset(); callCount = 0; callDropped = sampleFailures = advanceCalls = 0;
-            Rescan(); unexpectedAtWindowStart = coverage?.Unexpected.Count ?? 0; patchSetChanged = false;
+            Rescan(true); unexpectedAtWindowStart = coverage?.Unexpected.Count ?? 0; patchSetChanged = false;
             crossFrame = timedExceptions = 0; unknownScopeCalls = 0; totalSaves = totalSceneEvents = 0;
             union.ResetAll();
             ReadMonoHeap(out monoHeapStart, out monoUsedStart); monoHeapStop = monoUsedStop = -1;
@@ -536,7 +539,7 @@ namespace PerfUnionProbe
         private static void StopMeasurement(string reason, bool writeStopFrame = true)
         {
             if (!measuring) return;
-            if (reason == "explicit-stop") Rescan();
+            if (reason == "explicit-stop") Rescan(true);
             long now = Stopwatch.GetTimestamp();
             if (writeStopFrame && currentFrame > firstMeasureFrame) { frameDiagnostic = true; WriteFrame(currentFrame + 1, now, true); }
             if (pendingWindowStart) pendingWindowStart = false;
@@ -556,7 +559,7 @@ namespace PerfUnionProbe
                 SceneManager.sceneLoaded -= SceneLoaded; SceneManager.sceneUnloaded -= SceneUnloaded;
                 GlobalEvents.onSaveGame -= SaveObserved; eventsSubscribed = false;
             }
-            union.Abandon(); shimInstalled = holdsBound = advanceBound = false; coverage = null;
+            union.Abandon(); shimInstalled = holdsBound = advanceBound = false; coverage = null; patchWatch = null;
             mode = "none"; runtime = null; pc = null; shimFactor = double.NaN;
             heldOrdinary = heldSkip = boundaryClips = null; withheld = null; accountingLimited = null; clockFactor = null;
             readSimulation = readState = readStopEnvironment = null; readMinute = readSeam = null;
@@ -587,7 +590,8 @@ namespace PerfUnionProbe
                 ["window"] = window, ["error"] = error, ["stop_reason"] = stopReason,
                 ["scope_inventory_version"] = ScopeInventory.Version, ["expected_scope_hash"] = ScopeInventory.Hash(),
                 ["coverage_complete"] = NotApplicable(() => CoverageComplete()),
-                ["patch_scans"] = NotApplicable(() => coverage?.Scans ?? 0), ["patch_set_changed_in_window"] = NotApplicable(() => patchSetChanged),
+                ["patch_scans"] = NotApplicable(() => coverage?.Scans ?? 0), ["patch_state_checks"] = NotApplicable(() => patchWatch?.Checks ?? 0),
+                ["patch_state_changes"] = NotApplicable(() => patchWatch?.Changes ?? 0), ["patch_state_watch"] = NotApplicable(() => patchWatch != null), ["patch_set_changed_in_window"] = NotApplicable(() => patchSetChanged),
                 ["scopes"] = NotApplicable(() => new JObject { ["timed_methods"] = scopeIndex.Count, ["timed"] = Count("timed"),
                     ["untimed_transpiled"] = Names("untimed-transpiled"),
                     ["not_installed"] = new JArray(bindings.Where(b => b.Status == "timed" && b.Expected?.Kind <= ScopeKind.Finalizer && coverage != null && !coverage.Installed(b.Expected)).Select(b => b.Label).Take(64)),

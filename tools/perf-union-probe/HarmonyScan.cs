@@ -5,6 +5,48 @@ using HarmonyLib;
 
 namespace PerfUnionProbe
 {
+    public sealed class PatchStateWatch
+    {
+        private readonly Dictionary<MethodBase, byte[]> state;
+        private readonly Dictionary<MethodBase, byte[]> seen = new Dictionary<MethodBase, byte[]>();
+
+        public PatchStateWatch(Dictionary<MethodBase, byte[]> state) { this.state = state ?? throw new ArgumentNullException(nameof(state)); }
+
+        public static PatchStateWatch Shared()
+        {
+            var type = typeof(Harmony).Assembly.GetType("HarmonyLib.HarmonySharedState", false);
+            var field = type?.GetField("state", BindingFlags.NonPublic | BindingFlags.Static);
+            return field?.GetValue(null) is Dictionary<MethodBase, byte[]> state ? new PatchStateWatch(state) : null;
+        }
+
+        public long Checks { get; private set; }
+        public long Changes { get; private set; }
+
+        public void Capture()
+        {
+            lock (state)
+            {
+                seen.Clear();
+                foreach (var pair in state) seen.Add(pair.Key, pair.Value);
+            }
+        }
+
+        public bool Changed()
+        {
+            Checks++;
+            bool changed = false;
+            lock (state)
+            {
+                if (state.Count != seen.Count) changed = true;
+                else
+                    foreach (var pair in state)
+                        if (!seen.TryGetValue(pair.Key, out var known) || !ReferenceEquals(known, pair.Value)) { changed = true; break; }
+            }
+            if (changed) Changes++;
+            return changed;
+        }
+    }
+
     public static class HarmonyScan
     {
         public static readonly IReadOnlyList<FieldInfo> PatchLists = Lists();

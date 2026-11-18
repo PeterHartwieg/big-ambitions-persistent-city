@@ -16,8 +16,9 @@ namespace PersistentCity.Tests
     public sealed class RloBridgeTests
     {
         private readonly RloIdentityAdapter adapter = new RloIdentityAdapter();
+        private readonly Xunit.Abstractions.ITestOutputHelper output;
 
-        public RloBridgeTests() => CityApiHooks.Reset();
+        public RloBridgeTests(Xunit.Abstractions.ITestOutputHelper output) { this.output = output; CityApiHooks.Reset(); }
 
         private static Fake.FlareDirector City(int seed = 1000)
         {
@@ -310,6 +311,53 @@ namespace PersistentCity.Tests
             Assert.Equal(2, adapter.Bindings);
             Assert.Equal(expected.PopulationKey, adapter.Read(rlo).PopulationKey);
             Assert.Equal(2, adapter.Bindings);
+        }
+
+        [Fact]
+        public void PerFrameReservationReadsAllocateNothingAfterWarmUp()
+        {
+            var city = City(); Serve(city);
+            var rlo = StandIn.Build("0.99.0");
+            var result = adapter.Read(rlo);
+            var reservations = new RloPhysicalReservations(rlo, result.Identities);
+            Assert.True(reservations.Ready, reservations.LastError);
+            CityApiHooks.Reserved = new List<int> { 1, 5 };
+            for (int i = 0; i < 64; i++) reservations.Update();
+            long before = GC.GetAllocatedBytesForCurrentThread();
+            for (int i = 0; i < 4032; i++) reservations.Update();
+            long bytes = GC.GetAllocatedBytesForCurrentThread() - before;
+            Assert.True(reservations.Ready, reservations.LastError);
+            Assert.True(reservations.IsReserved("c1") && reservations.IsReserved("c5") && !reservations.IsReserved("c2"));
+            output.WriteLine("reservation update: " + bytes + " B over 4032 frames");
+            Assert.Equal(0, bytes);
+        }
+
+        [Fact]
+        public void APeriodicDonorReadStaysUnderItsAllocationBoundAndKeepsItsIdentities()
+        {
+            var city = City(); Serve(city);
+            var rlo = StandIn.Build("0.99.0");
+            var expected = adapter.Read(rlo);
+            for (int i = 0; i < 4; i++) adapter.Read(rlo);
+            long stand = 0;
+            for (int i = 0; i < 8; i++)
+            {
+                var into = new List<int>();
+                long at = GC.GetAllocatedBytesForCurrentThread();
+                int seed = 0;
+                var list = (IList)Activator.CreateInstance(typeof(List<>).MakeGenericType(rlo.GetType("RealLifeOverhaul.ModApi.CityApiCitizen")!))!;
+                CityApiHooks.ReadCitizens(list, ref seed);
+                stand += GC.GetAllocatedBytesForCurrentThread() - at;
+            }
+            long before = GC.GetAllocatedBytesForCurrentThread();
+            RloReadResult read = expected;
+            for (int i = 0; i < 8; i++) read = adapter.Read(rlo);
+            long bytes = GC.GetAllocatedBytesForCurrentThread() - before;
+            long own = (bytes - stand) / 8;
+            output.WriteLine("donor read: " + bytes / 8 + " B per read, stand-in API " + stand / 8 + " B, adapter " + own + " B");
+            Assert.Equal(expected.PopulationKey, read.PopulationKey);
+            Assert.Equal(expected.Identities.Select(Describe), read.Identities.Select(Describe));
+            Assert.True(own < 120_000, "adapter bytes per read " + own);
         }
 
         private static string Describe(CitizenIdentity c) =>
