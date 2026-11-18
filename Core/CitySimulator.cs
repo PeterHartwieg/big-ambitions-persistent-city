@@ -154,7 +154,7 @@ namespace PersistentCity.Core
         {
             AbortPending();
             var replacement = new CitySimulator(State, replacementRoutes, shell: true);
-            return new RouteRebuild(replacement, replacement.BuildSteps(retimedTraffic, this));
+            return new RouteRebuild(this, replacement, replacement.BuildSteps(retimedTraffic, this));
         }
 
         private void CopyRebuildInputs(CitySimulator source)

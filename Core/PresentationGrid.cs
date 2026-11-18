@@ -44,6 +44,25 @@ namespace PersistentCity.Core
 
         public PresentationGrid(Func<string, Position?>? placePosition = null) => this.placePosition = placePosition;
 
+        internal void TakeSpareCells(PresentationGrid retired)
+        {
+            if (ReferenceEquals(retired, this)) return;
+            int peak = retired.entries.Count + retired.pool.Count;
+            retired.Clear();
+            foreach (var pair in retired.cells)
+                if (!cells.ContainsKey(pair.Key)) cells.Add(pair.Key, pair.Value);
+            retired.cells.Clear();
+            while (retired.pool.Count > 0 && entries.Count + pool.Count < peak)
+            {
+                var entry = retired.pool.Pop();
+                entry.Stamp = 0;
+                pool.Push(entry);
+            }
+            retired.pool.Clear();
+        }
+
+        internal int Pooled => pool.Count;
+
         public int Count => entries.Count;
         public int Unplaced => unplaced.Count;
         public int Registrations => slotCount;

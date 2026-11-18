@@ -146,4 +146,38 @@ public sealed class Gr5RetimeRepeatAllocationTests
         var signals = target.ToDictionary(n => n.Id, n => n.Signal);
         Gr5RetimeReuseTests.AssertSame(new TrafficNetwork("gr5-retime-native", target, after), original.Rerated(after, id => signals[id]), target);
     }
+
+    private readonly struct Twin
+    {
+        public Twin(double x, double y, double z) { X = x; Y = y; Z = z; }
+        public double X { get; }
+        public double Y { get; }
+        public double Z { get; }
+    }
+
+    [Fact]
+    public void PositionEqualityMatchesTheDefaultValueEqualityWithoutBoxing()
+    {
+        double[] values = { 0, -0.0, 1.5, -3, 1e9, double.NaN, double.Epsilon };
+        foreach (double a in values)
+            foreach (double b in values)
+            {
+                var p = new Position(a, 2, b); var q = new Position(b, 2, a);
+                Assert.Equal(new Twin(a, 2, b).Equals(new Twin(b, 2, a)), p.Equals(q));
+                Assert.Equal(p.Equals(q), p.Equals((object)q));
+                Assert.Equal(p.Equals(q), EqualityComparer<Position>.Default.Equals(p, q));
+                Assert.Equal(p.Equals(q), Nullable.Equals<Position>(p, q));
+                if (p.Equals(q)) Assert.Equal(p.GetHashCode(), q.GetHashCode());
+            }
+        Assert.False(new Position(1, 2, 3).Equals("1,2,3"));
+        Assert.False(Nullable.Equals<Position>(new Position(1, 2, 3), null));
+        var left = new Position(4, 5, 6); var right = new Position(4, 5, 6); Position? car = left, other = right;
+        bool same = true;
+        for (int i = 0; i < 64; i++) same &= left.Equals(right) && Nullable.Equals(car, other);
+        long before = GC.GetAllocatedBytesForCurrentThread();
+        for (int i = 0; i < 10_000; i++) same &= left.Equals(right) && Nullable.Equals(car, other);
+        long bytes = GC.GetAllocatedBytesForCurrentThread() - before;
+        Assert.True(same);
+        Assert.Equal(0, bytes);
+    }
 }

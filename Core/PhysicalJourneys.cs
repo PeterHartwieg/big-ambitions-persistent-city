@@ -432,6 +432,13 @@ namespace PersistentCity.Core
 
         public ActiveJourneyIndex(Func<string, Position?>? placePosition = null) => grid = new PresentationGrid(placePosition);
 
+        internal void TakeSpareCells(ActiveJourneyIndex retired)
+        {
+            if (ReferenceEquals(retired, this)) return;
+            retired.Clear();
+            grid.TakeSpareCells(retired.grid);
+        }
+
         public static bool Member(CitizenState c)
             => c.Phase == CitizenPhase.Travelling || c.Phase == CitizenPhase.WaitingForOpening
             || c.Phase == CitizenPhase.AtPlace && (c.OptionalStop != null

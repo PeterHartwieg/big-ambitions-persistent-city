@@ -81,6 +81,7 @@ namespace PerfUnionProbe
         internal static readonly HoldTracker holds = new HoldTracker();
         private static bool loopInstalled, eventsSubscribed, holdsBound, advanceBound, patchSetChanged;
         private static CoverageTracker coverage;
+        private static PatchStateWatch patchWatch;
         private static int unexpectedAtWindowStart;
 
         private static readonly FrameRow[] frames = new FrameRow[FrameLimit];
@@ -156,11 +157,11 @@ namespace PerfUnionProbe
                 if (action == "inventory") return Wrap(Status(), Inventory());
                 if (action == "status") return Wrap(Status(), Status());
                 if (action == "arm") { var before = Status(); Arm(args); return Wrap(before, Status()); }
+                if (action == "heap") return Wrap(Status(), Heap());
                 Require(armed, "f4b_not_armed");
                 if (action == "measure-start") { var before = Status(); StartMeasurement(args); return Wrap(before, Status()); }
                 if (action == "measure-stop") { var before = Status(); StopMeasurement("explicit-stop"); return Wrap(before, Status()); }
                 if (action == "page") return Wrap(Status(), Page(args));
-                if (action == "heap") return Wrap(Status(), Heap());
                 if (action == "disarm") { var before = Status(); Disarm(); stopReason = "disarmed"; return Wrap(before, Status()); }
                 return Wrap(Status(), new JObject { ["supported"] = false, ["refusal"] = "f4b_unsupported_action", ["action"] = action });
             }
@@ -188,6 +189,7 @@ namespace PerfUnionProbe
             string requested = (string)args["mode"];
             Require(requested == "candidate" || requested == "reference", "f4b_mode_candidate_or_reference_required");
             Disarm();
+            ReadMonoHeap(out armHeapBefore, out armUsedBefore); armHeapAfter = armUsedAfter = -1;
             armThread = Thread.CurrentThread.ManagedThreadId; offMainCallbacks = 0; error = "";
             save = SaveGameManager.Current;
             pc = AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault(a => a.GetName().Name == "PersistentCity");
@@ -205,7 +207,8 @@ namespace PerfUnionProbe
                     patches.Patch(tick, prefix: new HarmonyMethod(typeof(ShimPatch), nameof(ShimPatch.Prefix)) { priority = Priority.First + 1 });
                     shimInstalled = true;
                     union = new UnionClock(0, 0, Stopwatch.Frequency); componentNames = Array.Empty<string>();
-                    coverage = null;
+                    coverage = null; matchedScans = 0;
+                    MatchedScan();
                 }
                 else
                 {
@@ -222,6 +225,7 @@ namespace PerfUnionProbe
                 SceneManager.sceneLoaded += SceneLoaded; SceneManager.sceneUnloaded += SceneUnloaded;
                 GlobalEvents.onSaveGame += SaveObserved; eventsSubscribed = true;
                 mode = requested; armed = true; stopReason = "armed";
+                ReadMonoHeap(out armHeapAfter, out armUsedAfter);
             }
             catch { Disarm(); throw; }
         }
@@ -293,7 +297,8 @@ namespace PerfUnionProbe
                 catch { foreach (var row in bindings.Where(b => b.Scope == pair.Value)) row.Status = "unbindable"; }
             }
             coverage = new CoverageTracker(ScopeInventory.Patches, exp => bindings.Any(b => ReferenceEquals(b.Expected, exp) && b.Status == "timed"), PatchId);
-            ScanPatches();
+            try { patchWatch = PatchStateWatch.Shared(); } catch { patchWatch = null; }
+            PatchStateWatch.Run(patchWatch, true, Scan);
             for (int i = 0; i < components.Length; i++)
             {
                 var method = Find(components[i], components[i].Target);
@@ -334,6 +339,7 @@ namespace PerfUnionProbe
             }
         }
 
+        private static readonly Action Scan = ScanPatches;
         private static void ScanPatches()
         {
             if (coverage == null) return;
@@ -452,7 +458,7 @@ namespace PerfUnionProbe
                 nextDiagnosticQpc = now + Stopwatch.Frequency;
                 frameDiagnostic = true;
                 SampleDiagnostics(now);
-                Rescan();
+                Rescan(false);
             }
             boundaryTicks += Stopwatch.GetTimestamp() - now;
         }
@@ -500,14 +506,27 @@ namespace PerfUnionProbe
             catch { sampleFailures++; }
         }
 
-        private static void Rescan()
+        private static long matchedScans;
+        private static void MatchedScan()
         {
-            if (coverage == null) return;
-            try { ScanPatches(); } catch { error = "f4b_patch_scan_failed"; }
+            var observed = new List<ObservedPatch>();
+            foreach (var target in Harmony.GetAllPatchedMethods().ToArray()) HarmonyScan.Observe(target, Harmony.GetPatchInfo(target), pc, observed);
+            matchedScans++;
+        }
+
+        private static void Rescan(bool full)
+        {
+            if (coverage == null)
+            {
+                if (full && mode == "reference") try { MatchedScan(); } catch { error = "f4b_patch_scan_failed"; }
+                return;
+            }
+            try { PatchStateWatch.Run(patchWatch, full, Scan); } catch { error = "f4b_patch_scan_failed"; }
             if (measuring && coverage.Unexpected.Count > unexpectedAtWindowStart) patchSetChanged = true;
         }
 
         private static long monoHeapStart = -1, monoUsedStart = -1, monoHeapStop = -1, monoUsedStop = -1;
+        private static long armHeapBefore = -1, armUsedBefore = -1, armHeapAfter = -1, armUsedAfter = -1, startScanHeap = -1, startScanUsed = -1;
 
         private static void ReadMonoHeap(out long heap, out long used)
         {
@@ -523,10 +542,11 @@ namespace PerfUnionProbe
             Require(label.Length <= 64 && label.All(ch => char.IsLetterOrDigit(ch) || ch == '-' || ch == '_' || ch == '.'), "f4b_invalid_window_label");
             window = label; error = ""; stopReason = "measuring";
             frameRing.Reset(); tickRing.Reset(); sampleRing.Reset(); callCount = 0; callDropped = sampleFailures = advanceCalls = 0;
-            Rescan(); unexpectedAtWindowStart = coverage?.Unexpected.Count ?? 0; patchSetChanged = false;
+            ReadMonoHeap(out startScanHeap, out startScanUsed); monoHeapStop = monoUsedStop = -1;
+            Rescan(true); unexpectedAtWindowStart = coverage?.Unexpected.Count ?? 0; patchSetChanged = false;
+            ReadMonoHeap(out monoHeapStart, out monoUsedStart);
             crossFrame = timedExceptions = 0; unknownScopeCalls = 0; totalSaves = totalSceneEvents = 0;
             union.ResetAll();
-            ReadMonoHeap(out monoHeapStart, out monoUsedStart); monoHeapStop = monoUsedStop = -1;
             long now = Stopwatch.GetTimestamp();
             currentFrame = firstMeasureFrame = Time.frameCount; frameStartQpc = now; nextDiagnosticQpc = now;
             observerTicks = boundaryTicks = 0; frameDiagnostic = true;
@@ -536,12 +556,12 @@ namespace PerfUnionProbe
         private static void StopMeasurement(string reason, bool writeStopFrame = true)
         {
             if (!measuring) return;
-            if (reason == "explicit-stop") Rescan();
+            ReadMonoHeap(out monoHeapStop, out monoUsedStop);
+            if (reason == "explicit-stop") Rescan(true);
             long now = Stopwatch.GetTimestamp();
             if (writeStopFrame && currentFrame > firstMeasureFrame) { frameDiagnostic = true; WriteFrame(currentFrame + 1, now, true); }
             if (pendingWindowStart) pendingWindowStart = false;
             else holds.EndWindow(currentFrame, now);
-            ReadMonoHeap(out monoHeapStop, out monoUsedStop);
             measuring = false; stopReason = reason;
         }
 
@@ -556,7 +576,7 @@ namespace PerfUnionProbe
                 SceneManager.sceneLoaded -= SceneLoaded; SceneManager.sceneUnloaded -= SceneUnloaded;
                 GlobalEvents.onSaveGame -= SaveObserved; eventsSubscribed = false;
             }
-            union.Abandon(); shimInstalled = holdsBound = advanceBound = false; coverage = null;
+            union.Abandon(); shimInstalled = holdsBound = advanceBound = false; coverage = null; patchWatch = null;
             mode = "none"; runtime = null; pc = null; shimFactor = double.NaN;
             heldOrdinary = heldSkip = boundaryClips = null; withheld = null; accountingLimited = null; clockFactor = null;
             readSimulation = readState = readStopEnvironment = null; readMinute = readSeam = null;
@@ -587,7 +607,8 @@ namespace PerfUnionProbe
                 ["window"] = window, ["error"] = error, ["stop_reason"] = stopReason,
                 ["scope_inventory_version"] = ScopeInventory.Version, ["expected_scope_hash"] = ScopeInventory.Hash(),
                 ["coverage_complete"] = NotApplicable(() => CoverageComplete()),
-                ["patch_scans"] = NotApplicable(() => coverage?.Scans ?? 0), ["patch_set_changed_in_window"] = NotApplicable(() => patchSetChanged),
+                ["patch_scans"] = NotApplicable(() => coverage?.Scans ?? 0), ["patch_state_checks"] = NotApplicable(() => patchWatch?.Checks ?? 0),
+                ["patch_state_changes"] = NotApplicable(() => patchWatch?.Changes ?? 0), ["patch_state_watch"] = NotApplicable(() => patchWatch != null), ["patch_scan_pending"] = NotApplicable(() => patchWatch?.Pending ?? false), ["matched_reference_scans"] = mode == "reference" ? (JToken)matchedScans : "n/a", ["patch_set_changed_in_window"] = NotApplicable(() => patchSetChanged),
                 ["scopes"] = NotApplicable(() => new JObject { ["timed_methods"] = scopeIndex.Count, ["timed"] = Count("timed"),
                     ["untimed_transpiled"] = Names("untimed-transpiled"),
                     ["not_installed"] = new JArray(bindings.Where(b => b.Status == "timed" && b.Expected?.Kind <= ScopeKind.Finalizer && coverage != null && !coverage.Installed(b.Expected)).Select(b => b.Label).Take(64)),
@@ -609,7 +630,9 @@ namespace PerfUnionProbe
                 ["unknown_scope_calls"] = unknownScopeCalls, ["union_underflows"] = union.Underflows, ["components_outside_union"] = union.ComponentsOutsideUnion,
                 ["saves_in_window"] = totalSaves, ["scene_events_in_window"] = totalSceneEvents,
                 ["mono_heap"] = new JObject { ["start_bytes"] = monoHeapStart, ["start_used_bytes"] = monoUsedStart, ["stop_bytes"] = monoHeapStop, ["stop_used_bytes"] = monoUsedStop,
-                    ["now_bytes"] = MonoHeapNow(true), ["now_used_bytes"] = MonoHeapNow(false), ["qualification"] = "Profiler Mono heap size and used size at window start, stop and read time; no forced collection." },
+                    ["now_bytes"] = MonoHeapNow(true), ["now_used_bytes"] = MonoHeapNow(false), ["arm_before_bytes"] = armHeapBefore, ["arm_before_used_bytes"] = armUsedBefore,
+                    ["arm_after_bytes"] = armHeapAfter, ["arm_after_used_bytes"] = armUsedAfter, ["start_scan_before_bytes"] = startScanHeap, ["start_scan_before_used_bytes"] = startScanUsed, ["frame_components_bytes"] = (long)frameComponents.Length * sizeof(float),
+                    ["qualification"] = "Profiler Mono heap size and used size before and after arm, before and after the forced patch scan at window start (start is after it), at stop before the forced patch scan, and at read time; no forced collection." },
                 ["boundary_source"] = boundarySource, ["probe_patches_installed"] = Harmony.HasAnyPatches(PatchId), ["player_loop_entry"] = LoopEntryPresent(), ["stopwatch_frequency"] = Stopwatch.Frequency, ["stopwatch_high_resolution"] = Stopwatch.IsHighResolution,
                 ["harmony_version"] = typeof(Harmony).Assembly.GetName().Version?.ToString(),
                 ["limits"] = "Mod work is the nested union of every timed Persistent City scope. The union includes nested probe cost; observerMs measures only part of it. "

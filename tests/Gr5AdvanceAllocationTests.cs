@@ -167,6 +167,8 @@ public sealed class Gr5AdvanceAllocationTests
     internal sealed class Window
     {
         public readonly long[] Bytes = new long[GcPauseSampler.Segments], Calls = new long[GcPauseSampler.Segments];
+        public readonly double[] Slowest = new double[GcPauseSampler.Segments];
+        public long CollectedCalls;
         public long PlannerBytes;
         public double Per(GcAllocationSegment s) => Calls[(int)s] == 0 ? 0 : Bytes[(int)s] / (double)Calls[(int)s];
         public long Total => Reported.Sum(s => Bytes[(int)s]);
@@ -180,6 +182,8 @@ public sealed class Gr5AdvanceAllocationTests
             for (int unit = 0; unit < 64; unit++)
             {
                 long plannerBefore = planner.PlannerBytes;
+                int collections = GC.CollectionCount(0);
+                long started = System.Diagnostics.Stopwatch.GetTimestamp();
                 long before = GC.GetAllocatedBytesForCurrentThread();
                 GcAllocationSegment kind;
                 bool stop = false;
@@ -197,7 +201,13 @@ public sealed class Gr5AdvanceAllocationTests
                     stop = result.CaughtUp;
                 }
                 long used = GC.GetAllocatedBytesForCurrentThread() - before - (planner.PlannerBytes - plannerBefore);
-                if (window != null) { window.Bytes[(int)kind] += used; window.Calls[(int)kind]++; window.PlannerBytes += planner.PlannerBytes - plannerBefore; }
+                double elapsed = (System.Diagnostics.Stopwatch.GetTimestamp() - started) * 1000.0 / System.Diagnostics.Stopwatch.Frequency;
+                if (window != null)
+                {
+                    window.Bytes[(int)kind] += used; window.Calls[(int)kind]++; window.PlannerBytes += planner.PlannerBytes - plannerBefore;
+                    if (GC.CollectionCount(0) != collections) window.CollectedCalls++;
+                    else window.Slowest[(int)kind] = Math.Max(window.Slowest[(int)kind], elapsed);
+                }
                 if (stop) break;
             }
             city.SynchronizeSnapshot();
@@ -242,6 +252,172 @@ public sealed class Gr5AdvanceAllocationTests
         Assert.True(w.Per(GcAllocationSegment.AdvancePlanningSlice) < 1, "planning slice bytes per call " + w.Per(GcAllocationSegment.AdvancePlanningSlice));
         Assert.True(w.Per(GcAllocationSegment.AdvanceEventsOther) < 1, "idle bytes per call " + w.Per(GcAllocationSegment.AdvanceEventsOther));
         Assert.Equal(Reference, hash);
+    }
+
+    [Fact]
+    public void ARepeatRetimeWindowStaysUnderItsMeasuredBytesPerCall()
+    {
+        var (state, city, planner) = City();
+        while (!city.AdvanceTo(Start - 30, 256).CaughtUp) { }
+        Run(city, planner, Start - 30, Start, null);
+        var driver = new ClockRetimeDriver();
+        long retime = 0;
+        foreach (double rate in new[] { 2.0, 1.0 })
+        {
+            long before = GC.GetAllocatedBytesForCurrentThread();
+            while (true)
+            {
+                var outcome = driver.Update(state, rate, false, WalkMetresPerMinute / 60, 4);
+                Assert.NotEqual(ClockRetimeOutcome.Restarted, outcome);
+                if (outcome != ClockRetimeOutcome.Committed) continue;
+                var rebuild = city.BeginRebuildRoutes(planner, driver.TakeRetimedTraffic());
+                while (!rebuild.Step(0)) { }
+                city = rebuild.TakeResult();
+                break;
+            }
+            if (rate == 1.0) retime = GC.GetAllocatedBytesForCurrentThread() - before;
+        }
+        Assert.Equal(1.0, state.TravelClockRate);
+        var window = new Window();
+        Run(city, planner, Start, Start + 240, window);
+        Print("repeat-15:30", window);
+        output.WriteLine("repeat-15:30 retime 2->1 " + retime + " B, window total with retime " + (window.Total + retime) + " B (.NET)");
+        foreach (var kind in Reported)
+            output.WriteLine("repeat-15:30 slowest " + GcPauseSampler.SegmentName(kind) + " call without a collection " + window.Slowest[(int)kind].ToString("0.000") + " ms (.NET Debug)");
+        output.WriteLine("repeat-15:30 calls containing a test-process collection, not timed: " + window.CollectedCalls);
+        Assert.True(window.Per(GcAllocationSegment.AdvanceEventsFood) < 650, "food bytes per call " + window.Per(GcAllocationSegment.AdvanceEventsFood));
+        Assert.True(window.Per(GcAllocationSegment.AdvanceEventsCitizen) < 1000, "citizen bytes per call " + window.Per(GcAllocationSegment.AdvanceEventsCitizen));
+        Assert.True(window.Per(GcAllocationSegment.AdvanceEventsRouteBegin) < 650, "route begin bytes per call " + window.Per(GcAllocationSegment.AdvanceEventsRouteBegin));
+        Assert.True(window.Per(GcAllocationSegment.AdvancePlanningFinish) < 250, "planning finish bytes per call " + window.Per(GcAllocationSegment.AdvancePlanningFinish));
+        Assert.True(window.Per(GcAllocationSegment.AdvancePlanningSlice) < 2, "planning slice bytes per call " + window.Per(GcAllocationSegment.AdvancePlanningSlice));
+        Assert.True(window.Per(GcAllocationSegment.AdvanceEventsOther) < 1, "idle bytes per call " + window.Per(GcAllocationSegment.AdvanceEventsOther));
+        Assert.True(retime < 3_400_000, "retime bytes " + retime);
+        Assert.True(window.Total + retime < 26_500_000, "repeat window bytes with retime " + (window.Total + retime));
+        PerfGate.Under(window.Slowest[(int)GcAllocationSegment.AdvanceEventsFood], 4, "slowest food event call");
+        PerfGate.Under(window.Slowest[(int)GcAllocationSegment.AdvancePlanningFinish], 4, "slowest planning finish call");
+        PerfGate.Under(window.Slowest[(int)GcAllocationSegment.AdvanceEventsCitizen], 4, "slowest citizen event call");
+    }
+
+    private static void Spin(double milliseconds)
+    {
+        long until = System.Diagnostics.Stopwatch.GetTimestamp() + (long)(milliseconds * System.Diagnostics.Stopwatch.Frequency / 1000);
+        while (System.Diagnostics.Stopwatch.GetTimestamp() < until) { }
+    }
+
+    private sealed class FrameSamples
+    {
+        public readonly List<double> Advance = new List<double>(), FoodRefill = new List<double>(), FoodWork = new List<double>(), FoodTraffic = new List<double>(), FoodTrafficWork = new List<double>(), Refill = new List<double>(), Sync = new List<double>();
+        public int Frames, Collected, MostTrafficJourneys;
+        public double SlowestUnit;
+    }
+
+    private const double FoodCityStart = 2 * 1440 + 11 * 60;
+
+    private sealed class RatedFoodPlanner : ICitizenRoutePlanner, ITrafficRoutePlanner
+    {
+        private readonly RushSpikeReplay.Planner inner = new RushSpikeReplay.Planner();
+        public RatedFoodPlanner(double rate) => TrafficNetwork = inner.TrafficNetwork!.Rerated(rate / 6, _ => null);
+        public TrafficNetwork? TrafficNetwork { get; }
+        public void SetTrafficForecast(Func<int, double, TrafficLinkForecast>? forecast) { }
+        public bool IsTrafficLinkClosed(int linkId) => false;
+        public Route? Plan(Place from, Place to, double minute, TravelPreferences preferences) => inner.Plan(from, to, minute, preferences);
+        public Route? Plan(Place from, Place to, double minute, CitizenState citizen) => inner.Plan(from, to, minute, citizen);
+    }
+
+    private static FrameSamples RefillFrames(bool handOver)
+    {
+        const double RefillMilliseconds = 22, OtherPhysicalMilliseconds = .5, PreludeMilliseconds = .5;
+        var (state, city) = Gr5FoodDecisionTests.FoodCity();
+        while (!city.AdvanceTo(FoodCityStart - 30, 256).CaughtUp) { }
+        Gr5FoodDecisionTests.Run(city, FoodCityStart - 30, FoodCityStart);
+        var driver = new ClockRetimeDriver();
+        foreach (double rate in new[] { 2.0, 1.0 })
+            while (true)
+            {
+                var outcome = driver.Update(state, rate, false, 1.4, 4);
+                if (outcome != ClockRetimeOutcome.Committed) continue;
+                var rebuild = city.BeginRebuildRoutes(new RatedFoodPlanner(rate), driver.TakeRetimedTraffic());
+                while (!rebuild.Step(0)) { }
+                city = handOver ? rebuild.TakeResult() : rebuild.Result!;
+                break;
+            }
+        var frameBudget = new UpdateCityBudget();
+        var samples = new FrameSamples();
+        for (double minute = FoodCityStart; minute < FoodCityStart + 120; minute += 1.0 / 30, samples.Frames++)
+        {
+            int collections = GC.CollectionCount(0);
+            long started = System.Diagnostics.Stopwatch.GetTimestamp();
+            double Elapsed() => (System.Diagnostics.Stopwatch.GetTimestamp() - started) * 1000.0 / System.Diagnostics.Stopwatch.Frequency;
+            Spin(PreludeMilliseconds);
+            city.RefreshOptionalStops();
+            double advanceStarted = Elapsed();
+            var budget = new PopulationFrameBudget(1.0 / 30, false);
+            double timeBudget = frameBudget.Advance(budget.Milliseconds, advanceStarted);
+            int citizenEvents = 0;
+            bool foodFrame = false;
+            double unitStart = advanceStarted;
+            for (int step = 0; step < budget.Units; step++)
+            {
+                if (city.PlanningPending)
+                {
+                    bool finished = city.ContinuePlanning(Math.Max(0, timeBudget - (Elapsed() - advanceStarted)));
+                    samples.SlowestUnit = Math.Max(samples.SlowestUnit, Elapsed() - unitStart); unitStart = Elapsed();
+                    if (!finished) { if (Elapsed() - advanceStarted >= timeBudget) break; continue; }
+                    citizenEvents++;
+                    if (citizenEvents >= budget.CitizenEvents || Elapsed() - advanceStarted >= timeBudget) break;
+                    continue;
+                }
+                var result = city.AdvanceFrameSlice(minute, 1);
+                samples.SlowestUnit = Math.Max(samples.SlowestUnit, Elapsed() - unitStart); unitStart = Elapsed();
+                foodFrame |= result.FoodContinuationEvents > 0;
+                citizenEvents += result.CitizenEvents;
+                if (result.PlanningPending) { if (Elapsed() - advanceStarted >= timeBudget) break; continue; }
+                if (result.CaughtUp || result.ThroughRoutePending || citizenEvents >= budget.CitizenEvents || Elapsed() - advanceStarted >= timeBudget) break;
+            }
+            double advanced = Elapsed() - advanceStarted;
+            int journeys = city.TrafficJourneyCount;
+            double syncStarted = Elapsed();
+            city.SynchronizeSnapshot();
+            double synced = Elapsed() - syncStarted;
+            bool heavy = foodFrame || samples.Frames % 30 == 0;
+            double physicalStarted = Elapsed();
+            Spin(heavy ? RefillMilliseconds : OtherPhysicalMilliseconds);
+            double physical = Elapsed() - physicalStarted;
+            frameBudget.ObservePhysical(physical);
+            double frame = Elapsed();
+            if (GC.CollectionCount(0) != collections) { samples.Collected++; continue; }
+            samples.Advance.Add(advanced);
+            samples.Sync.Add(synced);
+            samples.MostTrafficJourneys = Math.Max(samples.MostTrafficJourneys, journeys);
+            if (foodFrame) { samples.FoodRefill.Add(frame); samples.FoodWork.Add(frame - physical); if (journeys > 0) { samples.FoodTraffic.Add(frame); samples.FoodTrafficWork.Add(frame - physical); } }
+            else if (heavy) samples.Refill.Add(frame);
+        }
+        samples.Advance.Sort(); samples.FoodRefill.Sort(); samples.FoodWork.Sort(); samples.FoodTraffic.Sort(); samples.FoodTrafficWork.Sort(); samples.Refill.Sort(); samples.Sync.Sort();
+        return samples;
+    }
+
+    [Fact]
+    public void PostRetimeFoodFramesWithTrafficAndAHeavyRefillStayUnderThirtyMilliseconds()
+    {
+        static double P(List<double> v, double q) => v[(int)Math.Ceiling(v.Count * q) - 1];
+        string Line(string label, FrameSamples f) => label + ": " + f.Frames + " frames (" + f.Collected + " with a test-process collection, not timed); advance p95 "
+            + P(f.Advance, .95).ToString("0.000") + " / p99 " + P(f.Advance, .99).ToString("0.000") + " ms; snapshot sync max " + f.Sync[^1].ToString("0.000")
+            + " ms with up to " + f.MostTrafficJourneys + " traffic journeys; food frames with a 22 ms refill " + f.FoodRefill.Count + ", prelude + advance + snapshot sync max "
+            + f.FoodWork[^1].ToString("0.000") + " ms (with the fixed 22 ms refill " + (f.FoodWork[^1] + 22).ToString("0.000") + " ms), observed wall-clock frame p95 "
+            + P(f.FoodRefill, .95).ToString("0.000") + " / max " + f.FoodRefill[^1].ToString("0.000") + " ms; of those with traffic journeys " + f.FoodTraffic.Count
+            + ", p95 " + P(f.FoodTraffic, .95).ToString("0.000") + " / max " + f.FoodTraffic[^1].ToString("0.000")
+            + " ms, prelude + advance + snapshot sync p95 " + P(f.FoodTrafficWork, .95).ToString("0.000") + " / max " + f.FoodTrafficWork[^1].ToString("0.000")
+            + " ms; other refill frames " + f.Refill.Count + ", max " + f.Refill[^1].ToString("0.000") + " ms; slowest unit " + f.SlowestUnit.ToString("0.000") + " ms (.NET Debug)";
+        var without = RefillFrames(false);
+        var with = RefillFrames(true);
+        output.WriteLine(Line("food city 11:00-13:00 after 1->2->1, without the grid hand-over", without));
+        output.WriteLine(Line("food city 11:00-13:00 after 1->2->1, with the grid hand-over", with));
+        Assert.True(with.FoodRefill.Count >= 100, "food frames " + with.FoodRefill.Count);
+        Assert.True(with.FoodTraffic.Count >= 20, "food frames with traffic journeys " + with.FoodTraffic.Count + " of " + with.FoodRefill.Count);
+        Assert.True(with.MostTrafficJourneys >= 20, "traffic journeys " + with.MostTrafficJourneys);
+        PerfGate.Under(with.FoodWork[^1] + 22, 30, "slowest food frame: measured prelude, advance and snapshot sync plus the fixed 22 ms refill");
+        PerfGate.Under(with.FoodTrafficWork[^1] + 22, 30, "slowest food frame with traffic journeys: measured prelude, advance and snapshot sync plus the fixed 22 ms refill");
+        PerfGate.Under(P(with.Advance, .99), UpdateCityBudget.DefaultTargetMilliseconds + 4, "post-retime advance p99");
     }
 
     private sealed class Types : EventListener

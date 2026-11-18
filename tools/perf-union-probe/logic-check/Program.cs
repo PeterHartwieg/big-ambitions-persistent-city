@@ -42,6 +42,7 @@ internal static class Program
         CoverageLifecycle();
         Capacity();
         HarmonyAdapter();
+        PatchWatch();
         Console.WriteLine("logic-check: " + (checks - failures) + "/" + checks + " checks passed");
         Console.WriteLine("expected_scope_hash " + ScopeInventory.Hash());
         if (perf) Perf();
@@ -343,6 +344,71 @@ internal static class Program
             new[] { NewPatch("someone.else") }, new HarmonyLib.Patch[0]), typeof(string).Assembly, other);
         foreign.Observe(other);
         Check(foreign.Complete, "a foreign owner outside the PC assembly is ignored");
+    }
+
+    private static void PatchWatch()
+    {
+        Check(PatchStateWatch.Shared() != null, "the pinned Harmony exposes its shared patch state to the watch");
+        var methods = typeof(string).GetMethods().Take(600).Cast<MethodBase>().ToArray();
+        var state = new Dictionary<MethodBase, byte[]>();
+        foreach (var m in methods) state[m] = new byte[16];
+        var watch = new PatchStateWatch(state);
+        watch.Capture();
+        Check(!watch.Changed(), "an unchanged patch state needs no rescan");
+        state[methods[7]] = new byte[16];
+        Check(watch.Changed(), "a re-serialized patch info on a known method is a change");
+        watch.Capture();
+        Check(!watch.Changed(), "the change is consumed by the next full scan");
+        state.Remove(methods[3]);
+        Check(watch.Changed(), "a method whose patches all went away is a change");
+        watch.Capture();
+        state[methods[3]] = new byte[16];
+        Check(watch.Changed(), "a newly patched method is a change");
+        watch.Capture();
+        state.Remove(methods[5]); state[typeof(int).GetMethods()[0]] = new byte[16];
+        Check(watch.Changed(), "one method removed and another added at the same count is a change");
+        watch.Capture();
+        int attempts = 0, published = 0;
+        bool failNext = false;
+        void Attempt() { attempts++; if (failNext) { failNext = false; throw new InvalidOperationException("scan failed"); } published++; }
+        bool Periodic() { try { return PatchStateWatch.Run(watch, false, Attempt); } catch (InvalidOperationException) { return true; } }
+        Check(!Periodic() && attempts == 0, "an unchanged periodic check runs no scan");
+        failNext = true;
+        try { PatchStateWatch.Run(watch, true, Attempt); } catch (InvalidOperationException) { }
+        Check(attempts == 1 && published == 0 && watch.Pending, "a forced start scan that fails against an unchanged snapshot stays pending");
+        Check(Periodic() && attempts == 2 && published == 1 && !watch.Pending, "the next periodic check retries it with identical Harmony state");
+        Check(!Periodic() && attempts == 2, "after publishing, an unchanged check runs no scan");
+        state[methods[9]] = new byte[16];
+        failNext = true;
+        Periodic();
+        Check(attempts == 3 && published == 1 && watch.Pending, "a periodic scan that fails after a patch change stays pending");
+        Check(Periodic() && attempts == 4 && published == 2, "and is retried on the next periodic check");
+        state[methods[11]] = new byte[16];
+        PatchStateWatch.Run(watch, false, () => { Attempt(); state[methods[12]] = new byte[16]; });
+        Check(watch.Changed(), "a patch change during a scan triggers a follow-up scan");
+        watch.Capture();
+        long checksBefore = watch.Checks, changesBefore = watch.Changes;
+        for (int i = 0; i < 64; i++) watch.Changed();
+        long before = GC.GetAllocatedBytesForCurrentThread();
+        for (int i = 0; i < 600; i++) watch.Changed();
+        long bytes = GC.GetAllocatedBytesForCurrentThread() - before;
+        Check(bytes == 0, "600 unchanged checks over 600 patched methods allocate nothing after warm-up (" + bytes + " B)");
+        Check(watch.Checks - checksBefore == 64 + 600 && watch.Changes == changesBefore, "unchanged checks are counted and are not changes (" + watch.Checks + "/" + watch.Changes + ")");
+
+        var infos = Enumerable.Range(0, 600).Select(i => NewPatches(new[] { NewPatch("a" + i) }, new[] { NewPatch("b" + i) }, new HarmonyLib.Patch[0],
+            new HarmonyLib.Patch[0], new HarmonyLib.Patch[0], new HarmonyLib.Patch[0])).ToArray();
+        var pc = typeof(Program).Assembly;
+        void Scan()
+        {
+            var observed = new List<ObservedPatch>();
+            foreach (var info in infos) HarmonyScan.Observe(PatchMethod, info, pc, observed);
+            new CoverageTracker(ScopeInventory.Patches, _ => true, "f4b.perf-union-probe").Observe(observed);
+        }
+        Scan();
+        before = GC.GetAllocatedBytesForCurrentThread();
+        Scan();
+        long scan = GC.GetAllocatedBytesForCurrentThread() - before;
+        Console.WriteLine("patch watch: full scan of 600 patch infos without Harmony's deserialization " + scan + " B, unchanged watch check 0 B (.NET " + Environment.Version + ")");
     }
 
     private static void ScanPerf(int infos)

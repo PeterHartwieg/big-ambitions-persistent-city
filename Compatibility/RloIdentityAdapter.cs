@@ -287,7 +287,7 @@ namespace PersistentCity.Compatibility
                     if (c.Age < 1 || c.Age > 130 || !RloBridge.TryPersona(c.Persona, out Persona character)) throw new ContractException("A citizen has an invalid age or persona.");
                     if (c.AppearanceSeed == 0) throw new ContractException("A citizen has no appearance seed.");
                     ids[c.Index] = true;
-                    identities.Add(new CitizenIdentity { Id = "c" + c.Index.ToString(CultureInfo.InvariantCulture), Name = c.First + " " + c.Last,
+                    identities.Add(new CitizenIdentity { Id = BridgeIds[c.Index], Name = c.First + " " + c.Last,
                         District = c.District ?? "", Age = c.Age, Female = c.Female, Persona = character, AppearanceSeed = c.AppearanceSeed });
                 }
                 identities.Sort((a, b) => StringComparer.Ordinal.Compare(a.Id, b.Id));
@@ -301,6 +301,13 @@ namespace PersistentCity.Compatibility
         private bool bridgeBuffersBusy;
         private readonly List<RloBridgeCitizen> bridgeRead = new List<RloBridgeCitizen>(ReviewedPopulation);
         private readonly bool[] bridgeSeen = new bool[ReviewedPopulation];
+        private static readonly string[] BridgeIds = IndexIds();
+        private static string[] IndexIds()
+        {
+            var ids = new string[ReviewedPopulation];
+            for (int i = 0; i < ids.Length; i++) ids[i] = "c" + i.ToString(CultureInfo.InvariantCulture);
+            return ids;
+        }
 
         private static string PopulationHash(int seed, List<CitizenIdentity> identities)
         {

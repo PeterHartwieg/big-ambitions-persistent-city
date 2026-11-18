@@ -132,6 +132,7 @@ public sealed class Gr5RouteRebuildStepTests
         var budget = new UpdateCityBudget(); var overshoot = new UnitOvershoot();
         var driver = new ClockRetimeDriver();
         var work = new List<double>(); int warmFrom = 0;
+        var handOvers = new List<double>(); var publications = new List<int>();
         foreach (double rate in new[] { 2.0, 1, 2, 1 })
         {
             if (rate == 1 && warmFrom == 0) warmFrom = work.Count;
@@ -146,8 +147,17 @@ public sealed class Gr5RouteRebuildStepTests
                     long deadline = overshoot.Deadline(started, slice);
                     bool done = rebuild.Step(deadline);
                     overshoot.Observe(deadline, Stopwatch.GetTimestamp());
+                    double stepped = rebuild.Milliseconds;
+                    if (done) city = rebuild.TakeResult();
                     work.Add(GC.CollectionCount(0) != collections ? double.NaN : (Stopwatch.GetTimestamp() - started) * 1000.0 / Stopwatch.Frequency);
-                    if (done) { city = rebuild.Result!; break; }
+                    if (done)
+                    {
+                        Assert.Equal(stepped + rebuild.HandOverMilliseconds, rebuild.Milliseconds, 9);
+                        Assert.True(rebuild.HandOverMilliseconds > 0, "hand-over timed");
+                        handOvers.Add(rebuild.HandOverMilliseconds);
+                        publications.Add(work.Count - 1);
+                        break;
+                    }
                     continue;
                 }
                 var outcome = driver.Update(state, rate, false, 1.4, slice);
@@ -160,7 +170,13 @@ public sealed class Gr5RouteRebuildStepTests
         var warm = work.Skip(warmFrom).Where(w => !double.IsNaN(w)).ToList();
         output.WriteLine(work.Count + " retime updates (" + work.Count(double.IsNaN) + " with a collection, timed by the gc sampler instead), slowest " + work.Where(w => !double.IsNaN(w)).Max().ToString("0.00") + " ms, warm slowest " + warm.Max().ToString("0.00")
             + " ms, warm p95 " + warm.OrderBy(w => w).ElementAt((int)(warm.Count * .95)).ToString("0.00") + " ms on a " + prelude + " ms prelude (.NET)");
+        var published = publications.Where(i => i >= warmFrom && !double.IsNaN(work[i])).Select(i => work[i]).ToList();
+        output.WriteLine("publication updates with the grid hand-over: " + string.Join(", ", publications.Select(i => work[i].ToString("0.00"))) + " ms; hand-overs "
+            + string.Join(", ", handOvers.Select(h => h.ToString("0.000"))) + " ms (.NET)");
+        Assert.Equal(4, handOvers.Count);
+        Assert.NotEmpty(published);
         PerfGate.Under(prelude + warm.Max(), frame, "UpdateCity with a 1 ms prelude in the slowest warm retime update (.NET)");
+        PerfGate.Under(prelude + published.Max(), frame, "UpdateCity with a 1 ms prelude in the warm publication update including the grid hand-over (.NET)");
     }
 
     [Fact]
@@ -232,5 +248,94 @@ public sealed class Gr5RouteRebuildStepTests
         long before = GC.GetAllocatedBytesForCurrentThread();
         Run(10000);
         Assert.Equal(0, GC.GetAllocatedBytesForCurrentThread() - before);
+    }
+
+    private sealed class FailingTraffic : IRoutePlanner, ITrafficRoutePlanner
+    {
+        public Route? Plan(Place from, Place to, double departureMinute, TravelPreferences preferences) => null;
+        public TrafficNetwork? TrafficNetwork => throw new InvalidOperationException("traffic setup failed");
+        public void SetTrafficForecast(Func<int, double, TrafficLinkForecast>? forecast) { }
+        public bool IsTrafficLinkClosed(int linkId) => false;
+    }
+
+    [Fact]
+    public void TheSourceJourneyIndexStaysIntactUntilTheRebuildIsTakenAndAfterAFailure()
+    {
+        var (state, city, planner) = Gr5AdvanceAllocationTests.City();
+        while (!city.AdvanceTo(2 * 1440 + 15.5 * 60, 256).CaughtUp) { }
+        int indexed = city.ActiveJourneys.Count;
+        Assert.True(indexed > 0);
+        var rebuild = city.BeginRebuildRoutes(planner, null);
+        int steps = 0;
+        while (!rebuild.Step(0))
+        {
+            steps++;
+            Assert.True(city.ActiveJourneyIndexMatchesState(), "source index after step " + steps);
+            Assert.Equal(indexed, city.ActiveJourneys.Count);
+        }
+        Assert.True(steps > 3);
+        Assert.True(city.ActiveJourneyIndexMatchesState());
+        Assert.Equal(indexed, city.ActiveJourneys.Count);
+        var replacement = rebuild.TakeResult();
+        Assert.Same(replacement, rebuild.TakeResult());
+        Assert.True(replacement.ActiveJourneyIndexMatchesState());
+        Assert.Equal(indexed, replacement.ActiveJourneys.Count);
+        Assert.Equal(indexed, replacement.ActiveJourneys.Grid.Count);
+
+        var failing = replacement.BeginRebuildRoutes(new FailingTraffic(), null);
+        Assert.Throws<InvalidOperationException>(() => { while (!failing.Step(0)) { } });
+        Assert.Throws<InvalidOperationException>(() => failing.TakeResult());
+        Assert.True(replacement.ActiveJourneyIndexMatchesState(), "source index after a failed rebuild");
+        Assert.Equal(indexed, replacement.ActiveJourneys.Count);
+    }
+
+    private static CitizenState Walker(string id, double x)
+    {
+        var route = new Route();
+        route.Legs.Add(new RouteLeg { From = new Position(x, 0, 0), To = new Position(x + 1, 0, 0), Minutes = 1, Mode = TravelMode.Walk });
+        return new CitizenState { Identity = new CitizenIdentity { Id = id }, Phase = CitizenPhase.Travelling, Journey = route.Commit() };
+    }
+
+    [Fact]
+    public void AnEntryTakenFromARetiredGridIsFoundByTheFirstQuery()
+    {
+        var first = Walker("a", 1); var second = Walker("b", 2);
+        var source = new ActiveJourneyIndex();
+        source.File(first); source.File(second);
+        var output = new List<IPersonView>();
+        Assert.Equal(2, source.Grid.Query(new Position(1.5, 0, 0), 5, output).Count);
+        var replacement = new ActiveJourneyIndex();
+        replacement.File(first);
+        replacement.TakeSpareCells(source);
+        replacement.File(second);
+        var found = replacement.Grid.Query(new Position(1.5, 0, 0), 5, output);
+        Assert.Contains(second, found);
+        Assert.Equal(2, found.Count);
+        Assert.Equal(0, replacement.Grid.Pooled);
+    }
+
+    [Fact]
+    public void RepeatedRebuildsKeepTheGridEntryCapacityAtAPlateauAndTimeTheHandOver()
+    {
+        var (state, city, planner) = Gr5AdvanceAllocationTests.City();
+        while (!city.AdvanceTo(2 * 1440 + 15.5 * 60, 256).CaughtUp) { }
+        int live = city.ActiveJourneys.Grid.Count;
+        var capacity = new List<int>();
+        for (int round = 0; round < 6; round++)
+        {
+            var rebuild = city.BeginRebuildRoutes(planner, null);
+            while (!rebuild.Step(0)) { }
+            double before = rebuild.SlowestUpdateMilliseconds;
+            city = rebuild.TakeResult();
+            Assert.True(rebuild.HandOverMilliseconds >= 0);
+            Assert.True(rebuild.SlowestUpdateMilliseconds >= before);
+            Assert.True(rebuild.Milliseconds >= rebuild.HandOverMilliseconds);
+            Assert.Equal(live, city.ActiveJourneys.Grid.Count);
+            Assert.True(city.ActiveJourneyIndexMatchesState());
+            capacity.Add(city.ActiveJourneys.Grid.Count + city.ActiveJourneys.Grid.Pooled);
+            output.WriteLine("rebuild " + round + ": live " + city.ActiveJourneys.Grid.Count + ", pooled " + city.ActiveJourneys.Grid.Pooled
+                + ", hand-over " + rebuild.HandOverMilliseconds.ToString("0.000") + " ms, slowest update " + rebuild.SlowestUpdateMilliseconds.ToString("0.000") + " ms");
+        }
+        Assert.All(capacity, c => Assert.Equal(capacity[0], c));
     }
 }
