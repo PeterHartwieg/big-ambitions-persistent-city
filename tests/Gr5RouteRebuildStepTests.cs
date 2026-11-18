@@ -219,13 +219,18 @@ public sealed class Gr5RouteRebuildStepTests
         var rebuild = city.BeginRebuildRoutes(new Gr5AdvanceSegmentMeasure.Straight(), null);
         rebuild.Step(long.MaxValue);
         var budget = new UpdateCityBudget(); var overshoot = new UnitOvershoot();
-        long before = GC.GetAllocatedBytesForCurrentThread();
-        for (int i = 0; i < 10000; i++)
+        void Run(int count)
         {
-            rebuild.Step(0);
-            long deadline = overshoot.Deadline(i, budget.Exclusive(i % 5, ClockRetimeStages.SliceMilliseconds));
-            overshoot.Observe(deadline, deadline + i % 7);
+            for (int i = 0; i < count; i++)
+            {
+                rebuild.Step(0);
+                long deadline = overshoot.Deadline(i, budget.Exclusive(i % 5, ClockRetimeStages.SliceMilliseconds));
+                overshoot.Observe(deadline, deadline + i % 7);
+            }
         }
+        Run(10000);
+        long before = GC.GetAllocatedBytesForCurrentThread();
+        Run(10000);
         Assert.Equal(0, GC.GetAllocatedBytesForCurrentThread() - before);
     }
 }
