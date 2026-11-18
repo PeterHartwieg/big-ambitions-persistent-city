@@ -90,6 +90,7 @@ namespace PersistentCity.Runtime
             if (ReferenceEquals(combiner, null)) return;
             owned.Remove(combiner!);
             mergedMeshes.Remove(combiner!);
+            PruneMeshes();
             if (combiner == null) return;
             var result = combiner.resultMergeGameObject;
             if (result == null) return;
