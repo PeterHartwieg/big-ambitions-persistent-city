@@ -142,6 +142,7 @@ namespace PersistentCity.Runtime
         private ResearchLedger? researchSnapshot;
         private CitySimulator? researchSnapshotCity;
         private float researchSnapshotUntil;
+        private void ForgetResearchSnapshot() { researchSnapshot = null; researchSnapshotCity = null; }
         private ResearchLedger? ResearchLedgerNow
         {
             get

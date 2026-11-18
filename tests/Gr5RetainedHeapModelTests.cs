@@ -108,4 +108,33 @@ public sealed class Gr5RetainedHeapModelTests
         Assert.Equal("first", json.RootElement.GetProperty("top_roots")[0].GetProperty("name").GetString());
         Assert.Equal("Foreign", json.RootElement.GetProperty("foreign_types")[0].GetProperty("name").GetString());
     }
+
+    [Fact]
+    public void AFoodCityRetainsItsStateOnceAndARetiredSimulatorKeepsOnlyItsPrivateParts()
+    {
+        var (state, city, planner) = Gr5AdvanceAllocationTests.City();
+        while (!city.AdvanceTo(2 * 1440 + 15.5 * 60, 256).CaughtUp) { }
+        var live = new RetainedCensus();
+        live.Add("fixture planner", planner);
+        live.Add("food", state.Food); live.Add("state", state); live.Add("simulator", city);
+        Print("food city at day 2 15:30", live);
+        var rebuild = city.BeginRebuildRoutes(planner, null);
+        while (!rebuild.Step(long.MaxValue)) { }
+        var replacement = rebuild.TakeResult();
+        var after = new RetainedCensus();
+        after.Add("fixture planner", planner);
+        after.Add("state", state); after.Add("replacement", replacement);
+        var retired = after.Add("retired simulator", city);
+        Print("after a rebuild, retired simulator private part", after);
+        Assert.True(retired.Bytes > 0);
+        Assert.True(retired.Bytes < live.Bytes, "retired " + retired.Bytes + " of " + live.Bytes);
+    }
+
+    private void Print(string title, RetainedCensus census)
+    {
+        string M(long bytes) => (bytes / 1e6).ToString("0.000");
+        output.WriteLine(title + ": objects " + census.Objects + ", MB " + M(census.Bytes) + ", scanned MB " + M(census.ScannedBytes));
+        foreach (var row in census.Roots) output.WriteLine("  root " + row.Name + ": objects " + row.Objects + ", MB " + M(row.Bytes) + ", scanned MB " + M(row.ScannedBytes));
+        foreach (var row in census.Types.Take(15)) output.WriteLine("  type " + row.Name + ": objects " + row.Objects + ", MB " + M(row.Bytes));
+    }
 }

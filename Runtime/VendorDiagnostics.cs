@@ -19,8 +19,8 @@ namespace PersistentCity.Runtime
         {
             try
             {
-                CommandHelper.AddCommand<string, string>("pc", "pc population census | pc gc start|report|stop|frames | pc vendor status | pc vendor sales | pc food decisions | pc food contract | pc probe status | pc probe businesses", RoutePcCommand);
-                CommandHelper.AddCommand<string, string, string>("pc", "pc population person <id> | pc gc population <persons|off> (FT cities only, measurement) | pc gc frames <start|report|stop> | pc vendor withdraw <vehicle> | pc food contract <status|capabilities|hints|stamps|catalogue> (FT cities only)", RoutePcDetail);
+                CommandHelper.AddCommand<string, string>("pc", "pc population census | pc gc start|report|stop|frames | pc vendor status | pc vendor sales | pc food decisions | pc food contract | pc probe status | pc probe businesses | pc gc retained", RoutePcCommand);
+                CommandHelper.AddCommand<string, string, string>("pc", "pc population person <id> | pc gc population <persons|off> (FT cities only, measurement) | pc gc frames <start|report|stop> | pc food decisions <start|stop> | pc vendor withdraw <vehicle> | pc food contract <status|capabilities|hints|stamps|catalogue> (FT cities only)", RoutePcDetail);
                 CommandHelper.AddCommand<string, string, string, string>("pc", "pc movement corrections since <seq> | pc probe <resident> <place> <ceiling cents> (FT cities only)", RoutePcMovement);
                 vendorCommands = true;
             }
@@ -36,14 +36,28 @@ namespace PersistentCity.Runtime
             catch (Exception e) { log?.Warn("Vendor diagnostics detail command removal failed: " + e.Message); }
             try { CommandHelper.RemoveCommand<string, string, string, string>(RoutePcMovement); }
             catch (Exception e) { log?.Warn("Movement diagnostics command removal failed: " + e.Message); }
-            if (vendorObservedCity != null) vendorObservedCity.FoodDecisionObserved -= RecordVendorDecision;
-            vendorObservedCity = null; vendorDecisions.Clear();
+            StopVendorDecisions(); vendorDecisions.Clear();
         }
-        private void AttachVendorDecisionDiagnostics(CitySimulator city)
+        private void AttachVendorDecisionDiagnostics(CitySimulator city) { StopVendorDecisions(); vendorDecisions.Clear(); }
+        private void StartVendorDecisions(CitySimulator city)
+        {
+            if (ReferenceEquals(vendorObservedCity, city)) return;
+            StopVendorDecisions();
+            vendorObservedCity = city;
+            city.FoodDecisionObserved += RecordVendorDecision;
+        }
+        private void StopVendorDecisions()
         {
             if (vendorObservedCity != null) vendorObservedCity.FoodDecisionObserved -= RecordVendorDecision;
-            vendorObservedCity = city; vendorDecisions.Clear();
-            if (VendorDiagnosticCity(SaveGameManager.Current?.SaveGameName)) city.FoodDecisionObserved += RecordVendorDecision;
+            vendorObservedCity = null;
+        }
+        private void RebindVendorDecisionDiagnostics(CitySimulator city)
+        {
+            var observed = vendorObservedCity;
+            if (observed == null || ReferenceEquals(observed, city)) return;
+            observed.FoodDecisionObserved -= RecordVendorDecision;
+            vendorObservedCity = city;
+            city.FoodDecisionObserved += RecordVendorDecision;
         }
         private void RecordVendorDecision(FoodDecisionTrace trace)
         {
@@ -58,9 +72,21 @@ namespace PersistentCity.Runtime
             }
             catch (Exception error)
             {
-                if (vendorObservedCity != null) vendorObservedCity.FoodDecisionObserved -= RecordVendorDecision;
+                StopVendorDecisions();
                 log?.Warn("Vendor decision diagnostics stopped: " + error.Message);
             }
+        }
+        private void FoodDecisionsCommand(string detail)
+        {
+            if (detail == "start")
+            {
+                StartVendorDecisions(simulation!);
+                Debug.Log("[Persistent City] food decisions recording started (diagnostic only; traces every food decision and keeps the last 50). Use pc food decisions stop when done.");
+                return;
+            }
+            if (detail == "stop") { StopVendorDecisions(); Debug.Log("[Persistent City] food decisions recording stopped; the last 50 stay readable."); return; }
+            if (detail.Length > 0) { Debug.LogWarning("[Persistent City] Unknown command. Use: pc food decisions [start|stop]"); return; }
+            Debug.Log("[Persistent City] food decisions (recording " + (vendorObservedCity != null ? "on" : "off; use pc food decisions start") + ")\n" + string.Join("\n", vendorDecisions));
         }
         private void RoutePcCommand(string area, string action) => RoutePcDetail(area, action, "");
         private void RoutePcMovement(string area, string action, string detail, string value)
@@ -82,7 +108,7 @@ namespace PersistentCity.Runtime
             if (!VendorDiagnosticCity(save?.SaveGameName)) { Debug.LogWarning("[Persistent City] vendor diagnostics require an FT city."); return; }
             if (failed || simulation == null || save == null || !ReferenceEquals(saveIdentity, save) || vendorMarket == null)
             { Debug.LogWarning("[Persistent City] vendor diagnostics unavailable: no active city."); return; }
-            if (area == "food") { Debug.Log("[Persistent City] food decisions\n" + string.Join("\n", vendorDecisions)); return; }
+            if (area == "food") { FoodDecisionsCommand(detail); return; }
             var market = vendorMarket;
             switch (action)
             {
