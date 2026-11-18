@@ -11895,3 +11895,20 @@ Each boundary ran uptime, memory_pressure -Q, and `ps -Arco pid,pcpu,comm | head
 | 20261117-232504-ux-praemie-akte-2 | harness/ux-praemie-akte-2 | 75378 |
 
 Other observed host workloads: Resolve, VirtualMachine, limactl, next-server. This is a shared 30 fps headless Mac/Mono run, not a locked-PC or 60 fps result. Shared load and process clock history preclude attributing timing differences solely to the mod. Full boundary records remain under <stage>/*-host-start.json and *-host-end.json.
+
+Other live build/session working directories from the captured process inventory (not worktree file reads):
+
+| Window boundary | Other process working directories / build names |
+| --- | --- |
+| gc-day start | ~/Coding_Projects/personal/coding-harness; ~/Coding_Projects/work/MVP_project-worktrees/ux-praemie-akte-2; ~/Coding_Projects/work/MVP_project-worktrees/ux-schreiben-post-2 |
+| gc-day end | ~/Coding_Projects/personal/coding-harness; ~/Coding_Projects/work/MVP_project-worktrees/ux-praemie-akte-2; ~/Coding_Projects/work/MVP_project-worktrees/ux-schreiben-post-2 |
+| gc-day-retime start | ~/Coding_Projects/personal/coding-harness; ~/Coding_Projects/work/MVP_project-worktrees/ux-praemie-akte-2; ~/Coding_Projects/work/MVP_project-worktrees/ux-schreiben-post-2 |
+| gc-day-retime end | ~/Coding_Projects/personal/coding-harness; ~/Coding_Projects/work/MVP_project-worktrees/ux-praemie-akte-2; ~/Coding_Projects/work/MVP_project-worktrees/ux-schreiben-post-2 |
+| gc-night start | ~/Coding_Projects/personal/coding-harness |
+| gc-night end | ~/Coding_Projects/personal/coding-harness |
+| street start | ~/Coding_Projects/personal/coding-harness |
+| street end | ~/Coding_Projects/personal/coding-harness; ~/Coding_Projects/work/MVP_project-worktrees/ux-schreiben-post-2 |
+| rlo-night start | ~/Coding_Projects/personal/coding-harness; ~/Coding_Projects/work/MVP_project-worktrees/ux-praemie-akte-2; ~/Coding_Projects/work/MVP_project-worktrees/ux-schreiben-post-2 |
+| rlo-night end | none observed |
+
+The ux-schreiben-post-2 build is visible through process cwd even when no live harness state/runner is found; its runner session ID and binary SHA are unavailable. The ux-praemie-akte-2 live runner is identified above. This inventory names observed builds without inspecting or changing their files or branches.
