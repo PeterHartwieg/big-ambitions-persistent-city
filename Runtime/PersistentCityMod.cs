@@ -640,7 +640,7 @@ namespace PersistentCity.Runtime
         {
             if (!rebuild.Step(long.MaxValue)) throw new InvalidOperationException("The route rebuild did not finish.");
             routeRebuild = null;
-            simulation = rebuild.Result!;
+            simulation = rebuild.TakeResult();
             vendorMarket?.Rebind(simulation);
             seenPlanningRequests = seenEventRestarts = seenInlineRestarts = 0;
             log?.Info("Clock retime: body release " + Milliseconds(retimeReleaseMilliseconds) + " ms over "

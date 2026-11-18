@@ -207,7 +207,8 @@ namespace PerfUnionProbe
                     patches.Patch(tick, prefix: new HarmonyMethod(typeof(ShimPatch), nameof(ShimPatch.Prefix)) { priority = Priority.First + 1 });
                     shimInstalled = true;
                     union = new UnionClock(0, 0, Stopwatch.Frequency); componentNames = Array.Empty<string>();
-                    coverage = null;
+                    coverage = null; matchedScans = 0;
+                    MatchedScan();
                 }
                 else
                 {
@@ -505,9 +506,21 @@ namespace PerfUnionProbe
             catch { sampleFailures++; }
         }
 
+        private static long matchedScans;
+        private static void MatchedScan()
+        {
+            var observed = new List<ObservedPatch>();
+            foreach (var target in Harmony.GetAllPatchedMethods().ToArray()) HarmonyScan.Observe(target, Harmony.GetPatchInfo(target), pc, observed);
+            matchedScans++;
+        }
+
         private static void Rescan(bool full)
         {
-            if (coverage == null) return;
+            if (coverage == null)
+            {
+                if (full && mode == "reference") try { MatchedScan(); } catch { error = "f4b_patch_scan_failed"; }
+                return;
+            }
             try { PatchStateWatch.Run(patchWatch, full, Scan); } catch { error = "f4b_patch_scan_failed"; }
             if (measuring && coverage.Unexpected.Count > unexpectedAtWindowStart) patchSetChanged = true;
         }
@@ -595,7 +608,7 @@ namespace PerfUnionProbe
                 ["scope_inventory_version"] = ScopeInventory.Version, ["expected_scope_hash"] = ScopeInventory.Hash(),
                 ["coverage_complete"] = NotApplicable(() => CoverageComplete()),
                 ["patch_scans"] = NotApplicable(() => coverage?.Scans ?? 0), ["patch_state_checks"] = NotApplicable(() => patchWatch?.Checks ?? 0),
-                ["patch_state_changes"] = NotApplicable(() => patchWatch?.Changes ?? 0), ["patch_state_watch"] = NotApplicable(() => patchWatch != null), ["patch_scan_pending"] = NotApplicable(() => patchWatch?.Pending ?? false), ["patch_set_changed_in_window"] = NotApplicable(() => patchSetChanged),
+                ["patch_state_changes"] = NotApplicable(() => patchWatch?.Changes ?? 0), ["patch_state_watch"] = NotApplicable(() => patchWatch != null), ["patch_scan_pending"] = NotApplicable(() => patchWatch?.Pending ?? false), ["matched_reference_scans"] = mode == "reference" ? (JToken)matchedScans : "n/a", ["patch_set_changed_in_window"] = NotApplicable(() => patchSetChanged),
                 ["scopes"] = NotApplicable(() => new JObject { ["timed_methods"] = scopeIndex.Count, ["timed"] = Count("timed"),
                     ["untimed_transpiled"] = Names("untimed-transpiled"),
                     ["not_installed"] = new JArray(bindings.Where(b => b.Status == "timed" && b.Expected?.Kind <= ScopeKind.Finalizer && coverage != null && !coverage.Installed(b.Expected)).Select(b => b.Label).Take(64)),

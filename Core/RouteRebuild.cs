@@ -7,12 +7,23 @@ namespace PersistentCity.Core
     public sealed class RouteRebuild
     {
         private readonly CitySimulator replacement;
+        private CitySimulator? source;
         private IEnumerator<bool>? steps;
 
-        internal RouteRebuild(CitySimulator replacement, IEnumerator<bool> steps)
+        internal RouteRebuild(CitySimulator source, CitySimulator replacement, IEnumerator<bool> steps)
         {
+            this.source = source;
             this.replacement = replacement;
             this.steps = steps;
+        }
+
+        public CitySimulator TakeResult()
+        {
+            var result = Result ?? throw new InvalidOperationException("The route rebuild has not finished.");
+            var retired = source;
+            source = null;
+            if (retired != null) result.ActiveJourneys.TakeSpareCells(retired.ActiveJourneys);
+            return result;
         }
 
         public CitySimulator? Result { get; private set; }

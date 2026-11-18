@@ -192,6 +192,8 @@ public sealed class Gr5DiagnosticsProjectionTests
         int stop = probe.IndexOf("ReadMonoHeap(out monoHeapStop, out monoUsedStop);", StringComparison.Ordinal);
         int stopScan = probe.IndexOf("if (reason == \"explicit-stop\") Rescan(true);", StringComparison.Ordinal);
         Assert.True(stop > 0 && stopScan > stop, "the stop reading precedes the forced stop scan");
+        Assert.Contains("if (full && mode == \"reference\") try { MatchedScan(); }", probe);
+        Assert.Contains("coverage = null; matchedScans = 0;\n                    MatchedScan();", probe);
         string pedestrians = System.IO.File.ReadAllText(System.IO.Path.Combine(root, "Runtime", "PhysicalPedestrians.cs"));
         Assert.Contains("\" ms grow start max/\"", pedestrians);
         Assert.Contains("\" ms grow finish max\";", pedestrians);

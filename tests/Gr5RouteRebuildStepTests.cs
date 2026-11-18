@@ -233,4 +233,43 @@ public sealed class Gr5RouteRebuildStepTests
         Run(10000);
         Assert.Equal(0, GC.GetAllocatedBytesForCurrentThread() - before);
     }
+
+    private sealed class FailingTraffic : IRoutePlanner, ITrafficRoutePlanner
+    {
+        public Route? Plan(Place from, Place to, double departureMinute, TravelPreferences preferences) => null;
+        public TrafficNetwork? TrafficNetwork => throw new InvalidOperationException("traffic setup failed");
+        public void SetTrafficForecast(Func<int, double, TrafficLinkForecast>? forecast) { }
+        public bool IsTrafficLinkClosed(int linkId) => false;
+    }
+
+    [Fact]
+    public void TheSourceJourneyIndexStaysIntactUntilTheRebuildIsTakenAndAfterAFailure()
+    {
+        var (state, city, planner) = Gr5AdvanceAllocationTests.City();
+        while (!city.AdvanceTo(2 * 1440 + 15.5 * 60, 256).CaughtUp) { }
+        int indexed = city.ActiveJourneys.Count;
+        Assert.True(indexed > 0);
+        var rebuild = city.BeginRebuildRoutes(planner, null);
+        int steps = 0;
+        while (!rebuild.Step(0))
+        {
+            steps++;
+            Assert.True(city.ActiveJourneyIndexMatchesState(), "source index after step " + steps);
+            Assert.Equal(indexed, city.ActiveJourneys.Count);
+        }
+        Assert.True(steps > 3);
+        Assert.True(city.ActiveJourneyIndexMatchesState());
+        Assert.Equal(indexed, city.ActiveJourneys.Count);
+        var replacement = rebuild.TakeResult();
+        Assert.Same(replacement, rebuild.TakeResult());
+        Assert.True(replacement.ActiveJourneyIndexMatchesState());
+        Assert.Equal(indexed, replacement.ActiveJourneys.Count);
+        Assert.Equal(indexed, replacement.ActiveJourneys.Grid.Count);
+
+        var failing = replacement.BeginRebuildRoutes(new FailingTraffic(), null);
+        Assert.Throws<InvalidOperationException>(() => { while (!failing.Step(0)) { } });
+        Assert.Throws<InvalidOperationException>(() => failing.TakeResult());
+        Assert.True(replacement.ActiveJourneyIndexMatchesState(), "source index after a failed rebuild");
+        Assert.Equal(indexed, replacement.ActiveJourneys.Count);
+    }
 }
