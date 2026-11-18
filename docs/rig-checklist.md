@@ -12593,7 +12593,7 @@ Role `rig_test`, where `mac`, isolated `agentmac`, run `persistent-city-rig-2026
 | Pre-stage manifest | 10e834ecc106ab04d1b287b3881c14a33454e26df9bef43939f12d3e55178a33 for 35 file states, including absence. 53 RLO and four sealed save files hashed read-only. |
 | Fixture | FT GR5 13f Timing v1, 1,000 residents / 2,000 visitors / 1,683 places with Persistent City active. Only this sealed city was loaded. |
 | Configuration | Standard candidate, physical enabled, 96 pedestrians / 24 vehicles / 120 m radius, SaveCostDiagnostics=false, writer schema 1. |
-| Autosave original | Native 5 minutes / maximum 3, prevent_autosave=false. The #70 guard was checked at each load and window boundary. |
+| Autosave original | Native 5 minutes / maximum 3, prevent_autosave=false. The #70 guard was read 24 times: at the menu and after every load, and before and after every scored window, including the PC-absent D window. Every read returned autosave_disabled=true and suppressed=true. SaveEpochDiagnostics SHA-256 fbd87dff… was unchanged across the day, repeat, night and street windows, so no Persistent City save landed in a window. |
 | RLO | 1.0.6. Stored/live options living_population absent/true, social_media 1/true and social_media_notices 0/false. |
 
 Player.log and staging identify the DLL. The informational version is shared by candidates.
@@ -12614,7 +12614,7 @@ rm -rf "~/Library/Application Support/com.hovgaardgames.bigambitions.agenttests.
 
 | Check | Outcome | Evidence |
 | --- | --- | --- |
-| A | FAIL | Steady 119.972 MB mod, 0.000 MB retime, gen0 7, pause p95 31.279/29.838 ms with/without UpdateCity. Misses: mod allocation 119.972 MB vs ≤119 MB. Immediate retime 147.520 MB mod, 16.837 MB retime, gen0 7, pause p95 41.213/40.465 ms with/without UpdateCity. Misses: mod allocation 147.520 MB vs ≤119 MB. |
+| A | FAIL | Steady 119.972 MB mod, 0.000 MB retime, gen0 7, pause p95 31.279/29.838 ms with/without UpdateCity. Misses: mod allocation 119.972 MB vs ≤119 MB. Immediate retime 147.520 MB mod, 16.837 MB retime, gen0 7, pause p95 41.213/40.465 ms with/without UpdateCity. Misses: mod allocation 147.520 MB vs ≤119 MB. Against #303's GC targets, both windows miss gen0 (7 vs about ≤5). Steady meets pause p95 (31.279 ms vs under about 36 ms) and immediate retime misses it (41.213 ms, 40.465 ms without UpdateCity). Attribution is unresolved. UpdateCity took at most 2.869 ms in the retained collection frames, and each window's worst collection frame is absent from the ≥30 ms mod-work union list. The PC-absent reference (D) covers night only, so no day baseline separates game from mod collections. |
 | B | FAIL | 47.411 MB mod, 0.000 MB retime, gen0 6, pause p95 29.732/28.635 ms with/without UpdateCity. Misses: heap 1.462698/1.493713 GB vs ≤1.47 GB, sampler gen0 6 vs PC-absent 9. |
 | C | PASS | 3.9665 ms union p95 vs <5 ms, 0 union spikes ≥30 ms, retime sub bounded by 11.271 ms vs <30 ms, 9/9 pans. |
 | E | PASS | RSS 4,490,624 → 4,483,968 → 4,430,000 KiB (-0.15% immediate, -1.35% at +120 s). Owned bodies 69 → 69 → 81, live tracked meshes 69 → 69 → 81. |
