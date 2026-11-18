@@ -104,7 +104,7 @@ public sealed class Gr5RetainedHeapModelTests
         Assert.True(first.Bytes < 8 * 1024, "foreign payload walked: " + first.Bytes);
         Assert.Equal(40L + 4032 + 32, first.Bytes);
         using var json = JsonDocument.Parse(bounded.ReportJson(8, 1.5));
-        Assert.Equal(new[] { "policy", "layout", "objects", "bytes", "scanned_bytes", "roots", "foreign_objects", "failures", "elapsed_ms", "top_roots", "top_types", "foreign_types" },
+        Assert.Equal(new[] { "policy", "layout", "objects", "bytes", "scanned_bytes", "roots", "foreign_objects", "failures", "elapsed_ms", "top_roots", "top_types", "foreign_types", "type_counts" },
             json.RootElement.EnumerateObject().Select(p => p.Name).ToArray());
         Assert.Equal("first", json.RootElement.GetProperty("top_roots")[0].GetProperty("name").GetString());
         Assert.Equal("Foreign", json.RootElement.GetProperty("foreign_types")[0].GetProperty("name").GetString());
@@ -146,19 +146,41 @@ public sealed class Gr5RetainedHeapModelTests
     public void TheCensusCountsOnlyTheModsOwnSaveEntriesThroughTheSharedDictionary()
     {
         string mine = new string('p', 100_000), receipt = new string('r', 10_000), foreign = new string('f', 1_000_000);
-        var modData = new Dictionary<string, string> { ["persistentcity:state_v1"] = mine, ["persistentcity:food-sale-v1:a"] = receipt, ["othermod:state"] = foreign };
+        var modData = new Dictionary<string, string> { ["persistentcity:state_v1"] = mine, ["persistentcity:food-sale-v1:a"] = receipt, ["othermod:state"] = foreign, ["persistentcitytools:state"] = foreign + "t" };
         var runtime = new RuntimeShape { Validated = modData, Receipts = new ReceiptsShape { Data = modData }, Payload = mine };
         var census = new RetainedCensus();
-        census.AddOwnedEntries(modData, "persistentcity", "save.modData.");
+        census.AddOwnedEntries(modData, "persistentcity:", "save.modData.");
         census.AddFields("runtime.", runtime, null);
         var roots = census.Roots.ToDictionary(r => r.Name, r => r);
         long Text(string value) => (16 + 4 + 2L * (value.Length + 1) + 7) / 8 * 8;
         Assert.Equal(Text(mine), roots["save.modData.persistentcity:state_v1"].Bytes);
         Assert.Equal(Text(receipt), roots["save.modData.persistentcity:food-sale-v1:a"].Bytes);
-        Assert.DoesNotContain(census.Roots, r => r.Name.Contains("othermod"));
+        Assert.DoesNotContain(census.Roots, r => r.Name.Contains("othermod") || r.Name.Contains("persistentcitytools"));
         Assert.True(census.Bytes < Text(mine) + Text(receipt) + 1024, "census counted the shared dictionary: " + census.Bytes);
         Assert.Equal(0, roots["runtime.Validated"].Objects);
         Assert.Equal(0, roots["runtime.Payload"].Objects);
         Assert.Equal(1, roots["runtime.Receipts"].Objects);
+    }
+
+    [Fact]
+    public void TheCensusCountsEverySimulatorOutsideTheTopTypes()
+    {
+        var (state, city, planner) = Gr5AdvanceAllocationTests.City();
+        while (!city.AdvanceTo(2 * 1440 + 15.5 * 60, 256).CaughtUp) { }
+        var rebuild = city.BeginRebuildRoutes(planner, null);
+        while (!rebuild.Step(long.MaxValue)) { }
+        var replacement = rebuild.TakeResult();
+        string Report(params object[] roots)
+        {
+            var census = new RetainedCensus();
+            for (int i = 0; i < roots.Length; i++) census.Add("root" + i, roots[i]);
+            return census.ReportJson(2, 0, new[] { typeof(CitySimulator), typeof(TrafficKernel) });
+        }
+        using var one = JsonDocument.Parse(Report(planner, replacement));
+        using var two = JsonDocument.Parse(Report(planner, replacement, city));
+        Assert.DoesNotContain(one.RootElement.GetProperty("top_types").EnumerateArray(), row => row.GetProperty("name").GetString() == nameof(CitySimulator));
+        Assert.Equal(1, one.RootElement.GetProperty("type_counts").GetProperty(nameof(CitySimulator)).GetInt64());
+        Assert.Equal(2, two.RootElement.GetProperty("type_counts").GetProperty(nameof(CitySimulator)).GetInt64());
+        GC.KeepAlive(state);
     }
 }

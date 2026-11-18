@@ -141,13 +141,15 @@ namespace PersistentCity.Runtime
             long started = System.Diagnostics.Stopwatch.GetTimestamp();
             var census = RetainedCensusOf(this, save!.modData);
             double elapsed = (System.Diagnostics.Stopwatch.GetTimestamp() - started) * GcMillisecondsPerTimestamp;
-            Debug.Log(RetainedPrefix + census.ReportJson(48, elapsed));
+            Debug.Log(RetainedPrefix + census.ReportJson(48, elapsed, RetainedCountedTypes));
         }
+
+        internal static readonly Type[] RetainedCountedTypes = { typeof(CitySimulator), typeof(MultimodalRoutes), typeof(RoadRoutes), typeof(WalkingRoutes), typeof(TrafficRoadNetwork), typeof(TrafficKernel) };
 
         internal static RetainedCensus RetainedCensusOf(object runtime, IDictionary<string, string>? modData)
         {
             var census = new RetainedCensus(RetainedWalkable);
-            census.AddOwnedEntries(modData, "persistentcity", "save.modData.");
+            census.AddOwnedEntries(modData, "persistentcity:", "save.modData.");
             census.AddFields("runtime.", runtime, typeof(MonoBehaviour));
             var assemblies = new List<System.Reflection.Assembly>();
             foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())

@@ -253,7 +253,9 @@ namespace PersistentCity.Core
             return name + "<" + string.Join(",", type.GetGenericArguments().Select(Name)) + ">";
         }
 
-        public string ReportJson(int top, double elapsedMilliseconds)
+        public long ObjectsOf(Type type) => byType.TryGetValue(type, out var row) ? row.Objects : foreign.TryGetValue(type, out var outside) ? outside.Objects : 0;
+
+        public string ReportJson(int top, double elapsedMilliseconds, IEnumerable<Type>? counted = null)
         {
             string N(long value) => value.ToString(CultureInfo.InvariantCulture);
             string S(string value) => "\"" + value.Replace("\\", "\\\\").Replace("\"", "\\\"") + "\"";
@@ -280,6 +282,15 @@ namespace PersistentCity.Core
             Rows(report, "top_roots", byRoot.Where(r => r.Objects > 0).OrderByDescending(r => r.Bytes).ThenBy(r => r.Name, StringComparer.Ordinal), true);
             Rows(report, "top_types", Types, true);
             Rows(report, "foreign_types", Foreign, false);
+            report.Append(",\"type_counts\":{");
+            bool firstCount = true;
+            foreach (var type in counted ?? Array.Empty<Type>())
+            {
+                if (!firstCount) report.Append(',');
+                firstCount = false;
+                report.Append(S(Name(type))).Append(':').Append(N(ObjectsOf(type)));
+            }
+            report.Append('}');
             return report.Append('}').ToString();
         }
     }
