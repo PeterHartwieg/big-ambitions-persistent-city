@@ -213,7 +213,7 @@ namespace PersistentCity.Core
                     case 5:
                         return kernel!.RescaleTimeInSteps(ratio, (id, value) => maps.TryGetValue(id, out var mapping)
                             ? mapping.Map(value) : throw new ArgumentException("Missing traffic geometry map.", nameof(state)), LinksPerStep);
-                    case 6: return rescaledKernel!.CaptureSharedInSteps(LinksPerStep, trafficState);
+                    case 6: return rescaledKernel!.CaptureSharedInSteps(LinksPerStep);
                     default: throw new InvalidOperationException("Unknown traffic retime pass.");
                 }
             }

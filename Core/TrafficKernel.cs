@@ -821,38 +821,15 @@ namespace PersistentCity.Core
             return CaptureSteps(linksPerStep, true);
         }
 
-        internal TrafficKernelState CaptureShared(TrafficKernelState? lists = null) => RunToEnd(CaptureSharedInSteps(int.MaxValue, lists));
+        internal TrafficKernelState CaptureShared() => RunToEnd(CaptureSharedInSteps(int.MaxValue));
 
-        internal IEnumerator<TrafficKernelState?> CaptureSharedInSteps(int linksPerStep, TrafficKernelState? lists = null)
+        internal IEnumerator<TrafficKernelState?> CaptureSharedInSteps(int linksPerStep)
         {
             if (linksPerStep < 1) throw new ArgumentOutOfRangeException(nameof(linksPerStep));
-            return CaptureSteps(linksPerStep, true, shareDefinitions: true, lists);
+            return CaptureSteps(linksPerStep, true, shareDefinitions: true);
         }
 
-        private static List<string>? KnownQueue(List<string>? known, LinkedList<TrafficVehicleState> queue)
-        {
-            if (known == null || known.Count != queue.Count) return null;
-            int i = 0;
-            foreach (var vehicle in queue) if (!string.Equals(known[i++], vehicle.VehicleId, StringComparison.Ordinal)) return null;
-            return known;
-        }
-
-        private static List<string>? KnownSources(List<string>? known, Queue<string> sources)
-        {
-            if (known == null || known.Count != sources.Count) return null;
-            int i = 0;
-            foreach (string source in sources) if (!string.Equals(known[i++], source, StringComparison.Ordinal)) return null;
-            return known;
-        }
-
-        private static List<int>? KnownIncoming(List<int>? known, SortedIds incoming)
-        {
-            if (known == null || known.Count != incoming.Count) return null;
-            for (int i = 0; i < known.Count; i++) if (known[i] != incoming[i]) return null;
-            return known;
-        }
-
-        private IEnumerator<TrafficKernelState?> CaptureSteps(int linksPerStep, bool withLinks, bool shareDefinitions = false, TrafficKernelState? lists = null)
+        private IEnumerator<TrafficKernelState?> CaptureSteps(int linksPerStep, bool withLinks, bool shareDefinitions = false)
         {
             int work = 0;
             var state = new TrafficKernelState
@@ -865,21 +842,11 @@ namespace PersistentCity.Core
             {
                 state.Definitions.Add(shareDefinitions ? link.Definition : CopyDefinition(link.Definition));
                 if (!withLinks) { if (++work % linksPerStep == 0) yield return null; continue; }
-                var known = lists?.Links != null && state.Links.Count < lists.Links.Count ? lists.Links[state.Links.Count] : null;
-                if (known != null && known.LinkId != link.Definition.Id) known = null;
-                var queuedIds = KnownQueue(known?.Vehicles, link.Queue);
-                if (queuedIds == null)
-                {
-                    queuedIds = new List<string>(link.Queue.Count);
-                    foreach (var vehicle in link.Queue) queuedIds.Add(vehicle.VehicleId);
-                }
-                var sources = KnownSources(known?.WaitingSources, link.Sources);
-                if (sources == null)
-                {
-                    sources = new List<string>(link.Sources.Count);
-                    foreach (string source in link.Sources) sources.Add(source);
-                }
-                state.Links.Add(new TrafficLinkState(queuedIds, sources, KnownIncoming(known?.IncomingLinks, link.Incoming) ?? link.Incoming.ToList())
+                var queuedIds = new List<string>(link.Queue.Count);
+                foreach (var vehicle in link.Queue) queuedIds.Add(vehicle.VehicleId);
+                var sources = new List<string>(link.Sources.Count);
+                foreach (string source in link.Sources) sources.Add(source);
+                state.Links.Add(new TrafficLinkState(queuedIds, sources, link.Incoming.ToList())
                 {
                     LinkId = link.Definition.Id, Closed = link.Closed, NextDischargeAt = link.NextDischargeAt,
                     MergeCursor = link.MergeCursor

@@ -85,7 +85,7 @@ public sealed class Gr5RetimeRepeatAllocationTests
         var bytes = RepeatRetime(state, city, new[] { 3.0, 20, 1, 20 }, 2, () => new NoRoutes(), "13,965 links, 250 vehicles");
         long kernel = bytes["snapshot"] + bytes["rescale"] + bytes["capture"] + bytes["vehicles"];
         output.WriteLine("kernel snapshot + rescale + capture + vehicle check " + (kernel / 1e6).ToString("0.000") + " MB (.NET)");
-        Assert.True(kernel < 6_200_000, "kernel " + kernel);
+        Assert.True(kernel < 8_600_000, "kernel " + kernel);
     }
 
     [Fact]
@@ -112,20 +112,27 @@ public sealed class Gr5RetimeRepeatAllocationTests
     }
 
     [Fact]
-    public void ACaptureThatReusesEqualListsWritesTheSameStateAsAFreshCapture()
+    public void ASecondTrafficSnapshotLeavesAnEarlierSaveIntactWhenOneIsChanged()
     {
-        var (state, _) = TravelTimingMaximumRouteTests.RigScaleCity(TravelTimingMaximumRouteTests.FixtureLinks);
-        var kernel = TrafficKernel.Restore(state.Traffic!);
-        var earlier = kernel.CaptureShared();
-        kernel.AdvanceTo(state.Traffic!.Clock + 0.4, 100000);
-        var reused = kernel.CaptureShared(earlier);
-        var fresh = kernel.Capture();
-        Assert.Equal(System.Text.Json.JsonSerializer.Serialize(fresh), System.Text.Json.JsonSerializer.Serialize(reused));
-        int shared = 0;
-        for (int i = 0; i < reused.Links.Count; i++)
-            if (ReferenceEquals(reused.Links[i].IncomingLinks, earlier.Links[i].IncomingLinks)) shared++;
-        Assert.True(shared > reused.Links.Count / 2, shared + " of " + reused.Links.Count);
-        Assert.Equal(System.Text.Json.JsonSerializer.Serialize(fresh), System.Text.Json.JsonSerializer.Serialize(TrafficKernel.Restore(reused).Capture()));
+        var (state, city) = TrafficCity();
+        city.AdvanceTo(state.Minute + 1, int.MaxValue);
+        var earlier = SaveCodec.Capture(state);
+        string payload = SaveCodec.Encode(earlier);
+        var first = state.Traffic!;
+        var second = SaveCodec.Capture(state);
+        var published = state.Traffic!;
+        Assert.NotSame(first, published);
+        var occupied = published.Links.First(l => l.Vehicles.Count > 0);
+        var before = first.Links.Single(l => l.LinkId == occupied.LinkId);
+        Assert.NotSame(before.Vehicles, occupied.Vehicles);
+        Assert.NotSame(before.WaitingSources, occupied.WaitingSources);
+        Assert.NotSame(before.IncomingLinks, occupied.IncomingLinks);
+        occupied.Vehicles.Clear();
+        Assert.Equal(payload, SaveCodec.Encode(earlier));
+        var read = SaveCodec.Read(payload);
+        Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
+        Assert.Equal(payload, SaveCodec.Write(read.State!));
+        Assert.NotNull(second);
     }
 
     [Theory]
