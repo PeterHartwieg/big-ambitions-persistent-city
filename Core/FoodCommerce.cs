@@ -228,7 +228,7 @@ namespace PersistentCity.Core
             if (!string.Equals(meal.HostId, meal.ResidentId, StringComparison.Ordinal)) AnchorReads++;
             return city.FindCitizen(meal.HostId);
         }
-        internal FoodCommerce(CitySimulator city, IFoodMarket market, IRoutePlanner routes, FoodChoiceSettings? choiceSettings = null, FoodMemorySettings? memorySettings = null, FoodAwarenessSettings? awarenessSettings = null, IFoodAwarenessProvider? memory = null, IFoodAwarenessProvider? campaign = null, RivalFoodSettings? rivalSettings = null)
+        internal FoodCommerce(CitySimulator city, IFoodMarket market, IRoutePlanner routes, FoodChoiceSettings? choiceSettings = null, FoodMemorySettings? memorySettings = null, FoodAwarenessSettings? awarenessSettings = null, IFoodAwarenessProvider? memory = null, IFoodAwarenessProvider? campaign = null, RivalFoodSettings? rivalSettings = null, bool staged = false)
         {
             this.city = city; this.market = market; this.routes = routes;
             budgetDue = new BudgetQueue(this);
@@ -246,9 +246,26 @@ namespace PersistentCity.Core
             storedMemoryProvider = new StoredMemoryAwareness(this);
             AdoptRecordWallets();
             InitializeRepresentation();
+            attachSteps = AttachSteps();
+            if (staged) return;
+            while (attachSteps.MoveNext()) { }
+            attachSteps = null;
+        }
+        internal const int AttachMealsPerStep = 256;
+        private IEnumerator<bool>? attachSteps;
+        internal IEnumerator<bool> TakeAttachSteps()
+        {
+            var steps = attachSteps ?? throw new InvalidOperationException("The food market is already attached.");
+            attachSteps = null;
+            return steps;
+        }
+        private IEnumerator<bool> AttachSteps()
+        {
             long rivalPeriod = RivalServiceCalibration.Period(city.State.Minute);
-            foreach (var entry in state.Residents)
+            var residents = state.Residents;
+            for (int index = 0; index < residents.Count; index++)
             {
+                var entry = residents[index];
                 rivalLoad.Observe(entry, rivalPeriod);
                 if (entry.DueAt < city.State.Minute) throw new InvalidOperationException("Overdue meal record.");
                 due.Add(entry);
@@ -257,9 +274,13 @@ namespace PersistentCity.Core
                 if (entry.Decision != null) pendingDecision = entry;
                 if (market is IRivalFoodMarket && (Active(entry) && entry.TargetKind == FoodAlternativeKind.Rival
                     || entry.Decision?.Shops.Any(s => s.AlternativeKind == FoodAlternativeKind.Rival) == true)) rivalResumeNeedsRefresh = true;
+                if (index % AttachMealsPerStep == AttachMealsPerStep - 1) yield return false;
             }
+            yield return false;
             budgetDue.Build();
+            yield return false;
             Feedback = FoodMoneyCounters.Attach(state);
+            yield return true;
         }
         private static bool Active(ResidentMeal m) => m.Status == MealStatus.Travelling || m.Status == MealStatus.Serving;
         private static string ReservationKey(string shop, string product) => shop + "\n" + product;

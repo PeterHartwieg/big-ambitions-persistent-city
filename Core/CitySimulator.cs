@@ -249,7 +249,17 @@ namespace PersistentCity.Core
                 if (source.stopEnvironment != null) AttachOptionalStops(source.stopEnvironment, source.stopPercentage, source.stopTiming);
                 yield return false;
                 var sourceFood = source.food;
-                if (sourceFood != null) AttachFoodMarket(sourceFood.Market, sourceFood.ChoiceSettings, sourceFood.MemorySettings, sourceFood.AwarenessSettings, sourceFood.MemoryProvider, sourceFood.CampaignProvider, sourceFood.RivalSettings);
+                if (sourceFood != null)
+                {
+                    food = new FoodCommerce(this, sourceFood.Market, routes, sourceFood.ChoiceSettings, sourceFood.MemorySettings, sourceFood.AwarenessSettings,
+                        sourceFood.MemoryProvider, sourceFood.CampaignProvider, sourceFood.RivalSettings, staged: true);
+                    var attach = food.TakeAttachSteps();
+                    while (true)
+                    {
+                        yield return false;
+                        if (!attach.MoveNext() || attach.Current) break;
+                    }
+                }
                 yield return false;
                 if (source.research != null) AttachResearch(source.research.Ledger, source.research.ConsumersPerUnit, source.research.BusinessPlace);
                 purchases = source.purchases; PurchaseFault = source.PurchaseFault;

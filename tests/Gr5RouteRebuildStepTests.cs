@@ -122,6 +122,48 @@ public sealed class Gr5RouteRebuildStepTests
     }
 
     [Fact]
+    public void EveryRetimeUpdateOnTheRigCityLeavesTheWholeUpdateUnderFiveMilliseconds()
+    {
+        const double prelude = 1, frame = 5;
+        var state = Gr5AllocationMeasure.RigCity();
+        var city = new CitySimulator(state, new Gr5AdvanceSegmentMeasure.Straight());
+        city.AttachFoodMarket(new VisitorRoutineTests.Market { Shops = F5gPopulationFillTests.Shops(state) });
+        city.AdvanceTo(Math.Floor(state.Minute / 1440) * 1440 + 1440 + 15.5 * 60, int.MaxValue);
+        var budget = new UpdateCityBudget(); var overshoot = new UnitOvershoot();
+        var driver = new ClockRetimeDriver();
+        var work = new List<double>(); int warmFrom = 0;
+        foreach (double rate in new[] { 2.0, 1, 2, 1 })
+        {
+            if (rate == 1 && warmFrom == 0) warmFrom = work.Count;
+            RouteRebuild? rebuild = null;
+            while (true)
+            {
+                int collections = GC.CollectionCount(0);
+                long started = Stopwatch.GetTimestamp();
+                double slice = budget.Exclusive(prelude, ClockRetimeStages.SliceMilliseconds);
+                if (rebuild != null)
+                {
+                    long deadline = overshoot.Deadline(started, slice);
+                    bool done = rebuild.Step(deadline);
+                    overshoot.Observe(deadline, Stopwatch.GetTimestamp());
+                    work.Add(GC.CollectionCount(0) != collections ? double.NaN : (Stopwatch.GetTimestamp() - started) * 1000.0 / Stopwatch.Frequency);
+                    if (done) { city = rebuild.Result!; break; }
+                    continue;
+                }
+                var outcome = driver.Update(state, rate, false, 1.4, slice);
+                work.Add(GC.CollectionCount(0) != collections ? double.NaN : (Stopwatch.GetTimestamp() - started) * 1000.0 / Stopwatch.Frequency);
+                if (outcome == ClockRetimeOutcome.Committed) { rebuild = city.BeginRebuildRoutes(new Gr5AdvanceSegmentMeasure.Straight(), driver.TakeRetimedTraffic()); overshoot.Reset(); }
+            }
+            Gr5FoodDecisionTests.Run(city, state.Minute, state.Minute + 1);
+        }
+        Assert.True(city.ActiveJourneyIndexMatchesState());
+        var warm = work.Skip(warmFrom).Where(w => !double.IsNaN(w)).ToList();
+        output.WriteLine(work.Count + " retime updates (" + work.Count(double.IsNaN) + " with a collection, timed by the gc sampler instead), slowest " + work.Where(w => !double.IsNaN(w)).Max().ToString("0.00") + " ms, warm slowest " + warm.Max().ToString("0.00")
+            + " ms, warm p95 " + warm.OrderBy(w => w).ElementAt((int)(warm.Count * .95)).ToString("0.00") + " ms on a " + prelude + " ms prelude (.NET)");
+        PerfGate.Under(prelude + warm.Max(), frame, "UpdateCity with a 1 ms prelude in the slowest warm retime update (.NET)");
+    }
+
+    [Fact]
     public void AFailedRebuildCannotBeSteppedAgainAndAFinishedOneReturnsItsResult()
     {
         var (state, city) = Gr5FoodDecisionTests.FoodCity();
