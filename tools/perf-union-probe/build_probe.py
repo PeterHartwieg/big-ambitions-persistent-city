@@ -24,6 +24,7 @@ REFERENCES = ['mscorlib', 'System', 'System.Core', 'netstandard', 'BigAmbitions'
               'HGExtensions', 'HGPlugins', 'UnityEngine.CoreModule', 'Newtonsoft.Json']
 SOURCES = ['HarmonyScan.cs', 'Probe.cs', 'ProbeLogic.cs', 'ScopeInventory.cs']
 ARTIFACT = 'PerfUnionProbe.dll'
+MOD = 'PerfUnionProbe'
 
 
 def sha(path):
@@ -76,14 +77,26 @@ def build(managed, harmony, output):
     subprocess.run([dotnet, str(compiler), '-noconfig', '@' + str(rsp)], check=True)
     if any(sha(Path(path)) != digest for path, digest in initial.items()):
         raise SystemExit('Source/reference changed during compilation; artifact is not usable')
+    stage = package(artifact, harmony, output)
     manifest = dict(format=1, tool='perf-union-probe', native_validated=False, packaged=False, compiler_sdk=match[1],
                     expected_scope_hash=check_scopes.inventory_hash(REPO),
                     output=dict(name=ARTIFACT, sha256=sha(artifact)),
+                    rig_stage=dict(mod=MOD, folder=stage.name, files=sorted(p.relative_to(stage).as_posix() for p in stage.rglob('*') if p.is_file())),
                     sources=[dict(name='tools/perf-union-probe/' + p.name, sha256=initial[str(p)]) for p in sources],
                     references=[dict(name=p.name, sha256=initial[str(p)]) for p in references])
     text = json.dumps(manifest, indent=2) + '\n'
     (output / 'build-manifest.json').write_text(text, encoding='utf-8')
     return manifest, text
+
+
+def package(artifact, harmony, output):
+    stage = output / 'stage'
+    if stage.exists():
+        shutil.rmtree(stage)
+    (stage / 'Dependencies').mkdir(parents=True)
+    shutil.copyfile(artifact, stage / ARTIFACT)
+    shutil.copyfile(harmony, stage / 'Dependencies' / '0Harmony.dll')
+    return stage
 
 
 def main():

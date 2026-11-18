@@ -26,6 +26,8 @@ dotnet run -c Release --project tools/perf-union-probe/logic-check/LogicCheck.cs
 
 `tools/build.py` places the pinned `0Harmony.dll` the probe compiles against. `build_probe.py` runs `check_scopes.py` first and refuses to build on a mismatch. The probe has no compile reference to `PersistentCity.dll`; it binds Persistent City by reflection, so one artifact serves both modes. Two builds of the same inputs give byte-identical DLLs and manifests. The manifest and the probe's `status` report the same expected-scope hash.
 
+`build_probe.py` also writes `stage/` next to the DLL: `PerfUnionProbe.dll` and the pinned `Dependencies/0Harmony.dll`, the layout of a `ModsLocal/PerfUnionProbe` folder. On the Mac rig, stage it with `install-mac.py --stage-mod PerfUnionProbe <output>/stage`; the rig ops extension discovery only registers `perf_union` once that assembly is loaded, so a rig without the staged folder answers `ops_unknown_op`. The isolation check accepts the Windows profile (`Big Ambitions Agent Tests`, `%USERPROFILE%/AppData/LocalLow/Hovgaard Games/Big Ambitions Agent Tests`) and the Mac profile (`Big Ambitions Agent Tests Mac`, `~/Library/Application Support/com.hovgaardgames.bigambitions.agenttests.mac`), both with `-agent-tests -rig-test`.
+
 `check_scopes.py` scans `Core/`, `Compatibility/`, `Persistence/` and `Runtime/` for patches, MonoBehaviour messages, native event subscriptions, player-loop delegates, transpiler helpers, components and call sites, and compares them with the inventory, including each patch's native target. It fails closed on any form it cannot classify, and each transpiler body and target-resolver helper (`PINNED_RESOLVERS`) is pinned by fingerprint.
 
 ## Rig op

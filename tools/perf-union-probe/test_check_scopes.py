@@ -397,9 +397,12 @@ class ProbeSourceTests(unittest.TestCase):
 
 def game_managed():
     explicit = os.environ.get('PERF_UNION_GAME_MANAGED')
-    default = Path(r'C:\Program Files (x86)\Steam\steamapps\common\Big Ambitions\Big Ambitions_Data\Managed')
-    path = Path(explicit) if explicit else default
-    return path if (path / 'BigAmbitions.dll').is_file() else None
+    defaults = [Path(r'C:\Program Files (x86)\Steam\steamapps\common\Big Ambitions\Big Ambitions_Data\Managed'),
+                Path.home() / 'Library/Application Support/BigAmbitionsMCP/dll-import-shim/Big Ambitions_Data/Managed']
+    for path in [Path(explicit)] if explicit else defaults:
+        if (path / 'BigAmbitions.dll').is_file():
+            return path
+    return None
 
 
 class BuildManifestTests(unittest.TestCase):
@@ -418,6 +421,34 @@ class BuildManifestTests(unittest.TestCase):
         a = (REPO / 'build/perf-union-probe-test/a/PerfUnionProbe.dll').read_bytes()
         b = (REPO / 'build/perf-union-probe-test/b/PerfUnionProbe.dll').read_bytes()
         self.assertEqual(a, b)
+        self.assertEqual(first['rig_stage'], dict(mod='PerfUnionProbe', folder='stage', files=['Dependencies/0Harmony.dll', 'PerfUnionProbe.dll']))
+        self.assertEqual((REPO / 'build/perf-union-probe-test/a/stage/PerfUnionProbe.dll').read_bytes(), a)
+
+    def test_stage_folder_is_a_mod_folder_for_the_mac_rig(self):
+        import build_probe
+        output = REPO / 'build/perf-union-probe-test/stage-layout'
+        output.mkdir(parents=True, exist_ok=True)
+        artifact = output / build_probe.ARTIFACT
+        harmony = output / 'harmony.dll'
+        artifact.write_bytes(b'probe')
+        harmony.write_bytes(b'harmony')
+        (output / 'stage').mkdir(exist_ok=True)
+        (output / 'stage/stale.dll').write_bytes(b'old')
+        stage = build_probe.package(artifact, harmony, output)
+        files = sorted(p.relative_to(stage).as_posix() for p in stage.rglob('*') if p.is_file())
+        self.assertEqual(files, ['Dependencies/0Harmony.dll', build_probe.MOD + '.dll'])
+        self.assertEqual((stage / (build_probe.MOD + '.dll')).read_bytes(), b'probe')
+        self.assertEqual((stage / 'Dependencies/0Harmony.dll').read_bytes(), b'harmony')
+
+    def test_probe_isolation_accepts_the_mac_and_windows_rig_profiles(self):
+        logic = (MODULE / 'ProbeLogic.cs').read_text(encoding='utf-8')
+        probe = (MODULE / 'Probe.cs').read_text(encoding='utf-8')
+        self.assertIn('"Library", "Application Support", "com.hovgaardgames.bigambitions.agenttests.mac"', logic)
+        self.assertIn('MacProduct = "Big Ambitions Agent Tests Mac"', logic)
+        self.assertIn('"AppData", "LocalLow", "Hovgaard Games", "Big Ambitions Agent Tests"', logic)
+        self.assertIn('RigProfile.Isolated(Environment.GetCommandLineArgs(), Application.productName, Application.persistentDataPath', probe)
+        self.assertNotIn('AppData/LocalLow', probe)
+        self.assertRegex(probe, r'public static class PerfUnionRigOps\s*\{\s*public static JToken Op_perf_union\(JObject args\)')
 
     def test_output_outside_build_is_refused(self):
         import build_probe

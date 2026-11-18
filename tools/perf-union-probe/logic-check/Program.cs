@@ -31,6 +31,7 @@ internal static class Program
             else if (args[i] == "--perf") perf = true;
             else { Console.WriteLine("usage: LogicCheck [--expect-hash HEX] [--perf]"); return 2; }
         }
+        Profiles();
         Shim();
         Holds();
         BoundaryClips();
@@ -45,6 +46,26 @@ internal static class Program
         Console.WriteLine("expected_scope_hash " + ScopeInventory.Hash());
         if (perf) Perf();
         return failures == 0 ? 0 : 1;
+    }
+
+    private static void Profiles()
+    {
+        string[] rig = { "game", "-agent-tests", "-rig-test" };
+        const string mac = "/Users/agent", win = "C:\\Users\\agent";
+        string macData = mac + "/Library/Application Support/com.hovgaardgames.bigambitions.agenttests.mac";
+        string winData = "C:/Users/agent/AppData/LocalLow/Hovgaard Games/Big Ambitions Agent Tests";
+        Check(RigProfile.Isolated(rig, RigProfile.MacProduct, macData, mac), "the Mac Agent Tests profile is isolated");
+        Check(RigProfile.Isolated(rig, RigProfile.MacProduct, macData + "/", mac + "/"), "the Mac profile ignores a trailing separator");
+        Check(RigProfile.Isolated(rig, RigProfile.WindowsProduct, winData, win), "the Windows Agent Tests profile is isolated");
+        Check(RigProfile.Isolated(rig, RigProfile.WindowsProduct, winData.ToUpperInvariant(), win), "the Windows profile compares without case");
+        Check(!RigProfile.Isolated(rig, RigProfile.MacProduct, macData.ToUpperInvariant(), mac), "the Mac profile compares with case");
+        Check(!RigProfile.Isolated(rig, RigProfile.MacProduct, winData, win), "the Mac product refuses the Windows profile");
+        Check(!RigProfile.Isolated(rig, RigProfile.WindowsProduct, macData, mac), "the Windows product refuses the Mac profile");
+        Check(!RigProfile.Isolated(rig, "Big Ambitions", mac + "/Library/Application Support/com.hovgaardgames.bigambitions", mac), "the ordinary game is refused");
+        Check(!RigProfile.Isolated(rig, RigProfile.MacProduct, mac + "/Library/Application Support/com.hovgaardgames.bigambitions", mac), "the ordinary Mac profile is refused");
+        Check(!RigProfile.Isolated(new[] { "game", "-agent-tests" }, RigProfile.MacProduct, macData, mac), "a launch without -rig-test is refused");
+        Check(!RigProfile.Isolated(new[] { "game", "-rig-test" }, RigProfile.MacProduct, macData, mac), "a launch without -agent-tests is refused");
+        Check(!RigProfile.Isolated(rig, RigProfile.MacProduct, "", mac) && !RigProfile.Isolated(rig, RigProfile.MacProduct, macData, ""), "empty paths are refused");
     }
 
     private static void Shim()

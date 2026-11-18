@@ -3,6 +3,31 @@ using System.Collections.Generic;
 
 namespace PerfUnionProbe
 {
+    public static class RigProfile
+    {
+        public const string WindowsProduct = "Big Ambitions Agent Tests", MacProduct = "Big Ambitions Agent Tests Mac";
+        public static readonly string[] WindowsProfile = { "AppData", "LocalLow", "Hovgaard Games", "Big Ambitions Agent Tests" };
+        public static readonly string[] MacProfile = { "Library", "Application Support", "com.hovgaardgames.bigambitions.agenttests.mac" };
+
+        public static bool Isolated(IList<string> arguments, string product, string persistentDataPath, string userProfile)
+        {
+            if (arguments == null || !arguments.Contains("-agent-tests") || !arguments.Contains("-rig-test")) return false;
+            if (string.IsNullOrEmpty(persistentDataPath) || string.IsNullOrEmpty(userProfile)) return false;
+            if (product == WindowsProduct) return SamePath(persistentDataPath, userProfile, WindowsProfile, StringComparison.OrdinalIgnoreCase);
+            if (product == MacProduct) return SamePath(persistentDataPath, userProfile, MacProfile, StringComparison.Ordinal);
+            return false;
+        }
+
+        private static bool SamePath(string actual, string home, string[] parts, StringComparison comparison)
+        {
+            string expected = Normal(home);
+            foreach (var part in parts) expected += "/" + part;
+            return string.Equals(Normal(actual), expected, comparison);
+        }
+
+        private static string Normal(string path) => path.Replace('\\', '/').TrimEnd('/');
+    }
+
     public static class PaceShim
     {
         public const double MinimumFactor = 0.1, MaximumFactor = 1;
