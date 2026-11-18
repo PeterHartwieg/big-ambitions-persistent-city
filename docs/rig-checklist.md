@@ -8,6 +8,8 @@ Detailed specs: [F8 §7](https://github.com/PeterHartwieg/big-ambitions-persiste
 
 ## Latest evidence
 
+- **18 November a, Mac (rig 16k), build `e7215adf`:** 3 passed / 0 partial / 0 failed / 1 NOT RUN scoped arms; released donor clearing 3/3 residents, 8/8 slots empty; different-resident reuse not observed; correctness-only; restored ([18a results](#rig-results--18-november-2026-a-mac-rig-16k-gr-9-238-5--295-check-3-releasedpooled-donor-at-e7215adf)).
+
 - **17 November n, Mac (rig 16j), build `d2c25ba8`:** 2 passed / 1 partial / 3 failed / 2 NOT RUN scoped checks; day/repeat/night mod 75.007/125.914/46.822 MB; night pause p95 31.334 ms, street union p95 5.1476 ms; **PROVISIONAL (shared Mac)**; restored ([17n results](#rig-results--17-november-2026-n-mac-rig-16j-297-gcstreetseparationinspector-checks-1-5-at-d2c25ba8)).
 
 - **17 November m, Mac (rig 16i), build `604cdf3f`:** 3 passed / 0 partial / 0 failed / 1 NOT RUN scoped checks; A donor sameness 4/5, B reload 1/5; released-relay RIG GAP; correctness-only; restored ([17m results](#rig-results--17-november-2026-m-mac-rig-16i-gr-9-238-5--295-donor-readback-checks-1-3-at-604cdf3f)).
@@ -11912,3 +11914,209 @@ Other live build/session working directories from the captured process inventory
 | rlo-night end | none observed |
 
 The ux-schreiben-post-2 build is visible through process cwd even when no live harness state/runner is found; its runner session ID and binary SHA are unavailable. The ux-praemie-akte-2 live runner is identified above. This inventory names observed builds without inspecting or changing their files or branches.
+
+## Rig results — 18 November 2026 a, Mac (rig 16k; GR-9 #238-5 / #295 check 3 released/pooled donor at e7215adf)
+
+**RESULT: DONE. 3 passed / 0 partial / 0 failed / 1 NOT RUN scoped arms:** released donor clearing PASS; different-resident reuse NOT RUN; looks/log hygiene PASS; restore PASS. Excluded checks are grouped below. The three selected residents supplied six successful released identity reads. All eight slots in the post-release list were inactive and cleared.
+
+Correctness-only, role `rig_test`, where `mac`, run `persistent-city-rig-2026-11-18a-mac`. This follows the owner's **check 3 released/pooled donor** label; the current PR #295 body numbers the released/pooled item 2 and looks/log hygiene 3. The tested behavior is the released/pooled item. Checks 1–2 from the launch brief are not rescored. Mac is the approved stand-in for the PR's locked-PC setup. Incidental timing, FPS, allocation and GC figures are **PROVISIONAL / not used as evidence or gates**. No clean perf window was requested or awaited.
+
+`MarkdownBanTests` / `tools/md-ban.py` ban new Markdown paths, including `docs/checks`, without `docs-approved`. This report therefore appends to the existing checklist and adds one summary pointer. Raw commands, replies, Player.log copies, screenshot, build output and backups stay outside Git at `~/HART-Builds/persistent-city-rig-2026-11-18a-mac/` (`<stage>`). Report copy: `~/Coding_Projects/.agent-logs/persistent-city-rig-2026-11-18a-mac.md`.
+
+### Build, rig and staging
+
+| Item | Evidence |
+| --- | --- |
+| Tested head | `e7215adf4673dbcbf1bcb89074108765931bcf29`; fetched and verified with `git rev-parse origin/codex/persistent-city` before build; includes #295 donor fields from `e883e04d` |
+| Branch / worktree | `codex/mac-rig-2026-11-18a` / sibling `big-ambitions-persistent-city-worktrees/rig-2026-11-18a-mac-evidence`; built there; removed after commit/push/PR |
+| Agent-rig HEAD | `39be20c8252f049e2466503a6b40b6b851ba3589` (#104); clean, fetched and ff-only pull already current; no edits, overlay install or rollback |
+| Live AgentRigOps SHA-256 | `bb09f0495c8cb53c30128f02f7e82eac366a1e0391a7b3a5652d6b634cb28b41`; verified at start and cleanup |
+| Build | Homebrew PATH/DOTNET_ROOT; `python3 tools/build.py --game-managed "~/Library/Application Support/BigAmbitionsMCP/dll-import-shim/Big Ambitions_Data/Managed"`; exit 0; quoted home prefix shown shortened here |
+| PersistentCity DLL SHA-256 | `d815fa99b1bed0fc2548ebd2bbe753574541d165231ac1efc85e87f55a882e4f`; build/package/staging/Player.log agree |
+| Staging command | `BA_LOCK_OWNER=persistent-city-rig-2026-11-18a-mac python3 scripts/install-mac.py --stage-mod PersistentCity ~/HART-Builds/persistent-city-rig-2026-11-18a-mac/package` |
+| Receipt backup | `~/Library/Application Support/BigAmbitionsAgentTestsMac/receipt-backups/20261118T005743Z`; staged stopped with lease held, before every identity/donor/slots op |
+| Lease | Free/stopped at launch; acquired `2026-11-18T00:56:37.553428Z`; same exported `BA_LOCK_OWNER` throughout |
+| Pre-stage backup | `pre-stage-manifest.json`, SHA-256 `f92974d80227d1f7d0591bb96124e5fc36fe441b43204bf2ad6311f900d29a0a`; 35 file states backed up; 53 RLO files and four sealed-fixture files hashed read-only |
+| Configuration | Standard candidate, PhysicalEnabled=true, pedestrians=96, vehicles=24, radius=120 m, SaveCostDiagnostics=false; original PC package had pedestrian cap 48 and was restored |
+| Start / load | `python3 scripts/mac-agent start --mode background --rig-test`; first attempt succeeded, own game PID 19361; cold load completed in 83.8 s; no restart or `ops_load_*` error |
+| RLO version / options | `Real Life Overhaul 1.0.6 initialised.`; living_population stored absent/live true, social_media 1/true, social_media_notices 0/false; final reads match originals |
+| Autosave | Original native 5 minutes / maximum 3, prevent_autosave=false. Autosave OFF via the #70 process guard: `enabled:true`, `autosave_disabled:true`, `suppressed:true` in menu, after cold load, after release and after return; final save read 64 attempts / 64 refused / 0 allowed, no write/compression active |
+| City | Sealed `FT GR5 13f Timing v1`: 1,000 residents / 2,000 visitors / startup 1,683 places; census 3,000 persisted persons, 1,663 census places. Loaded only, never saved over |
+| Disposable / fixture | No copy needed or created; `FT RIGTMP-GR9-18a-mac` read exists:false/loaded:false/files:[]; no unrentable fixture applied; no sidecar |
+
+Player.log confirms the staged package before discovery:
+
+```text
+[AgentRigOps] staged_mod name=PersistentCity version=absent informational=0.10.0-persistent-city-candidate sha256=d815fa99b1bed0fc2548ebd2bbe753574541d165231ac1efc85e87f55a882e4f
+[Mod:PersistentCity] Persistent population active: 1000 residents, 2000 visitors, 1683 places.
+[Mod:PersistentCity] Physical population active: ordinary pedestrian and vehicle spawns replaced by own bodies and own cars; RLO scenes, customers, workers, taxis and service vehicles retained.
+```
+
+The population line above is excerpted before its explanatory suffix. No separate commit-stamped build line is emitted; source head plus the built/staged DLL hash identify this candidate. The exact printed rollback is retained verbatim in `<stage>/stage.log` and `<stage>/printed-rollback.json`; it was executed with the game stopped and lease held. Below only the home prefix is shortened to `~` (expand it before using quoted paths):
+
+```sh
+rm -rf "~/Library/Application Support/com.hovgaardgames.bigambitions.agenttests.mac/ModsLocal/PersistentCity" && cp -Rp "~/Library/Application Support/BigAmbitionsAgentTestsMac/receipt-backups/20261118T005743Z/mod" "~/Library/Application Support/com.hovgaardgames.bigambitions.agenttests.mac/ModsLocal/PersistentCity" && cp "~/Library/Application Support/BigAmbitionsAgentTestsMac/receipt-backups/20261118T005743Z/install.json" "~/Library/Application Support/BigAmbitionsAgentTestsMac/install.json"
+```
+
+### A — present-body setup and released donor clearing: PASS
+
+After cold load, autosave readback and a speed-1 replay, waited for `Physical population active` before discovery. The initial `Clock retime:` completed before judged reads. First identity request used resident `c3`; it had no body then and returned `ops_view_resident_absent`, an expected discovery miss. `slots` then returned exposed:true, count:5, truncated:false, frame:6590, including three active residents with present donors. Those residents were selected directly, without relying on walker handles. Present-body reads are setup only, not new gates for 16i's checks 1–2.
+
+| Resident | Kept slot | Generation | Present | Donor | Surname donor | Persona donor | Kind | Policy | donor_reason |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `pc:282` | `slot-5d3f5bf0ea6748b29be736794efbfc96` | 5 | true | `c73` | `c341` | `c368` | remixed | 1 | `null` |
+| `c266` | `slot-bcd6196ae7c34545b03f735e8c6ee9f2` | 3 | true | `c266` | `c266` | `c266` | imported | 1 | `null` |
+| `c295` | `slot-463ef950f785497e9ea1646d2d2a0c09` | 2 | true | `c295` | `c295` | `c295` | imported | 1 | `null` |
+
+Every binding source is `persistent_city`. Before release the list at frame 6723 had exposed:true, count:8, truncated:false (seven active, one already released). Speed stayed 1. Moved **both player and camera** from x=215/z=0 to x=-500/z=-400, let the simulation run for ten seconds, then paused to keep the released reads stable. Re-listed walkers; all three resident `get` calls returned `ops_view_resident_absent`. These are absence checks only; donor evidence comes from `identity` below.
+
+Post-release slot-target identity (`released-slot-0.json` through `-2.json`):
+
+| Slot target | Original resident | Frame | donor_present | donor_reason | Donor / surname / persona / kind | Policy | binding.resident_id | Generation | last_seen_resident_id |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `slot-5d3f5bf0ea6748b29be736794efbfc96` | `pc:282` | 6749 | false | `ops_view_walker_donor_absent` | `"" / "" / "" / ""` | 0 | null | null | `pc:282` |
+| `slot-bcd6196ae7c34545b03f735e8c6ee9f2` | `c266` | 6752 | false | `ops_view_walker_donor_absent` | `"" / "" / "" / ""` | 0 | null | null | `c266` |
+| `slot-463ef950f785497e9ea1646d2d2a0c09` | `c295` | 6757 | false | `ops_view_walker_donor_absent` | `"" / "" / "" / ""` | 0 | null | null | `c295` |
+
+Post-release resident-target identity (`released-resident-0.json` through `-2.json`):
+
+| Resident target | Returned kept slot | Frame | donor_present | donor_reason | Donor / surname / persona / kind | Policy | binding.resident_id | Generation | last_seen_resident_id |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `pc:282` | `slot-5d3f5bf0ea6748b29be736794efbfc96` | 6750 | false | `ops_view_walker_donor_absent` | `"" / "" / "" / ""` | 0 | null | null | `pc:282` |
+| `c266` | `slot-bcd6196ae7c34545b03f735e8c6ee9f2` | 6754 | false | `ops_view_walker_donor_absent` | `"" / "" / "" / ""` | 0 | null | null | `c266` |
+| `c295` | `slot-463ef950f785497e9ea1646d2d2a0c09` | 6758 | false | `ops_view_walker_donor_absent` | `"" / "" / "" / ""` | 0 | null | null | `c295` |
+
+Post-release `slots` at frame 6760: exposed:true, count:8, truncated:false. All eight rows have active:false, released:true, binding.resident_id:null, body_generation:null, donor_present:false, donor_reason:`ops_view_walker_donor_absent`, all four donor string fields `""` and policy 0. Selected row flags:
+
+| Kept slot | active | released | binding.resident_id | last_seen_resident_id |
+| --- | --- | --- | --- | --- |
+| `slot-5d3f5bf0ea6748b29be736794efbfc96` | false | true | null | `pc:282` |
+| `slot-bcd6196ae7c34545b03f735e8c6ee9f2` | false | true | null | `c266` |
+| `slot-463ef950f785497e9ea1646d2d2a0c09` | false | true | null | `c295` |
+
+Exact read commands, with `<SLOT_ID>` / `<RESIDENT_ID>` expanded to each row above; all six identity calls exit 0:
+
+```sh
+python3 scripts/mac-agent op screen_pos '{"action":"slots","limit":64}'
+python3 scripts/mac-agent op screen_pos '{"action":"identity","target":{"kind":"slot","id":"<SLOT_ID>"}}'
+python3 scripts/mac-agent op screen_pos '{"action":"identity","target":{"kind":"resident","id":"<RESIDENT_ID>"}}'
+```
+
+Representative complete released reply:
+
+```json
+{"target":{"kind":"slot","id":"slot-5d3f5bf0ea6748b29be736794efbfc96"},"binding":{"source":"persistent_city","resident_id":null,"body_generation":null,"donor_id":"","donor_reason":"ops_view_walker_donor_absent","stable_across_reload":true,"donor_present":false,"surname_donor_id":"","persona_donor_id":"","donor_kind":"","identity_policy_version":0},"frame":6749,"slot":{"kind":"slot","id":"slot-5d3f5bf0ea6748b29be736794efbfc96"},"last_seen_resident_id":"pc:282"}
+```
+
+No `ops_invalid_action`, false `ops_view_walker_donor_unexposed`, count-zero discovery, shape disagreement, crash or conflicting relay fields occurred. Native-citizen donor replies are not used as evidence. #104's live slots and remembered-resident fallback filled the 16i/16j released-body readback gap for this candidate.
+
+### Different-resident reuse: NOT RUN
+
+Returned player and camera to x=215/z=0 at speed 1. Observed for about 90 seconds, six paused/re-listed slot polls at frames 6797, 6812, 6823, 6839, 6849 and 6864. None of the kept slots carried a different resident. Final slots at frame 6871 still had eight total slots, five active. The kept slots held their original residents, with generations 12 (`pc:282`), 10 (`c266`) and 11 (`c295`), and the same donor fields shown in the setup table. This records what the slots carried after return; it does not rescore the already evidenced sameness check. No different-resident donor exclusivity comparison is claimed.
+
+### B — looks / log hygiene: PASS
+
+Five retained `pedestrianLooks` observations all report `0 failed merges`. Final counters: 9 built / 5 reused / 3 idle / 8 owned, 9 fast merges / 0 native merges / 0 failed merges, fallbacks:none. Entire retained session Player.log contains zero `Empty appearance`, zero `Appearance meshes unavailable`, and zero `NPC warp failed`. Timing/bake/GC numbers in the same diagnostic lines are provisional and unused.
+
+Optional rendered look proof: NOT RUN. `capture {"action":"take"}` succeeded in `--mode background --rig-test`, Metal, render_texture, fallback_reason:`ops_view_capture_background`, 640×480, frame 6729, image `43341f76177743e0b3df40c3ec22aeaa.png`. Visual inspection found Campaigns/phone panels covering a pale scene; no walker appearance can be judged. The image is retained in the run directory and is not appearance evidence. No memory/start refusal or headless fallback occurred. Pointer/hover stays for Peter's playtest.
+
+### Shared Mac sessions and load
+
+All timestamps below are UTC; local time is UTC+1. Captured `uptime`, `memory_pressure -Q` and `ps -Arco pid,pcpu,comm | head -8` at session start, before start, before release, while released, after return and after restore. Complete outputs are `<stage>/host-*.json`. No other process was killed, paused or modified.
+
+| Window | UTC | Host uptime | Load 1/5/15 | Reported memory free |
+| --- | --- | --- | --- | --- |
+| Start | 00:57:37 | 4 days,  7:35 | 9.32 6.29 4.53 | 53% |
+| Before game | 00:57:49 | 4 days,  7:36 | 8.28 6.17 4.50 | 48% |
+| Before release | 01:00:44 | 4 days,  7:38 | 15.70 9.09 5.94 | 40% |
+| Released | 01:01:22 | 4 days,  7:39 | 42.41 17.20 9.08 | 34% |
+| Return end | 01:04:23 | 4 days,  7:42 | 36.65 29.04 15.94 | 33% |
+| Restored | 01:06:35 | 4 days,  7:44 | 28.14 27.90 17.29 | 46% |
+
+The seven process rows from the requested top-eight snapshots at the critical windows (PID / %CPU / command):
+
+**Start:**
+
+```text
+  PID  %CPU COMM
+18979  61.1 next-server (v16.4.2)
+19234  22.8 chrome-headless-shell
+50220  20.3 com.apple.Virtualization.VirtualMachine
+19030  18.8 chrome-headless-shell
+19029  13.7 chrome-headless-shell
+19028  10.4 node
+  444   8.5 coreaudiod
+```
+
+**Before release:**
+
+```text
+  PID  %CPU COMM
+20195 168.0 next-server (v16.4.2)
+20420  73.1 node
+19361  69.0 Big Ambitions Agent Tests Mac
+20268  48.3 chrome-headless-shell
+20477  45.7 spotlightknowledged.updater
+50220  18.3 com.apple.Virtualization.VirtualMachine
+20266  12.0 chrome-headless-shell
+```
+
+**Released:**
+
+```text
+  PID  %CPU COMM
+20195 128.1 next-server (v16.4.2)
+19361  71.7 Big Ambitions Agent Tests Mac
+20611  67.4 node
+20637  52.5 node
+20619  45.8 node
+50220  31.9 com.apple.Virtualization.VirtualMachine
+20539  29.6 node
+```
+
+Live work on this Mac, recorded independently from harness metadata and process checks:
+
+| Session / role | Live build / phase |
+| --- | --- |
+| This `rig_test` run, `persistent-city-rig-2026-11-18a-mac` | e7215adf candidate / background private game PID 19361; stopped before restore |
+| `20261118-014644-mac-fix-gr5-gc-pause-19`, implement | Runner PID 14331; base d2c25ba8, live checkout 4a71af22af943fe53ef7e8ff8ecd3696cec35d3b; building concurrently; not awaited |
+| `20261117-232504-ux-praemie-akte-2`, fix | Runner PID 11493; branch harness/ux-praemie-akte-2, base c50b2ef231995a4def73540cfa9805f689a2ac51, live checkout f091ccf442586dfd4d7f8cce92be9a515a44b37c; other project |
+
+The generic host scanner found fix-19 but missed the resumed other-project runner; `live-sessions-explicit.json` records both live PIDs and both heads. No additional live harness runner was found in the process inventory. Browser test workers, dotnet builds, the VM and normal host services are reflected in the snapshots. Host load rose sharply around release; correctness state reads completed. No perf/GC/street gate is inferred on shared Mac/Mono.
+
+### Tooling / rig gaps and recovered preparation errors
+
+No donor/slots RIG GAP and no Persistent City product failure. Shutdown had a **RIG GAP**, after evidence capture:
+
+| Exact command | Exact error / outcome |
+| --- | --- |
+| `python3 scripts/mac-agent stop` | exit 1: `Mac rig still running; inspect log or use stop --force` after the normal wait |
+| `python3 scripts/mac-agent stop --force` | exit 1: `PID identity changed; refusing to control it`; no forced-stop success and no signal is claimed |
+| `python3 scripts/mac-agent status` | next read: running:false, process:null; independent `ps -p 19361` empty. Game exited after normal quit; restore proceeded only after stopped confirmation |
+
+Raw command/replies: `stop.json`, `stop-force.json`, `status-stopped.json`. Player.log excerpt from `stop-hung-Player.log` (no matching PID-identity diagnostic is emitted in Player.log):
+
+```text
+[Mod:RealLifeOverhaul] City faults: stopped (the mod is unloading); every lamp, lane and prop put back as the game had it.
+[Mod:RealLifeOverhaul] Living population: stood down (the city is unloading); the game's own customers and the city economy's own figures stand.
+[Mod:RealLifeOverhaul] Construction: stood down, the city is unloading. Its sites in the city's programme wait, put away, until it is on again.
+```
+
+Preparation command mistakes were recovered before judged reads: `python3 scripts/mac-agent call health` returned `Unknown command 'health'` (used `/health` instead); console `pc status` returned `Warning: ERROR: 'pc' doesn't take 1 parameter(s).` (used `pc population census`); `python3 scripts/mac-agent op pcstate '{"action":"read","property":"PopulationDiagnostics"}'` returned `ops_pcstate_property_missing` (property list has no such projection; used census and Player.log). These are invalid requests, not product or donor capability failures. The initial absent `c3` identity and all three post-release resident `get` errors are expected `ops_view_resident_absent`; successful slot/resident identity is the donor evidence.
+
+### NOT RUN grouped
+
+1. Scoped different-resident reuse: not observed during the reasonable return window; released reads pass independently.
+2. Launch-brief GR-9 #238-5 / #295 checks 1–2: already evidenced in rig 16i at 604cdf3f (release/reacquire 4/5 and reload 1/5); only minimum present-body setup and this release/return observation performed; no save/reload comparison.
+3. GR-5 GC / street / save-callback / 60 fps / locked-PC arms: outside this brief; Peter is gaming on the PC; fix-19 building concurrently, no clean window awaited. Incidental numbers provisional, no gates.
+4. #246 check 4: outside this brief; no unrentable fixture applied.
+5. #295 locked-PC arms: approved Mac stand-in used; Windows not contacted, started or used.
+6. Visual same-look / pointer / hover: capture cannot judge a body; pointer/hover reserved for Peter. All other unlisted checklist items: outside this brief.
+
+### Cleanup and offline validation
+
+No fixture needed reversion; final fixture status applied:false/sidecar:false. No disposable city was created or deleted, and no sealed fixture or protected leftover was changed. Normal quit outlasted the CLI's wait; the force fallback refused PID identity, then live status and process inventory confirmed the game had exited. Printed stage rollback restored the complete original PersistentCity folder and install.json. Original preferences, root persistent-city.json, frame-cap/save-mode presence and other backed-up settings were restored byte-for-byte. Native autosave stayed 5/3 and prevent_autosave=false; process suppression ends at stop.
+
+Verification: **35 original file states, 53 RLO files, four sealed-fixture files, zero mismatches**; mod file set equal; zero fixture sidecars; AgentRigOps hash unchanged. Restored install.json SHA-256 `7479eac4a0000d98cd256b42fc2d6c2c2826545849814f7e1d46bf4945349fee`. Lease released `2026-11-18T01:06:34.646195Z`; final status running:false, held:false, pending:0; own game PID absent. No process started by this run remains running at delivery. Other sessions continue untouched.
+
+Build exit 0; Markdown ban and docs-links checks pass. No test source changed and no full suite or tools/*-regression suite was run. No production code, schema (1), food weights (price 1.2, household 1.0), RLO files, OS settings, agent-rig checkout, version or changelog changed. No issue, release, Workshop upload or merge; results PR remains open without reviewers. Evidence worktree removed after publication.
