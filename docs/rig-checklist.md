@@ -13178,6 +13178,8 @@ Cells give counted / retained / truncated. Whole-frame and mod-work recorders ha
 | D candidate | — | — | — | 12227 / 1024 / true | True | 0 | 602.126 |
 | D reference | — | — | — | 7533 / 1024 / true | True | 0 | 602.797 |
 
+D dashes: the D arms started only the rig perf recorder and the PerfUnionProbe. The mod-work union and PC phase recorders were not started in either arm, and `<stage>` holds no `d-*-modwork-*` or `d-*-pc.json` capture. Those cells were not measured.
+
 | Window | Unity frame | Union ms | UpdateCity ms | Phase ms | Detail ms | Sub ms | GC phase | Rig components |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | A steady | 10250 | 32.6850 | 32.493 | advance_events 27.527 | none 0.000 | advance_events_citizen 27.525 | none | advance 27.6454 / physical 3.4634 / updatecity 1.3389 / PopulationRuntime.Update 0.1197 / prepare 0.0497 / PhysicalPedestrianCrosswalk.OnTriggerExit 0.0194 |
@@ -13269,8 +13271,8 @@ Each window start and end records uptime, load, queried memory pressure and the 
 | A repeat | rig_test persistent-city-rig-2026-11-18d-mac, game PID 36043. No other harness, launcher or build observed. |
 | B night | rig_test persistent-city-rig-2026-11-18d-mac, game PID 37792. Other observed work included ffmpeg PID 39582, ffmpeg PID 43896, ffmpeg PID 43904, ffmpeg PID 43912, ffmpeg PID 43917, ffmpeg PID 44239, ffmpeg PID 44626 |
 | C street | rig_test persistent-city-rig-2026-11-18d-mac, game PID 45206. No other harness, launcher or build observed. |
-| D candidate | rig_test persistent-city-rig-2026-11-18d-mac, game PID 51707. Other observed work included agent session PID 56869 in ~/Coding_Projects/work/MVP_project-worktrees/private-import-timeouts, harness 20261118-144606-private-import-timeouts (implement, PID 56833) |
-| D reference | rig_test persistent-city-rig-2026-11-18d-mac, game PID 58163. Other observed work included agent session PID 59983 in ~/Coding_Projects/work/MVP_project-worktrees/private-import-timeouts, agent session PID 60173 in ~/Coding_Projects/work/MVP_project-worktrees/private-import-timeouts, ffmpeg PID 59115, ffmpeg PID 59501, ffmpeg PID 59503, ffmpeg PID 59516, ffmpeg PID 59519, ffmpeg PID 59715, ffmpeg PID 59742, ffmpeg PID 59782, ffmpeg PID 59784, ffmpeg PID 60053, ffmpeg PID 60075, ffmpeg PID 60089, ffmpeg PID 60094, ffmpeg PID 60461, ffmpeg PID 60463, ffmpeg PID 60466, ffmpeg PID 60512, ffmpeg PID 60648, ffmpeg PID 60672, ffmpeg PID 60680, ffmpeg PID 60735, ffmpeg PID 60967, ffmpeg PID 60969, ffmpeg PID 60971, ffmpeg PID 60975, ffmpeg PID 61154, ffmpeg PID 61156, ffmpeg PID 61160, ffmpeg PID 61169, harness 20261118-144606-private-import-timeouts (ci, PID 56833), harness 20261118-144606-private-import-timeouts (implement, PID 56833), harness 20261118-144606-private-import-timeouts (local_tests, PID 56833), harness 20261118-144606-private-import-timeouts (review, PID 56833) |
+| D candidate | rig_test persistent-city-rig-2026-11-18d-mac, game PID 51707. Other observed work included one unrelated agent session and one unrelated test harness in its implement stage |
+| D reference | rig_test persistent-city-rig-2026-11-18d-mac, game PID 58163. Other observed work included two unrelated agent sessions, ffmpeg PID 59115, ffmpeg PID 59501, ffmpeg PID 59503, ffmpeg PID 59516, ffmpeg PID 59519, ffmpeg PID 59715, ffmpeg PID 59742, ffmpeg PID 59782, ffmpeg PID 59784, ffmpeg PID 60053, ffmpeg PID 60075, ffmpeg PID 60089, ffmpeg PID 60094, ffmpeg PID 60461, ffmpeg PID 60463, ffmpeg PID 60466, ffmpeg PID 60512, ffmpeg PID 60648, ffmpeg PID 60672, ffmpeg PID 60680, ffmpeg PID 60735, ffmpeg PID 60967, ffmpeg PID 60969, ffmpeg PID 60971, ffmpeg PID 60975, ffmpeg PID 61154, ffmpeg PID 61156, ffmpeg PID 61160, ffmpeg PID 61169 and one unrelated test harness in its implement, local test, review and CI stages |
 | E memory | rig_test persistent-city-rig-2026-11-18d-mac, game PID 45206. Other observed work included ffmpeg PID 46982 |
 
 ### Tooling findings and exact errors
@@ -13300,7 +13302,7 @@ Each window start and end records uptime, load, queried memory pressure and the 
 
 Original receipt SHA-256 `4b0b8042f7b2a03affa23fa31e1b9cb995080de267eb35fe085e5e94afcd10c2`. Verified file states and hashes {'files': 35, 'rlo': 53, 'sealed': 4}. Mismatches []. Persistent City file set matches True. Unrentable fixture sidecars remaining 0. AgentRigOps SHA-256 verified again. Process check `{"used_game_pids": ["15678", "36043", "37792", "45206", "47251", "51707", "58163"], "private_game_count": 0, "owned_caffeinate": []}`.
 
-Original staging rollback exit 0.
+Original staging rollback exit 0. Final restore asserted that the restored `install.json` matched the pre-stage manifest; its SHA-256 is the original receipt hash `4b0b8042f7b2a03affa23fa31e1b9cb995080de267eb35fe085e5e94afcd10c2` (`<stage>/restore-verification.json`). Lease released at 2026-11-18T14:06:58Z, held false, owner null, pending 0 (`<stage>/lease-release.json`). Final status at 2026-11-18T14:06:59Z: installed true, running false, process null (`<stage>/status-final.json`).
 
 Full exports stay under `<stage>`. The combined evidence exceeds the optional compact JSON size.
 
