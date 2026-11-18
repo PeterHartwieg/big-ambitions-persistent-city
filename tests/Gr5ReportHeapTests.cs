@@ -69,6 +69,7 @@ public sealed class Gr5ReportHeapTests
         string framesJson = sampler.FrameRecorder.ReportJson();
         long afterExport = GC.GetAllocatedBytesForCurrentThread();
         long atReport = Retained(sampler);
+        long stopStarted = GC.GetAllocatedBytesForCurrentThread();
         sampler.Stop(1_400_000_000);
         sampler.FrameRecorder.Disarm();
         sampler.ReportJson(Context); sampler.ReportHuman(Context); sampler.FrameRecorder.ReportHuman();
@@ -77,11 +78,12 @@ public sealed class Gr5ReportHeapTests
         long atPostReport = Retained(sampler);
         long text = 2L * (json.Length + human.Length + frames.Length + framesJson.Length);
         output.WriteLine("first report (.NET): json " + (afterJson - started) + " B for " + json.Length + " chars, human " + (afterHuman - afterJson)
-            + " B, frame recorder export " + (afterExport - afterHuman) + " B, stop and second report " + (afterStop - afterExport) + " B");
+            + " B, frame recorder export " + (afterExport - afterHuman) + " B, stop and second report " + (afterStop - stopStarted) + " B");
         output.WriteLine("retained (.NET): at sampler " + atSampler + " B, after first report " + atReport + " B, after stop " + atPostReport + " B");
         Assert.True(afterJson - started < 8 * json.Length + NightFrames * sizeof(double) + 64 * 1024, "first json bytes " + (afterJson - started));
         Assert.True(afterHuman - afterJson < 8 * 1024, "first human bytes " + (afterHuman - afterJson));
         Assert.True(afterExport - started < text * 4 + NightFrames * sizeof(double) + 256 * 1024, "first report and export bytes " + (afterExport - started));
+        Assert.True(afterStop - stopStarted < 8 * json.Length + 8 * 1024 + 64 * 1024, "stop and second report bytes " + (afterStop - stopStarted));
         Assert.True(atReport - atSampler <= NightFrames * sizeof(double) + 1024, "report retained " + (atReport - atSampler));
         Assert.True(atPostReport - atSampler <= NightFrames * sizeof(double) + 1024, "stop retained " + (atPostReport - atSampler));
     }
