@@ -1,7 +1,7 @@
 """Fail-closed check that the F4b probe's expected scope list matches Persistent City's source.
 
 Scans Core/, Compatibility/, Persistence/ and Runtime/ for Harmony patch calls, HarmonyMethod uses,
-MonoBehaviour messages, native event subscriptions, player-loop entries and transpiler helpers, and compares them with
+MonoBehaviour messages, native event subscriptions and transpiler helpers, and compares them with
 ScopeInventory.cs in both directions. Component methods and their call sites (including F2e's
 player-hold calls) must still exist where the list says. Any construct the scanner does not
 recognise is a failure, never a silent pass. Exit 0 only when everything matches.
@@ -430,11 +430,6 @@ def harmony_method(expr, names):
 
 
 def parse_helper(f, pos, body, end, params, problems):
-    """A local Patch(...) wrapper: one Harmony Patch call whose HarmonyMethods take typeof(T) and a parameter.
-
-    Either one unconditional kind (prefix: new HarmonyMethod(typeof(T), p)) or two kinds selected by one bool
-    parameter (prefix: flag ? null : new HarmonyMethod(...), postfix: flag ? new HarmonyMethod(...) : null).
-    """
     line = f.code.count('\n', 0, pos) + 1
     declared = parameters(params)
     names = [n for n, _ in declared]

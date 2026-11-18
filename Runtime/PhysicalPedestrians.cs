@@ -98,7 +98,7 @@ namespace PersistentCity.Runtime
 
         private static void DestroyCharacter(ThirdPersonCharacter character)
         {
-            BodyMerge.Forget(character.appearanceSetter?.meshCombiner);
+            BodyMerge.Release(character.appearanceSetter?.meshCombiner);
             NotifyRemoved(character);
             UnityEngine.Object.Destroy(character.gameObject);
         }
@@ -402,7 +402,7 @@ namespace PersistentCity.Runtime
         private void DestroyOwned(ThirdPersonCharacter character)
         {
             all.Remove(character); leases.Forget(character);
-            if (character != null && character.appearanceSetter != null) { baked.Remove(character.appearanceSetter); BodyMerge.Forget(character.appearanceSetter.meshCombiner); }
+            if (character != null && character.appearanceSetter != null) { baked.Remove(character.appearanceSetter); BodyMerge.Release(character.appearanceSetter.meshCombiner); }
             if (character != null)
             {
                 NotifyRemoved(character);
