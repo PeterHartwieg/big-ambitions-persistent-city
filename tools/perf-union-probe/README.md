@@ -32,10 +32,14 @@ First install on the isolated Mac profile (`<mods>` is `~/Library/Application Su
 
 1. If `<mods>/PerfUnionProbe` is absent, record that and run `mkdir "<mods>/PerfUnionProbe"`. `install-mac.py --stage-mod` refuses a destination folder that does not exist (`mod_scope`).
 2. Run `BA_LOCK_OWNER=<run> python3 scripts/install-mac.py --stage-mod PerfUnionProbe <output>/stage` in the agent-rig checkout. Keep the printed rollback line; it should be followed by `[AgentRigOps] staged_mod name=PerfUnionProbe` with the `PerfUnionProbe.dll` hash from `build-manifest.json`.
-3. Start with `--rig-test`, load the FT fixture and check that `op perf_union {"action":"status"}` returns a status with no `after.refusal`. Then `arm` (`mode`, and `expected_scope_hash` from the manifest), `measure-start` and `measure-stop`; `after.mono_heap` carries `start_bytes`, `start_used_bytes`, `stop_bytes` and `stop_used_bytes`.
+3. Start with `--rig-test`, load the FT fixture and check that `op perf_union {"action":"status"}` returns a status with no `after.refusal`. Then arm, and check that `after` has no `refusal` and `armed` is true before `measure-start`:
+   - Candidate (Persistent City staged): `op perf_union {"action":"arm","mode":"candidate","expected_scope_hash":"<hash from build-manifest.json>"}`. Do not pass `factor`; the probe reads it from Persistent City. Record the candidate's `after.calendar_factor`.
+   - Reference (Persistent City removed): `op perf_union {"action":"arm","mode":"reference","expected_scope_hash":"<hash from build-manifest.json>","factor":<candidate calendar_factor>}`. `factor` is required and must be between 0.1 and 1; without it `arm` refuses with `f4b_reference_factor_0_1_to_1_required`.
+   - Then `measure-start` and `measure-stop`. `after.mono_heap` carries `start_bytes`, `start_used_bytes`, `stop_bytes` and `stop_used_bytes`.
 
 Cleanup, with the player stopped: run the printed rollback (it restores the folder as it was at staging, which is empty on a first install, and the receipt). If step 1 created the folder, run `rmdir "<mods>/PerfUnionProbe"` so it is absent again, and check that `install.json` matches the backup hash.
- The isolation check accepts the Windows profile (`Big Ambitions Agent Tests`, `%USERPROFILE%/AppData/LocalLow/Hovgaard Games/Big Ambitions Agent Tests`) and the Mac profile (`Big Ambitions Agent Tests Mac`, `~/Library/Application Support/com.hovgaardgames.bigambitions.agenttests.mac`), both with `-agent-tests -rig-test`.
+
+The isolation check accepts the Windows profile (`Big Ambitions Agent Tests`, `%USERPROFILE%/AppData/LocalLow/Hovgaard Games/Big Ambitions Agent Tests`) and the Mac profile (`Big Ambitions Agent Tests Mac`, `~/Library/Application Support/com.hovgaardgames.bigambitions.agenttests.mac`), both with `-agent-tests -rig-test`.
 
 `check_scopes.py` scans `Core/`, `Compatibility/`, `Persistence/` and `Runtime/` for patches, MonoBehaviour messages, native event subscriptions, player-loop delegates, transpiler helpers, components and call sites, and compares them with the inventory, including each patch's native target. It fails closed on any form it cannot classify, and each transpiler body and target-resolver helper (`PINNED_RESOLVERS`) is pinned by fingerprint.
 
