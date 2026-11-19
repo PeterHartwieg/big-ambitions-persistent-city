@@ -314,7 +314,7 @@ public sealed class TrafficMappingValidationTests
         TrafficNetwork network = SeparateSections();
         Route route = ThreeSectionJourney();
         Assert.True(network.TryMap(route, out var mapped));
-        network.Links[1].FreeFlowMinutes = 0.001;
+        Assert.Throws<InvalidOperationException>(() => network.Links[1].FreeFlowMinutes = 0.001);
         mapped[1].FreeFlowMinutes = 0.001;
         Assert.Throws<ArgumentException>(() => network.ValidateRemainingMapping(route, mapped, 0));
         mapped[1].FreeFlowMinutes = 1;

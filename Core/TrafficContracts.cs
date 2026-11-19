@@ -3,12 +3,24 @@ using System.Collections.Generic;
 
 namespace PersistentCity.Core
 {
-    public sealed class TrafficSignalSchedule
+    public class TrafficSignalSchedule
     {
-        public double CycleMinutes { get; set; }
-        public double GreenStartMinutes { get; set; }
-        public double GreenDurationMinutes { get; set; }
-        public double PhaseOffsetMinutes { get; set; }
+        private double cycle, greenStart, greenDuration, phaseOffset;
+        public TrafficSignalSchedule() { }
+        private protected TrafficSignalSchedule(double cycle, double greenStart, double greenDuration, double phaseOffset)
+        { this.cycle = cycle; this.greenStart = greenStart; this.greenDuration = greenDuration; this.phaseOffset = phaseOffset; }
+        public double CycleMinutes { get => cycle; set { Writable(); cycle = value; } }
+        public double GreenStartMinutes { get => greenStart; set { Writable(); greenStart = value; } }
+        public double GreenDurationMinutes { get => greenDuration; set { Writable(); greenDuration = value; } }
+        public double PhaseOffsetMinutes { get => phaseOffset; set { Writable(); phaseOffset = value; } }
+        internal bool IsFrozen() => this is FrozenSignal;
+        internal static TrafficSignalSchedule? FrozenCopy(TrafficSignalSchedule? s) => s == null ? null
+            : new FrozenSignal(s.cycle, s.greenStart, s.greenDuration, s.phaseOffset);
+        private void Writable() { if (this is FrozenSignal) throw new InvalidOperationException("A traffic network's signal schedule is read-only."); }
+        private sealed class FrozenSignal : TrafficSignalSchedule
+        {
+            internal FrozenSignal(double cycle, double greenStart, double greenDuration, double phaseOffset) : base(cycle, greenStart, greenDuration, phaseOffset) { }
+        }
         internal double NextGreen(double time)
         {
             if (GreenDurationMinutes == 0) return double.PositiveInfinity;
@@ -37,13 +49,27 @@ namespace PersistentCity.Core
 
     }
 
-    public sealed class TrafficLinkDefinition
+    public class TrafficLinkDefinition
     {
-        public int Id { get; set; }
-        public int Capacity { get; set; }
-        public double FreeFlowMinutes { get; set; }
-        public double HeadwayMinutes { get; set; }
-        public TrafficSignalSchedule? Signal { get; set; }
+        private int id, capacity;
+        private double freeFlow, headway;
+        private TrafficSignalSchedule? signal;
+        public TrafficLinkDefinition() { }
+        private protected TrafficLinkDefinition(int id, int capacity, double freeFlow, double headway, TrafficSignalSchedule? signal)
+        { this.id = id; this.capacity = capacity; this.freeFlow = freeFlow; this.headway = headway; this.signal = signal; }
+        public int Id { get => id; set { Writable(); id = value; } }
+        public int Capacity { get => capacity; set { Writable(); capacity = value; } }
+        public double FreeFlowMinutes { get => freeFlow; set { Writable(); freeFlow = value; } }
+        public double HeadwayMinutes { get => headway; set { Writable(); headway = value; } }
+        public TrafficSignalSchedule? Signal { get => signal; set { Writable(); signal = value; } }
+        internal bool IsFrozen() => this is FrozenLink && (signal == null || signal.IsFrozen());
+        internal static TrafficLinkDefinition Frozen(int id, int capacity, double freeFlow, double headway, TrafficSignalSchedule? signal) =>
+            new FrozenLink(id, capacity, freeFlow, headway, TrafficSignalSchedule.FrozenCopy(signal));
+        private void Writable() { if (this is FrozenLink) throw new InvalidOperationException("A traffic network's link definition is read-only."); }
+        private sealed class FrozenLink : TrafficLinkDefinition
+        {
+            internal FrozenLink(int id, int capacity, double freeFlow, double headway, TrafficSignalSchedule? signal) : base(id, capacity, freeFlow, headway, signal) { }
+        }
     }
 
     public sealed class TrafficRouteLeg

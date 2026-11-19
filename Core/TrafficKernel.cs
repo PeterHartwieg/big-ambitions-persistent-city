@@ -8,7 +8,7 @@ namespace PersistentCity.Core
     {
         private sealed class Link
         {
-            internal readonly TrafficLinkDefinition Definition;
+            internal TrafficLinkDefinition Definition;
             internal bool Closed;
             internal double NextDischargeAt;
             internal int MergeCursor = -1;
@@ -294,6 +294,70 @@ namespace PersistentCity.Core
             return true;
         }
 
+        internal bool AdoptCompatibleDefinitions(IReadOnlyList<TrafficLinkDefinition> network)
+        {
+            if (network == null || network.Count != links.Count) return false;
+            bool compatible = true;
+            foreach (var current in network)
+            {
+                if (current == null || !links.TryGetValue(current.Id, out var link)) return false;
+                var saved = link.Definition;
+                if (ReferenceEquals(saved, current)) continue;
+                if (current.IsFrozen() && Identical(saved, current)) { Rebind(link, current); continue; }
+                if (saved.Capacity != current.Capacity || !SameDuration(saved.FreeFlowMinutes, current.FreeFlowMinutes)
+                    || !SameDuration(saved.HeadwayMinutes, current.HeadwayMinutes) || (saved.Signal == null) != (current.Signal == null)) compatible = false;
+                else if (saved.Signal != null && current.Signal != null
+                    && (!SameDuration(saved.Signal.CycleMinutes, current.Signal.CycleMinutes)
+                        || !SameDuration(saved.Signal.GreenDurationMinutes, current.Signal.GreenDurationMinutes)
+                        || !SameDuration(saved.Signal.GreenStartMinutes, current.Signal.GreenStartMinutes))) compatible = false;
+            }
+            return compatible;
+        }
+
+        internal static TrafficKernel SharingDefinitions(IReadOnlyList<TrafficLinkDefinition> network, double initialClock)
+        {
+            RequireTime(initialClock, nameof(initialClock));
+            if (network == null) throw new ArgumentNullException(nameof(network));
+            var kernel = new TrafficKernel(initialClock, network.Count);
+            bool ascending = true;
+            for (int i = 0; i < network.Count; i++) ascending &= kernel.AddDefinition(network[i], adopt: network[i] != null && network[i].IsFrozen());
+            if (!ascending) kernel.SortLinks();
+            return kernel;
+        }
+
+        internal int DefinitionsSharedWith(IReadOnlyList<TrafficLinkDefinition> network)
+        {
+            int shared = 0;
+            foreach (var current in network)
+                if (current != null && links.TryGetValue(current.Id, out var link) && ReferenceEquals(link.Definition, current)) shared++;
+            return shared;
+        }
+
+        private void Rebind(Link link, TrafficLinkDefinition definition)
+        {
+            link.Definition = definition;
+            if (projectionScratch != null && projectionScratch.Kernel.links.TryGetValue(definition.Id, out Link? projected)) projected.Definition = definition;
+        }
+
+        internal int ProjectionDefinitionsNotLive()
+        {
+            if (projectionScratch == null) return 0;
+            int stale = 0;
+            foreach (var pair in projectionScratch.Kernel.links)
+                if (!links.TryGetValue(pair.Key, out var live) || !ReferenceEquals(live.Definition, pair.Value.Definition)) stale++;
+            return stale;
+        }
+
+        private static bool Identical(TrafficLinkDefinition a, TrafficLinkDefinition b)
+        {
+            if (a.Id != b.Id || a.Capacity != b.Capacity || !Bits(a.FreeFlowMinutes, b.FreeFlowMinutes) || !Bits(a.HeadwayMinutes, b.HeadwayMinutes)) return false;
+            if (a.Signal == null || b.Signal == null) return a.Signal == null && b.Signal == null;
+            return Bits(a.Signal.CycleMinutes, b.Signal.CycleMinutes) && Bits(a.Signal.GreenStartMinutes, b.Signal.GreenStartMinutes)
+                && Bits(a.Signal.GreenDurationMinutes, b.Signal.GreenDurationMinutes) && Bits(a.Signal.PhaseOffsetMinutes, b.Signal.PhaseOffsetMinutes);
+        }
+
+        private static bool Bits(double a, double b) => BitConverter.DoubleToInt64Bits(a) == BitConverter.DoubleToInt64Bits(b);
+
         private static bool SameDuration(double a, double b) => Math.Abs(a - b) <= 1e-9 * Math.Max(1, Math.Max(Math.Abs(a), Math.Abs(b)));
 
         public TrafficHoldResult HoldVehicle(string vehicleId, double minutes, double maximumCharge = double.PositiveInfinity)
@@ -518,6 +582,7 @@ namespace PersistentCity.Core
             {
                 Link original = links[id];
                 if (!projection.links.TryGetValue(id, out Link? copy)) { copy = new Link(original.Definition); projection.links.Add(id, copy); }
+                else copy.Definition = original.Definition;
                 scratch.Used.Add(id);
                 copy.Closed = original.Closed;
                 copy.NextDischargeAt = original.NextDischargeAt;

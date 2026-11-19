@@ -115,7 +115,7 @@ namespace PersistentCity.Runtime
                 int meshes = BodyMerge.LiveMeshes(out long vertices);
                 return new { monoHeapBytes = context.MonoHeapBytes, monoUsedBytes = context.MonoUsedBytes, totalMemoryBytes = GC.GetTotalMemory(false),
                     gen0 = GcCount(0), gen1 = GcCount(1), gen2 = GcCount(2), incremental = context.Incremental, measuring = gcSampler?.Running == true,
-                    ownedBodyCombiners = BodyMerge.Owned, reservedBodies = PhysicalPedestrians.ReserveCount, liveMergedMeshes = meshes, liveMergedVertices = vertices,
+                    ownedBodyCombiners = BodyMerge.Owned, unmergedBodyCombiners = BodyMerge.Unmerged, reservedBodies = PhysicalPedestrians.ReserveCount, liveMergedMeshes = meshes, liveMergedVertices = vertices,
                     releasedMergedMeshes = BodyMerge.ReleasedMeshes, releasedMergedVertices = BodyMerge.ReleasedVertices, bakeScratchBytes = BlendshapeBake.ScratchBytes };
             }
         }

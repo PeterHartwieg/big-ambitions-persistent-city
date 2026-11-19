@@ -41,7 +41,17 @@ namespace PersistentCity.Runtime
             + (BodyMerge.LastError.Length == 0 ? "" : " (" + BodyMerge.LastError + ")")
             + "/fallbacks: " + BodyMerge.Fallbacks + (BodyMerge.LastCollectError.Length == 0 ? "" : " (collect: " + BodyMerge.LastCollectError + ")")
             + "/" + GrowStartMaximum.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture) + " ms grow start max/"
-            + GrowFinishMaximum.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture) + " ms grow finish max";
+            + GrowFinishMaximum.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture) + " ms grow finish max/" + growLog.Report();
+        private static readonly GrowTimingLog growLog = new GrowTimingLog();
+        private readonly GrowTimer growTimer = new GrowTimer(System.Diagnostics.Stopwatch.Frequency);
+        private void BeginGrow(GrowKind kind) => growTimer.Begin(Time.frameCount, kind, System.Diagnostics.Stopwatch.GetTimestamp());
+        private void GrowStep(int step) => growTimer.Done(step, System.Diagnostics.Stopwatch.GetTimestamp());
+        private void EndGrow()
+        {
+            var timing = growTimer.End(System.Diagnostics.Stopwatch.GetTimestamp());
+            growLog.Record(timing);
+            ModFrames.NoteGrow(timing);
+        }
         private readonly Dictionary<string, PhysicalPedestrianBody> active = new Dictionary<string, PhysicalPedestrianBody>(StringComparer.Ordinal);
         private bool disposed;
 
@@ -138,8 +148,10 @@ namespace PersistentCity.Runtime
                 else if (!immediate)
                 {
                     PhysicalAllocation.Mark();
-                    var grown = Grow(out bool failed);
-                    PhysicalAllocation.Detail(PersistentCity.Core.GcAllocationSegment.PhysicalSpawnGrow);
+                    ThirdPersonCharacter? grown;
+                    bool failed;
+                    try { grown = Grow(out failed); }
+                    finally { PhysicalAllocation.Detail(PersistentCity.Core.GcAllocationSegment.PhysicalSpawnGrow); }
                     if (failed) return false;
                     if (grown != null)
                     {
@@ -152,8 +164,8 @@ namespace PersistentCity.Runtime
                 else
                 {
                     PhysicalAllocation.Mark();
-                    character = Instantiate();
-                    PhysicalAllocation.Detail(PersistentCity.Core.GcAllocationSegment.PhysicalSpawnGrow);
+                    try { character = Instantiate(); }
+                    finally { PhysicalAllocation.Detail(PersistentCity.Core.GcAllocationSegment.PhysicalSpawnGrow); }
                     if (character == null) return false;
                 }
                 character.isPlayer = false; character.updatePlayerPos = false;
@@ -241,15 +253,25 @@ namespace PersistentCity.Runtime
             long started = System.Diagnostics.Stopwatch.GetTimestamp();
             if (growing == null)
             {
-                if (!Staged()) { failed = true; return null; }
-                growing = UnityEngine.Object.InstantiateAsync(prefab!, staging!.transform);
-                GrowsStarted++;
-                GrowStartMaximum = Math.Max(GrowStartMaximum, Since(started));
-                return null;
+                BeginGrow(GrowKind.AsyncStart);
+                try
+                {
+                    bool staged = Staged();
+                    GrowStep(GrowTimer.Staging);
+                    if (!staged) { growTimer.Stopped(); failed = true; return null; }
+                    growing = UnityEngine.Object.InstantiateAsync(prefab!, staging!.transform);
+                    GrowStep(GrowTimer.Result);
+                    growTimer.Outcome(true);
+                    GrowsStarted++;
+                    GrowStartMaximum = Math.Max(GrowStartMaximum, Since(started));
+                    return null;
+                }
+                finally { EndGrow(); }
             }
             if (!growing.isDone) return null;
-            try { return Finish(out failed); }
-            finally { GrowFinishMaximum = Math.Max(GrowFinishMaximum, Since(started)); }
+            BeginGrow(GrowKind.AsyncFinish);
+            try { var finished = Finish(out failed); growTimer.Outcome(!failed); return finished; }
+            finally { GrowFinishMaximum = Math.Max(GrowFinishMaximum, Since(started)); EndGrow(); }
         }
 
         private ThirdPersonCharacter? Finish(out bool failed)
@@ -257,6 +279,7 @@ namespace PersistentCity.Runtime
             failed = false;
             var made = growing!.Result;
             growing = null;
+            GrowStep(GrowTimer.Result);
             if (made == null || made.Length != 1 || made[0] == null)
             {
                 if (made != null) foreach (var extra in made) if (extra != null) UnityEngine.Object.Destroy(extra);
@@ -279,8 +302,19 @@ namespace PersistentCity.Runtime
 
         private ThirdPersonCharacter? Instantiate()
         {
-            if (!Staged()) return null;
-            return Adopt(UnityEngine.Object.Instantiate(prefab!, staging!.transform));
+            BeginGrow(GrowKind.SyncInstantiate);
+            try
+            {
+                bool staged = Staged();
+                GrowStep(GrowTimer.Staging);
+                if (!staged) { growTimer.Stopped(); return null; }
+                var made = UnityEngine.Object.Instantiate(prefab!, staging!.transform);
+                GrowStep(GrowTimer.Result);
+                var adopted = Adopt(made);
+                growTimer.Outcome(adopted != null);
+                return adopted;
+            }
+            finally { EndGrow(); }
         }
 
         private ThirdPersonCharacter? Adopt(GameObject instance)
@@ -292,13 +326,16 @@ namespace PersistentCity.Runtime
             {
                 UnityEngine.Object.Destroy(instance); return null;
             }
+            GrowStep(GrowTimer.Checks);
             character.gameObject.SetActive(false);
             character.isPlayer = false; character.updatePlayerPos = false;
             SizeHierarchy(character.transform);
             character.transform.SetParent(parent, false);
+            GrowStep(GrowTimer.Parent);
             all.Add(character);
             if (BlendshapeBake.Adopt(character.appearanceSetter.meshCombiner)) baked.Add(character.appearanceSetter);
             BodyMerge.Own(character.appearanceSetter.meshCombiner);
+            GrowStep(GrowTimer.Own);
             return character;
         }
 
