@@ -84,6 +84,36 @@ Peter: "We should hold it at 1 until release. Nobody has a save since its not re
 - Tests run focused while working and in full once before merge (9 November). Peter removed the machine-wide dotnet lock on 10 November.
 - Docs stay as lean as possible (10 November): slices write no docs unless the task names the file. Later rules on code comments and new Markdown files are in AGENTS.md.
 
+## GR-5 acceptance gates, 19 November 2026
+
+Peter, 19 November 2026: "I don't want to be stuck in optimization that a player never feels." This adopts decisions 5 and 9 of the [test-plan review](../../research/rig-test-plan-review-2026-11-19.md#8-decisions-for-peter), with the retained census judged the same way. The review's other decisions are still open.
+
+Gates (set 18 November, unchanged):
+
+- GC pause p95 about 36 ms, day and night.
+- Gen0 about 5 per 600 s.
+- Night Mono heap at most 1.47 GB at the GC sampler report, measured as in rigs 16l to 16r.
+- Street mod-work p95 under 5 ms. Every mod-work frame of 30 ms or more is listed.
+- Save main-thread pause under 40 ms at 1,000 residents (route A, background writer).
+- Owned meshes match live meshes plus unmerged meshes.
+
+Reported only, never a fail:
+
+- Day mod allocation (the 119 MB target), since 18 November.
+- Mod-versus-no-mod heap (former check D). It is a footprint figure: report the start and stop gap in % and MB, for heap size and for live after forced GC. Pick a budget only if a smaller footprint is wanted for its own sake.
+- RSS allowance against a single no-mod read (former check E).
+- Retained census growth after one 1->2->1 retime (former check F).
+
+Leak rule (the memory gate). Memory fails only when it keeps growing across repeated cycles, not on one-time overhead.
+
+- Run at least three 1->2->1 retimes in one fresh game process. Wait for each to complete. Take readings at matched points after each. Also judge repeated day/night cycles or a soak when those are run.
+- Readings: retained census (`pc gc retained` total and per-type counts); managed heap (live after forced GC, and the live gap to the no-mod reference); process RSS; the mod's native counters (owned, live and unmerged meshes, live vertices, bake scratch).
+- A reading that rises at every checkpoint fails. Growth that levels off passes, and the plateau size is reported.
+- Growth inside one window or after one retime is reported. It fails only if it continues across the repeated cycles.
+- If three cycles cannot tell (still rising but slowing), the verdict is NOT ESTABLISHED. Run more cycles; it is not a pass.
+
+Every measured check records its autosave suppression: the original autosave value, and the value verified off after each reload and before and after each window.
+
 ## Lessons from failed approaches
 
 - **Compact save format (F7d, 6 November):** fewer bytes did not show a shorter native pause, and the extra encoding, compression and identity work cost time. The format was dropped in P-A. [Record](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/a3a6c8db8686f4382ac3cf941010e0b614e48805/docs/decisions/2026-11-06-f7d-compact-format.md).
