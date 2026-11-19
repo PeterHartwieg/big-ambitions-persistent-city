@@ -174,6 +174,73 @@ public sealed class Gr5RetiredSimulatorTests
     }
 
     [Fact]
+    public void ClockRetimesBetweenTwoRatesKeepRetainedAndScannedBytesFlatAtWarmedReturnsToEachRate()
+    {
+        var rated = new Dictionary<double, TrafficNetwork> { [1] = Line() };
+        rated[2] = rated[1].Rerated(2, _ => null);
+        var planner = new RoadPlanner { TrafficNetwork = rated[1] };
+        var state = City(rated[1]);
+        var city = new CitySimulator(state, planner);
+        city.AdvanceTo(100.2, 64);
+        var driver = new ClockRetimeDriver();
+        var donor = new Donor();
+        var rows = new List<(double Rate, long Bytes, long Scanned)>();
+        var journeyLegs = new List<long>();
+        double minute = 100.2;
+        for (int i = 0; i < 10; i++)
+        {
+            double rate = i % 2 == 0 ? 2 : 1;
+            int updates = 0;
+            while (driver.Update(state, rate, false, 1.4, 1000) != ClockRetimeOutcome.Committed)
+                Assert.True(++updates < 10_000, "retime to " + rate + " did not commit");
+            Assert.Equal(rate, state.TravelClockRate);
+            var next = new RoadPlanner { TrafficNetwork = rated[rate] };
+            donor.Planner = planner;
+            var rebuild = city.BeginRebuildRoutes(next, driver.TakeRetimedTraffic());
+            while (!rebuild.Step(long.MaxValue)) { }
+            city = rebuild.TakeResult(); planner = next;
+            Assert.Null(driver.TakeRetimedTraffic());
+            Assert.False(driver.Holding);
+            Assert.NotNull(planner.Forecast);
+            minute += 0.02;
+            city.AdvanceTo(minute, 64);
+            var census = new RetainedCensus();
+            census.Add("runtime.simulation", city);
+            census.Add("runtime.routes", planner);
+            census.Add("runtime.retimeDriver", driver);
+            census.Add("static.RoadRoutes.donor", donor);
+            census.Add("rate cache", rated);
+            Assert.Equal(1, census.ObjectsOf(typeof(CitySimulator)));
+            Assert.Equal(0, census.Failures);
+            long legs = state.Citizens.Sum(c => (long)(c.Journey?.Legs.Count ?? 0)) + state.VisitorRoutines.Sum(v => (long)(v.Journey?.Legs.Count ?? 0));
+            Assert.Equal(legs, census.ObjectsOf(typeof(RouteLeg)));
+            var journeyRows = census.Types.Where(t => t.Name == nameof(RouteLeg) || t.Name == nameof(RouteLeg) + "[]").ToList();
+            rows.Add((rate, census.Bytes - journeyRows.Sum(t => t.Bytes), census.ScannedBytes - journeyRows.Sum(t => t.ScannedBytes)));
+            journeyLegs.Add(legs);
+        }
+        output.WriteLine("without journey legs: " + string.Join("; ", rows.Select(r => "rate " + r.Rate + ": " + r.Bytes + " B / scanned " + r.Scanned + " B")));
+        output.WriteLine("live journey legs per retime: " + string.Join(", ", journeyLegs));
+        foreach (double rate in new[] { 1.0, 2.0 })
+        {
+            var warmed = rows.Where(r => r.Rate == rate).Skip(1).ToList();
+            Assert.True(warmed.Count >= 3);
+            foreach (var row in warmed)
+            {
+                Assert.InRange(row.Bytes, warmed[0].Bytes - 512, warmed[0].Bytes + 512);
+                Assert.InRange(row.Scanned, warmed[0].Scanned - 512, warmed[0].Scanned + 512);
+            }
+        }
+        city.AdvanceTo(130, 4096);
+        var after = new RetainedCensus();
+        after.Add("runtime.simulation", city);
+        long remaining = state.Citizens.Sum(c => (long)(c.Journey?.Legs.Count ?? 0));
+        output.WriteLine("live journey legs after arrival: " + remaining);
+        Assert.Equal(CitizenPhase.AtPlace, state.Citizens[0].Phase);
+        Assert.Equal(remaining, after.ObjectsOf(typeof(RouteLeg)));
+        Assert.True(remaining < journeyLegs[0], "legs after arrival " + remaining);
+    }
+
+    [Fact]
     public void AForecastUsedByTheReplacementIsKeptWhenARebuildReusesThePlanner()
     {
         var network = Line();
