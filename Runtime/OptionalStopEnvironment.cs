@@ -303,8 +303,9 @@ namespace PersistentCity.Runtime
         }
         private sealed class ParkBuild
         {
-            public ParkBuild(LocationHappinessTrigger trigger, Place place, string key, ResumableSamples<(Collider Collider, Vector3 Outside)> run)
-            { Trigger = trigger; Origin = place.Position; PlaceId = place.Id; Key = key; Run = run; }
+            public ParkBuild(LocationHappinessTrigger trigger, Place place, string key, (Collider Collider, Vector3 Outside)[] inputs, ResumableSamples<(Collider Collider, Vector3 Outside)> run)
+            { Trigger = trigger; Origin = place.Position; PlaceId = place.Id; Key = key; Inputs = inputs; Run = run; }
+            public (Collider Collider, Vector3 Outside)[] Inputs { get; }
             public LocationHappinessTrigger Trigger { get; }
             public Position Origin { get; }
             public string PlaceId { get; }
@@ -326,8 +327,10 @@ namespace PersistentCity.Runtime
                     if (!OutdoorPlaces.StaticSceneKey(trigger.transform, out string scene) || "scene-park:" + scene != place.Id
                         || !parkActivity.Admit(place.Id, trigger.gameObject.activeInHierarchy, false)) continue;
                     long started = System.Diagnostics.Stopwatch.GetTimestamp();
-                    if (!parkBuilds.TryGetValue(key, out var build) || !ReferenceEquals(build.Trigger, trigger) || !ReferenceEquals(build.PlaceId, place.Id) || !build.Origin.Equals(place.Position))
-                        build = SetUpPark(trigger, place, key);
+                    var fresh = SetUpPark(trigger, place, key);
+                    if (!parkBuilds.TryGetValue(key, out var build) || !ReferenceEquals(build.Trigger, trigger) || !ReferenceEquals(build.PlaceId, place.Id)
+                        || !build.Origin.Equals(place.Position) || !build.Run.SameInputs(fresh.Inputs, ParkInputComparer.Instance))
+                        build = fresh;
                     parkBuilds.Remove(key);
                     build.Run.Continue(ParkSampleSpot, build, long.MaxValue);
                     ParkBuilds++;
@@ -354,7 +357,15 @@ namespace PersistentCity.Runtime
                 inputs.Add((collider, new Vector3(center.x, center.y, b.min.z - 2)));
                 inputs.Add((collider, new Vector3(center.x, center.y, b.max.z + 2)));
             }
-            return new ParkBuild(trigger, place, key, new ResumableSamples<(Collider, Vector3)>(inputs.ToArray()));
+            var array = inputs.ToArray();
+            return new ParkBuild(trigger, place, key, array, new ResumableSamples<(Collider, Vector3)>(array));
+        }
+        private sealed class ParkInputComparer : IEqualityComparer<(Collider Collider, Vector3 Outside)>
+        {
+            public static readonly ParkInputComparer Instance = new ParkInputComparer();
+            public bool Equals((Collider Collider, Vector3 Outside) a, (Collider Collider, Vector3 Outside) b)
+                => ReferenceEquals(a.Collider, b.Collider) && a.Outside.x.Equals(b.Outside.x) && a.Outside.y.Equals(b.Outside.y) && a.Outside.z.Equals(b.Outside.z);
+            public int GetHashCode((Collider Collider, Vector3 Outside) value) => System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(value.Collider);
         }
         private static readonly Func<ParkBuild, (Collider Collider, Vector3 Outside), int, OptionalStopSpot?> ParkSampleSpot
             = (build, input, count) => ParkSpot(build.Origin, build.PlaceId, build.Key, count, input.Collider, input.Outside);
@@ -370,13 +381,38 @@ namespace PersistentCity.Runtime
         {
             private readonly OptionalStopEnvironment owner;
             public ParkWarmTargets(OptionalStopEnvironment owner) { this.owner = owner; }
-            public int Count => owner.parkTriggers == null || owner.scans.Due(DwellKind.Resting) ? 0 : owner.parkTriggers.Length;
+            private LocationHappinessTrigger[]? bound;
+            private Place?[] boundPlaces = Array.Empty<Place?>();
+            private string[] boundKeys = Array.Empty<string>();
+            private bool[] resolved = Array.Empty<bool>();
+            public int Count
+            {
+                get
+                {
+                    var triggers = owner.parkTriggers;
+                    if (triggers == null || owner.scans.Due(DwellKind.Resting)) return 0;
+                    if (!ReferenceEquals(bound, triggers))
+                    {
+                        bound = triggers; boundPlaces = new Place?[triggers.Length];
+                        boundKeys = new string[triggers.Length]; resolved = new bool[triggers.Length];
+                    }
+                    return triggers.Length;
+                }
+            }
             private bool Resolve(int index, out LocationHappinessTrigger trigger, out Place place, out string key)
             {
-                trigger = owner.parkTriggers![index]; place = null!; key = "";
-                if (trigger == null || !OutdoorPlaces.StaticSceneKey(trigger.transform, out string scene)
-                    || !owner.places.TryGetValue("scene-park:" + scene, out var found) || !ParkPlace(found)) return false;
-                place = found; key = owner.SpotKey(found, DwellKind.Resting);
+                trigger = bound![index]; place = null!; key = "";
+                if (trigger == null || !trigger.gameObject.activeInHierarchy) return false;
+                if (!resolved[index])
+                {
+                    resolved[index] = true;
+                    if (OutdoorPlaces.StaticSceneKey(trigger.transform, out string scene)
+                        && owner.places.TryGetValue("scene-park:" + scene, out var found) && ParkPlace(found))
+                    { boundPlaces[index] = found; boundKeys[index] = owner.SpotKey(found, DwellKind.Resting); }
+                }
+                var known = boundPlaces[index];
+                if (known == null) return false;
+                place = known; key = boundKeys[index];
                 return !owner.cached.ContainsKey(key);
             }
             private ParkBuild? Build(int index, out LocationHappinessTrigger trigger, out Place place, out string key)

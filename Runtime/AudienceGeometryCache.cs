@@ -53,6 +53,12 @@ namespace PersistentCity.Runtime
         public ResumableSamples(TInput[] inputs) { this.inputs = inputs ?? throw new ArgumentNullException(nameof(inputs)); }
 
         public bool Complete => next >= inputs.Length;
+        public bool SameInputs(TInput[] other, IEqualityComparer<TInput> comparer)
+        {
+            if (other.Length != inputs.Length) return false;
+            for (int i = 0; i < inputs.Length; i++) if (!comparer.Equals(inputs[i], other[i])) return false;
+            return true;
+        }
         public int Sampled => next;
         public IReadOnlyList<OptionalStopSpot> Spots => spots;
 
@@ -82,6 +88,8 @@ namespace PersistentCity.Runtime
     internal sealed class GeometryWarmup
     {
         private int cursor;
+        private readonly Func<long> clock;
+        public GeometryWarmup(Func<long>? clock = null) { this.clock = clock ?? Stopwatch.GetTimestamp; }
         public bool Idle { get; private set; }
         public long Setups { get; private set; }
         public long Slices { get; private set; }
@@ -92,34 +100,35 @@ namespace PersistentCity.Runtime
 
         public void Run(GeometryFrameBudget budget, int frameNumber, IGeometryWarmTarget target)
         {
-            int count = target.Count;
-            if (Idle || count == 0) return;
-            long started = Stopwatch.GetTimestamp();
+            if (Idle) return;
+            long started = clock();
             if (!budget.TryDeadline(frameNumber, started, out long deadline)) return;
             bool worked = false;
             try
             {
+                int count = target.Count;
+                if (count == 0) return;
                 for (int visited = 0; visited < count; visited++)
                 {
+                    if (clock() >= deadline) return;
                     int index = cursor % count;
-                    if (target.Warm(index)) { cursor = index + 1; if (Stopwatch.GetTimestamp() >= deadline) return; continue; }
+                    if (target.Warm(index)) { cursor = index + 1; continue; }
                     worked = true;
                     if (!target.Started(index))
                     {
-                        if (Stopwatch.GetTimestamp() >= deadline) return;
                         Setups++;
                         target.Start(index);
+                        if (clock() >= deadline) return;
                     }
                     if (!target.Continue(index, deadline)) return;
                     cursor = index + 1;
-                    if (Stopwatch.GetTimestamp() >= deadline) return;
                 }
                 if (!worked) Idle = true;
             }
             catch (Exception) { Failures++; cursor++; }
             finally
             {
-                double elapsed = (Stopwatch.GetTimestamp() - started) * 1000.0 / Stopwatch.Frequency;
+                double elapsed = (clock() - started) * 1000.0 / Stopwatch.Frequency;
                 budget.Spend(elapsed); Slices++;
                 if (elapsed > MaximumMilliseconds) MaximumMilliseconds = elapsed;
             }

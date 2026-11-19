@@ -101,67 +101,104 @@ public sealed class AudienceGeometryCacheTests
         Assert.True(new ResumableSamples<int>(Array.Empty<int>()).Continue(Sample, "park:", 0));
     }
 
+    private sealed class Clock
+    {
+        public long Now = 1_000_000;
+        public static long Ticks(double milliseconds) => (long)(milliseconds * Stopwatch.Frequency / 1000);
+        public void Advance(double milliseconds) => Now += Ticks(milliseconds);
+    }
+
     private sealed class Parks : IGeometryWarmTarget
     {
-        public readonly int[] Samples; public readonly bool[] SetUp, Done; public int Starts;
+        private readonly Clock clock;
+        public readonly int[] Samples; public readonly bool[] SetUp, Done; public int Starts, Continues, CountReads;
         public double StartMilliseconds, SampleMilliseconds;
-        public Parks(int count, int samples) { Samples = Enumerable.Repeat(samples, count).ToArray(); SetUp = new bool[count]; Done = new bool[count]; }
-        public int Count => Samples.Length;
+        public Parks(Clock clock, int count, int samples) { this.clock = clock; Samples = Enumerable.Repeat(samples, count).ToArray(); SetUp = new bool[count]; Done = new bool[count]; }
+        public int Count { get { CountReads++; return Samples.Length; } }
         public bool Warm(int index) => Done[index];
         public bool Started(int index) => SetUp[index];
-        public void Start(int index) { Starts++; SetUp[index] = true; Spin(StartMilliseconds); }
+        public void Start(int index) { Starts++; SetUp[index] = true; clock.Advance(StartMilliseconds); }
         public bool Continue(int index, long deadline)
         {
+            Continues++;
             while (Samples[index] > 0)
             {
-                Samples[index]--; Spin(SampleMilliseconds);
-                if (Samples[index] > 0 && Stopwatch.GetTimestamp() >= deadline) return false;
+                Samples[index]--; clock.Advance(SampleMilliseconds);
+                if (Samples[index] > 0 && clock.Now >= deadline) return false;
             }
             Done[index] = true; return true;
-        }
-        private static void Spin(double milliseconds)
-        {
-            long until = Stopwatch.GetTimestamp() + (long)(milliseconds * Stopwatch.Frequency / 1000);
-            while (Stopwatch.GetTimestamp() < until) { }
         }
     }
 
     [Fact]
-    public void AnExhaustedFrameBudgetPreventsTheSetupOfAnotherColdPark()
+    public void AnOverBudgetParkSetupStartsNoSampleAndNoOtherColdPark()
     {
+        var clock = new Clock();
         var budget = new GeometryFrameBudget();
-        var warmup = new GeometryWarmup();
-        var parks = new Parks(3, 1) { StartMilliseconds = 1.5 };
+        var warmup = new GeometryWarmup(() => clock.Now);
+        var parks = new Parks(clock, 3, 2) { StartMilliseconds = 1.5, SampleMilliseconds = 0.1 };
         warmup.Run(budget, 1, parks);
         Assert.Equal(1, parks.Starts);
-        Assert.True(parks.Done[0]);
+        Assert.Equal(0, parks.Continues);
+        Assert.Equal(2, parks.Samples[0]);
         Assert.False(parks.SetUp[1]);
+        Assert.True(warmup.MaximumMilliseconds >= 1.5, "setup charged " + warmup.MaximumMilliseconds);
         warmup.Run(budget, 1, parks);
         Assert.Equal(1, parks.Starts);
-        Assert.True(budget.Deferrals >= 1);
+        Assert.Equal(0, parks.Continues);
+        Assert.Equal(1, budget.Deferrals);
         warmup.Run(budget, 2, parks);
-        Assert.Equal(2, parks.Starts);
+        Assert.True(parks.Done[0]);
         Assert.Equal(2, warmup.Setups);
-        Assert.True(warmup.MaximumMilliseconds >= 1.5, "setup charged " + warmup.MaximumMilliseconds);
+        Assert.Equal(0, parks.Samples[0]);
+    }
+
+    [Fact]
+    public void AnExhaustedParkPassPreparesNoAudienceCandidates()
+    {
+        var clock = new Clock();
+        var budget = new GeometryFrameBudget();
+        var parkWarmup = new GeometryWarmup(() => clock.Now);
+        var audienceWarmup = new GeometryWarmup(() => clock.Now);
+        var parks = new Parks(clock, 1, 30) { SampleMilliseconds = 0.1 };
+        var audiences = new Parks(clock, 4, 1);
+        parkWarmup.Run(budget, 1, parks);
+        Assert.False(parks.Done[0]);
+        audienceWarmup.Run(budget, 1, audiences);
+        Assert.Equal(0, audiences.CountReads);
+        Assert.Equal(1, budget.Deferrals);
+        audienceWarmup.Run(budget, 2, audiences);
+        Assert.Equal(1, audiences.CountReads);
+        Assert.True(audiences.Done.All(d => d));
     }
 
     [Fact]
     public void WarmUpResumesAcrossFramesAndGoesIdleOnceEveryParkIsWarm()
     {
+        var clock = new Clock();
         var budget = new GeometryFrameBudget();
-        var warmup = new GeometryWarmup();
-        var parks = new Parks(2, 12) { SampleMilliseconds = 0.2 };
+        var warmup = new GeometryWarmup(() => clock.Now);
+        var parks = new Parks(clock, 2, 12) { SampleMilliseconds = 0.2 };
         int frames = 0;
         while (!warmup.Idle && frames < 100) warmup.Run(budget, ++frames, parks);
         Assert.True(parks.Done.All(d => d));
         Assert.Equal(2, parks.Starts);
-        Assert.InRange(frames, 4, 20);
+        Assert.InRange(frames, 5, 8);
         long slices = warmup.Slices;
         warmup.Run(budget, ++frames, parks);
         Assert.Equal(slices, warmup.Slices);
         warmup.Reset();
         warmup.Run(budget, ++frames, parks);
         Assert.True(warmup.Idle);
+    }
+
+    [Fact]
+    public void SameInputsComparesEveryInputInOrder()
+    {
+        var run = new ResumableSamples<int>(new[] { 1, 2, 3 });
+        Assert.True(run.SameInputs(new[] { 1, 2, 3 }, EqualityComparer<int>.Default));
+        Assert.False(run.SameInputs(new[] { 1, 3, 2 }, EqualityComparer<int>.Default));
+        Assert.False(run.SameInputs(new[] { 1, 2 }, EqualityComparer<int>.Default));
     }
 
     [Fact]
