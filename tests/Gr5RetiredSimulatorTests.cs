@@ -109,6 +109,70 @@ public sealed class Gr5RetiredSimulatorTests
         Assert.Equal(0, census.Failures);
     }
 
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private static (CitySimulator Live, RoadPlanner Next, WeakReference Retired) SynchronousRebuildAwaitingNetwork(DroppedRoads donor)
+    {
+        var network = Line();
+        var planner = new RoadPlanner { TrafficNetwork = network };
+        var city = new CitySimulator(City(network), planner);
+        city.AdvanceTo(100.5, 64);
+        donor.Forecast = planner.Forecast; donor.EntryForecast = planner.EntryForecast;
+        var next = new RoadPlanner();
+        var replacement = city.RebuildRoutes(next);
+        Assert.Null(next.Forecast);
+        return (replacement, next, new WeakReference(city));
+    }
+
+    [Fact]
+    public void ASynchronousRebuildReleasesTheRetiredSimulatorAndKeepsItsJourneyIndex()
+    {
+        var donor = new DroppedRoads();
+        var (live, next, retired) = SynchronousRebuildAwaitingNetwork(donor);
+        Assert.NotNull(donor.Forecast); Assert.NotNull(donor.EntryForecast);
+        GC.Collect(); GC.WaitForPendingFinalizers(); GC.Collect();
+        Assert.False(retired.IsAlive);
+        Assert.True(live.ActiveJourneyIndexMatchesState());
+        next.TrafficNetwork = Line();
+        live.TryRefreshTrafficClosures(1000);
+        Assert.Same(live, Closure(next.Forecast!));
+        live.AdvanceTo(101.5, 64);
+        GC.KeepAlive(donor);
+    }
+
+    [Fact]
+    public void RepeatedRetimesKeepRetainedAndScannedBytesFlatAtWarmedBoundaries()
+    {
+        var network = Line();
+        var planner = new RoadPlanner { TrafficNetwork = network };
+        var city = new CitySimulator(City(network), planner);
+        city.AdvanceTo(100.5, 64);
+        var donor = new Donor();
+        var bytes = new List<long>(); var scanned = new List<long>();
+        for (int i = 0; i < 8; i++)
+        {
+            var next = new RoadPlanner { TrafficNetwork = network };
+            donor.Planner = planner;
+            var rebuild = city.BeginRebuildRoutes(next, null);
+            while (!rebuild.Step(long.MaxValue)) { }
+            city = rebuild.TakeResult(); planner = next;
+            city.AdvanceTo(100.5 + 0.25 * (i + 1), 64);
+            var census = new RetainedCensus();
+            census.Add("runtime.simulation", city);
+            census.Add("runtime.routes", planner);
+            census.Add("static.RoadRoutes.donor", donor);
+            census.Add("network", network);
+            Assert.Equal(1, census.ObjectsOf(typeof(CitySimulator)));
+            Assert.Equal(0, census.Failures);
+            bytes.Add(census.Bytes); scanned.Add(census.ScannedBytes);
+        }
+        output.WriteLine("retained B per retime: " + string.Join(", ", bytes) + "; scanned B: " + string.Join(", ", scanned));
+        for (int i = 2; i < bytes.Count; i++)
+        {
+            Assert.InRange(bytes[i], bytes[1] - 512, bytes[1] + 512);
+            Assert.InRange(scanned[i], scanned[1] - 512, scanned[1] + 512);
+        }
+    }
+
     [Fact]
     public void AForecastUsedByTheReplacementIsKeptWhenARebuildReusesThePlanner()
     {
