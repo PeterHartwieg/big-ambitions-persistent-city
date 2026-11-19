@@ -303,7 +303,7 @@ namespace PersistentCity.Core
                 if (current == null || !links.TryGetValue(current.Id, out var link)) return false;
                 var saved = link.Definition;
                 if (ReferenceEquals(saved, current)) continue;
-                if (Identical(saved, current)) { link.Definition = current; continue; }
+                if (current.IsFrozen() && Identical(saved, current)) { Rebind(link, current); continue; }
                 if (saved.Capacity != current.Capacity || !SameDuration(saved.FreeFlowMinutes, current.FreeFlowMinutes)
                     || !SameDuration(saved.HeadwayMinutes, current.HeadwayMinutes) || (saved.Signal == null) != (current.Signal == null)) compatible = false;
                 else if (saved.Signal != null && current.Signal != null
@@ -320,7 +320,7 @@ namespace PersistentCity.Core
             if (network == null) throw new ArgumentNullException(nameof(network));
             var kernel = new TrafficKernel(initialClock, network.Count);
             bool ascending = true;
-            for (int i = 0; i < network.Count; i++) ascending &= kernel.AddDefinition(network[i], adopt: true);
+            for (int i = 0; i < network.Count; i++) ascending &= kernel.AddDefinition(network[i], adopt: network[i] != null && network[i].IsFrozen());
             if (!ascending) kernel.SortLinks();
             return kernel;
         }
@@ -331,6 +331,21 @@ namespace PersistentCity.Core
             foreach (var current in network)
                 if (current != null && links.TryGetValue(current.Id, out var link) && ReferenceEquals(link.Definition, current)) shared++;
             return shared;
+        }
+
+        private void Rebind(Link link, TrafficLinkDefinition definition)
+        {
+            link.Definition = definition;
+            if (projectionScratch != null && projectionScratch.Kernel.links.TryGetValue(definition.Id, out Link? projected)) projected.Definition = definition;
+        }
+
+        internal int ProjectionDefinitionsNotLive()
+        {
+            if (projectionScratch == null) return 0;
+            int stale = 0;
+            foreach (var pair in projectionScratch.Kernel.links)
+                if (!links.TryGetValue(pair.Key, out var live) || !ReferenceEquals(live.Definition, pair.Value.Definition)) stale++;
+            return stale;
         }
 
         private static bool Identical(TrafficLinkDefinition a, TrafficLinkDefinition b)
@@ -567,6 +582,7 @@ namespace PersistentCity.Core
             {
                 Link original = links[id];
                 if (!projection.links.TryGetValue(id, out Link? copy)) { copy = new Link(original.Definition); projection.links.Add(id, copy); }
+                else copy.Definition = original.Definition;
                 scratch.Used.Add(id);
                 copy.Closed = original.Closed;
                 copy.NextDischargeAt = original.NextDischargeAt;

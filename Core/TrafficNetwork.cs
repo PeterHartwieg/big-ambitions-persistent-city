@@ -127,7 +127,7 @@ namespace PersistentCity.Core
             links = new List<TrafficLinkDefinition>();
             var nodeLists = new List<int[]>(); positions = new Dictionary<int, Position>();
             kilometres = new Dictionary<int, double>();
-            var points = new List<Position>(); var distances = new List<double>(); var starts = new List<int> { 0 };
+
             var nodes = new Dictionary<int, TrafficNetworkNode>();
             foreach (var node in snapshot)
             {
@@ -187,24 +187,32 @@ namespace PersistentCity.Core
                     Id = id, Capacity = Math.Max(1, checked((int)Math.Floor(Math.Max(metres, 6) / 6))),
                     FreeFlowMinutes = minutes, HeadwayMinutes = 1.8 * clockRate,
                     Signal = CopySignal(nodes[chain[chain.Count - 1].To].Signal)
-                });
+                }.Freeze());
                 var indices = new List<int> { chain[0].From };
                 double offset = 0;
                 foreach (var part in chain)
                 { edges.Add(part.From, part.To, id, offset / metres, (offset + part.Metres) / metres); minutesByEdge.Add(part.Minutes); indices.Add(part.To); offset += part.Metres; }
                 nodeLists.Add(indices.ToArray());
-                double cumulative = 0;
-                for (int i = 0; i < indices.Count; i++)
-                {
-                    points.Add(positions[indices[i]]);
-                    if (i > 0) cumulative += chain[i - 1].Metres;
-                    distances.Add(cumulative);
-                }
-                starts.Add(points.Count);
                 minutesBySection.Add(minutes);
             }
             linkNodes = nodeLists.ToArray();
-            sectionPoints = points.ToArray(); sectionDistances = distances.ToArray(); sectionStarts = starts.ToArray();
+            int total = 0;
+            foreach (var list in linkNodes) total += list.Length;
+            sectionPoints = new Position[total]; sectionDistances = new double[total]; sectionStarts = new int[linkNodes.Length + 1];
+            int at = 0;
+            for (int link = 0; link < linkNodes.Length; link++)
+            {
+                sectionStarts[link] = at;
+                var list = linkNodes[link];
+                double cumulative = 0;
+                for (int i = 0; i < list.Length; i++, at++)
+                {
+                    Position point = positions[list[i]];
+                    if (i > 0) cumulative += Position.Distance(sectionPoints[at - 1], point);
+                    sectionPoints[at] = point; sectionDistances[at] = cumulative;
+                }
+            }
+            sectionStarts[linkNodes.Length] = at;
             edgeMinutes = minutesByEdge.ToArray();
             sectionMinutes = minutesBySection.ToArray();
             Links = links.AsReadOnly();
@@ -258,7 +266,7 @@ namespace PersistentCity.Core
                 {
                     Id = id, Capacity = link.Capacity, FreeFlowMinutes = minutes, HeadwayMinutes = 1.8 * clockRate,
                     Signal = CopySignal(signalAt(indices[indices.Length - 1]))
-                });
+                }.Freeze());
                 sectionMinutes[id] = minutes;
             }
             Links = links.AsReadOnly();

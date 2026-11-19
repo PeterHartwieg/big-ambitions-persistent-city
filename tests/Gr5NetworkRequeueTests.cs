@@ -108,11 +108,13 @@ public sealed class Gr5NetworkRequeueTests
     private const int RoadNodes = 4 * 14000 + 1;
     private const int DriveLegs = 40;
 
-    internal static TrafficNetwork Road() => new TrafficNetwork(Native, Enumerable.Range(0, RoadNodes).Select(i => new TrafficNetworkNode
+    internal static TrafficNetwork Road() => new TrafficNetwork(Native, RoadNodesForTest(), 1);
+
+    internal static List<TrafficNetworkNode> RoadNodesForTest() => Enumerable.Range(0, RoadNodes).Select(i => new TrafficNetworkNode
     {
         Id = i, Position = new Position(i * 12, 0, 0), KilometresPerHour = 36, AllowsCar = true,
         Boundary = i % 4 == 0, Successors = i + 1 < RoadNodes ? new[] { i + 1 } : Array.Empty<int>()
-    }).ToList(), 1);
+    }).ToList();
 
     internal static CitySimulator RoadCity(int drivers, int resting, SwappablePlanner planner)
     {

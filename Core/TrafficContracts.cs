@@ -5,10 +5,15 @@ namespace PersistentCity.Core
 {
     public sealed class TrafficSignalSchedule
     {
-        public double CycleMinutes { get; set; }
-        public double GreenStartMinutes { get; set; }
-        public double GreenDurationMinutes { get; set; }
-        public double PhaseOffsetMinutes { get; set; }
+        private double cycle, greenStart, greenDuration, phaseOffset;
+        private bool frozen;
+        public double CycleMinutes { get => cycle; set { Writable(); cycle = value; } }
+        public double GreenStartMinutes { get => greenStart; set { Writable(); greenStart = value; } }
+        public double GreenDurationMinutes { get => greenDuration; set { Writable(); greenDuration = value; } }
+        public double PhaseOffsetMinutes { get => phaseOffset; set { Writable(); phaseOffset = value; } }
+        internal bool IsFrozen() => frozen;
+        internal void Freeze() => frozen = true;
+        private void Writable() { if (frozen) throw new InvalidOperationException("A traffic network's signal schedule is read-only."); }
         internal double NextGreen(double time)
         {
             if (GreenDurationMinutes == 0) return double.PositiveInfinity;
@@ -39,11 +44,18 @@ namespace PersistentCity.Core
 
     public sealed class TrafficLinkDefinition
     {
-        public int Id { get; set; }
-        public int Capacity { get; set; }
-        public double FreeFlowMinutes { get; set; }
-        public double HeadwayMinutes { get; set; }
-        public TrafficSignalSchedule? Signal { get; set; }
+        private int id, capacity;
+        private double freeFlow, headway;
+        private TrafficSignalSchedule? signal;
+        private bool frozen;
+        public int Id { get => id; set { Writable(); id = value; } }
+        public int Capacity { get => capacity; set { Writable(); capacity = value; } }
+        public double FreeFlowMinutes { get => freeFlow; set { Writable(); freeFlow = value; } }
+        public double HeadwayMinutes { get => headway; set { Writable(); headway = value; } }
+        public TrafficSignalSchedule? Signal { get => signal; set { Writable(); signal = value; } }
+        internal bool IsFrozen() => frozen && (signal == null || signal.IsFrozen());
+        internal TrafficLinkDefinition Freeze() { signal?.Freeze(); frozen = true; return this; }
+        private void Writable() { if (frozen) throw new InvalidOperationException("A traffic network's link definition is read-only."); }
     }
 
     public sealed class TrafficRouteLeg

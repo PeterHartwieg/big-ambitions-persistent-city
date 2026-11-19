@@ -1,0 +1,67 @@
+using System;
+using System.Globalization;
+using System.Text;
+
+namespace PersistentCity.Core
+{
+    public enum GrowKind : byte { SyncInstantiate, AsyncStart, AsyncFinish }
+
+    public struct GrowTiming
+    {
+        public int Frame;
+        public GrowKind Kind;
+        public double Result, Checks, Parent, Own, Total;
+    }
+
+    public sealed class GrowTimingLog
+    {
+        public const int Capacity = 32;
+        public const double SlowMilliseconds = 10;
+        private readonly GrowTiming[] slow = new GrowTiming[Capacity];
+        private int next;
+        private GrowTiming slowest;
+
+        public long Recorded { get; private set; }
+        public long SlowRecorded { get; private set; }
+        public int SlowCount => (int)Math.Min(SlowRecorded, Capacity);
+        public GrowTiming Slowest => slowest;
+
+        public void Record(in GrowTiming timing)
+        {
+            Recorded++;
+            if (Recorded == 1 || timing.Total > slowest.Total) slowest = timing;
+            if (timing.Total < SlowMilliseconds) return;
+            slow[next] = timing;
+            next = (next + 1) % Capacity;
+            SlowRecorded++;
+        }
+
+        public GrowTiming Slow(int index)
+        {
+            if (index < 0 || index >= SlowCount) throw new ArgumentOutOfRangeException(nameof(index));
+            int oldest = SlowRecorded > Capacity ? next : 0;
+            return slow[(oldest + index) % Capacity];
+        }
+
+        public string Report()
+        {
+            var text = new StringBuilder("grow operations ").Append(Recorded.ToString(CultureInfo.InvariantCulture))
+                .Append(", slow (>= ").Append(SlowMilliseconds.ToString("0", CultureInfo.InvariantCulture)).Append(" ms) ")
+                .Append(SlowRecorded.ToString(CultureInfo.InvariantCulture)).Append(" retained ").Append(SlowCount.ToString(CultureInfo.InvariantCulture))
+                .Append(" truncated=").Append(SlowRecorded > Capacity ? "true" : "false");
+            if (Recorded > 0) Append(text.Append("; slowest "), slowest);
+            for (int i = 0; i < SlowCount; i++) Append(text.Append("; "), Slow(i));
+            return text.ToString();
+        }
+
+        private static void Append(StringBuilder text, GrowTiming timing)
+        {
+            text.Append("frame=").Append(timing.Frame.ToString(CultureInfo.InvariantCulture)).Append(' ')
+                .Append(timing.Kind == GrowKind.SyncInstantiate ? "sync" : timing.Kind == GrowKind.AsyncStart ? "async_start" : "async_finish")
+                .Append(' ').Append(Ms(timing.Total)).Append(" ms (result ").Append(Ms(timing.Result)).Append(" / checks ").Append(Ms(timing.Checks))
+                .Append(" / parent ").Append(Ms(timing.Parent)).Append(" / own ").Append(Ms(timing.Own)).Append(')');
+        }
+
+        private static string Ms(double value) => value.ToString("0.000", CultureInfo.InvariantCulture);
+    }
+}

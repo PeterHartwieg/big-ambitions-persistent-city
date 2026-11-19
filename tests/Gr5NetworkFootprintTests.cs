@@ -94,16 +94,15 @@ public sealed class Gr5NetworkFootprintTests
     public void ADifferentNetworkDefinitionIsNotAdopted()
     {
         var network = Gr5NetworkRequeueTests.Road();
-        var planner = new Gr5NetworkRequeueTests.SwappablePlanner { TrafficNetwork = network };
-        var city = Gr5NetworkRequeueTests.RoadCity(10, 10, planner);
-        city.RefreshTrafficClosures();
-        var nudged = Gr5NetworkRequeueTests.Road();
-        nudged.Links[5].FreeFlowMinutes = Math.BitIncrement(nudged.Links[5].FreeFlowMinutes);
-        planner.TrafficNetwork = nudged;
-        city.RefreshTrafficClosures();
-        var kernel = city.Traffic!;
-        Assert.Equal(nudged.Links.Count - 1, kernel.DefinitionsSharedWith(nudged.Links));
-        Assert.Equal(1, kernel.DefinitionsSharedWith(network.Links.Where(l => l.Id == 5).ToList()));
+        var kernel = TrafficKernel.SharingDefinitions(network.Links, 0);
+        var nodes = Gr5NetworkRequeueTests.RoadNodesForTest();
+        nodes[22].Position = new Position(nodes[22].Position.X, 0, 1e-4);
+        var nudged = new TrafficNetwork("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", nodes, 1);
+        int differing = Enumerable.Range(0, network.Links.Count).Count(i => network.Links[i].FreeFlowMinutes != nudged.Links[i].FreeFlowMinutes);
+        Assert.True(differing >= 1);
+        Assert.True(kernel.AdoptCompatibleDefinitions(nudged.Links));
+        Assert.Equal(nudged.Links.Count - differing, kernel.DefinitionsSharedWith(nudged.Links));
+        Assert.Equal(differing, kernel.DefinitionsSharedWith(network.Links));
     }
 
     [Fact]
@@ -138,5 +137,101 @@ public sealed class Gr5NetworkFootprintTests
         Assert.Equal(network.Links.Count, back.DefinitionsSharedWith(network.Links));
         var third = back.RescaleTime(3);
         Assert.True(third.AdoptCompatibleDefinitions(network.Rerated(3, _ => null).Links));
+    }
+
+    private static TrafficKernel QueuedOnSignal(TrafficNetwork network, out TrafficLinkDefinition signalled)
+    {
+        signalled = network.Links.First(l => l.Signal != null);
+        var kernel = TrafficKernel.SharingDefinitions(network.Links, 0);
+        for (int i = 0; i < 1; i++)
+            kernel.Enqueue("queued" + i, new List<TrafficRouteLeg> { new TrafficRouteLeg
+            { LinkId = signalled.Id, StartNominalMinutes = 0, EndNominalMinutes = signalled.FreeFlowMinutes, FreeFlowMinutes = signalled.FreeFlowMinutes } });
+        kernel.AdvanceTo(signalled.FreeFlowMinutes * 0.25, int.MaxValue);
+        return kernel;
+    }
+
+    [Fact]
+    public void ADefinitionSharedWithAQueuedKernelCannotBeEdited()
+    {
+        var network = new TrafficNetwork("gr5-frozen", Gr5RetimeReuseTests.Grid(12, 1), 1);
+        var kernel = QueuedOnSignal(network, out var signalled);
+        Assert.Equal(network.Links.Count, kernel.DefinitionsSharedWith(network.Links));
+        int capacity = signalled.Capacity;
+        double phase = signalled.Signal!.PhaseOffsetMinutes;
+        string before = Describe(kernel.Capture());
+        Assert.Throws<InvalidOperationException>(() => signalled.Capacity = 0);
+        Assert.Throws<InvalidOperationException>(() => signalled.FreeFlowMinutes = 0.001);
+        Assert.Throws<InvalidOperationException>(() => signalled.Signal = null);
+        Assert.Throws<InvalidOperationException>(() => signalled.Signal!.PhaseOffsetMinutes = phase + 5);
+        Assert.Throws<InvalidOperationException>(() => signalled.Signal!.GreenDurationMinutes = 0);
+        Assert.Equal(capacity, signalled.Capacity);
+        Assert.Equal(phase, signalled.Signal!.PhaseOffsetMinutes);
+        var captured = kernel.Capture();
+        Assert.Equal(before, Describe(captured));
+        var restored = TrafficKernel.Restore(captured);
+        Assert.True(restored.HasCompatibleDefinitions(network.Links));
+        Assert.True(kernel.AdoptCompatibleDefinitions(network.Links));
+    }
+
+    private static string Describe(TrafficKernelState state) => string.Join(";", state.Vehicles.Select(v => v.VehicleId + ":" + v.RouteIndex + ":" + v.NominalMinutes.ToString("R")))
+        + "|" + string.Join(";", state.Events.Select(e => e.LinkId + "@" + e.At.ToString("R")))
+        + "|" + string.Join(";", state.Definitions.Select(d => d.Id + ":" + d.Capacity + ":" + d.FreeFlowMinutes.ToString("R") + ":" + (d.Signal?.PhaseOffsetMinutes.ToString("R") ?? "-")));
+
+    [Fact]
+    public void AKernelBuiltFromEditableDefinitionsKeepsItsOwnCopies()
+    {
+        var editable = new TrafficNetwork("gr5-frozen", Gr5RetimeReuseTests.Grid(6, 1), 1).Links
+            .Select(l => new TrafficLinkDefinition { Id = l.Id, Capacity = l.Capacity, FreeFlowMinutes = l.FreeFlowMinutes, HeadwayMinutes = l.HeadwayMinutes }).ToList();
+        var kernel = TrafficKernel.SharingDefinitions(editable, 0);
+        Assert.Equal(0, kernel.DefinitionsSharedWith(editable));
+        Assert.True(kernel.AdoptCompatibleDefinitions(editable));
+        Assert.Equal(0, kernel.DefinitionsSharedWith(editable));
+        editable[0].Capacity = 99;
+        Assert.False(kernel.HasCompatibleDefinitions(editable));
+    }
+
+    [Fact]
+    public void AdoptionRebindsWarmForecastProjectionsAndKeepsThemAllocationFree()
+    {
+        var first = Gr5NetworkRequeueTests.Road();
+        var planner = new Gr5NetworkRequeueTests.SwappablePlanner { TrafficNetwork = first };
+        var city = Gr5NetworkRequeueTests.RoadCity(750, 250, planner);
+        city.RefreshTrafficClosures();
+        city.AdvanceTo(city.State.Minute + 3, int.MaxValue);
+        var kernel = city.Traffic!;
+        double minute = city.State.Minute;
+        void Forecasts() { for (int link = 0; link < first.Links.Count; link += 7) kernel.ForecastEntry(link, minute + 0.5, 0.4, 0.6); }
+        Forecasts(); Forecasts();
+        Assert.Equal(0, kernel.ProjectionDefinitionsNotLive());
+        var second = Gr5NetworkRequeueTests.Road();
+        planner.TrafficNetwork = second;
+        city.RefreshTrafficClosures();
+        Assert.Same(kernel, city.Traffic);
+        Assert.Equal(second.Links.Count, kernel.DefinitionsSharedWith(second.Links));
+        Assert.Equal(0, kernel.ProjectionDefinitionsNotLive());
+        long started = GC.GetAllocatedBytesForCurrentThread();
+        Forecasts();
+        long allocated = GC.GetAllocatedBytesForCurrentThread() - started;
+        var heap = new RetainedHeap();
+        heap.Exclude(city); heap.Exclude(city.State); heap.Exclude(planner);
+        heap.Add("network", second);
+        heap.Add("kernel", kernel);
+        output.WriteLine("after a compatible swap: " + Definitions(heap) + " definitions reachable from the new network and the kernel; warm forecasts allocated " + allocated + " B (.NET)");
+        Assert.Equal(second.Links.Count, Definitions(heap));
+        Assert.Equal(0, allocated);
+    }
+
+    [Fact]
+    public void ColdNetworkConstructionAllocatesNoMoreThanTheUnflattenedLayout()
+    {
+        var nodes = Gr5NetworkRequeueTests.RoadNodesForTest();
+        _ = new TrafficNetwork("gr5-cold", nodes, 1);
+        long started = GC.GetAllocatedBytesForCurrentThread();
+        var network = new TrafficNetwork("gr5-cold", nodes, 1);
+        long allocated = GC.GetAllocatedBytesForCurrentThread() - started;
+        var heap = new RetainedHeap();
+        heap.Add("network", network);
+        output.WriteLine(network.Links.Count + "-link cold construction allocated " + M(allocated) + " MB, retained " + M(heap.Bytes) + " MB (.NET allocation, Mono layout model for retained)");
+        Assert.True(allocated < 107_000_000, "allocated " + allocated);
     }
 }
