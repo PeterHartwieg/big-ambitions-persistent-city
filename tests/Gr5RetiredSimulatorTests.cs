@@ -124,6 +124,74 @@ public sealed class Gr5RetiredSimulatorTests
         replacement.AdvanceTo(101.5, 64);
     }
 
+    private sealed class DroppedRoads { public Func<int, double, TrafficLinkForecast>? Forecast; public Func<int, double, double, double, double>? EntryForecast; }
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private static (CitySimulator Live, RoadPlanner Next, WeakReference Retired) GateRefreshThenRetime(DroppedRoads donor)
+    {
+        var network = Line();
+        var planner = new RoadPlanner { TrafficNetwork = network };
+        var city = new CitySimulator(City(network), planner);
+        city.AdvanceTo(100.5, 64);
+        donor.Forecast = planner.Forecast; donor.EntryForecast = planner.EntryForecast;
+        planner.TrafficNetwork = null;
+        var next = new RoadPlanner();
+        var rebuild = city.BeginRebuildRoutes(next, null);
+        while (!rebuild.Step(long.MaxValue)) { }
+        var replacement = rebuild.TakeResult();
+        Assert.Null(next.Forecast);
+        return (replacement, next, new WeakReference(city));
+    }
+
+    [Fact]
+    public void AGateRefreshBeforeARetimeLeavesTheRoadDonorUnableToPinTheRetiredSimulator()
+    {
+        var donor = new DroppedRoads();
+        var (live, next, retired) = GateRefreshThenRetime(donor);
+        Assert.NotNull(donor.Forecast); Assert.NotNull(donor.EntryForecast);
+        GC.Collect(); GC.WaitForPendingFinalizers(); GC.Collect();
+        Assert.False(retired.IsAlive);
+        Assert.Equal(0, donor.Forecast!(0, 101).DelayMinutes);
+        Assert.Equal(0, donor.EntryForecast!(0, 101, 0, 1));
+        next.TrafficNetwork = Line();
+        live.TryRefreshTrafficClosures(1000);
+        Assert.Same(live, Closure(next.Forecast!));
+        Assert.Same(live, Closure(next.EntryForecast!));
+        GC.KeepAlive(donor);
+    }
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private static (CitySimulator Live, RoadPlanner Planner, TrafficNetwork Network, WeakReference Retired) ReusedPlannerWithoutNetwork()
+    {
+        var network = Line();
+        var planner = new RoadPlanner { TrafficNetwork = network };
+        var city = new CitySimulator(City(network), planner);
+        city.AdvanceTo(100.5, 64);
+        Assert.NotNull(planner.Forecast); Assert.NotNull(planner.EntryForecast);
+        planner.TrafficNetwork = null;
+        var rebuild = city.BeginRebuildRoutes(planner, null);
+        while (!rebuild.Step(long.MaxValue)) { }
+        var replacement = rebuild.TakeResult();
+        return (replacement, planner, network, new WeakReference(city));
+    }
+
+    [Fact]
+    public void AReusedPlannerWithoutANetworkDropsTheRetiredCallbacksAndTakesTheReplacementsWhenTheNetworkReturns()
+    {
+        var (live, planner, network, retired) = ReusedPlannerWithoutNetwork();
+        Assert.Null(planner.Forecast); Assert.Null(planner.EntryForecast);
+        GC.Collect(); GC.WaitForPendingFinalizers(); GC.Collect();
+        Assert.False(retired.IsAlive);
+        planner.TrafficNetwork = network;
+        live.TryRefreshTrafficClosures(1000);
+        Assert.Same(live, Closure(planner.Forecast!));
+        Assert.Same(live, Closure(planner.EntryForecast!));
+        var expected = live.Traffic!.Forecast(0, 101);
+        Assert.Equal(expected.DelayMinutes, planner.Forecast!(0, 101).DelayMinutes);
+        Assert.Equal(live.Traffic.ForecastEntry(0, 101, 0, 1), planner.EntryForecast!(0, 101, 0, 1));
+        live.AdvanceTo(101.5, 64);
+    }
+
     private static object? Closure(Delegate value)
     {
         var target = value.Target;

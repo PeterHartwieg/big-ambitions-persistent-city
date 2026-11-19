@@ -110,9 +110,21 @@ namespace PersistentCity.Core
             finally { closureLinks.Clear(); refreshingClosures = false; }
         }
 
+        private sealed class ForecastHook
+        {
+            internal CitySimulator? City;
+            internal TrafficLinkForecast Link(int id, double at) => City?.traffic is TrafficKernel kernel ? kernel.Forecast(id, at) : default;
+            internal double Entry(int id, double at, double fraction, double share) => City?.traffic is TrafficKernel kernel ? kernel.ForecastEntry(id, at, fraction, share) : 0;
+        }
+        private ForecastHook? forecastHook;
+        private Func<int, double, TrafficLinkForecast>? linkForecast;
+        private Func<int, double, double, double, double>? entryForecast;
+        internal bool OwnsPlannerHooks => forecastHook?.City == this;
+
         internal void ReleasePlannerHooks(CitySimulator replacement)
         {
-            if (ReferenceEquals(routes, replacement.routes)) return;
+            if (forecastHook != null) forecastHook.City = null;
+            if (ReferenceEquals(routes, replacement.routes) && replacement.OwnsPlannerHooks) return;
             if (routes is ITrafficRoutePlanner planner) planner.SetTrafficForecast(null);
             if (routes is ITrafficEntryRoutePlanner entryPlanner) entryPlanner.SetTrafficEntryForecast(null);
         }
@@ -178,9 +190,10 @@ namespace PersistentCity.Core
             else if (!traffic.HasCompatibleDefinitions(network.Links))
                 throw new InvalidOperationException("Saved road section policy disagrees with its topology/timing.");
             trafficNetwork = network;
-            planner.SetTrafficForecast((id, at) => traffic.Forecast(id, at));
+            var hook = forecastHook ??= new ForecastHook { City = this };
+            planner.SetTrafficForecast(linkForecast ??= hook.Link);
             if (routes is ITrafficEntryRoutePlanner entryPlanner)
-                entryPlanner.SetTrafficEntryForecast((id, at, fraction, share) => traffic.ForecastEntry(id, at, fraction, share));
+                entryPlanner.SetTrafficEntryForecast(entryForecast ??= hook.Entry);
             RequeueForNetwork();
         }
 

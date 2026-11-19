@@ -641,6 +641,7 @@ namespace PersistentCity.Runtime
             if (!rebuild.Step(long.MaxValue)) throw new InvalidOperationException("The route rebuild did not finish.");
             routeRebuild = null;
             simulation = rebuild.TakeResult();
+            ForgetStaleHoldReplay();
             vendorMarket?.Rebind(simulation);
             RebindVendorDecisionDiagnostics(simulation);
             ForgetResearchSnapshot();
