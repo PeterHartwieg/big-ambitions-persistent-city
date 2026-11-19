@@ -412,9 +412,10 @@ public sealed class Gr5NetworkFootprintTests
             output.WriteLine("  final read " + name + ": " + (start?.Objects ?? 0) + " -> " + (last?.Objects ?? 0) + " objects, " + (((last?.Bytes ?? 0) - (start?.Bytes ?? 0)) / 1e6).ToString("+0.000;-0.000") + " MB since the before read");
         }
         long Growth(string name) => (after.Types.FirstOrDefault(r => r.Name == name)?.Bytes ?? 0) - (before.Types.FirstOrDefault(r => r.Name == name)?.Bytes ?? 0);
-        long routeAndGeometry = Growth("RouteLeg") + Growth("RouteLeg[]") + Growth("Route") + Growth("Position[]") + Growth("Double[]") + Growth("FrozenLink") + Growth("FrozenSignal");
-        output.WriteLine("  route and geometry growth " + routeAndGeometry + " B; raw growth without the released Int64[] cell arrays " + (after.Bytes - before.Bytes - Growth("Int64[]")) + " B");
-        Assert.True(routeAndGeometry < allowance, "route and geometry growth " + routeAndGeometry);
+        long routeAndGeometry = Growth("RouteLeg") + Growth("RouteLeg[]") + Growth("Route") + Growth("Position[]") + Growth("Double[]") + Growth("FrozenLink") + Growth("FrozenSignal")
+            + Growth("TrafficLinkDefinition") + Growth("TrafficSignalSchedule");
+        output.WriteLine("  route, geometry and traffic-definition growth " + routeAndGeometry + " B; raw growth without the released Int64[] cell arrays " + (after.Bytes - before.Bytes - Growth("Int64[]")) + " B");
+        Assert.True(routeAndGeometry < allowance, "route, geometry and traffic-definition growth " + routeAndGeometry);
         if (sameState) Assert.True(excess < allowance, "retimed minus control " + excess);
         Assert.True(after.Bytes - before.Bytes < allowance, "raw retained growth " + (after.Bytes - before.Bytes));
     }
