@@ -25,7 +25,7 @@ public sealed class Gr5GrowTimingLogTests
         Assert.Equal(GrowKind.SyncInstantiate, log.Slow(1).Kind);
         Assert.Equal(140, log.Slowest.Frame);
         string report = log.Report();
-        Assert.Contains("frame=140 async_finish 58.300 ms (result 0.200 / checks 0.100 / parent 55.000 / own 3.000)", report);
+        Assert.Contains("frame=140 async_finish 58.300 ms (staging 0.000 / result 0.200 / checks 0.100 / parent 55.000 / own 3.000)", report);
         Assert.Contains("frame=141 sync 12.500 ms", report);
         Assert.DoesNotContain("frame=100", report.Substring(report.IndexOf("; frame=", StringComparison.Ordinal)));
         Assert.Contains("truncated=false", report);
@@ -80,7 +80,7 @@ public sealed class Gr5GrowTimingLogTests
         Assert.Equal(6.9, row.Grow.Parent);
         string json = recorder.ReportJson();
         Assert.Contains("\"frame\":7610,", json);
-        Assert.Contains("\"grow_ops\":2,\"grow_kind\":\"async_finish\",\"grow_ms\":7.467,\"grow_result_ms\":0.1,\"grow_checks_ms\":0.2,\"grow_parent_ms\":6.9,\"grow_own_ms\":0.267", json);
+        Assert.Contains("\"grow_ops\":2,\"grow_kind\":\"async_finish\",\"grow_failed\":false,\"grow_ms\":7.467,\"grow_staging_ms\":0,\"grow_result_ms\":0.1,\"grow_checks_ms\":0.2,\"grow_parent_ms\":6.9,\"grow_own_ms\":0.267", json);
         Assert.Contains("\"grow_ops\":0,\"grow_kind\":\"none\"", json);
     }
 
@@ -105,6 +105,32 @@ public sealed class Gr5GrowTimingLogTests
         Assert.Equal(GrowKind.SyncInstantiate, recorder.Spike(0).Grow.Kind);
         Assert.Equal(30.0, recorder.Spike(0).Grow.Result);
         Assert.Equal(0, recorder.Top(1).GrowCount);
+    }
+
+    [Fact]
+    public void AGrowFrameWhoseColdStagingFailsStillCarriesTheOperation()
+    {
+        var recorder = Armed();
+        var log = new GrowTimingLog();
+        var failedStaging = new GrowTiming { Frame = 900, Kind = GrowKind.SyncInstantiate, Staging = 31.5, Total = 31.6, Failed = true };
+        log.Record(failedStaging);
+        recorder.Begin(900, 0, 0, 0);
+        recorder.Charge(GcAllocationSegment.PhysicalSpawnPedestrian, 1, 0, 0);
+        recorder.NoteGrow(failedStaging);
+        recorder.Detail(GcAllocationSegment.PhysicalSpawnGrow, 33, 0, 0);
+        recorder.End(33, 0, 0, null);
+        var row = recorder.Spike(0);
+        Assert.Equal((int)GcAllocationSegment.PhysicalSpawnGrow, row.Detail);
+        Assert.Equal(1, row.GrowCount);
+        Assert.True(row.Grow.Failed);
+        Assert.Equal(31.5, row.Grow.Staging);
+        Assert.Contains("\"grow_ops\":1,\"grow_kind\":\"sync\",\"grow_failed\":true,\"grow_ms\":31.6,\"grow_staging_ms\":31.5,", recorder.ReportJson());
+        Assert.Contains("frame=900 sync failed 31.600 ms (staging 31.500", log.Report());
+        var asyncFailure = new GrowTiming { Frame = 901, Kind = GrowKind.AsyncStart, Staging = 12, Total = 12, Failed = true };
+        recorder.Begin(901, 40, 0, 0);
+        recorder.NoteGrow(asyncFailure);
+        recorder.End(72, 0, 0, null);
+        Assert.Contains("\"grow_kind\":\"async_start\",\"grow_failed\":true,\"grow_ms\":12,\"grow_staging_ms\":12,", recorder.ReportJson());
     }
 
     [Fact]

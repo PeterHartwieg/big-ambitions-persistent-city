@@ -263,17 +263,25 @@ namespace PersistentCity.Runtime
             if (growing == null)
             {
                 BeginGrow(GrowKind.AsyncStart);
-                if (!Staged()) { failed = true; return null; }
-                growing = UnityEngine.Object.InstantiateAsync(prefab!, staging!.transform);
-                growTiming.Result = GrowStep();
-                GrowsStarted++;
-                GrowStartMaximum = Math.Max(GrowStartMaximum, Since(started));
-                EndGrow();
-                return null;
+                growTiming.Failed = true;
+                try
+                {
+                    bool staged = Staged();
+                    growTiming.Staging = GrowStep();
+                    if (!staged) { failed = true; return null; }
+                    growing = UnityEngine.Object.InstantiateAsync(prefab!, staging!.transform);
+                    growTiming.Result = GrowStep();
+                    growTiming.Failed = false;
+                    GrowsStarted++;
+                    GrowStartMaximum = Math.Max(GrowStartMaximum, Since(started));
+                    return null;
+                }
+                finally { EndGrow(); }
             }
             if (!growing.isDone) return null;
             BeginGrow(GrowKind.AsyncFinish);
-            try { return Finish(out failed); }
+            growTiming.Failed = true;
+            try { var finished = Finish(out failed); growTiming.Failed = failed; return finished; }
             finally { GrowFinishMaximum = Math.Max(GrowFinishMaximum, Since(started)); EndGrow(); }
         }
 
@@ -305,13 +313,18 @@ namespace PersistentCity.Runtime
 
         private ThirdPersonCharacter? Instantiate()
         {
-            if (!Staged()) return null;
             BeginGrow(GrowKind.SyncInstantiate);
+            growTiming.Failed = true;
             try
             {
+                bool staged = Staged();
+                growTiming.Staging = GrowStep();
+                if (!staged) return null;
                 var made = UnityEngine.Object.Instantiate(prefab!, staging!.transform);
                 growTiming.Result = GrowStep();
-                return Adopt(made);
+                var adopted = Adopt(made);
+                growTiming.Failed = adopted == null;
+                return adopted;
             }
             finally { EndGrow(); }
         }

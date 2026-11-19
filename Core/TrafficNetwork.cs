@@ -112,6 +112,7 @@ namespace PersistentCity.Core
         public string TopologyId { get; }
         public string NativeTopologyId { get; }
         public IReadOnlyList<TrafficLinkDefinition> Links { get; }
+        internal bool RatedCopy { get; }
 
         private sealed class Edge
         {
@@ -244,7 +245,7 @@ namespace PersistentCity.Core
             NativeTopologyId = source.NativeTopologyId; TopologyId = source.TopologyId;
             positions = source.positions; kilometres = source.kilometres; linkNodes = source.linkNodes;
             edges = source.edges; sectionPoints = source.sectionPoints; sectionDistances = source.sectionDistances; sectionStarts = source.sectionStarts;
-            linkSpeeds = source.linkSpeeds; this.clockRate = clockRate;
+            linkSpeeds = source.linkSpeeds; this.clockRate = clockRate; RatedCopy = true;
             links = new List<TrafficLinkDefinition>(source.links.Count);
             for (int id = 0; id < source.links.Count; id++)
             {

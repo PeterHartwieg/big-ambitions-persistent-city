@@ -219,7 +219,8 @@ namespace PersistentCity.Core
                         .Append(",\"alloc_phase\":\"").Append(Name(r.AllocPhase)).Append("\",\"alloc_phase_bytes\":").Append(N(r.AllocBytes))
                         .Append(",\"alloc_bytes\":").Append(N(r.Bytes))
                         .Append(",\"grow_ops\":").Append(N(r.GrowCount)).Append(",\"grow_kind\":\"").Append(r.GrowCount == 0 ? "none" : GrowTimingLog.KindName(r.Grow.Kind))
-                        .Append("\",\"grow_ms\":").Append(D(r.Grow.Total)).Append(",\"grow_result_ms\":").Append(D(r.Grow.Result))
+                        .Append("\",\"grow_failed\":").Append(r.GrowCount > 0 && r.Grow.Failed ? "true" : "false")
+                        .Append(",\"grow_ms\":").Append(D(r.Grow.Total)).Append(",\"grow_staging_ms\":").Append(D(r.Grow.Staging)).Append(",\"grow_result_ms\":").Append(D(r.Grow.Result))
                         .Append(",\"grow_checks_ms\":").Append(D(r.Grow.Checks)).Append(",\"grow_parent_ms\":").Append(D(r.Grow.Parent))
                         .Append(",\"grow_own_ms\":").Append(D(r.Grow.Own)).Append('}');
                 }

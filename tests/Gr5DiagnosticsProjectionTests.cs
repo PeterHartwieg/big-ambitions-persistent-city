@@ -217,6 +217,16 @@ public sealed class Gr5DiagnosticsProjectionTests
         Assert.True(pedestrians.IndexOf("character.transform.SetParent(parent, false);", StringComparison.Ordinal) < parented, "the reparent is inside the parent step");
         Assert.DoesNotContain("static readonly double[] GrowSteps", pedestrians);
         Assert.Contains("private static readonly GrowTimingLog growLog", pedestrians);
+        foreach (string kind in new[] { "BeginGrow(GrowKind.AsyncStart);", "BeginGrow(GrowKind.SyncInstantiate);" })
+        {
+            int begun = pedestrians.IndexOf(kind, StringComparison.Ordinal);
+            int staged = pedestrians.IndexOf("bool staged = Staged();", begun, StringComparison.Ordinal);
+            int stagingStep = pedestrians.IndexOf("growTiming.Staging = GrowStep();", begun, StringComparison.Ordinal);
+            int ended = pedestrians.IndexOf("finally { EndGrow(); }", begun, StringComparison.Ordinal);
+            Assert.True(begun > 0 && pedestrians.IndexOf("growTiming.Failed = true;", begun, StringComparison.Ordinal) < staged, kind + " is marked failed until it succeeds");
+            Assert.True(staged > begun && stagingStep > staged && ended > stagingStep, kind + " times staging inside the operation and records it on every exit");
+        }
+        Assert.DoesNotContain("if (!Staged()) return null;\n            BeginGrow", pedestrians);
         int recorded = pedestrians.IndexOf("growLog.Record(growTiming);", StringComparison.Ordinal);
         Assert.True(recorded > 0 && pedestrians.IndexOf("ModFrames.NoteGrow(growTiming);", recorded, StringComparison.Ordinal) > recorded, "every grow operation is noted on the measurement's frame row");
         string counter = System.IO.File.ReadAllText(System.IO.Path.Combine(root, "Runtime", "GcAllocationCounter.cs"));

@@ -61,10 +61,38 @@ public sealed class Gr5RateCacheTests
         _ = twenty.Rerated(1, id => oneSignals[id]);
         long rerate = GC.GetAllocatedBytesForCurrentThread() - started;
         started = GC.GetAllocatedBytesForCurrentThread();
-        for (int i = 0; i < 100; i++) { Assert.True(cache.TryGet(i % 2 == 0 ? 1 : 20, out _)); cache.Remember(i % 2 == 0 ? 1 : 20, one); }
+        for (int i = 0; i < 100; i++) { Assert.True(cache.TryGet(1, out var back)); Assert.Same(one, back); cache.Remember(20, twenty); cache.Remember(1, one); }
         long reused = GC.GetAllocatedBytesForCurrentThread() - started;
-        output.WriteLine("links " + one.Links.Count + ": rerate " + rerate + " B, 100 cached returns " + reused + " B");
+        output.WriteLine("links " + one.Links.Count + ": rerate " + rerate + " B, 100 cached returns to the base rate " + reused + " B");
         Assert.Equal(0, reused);
         Assert.True(rerate > 100_000, rerate.ToString());
+    }
+
+    [Fact]
+    public void RatedCopiesAreNotKeptSoAReturnToTheBaseRateReleasesThem()
+    {
+        var one = new TrafficNetwork("gr5-rate", Gr5RetimeReuseTests.Grid(9, 1), 1);
+        var twoSignals = Gr5RetimeReuseTests.Grid(9, 2).ToDictionary(n => n.Id, n => n.Signal);
+        var two = one.Rerated(2, id => twoSignals[id]);
+        var cache = new TrafficRateCache();
+        cache.Remember(1, one);
+        cache.Remember(2, two);
+        Assert.Equal(1, cache.Count);
+        Assert.False(cache.TryGet(2, out _));
+        Assert.True(cache.TryGet(1, out var back));
+        Assert.Same(one, back);
+        var weak = Rated(one, cache);
+        GC.Collect(); GC.WaitForPendingFinalizers(); GC.Collect();
+        Assert.False(weak.IsAlive);
+        GC.KeepAlive(cache);
+    }
+
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
+    private static WeakReference Rated(TrafficNetwork one, TrafficRateCache cache)
+    {
+        var signals = Gr5RetimeReuseTests.Grid(9, 3).ToDictionary(n => n.Id, n => n.Signal);
+        var rated = one.Rerated(3, id => signals[id]);
+        cache.Remember(3, rated);
+        return new WeakReference(rated);
     }
 }

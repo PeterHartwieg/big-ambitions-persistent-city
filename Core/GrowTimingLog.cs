@@ -10,7 +10,8 @@ namespace PersistentCity.Core
     {
         public int Frame;
         public GrowKind Kind;
-        public double Result, Checks, Parent, Own, Total;
+        public double Staging, Result, Checks, Parent, Own, Total;
+        public bool Failed;
     }
 
     public sealed class GrowTimingLog
@@ -58,7 +59,7 @@ namespace PersistentCity.Core
         {
             text.Append("frame=").Append(timing.Frame.ToString(CultureInfo.InvariantCulture)).Append(' ')
                 .Append(KindName(timing.Kind))
-                .Append(' ').Append(Ms(timing.Total)).Append(" ms (result ").Append(Ms(timing.Result)).Append(" / checks ").Append(Ms(timing.Checks))
+                .Append(timing.Failed ? " failed " : " ").Append(Ms(timing.Total)).Append(" ms (staging ").Append(Ms(timing.Staging)).Append(" / result ").Append(Ms(timing.Result)).Append(" / checks ").Append(Ms(timing.Checks))
                 .Append(" / parent ").Append(Ms(timing.Parent)).Append(" / own ").Append(Ms(timing.Own)).Append(')');
         }
 

@@ -25,7 +25,7 @@ namespace PersistentCity.Core
 
         public void Remember(double clockRate, TrafficNetwork network)
         {
-            if (!Position.Finite(clockRate) || clockRate <= 0 || network == null) return;
+            if (!Position.Finite(clockRate) || clockRate <= 0 || network == null || network.RatedCopy) return;
             int slot = -1;
             for (int i = 0; i < Count; i++) if (rates[i] == clockRate) { slot = i; break; }
             if (slot < 0 && Count < Capacity) slot = Count++;

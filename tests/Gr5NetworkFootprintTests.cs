@@ -267,4 +267,84 @@ public sealed class Gr5NetworkFootprintTests
         Assert.True(cacheAfter - cacheBefore < allowance, "cache growth " + (cacheAfter - cacheBefore));
         Assert.True(cacheAfter - cacheBefore + kernelAfter - kernelBefore < allowance, "cache and kernel growth " + (cacheAfter - cacheBefore + kernelAfter - kernelBefore));
     }
+
+    private static List<TrafficNetworkNode> SignalledRoad(double clockRate)
+    {
+        var nodes = Gr5NetworkRequeueTests.RoadNodesForTest();
+        foreach (var node in nodes)
+            if (node.Id % 40 == 0 && node.Id > 0)
+                node.Signal = new TrafficSignalSchedule { CycleMinutes = 1.0 * clockRate, GreenStartMinutes = node.Id % 80 == 0 ? 0 : 0.5 * clockRate, GreenDurationMinutes = 0.45 * clockRate };
+        return nodes;
+    }
+
+    private static CitySimulator FullRetime(CityState state, CitySimulator city, ClockRetimeDriver driver, double rate, TrafficNetwork network)
+    {
+        while (true)
+        {
+            var outcome = driver.Update(state, rate, false, 2, 0);
+            Assert.NotEqual(ClockRetimeOutcome.Restarted, outcome);
+            if (outcome != ClockRetimeOutcome.Committed) continue;
+            var rebuild = city.BeginRebuildRoutes(new Gr5NetworkRequeueTests.SwappablePlanner { TrafficNetwork = network }, driver.TakeRetimedTraffic());
+            while (!rebuild.Step(0)) { }
+            var next = rebuild.Result!;
+            next.RefreshTrafficClosures();
+            return next;
+        }
+    }
+
+    private static RetainedHeap Census(CitySimulator city, TrafficRateCache cache)
+    {
+        var heap = new RetainedHeap();
+        heap.Add("simulation", city);
+        heap.Add("cache", cache);
+        return heap;
+    }
+
+    [Fact]
+    public void AFullOneTwoOneRetimeWithAnUnwarmedCacheAndPlayAtTwoTimesStaysUnderTheCensusAllowance()
+    {
+        const long allowance = 1_000_000;
+        const string native = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+        var one = new TrafficNetwork(native, SignalledRoad(1), 1);
+        var doubled = SignalledRoad(2).ToDictionary(n => n.Id, n => n.Signal);
+        var planner = new Gr5NetworkRequeueTests.SwappablePlanner { TrafficNetwork = one };
+        var city = Gr5NetworkRequeueTests.RoadCity(750, 2250, planner);
+        var state = city.State;
+        city.RefreshTrafficClosures();
+        city.AdvanceTo(state.Minute + 2, int.MaxValue);
+        var driver = new ClockRetimeDriver();
+        var halved = SignalledRoad(0.5).ToDictionary(n => n.Id, n => n.Signal);
+        city = FullRetime(state, city, driver, 0.5, one.Rerated(0.5, id => halved[id]));
+        city.AdvanceTo(state.Minute + 0.05, int.MaxValue);
+        city = FullRetime(state, city, driver, 1, one);
+        city.AdvanceTo(state.Minute + 0.02, int.MaxValue);
+        Assert.True(city.Traffic!.VehicleCount > 0);
+        var cache = new TrafficRateCache();
+        cache.Remember(1, one);
+        var before = Census(city, cache);
+        Assert.False(cache.TryGet(2, out _));
+        var two = one.Rerated(2, id => doubled[id]);
+        cache.Remember(2, two);
+        city = FullRetime(state, city, driver, 2, two);
+        Assert.Equal(two.Links.Count, city.Traffic!.DefinitionsSharedWith(two.Links) + two.Links.Count(l => l.Signal != null));
+        city.AdvanceTo(state.Minute + 0.05, int.MaxValue);
+        Assert.True(cache.TryGet(1, out var back));
+        city = FullRetime(state, city, driver, 1, back);
+        city.AdvanceTo(state.Minute + 0.01, int.MaxValue);
+        var after = Census(city, cache);
+        Assert.True(city.Traffic!.VehicleCount > 0);
+        int signals = one.Links.Count(l => l.Signal != null);
+        long growth = after.Bytes - before.Bytes;
+        output.WriteLine(one.Links.Count + " links (" + signals + " signalled), 750 drivers, unwarmed cache, retime 1->2, 1 game minute at 2x, retime 2->1: simulation "
+            + before.Roots[0].Bytes + " -> " + after.Roots[0].Bytes + " B, cache " + before.Roots[1].Bytes + " -> " + after.Roots[1].Bytes + " B, total growth " + growth
+            + " B; " + city.Traffic!.VehicleCount + " vehicles in traffic; kernel shares " + city.Traffic!.DefinitionsSharedWith(one.Links) + " of " + one.Links.Count + " definitions (Mono 64-bit layout model)");
+        foreach (string name in new[] { "CitySimulator", "TrafficKernel", "TrafficJourneys", "ActiveJourneyIndex" })
+            output.WriteLine("  count " + name + ": " + (before.Types.FirstOrDefault(r => r.Name == name)?.Objects ?? 0) + " -> " + (after.Types.FirstOrDefault(r => r.Name == name)?.Objects ?? 0));
+        foreach (var row in after.Types.Take(12))
+        {
+            var prior = before.Types.FirstOrDefault(r => r.Name == row.Name);
+            output.WriteLine("  " + row.Name + ": " + (prior?.Objects ?? 0) + " -> " + row.Objects + " objects, " + ((row.Bytes - (prior?.Bytes ?? 0)) / 1e6).ToString("+0.000;-0.000") + " MB");
+        }
+        Assert.True(growth < allowance, "retained growth " + growth);
+    }
 }
