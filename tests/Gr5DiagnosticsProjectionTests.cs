@@ -187,7 +187,7 @@ public sealed class Gr5DiagnosticsProjectionTests
         Assert.Contains("monoHeapBytes = context.MonoHeapBytes, monoUsedBytes = context.MonoUsedBytes", movement);
         string probe = System.IO.File.ReadAllText(System.IO.Path.Combine(root, "tools", "perf-union-probe", "Probe.cs"));
         Assert.Contains("[\"mono_heap\"] = new JObject { [\"start_bytes\"] = monoHeapStart", probe);
-        Assert.Contains("ReadMonoHeap(out monoHeapStop, out monoUsedStop);", probe);
+        Assert.Contains("monoHeapStop = stop.Heap; monoUsedStop = stop.Used;", probe);
         int heap = probe.IndexOf("if (action == \"heap\") return Wrap(Status(), Heap());", StringComparison.Ordinal);
         int armedGate = probe.IndexOf("Require(armed, \"f4b_not_armed\");", StringComparison.Ordinal);
         Assert.True(heap > 0 && armedGate > heap, "the forced-collection heap read is available before arm");
@@ -195,9 +195,15 @@ public sealed class Gr5DiagnosticsProjectionTests
         int startScan = probe.IndexOf("Rescan(true); unexpectedAtWindowStart", StringComparison.Ordinal);
         int start = probe.IndexOf("ReadMonoHeap(out monoHeapStart, out monoUsedStart);", StringComparison.Ordinal);
         Assert.True(scanBefore > 0 && startScan > scanBefore && start > startScan, "the window baseline is read after the forced start scan, which is bracketed");
-        int stop = probe.IndexOf("ReadMonoHeap(out monoHeapStop, out monoUsedStop);", StringComparison.Ordinal);
+        int stop = probe.IndexOf("monoHeapStop = stop.Heap; monoUsedStop = stop.Used;", StringComparison.Ordinal);
+        int stopSeries = probe.IndexOf("collectionSeries.Note(stop.Collections, stop.Used, stop.Frame);", StringComparison.Ordinal);
         int stopScan = probe.IndexOf("if (reason == \"explicit-stop\") Rescan(true);", StringComparison.Ordinal);
-        Assert.True(stop > 0 && stopScan > stop, "the stop reading precedes the forced stop scan");
+        Assert.True(stop > 0 && stopSeries > stop && stopScan > stopSeries, "the stop reading and its collection sample precede the forced stop scan");
+        Assert.Contains("if (action == \"measure-stop\") { var stop = ReadStop(); var before = Status(); StopMeasurement(\"explicit-stop\", stop);", probe);
+        int read = probe.IndexOf("private static StopRead ReadStop()", StringComparison.Ordinal);
+        int count = probe.IndexOf("int collections = GC.CollectionCount(0);", read, StringComparison.Ordinal);
+        int heapRead = probe.IndexOf("ReadMonoHeap(out long heap, out long used);", read, StringComparison.Ordinal);
+        Assert.True(read > 0 && count > read && heapRead > count, "the explicit stop reads the collection count and heap before the status response is built");
         Assert.Contains("if (full && mode == \"reference\") try { MatchedScan(); }", probe);
         Assert.Contains("coverage = null; matchedScans = 0;\n                    MatchedScan();", probe);
         string pedestrians = System.IO.File.ReadAllText(System.IO.Path.Combine(root, "Runtime", "PhysicalPedestrians.cs"));
