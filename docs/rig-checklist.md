@@ -15504,7 +15504,7 @@ Run `persistent-city-rig-2026-11-19d-mac`, role rig_test on agentmac. **PROVISIO
 
 | Check | Status | Readback |
 | --- | --- | --- |
-| A | FAIL | Day steady / retime gen0 7 / 7, pause p95 174.685 / 815.296 ms vs ~36 ms and about five collections. Grow-detail rows missing operations 0. |
+| A | FAIL | Day steady / retime gen0 7 / 7, pause p95 174.685 / 815.296 ms vs ~36 ms and about five collections. Grow-detail rows missing operations 0. The ≥30 ms `physical_spawn_grow` attribution case was unexercised: no grow row reached 30 ms (largest 23.033 ms). |
 | B | PASS | Sampler / final heap 1,409,941,504 / 1,445,871,616 B against 1,470,000,000 B. Pause p95 69.438 ms, gen0 6. |
 | C | PASS | Street union p95 4.1554 ms against <5 ms. Union / phase spikes 1 / 1. 9/9 pans. Retime bound 8.202 ms against ≤11.3 ms. |
 | D | FAIL | Mono heap start / stop against reused 16q reference +5.03% / +12.08% (±5%). Forced-GC live gaps +78,303,232 / +152,121,344 B. |
@@ -15532,7 +15532,8 @@ Run `persistent-city-rig-2026-11-19d-mac`, role rig_test on agentmac. **PROVISIO
 | Rollback | Exact installer output in `stage.log` and `probe-stage.log`. Probe rolled back first, then Persistent City. |
 | Sealed fixture | FT GR5 13f Timing v1, 1,000 residents / 2,000 visitors / 1,683 places |
 | Other named cities | FT RIGTMP-GR5-19d-mac, FT RIGTMP-GR5-15c and FT RIGTMP-GR5-15c-mac queried for cleanup only |
-| Native autosave preference | 5 minutes / 3 saves, prevent_autosave=False |
+| Native autosave preference (original setting) | 5 minutes / 3 saves, prevent_autosave=False, restored unchanged at cleanup |
+| #70 autosave guard | Process guard checked after every load and before and after each timed window. All four timed windows (A steady, A retime, B night, C street) read save clean true with 0 native saving frames (frame counts table below) |
 | SaveCostDiagnostics | requested=false and writer schema 1 on all measured pre-window reads |
 | Pre-stage manifest SHA-256 | 10e834ecc106ab04d1b287b3881c14a33454e26df9bef43939f12d3e55178a33 |
 | Restore | game stopped, lease released. Verified file sets {'files': 35, 'rlo': 53, 'sealed': 4}. Hash mismatches 0. Fixture sidecars 0 |
@@ -15600,7 +15601,7 @@ Night heap reads use the 16q bracket order. The night sampler report contains th
 | (d) after modwork export | 1,445,740,544 | 1,372,274,688 | 1,462,304,768 | −16,564,224 |
 | (e) after perf export | 1,445,871,616 | 1,375,608,832 | 1,462,370,304 | −16,498,688 |
 
-Every sampler collection row. Frame and UpdateCity times are from the sampler. A different marker frame denotes the only unmatched marker with a collection within one frame. Where the frame recorder marks GC inside UpdateCity, the Unity marker may overlap that UpdateCity time.
+Every sampler collection row. Frame and UpdateCity times are from the sampler. Where the marker frame equals the Unity frame, the match is exact. A different marker frame marks an adjacent-frame candidate: the nearest GC.Collect marker, one frame later, is associated with the collection. Three rows are adjacent-frame candidates: A steady 8,690 (marker 8,691), A retime 7,238 (marker 7,239) and A retime 14,108 (marker 14,109). Where the frame recorder marks GC inside UpdateCity, the Unity marker may overlap that UpdateCity time.
 
 | Window | Unity frame | Frame ms | UpdateCity ms | Marker frame | GC.Collect ms | Gen0 | Heap before / after B | Adjacent frame ms |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
