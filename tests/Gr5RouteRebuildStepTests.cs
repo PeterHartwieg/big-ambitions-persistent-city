@@ -216,7 +216,7 @@ public sealed class Gr5RouteRebuildStepTests
         var whole = city.RebuildRoutes(new Gr5AdvanceSegmentMeasure.Straight(), null);
         Assert.Equal(committed, Hash(state));
         Assert.Equal(FoodMoneyCounters.Rescan(state.Food!), whole.FoodMoney!.Snapshot());
-        int chunks = (meals + CitySimulator.RebuildPeoplePerStep - 1) / FoodCommerce.AttachMealsPerStep;
+        int chunks = (meals + FoodCommerce.AttachMealsPerStep - 1) / FoodCommerce.AttachMealsPerStep;
         Assert.All(units, u => Assert.Equal(units[0], u));
         var best = Enumerable.Range(0, units[0]).Select(i => times.Min(t => t[i])).ToList();
         double slowest = best.Max();

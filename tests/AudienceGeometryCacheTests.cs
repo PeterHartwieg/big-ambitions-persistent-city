@@ -89,16 +89,79 @@ public sealed class AudienceGeometryCacheTests
     public void ResumableSamplesNumberSpotsByResultCountAcrossSlices()
     {
         var inputs = Enumerable.Range(0, 40).ToArray();
-        OptionalStopSpot? Sample(int input, int count) => input % 4 == 0 ? null : new OptionalStopSpot { Id = "park:" + count, TargetId = "p" + input };
+        OptionalStopSpot? Sample(string prefix, int input, int count) => input % 4 == 0 ? null : new OptionalStopSpot { Id = prefix + count, TargetId = "p" + input };
         var whole = new ResumableSamples<int>(inputs);
-        Assert.True(whole.Continue(Sample, long.MaxValue));
+        Assert.True(whole.Continue(Sample, "park:", long.MaxValue));
         var sliced = new ResumableSamples<int>(inputs);
         int continuations = 1;
-        while (!sliced.Continue(Sample, 0)) continuations++;
+        while (!sliced.Continue(Sample, "park:", 0)) continuations++;
         Assert.Equal(inputs.Length, continuations);
         Assert.Equal(whole.Take().Select(s => s.Id + s.TargetId), sliced.Take().Select(s => s.Id + s.TargetId));
         Assert.Equal(30, sliced.Spots.Count);
-        Assert.True(new ResumableSamples<int>(Array.Empty<int>()).Continue(Sample, 0));
+        Assert.True(new ResumableSamples<int>(Array.Empty<int>()).Continue(Sample, "park:", 0));
+    }
+
+    private sealed class Parks : IGeometryWarmTarget
+    {
+        public readonly int[] Samples; public readonly bool[] SetUp, Done; public int Starts;
+        public double StartMilliseconds, SampleMilliseconds;
+        public Parks(int count, int samples) { Samples = Enumerable.Repeat(samples, count).ToArray(); SetUp = new bool[count]; Done = new bool[count]; }
+        public int Count => Samples.Length;
+        public bool Warm(int index) => Done[index];
+        public bool Started(int index) => SetUp[index];
+        public void Start(int index) { Starts++; SetUp[index] = true; Spin(StartMilliseconds); }
+        public bool Continue(int index, long deadline)
+        {
+            while (Samples[index] > 0)
+            {
+                Samples[index]--; Spin(SampleMilliseconds);
+                if (Samples[index] > 0 && Stopwatch.GetTimestamp() >= deadline) return false;
+            }
+            Done[index] = true; return true;
+        }
+        private static void Spin(double milliseconds)
+        {
+            long until = Stopwatch.GetTimestamp() + (long)(milliseconds * Stopwatch.Frequency / 1000);
+            while (Stopwatch.GetTimestamp() < until) { }
+        }
+    }
+
+    [Fact]
+    public void AnExhaustedFrameBudgetPreventsTheSetupOfAnotherColdPark()
+    {
+        var budget = new GeometryFrameBudget();
+        var warmup = new GeometryWarmup();
+        var parks = new Parks(3, 1) { StartMilliseconds = 1.5 };
+        warmup.Run(budget, 1, parks);
+        Assert.Equal(1, parks.Starts);
+        Assert.True(parks.Done[0]);
+        Assert.False(parks.SetUp[1]);
+        warmup.Run(budget, 1, parks);
+        Assert.Equal(1, parks.Starts);
+        Assert.True(budget.Deferrals >= 1);
+        warmup.Run(budget, 2, parks);
+        Assert.Equal(2, parks.Starts);
+        Assert.Equal(2, warmup.Setups);
+        Assert.True(warmup.MaximumMilliseconds >= 1.5, "setup charged " + warmup.MaximumMilliseconds);
+    }
+
+    [Fact]
+    public void WarmUpResumesAcrossFramesAndGoesIdleOnceEveryParkIsWarm()
+    {
+        var budget = new GeometryFrameBudget();
+        var warmup = new GeometryWarmup();
+        var parks = new Parks(2, 12) { SampleMilliseconds = 0.2 };
+        int frames = 0;
+        while (!warmup.Idle && frames < 100) warmup.Run(budget, ++frames, parks);
+        Assert.True(parks.Done.All(d => d));
+        Assert.Equal(2, parks.Starts);
+        Assert.InRange(frames, 4, 20);
+        long slices = warmup.Slices;
+        warmup.Run(budget, ++frames, parks);
+        Assert.Equal(slices, warmup.Slices);
+        warmup.Reset();
+        warmup.Run(budget, ++frames, parks);
+        Assert.True(warmup.Idle);
     }
 
     [Fact]

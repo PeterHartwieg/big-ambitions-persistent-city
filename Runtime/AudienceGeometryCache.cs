@@ -56,11 +56,11 @@ namespace PersistentCity.Runtime
         public int Sampled => next;
         public IReadOnlyList<OptionalStopSpot> Spots => spots;
 
-        public bool Continue(Func<TInput, int, OptionalStopSpot?> sample, long deadlineTimestamp)
+        public bool Continue<TState>(Func<TState, TInput, int, OptionalStopSpot?> sample, TState state, long deadlineTimestamp)
         {
             while (next < inputs.Length)
             {
-                var found = sample(inputs[next++], spots.Count);
+                var found = sample(state, inputs[next++], spots.Count);
                 if (found != null) spots.Add(found);
                 if (next < inputs.Length && Stopwatch.GetTimestamp() >= deadlineTimestamp) return false;
             }
@@ -70,9 +70,67 @@ namespace PersistentCity.Runtime
         public OptionalStopSpot[] Take() => spots.ToArray();
     }
 
+    internal interface IGeometryWarmTarget
+    {
+        int Count { get; }
+        bool Warm(int index);
+        bool Started(int index);
+        void Start(int index);
+        bool Continue(int index, long deadlineTimestamp);
+    }
+
+    internal sealed class GeometryWarmup
+    {
+        private int cursor;
+        public bool Idle { get; private set; }
+        public long Setups { get; private set; }
+        public long Slices { get; private set; }
+        public long Failures { get; private set; }
+        public double MaximumMilliseconds { get; private set; }
+        public void Reset() { Idle = false; }
+        public void ResetDiagnostics() { Setups = Slices = Failures = 0; MaximumMilliseconds = 0; }
+
+        public void Run(GeometryFrameBudget budget, int frameNumber, IGeometryWarmTarget target)
+        {
+            int count = target.Count;
+            if (Idle || count == 0) return;
+            long started = Stopwatch.GetTimestamp();
+            if (!budget.TryDeadline(frameNumber, started, out long deadline)) return;
+            bool worked = false;
+            try
+            {
+                for (int visited = 0; visited < count; visited++)
+                {
+                    int index = cursor % count;
+                    if (target.Warm(index)) { cursor = index + 1; if (Stopwatch.GetTimestamp() >= deadline) return; continue; }
+                    worked = true;
+                    if (!target.Started(index))
+                    {
+                        if (Stopwatch.GetTimestamp() >= deadline) return;
+                        Setups++;
+                        target.Start(index);
+                    }
+                    if (!target.Continue(index, deadline)) return;
+                    cursor = index + 1;
+                    if (Stopwatch.GetTimestamp() >= deadline) return;
+                }
+                if (!worked) Idle = true;
+            }
+            catch (Exception) { Failures++; cursor++; }
+            finally
+            {
+                double elapsed = (Stopwatch.GetTimestamp() - started) * 1000.0 / Stopwatch.Frequency;
+                budget.Spend(elapsed); Slices++;
+                if (elapsed > MaximumMilliseconds) MaximumMilliseconds = elapsed;
+            }
+        }
+    }
+
     internal sealed class AudienceGeometryCache
     {
         public const int Angles = 8;
+        private static readonly Func<(Func<Place, AudienceTarget, int, OptionalStopSpot?> Sample, Place Place), (AudienceTarget Member, int Angle), int, OptionalStopSpot?> SampleMember
+            = (state, input, _) => state.Sample(state.Place, input.Member, input.Angle);
         private sealed class Entry
         {
             public Position Origin;
@@ -124,7 +182,7 @@ namespace PersistentCity.Runtime
             if (entry.Run != null)
             {
                 bool done;
-                try { done = entry.Run.Continue((input, _) => sample(place, input.Member, input.Angle), deadlineTimestamp); }
+                try { done = entry.Run.Continue(SampleMember, (sample, place), deadlineTimestamp); }
                 catch (Exception) { entries.Remove(place.Id); throw; }
                 if (!done) { spots = Array.Empty<OptionalStopSpot>(); return false; }
                 entry.Spots = entry.Run.Take(); entry.Run = null;

@@ -158,4 +158,43 @@ public sealed class Gr5RepeatedRetimeLeakTests
         Judge("rig food city, " + state.Citizens.Count + " residents, " + state.VisitorRoutines.Count + " visitors, " + state.Food!.Residents.Count + " meals", retimedReads, controlReads, travelling,
             Census(("simulation", city), ("driver", driver)), Census(("simulation", control.City), ("driver", new ClockRetimeDriver())));
     }
+
+    [Fact]
+    public void PrePositioningTheRigFoodCityToNightAtSixtyTimesRetainsNoMoreThanAtTwentyTimes()
+    {
+        RetainedHeap Run(double rate)
+        {
+            var state = Gr5AllocationMeasure.RigCity();
+            var city = new CitySimulator(state, new Gr5AdvanceSegmentMeasure.Straight());
+            city.AttachFoodMarket(new VisitorRoutineTests.Market { Shops = F5gPopulationFillTests.Shops(state) });
+            city.AttachOptionalStops(new Gr5AllocationMeasure.StopSpots(), OptionalStopPolicy.ApprovedChoicePercentage);
+            double day = Math.Floor(state.Minute / 1440) * 1440 + 1440;
+            city.AdvanceTo(day + 15.5 * 60, int.MaxValue);
+            var driver = new ClockRetimeDriver();
+            CitySimulator Retime(double to)
+            {
+                while (driver.Update(state, to, false, 1.4, ClockRetimeStages.SliceMilliseconds) != ClockRetimeOutcome.Committed) { }
+                var rebuild = city.BeginRebuildRoutes(new Gr5AdvanceSegmentMeasure.Straight(), driver.TakeRetimedTraffic());
+                while (!rebuild.Step(0)) { }
+                return rebuild.TakeResult();
+            }
+            if (rate != 1) city = Retime(rate);
+            city.AdvanceTo(day + 1440 + 50, int.MaxValue);
+            if (rate != 1) city = Retime(1);
+            city.AdvanceTo(day + 1440 + 60, int.MaxValue);
+            Assert.True(city.ActiveJourneyIndexMatchesState());
+            return Census(("simulation", city), ("driver", driver));
+        }
+        var one = Run(1); var twenty = Run(20); var sixty = Run(60);
+        output.WriteLine("rig food city at 01:00 after 15:30 -> 00:50 pre-positioning (Mono 64-bit layout model): 1x " + one.Bytes + " B / " + one.Objects
+            + " objects, 20x " + twenty.Bytes + " B / " + twenty.Objects + " objects, 60x " + sixty.Bytes + " B / " + sixty.Objects + " objects; 60x minus 20x " + (sixty.Bytes - twenty.Bytes).ToString("+0;-0") + " B");
+        foreach (var row in sixty.Types.Take(12))
+        {
+            var other = twenty.Types.FirstOrDefault(r => r.Name == row.Name);
+            output.WriteLine("  " + row.Name + ": 20x " + (other?.Objects ?? 0) + " / 60x " + row.Objects + " objects, " + ((row.Bytes - (other?.Bytes ?? 0)) / 1e6).ToString("+0.000;-0.000") + " MB");
+        }
+        Assert.True(Math.Abs(sixty.Bytes - twenty.Bytes) < Allowance, "60x minus 20x " + (sixty.Bytes - twenty.Bytes) + " B");
+        Assert.True(sixty.Bytes - one.Bytes < Allowance, "60x minus 1x " + (sixty.Bytes - one.Bytes) + " B");
+        Assert.Equal(1, Objects(sixty, "CitySimulator"));
+    }
 }
