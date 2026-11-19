@@ -79,7 +79,23 @@ namespace PersistentCity.Runtime
         public double SeamMilliseconds { get; private set; }
         public double MaximumSeamMilliseconds { get; private set; }
         public long ParkTriggerScans { get; private set; }
-        public void ResetSeamDiagnostics() { SeamCalls = ParkTriggerScans = 0; SeamMilliseconds = MaximumSeamMilliseconds = 0; }
+        public void ResetSeamDiagnostics()
+        {
+            SeamCalls = ParkTriggerScans = 0; SeamMilliseconds = MaximumSeamMilliseconds = 0;
+            DoorSamples = ParkSlices = AudienceSlices = 0; MaximumDoorMilliseconds = MaximumParkMilliseconds = MaximumAudienceMilliseconds = 0;
+            deferralsSeen = geometryBudget.Deferrals;
+        }
+        public long DoorSamples { get; private set; }
+        public long ParkSlices { get; private set; }
+        public long AudienceSlices { get; private set; }
+        public double MaximumDoorMilliseconds { get; private set; }
+        public double MaximumParkMilliseconds { get; private set; }
+        public double MaximumAudienceMilliseconds { get; private set; }
+        private long deferralsSeen;
+        public long GeometryDeferrals => geometryBudget.Deferrals - deferralsSeen;
+        private readonly GeometryFrameBudget geometryBudget = new GeometryFrameBudget();
+        private bool geometryPending;
+        private static double MillisecondsSince(long started) => (System.Diagnostics.Stopwatch.GetTimestamp() - started) * 1000.0 / System.Diagnostics.Stopwatch.Frequency;
         private int seamDepth;
         private long BeginSeam() { seamDepth++; return System.Diagnostics.Stopwatch.GetTimestamp(); }
         private void RecordSeam(long started)
@@ -104,17 +120,30 @@ namespace PersistentCity.Runtime
         }
         private IReadOnlyList<OptionalStopSpot> ReadSpots(Place place, DwellKind kind)
         {
+            geometryPending = false;
             if (kind == DwellKind.Audience) return Audience(place);
             string key = SpotKey(place, kind);
             if (kind == DwellKind.Resting)
                 return cached.TryGetValue(key, out var park) ? park : ParkEdge(place, key);
-            if (!NativeDoorPresent(place, kind) || !doors.TryQueue(place, out var line) || line == null)
+            if (!NativeDoorPresent(place, kind) || !TryDoorQueue(place, out var line) || line == null)
                 return Array.Empty<OptionalStopSpot>();
             if (cached.TryGetValue(key, out var known)) return known;
             var result = line.Spots.Select((p, index) => new OptionalStopSpot { Id = key + ":" + index,
                 TargetId = place.Id, Position = p, Facing = kind == DwellKind.WindowShopping ? line.Door
                     : new Position(2 * p.X - line.Door.X, p.Y, 2 * p.Z - line.Door.Z) }).ToArray();
             cached[key] = result; return result;
+        }
+        private bool TryDoorQueue(Place place, out DoorQueue? line)
+        {
+            bool before = doors.SampledThisFrame;
+            long started = System.Diagnostics.Stopwatch.GetTimestamp();
+            bool found = doors.TryQueue(place, out line);
+            if (!before && doors.SampledThisFrame)
+            {
+                DoorSamples++;
+                MaximumDoorMilliseconds = Math.Max(MaximumDoorMilliseconds, MillisecondsSince(started));
+            }
+            return found;
         }
         private readonly Dictionary<(string, DwellKind), string> spotKeys = new Dictionary<(string, DwellKind), string>();
         private string SpotKey(Place place, DwellKind kind)
@@ -264,11 +293,24 @@ namespace PersistentCity.Runtime
                     }
             return owner;
         }
+        private sealed class ParkBuild
+        {
+            public ParkBuild(LocationHappinessTrigger trigger, ResumableSamples<(Collider Collider, Vector3 Outside)> run) { Trigger = trigger; Run = run; }
+            public LocationHappinessTrigger Trigger { get; }
+            public ResumableSamples<(Collider Collider, Vector3 Outside)> Run { get; }
+        }
+        private readonly Dictionary<string, ParkBuild> parkBuilds = new Dictionary<string, ParkBuild>(StringComparer.Ordinal);
         private IReadOnlyList<OptionalStopSpot> ParkEdge(Place place, string key)
         {
             if (!place.Id.StartsWith("scene-park:", StringComparison.Ordinal)
                 || !place.EvidenceSource.StartsWith("native-park-volume;", StringComparison.Ordinal)) return Array.Empty<OptionalStopSpot>();
             if (parkTriggers == null || scans.Due(DwellKind.Resting)) return Array.Empty<OptionalStopSpot>();
+            if (parkBuilds.TryGetValue(key, out var started))
+            {
+                if (started.Trigger != null && parkActivity.Admit(place.Id, started.Trigger.gameObject.activeInHierarchy, false))
+                    return ContinuePark(place, key, started);
+                parkBuilds.Remove(key);
+            }
             {
                 bool destroyed = false;
                 foreach (var trigger in parkTriggers)
@@ -276,27 +318,48 @@ namespace PersistentCity.Runtime
                     if (trigger == null) { destroyed = true; continue; }
                     if (!OutdoorPlaces.StaticSceneKey(trigger.transform, out string scene) || "scene-park:" + scene != place.Id
                         || !parkActivity.Admit(place.Id, trigger.gameObject.activeInHierarchy, false)) continue;
-                    var result = new List<OptionalStopSpot>();
+                    var inputs = new List<(Collider, Vector3)>();
                     foreach (var collider in trigger.GetComponentsInChildren<Collider>(false))
                     {
                         if (collider == null || !collider.enabled || !collider.isTrigger
                             || collider is MeshCollider mesh && !mesh.convex) continue;
                         var b = collider.bounds; var center = b.center; center.y = (float)place.Position.Y;
-                        foreach (var outside in new[] { new Vector3(b.min.x - 2, center.y, center.z), new Vector3(b.max.x + 2, center.y, center.z),
-                            new Vector3(center.x, center.y, b.min.z - 2), new Vector3(center.x, center.y, b.max.z + 2) })
-                        {
-                            var edge = collider.ClosestPoint(outside);
-                            if (!Sample(place.Position, edge, out var point) || (collider.ClosestPoint(PhysicalPedestrianBody.Vector(point))
-                                - PhysicalPedestrianBody.Vector(point)).sqrMagnitude > 0.25f) continue;
-                            result.Add(new OptionalStopSpot { Id = key + ":" + result.Count, TargetId = place.Id, Position = point, Facing = place.Position });
-                        }
+                        inputs.Add((collider, new Vector3(b.min.x - 2, center.y, center.z)));
+                        inputs.Add((collider, new Vector3(b.max.x + 2, center.y, center.z)));
+                        inputs.Add((collider, new Vector3(center.x, center.y, b.min.z - 2)));
+                        inputs.Add((collider, new Vector3(center.x, center.y, b.max.z + 2)));
                     }
-                    if (result.Count == 0) return result;
-                    targets[place.Id] = trigger.transform; cached[key] = result.ToArray(); return cached[key];
+                    var build = new ParkBuild(trigger, new ResumableSamples<(Collider, Vector3)>(inputs.ToArray()));
+                    parkBuilds[key] = build;
+                    return ContinuePark(place, key, build);
                 }
                 if (destroyed) scans.ParkTriggerLost();
             }
             return Array.Empty<OptionalStopSpot>();
+        }
+        private IReadOnlyList<OptionalStopSpot> ContinuePark(Place place, string key, ParkBuild build)
+        {
+            long started = System.Diagnostics.Stopwatch.GetTimestamp();
+            if (!geometryBudget.TryDeadline(Time.frameCount, started, out long deadline)) { geometryPending = true; return Array.Empty<OptionalStopSpot>(); }
+            var origin = place.Position; string id = place.Id;
+            bool done = build.Run.Continue((input, count) => ParkSpot(origin, id, key, count, input.Collider, input.Outside), deadline);
+            double elapsed = MillisecondsSince(started);
+            geometryBudget.Spend(elapsed); ParkSlices++;
+            MaximumParkMilliseconds = Math.Max(MaximumParkMilliseconds, elapsed);
+            if (!done) { geometryPending = true; return Array.Empty<OptionalStopSpot>(); }
+            parkBuilds.Remove(key);
+            if (build.Run.Spots.Count == 0) return Array.Empty<OptionalStopSpot>();
+            targets[place.Id] = build.Trigger.transform;
+            var result = build.Run.Take();
+            cached[key] = result; return result;
+        }
+        private static OptionalStopSpot? ParkSpot(Position origin, string placeId, string key, int count, Collider collider, Vector3 outside)
+        {
+            if (collider == null) return null;
+            var edge = collider.ClosestPoint(outside);
+            if (!Sample(origin, edge, out var point) || (collider.ClosestPoint(PhysicalPedestrianBody.Vector(point))
+                - PhysicalPedestrianBody.Vector(point)).sqrMagnitude > 0.25f) return null;
+            return new OptionalStopSpot { Id = key + ":" + count, TargetId = placeId, Position = point, Facing = origin };
         }
         private LocationHappinessTrigger[]? parkTriggers;
         private static bool SameScenes(List<int> recorded)
@@ -342,27 +405,28 @@ namespace PersistentCity.Runtime
         private IReadOnlyList<OptionalStopSpot> Audience(Place place)
         {
             if (scans.Due(DwellKind.Audience)) return Array.Empty<OptionalStopSpot>();
-            return audiences.Get(place, performers.Near(place), SampleAudience);
+            var near = performers.Near(place);
+            if (audiences.Cached(place, near, out var known)) return known;
+            long started = System.Diagnostics.Stopwatch.GetTimestamp();
+            if (!geometryBudget.TryDeadline(Time.frameCount, started, out long deadline)) { geometryPending = true; return Array.Empty<OptionalStopSpot>(); }
+            bool done = audiences.TryGet(place, near, SampleAudienceSpot, deadline, out var spots);
+            double elapsed = MillisecondsSince(started);
+            geometryBudget.Spend(elapsed); AudienceSlices++;
+            MaximumAudienceMilliseconds = Math.Max(MaximumAudienceMilliseconds, elapsed);
+            if (!done) geometryPending = true;
+            return spots;
         }
-        private static IReadOnlyList<OptionalStopSpot> SampleAudience(Place place, IReadOnlyList<AudienceTarget> image)
+        private static readonly Func<Place, AudienceTarget, int, OptionalStopSpot?> SampleAudienceSpot = SampleAudience;
+        private static OptionalStopSpot? SampleAudience(Place place, AudienceTarget member, int i)
         {
-            var result = new List<OptionalStopSpot>();
-            foreach (var member in image)
-            {
-                var center = PhysicalPedestrianBody.Vector(member.Position);
-                string target = member.Id;
-                for (int i = 0; i < 8; i++)
-                {
-                    double angle = i * Math.PI / 4;
-                    var wanted = center + new Vector3((float)Math.Cos(angle) * 2, 0, (float)Math.Sin(angle) * 2);
-                    if (!Sample(place.Position, wanted, out var point)
-                        || !NavMesh.FindClosestEdge(PhysicalPedestrianBody.Vector(point), out var edge, WalkingRoutes.DryFilter)
-                        || Vector3.Distance(edge.position, PhysicalPedestrianBody.Vector(point)) > 0.8f) continue;
-                    result.Add(new OptionalStopSpot { Id = target + ":" + i, TargetId = target,
-                        Position = point, Facing = PhysicalPedestrianBody.Point(center) });
-                }
-            }
-            return result;
+            var center = PhysicalPedestrianBody.Vector(member.Position);
+            double angle = i * Math.PI / 4;
+            var wanted = center + new Vector3((float)Math.Cos(angle) * 2, 0, (float)Math.Sin(angle) * 2);
+            if (!Sample(place.Position, wanted, out var point)
+                || !NavMesh.FindClosestEdge(PhysicalPedestrianBody.Vector(point), out var edge, WalkingRoutes.DryFilter)
+                || Vector3.Distance(edge.position, PhysicalPedestrianBody.Vector(point)) > 0.8f) return null;
+            return new OptionalStopSpot { Id = member.Id + ":" + i, TargetId = member.Id,
+                Position = point, Facing = PhysicalPedestrianBody.Point(center) };
         }
         public OptionalStopAvailability Available(OptionalStopState stop)
         {
@@ -384,7 +448,12 @@ namespace PersistentCity.Runtime
             {
                 if (!performers.Available(stop.TargetId, stop.Facing)) return OptionalStopAvailability.Unavailable;
             }
-            if (stop.Kind == DwellKind.Resting && !targets.ContainsKey(stop.TargetId)) ParkEdge(place, SpotKey(place, stop.Kind));
+            if (stop.Kind == DwellKind.Resting && !targets.ContainsKey(stop.TargetId))
+            {
+                geometryPending = false;
+                ParkEdge(place, SpotKey(place, stop.Kind));
+                if (geometryPending) return OptionalStopAvailability.Deferred;
+            }
             if (ScanDue(stop.Kind)) return OptionalStopAvailability.Deferred;
             if (stop.Kind == DwellKind.Resting && (!targets.TryGetValue(stop.TargetId, out var target) || target == null
                 || !parkActivity.Admit(stop.TargetId, target.gameObject.activeInHierarchy, false))) return OptionalStopAvailability.Unavailable;
@@ -398,19 +467,21 @@ namespace PersistentCity.Runtime
             {
                 Spots(place, stop.Kind);
                 if (!validatedSpots.TryGetValue(stop.SpotId, out geometry))
-                    return stop.Kind != DwellKind.Audience && stop.Kind != DwellKind.Resting
+                    return geometryPending ? OptionalStopAvailability.Deferred
+                        : stop.Kind != DwellKind.Audience && stop.Kind != DwellKind.Resting
                         && doors.Unsampled(place) && doors.SampledThisFrame
                         ? OptionalStopAvailability.Deferred : OptionalStopAvailability.Unavailable;
             }
             if (Position.Distance(stop.Position, geometry.Position) > 0.01) return OptionalStopAvailability.Unavailable;
             return OptionalStopAvailability.Ready;
         }
+        private static NavMeshPath? samplePath;
         private static bool Sample(Position from, Vector3 wanted, out Position point)
         {
             point = default;
             if (!NavMesh.SamplePosition(wanted, out var hit, 0.45f, WalkingRoutes.DryFilter)
                 || Vector3.Distance(hit.position, wanted) > 0.45f) return false;
-            var path = new NavMeshPath();
+            var path = samplePath ??= new NavMeshPath();
             if (!NavMesh.CalculatePath(PhysicalPedestrianBody.Vector(from), hit.position, WalkingRoutes.DryFilter, path)
                 || path.status != NavMeshPathStatus.PathComplete) return false;
             point = PhysicalPedestrianBody.Point(hit.position); return true;

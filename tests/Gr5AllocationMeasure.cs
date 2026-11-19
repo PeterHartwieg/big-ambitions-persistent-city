@@ -36,7 +36,7 @@ public sealed class Gr5AllocationMeasure
         }
     }
 
-    private sealed class StopSpots : IOptionalStopEnvironment
+    internal sealed class StopSpots : IOptionalStopEnvironment
     {
         private readonly Dictionary<(string, DwellKind), OptionalStopSpot[]> spots = new Dictionary<(string, DwellKind), OptionalStopSpot[]>();
         public bool Raining => false;

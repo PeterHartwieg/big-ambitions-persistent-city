@@ -268,7 +268,7 @@ public sealed class Gr5NetworkFootprintTests
         Assert.True(cacheAfter - cacheBefore + kernelAfter - kernelBefore < allowance, "cache and kernel growth " + (cacheAfter - cacheBefore + kernelAfter - kernelBefore));
     }
 
-    private static List<TrafficNetworkNode> SignalledRoad(double clockRate)
+    internal static List<TrafficNetworkNode> SignalledRoad(double clockRate)
     {
         var nodes = Gr5NetworkRequeueTests.RoadNodesForTest();
         foreach (var node in nodes)
@@ -277,7 +277,7 @@ public sealed class Gr5NetworkFootprintTests
         return nodes;
     }
 
-    private static CitySimulator FullRetime(CityState state, CitySimulator city, ClockRetimeDriver driver, double rate, TrafficNetwork network)
+    internal static CitySimulator FullRetime(CityState state, CitySimulator city, ClockRetimeDriver driver, double rate, TrafficNetwork network)
     {
         while (true)
         {

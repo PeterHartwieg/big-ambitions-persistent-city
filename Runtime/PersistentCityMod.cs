@@ -457,7 +457,11 @@ namespace PersistentCity.Runtime
                         + (stopEnvironment?.SeamCalls ?? 0) + " calls, "
                         + (stopEnvironment?.SeamMilliseconds ?? 0).ToString("F3", System.Globalization.CultureInfo.InvariantCulture) + " ms total, "
                         + (stopEnvironment?.MaximumSeamMilliseconds ?? 0).ToString("F3", System.Globalization.CultureInfo.InvariantCulture) + " ms maximum, "
-                        + (stopEnvironment?.ParkTriggerScans ?? 0) + " park trigger scans. Routes: "
+                        + (stopEnvironment?.ParkTriggerScans ?? 0) + " park trigger scans; geometry door samples "
+                        + (stopEnvironment?.DoorSamples ?? 0) + " (maximum " + (stopEnvironment?.MaximumDoorMilliseconds ?? 0).ToString("F3", System.Globalization.CultureInfo.InvariantCulture)
+                        + " ms), park slices " + (stopEnvironment?.ParkSlices ?? 0) + " (maximum " + (stopEnvironment?.MaximumParkMilliseconds ?? 0).ToString("F3", System.Globalization.CultureInfo.InvariantCulture)
+                        + " ms), audience slices " + (stopEnvironment?.AudienceSlices ?? 0) + " (maximum " + (stopEnvironment?.MaximumAudienceMilliseconds ?? 0).ToString("F3", System.Globalization.CultureInfo.InvariantCulture)
+                        + " ms), frame-budget deferrals " + (stopEnvironment?.GeometryDeferrals ?? 0) + ". Routes: "
                         + roadSnapshots + " road snapshots started (" + gateChanges + " for gate changes), "
                         + waitingFrames + " frames waiting for routes; rebuild reasons ["
                         + string.Join(", ", roadRebuildReasons.OrderBy(pair => pair.Key, StringComparer.Ordinal).Select(pair => pair.Key + "=" + pair.Value))
