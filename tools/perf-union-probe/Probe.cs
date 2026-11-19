@@ -527,32 +527,23 @@ namespace PerfUnionProbe
         }
 
         private static long monoHeapStart = -1, monoUsedStart = -1, monoHeapStop = -1, monoUsedStop = -1;
-        private const int CollectionUsedLimit = 64;
-        private static readonly long[] collectionUsed = new long[CollectionUsedLimit];
-        private static readonly int[] collectionUsedFrame = new int[CollectionUsedLimit];
-        private static int collectionUsedCount, windowCollectionsSeen, windowCollectionMark = -1;
+        private static readonly CollectionSeries collectionSeries = new CollectionSeries();
 
         private static void NoteCollections()
         {
             int count = GC.CollectionCount(0);
-            if (windowCollectionMark < 0) { windowCollectionMark = count; return; }
-            if (count == windowCollectionMark) return;
-            windowCollectionsSeen += count - windowCollectionMark;
-            windowCollectionMark = count;
-            if (collectionUsedCount == CollectionUsedLimit) return;
+            if (!collectionSeries.Due(count)) return;
             ReadMonoHeap(out _, out long used);
-            collectionUsedFrame[collectionUsedCount] = Time.frameCount;
-            collectionUsed[collectionUsedCount++] = used;
+            collectionSeries.Note(count, used, Time.frameCount);
         }
 
         private static JObject CollectionUsed()
         {
             var rows = new JArray();
-            for (int i = 0; i < collectionUsedCount; i++) rows.Add(new JObject { ["frame"] = collectionUsedFrame[i], ["used_bytes"] = collectionUsed[i] });
-            return new JObject { ["collections"] = windowCollectionsSeen, ["retained"] = collectionUsedCount, ["truncated"] = windowCollectionsSeen > collectionUsedCount,
-                ["first_used_bytes"] = collectionUsedCount > 0 ? collectionUsed[0] : -1, ["last_used_bytes"] = collectionUsedCount > 0 ? collectionUsed[collectionUsedCount - 1] : -1,
-                ["growth_bytes"] = collectionUsedCount > 1 ? collectionUsed[collectionUsedCount - 1] - collectionUsed[0] : 0, ["rows"] = rows,
-                ["qualification"] = "Profiler Mono used size at the first frame boundary after each gen0 collection in the window; it includes what was allocated between the collection and that boundary. growth_bytes is last minus first, the window's live-heap growth without a forced collection." };
+            for (int i = 0; i < collectionSeries.Retained; i++) rows.Add(new JObject { ["frame"] = collectionSeries.FrameAt(i), ["used_bytes"] = collectionSeries.UsedAt(i) });
+            return new JObject { ["collections"] = collectionSeries.Collections, ["retained"] = collectionSeries.Retained, ["truncated"] = collectionSeries.Truncated,
+                ["first_used_bytes"] = collectionSeries.First, ["last_used_bytes"] = collectionSeries.Last, ["growth_bytes"] = collectionSeries.Growth, ["rows"] = rows,
+                ["qualification"] = "Profiler Mono used size at the first frame boundary after each gen0 collection in the window, or at measure-stop for a collection in the final partial frame; it includes what was allocated between the collection and that read. growth_bytes is last minus first, the window's live-heap growth without a forced collection." };
         }
         private static long armHeapBefore = -1, armUsedBefore = -1, armHeapAfter = -1, armUsedAfter = -1, startScanHeap = -1, startScanUsed = -1;
 
@@ -573,7 +564,7 @@ namespace PerfUnionProbe
             ReadMonoHeap(out startScanHeap, out startScanUsed); monoHeapStop = monoUsedStop = -1;
             Rescan(true); unexpectedAtWindowStart = coverage?.Unexpected.Count ?? 0; patchSetChanged = false;
             ReadMonoHeap(out monoHeapStart, out monoUsedStart);
-            collectionUsedCount = windowCollectionsSeen = 0; windowCollectionMark = GC.CollectionCount(0);
+            collectionSeries.Begin(GC.CollectionCount(0));
             crossFrame = timedExceptions = 0; unknownScopeCalls = 0; totalSaves = totalSceneEvents = 0;
             union.ResetAll();
             long now = Stopwatch.GetTimestamp();
@@ -585,7 +576,9 @@ namespace PerfUnionProbe
         private static void StopMeasurement(string reason, bool writeStopFrame = true)
         {
             if (!measuring) return;
+            int stopCollections = GC.CollectionCount(0);
             ReadMonoHeap(out monoHeapStop, out monoUsedStop);
+            collectionSeries.Note(stopCollections, monoUsedStop, Time.frameCount);
             if (reason == "explicit-stop") Rescan(true);
             long now = Stopwatch.GetTimestamp();
             if (writeStopFrame && currentFrame > firstMeasureFrame) { frameDiagnostic = true; WriteFrame(currentFrame + 1, now, true); }

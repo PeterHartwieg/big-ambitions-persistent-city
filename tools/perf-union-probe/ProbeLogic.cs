@@ -268,5 +268,31 @@ namespace PerfUnionProbe
         }
         public void Reset() { Written = Drained = Dropped = 0; }
     }
-}
 
+    public sealed class CollectionSeries
+    {
+        public const int Limit = 64;
+        private readonly long[] used = new long[Limit];
+        private readonly int[] frames = new int[Limit];
+        private int mark = -1;
+        public int Retained { get; private set; }
+        public int Collections { get; private set; }
+        public bool Truncated => Collections > Retained;
+        public long UsedAt(int index) => index < Retained ? used[index] : throw new ArgumentOutOfRangeException(nameof(index));
+        public int FrameAt(int index) => index < Retained ? frames[index] : throw new ArgumentOutOfRangeException(nameof(index));
+        public long First => Retained > 0 ? used[0] : -1;
+        public long Last => Retained > 0 ? used[Retained - 1] : -1;
+        public long Growth => Retained > 1 ? used[Retained - 1] - used[0] : 0;
+        public void Begin(int collections) { mark = collections; Retained = Collections = 0; }
+        public bool Due(int collections) => mark >= 0 && collections != mark;
+        public void Note(int collections, long usedBytes, int frame)
+        {
+            if (!Due(collections)) return;
+            Collections += Math.Max(0, collections - mark);
+            mark = collections;
+            if (Retained == Limit) return;
+            frames[Retained] = frame;
+            used[Retained++] = usedBytes;
+        }
+    }
+}

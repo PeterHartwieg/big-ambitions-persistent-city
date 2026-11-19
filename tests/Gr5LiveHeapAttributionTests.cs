@@ -55,7 +55,7 @@ public sealed class Gr5LiveHeapAttributionTests
     }
 
     [Fact]
-    public void CollectionRowsCarryTheBodyCountsNotedBeforeTheCollectionAndNotingAllocatesNothing()
+    public void CollectionRowsCarryTheBodyCountsNotedAtTheBoundaryThatSeesTheCollectionAndNotingAllocatesNothing()
     {
         static void Run(GcPauseSampler target, ref int collections)
         {

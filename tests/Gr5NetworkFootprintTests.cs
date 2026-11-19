@@ -359,9 +359,10 @@ public sealed class Gr5NetworkFootprintTests
     }
 
     [Theory]
-    [InlineData(0.05)]
-    [InlineData(0.25)]
-    public void ARetimedCityRetainsNoMoreThanAnUnretimedCityAtTheSameGameMinute(double playMinutes)
+    [InlineData(0.05, true)]
+    [InlineData(0.25, true)]
+    [InlineData(2.0, false)]
+    public void ARetimedCityRetainsNoMoreThanAnUnretimedCityAtTheSameGameMinute(double playMinutes, bool sameState)
     {
         const long allowance = 1_000_000;
         const string native = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
@@ -404,6 +405,13 @@ public sealed class Gr5NetworkFootprintTests
         }
         Assert.Equal(1, after.Types.First(r => r.Name == "CitySimulator").Objects);
         Assert.All(city.State.Citizens.Where(c => c.Phase == CitizenPhase.Travelling), c => Assert.Null(c.Journey!.PresentationCells));
-        Assert.True(excess < allowance, "retimed minus control " + excess);
+        foreach (string name in new[] { "RouteLeg", "RouteLeg[]", "Position[]", "Double[]", "Int64[]", "TrafficLinkDefinition", "FrozenLink" })
+        {
+            var start = before.Types.FirstOrDefault(r => r.Name == name);
+            var last = after.Types.FirstOrDefault(r => r.Name == name);
+            output.WriteLine("  final read " + name + ": " + (start?.Objects ?? 0) + " -> " + (last?.Objects ?? 0) + " objects, " + (((last?.Bytes ?? 0) - (start?.Bytes ?? 0)) / 1e6).ToString("+0.000;-0.000") + " MB since the before read");
+        }
+        if (sameState) Assert.True(excess < allowance, "retimed minus control " + excess);
+        Assert.True(after.Bytes - before.Bytes < allowance, "raw retained growth " + (after.Bytes - before.Bytes));
     }
 }
