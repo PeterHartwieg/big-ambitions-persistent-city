@@ -19,6 +19,8 @@ namespace PersistentCity.Core
         public int AllocPhase;
         public long AllocBytes;
         public long Bytes;
+        public int GrowCount;
+        public GrowTiming Grow;
     }
 
     public sealed class ModFrameRecorder
@@ -38,6 +40,8 @@ namespace PersistentCity.Core
         private long frame, began, mark, detailMark, counterMark, detailCounterMark;
         private int collectionsMark, detailCollectionsMark, epochMark;
         private bool open, countersValid;
+        private int growCount;
+        private GrowTiming grow;
         private double ticksPerMillisecond = 1;
 
         public bool Armed { get; private set; }
@@ -90,6 +94,7 @@ namespace PersistentCity.Core
             began = mark = detailMark = timestamp;
             counterMark = detailCounterMark = counter; countersValid = counter >= 0; epochMark = counterEpoch;
             collectionsMark = detailCollectionsMark = collections;
+            growCount = 0; grow = default;
             Array.Clear(ticks, 0, Segments); Array.Clear(bytes, 0, Segments);
             for (int i = 0; i < Segments; i++) gcAt[i] = 0;
         }
@@ -120,6 +125,12 @@ namespace PersistentCity.Core
             detailMark = timestamp; detailCounterMark = counter; detailCollectionsMark = collections;
         }
 
+        public void NoteGrow(in GrowTiming timing)
+        {
+            if (!open) return;
+            if (growCount++ == 0 || timing.Total > grow.Total) grow = timing;
+        }
+
         public void MarkDetail(long timestamp, long counter, int collections)
         {
             if (!open) return;
@@ -134,7 +145,7 @@ namespace PersistentCity.Core
             double modMilliseconds = (timestamp - began) / ticksPerMillisecond;
             Charge(GcAllocationSegment.ModOther, timestamp, counter, collections, counterEpoch);
             open = false;
-            var row = new ModFrameRow { Frame = frame, ModMs = modMilliseconds, Phase = -1, Detail = -1, Sub = -1, GcPhase = -1, AllocPhase = -1 };
+            var row = new ModFrameRow { Frame = frame, ModMs = modMilliseconds, Phase = -1, Detail = -1, Sub = -1, GcPhase = -1, AllocPhase = -1, GrowCount = growCount, Grow = grow };
             long phaseTicks = 0, detailTicks = 0, subTicks = 0;
             for (int i = 0; i < Segments; i++)
             {
@@ -206,7 +217,11 @@ namespace PersistentCity.Core
                         .Append(",\"sub\":\"").Append(Name(r.Sub)).Append("\",\"sub_ms\":").Append(D(r.SubMs))
                         .Append(",\"gc_phase\":\"").Append(Name(r.GcPhase)).Append("\",\"collections\":").Append(N(r.Collections))
                         .Append(",\"alloc_phase\":\"").Append(Name(r.AllocPhase)).Append("\",\"alloc_phase_bytes\":").Append(N(r.AllocBytes))
-                        .Append(",\"alloc_bytes\":").Append(N(r.Bytes)).Append('}');
+                        .Append(",\"alloc_bytes\":").Append(N(r.Bytes))
+                        .Append(",\"grow_ops\":").Append(N(r.GrowCount)).Append(",\"grow_kind\":\"").Append(r.GrowCount == 0 ? "none" : GrowTimingLog.KindName(r.Grow.Kind))
+                        .Append("\",\"grow_ms\":").Append(D(r.Grow.Total)).Append(",\"grow_result_ms\":").Append(D(r.Grow.Result))
+                        .Append(",\"grow_checks_ms\":").Append(D(r.Grow.Checks)).Append(",\"grow_parent_ms\":").Append(D(r.Grow.Parent))
+                        .Append(",\"grow_own_ms\":").Append(D(r.Grow.Own)).Append('}');
                 }
                 text.Append(']');
             }

@@ -42,7 +42,7 @@ namespace PersistentCity.Runtime
             + "/fallbacks: " + BodyMerge.Fallbacks + (BodyMerge.LastCollectError.Length == 0 ? "" : " (collect: " + BodyMerge.LastCollectError + ")")
             + "/" + GrowStartMaximum.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture) + " ms grow start max/"
             + GrowFinishMaximum.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture) + " ms grow finish max/" + growLog.Report();
-        private readonly GrowTimingLog growLog = new GrowTimingLog();
+        private static readonly GrowTimingLog growLog = new GrowTimingLog();
         private GrowTiming growTiming;
         private long growStarted, growStep;
         private void BeginGrow(GrowKind kind)
@@ -61,6 +61,7 @@ namespace PersistentCity.Runtime
         {
             growTiming.Total = Since(growStarted);
             growLog.Record(growTiming);
+            ModFrames.NoteGrow(growTiming);
         }
         private readonly Dictionary<string, PhysicalPedestrianBody> active = new Dictionary<string, PhysicalPedestrianBody>(StringComparer.Ordinal);
         private bool disposed;

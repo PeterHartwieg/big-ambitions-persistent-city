@@ -57,10 +57,12 @@ namespace PersistentCity.Core
         private static void Append(StringBuilder text, GrowTiming timing)
         {
             text.Append("frame=").Append(timing.Frame.ToString(CultureInfo.InvariantCulture)).Append(' ')
-                .Append(timing.Kind == GrowKind.SyncInstantiate ? "sync" : timing.Kind == GrowKind.AsyncStart ? "async_start" : "async_finish")
+                .Append(KindName(timing.Kind))
                 .Append(' ').Append(Ms(timing.Total)).Append(" ms (result ").Append(Ms(timing.Result)).Append(" / checks ").Append(Ms(timing.Checks))
                 .Append(" / parent ").Append(Ms(timing.Parent)).Append(" / own ").Append(Ms(timing.Own)).Append(')');
         }
+
+        public static string KindName(GrowKind kind) => kind == GrowKind.SyncInstantiate ? "sync" : kind == GrowKind.AsyncStart ? "async_start" : "async_finish";
 
         private static string Ms(double value) => value.ToString("0.000", CultureInfo.InvariantCulture);
     }

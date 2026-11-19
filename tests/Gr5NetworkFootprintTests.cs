@@ -22,7 +22,7 @@ public sealed class Gr5NetworkFootprintTests
         foreach (var row in heap.Types.Take(10)) output.WriteLine("  " + row.Name + ": " + row.Objects + " objects, " + M(row.Bytes) + " MB");
     }
 
-    private static long Definitions(RetainedHeap heap) => heap.Types.Where(r => r.Name == nameof(TrafficLinkDefinition)).Sum(r => r.Objects);
+    private static long Definitions(RetainedHeap heap) => heap.Types.Where(r => r.Name == nameof(TrafficLinkDefinition) || r.Name == "FrozenLink").Sum(r => r.Objects);
 
     [Fact]
     public void ARigScaleNetworkKeepsAboutOneObjectPerLink()
@@ -232,6 +232,39 @@ public sealed class Gr5NetworkFootprintTests
         var heap = new RetainedHeap();
         heap.Add("network", network);
         output.WriteLine(network.Links.Count + "-link cold construction allocated " + M(allocated) + " MB, retained " + M(heap.Bytes) + " MB (.NET allocation, Mono layout model for retained)");
-        Assert.True(allocated < 107_000_000, "allocated " + allocated);
+        Assert.True(allocated < 107_400_000, "allocated " + allocated + " B; the unflattened layout at aeb8974a allocated 107,488,920 B for this fixture (.NET 10)");
+    }
+
+    [Fact]
+    public void AnUnwarmedRateCacheGrowsByLessThanTheCensusAllowanceThroughAOneTwoOneRetime()
+    {
+        const long allowance = 1_000_000;
+        var nodes = Gr5RetimeReuseTests.Grid(42, 1);
+        var one = new TrafficNetwork("gr5-rate-allowance", nodes, 1);
+        var doubled = Gr5RetimeReuseTests.Grid(42, 2).ToDictionary(n => n.Id, n => n.Signal);
+        var cache = new TrafficRateCache();
+        cache.Remember(1, one);
+        var kernel = TrafficKernel.SharingDefinitions(one.Links, 600);
+        var before = new RetainedHeap();
+        long cacheBefore = before.Add("cache", cache).Bytes;
+        long kernelBefore = before.Add("kernel", kernel).Bytes;
+        Assert.False(cache.TryGet(2, out _));
+        var two = one.Rerated(2, id => doubled[id]);
+        cache.Remember(2, two);
+        var retimed = kernel.RescaleTime(2);
+        Assert.True(retimed.AdoptCompatibleDefinitions(two.Links));
+        Assert.True(cache.TryGet(1, out var back));
+        Assert.Same(one, back);
+        var restored = retimed.RescaleTime(0.5);
+        Assert.True(restored.AdoptCompatibleDefinitions(one.Links));
+        var after = new RetainedHeap();
+        long cacheAfter = after.Add("cache", cache).Bytes;
+        long kernelAfter = after.Add("kernel", restored).Bytes;
+        int signals = one.Links.Count(l => l.Signal != null);
+        output.WriteLine(one.Links.Count + " links (" + signals + " signalled), unwarmed cache through 1->2->1: cache +" + (cacheAfter - cacheBefore)
+            + " B, kernel +" + (kernelAfter - kernelBefore) + " B, total +" + (cacheAfter - cacheBefore + kernelAfter - kernelBefore) + " B (Mono 64-bit layout model)");
+        Assert.True(one.Links.Count >= 13_965, "links " + one.Links.Count);
+        Assert.True(cacheAfter - cacheBefore < allowance, "cache growth " + (cacheAfter - cacheBefore));
+        Assert.True(cacheAfter - cacheBefore + kernelAfter - kernelBefore < allowance, "cache and kernel growth " + (cacheAfter - cacheBefore + kernelAfter - kernelBefore));
     }
 }

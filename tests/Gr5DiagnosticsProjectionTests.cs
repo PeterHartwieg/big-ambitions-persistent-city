@@ -216,6 +216,11 @@ public sealed class Gr5DiagnosticsProjectionTests
         Assert.True(checks > 0 && parented > checks && owned > parented, "grow finish steps are timed in order");
         Assert.True(pedestrians.IndexOf("character.transform.SetParent(parent, false);", StringComparison.Ordinal) < parented, "the reparent is inside the parent step");
         Assert.DoesNotContain("static readonly double[] GrowSteps", pedestrians);
+        Assert.Contains("private static readonly GrowTimingLog growLog", pedestrians);
+        int recorded = pedestrians.IndexOf("growLog.Record(growTiming);", StringComparison.Ordinal);
+        Assert.True(recorded > 0 && pedestrians.IndexOf("ModFrames.NoteGrow(growTiming);", recorded, StringComparison.Ordinal) > recorded, "every grow operation is noted on the measurement's frame row");
+        string counter = System.IO.File.ReadAllText(System.IO.Path.Combine(root, "Runtime", "GcAllocationCounter.cs"));
+        Assert.Contains("public static void NoteGrow(in GrowTiming timing) => recorder?.NoteGrow(timing);", counter);
         Assert.Contains("SizeHierarchy(character.transform);", pedestrians);
         Assert.Contains("BodyHierarchy.Capacity(parent.hierarchyCount, SubtreeCount(body), Math.Max(0, ceiling - all.Count - 1))", pedestrians);
         Assert.DoesNotContain("body.hierarchyCount", pedestrians);

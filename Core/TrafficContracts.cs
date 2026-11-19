@@ -3,17 +3,24 @@ using System.Collections.Generic;
 
 namespace PersistentCity.Core
 {
-    public sealed class TrafficSignalSchedule
+    public class TrafficSignalSchedule
     {
         private double cycle, greenStart, greenDuration, phaseOffset;
-        private bool frozen;
+        public TrafficSignalSchedule() { }
+        private protected TrafficSignalSchedule(double cycle, double greenStart, double greenDuration, double phaseOffset)
+        { this.cycle = cycle; this.greenStart = greenStart; this.greenDuration = greenDuration; this.phaseOffset = phaseOffset; }
         public double CycleMinutes { get => cycle; set { Writable(); cycle = value; } }
         public double GreenStartMinutes { get => greenStart; set { Writable(); greenStart = value; } }
         public double GreenDurationMinutes { get => greenDuration; set { Writable(); greenDuration = value; } }
         public double PhaseOffsetMinutes { get => phaseOffset; set { Writable(); phaseOffset = value; } }
-        internal bool IsFrozen() => frozen;
-        internal void Freeze() => frozen = true;
-        private void Writable() { if (frozen) throw new InvalidOperationException("A traffic network's signal schedule is read-only."); }
+        internal bool IsFrozen() => this is FrozenSignal;
+        internal static TrafficSignalSchedule? FrozenCopy(TrafficSignalSchedule? s) => s == null ? null
+            : new FrozenSignal(s.cycle, s.greenStart, s.greenDuration, s.phaseOffset);
+        private void Writable() { if (this is FrozenSignal) throw new InvalidOperationException("A traffic network's signal schedule is read-only."); }
+        private sealed class FrozenSignal : TrafficSignalSchedule
+        {
+            internal FrozenSignal(double cycle, double greenStart, double greenDuration, double phaseOffset) : base(cycle, greenStart, greenDuration, phaseOffset) { }
+        }
         internal double NextGreen(double time)
         {
             if (GreenDurationMinutes == 0) return double.PositiveInfinity;
@@ -42,20 +49,27 @@ namespace PersistentCity.Core
 
     }
 
-    public sealed class TrafficLinkDefinition
+    public class TrafficLinkDefinition
     {
         private int id, capacity;
         private double freeFlow, headway;
         private TrafficSignalSchedule? signal;
-        private bool frozen;
+        public TrafficLinkDefinition() { }
+        private protected TrafficLinkDefinition(int id, int capacity, double freeFlow, double headway, TrafficSignalSchedule? signal)
+        { this.id = id; this.capacity = capacity; this.freeFlow = freeFlow; this.headway = headway; this.signal = signal; }
         public int Id { get => id; set { Writable(); id = value; } }
         public int Capacity { get => capacity; set { Writable(); capacity = value; } }
         public double FreeFlowMinutes { get => freeFlow; set { Writable(); freeFlow = value; } }
         public double HeadwayMinutes { get => headway; set { Writable(); headway = value; } }
         public TrafficSignalSchedule? Signal { get => signal; set { Writable(); signal = value; } }
-        internal bool IsFrozen() => frozen && (signal == null || signal.IsFrozen());
-        internal TrafficLinkDefinition Freeze() { signal?.Freeze(); frozen = true; return this; }
-        private void Writable() { if (frozen) throw new InvalidOperationException("A traffic network's link definition is read-only."); }
+        internal bool IsFrozen() => this is FrozenLink && (signal == null || signal.IsFrozen());
+        internal static TrafficLinkDefinition Frozen(int id, int capacity, double freeFlow, double headway, TrafficSignalSchedule? signal) =>
+            new FrozenLink(id, capacity, freeFlow, headway, TrafficSignalSchedule.FrozenCopy(signal));
+        private void Writable() { if (this is FrozenLink) throw new InvalidOperationException("A traffic network's link definition is read-only."); }
+        private sealed class FrozenLink : TrafficLinkDefinition
+        {
+            internal FrozenLink(int id, int capacity, double freeFlow, double headway, TrafficSignalSchedule? signal) : base(id, capacity, freeFlow, headway, signal) { }
+        }
     }
 
     public sealed class TrafficRouteLeg

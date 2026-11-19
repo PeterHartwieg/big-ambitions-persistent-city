@@ -52,8 +52,8 @@ namespace PersistentCity.Core
     {
         public const string PolicyId = "directed-sections-v1;max80m;storage6m;headway1.8s;native-periodic-groups";
         private readonly EdgeTable edges;
-        private readonly double[] edgeMinutes;
-        private readonly double[] sectionMinutes;
+        private readonly double clockRate;
+        private readonly double[] linkSpeeds;
         private readonly List<TrafficLinkDefinition> links;
         private readonly int[][] linkNodes;
         private readonly Dictionary<int, Position> positions;
@@ -88,24 +88,24 @@ namespace PersistentCity.Core
         {
             internal readonly Dictionary<(int, int), int> Index;
             internal int[] From, To, Link;
-            internal double[] Start, End;
+            internal double[] Start, End, Metres;
             internal int Count;
             internal EdgeTable(int capacity)
             {
                 Index = new Dictionary<(int, int), int>(capacity);
                 From = new int[capacity]; To = new int[capacity]; Link = new int[capacity];
-                Start = new double[capacity]; End = new double[capacity];
+                Start = new double[capacity]; End = new double[capacity]; Metres = new double[capacity];
             }
-            internal int Add(int from, int to, int link, double start, double end)
+            internal int Add(int from, int to, int link, double start, double end, double metres)
             {
                 if (Count == From.Length)
                 {
                     int grown = Math.Max(4, Count * 2);
                     Array.Resize(ref From, grown); Array.Resize(ref To, grown); Array.Resize(ref Link, grown);
-                    Array.Resize(ref Start, grown); Array.Resize(ref End, grown);
+                    Array.Resize(ref Start, grown); Array.Resize(ref End, grown); Array.Resize(ref Metres, grown);
                 }
                 Index.Add((from, to), Count);
-                From[Count] = from; To[Count] = to; Link[Count] = link; Start[Count] = start; End[Count] = end;
+                From[Count] = from; To[Count] = to; Link[Count] = link; Start[Count] = start; End[Count] = end; Metres[Count] = metres;
                 return Count++;
             }
         }
@@ -142,8 +142,7 @@ namespace PersistentCity.Core
             foreach (var node in nodes.Values)
                 foreach (int next in node.Successors.Distinct()) if (rawIncoming.ContainsKey(next)) rawIncoming[next]++;
             var all = new List<Edge>();
-            var minutesByEdge = new List<double>();
-            var minutesBySection = new List<double>();
+            var speeds = new List<double>();
             foreach (var node in nodes.Values.OrderBy(n => n.Id))
             {
                 if (!Usable(node)) continue;
@@ -182,18 +181,18 @@ namespace PersistentCity.Core
                     edge = next;
                 }
                 int id = links.Count;
-                links.Add(new TrafficLinkDefinition
-                {
-                    Id = id, Capacity = Math.Max(1, checked((int)Math.Floor(Math.Max(metres, 6) / 6))),
-                    FreeFlowMinutes = minutes, HeadwayMinutes = 1.8 * clockRate,
-                    Signal = CopySignal(nodes[chain[chain.Count - 1].To].Signal)
-                }.Freeze());
+                links.Add(TrafficLinkDefinition.Frozen(id, Math.Max(1, checked((int)Math.Floor(Math.Max(metres, 6) / 6))),
+                    minutes, 1.8 * clockRate, nodes[chain[chain.Count - 1].To].Signal));
+                speeds.Add(Math.Min(40, nodes[chain[0].From].KilometresPerHour) / 3.6);
                 var indices = new List<int> { chain[0].From };
                 double offset = 0;
                 foreach (var part in chain)
-                { edges.Add(part.From, part.To, id, offset / metres, (offset + part.Metres) / metres); minutesByEdge.Add(part.Minutes); indices.Add(part.To); offset += part.Metres; }
+                {
+                    int index = edges.Add(part.From, part.To, id, offset / metres, (offset + part.Metres) / metres, part.Metres);
+                    if (EdgeMinutes(edges, speeds[id], clockRate, index) != part.Minutes) throw new ArgumentException("Native section speed differs along a section.");
+                    indices.Add(part.To); offset += part.Metres;
+                }
                 nodeLists.Add(indices.ToArray());
-                minutesBySection.Add(minutes);
             }
             linkNodes = nodeLists.ToArray();
             int total = 0;
@@ -213,8 +212,8 @@ namespace PersistentCity.Core
                 }
             }
             sectionStarts[linkNodes.Length] = at;
-            edgeMinutes = minutesByEdge.ToArray();
-            sectionMinutes = minutesBySection.ToArray();
+            this.clockRate = clockRate;
+            linkSpeeds = speeds.ToArray();
             Links = links.AsReadOnly();
             using var buffer = new MemoryStream();
             using (var writer = new BinaryWriter(buffer, System.Text.Encoding.UTF8, true))
@@ -245,8 +244,7 @@ namespace PersistentCity.Core
             NativeTopologyId = source.NativeTopologyId; TopologyId = source.TopologyId;
             positions = source.positions; kilometres = source.kilometres; linkNodes = source.linkNodes;
             edges = source.edges; sectionPoints = source.sectionPoints; sectionDistances = source.sectionDistances; sectionStarts = source.sectionStarts;
-            edgeMinutes = new double[source.edgeMinutes.Length];
-            sectionMinutes = new double[source.sectionMinutes.Length];
+            linkSpeeds = source.linkSpeeds; this.clockRate = clockRate;
             links = new List<TrafficLinkDefinition>(source.links.Count);
             for (int id = 0; id < source.links.Count; id++)
             {
@@ -258,16 +256,11 @@ namespace PersistentCity.Core
                     double length = Position.Distance(positions[from], positions[to]);
                     double part = length / (Math.Min(40, kilometres[from]) / 3.6 / clockRate);
                     if (!Position.Finite(part) || part <= 0) throw new ArgumentException("Invalid native edge duration.");
-                    edgeMinutes[edges.Index[(from, to)]] = part;
+                    if (EdgeMinutes(edges, linkSpeeds[id], clockRate, edges.Index[(from, to)]) != part) throw new ArgumentException("Native section speed differs along a section.");
                     minutes += part;
                 }
                 var link = source.links[id];
-                links.Add(new TrafficLinkDefinition
-                {
-                    Id = id, Capacity = link.Capacity, FreeFlowMinutes = minutes, HeadwayMinutes = 1.8 * clockRate,
-                    Signal = CopySignal(signalAt(indices[indices.Length - 1]))
-                }.Freeze());
-                sectionMinutes[id] = minutes;
+                links.Add(TrafficLinkDefinition.Frozen(id, link.Capacity, minutes, 1.8 * clockRate, signalAt(indices[indices.Length - 1])));
             }
             Links = links.AsReadOnly();
         }
@@ -277,7 +270,7 @@ namespace PersistentCity.Core
         public bool TryGetEdge(int from, int to, out TrafficNetworkEdge edge)
         {
             if (!edges.Index.TryGetValue((from, to), out int index)) { edge = default; return false; }
-            edge = new TrafficNetworkEdge(edges.From[index], edges.To[index], edges.Link[index], edgeMinutes[index], edges.Start[index], edges.End[index]);
+            edge = new TrafficNetworkEdge(edges.From[index], edges.To[index], edges.Link[index], EdgeMinutes(edges, linkSpeeds[edges.Link[index]], clockRate, index), edges.Start[index], edges.End[index]);
             return true;
         }
         public Position NodePosition(int nodeId) => positions.TryGetValue(nodeId, out var at) ? at : throw new ArgumentOutOfRangeException(nameof(nodeId));
@@ -552,7 +545,7 @@ namespace PersistentCity.Core
                 if (distance > referenceMetres) { reference = leg; referenceMetres = distance; }
             }
             if (reference == null) throw new ArgumentException("Traffic timing has no unfinished committed geometry.");
-            double canonicalDensity = sectionMinutes[span.LinkId] / section.Length;
+            double canonicalDensity = links[span.LinkId].FreeFlowMinutes / section.Length;
             double density = reference.Minutes / referenceMetres;
             for (int i = firstLeg; i < lastLeg; i++)
             {
@@ -640,8 +633,7 @@ namespace PersistentCity.Core
         }
         private static bool Usable(TrafficNetworkNode node) => node.AllowsCar && node.Position.IsFinite
             && Position.Finite(node.KilometresPerHour) && node.KilometresPerHour > 0;
-        private static TrafficSignalSchedule? CopySignal(TrafficSignalSchedule? s) => s == null ? null : new TrafficSignalSchedule
-        { CycleMinutes = s.CycleMinutes, GreenStartMinutes = s.GreenStartMinutes, GreenDurationMinutes = s.GreenDurationMinutes, PhaseOffsetMinutes = s.PhaseOffsetMinutes };
+        private static double EdgeMinutes(EdgeTable edges, double speed, double clockRate, int index) => edges.Metres[index] / (speed / clockRate);
         private static void WriteSignal(BinaryWriter writer, TrafficSignalSchedule? s, double clockRate)
         {
             writer.Write(s != null);

@@ -184,6 +184,8 @@ namespace PersistentCity.Runtime
             if (current != null) current.Detail(segment, System.Diagnostics.Stopwatch.GetTimestamp(), GcAllocationCounter.Read(), GC.CollectionCount(0), GcAllocationCounter.Collections);
         }
 
+        public static void NoteGrow(in GrowTiming timing) => recorder?.NoteGrow(timing);
+
         public static void MarkDetail()
         {
             var current = recorder;

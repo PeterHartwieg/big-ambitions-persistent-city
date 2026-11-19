@@ -51,4 +51,76 @@ public sealed class Gr5GrowTimingLogTests
         for (int i = 0; i < 10_000; i++) log.Record(Op(i, (GrowKind)(i % 3), i % 7 == 0 ? 40 : 2));
         Assert.Equal(0, GC.GetAllocatedBytesForCurrentThread() - before);
     }
+
+    private static ModFrameRecorder Armed()
+    {
+        var recorder = new ModFrameRecorder();
+        recorder.Arm(1000);
+        return recorder;
+    }
+
+    [Fact]
+    public void ASpikeRowCarriesItsFramesSlowestGrowEvenUnderTheTenMillisecondCutoff()
+    {
+        var recorder = Armed();
+        recorder.Begin(7610, 0, 0, 0);
+        recorder.Charge(GcAllocationSegment.PhysicalSpawnPedestrian, 10, 0, 0);
+        recorder.NoteGrow(Op(7610, GrowKind.AsyncStart, 0.3, result: 0.3));
+        recorder.Detail(GcAllocationSegment.PhysicalSpawnGrow, 17, 0, 0);
+        recorder.NoteGrow(Op(7610, GrowKind.AsyncFinish, 7.467, result: 0.1, checks: 0.2, parent: 6.9, own: 0.267));
+        recorder.Charge(GcAllocationSegment.PhysicalUnattributed, 36, 0, 0);
+        recorder.End(36, 0, 0, null);
+        recorder.Begin(7611, 40, 0, 0);
+        recorder.End(41, 0, 0, null);
+        Assert.Equal(1, recorder.SpikeCount);
+        var row = recorder.Spike(0);
+        Assert.Equal(7610, row.Frame);
+        Assert.Equal(2, row.GrowCount);
+        Assert.Equal(GrowKind.AsyncFinish, row.Grow.Kind);
+        Assert.Equal(6.9, row.Grow.Parent);
+        string json = recorder.ReportJson();
+        Assert.Contains("\"frame\":7610,", json);
+        Assert.Contains("\"grow_ops\":2,\"grow_kind\":\"async_finish\",\"grow_ms\":7.467,\"grow_result_ms\":0.1,\"grow_checks_ms\":0.2,\"grow_parent_ms\":6.9,\"grow_own_ms\":0.267", json);
+        Assert.Contains("\"grow_ops\":0,\"grow_kind\":\"none\"", json);
+    }
+
+    [Fact]
+    public void GrowBreakdownsStayWithTheRecorderAcrossPoolReplacementAndOutsideFramesAreIgnored()
+    {
+        var recorder = Armed();
+        var firstPool = new GrowTimingLog();
+        var timing = Op(500, GrowKind.SyncInstantiate, 31.0, result: 30.0, own: 1.0);
+        firstPool.Record(timing);
+        recorder.Begin(500, 0, 0, 0);
+        recorder.NoteGrow(timing);
+        recorder.Charge(GcAllocationSegment.PhysicalSpawnPedestrian, 33, 0, 0);
+        recorder.End(33, 0, 0, null);
+        firstPool = null;
+        var replacement = new GrowTimingLog();
+        recorder.NoteGrow(Op(501, GrowKind.AsyncFinish, 99));
+        recorder.Begin(502, 50, 0, 0);
+        recorder.End(51, 0, 0, null);
+        Assert.Equal(0, replacement.Recorded);
+        Assert.Equal(1, recorder.SpikeCount);
+        Assert.Equal(GrowKind.SyncInstantiate, recorder.Spike(0).Grow.Kind);
+        Assert.Equal(30.0, recorder.Spike(0).Grow.Result);
+        Assert.Equal(0, recorder.Top(1).GrowCount);
+    }
+
+    [Fact]
+    public void NotingGrowsAllocatesNothingAfterArming()
+    {
+        var recorder = Armed();
+        recorder.Begin(1, 0, 0, 0);
+        recorder.NoteGrow(Op(1, GrowKind.AsyncFinish, 1));
+        recorder.End(1, 0, 0, null);
+        long before = GC.GetAllocatedBytesForCurrentThread();
+        for (int i = 2; i < 2_000; i++)
+        {
+            recorder.Begin(i, i * 100L, 0, 0);
+            recorder.NoteGrow(Op(i, GrowKind.AsyncFinish, i % 50));
+            recorder.End(i * 100L + i % 60, 0, 0, null);
+        }
+        Assert.Equal(0, GC.GetAllocatedBytesForCurrentThread() - before);
+    }
 }
