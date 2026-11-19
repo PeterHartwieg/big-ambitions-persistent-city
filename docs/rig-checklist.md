@@ -6,6 +6,15 @@ Every check runs in a named disposable FT city in the isolated rig profile, neve
 
 Detailed specs: [F8 §7](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/a3a6c8db8686f4382ac3cf941010e0b614e48805/docs/plans/f8-capability-boundaries.md#7-in-game-checks-for-the-batched-rig), [F9 §7](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/a3a6c8db8686f4382ac3cf941010e0b614e48805/docs/plans/f9-city-acceptance.md#7-in-game-checks-for-the-next-batched-rig), [E6 §7](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/a3a6c8db8686f4382ac3cf941010e0b614e48805/docs/plans/e6-carts-food-trucks.md#7-in-game-checks-for-the-batched-rig), [F4 plan](plans/f4-perf-gate.md), [11j report](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/a3a6c8db8686f4382ac3cf941010e0b614e48805/docs/checks/rig-2026-11-11j-mac-results.md), [12b report](checks/rig-2026-11-12b-mac-results.md). Checks written before 10 November are in the [docs history tag](https://github.com/PeterHartwieg/big-ambitions-persistent-city/tree/docs-history-2026-11-10/docs/checks); many test save migration, which no longer exists.
 
+## GR-5 gates (from 19 November 2026)
+
+The gates are in the [register](decisions/2026-11-10-city-direction.md#gr-5-acceptance-gates-19-november-2026). The mod-versus-no-mod heap footprint (D), the RSS allowance (E) and census growth after a single retime (F) are reported only. The memory verdict is the leak rule. Earlier results below were judged under the gates in force at the time.
+
+Every GR-5 rig run from now on must:
+
+1. Run the repeated-cycle leak measurement: at least three 1->2->1 retimes in one fresh process, each waited to completion. After each, read the retained census (total and per type), managed heap (live after forced GC and the gap to the no-mod reference), process RSS and the mod's native counters (owned, live and unmerged meshes, live vertices, bake scratch). Read the retained census at the same matched point each time.
+2. Record autosave suppression per check: the original value, and the value verified off after each reload and before and after each window.
+
 ## Latest evidence
 
 - **19 November d, Mac (rig 16r), build `d0066bbe`**. 3 pass / 0 partial / 3 fail / 0 NOT RUN. Street union p95 4.1554 ms. **PROVISIONAL (shared Mac / Mono)**. [19d results](#rig-results--19-november-2026-d-mac-rig-16r-gr-5-313-twenty-fifth-fix-at-d0066bbe).

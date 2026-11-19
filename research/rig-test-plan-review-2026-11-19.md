@@ -291,6 +291,8 @@ One thing in the current practice already weakens confidence: fix rounds chosen 
 
 ## 8. Decisions for Peter
 
+On 19 November 2026 Peter adopted decisions 5 and 9, with the retained census judged the same way; the rest are still open. [Register entry](../docs/decisions/2026-11-10-city-direction.md#gr-5-acceptance-gates-19-november-2026).
+
 None of these is applied. Each has a recommended default.
 
 1. **Two tiers.** Default: yes. Per-fix rig as in [3.1](#31-per-fix-rig); release rig as in [3.2](#32-release-rig); GR-5 closes on two consecutive valid release runs.
