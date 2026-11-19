@@ -67,4 +67,56 @@ namespace PersistentCity.Core
 
         private static string Ms(double value) => value.ToString("0.000", CultureInfo.InvariantCulture);
     }
+
+    public sealed class GrowTimer
+    {
+        public const int Staging = 0, Result = 1, Checks = 2, Parent = 3, Own = 4;
+        private readonly double ticksPerMillisecond;
+        private GrowTiming timing;
+        private long started, mark;
+
+        public GrowTimer(double ticksPerSecond)
+        {
+            if (!(ticksPerSecond > 0) || double.IsInfinity(ticksPerSecond)) throw new ArgumentOutOfRangeException(nameof(ticksPerSecond));
+            ticksPerMillisecond = ticksPerSecond / 1000.0;
+        }
+
+        public int Active { get; private set; }
+
+        public void Begin(int frame, GrowKind kind, long timestamp)
+        {
+            timing = new GrowTiming { Frame = frame, Kind = kind, Failed = true };
+            started = mark = timestamp;
+            Active = kind == GrowKind.AsyncFinish ? Result : Staging;
+        }
+
+        public void Done(int step, long timestamp)
+        {
+            Add(step, timestamp);
+            Active = step + 1;
+        }
+
+        public void Outcome(bool succeeded) => timing.Failed = !succeeded;
+
+        public GrowTiming End(long timestamp)
+        {
+            if (timing.Failed && Active <= Own) Add(Active, timestamp);
+            timing.Total = (timestamp - started) / ticksPerMillisecond;
+            return timing;
+        }
+
+        private void Add(int step, long timestamp)
+        {
+            double elapsed = (timestamp - mark) / ticksPerMillisecond;
+            mark = timestamp;
+            switch (step)
+            {
+                case Staging: timing.Staging += elapsed; break;
+                case Result: timing.Result += elapsed; break;
+                case Checks: timing.Checks += elapsed; break;
+                case Parent: timing.Parent += elapsed; break;
+                default: timing.Own += elapsed; break;
+            }
+        }
+    }
 }

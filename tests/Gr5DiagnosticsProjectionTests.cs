@@ -203,16 +203,16 @@ public sealed class Gr5DiagnosticsProjectionTests
         string pedestrians = System.IO.File.ReadAllText(System.IO.Path.Combine(root, "Runtime", "PhysicalPedestrians.cs"));
         Assert.Contains("\" ms grow start max/\"", pedestrians);
         Assert.Contains("\" ms grow finish max/\" + growLog.Report();", pedestrians);
-        Assert.Contains("growTiming = new GrowTiming { Frame = Time.frameCount, Kind = kind };", pedestrians);
+        Assert.Contains("growTimer.Begin(Time.frameCount, kind, System.Diagnostics.Stopwatch.GetTimestamp())", pedestrians);
         int asyncStart = pedestrians.IndexOf("BeginGrow(GrowKind.AsyncStart);", StringComparison.Ordinal);
         int finish = pedestrians.IndexOf("BeginGrow(GrowKind.AsyncFinish);", StringComparison.Ordinal);
         int sync = pedestrians.IndexOf("BeginGrow(GrowKind.SyncInstantiate);", StringComparison.Ordinal);
         Assert.True(asyncStart > 0 && finish > asyncStart && sync > 0, "async start, async finish and sync instantiate are recorded separately");
         int result = pedestrians.IndexOf("var made = growing!.Result;", StringComparison.Ordinal);
-        Assert.True(result > finish && pedestrians.IndexOf("growTiming.Result = GrowStep();", result, StringComparison.Ordinal) > result, "the async result read is timed");
-        int checks = pedestrians.IndexOf("growTiming.Checks = GrowStep();", StringComparison.Ordinal);
-        int parented = pedestrians.IndexOf("growTiming.Parent = GrowStep();", StringComparison.Ordinal);
-        int owned = pedestrians.IndexOf("growTiming.Own = GrowStep();", StringComparison.Ordinal);
+        Assert.True(result > finish && pedestrians.IndexOf("GrowStep(GrowTimer.Result);", result, StringComparison.Ordinal) > result, "the async result read is timed");
+        int checks = pedestrians.IndexOf("GrowStep(GrowTimer.Checks);", StringComparison.Ordinal);
+        int parented = pedestrians.IndexOf("GrowStep(GrowTimer.Parent);", StringComparison.Ordinal);
+        int owned = pedestrians.IndexOf("GrowStep(GrowTimer.Own);", StringComparison.Ordinal);
         Assert.True(checks > 0 && parented > checks && owned > parented, "grow finish steps are timed in order");
         Assert.True(pedestrians.IndexOf("character.transform.SetParent(parent, false);", StringComparison.Ordinal) < parented, "the reparent is inside the parent step");
         Assert.DoesNotContain("static readonly double[] GrowSteps", pedestrians);
@@ -221,14 +221,16 @@ public sealed class Gr5DiagnosticsProjectionTests
         {
             int begun = pedestrians.IndexOf(kind, StringComparison.Ordinal);
             int staged = pedestrians.IndexOf("bool staged = Staged();", begun, StringComparison.Ordinal);
-            int stagingStep = pedestrians.IndexOf("growTiming.Staging = GrowStep();", begun, StringComparison.Ordinal);
+            int stagingStep = pedestrians.IndexOf("GrowStep(GrowTimer.Staging);", begun, StringComparison.Ordinal);
             int ended = pedestrians.IndexOf("finally { EndGrow(); }", begun, StringComparison.Ordinal);
-            Assert.True(begun > 0 && pedestrians.IndexOf("growTiming.Failed = true;", begun, StringComparison.Ordinal) < staged, kind + " is marked failed until it succeeds");
+            Assert.True(begun > 0 && pedestrians.IndexOf("try", begun, StringComparison.Ordinal) < staged, kind + " is timed from before staging");
             Assert.True(staged > begun && stagingStep > staged && ended > stagingStep, kind + " times staging inside the operation and records it on every exit");
         }
         Assert.DoesNotContain("if (!Staged()) return null;\n            BeginGrow", pedestrians);
-        int recorded = pedestrians.IndexOf("growLog.Record(growTiming);", StringComparison.Ordinal);
-        Assert.True(recorded > 0 && pedestrians.IndexOf("ModFrames.NoteGrow(growTiming);", recorded, StringComparison.Ordinal) > recorded, "every grow operation is noted on the measurement's frame row");
+        Assert.Contains("try { grown = Grow(out failed); }\n                    finally { PhysicalAllocation.Detail(PersistentCity.Core.GcAllocationSegment.PhysicalSpawnGrow); }", pedestrians);
+        Assert.Contains("try { character = Instantiate(); }\n                    finally { PhysicalAllocation.Detail(PersistentCity.Core.GcAllocationSegment.PhysicalSpawnGrow); }", pedestrians);
+        int recorded = pedestrians.IndexOf("growLog.Record(timing);", StringComparison.Ordinal);
+        Assert.True(recorded > 0 && pedestrians.IndexOf("ModFrames.NoteGrow(timing);", recorded, StringComparison.Ordinal) > recorded, "every grow operation is noted on the measurement's frame row");
         string counter = System.IO.File.ReadAllText(System.IO.Path.Combine(root, "Runtime", "GcAllocationCounter.cs"));
         Assert.Contains("public static void NoteGrow(in GrowTiming timing) => recorder?.NoteGrow(timing);", counter);
         Assert.Contains("SizeHierarchy(character.transform);", pedestrians);

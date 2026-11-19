@@ -95,4 +95,19 @@ public sealed class Gr5RateCacheTests
         cache.Remember(3, rated);
         return new WeakReference(rated);
     }
+
+    [Fact]
+    public void AMissNearACachedRateReleasesTheStaleBaseButAFarMissKeepsIt()
+    {
+        var one = new TrafficNetwork("gr5-rate", Gr5RetimeReuseTests.Grid(3, 1), 1);
+        var cache = new TrafficRateCache();
+        cache.Remember(1, one);
+        Assert.False(cache.TryGet(2, out _));
+        Assert.Equal(1, cache.Count);
+        Assert.False(cache.TryGet(1.0000001064368653, out _));
+        Assert.Equal(0, cache.Count);
+        cache.Remember(1, one);
+        Assert.True(cache.TryGet(1, out var back));
+        Assert.Same(one, back);
+    }
 }

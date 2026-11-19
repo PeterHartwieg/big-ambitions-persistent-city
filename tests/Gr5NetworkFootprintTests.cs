@@ -300,8 +300,10 @@ public sealed class Gr5NetworkFootprintTests
         return heap;
     }
 
-    [Fact]
-    public void AFullOneTwoOneRetimeWithAnUnwarmedCacheAndPlayAtTwoTimesStaysUnderTheCensusAllowance()
+    [Theory]
+    [InlineData(1.0)]
+    [InlineData(1.0000001064368653)]
+    public void AFullOneTwoOneRetimeWithAnUnwarmedCacheAndPlayAtTwoTimesStaysUnderTheCensusAllowance(double returnRate)
     {
         const long allowance = 1_000_000;
         const string native = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
@@ -328,14 +330,22 @@ public sealed class Gr5NetworkFootprintTests
         city = FullRetime(state, city, driver, 2, two);
         Assert.Equal(two.Links.Count, city.Traffic!.DefinitionsSharedWith(two.Links) + two.Links.Count(l => l.Signal != null));
         city.AdvanceTo(state.Minute + 0.05, int.MaxValue);
-        Assert.True(cache.TryGet(1, out var back));
-        city = FullRetime(state, city, driver, 1, back);
+        bool exact = returnRate == 1;
+        Assert.Equal(exact, cache.TryGet(returnRate, out var back));
+        if (!exact)
+        {
+            Assert.Equal(0, cache.Count);
+            var returned = SignalledRoad(returnRate).ToDictionary(n => n.Id, n => n.Signal);
+            back = two.Rerated(returnRate, id => returned[id]);
+            cache.Remember(returnRate, back);
+        }
+        city = FullRetime(state, city, driver, returnRate, back);
         city.AdvanceTo(state.Minute + 0.01, int.MaxValue);
         var after = Census(city, cache);
         Assert.True(city.Traffic!.VehicleCount > 0);
         int signals = one.Links.Count(l => l.Signal != null);
         long growth = after.Bytes - before.Bytes;
-        output.WriteLine(one.Links.Count + " links (" + signals + " signalled), 750 drivers, unwarmed cache, retime 1->2, 1 game minute at 2x, retime 2->1: simulation "
+        output.WriteLine(one.Links.Count + " links (" + signals + " signalled), 750 drivers, before read after a warm-up 1->0.5->1 retime, unwarmed rate-2 cache, retime 1->2, 0.05 game minutes at 2x, retime 2->" + returnRate.ToString("R") + ": simulation "
             + before.Roots[0].Bytes + " -> " + after.Roots[0].Bytes + " B, cache " + before.Roots[1].Bytes + " -> " + after.Roots[1].Bytes + " B, total growth " + growth
             + " B; " + city.Traffic!.VehicleCount + " vehicles in traffic; kernel shares " + city.Traffic!.DefinitionsSharedWith(one.Links) + " of " + one.Links.Count + " definitions (Mono 64-bit layout model)");
         foreach (string name in new[] { "CitySimulator", "TrafficKernel", "TrafficJourneys", "ActiveJourneyIndex" })

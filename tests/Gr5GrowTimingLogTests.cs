@@ -149,4 +149,59 @@ public sealed class Gr5GrowTimingLogTests
         }
         Assert.Equal(0, GC.GetAllocatedBytesForCurrentThread() - before);
     }
+
+    private static GrowTiming Run(GrowTimer timer, GrowKind kind, Action<GrowTimer> body)
+    {
+        timer.Begin(77, kind, 0);
+        try { body(timer); }
+        catch (InvalidOperationException) { }
+        return timer.End(50_000);
+    }
+
+    [Fact]
+    public void AThrownStagingCallChargesItsTimeToStaging()
+    {
+        var timing = Run(new GrowTimer(1_000_000), GrowKind.SyncInstantiate, _ => throw new InvalidOperationException("prefab load"));
+        Assert.True(timing.Failed);
+        Assert.Equal(50, timing.Staging, 6);
+        Assert.Equal(0, timing.Result);
+        Assert.Equal(50, timing.Total, 6);
+    }
+
+    [Fact]
+    public void AThrownInstantiateCallChargesItsTimeToTheResultStep()
+    {
+        var timing = Run(new GrowTimer(1_000_000), GrowKind.AsyncStart, t => { t.Done(GrowTimer.Staging, 2_000); throw new InvalidOperationException("instantiate"); });
+        Assert.True(timing.Failed);
+        Assert.Equal(2, timing.Staging, 6);
+        Assert.Equal(48, timing.Result, 6);
+        var finish = Run(new GrowTimer(1_000_000), GrowKind.AsyncFinish, t => { t.Done(GrowTimer.Result, 1_000); t.Done(GrowTimer.Checks, 3_000); throw new InvalidOperationException("reparent"); });
+        Assert.Equal(1, finish.Result, 6);
+        Assert.Equal(2, finish.Checks, 6);
+        Assert.Equal(47, finish.Parent, 6);
+        Assert.Equal(0, finish.Staging);
+    }
+
+    [Fact]
+    public void ASuccessfulGrowKeepsItsMeasuredStepsAndAllocatesNothing()
+    {
+        var timer = new GrowTimer(1_000_000);
+        timer.Begin(5, GrowKind.SyncInstantiate, 0);
+        timer.Done(GrowTimer.Staging, 1_000); timer.Done(GrowTimer.Result, 3_000); timer.Done(GrowTimer.Checks, 4_000);
+        timer.Done(GrowTimer.Parent, 9_000); timer.Done(GrowTimer.Own, 10_000);
+        timer.Outcome(true);
+        var timing = timer.End(12_000);
+        Assert.False(timing.Failed);
+        Assert.Equal(1, timing.Staging, 6); Assert.Equal(2, timing.Result, 6); Assert.Equal(1, timing.Checks, 6);
+        Assert.Equal(5, timing.Parent, 6); Assert.Equal(1, timing.Own, 6); Assert.Equal(12, timing.Total, 6);
+        long before = GC.GetAllocatedBytesForCurrentThread();
+        for (int i = 0; i < 10_000; i++)
+        {
+            timer.Begin(i, GrowKind.AsyncStart, i);
+            timer.Done(GrowTimer.Staging, i + 1);
+            timer.Outcome(i % 2 == 0);
+            _ = timer.End(i + 2);
+        }
+        Assert.Equal(0, GC.GetAllocatedBytesForCurrentThread() - before);
+    }
 }
