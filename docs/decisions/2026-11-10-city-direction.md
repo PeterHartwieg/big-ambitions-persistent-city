@@ -108,9 +108,9 @@ Leak rule (the memory gate). Memory fails only when it keeps growing across repe
 
 - Run at least three 1->2->1 retimes in one fresh game process. Wait for each to complete. Take readings at matched points after each. Also judge repeated day/night cycles or a soak when those are run.
 - Readings: retained census (`pc gc retained` total and per-type counts); managed heap (live after forced GC, and the live gap to the no-mod reference); process RSS; the mod's native counters (owned, live and unmerged meshes, live vertices, bake scratch).
-- A reading that rises at every checkpoint fails. Growth that levels off passes, and the plateau size is reported.
+- A reading that rises at every checkpoint fails, unless the rise is slowing so that three cycles cannot tell continuing growth from a plateau; that case is NOT ESTABLISHED (below). Growth that levels off passes, and the plateau size is reported.
 - Growth inside one window or after one retime is reported. It fails only if it continues across the repeated cycles.
-- If three cycles cannot tell (still rising but slowing), the verdict is NOT ESTABLISHED. Run more cycles; it is not a pass.
+- If three cycles cannot tell (still rising but slowing), the verdict is NOT ESTABLISHED, not a fail and not a pass. Run more cycles and judge the longer series by the rules above.
 
 Every measured check records its autosave suppression: the original autosave value, and the value verified off after each reload and before and after each window.
 

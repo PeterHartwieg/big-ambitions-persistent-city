@@ -12,7 +12,7 @@ The gates are in the [register](decisions/2026-11-10-city-direction.md#gr-5-acce
 
 Every GR-5 rig run from now on must:
 
-1. Run the repeated-cycle leak measurement: at least three 1->2->1 retimes in one fresh process, each waited to completion. After each, read the retained census (total and per type), managed heap (live after forced GC and the gap to the no-mod reference), process RSS and the native mesh counters. Read the retained census at the same matched point each time.
+1. Run the repeated-cycle leak measurement: at least three 1->2->1 retimes in one fresh process, each waited to completion. After each, read the retained census (total and per type), managed heap (live after forced GC and the gap to the no-mod reference), process RSS and the mod's native counters (owned, live and unmerged meshes, live vertices, bake scratch). Read the retained census at the same matched point each time.
 2. Record autosave suppression per check: the original value, and the value verified off after each reload and before and after each window.
 
 ## Latest evidence
