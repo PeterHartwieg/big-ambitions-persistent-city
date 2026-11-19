@@ -8,7 +8,7 @@ Detailed specs: [F8 §7](https://github.com/PeterHartwieg/big-ambitions-persiste
 
 ## Latest evidence
 
-- **19 November c, PC, build `f9b9dfd8`**. 3 pass / 2 partial / 4 fail / 0 NOT RUN. **NON-PROVISIONAL (clean PC)**. [19c results](#rig-results--19-november-2026-c-pc-gr-5-311-checks-at-60-fps--no-mod-baseline-at-f9b9dfd8).
+- **19 November c, PC, build `f9b9dfd8`**. 3 pass / 2 partial / 4 fail / 0 NOT RUN. **NON-PROVISIONAL (owner-accepted)**; 60 fps was the configured target on a host with other active workloads, and C and H achieved 12.84 and about 6.72 fps. [19c results](#rig-results--19-november-2026-c-pc-gr-5-311-checks-at-60-fps--no-mod-baseline-at-f9b9dfd8).
 
 - **19 November b, Mac (rig 16q), build `aeb8974a`**. 4 pass / 0 partial / 5 fail / 0 NOT RUN. Street union p95 5.0466 ms. **PROVISIONAL (shared Mac / Mono)**. [19b results](#rig-results--19-november-2026-b-mac-rig-16q-gr-5-311-twenty-fourth-fix-at-aeb8974a).
 
@@ -15046,13 +15046,13 @@ The candidate build passed. Markdown ban, documentation links, and diff hygiene 
 
 ## Rig results — 19 November 2026 c, PC (GR-5 #311 checks at 60 fps + no-mod baseline at f9b9dfd8)
 
-**RESULT DONE. 3 pass / 2 partial / 4 fail / 0 NOT RUN.** Counts cover A–H and the paired N baseline. In-game proof gates no merge.
+**RESULT DONE. 3 pass / 2 partial / 4 fail / 0 NOT RUN.** Counts cover A–H and the paired N baseline. This docs-only report follows merge rule v2 and can merge once reviewers approve the current head; the native proof requirement still applies to product changes.
 
-All PC measurement numbers below are **PC 60 fps windowed, NON-PROVISIONAL (clean PC)**. References to Mac rig 16q and earlier Mac runs are **PROVISIONAL (shared Mac / Mono)**. The candidate was the verified remote tip at launch. The build and stage hashes match the build used on Mac 16q. Fix 25 was outside the tested SHA.
+All PC measurement numbers below are **NON-PROVISIONAL (owner-accepted)** at a configured 60 fps windowed target. That status is the owner's acceptance of the evidence, not a measured clean host: Path of Exile, the desktop client, browsers, Node and the Insurgo rehearsal were active, boundary host CPU ranged 16–76% ([host load](#window-boundaries-and-host-load)), and C and H achieved 12.84 fps and about 6.72 fps. References to Mac rig 16q and earlier Mac runs are **PROVISIONAL (shared Mac / Mono)**. The candidate was the verified remote tip at launch. The build and stage hashes match the build used on Mac 16q. Fix 25 was outside the tested SHA.
 
 Windows with achieved render rate below 51 fps, despite the applied target: A steady 56.0 fps whole window, 52.7→30.4 fps boundary, B night 58.5 fps whole window, 57.3→44.8 fps boundary, C street 12.8 fps whole window, 54.8→8.1 fps boundary, E reference 13.1 fps whole window, 52.3→7.9 fps boundary, D reference 54.5 fps whole window, 36.1→49.4 fps boundary, D candidate 59.2 fps whole window, 50.0→55.0 fps boundary, H busy-shop 6.7 fps whole window, 2.2→1.7 fps boundary, N night 57.3 fps whole window, 38.3→56.6 fps boundary. Their cadence is qualified individually.
 
-Run `persistent-city-rig-2026-11-19c-pc`, role `rig_test`, Windows host HomePCHartwieg, isolated `agent1`. Raw logs, per-frame JSON, hashes and backups are in `~/HART-Builds/persistent-city-rig-2026-11-19c-pc/` (stage). The evidence contains the complete raw JSON and timing exports. [PR #311 procedures](https://github.com/PeterHartwieg/big-ambitions-persistent-city/pull/311), [Mac 16q](#rig-results--19-november-2026-b-mac-rig-16q-gr-5-311-twenty-fourth-fix-at-aeb8974a).
+Run `persistent-city-rig-2026-11-19c-pc`, role `rig_test`, Windows host HomePCHartwieg, isolated `agent1`. Raw logs, per-frame JSON, hashes and backups are in `<stage>`. The evidence contains the complete raw JSON and timing exports. [PR #311 procedures](https://github.com/PeterHartwieg/big-ambitions-persistent-city/pull/311), [Mac 16q](#rig-results--19-november-2026-b-mac-rig-16q-gr-5-311-twenty-fourth-fix-at-aeb8974a).
 
 | Check | Outcome | Expected or required evidence |
 | --- | --- | --- |
@@ -15073,7 +15073,7 @@ Run `persistent-city-rig-2026-11-19c-pc`, role `rig_test`, Windows host HomePCHa
 | PersistentCity.dll SHA-256 | `b4d72eaa3b7479422c1fb43ea51a5e2e8c7b1552f8058df6216d5a07df8dd8dc` |
 | Official agent-rig | `0acf3111e8ae9516fd607ed84d453fcf278bf192` (#105), clean after fetch and fast-forward-only pull. |
 | Installed Ops SHA-256 | `129A384C9EC8BDDA764A26DB696974A05CD716D4B178D7CAE58DC2C512CBB51B`, revision `20261117T204307913`, timestamp 17 Nov 21:43:01 CET. The overlay predates Mac #104 and checkout #105. |
-| Stage / rollback | `python scripts/stage_mod_windows.py --stage-mod PersistentCity <stage>/package --what-if` then same without flag. Original rollback backup `C:/BigAmbitions-AgentTests/receipt-backups/20261119T121443Z`. |
+| Stage / rollback | `python scripts/stage_mod_windows.py --stage-mod PersistentCity <stage>/package --what-if` then same without flag. Original rollback backup `<rig-root>/receipt-backups/20261119T121443Z`. |
 | Probe | `ac46b40080e73c45d33e9c42834be05ded1d34dd23aef4bd38b91d58c14cf14e` staged with receipt 20261119T125945Z |
 | RLO / Food Trucks | Player.log RLO 0.45.0, bridge Food Trucks 0.10.2. |
 | Fixture | Native save lookup found no `FT GR5 13f Timing v1`. `FT RIGTMP-GR5-19c` grew naturally to 957 / 1914, with 1,080 places at activation. Day 2 15:23 disposable checkpoint via one explicit Default save, outside all windows. |
@@ -15082,7 +15082,7 @@ Run `persistent-city-rig-2026-11-19c-pc`, role `rig_test`, Windows host HomePCHa
 | Frame cap | Isolated file `{"fps":60,"vsync":0}`. Health requested=60, applied=true, vsync_count=0, target_frame_rate=60. |
 | Pre-stage manifest | `88f764c86127a30d9c67d6ac7876f18f0226e639768d6f2ae8307e3ad5fcf6a5` SHA-256. |
 
-A merge and repeat live-heap expectations were met. Steady/repeat fast merges 490/446, failed merges 0/0, repeat post-collection live range 924,762,112–988,864,512 B. Both fresh processes finished the checkpoint's load-time rate reset before the sampler started.
+A merge and repeat live-heap expectations were met. Steady/repeat fast merges 490/446, failed merges 0/0, repeat post-collection live range 924,762,112–988,864,512 B. Both fresh processes finished the checkpoint's load-time rate reset before the sampler started. This record does not timestamp the repeat arm's deliberate 1→2 retime against sampler start. The repeat window's `mod_routes_retime` allocation (7,802,880 B against 8,192 B in steady) and its `physical_setup_*` samples show a retime and physical setup inside the window, but whether it fell immediately at window start is unverified. A stays FAIL on gen0 and the steady pause p95 either way.
 
 B final margin 216,329,088 B. The expected larger margin than 16p was met. The gen0 and pause targets are reported alongside the B heap gate.
 
@@ -15272,7 +15272,7 @@ Allocation cells give bytes / samples / skipped / cumulative phase ms. Counters 
 | C street | 0/0/false | 0/0/false | 1/1/false | 4522/1024/true |
 | H busy-shop | 0/0/false | 0/0/false | 1/1/false | 4039/1024/true |
 
-Street at x=215, z=0. 9/9 accepted camera pans at 60.31, 120.41, 180.41, 240.41, 300.30, 360.31, 420.30, 480.41, 540.31 s. Candidate measured retime sub — ms, conservative all-frame bound 18.634 ms.
+Street at x=215, z=0. 9/9 accepted camera pans at 60.31, 120.41, 180.41, 240.41, 300.30, 360.31, 420.30, 480.41, 540.31 s. Candidate measured retime sub — ms: the street exports carry no direct retime sub value for this arm, only the conservative all-frame bound of 18.634 ms. That bound caps the retime cost but is above 11.3 ms, so the ≤11.3 ms target is unverified and C stays PARTIAL. Union and UpdateCity p95 and zero ≥30 ms union and phase rows passed at the achieved 12.84 fps.
 
 | Retime | Rate acknowledgement s | Completion observed s | PC stages |
 | --- | --- | --- | --- |
@@ -15281,7 +15281,7 @@ Street at x=215, z=0. 9/9 accepted camera pans at 60.31, 120.41, 180.41, 240.41,
 
 Mac 16q (provisional) UpdateCity self/inclusive 4.6606/4.9964 ms, union 5.0466 ms, four ≥30 ms union and phase rows, 9/9 pans and a conservative retime sub bound of 11.559 ms. Its 1→2 stages were body release 137.7 ms/44 updates, journey 80.5 ms/22 updates/10 snapshots/4.0 ms slowest, commit 1.8 ms, rebuild 19.5 ms/6 updates/6.2 ms slowest. Its 2→1 stages were 107.9 ms/35, 36.4 ms/10/1/4.2 ms, 1.3 ms and 18.0 ms/5/5.8 ms. 16p provisional union p95 was 5.4668 ms with four spikes and a 19.449 ms retime bound. Hook timings are listed when retained by the rig observer.
 
-H measured commercial frontage 23 3rd Street (El Gato Food Market, Supermarket, `ba:street_thirdstreet#23`). 12 nearby commercial places had walker density reads. No new shop was added.
+H is PARTIAL because of its cadence: shop mod-work p95 and zero ≥30 ms mod-work frames passed, but the window ran at 6.73 fps (4,034 sampler frames against about 36,000 at the 60 fps target), so the 600 s busy-shop sample does not show the gate at the configured cadence. H measured commercial frontage 23 3rd Street (El Gato Food Market, Supermarket, `ba:street_thirdstreet#23`). 12 nearby commercial places had walker density reads. No new shop was added.
 
 ### E and D. RSS and managed heap
 
@@ -15390,7 +15390,7 @@ G used a held future record with PhysicalEnabled=false for this diagnostic setup
 | N night | 3888 | 123.362 | — | — | False |
 | N night | 3768 | 121.833 | — | — | False |
 
-The no-mod process uses the stock rig Unity GC marker. The Persistent City sampler and its allocation segments, unforced per-collection heap_after_gc_bytes, UpdateCity and mod-work are unavailable with Persistent City absent. Passive Mono heap and forced live after the window use the unarmed probe. The forced read is outside the 600 s sample. Other isolated rig mods are the same as the candidate install.
+The no-mod process uses the stock rig Unity GC marker. The Persistent City sampler and its allocation segments, unforced per-collection heap_after_gc_bytes, UpdateCity and mod-work are unavailable with Persistent City absent. Passive Mono heap and forced live after the window use the unarmed probe. Whole-frame p99 is blank because the no-mod exports in this record give p95, max and spike rows but no p99. The spike rows' GC marker and collection columns are blank because the stock marker rows were not matched to those spike frames; spike-level GC attribution for N is unavailable, and N's PASS rests on the full 600 s windows, gen0 and Unity GC p95. The forced read is outside the 600 s sample. Other isolated rig mods are the same as the candidate install.
 
 ### Window boundaries and host load
 
@@ -15455,12 +15455,14 @@ Each raw host record lists active session PIDs and the top CPU and memory proces
 - `a-repeat/error.json`. scripts/agent status: PID identity mismatch; refusing to control this process
 
   ```text
-  At C:\BigAmbitions-AgentTests\Agent-Windows.ps1:87 char:102
+  At <rig-root>\Agent-Windows.ps1:87 char:102
   + ... ed_ticks) { throw 'PID identity mismatch; refusing to control this pr ...
   +                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
       + CategoryInfo          : OperationStopped: (PID identity mi...ol this process:String) [], RuntimeException
       + FullyQualifiedErrorId : PID identity mismatch; refusing to control this process
   ```
+
+  The status read refused control; the restoration status read later reported running=False ([restoration](#restoration-and-evidence)).
 
 ### NOT RUN outside this pass
 
@@ -15478,16 +15480,16 @@ Each raw host record lists active session PIDs and the top CPU and memory proces
 
 | Check | Observed |
 | --- | --- |
-| Manifest | 103/103 hashes and absence checks matched. |
+| Manifest | 103/103 hashes and absence checks matched. This report does not itemize the manifest entries, so whether the original install receipt and the RLO hashes were among the 103 is unverified here. |
 | Mismatches | None. |
 | Cleanup errors | None. |
-| Agent status | running=False |
+| Agent status | running=False. This later stopped-status read confirms that the isolated process ended after the A repeat `scripts/agent status` PID identity mismatch error. |
 | Agent1 lease | held=False |
 
 Raw evidence checksum index `<stage>/results-artifacts.json`, SHA-256 `c8007f6c0d1d16707f1a50171fceaac760e91a8ab061189a3d3f10a0d933f8a3`. It names the full GC, phase, perf, RSS, census, replay and restore records when available.
 
 Documented disposable-save read after deletion reported exists=False, files=[]. The cleanup process loaded the existing 15c city to issue the delete against the disposable 19c name.
 
-The Markdown ban applies to new files under docs/checks, so this report appends to the existing checklist. Raw exports and rollback manifests remain in the stage directory. Report copy `~/Coding_Projects/.agent-logs/persistent-city-rig-2026-11-19c-pc.md`.
+The Markdown ban applies to new files under docs/checks, so this report appends to the existing checklist. Raw exports and rollback manifests remain in the stage directory. Report copy `<agent-logs>/persistent-city-rig-2026-11-19c-pc.md`.
 
 Refs #311 #312
