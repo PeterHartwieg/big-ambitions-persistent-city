@@ -15272,7 +15272,7 @@ Allocation cells give bytes / samples / skipped / cumulative phase ms. Counters 
 | C street | 0/0/false | 0/0/false | 1/1/false | 4522/1024/true |
 | H busy-shop | 0/0/false | 0/0/false | 1/1/false | 4039/1024/true |
 
-Street at x=215, z=0. 9/9 accepted camera pans at 60.31, 120.41, 180.41, 240.41, 300.30, 360.31, 420.30, 480.41, 540.31 s. Candidate measured retime sub — ms: the street exports carry no direct retime sub value for this arm, only the conservative all-frame bound of 18.634 ms. That bound caps the retime cost but is above 11.3 ms, so the ≤11.3 ms target is unverified and C stays PARTIAL. Union and UpdateCity p95 and zero ≥30 ms union and phase rows passed at the achieved 12.84 fps.
+Street at x=215, z=0. 9/9 accepted camera pans at 60.31, 120.41, 180.41, 240.41, 300.30, 360.31, 420.30, 480.41, 540.31 s. Candidate measured retime sub — ms: the street exports carry no direct retime sub value for this arm, only 18.634 ms, a conservative all-frame upper bound on the per-frame retime subphase. It does not bound a whole multi-update retime stage (see the stage totals below). The bound is above 11.3 ms, so the ≤11.3 ms target is unverified and C stays PARTIAL. Union and UpdateCity p95 and zero ≥30 ms union and phase rows passed at the achieved 12.84 fps.
 
 | Retime | Rate acknowledgement s | Completion observed s | PC stages |
 | --- | --- | --- | --- |
