@@ -342,7 +342,9 @@ namespace PersistentCity.Runtime
             long started = System.Diagnostics.Stopwatch.GetTimestamp();
             if (!geometryBudget.TryDeadline(Time.frameCount, started, out long deadline)) { geometryPending = true; return Array.Empty<OptionalStopSpot>(); }
             var origin = place.Position; string id = place.Id;
-            bool done = build.Run.Continue((input, count) => ParkSpot(origin, id, key, count, input.Collider, input.Outside), deadline);
+            bool done;
+            try { done = build.Run.Continue((input, count) => ParkSpot(origin, id, key, count, input.Collider, input.Outside), deadline); }
+            catch (Exception) { parkBuilds.Remove(key); throw; }
             double elapsed = MillisecondsSince(started);
             geometryBudget.Spend(elapsed); ParkSlices++;
             MaximumParkMilliseconds = Math.Max(MaximumParkMilliseconds, elapsed);

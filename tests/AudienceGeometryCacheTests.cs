@@ -70,6 +70,22 @@ public sealed class AudienceGeometryCacheTests
     }
 
     [Fact]
+    public void AFailedSliceDropsThePartialBuildSoTheNextReadStartsAgain()
+    {
+        var place = new Place { Id = "venue" };
+        var members = new[] { new AudienceTarget(new object(), new object(), "show", new Position(1, 0, 0)) };
+        int calls = 0;
+        OptionalStopSpot? Failing(Place p, AudienceTarget member, int angle) { calls++; if (angle == 3) throw new InvalidOperationException("scene"); return Spot(p, member, angle); }
+        var cache = new AudienceGeometryCache();
+        Assert.Throws<InvalidOperationException>(() => cache.Get(place, members, Failing));
+        Assert.False(cache.Pending(place, members));
+        Assert.Equal(4, calls);
+        var spots = cache.Get(place, members, (p, member, angle) => Spot(p, member, angle));
+        Assert.Equal(AudienceGeometryCache.Angles, spots.Count);
+        Assert.Equal(2, cache.Builds);
+    }
+
+    [Fact]
     public void ResumableSamplesNumberSpotsByResultCountAcrossSlices()
     {
         var inputs = Enumerable.Range(0, 40).ToArray();

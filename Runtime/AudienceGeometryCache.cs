@@ -123,8 +123,10 @@ namespace PersistentCity.Runtime
             }
             if (entry.Run != null)
             {
-                if (!entry.Run.Continue((input, _) => sample(place, input.Member, input.Angle), deadlineTimestamp))
-                { spots = Array.Empty<OptionalStopSpot>(); return false; }
+                bool done;
+                try { done = entry.Run.Continue((input, _) => sample(place, input.Member, input.Angle), deadlineTimestamp); }
+                catch (Exception) { entries.Remove(place.Id); throw; }
+                if (!done) { spots = Array.Empty<OptionalStopSpot>(); return false; }
                 entry.Spots = entry.Run.Take(); entry.Run = null;
             }
             spots = entry.Spots;
