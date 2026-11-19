@@ -47,8 +47,9 @@ public sealed class Gr5GrowTimingLogTests
     {
         var log = new GrowTimingLog();
         for (int i = 0; i < 64; i++) log.Record(Op(i, GrowKind.AsyncFinish, i % 2 == 0 ? 30 : 1));
+        Records(log);
         long before = GC.GetAllocatedBytesForCurrentThread();
-        for (int i = 0; i < 10_000; i++) log.Record(Op(i, (GrowKind)(i % 3), i % 7 == 0 ? 40 : 2));
+        Records(log);
         Assert.Equal(0, GC.GetAllocatedBytesForCurrentThread() - before);
     }
 
@@ -140,13 +141,9 @@ public sealed class Gr5GrowTimingLogTests
         recorder.Begin(1, 0, 0, 0);
         recorder.NoteGrow(Op(1, GrowKind.AsyncFinish, 1));
         recorder.End(1, 0, 0, null);
+        Frames(recorder);
         long before = GC.GetAllocatedBytesForCurrentThread();
-        for (int i = 2; i < 2_000; i++)
-        {
-            recorder.Begin(i, i * 100L, 0, 0);
-            recorder.NoteGrow(Op(i, GrowKind.AsyncFinish, i % 50));
-            recorder.End(i * 100L + i % 60, 0, 0, null);
-        }
+        Frames(recorder);
         Assert.Equal(0, GC.GetAllocatedBytesForCurrentThread() - before);
     }
 
@@ -194,7 +191,15 @@ public sealed class Gr5GrowTimingLogTests
         Assert.False(timing.Failed);
         Assert.Equal(1, timing.Staging, 6); Assert.Equal(2, timing.Result, 6); Assert.Equal(1, timing.Checks, 6);
         Assert.Equal(5, timing.Parent, 6); Assert.Equal(1, timing.Own, 6); Assert.Equal(12, timing.Total, 6);
+        Cycles(timer);
         long before = GC.GetAllocatedBytesForCurrentThread();
+        Cycles(timer);
+        Assert.Equal(0, GC.GetAllocatedBytesForCurrentThread() - before);
+    }
+
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
+    private static void Cycles(GrowTimer timer)
+    {
         for (int i = 0; i < 10_000; i++)
         {
             timer.Begin(i, GrowKind.AsyncStart, i);
@@ -202,6 +207,39 @@ public sealed class Gr5GrowTimingLogTests
             timer.Outcome(i % 2 == 0);
             _ = timer.End(i + 2);
         }
-        Assert.Equal(0, GC.GetAllocatedBytesForCurrentThread() - before);
+    }
+
+    [Theory]
+    [InlineData(GrowKind.SyncInstantiate)]
+    [InlineData(GrowKind.AsyncStart)]
+    public void AStagingThatReturnsFalseChargesNothingToTheInstantiateStep(GrowKind kind)
+    {
+        var timer = new GrowTimer(1_000_000);
+        timer.Begin(12, kind, 0);
+        timer.Done(GrowTimer.Staging, 2_000);
+        timer.Stopped();
+        var timing = timer.End(50_000);
+        Assert.True(timing.Failed);
+        Assert.Equal(2, timing.Staging, 6);
+        Assert.Equal(0, timing.Result);
+        Assert.Equal(0, timing.Checks + timing.Parent + timing.Own);
+        Assert.Equal(50, timing.Total, 6);
+    }
+
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
+    private static void Records(GrowTimingLog log)
+    {
+        for (int i = 0; i < 10_000; i++) log.Record(Op(i, (GrowKind)(i % 3), i % 7 == 0 ? 40 : 2));
+    }
+
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
+    private static void Frames(ModFrameRecorder recorder)
+    {
+        for (int i = 2; i < 2_000; i++)
+        {
+            recorder.Begin(i, i * 100L, 0, 0);
+            recorder.NoteGrow(Op(i, GrowKind.AsyncFinish, i % 50));
+            recorder.End(i * 100L + i % 60, 0, 0, null);
+        }
     }
 }

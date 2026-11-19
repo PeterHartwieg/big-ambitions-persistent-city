@@ -98,6 +98,8 @@ namespace PersistentCity.Core
 
         public void Outcome(bool succeeded) => timing.Failed = !succeeded;
 
+        public void Stopped() => Active = Own + 1;
+
         public GrowTiming End(long timestamp)
         {
             if (timing.Failed && Active <= Own) Add(Active, timestamp);

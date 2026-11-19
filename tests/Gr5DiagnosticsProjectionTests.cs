@@ -227,6 +227,8 @@ public sealed class Gr5DiagnosticsProjectionTests
             Assert.True(staged > begun && stagingStep > staged && ended > stagingStep, kind + " times staging inside the operation and records it on every exit");
         }
         Assert.DoesNotContain("if (!Staged()) return null;\n            BeginGrow", pedestrians);
+        Assert.Contains("if (!staged) { growTimer.Stopped(); failed = true; return null; }", pedestrians);
+        Assert.Contains("if (!staged) { growTimer.Stopped(); return null; }", pedestrians);
         Assert.Contains("try { grown = Grow(out failed); }\n                    finally { PhysicalAllocation.Detail(PersistentCity.Core.GcAllocationSegment.PhysicalSpawnGrow); }", pedestrians);
         Assert.Contains("try { character = Instantiate(); }\n                    finally { PhysicalAllocation.Detail(PersistentCity.Core.GcAllocationSegment.PhysicalSpawnGrow); }", pedestrians);
         int recorded = pedestrians.IndexOf("growLog.Record(timing);", StringComparison.Ordinal);

@@ -258,7 +258,7 @@ namespace PersistentCity.Runtime
                 {
                     bool staged = Staged();
                     GrowStep(GrowTimer.Staging);
-                    if (!staged) { failed = true; return null; }
+                    if (!staged) { growTimer.Stopped(); failed = true; return null; }
                     growing = UnityEngine.Object.InstantiateAsync(prefab!, staging!.transform);
                     GrowStep(GrowTimer.Result);
                     growTimer.Outcome(true);
@@ -307,7 +307,7 @@ namespace PersistentCity.Runtime
             {
                 bool staged = Staged();
                 GrowStep(GrowTimer.Staging);
-                if (!staged) return null;
+                if (!staged) { growTimer.Stopped(); return null; }
                 var made = UnityEngine.Object.Instantiate(prefab!, staging!.transform);
                 GrowStep(GrowTimer.Result);
                 var adopted = Adopt(made);
