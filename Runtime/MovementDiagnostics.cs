@@ -271,6 +271,11 @@ namespace PersistentCity.Runtime
             Debug.Log("[Persistent City] hold replay started count=" + records.Count + " start=" + start + " end=" + end);
         }
 
+        private void ForgetStaleHoldReplay()
+        {
+            if (holdReplayCity != null && !ReferenceEquals(holdReplayCity, simulation)) { holdReplay = null; holdReplayCity = null; }
+        }
+
         private double HoldReplayLimit(double target)
         {
             if (holdReplay == null || simulation == null) return target;

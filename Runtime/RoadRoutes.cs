@@ -446,7 +446,12 @@ namespace PersistentCity.Runtime
                 topologyHash.Dispose();
                 topologyWriter.Dispose();
             }
-            if (Ready) return IsCurrent;
+            if (Ready)
+            {
+                if (!IsCurrent) return false;
+                donor = this;
+                return true;
+            }
             double remaining = 2 - ((Stopwatch.GetTimestamp() - watchStarted) * 1000.0 / Stopwatch.Frequency);
             int remainingUnits = 2048 - (copiedNodes - startedAt);
             if (remaining <= 0 || remainingUnits <= 0) return false;

@@ -147,7 +147,9 @@ namespace PersistentCity.Core
         {
             var rebuild = BeginRebuildRoutes(replacementRoutes, retimedTraffic);
             rebuild.Step(long.MaxValue);
-            return rebuild.Result!;
+            var result = rebuild.Result!;
+            ReleasePlannerHooks(result);
+            return result;
         }
 
         public RouteRebuild BeginRebuildRoutes(IRoutePlanner replacementRoutes, TravelTiming.RetimedTraffic? retimedTraffic)

@@ -97,6 +97,7 @@ namespace PersistentCity.Core
         public void AddFields(string prefix, object? owner, Type? stopAt)
         {
             if (owner == null) return;
+            Exclude(owner);
             for (var at = owner.GetType(); at != null && at != stopAt && at != typeof(object); at = at.BaseType)
                 foreach (var field in at.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly))
                 {

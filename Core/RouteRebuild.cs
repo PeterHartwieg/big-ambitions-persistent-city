@@ -25,6 +25,7 @@ namespace PersistentCity.Core
             if (retired == null) return result;
             long started = Stopwatch.GetTimestamp();
             result.ActiveJourneys.TakeSpareCells(retired.ActiveJourneys);
+            retired.ReleasePlannerHooks(result);
             double elapsed = (Stopwatch.GetTimestamp() - started) * 1000.0 / Stopwatch.Frequency;
             Milliseconds += elapsed;
             HandOverMilliseconds = elapsed;
