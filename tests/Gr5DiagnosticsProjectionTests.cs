@@ -202,7 +202,15 @@ public sealed class Gr5DiagnosticsProjectionTests
         Assert.Contains("coverage = null; matchedScans = 0;\n                    MatchedScan();", probe);
         string pedestrians = System.IO.File.ReadAllText(System.IO.Path.Combine(root, "Runtime", "PhysicalPedestrians.cs"));
         Assert.Contains("\" ms grow start max/\"", pedestrians);
-        Assert.Contains("\" ms grow finish max\";", pedestrians);
+        Assert.Contains("\" ms grow finish max (result \"", pedestrians);
+        Assert.Contains("\" ms maxima)\";", pedestrians);
+        int result = pedestrians.IndexOf("var made = growing!.Result;", StringComparison.Ordinal);
+        int checks = pedestrians.IndexOf("GrowStep(1);", StringComparison.Ordinal);
+        int parented = pedestrians.IndexOf("GrowStep(2);", StringComparison.Ordinal);
+        int owned = pedestrians.IndexOf("GrowStep(3);", StringComparison.Ordinal);
+        Assert.True(result > 0 && pedestrians.IndexOf("GrowStep(0);", result, StringComparison.Ordinal) > result, "the async result read is timed");
+        Assert.True(checks > 0 && parented > checks && owned > parented, "grow finish steps are timed in order");
+        Assert.True(pedestrians.IndexOf("character.transform.SetParent(parent, false);", StringComparison.Ordinal) < parented, "the reparent is inside the parent step");
         Assert.Contains("SizeHierarchy(character.transform);", pedestrians);
         Assert.Contains("BodyHierarchy.Capacity(parent.hierarchyCount, SubtreeCount(body), Math.Max(0, ceiling - all.Count - 1))", pedestrians);
         Assert.DoesNotContain("body.hierarchyCount", pedestrians);

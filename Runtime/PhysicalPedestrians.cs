@@ -41,7 +41,20 @@ namespace PersistentCity.Runtime
             + (BodyMerge.LastError.Length == 0 ? "" : " (" + BodyMerge.LastError + ")")
             + "/fallbacks: " + BodyMerge.Fallbacks + (BodyMerge.LastCollectError.Length == 0 ? "" : " (collect: " + BodyMerge.LastCollectError + ")")
             + "/" + GrowStartMaximum.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture) + " ms grow start max/"
-            + GrowFinishMaximum.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture) + " ms grow finish max";
+            + GrowFinishMaximum.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture) + " ms grow finish max (result "
+            + GrowSteps[0].ToString("0.0", System.Globalization.CultureInfo.InvariantCulture) + " / checks "
+            + GrowSteps[1].ToString("0.0", System.Globalization.CultureInfo.InvariantCulture) + " / parent "
+            + GrowSteps[2].ToString("0.0", System.Globalization.CultureInfo.InvariantCulture) + " / own "
+            + GrowSteps[3].ToString("0.0", System.Globalization.CultureInfo.InvariantCulture) + " ms maxima)";
+        private static readonly double[] GrowSteps = new double[4];
+        private static long growStep;
+        private static void GrowStep(int step)
+        {
+            long now = System.Diagnostics.Stopwatch.GetTimestamp();
+            double elapsed = (now - growStep) * 1000.0 / System.Diagnostics.Stopwatch.Frequency;
+            if (elapsed > GrowSteps[step]) GrowSteps[step] = elapsed;
+            growStep = now;
+        }
         private readonly Dictionary<string, PhysicalPedestrianBody> active = new Dictionary<string, PhysicalPedestrianBody>(StringComparer.Ordinal);
         private bool disposed;
 
@@ -255,8 +268,10 @@ namespace PersistentCity.Runtime
         private ThirdPersonCharacter? Finish(out bool failed)
         {
             failed = false;
+            growStep = System.Diagnostics.Stopwatch.GetTimestamp();
             var made = growing!.Result;
             growing = null;
+            GrowStep(0);
             if (made == null || made.Length != 1 || made[0] == null)
             {
                 if (made != null) foreach (var extra in made) if (extra != null) UnityEngine.Object.Destroy(extra);
@@ -280,7 +295,9 @@ namespace PersistentCity.Runtime
         private ThirdPersonCharacter? Instantiate()
         {
             if (!Staged()) return null;
-            return Adopt(UnityEngine.Object.Instantiate(prefab!, staging!.transform));
+            var made = UnityEngine.Object.Instantiate(prefab!, staging!.transform);
+            growStep = System.Diagnostics.Stopwatch.GetTimestamp();
+            return Adopt(made);
         }
 
         private ThirdPersonCharacter? Adopt(GameObject instance)
@@ -292,13 +309,16 @@ namespace PersistentCity.Runtime
             {
                 UnityEngine.Object.Destroy(instance); return null;
             }
+            GrowStep(1);
             character.gameObject.SetActive(false);
             character.isPlayer = false; character.updatePlayerPos = false;
             SizeHierarchy(character.transform);
             character.transform.SetParent(parent, false);
+            GrowStep(2);
             all.Add(character);
             if (BlendshapeBake.Adopt(character.appearanceSetter.meshCombiner)) baked.Add(character.appearanceSetter);
             BodyMerge.Own(character.appearanceSetter.meshCombiner);
+            GrowStep(3);
             return character;
         }
 

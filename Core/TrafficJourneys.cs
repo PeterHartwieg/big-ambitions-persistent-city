@@ -183,11 +183,11 @@ namespace PersistentCity.Core
             }
             if (traffic == null || State.TrafficTopologyId != network.TopologyId)
             {
-                traffic = new TrafficKernel(network.Links, State.Minute);
+                traffic = TrafficKernel.SharingDefinitions(network.Links, State.Minute);
                 traffic.VehicleCompleted += TrafficCompleted;
                 State.TrafficTopologyId = network.TopologyId;
             }
-            else if (!traffic.HasCompatibleDefinitions(network.Links))
+            else if (!traffic.AdoptCompatibleDefinitions(network.Links))
                 throw new InvalidOperationException("Saved road section policy disagrees with its topology/timing.");
             trafficNetwork = network;
             var hook = forecastHook ??= new ForecastHook { City = this };

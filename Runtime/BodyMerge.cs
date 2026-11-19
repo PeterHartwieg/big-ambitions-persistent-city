@@ -55,6 +55,17 @@ namespace PersistentCity.Runtime
         public static bool Disabled => !gate.Allows;
         public static int Owned => owned.Count;
 
+        public static int Unmerged
+        {
+            get
+            {
+                PruneMeshes();
+                int unmerged = 0;
+                foreach (var combiner in owned) if (combiner != null && !mergedMeshes.ContainsKey(combiner)) unmerged++;
+                return unmerged;
+            }
+        }
+
         public static void Install()
         {
             owned.RemoveWhere(combiner => combiner == null);

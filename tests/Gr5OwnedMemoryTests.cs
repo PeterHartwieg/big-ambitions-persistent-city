@@ -57,7 +57,7 @@ public sealed class Gr5OwnedMemoryTests
     public void GcDiagnosticsReportsTheModOwnedBodyMemory()
     {
         string movement = Source("Runtime", "MovementDiagnostics.cs");
-        foreach (string field in new[] { "ownedBodyCombiners = BodyMerge.Owned", "reservedBodies = PhysicalPedestrians.ReserveCount", "liveMergedMeshes = meshes",
+        foreach (string field in new[] { "ownedBodyCombiners = BodyMerge.Owned", "unmergedBodyCombiners = BodyMerge.Unmerged", "reservedBodies = PhysicalPedestrians.ReserveCount", "liveMergedMeshes = meshes",
             "liveMergedVertices = vertices", "releasedMergedMeshes = BodyMerge.ReleasedMeshes", "releasedMergedVertices = BodyMerge.ReleasedVertices",
             "bakeScratchBytes = BlendshapeBake.ScratchBytes" })
             Assert.Contains(field, movement);

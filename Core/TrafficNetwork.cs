@@ -55,19 +55,33 @@ namespace PersistentCity.Core
         private readonly double[] edgeMinutes;
         private readonly double[] sectionMinutes;
         private readonly List<TrafficLinkDefinition> links;
-        private readonly List<IReadOnlyList<int>> linkNodes;
+        private readonly int[][] linkNodes;
         private readonly Dictionary<int, Position> positions;
         private readonly Dictionary<int, double> kilometres;
-        private readonly List<SectionGeometry> sectionGeometry;
+        private readonly Position[] sectionPoints;
+        private readonly double[] sectionDistances;
+        private readonly int[] sectionStarts;
         private const double MappingMetresTolerance = 0.002;
 
-        private sealed class SectionGeometry
+        private readonly struct SectionGeometry
         {
-            internal readonly Position[] Points;
-            internal readonly double[] Distances;
+            private readonly Position[] points;
+            private readonly double[] distances;
+            private readonly int start;
+            internal readonly int Count;
             internal readonly double Length;
-            internal SectionGeometry(Position[] points, double[] distances)
-            { Points = points; Distances = distances; Length = distances[distances.Length - 1]; }
+            internal SectionGeometry(Position[] points, double[] distances, int start, int count)
+            { this.points = points; this.distances = distances; this.start = start; Count = count; Length = distances[start + count - 1]; }
+            internal Position Point(int i) => points[start + i];
+            internal double Distance(int i) => distances[start + i];
+        }
+
+        private int SectionCount => sectionStarts.Length - 1;
+
+        private SectionGeometry Section(int linkId)
+        {
+            int start = sectionStarts[linkId];
+            return new SectionGeometry(sectionPoints, sectionDistances, start, sectionStarts[linkId + 1] - start);
         }
 
         private sealed class EdgeTable
@@ -111,8 +125,9 @@ namespace PersistentCity.Core
                 throw new ArgumentException("Invalid traffic network snapshot.");
             NativeTopologyId = nativeTopologyId;
             links = new List<TrafficLinkDefinition>();
-            linkNodes = new List<IReadOnlyList<int>>(); positions = new Dictionary<int, Position>();
-            kilometres = new Dictionary<int, double>(); sectionGeometry = new List<SectionGeometry>();
+            var nodeLists = new List<int[]>(); positions = new Dictionary<int, Position>();
+            kilometres = new Dictionary<int, double>();
+            var points = new List<Position>(); var distances = new List<double>(); var starts = new List<int> { 0 };
             var nodes = new Dictionary<int, TrafficNetworkNode>();
             foreach (var node in snapshot)
             {
@@ -177,19 +192,19 @@ namespace PersistentCity.Core
                 double offset = 0;
                 foreach (var part in chain)
                 { edges.Add(part.From, part.To, id, offset / metres, (offset + part.Metres) / metres); minutesByEdge.Add(part.Minutes); indices.Add(part.To); offset += part.Metres; }
-                linkNodes.Add(indices.AsReadOnly());
-                var sectionPositions = new Position[indices.Count];
-                var sectionDistances = new double[indices.Count];
+                nodeLists.Add(indices.ToArray());
                 double cumulative = 0;
                 for (int i = 0; i < indices.Count; i++)
                 {
-                    sectionPositions[i] = positions[indices[i]];
+                    points.Add(positions[indices[i]]);
                     if (i > 0) cumulative += chain[i - 1].Metres;
-                    sectionDistances[i] = cumulative;
+                    distances.Add(cumulative);
                 }
-                sectionGeometry.Add(new SectionGeometry(sectionPositions, sectionDistances));
+                starts.Add(points.Count);
                 minutesBySection.Add(minutes);
             }
+            linkNodes = nodeLists.ToArray();
+            sectionPoints = points.ToArray(); sectionDistances = distances.ToArray(); sectionStarts = starts.ToArray();
             edgeMinutes = minutesByEdge.ToArray();
             sectionMinutes = minutesBySection.ToArray();
             Links = links.AsReadOnly();
@@ -221,7 +236,7 @@ namespace PersistentCity.Core
         {
             NativeTopologyId = source.NativeTopologyId; TopologyId = source.TopologyId;
             positions = source.positions; kilometres = source.kilometres; linkNodes = source.linkNodes;
-            edges = source.edges; sectionGeometry = source.sectionGeometry;
+            edges = source.edges; sectionPoints = source.sectionPoints; sectionDistances = source.sectionDistances; sectionStarts = source.sectionStarts;
             edgeMinutes = new double[source.edgeMinutes.Length];
             sectionMinutes = new double[source.sectionMinutes.Length];
             links = new List<TrafficLinkDefinition>(source.links.Count);
@@ -229,7 +244,7 @@ namespace PersistentCity.Core
             {
                 var indices = linkNodes[id];
                 double minutes = 0;
-                for (int i = 1; i < indices.Count; i++)
+                for (int i = 1; i < indices.Length; i++)
                 {
                     int from = indices[i - 1], to = indices[i];
                     double length = Position.Distance(positions[from], positions[to]);
@@ -242,14 +257,14 @@ namespace PersistentCity.Core
                 links.Add(new TrafficLinkDefinition
                 {
                     Id = id, Capacity = link.Capacity, FreeFlowMinutes = minutes, HeadwayMinutes = 1.8 * clockRate,
-                    Signal = CopySignal(signalAt(indices[indices.Count - 1]))
+                    Signal = CopySignal(signalAt(indices[indices.Length - 1]))
                 });
                 sectionMinutes[id] = minutes;
             }
             Links = links.AsReadOnly();
         }
 
-        public IReadOnlyList<int> NativeNodes(int linkId) => linkId >= 0 && linkId < linkNodes.Count
+        public IReadOnlyList<int> NativeNodes(int linkId) => linkId >= 0 && linkId < linkNodes.Length
             ? linkNodes[linkId] : throw new ArgumentOutOfRangeException(nameof(linkId));
         public bool TryGetEdge(int from, int to, out TrafficNetworkEdge edge)
         {
@@ -318,7 +333,7 @@ namespace PersistentCity.Core
                     Position point = Position.Lerp(leg.From, leg.To, consumed);
                     bool sameSection = previousWasRoad && previousLink == edge.LinkId;
                     if (previousWasRoad && (!Near(previousPoint, point) || (sameSection
-                        ? Math.Abs(previousEndFraction - startFraction) * sectionGeometry[edge.LinkId].Length > MappingMetresTolerance
+                        ? Math.Abs(previousEndFraction - startFraction) * Section(edge.LinkId).Length > MappingMetresTolerance
                         : previousNativeTo != edge.From || !Near(previousPoint, positions[previousNativeTo]) || !Near(point, positions[edge.From]))))
                     { mapped.Clear(); return false; }
                     if (!previousWasRoad && mapped.Count > 0 && mapped[mapped.Count - 1].LinkId == edge.LinkId)
@@ -404,14 +419,14 @@ namespace PersistentCity.Core
             for (int spanIndex = 0; spanIndex < traffic.Count; spanIndex++)
             {
                 TrafficRouteLeg span = traffic[spanIndex];
-                if (span == null || span.LinkId < 0 || span.LinkId >= sectionGeometry.Count ||
+                if (span == null || span.LinkId < 0 || span.LinkId >= SectionCount ||
                     !Position.Finite(span.StartNominalMinutes) || !Position.Finite(span.EndNominalMinutes) ||
                     span.StartNominalMinutes < previousEnd || span.EndNominalMinutes <= span.StartNominalMinutes ||
                     span.EndNominalMinutes > offsets[journey.Legs.Count] + 0.0000001 ||
                     !Position.Finite(span.StartLinkFraction) || !Position.Finite(span.EndLinkFraction) ||
                     span.StartLinkFraction < 0 || span.EndLinkFraction > 1 || span.StartLinkFraction >= span.EndLinkFraction)
                     throw new ArgumentException("Invalid traffic mapping span.", nameof(traffic));
-                SectionGeometry section = sectionGeometry[span.LinkId];
+                SectionGeometry section = Section(span.LinkId);
                 double cursor = span.StartLinkFraction * section.Length;
                 double endDistance = span.EndLinkFraction * section.Length;
                 if (!Near(PositionAt(journey, offsets, span.StartNominalMinutes, ref positionLeg), SectionPoint(section, cursor)) ||
@@ -508,7 +523,7 @@ namespace PersistentCity.Core
             const double maximumSlowdown = 1.75;
             const double relativeTolerance = 1e-8;
             const double doubleEpsilon = 2.2204460492503131e-16;
-            SectionGeometry section = sectionGeometry[span.LinkId];
+            SectionGeometry section = Section(span.LinkId);
             double metres = (span.EndLinkFraction - span.StartLinkFraction) * section.Length;
             double clockNoise = 8 * doubleEpsilon * Math.Max(Math.Abs(span.StartNominalMinutes), Math.Abs(span.EndNominalMinutes));
             ValidateCommittedSpanTiming(span);
@@ -563,21 +578,21 @@ namespace PersistentCity.Core
 
         private static Position SectionPoint(SectionGeometry section, double distance)
         {
-            for (int i = 1; i < section.Points.Length; i++)
-                if (distance <= section.Distances[i])
-                    return Position.Lerp(section.Points[i - 1], section.Points[i],
-                        Math.Max(0, (distance - section.Distances[i - 1]) / (section.Distances[i] - section.Distances[i - 1])));
-            return section.Points[section.Points.Length - 1];
+            for (int i = 1; i < section.Count; i++)
+                if (distance <= section.Distance(i))
+                    return Position.Lerp(section.Point(i - 1), section.Point(i),
+                        Math.Max(0, (distance - section.Distance(i - 1)) / (section.Distance(i) - section.Distance(i - 1))));
+            return section.Point(section.Count - 1);
         }
 
         private static bool AdvanceSection(SectionGeometry section, Position from, Position to, double limit, ref double cursor)
         {
             if (!Near(from, SectionPoint(section, cursor))) return false;
             double previousAlong = 0;
-            for (int i = 1; i < section.Points.Length && cursor < limit; i++)
+            for (int i = 1; i < section.Count && cursor < limit; i++)
             {
-                if (section.Distances[i] <= cursor) continue;
-                double segmentEnd = Math.Min(limit, section.Distances[i]);
+                if (section.Distance(i) <= cursor) continue;
+                double segmentEnd = Math.Min(limit, section.Distance(i));
                 Position begin = SectionPoint(section, cursor);
                 Position end = SectionPoint(section, segmentEnd);
                 if (TryProjectSegment(to, begin, end, out double endpointAlong))
