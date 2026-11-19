@@ -8,6 +8,8 @@ Detailed specs: [F8 §7](https://github.com/PeterHartwieg/big-ambitions-persiste
 
 ## Latest evidence
 
+- **19 November d, Mac (rig 16r), build `d0066bbe`**. 3 pass / 0 partial / 3 fail / 0 NOT RUN. Street union p95 4.1554 ms. **PROVISIONAL (shared Mac / Mono)**. [19d results](#rig-results--19-november-2026-d-mac-rig-16r-gr-5-313-twenty-fifth-fix-at-d0066bbe).
+
 - **19 November c, PC, build `f9b9dfd8`**. 3 pass / 2 partial / 4 fail / 0 NOT RUN. **NON-PROVISIONAL (owner-accepted)**; 60 fps was the configured target on a host with other active workloads, and C and H achieved 12.84 and about 6.72 fps. [19c results](#rig-results--19-november-2026-c-pc-gr-5-311-checks-at-60-fps--no-mod-baseline-at-f9b9dfd8).
 
 - **19 November b, Mac (rig 16q), build `aeb8974a`**. 4 pass / 0 partial / 5 fail / 0 NOT RUN. Street union p95 5.0466 ms. **PROVISIONAL (shared Mac / Mono)**. [19b results](#rig-results--19-november-2026-b-mac-rig-16q-gr-5-311-twenty-fourth-fix-at-aeb8974a).
@@ -15493,3 +15495,406 @@ Documented disposable-save read after deletion reported exists=False, files=[]. 
 The Markdown ban applies to new files under docs/checks, so this report appends to the existing checklist. Raw exports and rollback manifests remain in the stage directory. Report copy `<agent-logs>/persistent-city-rig-2026-11-19c-pc.md`.
 
 Refs #311 #312
+
+## Rig results — 19 November 2026 d, Mac (rig 16r; GR-5 #313 twenty-fifth fix at d0066bbe)
+
+Run `persistent-city-rig-2026-11-19d-mac`, role rig_test on agentmac. **PROVISIONAL** for all Mac timing and memory comparisons. Historical references are 16q at `aeb8974a` (provisional Mac) and 19c at `f9b9dfd8` (non-provisional PC with a 60 fps target). The PC used a different host, game/mod stack and a 957-resident / 1,914-visitor fallback. Its achieved street cadence and whole-frame times are reported for context.
+
+### Outcomes
+
+| Check | Status | Readback |
+| --- | --- | --- |
+| A | FAIL | Day steady / retime gen0 7 / 7, pause p95 174.685 / 815.296 ms vs ~36 ms and about five collections. Grow-detail rows missing operations 0. The ≥30 ms `physical_spawn_grow` attribution case was unexercised: no grow row reached 30 ms (largest 23.033 ms). |
+| B | PASS | Sampler / final heap 1,409,941,504 / 1,445,871,616 B against 1,470,000,000 B. Pause p95 69.438 ms, gen0 6. |
+| C | PASS | Street union p95 4.1554 ms against <5 ms. Union / phase spikes 1 / 1. 9/9 pans. Retime bound 8.202 ms against ≤11.3 ms. |
+| D | FAIL | Mono heap start / stop against reused 16q reference +5.03% / +12.08% (±5%). Forced-GC live gaps +78,303,232 / +152,121,344 B. |
+| E | PASS | Owned = live + unmerged 3/3 reads. Candidate − reference RSS at +120 s −1,689,376 KiB. Growth minus reference −1,801,355,264 B against 12,386,240 B of mesh and scratch allowance. |
+| F | FAIL | Retained bytes 57,553,096 / 65,073,456 / 65,722,936. Road +30 s growth +8,169,840 B against ±1,000,000 B. CitySimulator 1 / 1 / 1. |
+
+**Six requested checks** · 3 pass / 0 partial / 3 fail / 0 NOT RUN. The excluded groups are listed below.
+
+### Build, fixture and restore
+
+| Item | Evidence |
+| --- | --- |
+| Tested commit | `d0066bbec737939808d1b8c483b198690eea6a80` |
+| Agent-rig checkout | `0acf3111e8ae9516fd607ed84d453fcf278bf192` after clean fetch and fast-forward-only pull |
+| Lease | agentmac originally free. Acquired 2026-11-19 15:28:02 UTC |
+| AgentRigOps SHA-256 | `a9375db68b9bd1eeea06a43c76ac4670849f3eebf812d8bcc6eb72f4513c30e9` |
+| Persistent City DLL SHA-256 | `d4f3eff7cc6a178f897a8645f5759c564d9b74cc944c33bc75ab38af2b20a0d6` |
+| Build command | `python3 tools/build.py --game-managed "~/Library/Application Support/BigAmbitionsMCP/dll-import-shim/Big Ambitions_Data/Managed"` with Homebrew dotnet |
+| Game build | Loaded Big Ambitions (Build 3682) |
+| RLO Player.log | [Mod:RealLifeOverhaul] Real Life Overhaul 1.0.6 initialised. |
+| Stage command | `python3 scripts/install-mac.py --stage-mod PersistentCity ~/HART-Builds/persistent-city-rig-2026-11-19d-mac/package` |
+| Receipt backup | ~/Library/Application Support/BigAmbitionsAgentTestsMac/receipt-backups/20261119T152856Z |
+| Staged line / Player.log | `[AgentRigOps] staged_mod name=PersistentCity version=absent informational=0.10.0-persistent-city-candidate sha256=d4f3eff7cc6a178f897a8645f5759c564d9b74cc944c33bc75ab38af2b20a0d6` |
+| Probe used in A steady / D | PerfUnionProbe SHA-256 `ac46b40080e73c45d33e9c42834be05ded1d34dd23aef4bd38b91d58c14cf14e`. Receipt `20261119T152915Z`. Probe staged beside Persistent City for the combined-session plan |
+| Rollback | Exact installer output in `stage.log` and `probe-stage.log`. Probe rolled back first, then Persistent City. |
+| Sealed fixture | FT GR5 13f Timing v1, 1,000 residents / 2,000 visitors / 1,683 places |
+| Other named cities | FT RIGTMP-GR5-19d-mac, FT RIGTMP-GR5-15c and FT RIGTMP-GR5-15c-mac queried for cleanup only |
+| Native autosave preference (original setting) | 5 minutes / 3 saves, prevent_autosave=False, restored unchanged at cleanup |
+| #70 autosave guard | Process guard checked after every load and before and after each timed window. All four timed windows (A steady, A retime, B night, C street) read save clean true with 0 native saving frames (frame counts table below) |
+| SaveCostDiagnostics | requested=false and writer schema 1 on all measured pre-window reads |
+| Pre-stage manifest SHA-256 | 10e834ecc106ab04d1b287b3881c14a33454e26df9bef43939f12d3e55178a33 |
+| Restore | game stopped, lease released. Verified file sets {'files': 35, 'rlo': 53, 'sealed': 4}. Hash mismatches 0. Fixture sidecars 0 |
+| Restored install.json SHA-256 | 4b0b8042f7b2a03affa23fa31e1b9cb995080de267eb35fe085e5e94afcd10c2 |
+| Preferences and frame-cap config | File hashes matched the pre-stage manifest. Native autosave and RLO live reads agreed with their original values. |
+
+Original and final live RLO values, stored / live.
+
+| Option | Original | Final |
+| --- | --- | --- |
+| living_population | none / true | none / true |
+| social_media | 1 / true | 1 / true |
+| social_media_notices | 0 / false | 0 / false |
+
+| Leftover-delete read | Initial exists | Cleanup before exists | Cleanup after exists |
+| --- | --- | --- | --- |
+| FT RIGTMP-GR5-19d-mac | false | false | false |
+| FT RIGTMP-GR5-15c | false | false | false |
+| FT RIGTMP-GR5-15c-mac | false | false | false |
+
+Raw instrument exports, Player.log, host snapshots and staging receipts are in `~/HART-Builds/persistent-city-rig-2026-11-19d-mac`. The four sealed fixture hashes and 53 RLO mod file hashes matched 16q before start. No separate no-mod process was scheduled because the candidate and both 16q references report `Loaded Big Ambitions (Build 3682)` on the same sealed fixture.
+
+### A–B. Day and night GC
+
+Targets are ~36 ms pause p95 and about five gen0 collections. The night heap gate is ≤1.47 GB at the report and final read. Day allocation is report-only. All MB and GB here are decimal. Unity p95 uses nearest rank on GC.Collect markers. The table identifies the marker frame, including adjacent-frame candidates.
+
+| Arm | gen0 | Pause p95 ms | Without UpdateCity ms | Over neighbours ms | Unity GC p95 ms | Mono heap B | Mod MB |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 16r A steady | 7 | 174.685 | 100.622 | 154.269 | 40.5226 | 1,368,817,664 | 86.432 |
+| 16r A retime | 7 | 815.296 | 814.547 | 784.066 | 34.6125 | 1,438,318,592 | 176.151 |
+| 16r B night | 6 | 69.438 | 67.778 | 69.982 | 26.4523 | 1,409,941,504 | 41.540 |
+| 16q steady | 5 | 1,717.475 | 606.727 | 1,240.482 | 862.5942 | 1,376,387,072 | 60.707 |
+| 16q retime | 7 | 103.264 | 102.861 | 94.823 | 31.7770 | 1,353,334,784 | 164.601 |
+| 16q night | 6 | 281.831 | 281.579 | 272.842 | 28.5770 | 1,429,864,448 | 39.424 |
+| 19c steady | 14 | 563.157 | 561.254 | 47.062 | 17.3950 | 1,091,686,400 | 43.594 |
+| 19c retime | 14 | 24.465 | 23.607 | 24.973 | 18.7840 | 1,133,801,472 | 77.914 |
+| 19c night | 13 | 22.636 | 21.147 | 23.321 | 17.3570 | 1,169,784,832 | 61.620 |
+
+| Mac rig | Steady / retime / night gen0 | Pause p95 ms | Unity GC p95 ms | Steady / retime / night mod MB |
+| --- | --- | --- | --- | --- |
+| 16h | 7 / 7 / 6 | 145.678 / 216.944 / 47.172 | 24.8960 / 41.0750 / 26.6030 | 104.612 / 144.227 / 45.719 |
+| 16j | 5 / 6 / 7 | 237.185 / 755.686 / 31.334 | 36.6868 / 32.3984 / 28.1965 | 75.007 / 125.914 / 46.822 |
+| 16l | 7 / 7 / 6 | 128.481 / 676.855 / 117.959 | 26.9218 / 24.7384 / 29.6001 | 113.235 / 139.452 / 45.853 |
+| 16m | 7 / 7 / 6 | 31.279 / 41.213 / 29.732 | 23.8981 / 24.9321 / 27.1579 | 119.972 / 147.520 / 47.411 |
+| 16n | 7 / 7 / 5 | 403.214 / 55.257 / 41.103 | 36.8937 / 34.6510 / 28.9960 | 99.696 / 136.985 / 43.430 |
+| 16o | 7 / 6 / 7 | 74.699 / 114.289 / 88.299 | 34.8856 / 49.0581 / 31.7702 | 91.732 / 99.725 / 40.990 |
+| 16p | 7 / 7 / 6 | 283.027 / 96.527 / 97.771 | 28.1673 / 34.1038 / 36.9249 | 87.686 / 163.539 / 37.978 |
+
+| Window | Fast / native / failed merge counts | Fallbacks | Sampler frames | Mono used at report B | GC live B range |
+| --- | --- | --- | --- | --- | --- |
+| A steady | 264 / 0 / 0 | none | 16,363 | 1,298,325,504 | 1,167,953,920 / 1,244,975,104 |
+| A retime | 322 / 0 / 0 | none | 15,475 | 1,324,040,192 | 1,240,764,416 / 1,312,788,480 |
+| B night | 239 / 0 / 0 | none | 16,238 | 1,334,427,648 | 1,269,084,160 / 1,279,741,952 |
+
+Night heap reads use the 16q bracket order. The night sampler report contains the PC phase and grow rows, so the final read follows the last in-process export. The export between (c) and (d) is the in-process modwork export. Final post-export heap in 16o / 16p / 16q / PC 19c was 1,478,131,712 / 1,467,858,944 / 1,462,370,304 / 1,253,670,912 B.
+
+| Boundary | 16r heap B | 16r used B | 16q heap B | 16r − 16q heap B |
+| --- | --- | --- | --- | --- |
+| right after load | 1,401,044,992 | 1,386,766,336 | 1,287,503,872 | +113,541,120 |
+| 00:50 before retime | 1,417,822,208 | 1,310,593,024 | 1,421,721,600 | −3,899,392 |
+| (a) before sampler | 1,501,708,288 | 1,287,856,128 | 1,505,607,680 | −3,899,392 |
+| sampler report | 1,409,941,504 | 1,334,427,648 | 1,429,864,448 | −19,922,944 |
+| (b) after report | 1,410,121,728 | 1,335,488,512 | 1,429,979,136 | −19,857,408 |
+| (c) after stop | 1,410,236,416 | 1,337,503,744 | 1,430,093,824 | −19,857,408 |
+| (d) after modwork export | 1,445,740,544 | 1,372,274,688 | 1,462,304,768 | −16,564,224 |
+| (e) after perf export | 1,445,871,616 | 1,375,608,832 | 1,462,370,304 | −16,498,688 |
+
+Every sampler collection row. Frame and UpdateCity times are from the sampler. Where the marker frame equals the Unity frame, the match is exact. A different marker frame marks an adjacent-frame candidate: the nearest GC.Collect marker, one frame later, is associated with the collection. Three rows are adjacent-frame candidates: A steady 8,690 (marker 8,691), A retime 7,238 (marker 7,239) and A retime 14,108 (marker 14,109). Where the frame recorder marks GC inside UpdateCity, the Unity marker may overlap that UpdateCity time.
+
+| Window | Unity frame | Frame ms | UpdateCity ms | Marker frame | GC.Collect ms | Gen0 | Heap before / after B | Adjacent frame ms |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| A steady | 6,416 | 65.239 | 0.350 | 6,416 | 23.3216 | 1 | 1,284,341,760 / 1,167,953,920 | 32.977 / 32.725 |
+| A steady | 8,690 | 70.816 | 0.599 | 8,691 | 24.7677 | 1 | 1,297,375,232 / 1,180,434,432 | 33.332 / 32.741 |
+| A steady | 11,067 | 64.949 | 0.450 | 11,067 | 24.0001 | 1 | 1,309,388,800 / 1,193,529,344 | 34.334 / 32.425 |
+| A steady | 13,465 | 134.609 | 0.478 | 13,465 | 24.7973 | 1 | 1,329,823,744 / 1,209,106,432 | 34.336 / 62.324 |
+| A steady | 16,017 | 208.192 | 143.826 | 16,017 | 40.5226 | 1 | 1,339,387,904 / 1,217,568,768 | 66.969 / 40.877 |
+| A steady | 18,337 | 59.997 | 1.058 | 18,337 | 23.3669 | 1 | 1,338,785,792 / 1,227,677,696 | 33.693 / 33.700 |
+| A steady | 20,719 | 65.561 | 0.788 | 20,719 | 24.8581 | 1 | 1,353,744,384 / 1,244,975,104 | 52.887 / 34.240 |
+| A retime | 5,044 | 285.428 | 2.636 | 5,044 | 25.6615 | 1 | 1,335,611,392 / 1,240,764,416 | 33.619 / 44.930 |
+| A retime | 7,238 | 74.571 | 1.670 | 7,239 | 29.5215 | 1 | 1,379,864,576 / 1,257,676,800 | 51.042 / 67.065 |
+| A retime | 9,516 | 848.842 | 0.749 | 9,516 | 34.6125 | 1 | 1,393,078,272 / 1,271,746,560 | 34.623 / 94.928 |
+| A retime | 11,786 | 97.203 | 1.065 | 11,786 | 27.7715 | 1 | 1,404,510,208 / 1,283,956,736 | 35.515 / 32.927 |
+| A retime | 14,108 | 67.586 | 2.553 | 14,109 | 27.3310 | 1 | 1,419,681,792 / 1,294,315,520 | 64.731 / 33.248 |
+| A retime | 16,375 | 69.369 | 0.556 | 16,375 | 26.9072 | 1 | 1,426,378,752 / 1,303,904,256 | 33.301 / 32.447 |
+| A retime | 18,634 | 61.197 | 4.223 | 18,634 | 26.2062 | 1 | 1,432,309,760 / 1,312,788,480 | 34.948 / 34.727 |
+| B night | 14,582 | 64.919 | 1.100 | 14,582 | 24.2415 | 1 | 1,380,782,080 / 1,269,084,160 | 33.720 / 33.502 |
+| B night | 17,077 | 64.150 | 0.870 | 17,077 | 26.0212 | 1 | 1,386,799,104 / 1,272,197,120 | 33.589 / 33.200 |
+| B night | 19,736 | 66.081 | 0.444 | 19,736 | 25.6226 | 1 | 1,389,727,744 / 1,273,225,216 | 34.436 / 32.625 |
+| B night | 22,286 | 102.999 | 1.660 | 22,286 | 26.4523 | 1 | 1,392,615,424 / 1,278,066,688 | 33.240 / 32.794 |
+| B night | 24,966 | 66.493 | 0.307 | 24,966 | 26.4387 | 1 | 1,397,084,160 / 1,278,873,600 | 32.802 / 32.756 |
+| B night | 27,487 | 69.111 | 0.237 | 27,487 | 24.2390 | 1 | 1,394,970,624 / 1,279,741,952 | 32.447 / 34.915 |
+
+All segments and sub-segments. Cells give allocated B / sampled frames / skipped frames / accumulated phase ms. Overlapping attribution scopes are included.
+
+| Scope | A steady | A retime | B night |
+| --- | --- | --- | --- |
+| `mod` | 86,432,472 / 16,364 / 0 / 0 | 176,151,056 / 15,476 / 0 / 0 | 41,540,288 / 16,239 / 0 / 0 |
+| `advance` | 54,498,552 / 16,364 / 0 / 0 | 108,256,648 / 15,396 / 0 / 0 | 21,478,304 / 16,239 / 0 / 0 |
+| `physical` | 17,103,776 / 16,364 / 0 / 0 | 19,825,864 / 15,412 / 0 / 0 | 5,566,000 / 16,239 / 0 / 0 |
+| `physical_ambient` | 0 / 16,364 / 0 / 130.838 | 1,872 / 15,396 / 0 / 169.872 | 512 / 16,239 / 0 / 143.64 |
+| `physical_vehicles` | 1,097,392 / 16,364 / 0 / 452.043 | 1,796,240 / 15,396 / 0 / 736.722 | 305,648 / 16,239 / 0 / 258.231 |
+| `physical_bindings` | 12,288 / 399,984 / 0 / 407.211 | 150,224 / 417,401 / 0 / 329.227 | 6,000 / 126,331 / 0 / 119.974 |
+| `physical_vendor_meals` | 0 / 16,364 / 0 / 6.664 | 0 / 15,396 / 0 / 6.696 | 4,352 / 16,239 / 0 / 8.74 |
+| `physical_fade` | 0 / 16,364 / 0 / 3.673 | 0 / 15,396 / 0 / 3.844 | 0 / 16,239 / 0 / 6.114 |
+| `physical_focus` | 0 / 16,364 / 0 / 75.895 | 0 / 15,396 / 0 / 84.327 | 0 / 16,239 / 0 / 78.971 |
+| `physical_observe` | 290,368 / 383,360 / 0 / 2947.89 | 615,168 / 401,669 / 0 / 3334.65 | 113,424 / 109,991 / 0 / 1070.13 |
+| `physical_release` | 6,096 / 273 / 0 / 172.773 | 8,320 / 350 / 0 / 215.775 | 256 / 137 / 0 / 121.867 |
+| `physical_parked` | 1,748,256 / 1,179 / 0 / 671.339 | 1,842,448 / 1,177 / 0 / 767.829 | 1,469,872 / 1,182 / 0 / 664.641 |
+| `physical_index` | 80 / 2,201 / 0 / 37.022 | 80 / 2,133 / 0 / 69.578 | 80 / 2,198 / 0 / 41.459 |
+| `physical_queues` | 7,584 / 2,181 / 0 / 107.854 | 8,960 / 2,113 / 0 / 147.276 | 0 / 2,178 / 0 / 105.679 |
+| `physical_roster` | 12,864 / 2,181 / 0 / 494.996 | 15,280 / 2,113 / 0 / 746.734 | 128 / 2,178 / 0 / 461.817 |
+| `physical_selection` | 1,817,816 / 2,737 / 0 / 114.393 | 2,184,024 / 2,738 / 0 / 174.172 | 294,160 / 2,254 / 0 / 30.355 |
+| `physical_spawn_pedestrian` | 2,763,432 / 749 / 0 / 559.171 | 2,515,552 / 791 / 0 / 768.729 | 5,936 / 116 / 0 / 120.517 |
+| `physical_spawn_appearance` | 6,881,280 / 786 / 0 / 581.38 | 7,566,304 / 903 / 0 / 717.761 | 1,004,624 / 171 / 0 / 142.217 |
+| `physical_spawn_check` | 0 / 524 / 0 / 1.194 | 0 / 602 / 0 / 1.973 | 0 / 114 / 0 / 0.35 |
+| `physical_spawn_vehicle` | 97,680 / 69 / 0 / 35.642 | 144,176 / 135 / 0 / 63.083 | 21,664 / 17 / 0 / 5.946 |
+| `physical_unattributed` | 2,368,640 / 32,728 / 0 / 126.938 | 2,977,216 / 30,810 / 0 / 119.011 | 2,339,344 / 32,478 / 0 / 105.742 |
+| `physical_spawn_randomize` | 2,349,872 / 262 / 0 / 23.541 | 2,674,208 / 301 / 0 / 34.821 | 499,888 / 57 / 0 / 6.695 |
+| `physical_spawn_bake` | 1,801,136 / 262 / 0 / 158.672 | 1,878,000 / 301 / 0 / 172.361 | 0 / 57 / 0 / 32.85 |
+| `advance_planning` | 40,005,280 / 9,538 / 0 / 6393.61 | 57,025,048 / 14,827 / 0 / 9279.31 | 17,710,080 / 4,057 / 0 / 3911.77 |
+| `advance_events` | 12,136,104 / 20,230 / 0 / 841.838 | 49,012,672 / 25,629 / 0 / 1342.86 | 1,426,832 / 17,645 / 0 / 319.346 |
+| `advance_stops` | 2,357,168 / 16,364 / 0 / 65.982 | 2,218,928 / 15,396 / 0 / 51.491 | 2,338,416 / 16,239 / 0 / 82.011 |
+| `advance_other` | 0 / 16,364 / 0 / 189.571 | 0 / 15,396 / 0 / 288.687 | 192 / 16,239 / 0 / 85.68 |
+| `physical_spawn_grow` | 504,960 / 202 / 0 / 129.102 | 674,272 / 161 / 0 / 206.191 | 0 / 0 / 0 / 0 |
+| `mod_prelude` | 2,463,264 / 16,364 / 0 / 1820.87 | 2,312,800 / 15,476 / 0 / 1798.26 | 2,423,968 / 16,239 / 0 / 1891.89 |
+| `mod_rlo` | 1,969,888 / 16,364 / 0 / 71.213 | 1,963,216 / 15,476 / 0 / 69.378 | 2,007,392 / 16,239 / 0 / 105.58 |
+| `mod_food` | 1,282,096 / 16,364 / 0 / 87.655 | 1,706,928 / 15,471 / 0 / 47.191 | 1,281,248 / 16,239 / 0 / 49.816 |
+| `mod_optional_stops` | 2,367,328 / 16,364 / 0 / 1341.55 | 2,236,272 / 15,471 / 0 / 1006.9 | 2,338,416 / 16,239 / 0 / 175.867 |
+| `mod_routes` | 3,687,136 / 16,364 / 0 / 703.533 | 36,762,224 / 15,476 / 0 / 915.849 | 3,629,664 / 16,239 / 0 / 690.366 |
+| `mod_closures` | 848 / 16,364 / 0 / 1167.12 | 262,800 / 15,396 / 0 / 1514.05 | 256 / 16,239 / 0 / 538.666 |
+| `mod_hold_replay` | 0 / 16,364 / 0 / 29.077 | 752 / 15,396 / 0 / 5.769 | 2,880 / 16,239 / 0 / 6.473 |
+| `mod_physical_setup` | 0 / 16,195 / 0 / 3.435 | 0 / 15,383 / 0 / 3.985 | 0 / 15,542 / 0 / 3.274 |
+| `mod_inspector` | 2,430,240 / 16,364 / 0 / 142.293 | 2,303,360 / 15,396 / 0 / 144.549 | 2,338,416 / 16,239 / 0 / 143.316 |
+| `mod_summary` | 618,064 / 16,099 / 0 / 19.018 | 513,936 / 15,221 / 0 / 35.354 | 474,112 / 16,239 / 0 / 26.069 |
+| `mod_other` | 3,904 / 16,364 / 0 / 14.426 | 1,808 / 15,476 / 0 / 15.229 | 0 / 16,239 / 0 / 12.844 |
+| `mod_routes_speeds` | 0 / 13,392 / 0 / 144.083 | 848 / 10,774 / 0 / 120.688 | 0 / 15,001 / 0 / 175.508 |
+| `mod_routes_nodes` | 0 / 13,392 / 0 / 8.021 | 3,513,448 / 10,774 / 0 / 28.056 | 0 / 15,001 / 0 / 10.578 |
+| `mod_routes_sweep` | 0 / 16,362 / 0 / 387.857 | 0 / 15,393 / 0 / 379.673 | 0 / 16,239 / 0 / 355.808 |
+| `mod_routes_rebuild` | 3,687,136 / 16,364 / 0 / 117.255 | 3,798,400 / 15,411 / 0 / 134.683 | 3,629,664 / 16,239 / 0 / 101.692 |
+| `mod_closures_network` | 480 / 16,364 / 0 / 186.968 | 1,216 / 15,396 / 0 / 238.392 | 0 / 16,239 / 0 / 108.623 |
+| `mod_closures_links` | 368 / 16,364 / 0 / 930.074 | 261,584 / 15,396 / 0 / 1236.28 | 192 / 16,239 / 0 / 388.008 |
+| `advance_events_traffic` | 475,552 / 3,243 / 0 / 68.468 | 627,984 / 4,246 / 0 / 115.155 | 211,600 / 1,255 / 0 / 25.607 |
+| `advance_events_food` | 1,562,576 / 920 / 0 / 57.825 | 9,554,992 / 2,691 / 0 / 128.07 | 144 / 270 / 0 / 10.862 |
+| `advance_events_citizen` | 8,279,944 / 2,797 / 0 / 416.462 | 36,053,744 / 7,490 / 0 / 721.085 | 392,592 / 795 / 0 / 111.127 |
+| `advance_events_route_begin` | 1,818,032 / 3,349 / 0 / 259.566 | 2,775,952 / 4,700 / 0 / 348.55 | 822,496 / 1,520 / 0 / 107.081 |
+| `advance_events_other` | 0 / 9,921 / 0 / 37.16 | 0 / 6,502 / 0 / 27.167 | 0 / 13,805 / 0 / 62.054 |
+| `advance_planning_slice` | 26,226,544 / 6,188 / 0 / 5200.17 | 39,457,384 / 10,127 / 0 / 7808.63 | 11,954,160 / 2,537 / 0 / 3257.56 |
+| `advance_planning_finish` | 13,778,736 / 3,350 / 0 / 1191.03 | 17,567,664 / 4,700 / 0 / 1466.94 | 5,755,920 / 1,520 / 0 / 652.488 |
+| `physical_setup_places` | 0 / 0 / 0 / 0 | 355,360 / 1 / 0 / 3.057 | 0 / 0 / 0 / 0 |
+| `physical_setup_bodies` | 0 / 0 / 0 / 0 | 179,760 / 1 / 0 / 0.633 | 0 / 0 / 0 / 0 |
+| `physical_setup_vehicles` | 0 / 0 / 0 / 0 | 16,352 / 2 / 0 / 1.366 | 0 / 0 / 0 / 0 |
+| `physical_setup_ambient` | 0 / 0 / 0 / 0 | 190,896 / 2 / 0 / 4.308 | 0 / 0 / 0 / 0 |
+| `physical_setup_preflight` | 0 / 0 / 0 / 0 | 848 / 1 / 0 / 0.12 | 0 / 0 / 0 / 0 |
+| `physical_unattributed_setup` | 0 / 0 / 0 / 0 | 4,240 / 1 / 0 / 0.154 | 0 / 0 / 0 / 0 |
+| `physical_unattributed_update` | 12,224 / 16,364 / 0 / 47.695 | 10,576 / 15,396 / 0 / 52.113 | 64 / 16,239 / 0 / 42.03 |
+| `physical_unattributed_waiting` | 0 / 0 / 0 / 0 | 2,160 / 15 / 0 / 0.071 | 0 / 0 / 0 / 0 |
+| `physical_unattributed_entry` | 2,356,416 / 16,364 / 0 / 72.092 | 2,217,024 / 15,396 / 0 / 50.731 | 2,338,992 / 16,239 / 0 / 53.575 |
+| `mod_routes_retime` | 0 / 16,364 / 0 / 28.713 | 29,333,688 / 15,476 / 0 / 236.862 | 0 / 16,239 / 0 / 31.984 |
+
+### C. Street
+
+| Rig | UpdateCity self p95 ms | Inclusive p95 ms | Union p95 ms | Whole-frame p95 ms | Whole-frame max ms | Union ≥30 ms |
+| --- | --- | --- | --- | --- | --- | --- |
+| 16r | 4.0147 | 4.0908 | 4.1554 | 214.4230 | 748.2633 | 1 |
+| 16h | 4.1956 | 4.2265 | 4.2911 | 217.8050 | 869.9680 | 3 |
+| 16j | 4.9052 | 5.0698 | 5.1476 | 235.9157 | 1,745.2090 | 1 |
+| 16l | 5.2745 | 5.5381 | 5.6815 | 236.4184 | 1,595.7574 | 3 |
+| 16m | 3.8229 | 3.9095 | 3.9665 | 169.4044 | 582.7957 | 0 |
+| 16n | 5.3404 | 5.6998 | 5.8260 | 308.7646 | 1,359.5531 | 4 |
+| 16o | 4.0157 | 4.0943 | 4.1603 | 226.1369 | 5,543.0279 | 0 |
+| 16p | 4.7834 | 5.4103 | 5.4668 | 350.3416 | 9,185.4534 | 4 |
+| 16q | 4.6606 | 4.9964 | 5.0466 | 291.8380 | 7,668.2886 | 4 |
+| 19c PC | 0.3390 | 3.7180 | 3.8120 | 129.8340 | 428.1130 | 0 |
+
+Player at x=215, z=0. PC phase recorder active and GC sampler off. Accepted pans at 60.80, 120.91, 180.93, 240.66, 300.72, 360.85, 420.79, 480.72, 540.88 s.
+
+Rate commands acknowledged at 200.239 and 400.451 s.
+
+| Observed completion | PC retime timing | New planner Unity frame |
+| --- | --- | --- |
+| 1 | body release 116.1 ms over 37 updates, journey retime 37.4 ms over 11 updates (snapshot 1, slowest 3.8 ms, restarts 0), final slice and commit 1.5 ms, simulation rebuild 19.6 ms over 5 updates (slowest 6.9 ms). | 41,819 |
+| 2 | body release 111.1 ms over 36 updates, journey retime 44.0 ms over 12 updates (snapshot 1, slowest 4.2 ms, restarts 0), final slice and commit 1.6 ms, simulation rebuild 23.4 ms over 7 updates (slowest 6.4 ms). | 42,786 |
+
+The export had no row dominated by the retime sub. Its conservative all-frame bound was 8.202 ms. Unlisted frames are bounded by the smallest of the 16 retained top-frame totals (7.299 ms, plus rounding). On listed frames, the retime sub is bounded by the dominant sub. When a different sub dominates, its time can also be subtracted from the frame’s mod total because the recorder uses a shared advancing detail timestamp. The 37.196 ms spike spent 36.398 ms in the planning sub, leaving at most 0.800 ms for the retime sub. Frame 42,802 supplies the largest bound at 8.202 ms including rounding. 16q reported 11.559 ms and PC 19c 18.634 ms using the earlier method.
+
+### Frame counts and spike attribution (#94)
+
+| Window | Live session | Controller s | Perf recorder s | Save clean / native saving frames | Union ≥30 ms | PC phase ≥30 ms | PC near 15–30 ms | Whole frame ≥30 ms |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| A steady | bfc8d7c4 | 600.010 | 605.711 | true / 0 | 1 / 1 / false | 1 / 1 / false | 6 / 6 / false | 15,299 / 1,024 / true |
+| A retime | 75ad937f | 600.004 | 604.308 | true / 0 | 4 / 4 / false | 4 / 4 / false | 18 / 18 / false | 14,106 / 1,024 / true |
+| B night | 0e79307c | 600.002 | 607.117 | true / 0 | 0 / 0 / false | 0 / 0 / false | 5 / 5 / false | 15,075 / 1,024 / true |
+| C street | 0e79307c | 600.008 | 601.855 | true / 0 | 1 / 1 / false | 1 / 1 / false | 2 / 2 / false | 4,445 / 1,024 / true |
+
+Spike cells show counted / retained / truncated. Union and phase rows are joined by Unity frame. A dash means the recorder had no value for that field. Whole-frame near/spike evidence is independent of the mod-work gate.
+
+| Window | Unity frame | Union ms | UpdateCity ms | Phase ms | Detail ms | Sub ms | GC phase | AccountingPrefix ms | PopulationRuntime.Update ms |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| A steady | 16,017 | 143.8915 | 143.776 | mod_optional_stops 142.142 | none 0.000 | advance_planning_slice 0.547 | mod_optional_stops | 0.0158 | 0.0561 |
+| A retime | 3,633 | 42.2728 | 42.056 | physical_spawn_pedestrian 16.909 | physical_spawn_grow 14.373 | advance_events_food 7.688 | none | — | 0.1716 |
+| A retime | 6,760 | 65.6057 | 63.880 | physical_observe 55.030 | none 0.000 | mod_closures_links 1.463 | none | 1.4621 | 0.1337 |
+| A retime | 10,297 | 31.9468 | 31.873 | advance_events 31.009 | none 0.000 | advance_events_citizen 31.008 | none | 0.0139 | 0.0187 |
+| A retime | 11,474 | 40.1906 | 40.090 | advance_events 38.778 | none 0.000 | advance_events_citizen 38.777 | none | 0.0386 | — |
+| C street | 42,171 | 37.2807 | 37.196 | advance_planning 36.400 | none 0.000 | advance_planning_slice 36.398 | advance_planning | 0.0140 | 0.0380 |
+
+Grow timing for every spike or near-spike row tagged physical_spawn_grow or physical_spawn_pedestrian in phase or detail, plus any other spike with a recorded grow operation. The timing fields describe the slowest grow operation in the frame. Each matching row is listed once. Zero grow operations can occur on a pedestrian frame that spent time dressing or reusing an existing body.
+
+| Window | Unity frame | Band | Phase | Detail | grow_ops | grow_kind | grow_ms | grow_result_ms | grow_checks_ms | grow_parent_ms | grow_own_ms | grow_staging_ms | grow_failed |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| A steady | 11,670 | near | physical_spawn_pedestrian | physical_spawn_bake | 0 | none | 0.000 | 0.000 | 0.000 | 0.000 | 0.000 | 0.000 | false |
+| A retime | 3,633 | spike | physical_spawn_pedestrian | physical_spawn_grow | 1 | sync | 14.133 | 13.479 | 0.028 | 0.410 | 0.011 | 0.204 | false |
+| A retime | 6,800 | near | physical_spawn_pedestrian | physical_spawn_bake | 0 | none | 0.000 | 0.000 | 0.000 | 0.000 | 0.000 | 0.000 | false |
+| A retime | 7,170 | near | physical_spawn_pedestrian | physical_spawn_grow | 1 | async_start | 12.589 | 12.580 | 0.000 | 0.000 | 0.000 | 0.009 | false |
+| A retime | 8,890 | near | physical_spawn_pedestrian | physical_spawn_bake | 0 | none | 0.000 | 0.000 | 0.000 | 0.000 | 0.000 | 0.000 | false |
+| A retime | 9,260 | near | physical_spawn_pedestrian | physical_spawn_grow | 1 | async_start | 11.792 | 11.771 | 0.000 | 0.000 | 0.000 | 0.021 | false |
+| A retime | 9,856 | near | physical_spawn_pedestrian | physical_spawn_bake | 0 | none | 0.000 | 0.000 | 0.000 | 0.000 | 0.000 | 0.000 | false |
+| A retime | 10,383 | near | physical_spawn_pedestrian | physical_spawn_bake | 0 | none | 0.000 | 0.000 | 0.000 | 0.000 | 0.000 | 0.000 | false |
+| A retime | 11,381 | near | physical_spawn_pedestrian | physical_spawn_grow | 1 | async_start | 23.033 | 23.017 | 0.000 | 0.000 | 0.000 | 0.016 | false |
+| A retime | 11,502 | near | physical_spawn_pedestrian | physical_spawn_bake | 0 | none | 0.000 | 0.000 | 0.000 | 0.000 | 0.000 | 0.000 | false |
+| B night | 16,802 | near | physical_spawn_pedestrian | physical_spawn_bake | 0 | none | 0.000 | 0.000 | 0.000 | 0.000 | 0.000 | 0.000 | false |
+
+Largest logged grow in these rows was Unity frame 11381 (A retime), 23.033 ms, kind `async_start`. 16q frame 7922 had 1,102.364 ms in grow and an overlapping 862.5942 ms GC marker. Its per-step times were unavailable. 16q street frame 7610 likewise had no per-step fields.
+
+### E. RSS and owned memory
+
+16r sampled the fresh A-repeat 1→2 at 15:30. Reused 16q E no-mod rows bracket the final 2→1 in its street window. Absolute RSS values and growth differences are descriptive across those conditions. Physical footprint is the rounded macOS vmmap summary. The allowance is 100 B per additional live vertex plus positive bake scratch growth.
+
+| Read | 16r RSS KiB | 16q reference KiB | Absolute RSS difference KiB | 16r footprint | 16q ref footprint | Owned | Live | Unmerged | Reserved | Vertices | Scratch B | Mono heap B | Mono used B | Identity |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| before | 2,453,200 | 2,383,440 | +69,760 | 4.8G | 4.7G | 7 | 7 | 0 | 0 | 28,336 | 689,724 | 1,417,084,928 | 1,402,277,888 | true |
+| after | 2,682,768 | 3,350,464 | −667,696 | 4.9G | 4.7G | 7 | 7 | 0 | 7 | 28,336 | 689,724 | 1,568,079,872 | 1,222,557,696 | true |
+| 120s | 800,336 | 2,489,712 | −1,689,376 | 5.0G | 4.7G | 35 | 35 | 0 | 0 | 141,906 | 1,718,964 | 1,568,079,872 | 1,327,734,784 | true |
+
+| Read | 16r Mono heap B | 16q no-mod Mono heap B | Absolute heap difference B |
+| --- | --- | --- | --- |
+| before | 1,417,084,928 | 1,340,915,712 | +76,169,216 |
+| after | 1,568,079,872 | 1,340,915,712 | +227,164,160 |
+| +120 s | 1,568,079,872 | 1,332,101,120 | +235,978,752 |
+
+| Boundary | 16r growth − ref B | 16r allowance B | 16q growth − ref B | 19c PC growth − ref B | 16q candidate owned / live | 19c PC candidate owned / live | 16r s from commit seen |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Immediately after | −755,154,944 | 0 | -345,522,176 | 834,252,800 | 52 / 51 | 82 / 82 | 0.549 |
+| +120 s | −1,801,355,264 | 12,386,240 | 526,893,056 | 1,067,495,424 | 60 / 60 | 82 / 82 | 121.289 |
+
+All three 16r unmerged counts were zero. The identity held at those boundaries, including the immediate read with seven reserved bodies. 16q’s immediate owned/live was 52/51 with 52 reserved and no unmerged field.
+
+16q candidate absolute RSS against its reference was −446,768 / −784,192 / +67,776 KiB before, immediately after and at +120 s. 16q +120 s allowance was 16,016,256 B. 16p +120 s excess was 43,155,456 B with 19,173,396 B allowed. Earlier Mac owned sequences were 57 / 55 / 64 on 16l, 69 / 69 / 81 on 16m and 29 / 75 / 75 on 16o. On 16n RSS rose 433,424 KiB at +120 s.
+
+### D. Separation
+
+Candidate forced-GC heap reads bracketed A steady in session 1. Probe `mono_heap` reads come from measure-start/measure-stop. This comparison was evaluated after A, B, C and E. The reused 16q D no-mod reference was at 01:00 at x=215, z=0. This run used the requested day window at 15:30, with the additional A recorders. The percentage comparison is provisional across the different conditions.
+
+| Boundary | 16r candidate B | 16q no-mod B | 16r offset | 16q candidate offset | 19c PC offset |
+| --- | --- | --- | --- | --- | --- |
+| Mono heap start | 1,352,040,448 | 1,287,340,032 | +5.03% | +4.44% | +6.261% |
+| Mono heap stop | 1,368,817,664 | 1,221,312,512 | +12.08% | +10.09% | +7.906% |
+| Forced-GC live before | 1,140,002,816 | 1,061,699,584 | +78,303,232 | +123,805,696 B | +106,602,496 B |
+| Forced-GC live after | 1,223,913,472 | 1,071,792,128 | +152,121,344 | +118,435,840 B | +102,559,744 B |
+
+| Probe fields | 16r candidate | 16q reference |
+| --- | --- | --- |
+| Calendar factor | 0.333333 | 0.333333 |
+| Start / stop Mono used B | 1,159,995,392 / 1,246,351,360 | 1,160,777,728 / 1,125,359,616 |
+| Forced GC heap before / after B | 1,352,040,448 / 1,402,372,096 | 1,287,340,032 / 1,221,312,512 |
+| Forced GC used before / after B | 1,140,002,816 / 1,223,913,472 | 1,061,699,584 / 1,071,792,128 |
+
+The forced-GC gap changed −45,502,464 B at start and +33,685,504 B at stop vs the 16q gap. PR #313 expected about 3 MB less at each boundary. Other provisional start / stop offsets were 15.63% / 23.13% on 16n and 5.19% / 12.76% on 16o.
+
+### F. Retained census
+
+| Boundary | 16r retained B | 16r objects | 16r failures | 16q retained B | 19c retained B |
+| --- | --- | --- | --- | --- | --- |
+| Before 1→2 | 57,553,096 | 527,330 | 0 | 67,026,752 | 66,105,008 |
+| Immediately after 2→1 | 65,073,456 | 549,682 | 0 | 67,070,320 | 65,754,568 |
+| New road snapshot +30 s | 65,722,936 | 567,371 | 0 | 68,438,912 | 67,254,224 |
+
+Retained growth at the timed read was +8,169,840 B on 16r, +1,412,160 B on 16q and +1,149,216 B on PC 19c. The 16r change relative to 16q was +6,757,680 B.
+
+Full-precision `FoodDiagnostics.travelClockRate` before first retime and after the return was `0.3333333333333333` and `0.3333333333333333`. The after/before ratio was `1.0`. Each census stayed outside the 600 s sampler.
+
+Road marker `[Mod:PersistentCity] Road snapshot started: frame=19115, reason=clock-rate index=-1, scene searches in this planner=0, reused unchanged snapshot=True.` observed at 2026-11-19T15:54:03.886637+00:00. The timed census began 30.003 s after observation.
+
+| Type | 16q before | 16r before | 16q immediate | 16r immediate | 16q road +30 s | 16r road +30 s |
+| --- | --- | --- | --- | --- | --- | --- |
+| `CitySimulator` | 1 | 1 | 1 | 1 | 1 | 1 |
+| `MultimodalRoutes` | 1 | 1 | 1 | 1 | 1 | 1 |
+| `WalkingRoutes` | 1 | 1 | 1 | 1 | 1 | 1 |
+| `RoadRoutes` | 1 | 1 | 2 | 2 | 1 | 1 |
+| `TrafficRoadNetwork` | 1 | 1 | 2 | 2 | 1 | 1 |
+| `TrafficKernel` | 2 | 1 | 1 | 1 | 1 | 1 |
+| `Position[]` | 13,985 | 18 | 13,985 | 33 | 13,985 | 33 |
+| `Double[]` | 13,981 | 15 | 13,981 | 13 | 13,983 | 17 |
+| `List<Int32>` | 51,323 | 35,358 | 38,059 | 23,424 | 51,309 | 36,674 |
+| `TrafficLinkDefinition` | 41,895 | 13,965 | 69,825 | 13,965 | 55,860 | 13,965 |
+| `FrozenLink` | — | 27,930 | — | 41,895 | — | 27,930 |
+| `TrafficSignalSchedule` | — | — | 5,768 | — | — | — |
+| `FrozenSignal` | — | — | — | — | — | — |
+
+Link definitions, sum of mutable and frozen census rows when both are exported · 41,895 / 55,860 / 41,895. 16q corresponding mutable counts · 41,895 / 69,825 / 55,860.
+
+Signal schedules, sum of mutable and frozen census rows when both are exported · — / — / —. 16q corresponding mutable counts · — / 5,768 / —.
+
+The census reports six tracked instance counts plus the 48 largest owned types by bytes. A dash marks a type outside the export. The last type-row cutoffs in B were 214,528 / 212,800 / 214,528 for 16q and 161,992 / 214,720 / 216,000 for 16r. Signal totals were unavailable when a constituent row fell below the cap. Definition and signal counts include save snapshots and kernel objects. Bit-identical non-signal links can share the returned network. Signal links can retain private definitions for phase changes.
+
+| Root bytes | 16r before | 16r immediate | 16r road +30 s |
+| --- | --- | --- | --- |
+| runtime.simulation | 41,603,344 | 43,004,680 | 47,499,408 |
+| runtime.gcSampler | — | 873,824 | 873,824 |
+| static.BlendshapeBake.scratch | 694,232 | 1,728,744 | 1,728,744 |
+| runtime.routes | — | — | — |
+| runtime.settings | — | — | — |
+| static.RoadRoutes.donor | — | 3,848,752 | — |
+| static.RetainedCensus.Layouts | 93,544 | 153,768 | 155,472 |
+| save.modData.persistentcity:state_v1 | 12,101,968 | 12,101,968 | 12,101,968 |
+
+### Shared Mac boundaries
+
+| Window | Boundary | UTC | Rig PID | Load averages | Memory free | Top processes |
+| --- | --- | --- | --- | --- | --- | --- |
+| A steady | start | 2026-11-19T15:31:39Z | 69,138 | 7.09 9.15 9.82 | 60% | com.apple.Virtualization.VirtualMachine 100.0%, Big Ambitions Agent Tests Mac 96.3%, WindowServer 44.2%, desktop agent 18.9%, desktop agent 11.8% |
+| A steady | end | 2026-11-19T15:41:48Z | 69,138 | 7.22 9.83 9.78 | 65% | node 101.7%, Big Ambitions Agent Tests Mac 79.9%, WindowServer 47.0%, com.apple.Virtualization.VirtualMachine 25.4%, desktop agent 13.3% |
+| A retime | start | 2026-11-19T15:43:56Z | 73,136 | 6.23 8.56 9.28 | 44% | com.apple.Virtualization.VirtualMachine 160.1%, Big Ambitions Agent Tests Mac 100.1%, WindowServer 41.5%, desktop agent 13.5%, limactl 12.5% |
+| A retime | end | 2026-11-19T15:54:34Z | 73,136 | 6.60 10.78 10.49 | 63% | Big Ambitions Agent Tests Mac 95.8%, com.apple.Virtualization.VirtualMachine 93.4%, WindowServer 44.1%, limactl 15.5%, node 15.3% |
+| B night | start | 2026-11-19T16:02:43Z | 77,315 | 11.50 9.83 9.97 | 58% | com.apple.Virtualization.VirtualMachine 115.5%, Big Ambitions Agent Tests Mac 75.5%, node 71.9%, node 65.2%, node 49.3% |
+| B night | end | 2026-11-19T16:12:52Z | 77,315 | 13.93 12.13 10.92 | 48% | node 124.6%, com.apple.Virtualization.VirtualMachine 110.4%, node 99.9%, node 94.9%, Big Ambitions Agent Tests Mac 59.4% |
+| C street | start | 2026-11-19T16:20:25Z | 77,315 | 8.36 12.63 11.98 | 79% | com.apple.Virtualization.VirtualMachine 122.2%, Big Ambitions Agent Tests Mac 90.3%, WindowServer 42.1%, desktop agent 41.4%, desktop agent 22.7% |
+| C street | end | 2026-11-19T16:30:29Z | 77,315 | 5.80 7.69 9.56 | 80% | Big Ambitions Agent Tests Mac 101.8%, com.apple.Virtualization.VirtualMachine 101.4%, WindowServer 47.2%, desktop agent 25.0%, desktop agent 21.6% |
+
+Day steady includes the D probe. A repeat includes E’s two live RSS/diagnostic samples and vmmap calls. F’s graph walks were outside the sampler. B and C share a process with separate windows and independent recorder exports.
+
+### Findings
+
+- A steady’s longest collection frame was 16017 at 208.192 ms. UpdateCity took 143.826 ms and the GC marker took 40.5226 ms. The frame recorder attributed 142.142 ms to `mod_optional_stops`, with 0 grow operations. 16q’s largest steady collection was in physical spawn grow with a much larger GC marker.
+- Largest repeat and night collection frames · A retime frame 9516 · total 848.842 ms, UpdateCity 0.749 ms, GC marker 34.6125 ms / B night frame 22286 · total 102.999 ms, UpdateCity 1.660 ms, GC marker 26.4523 ms. The repeat frame had about 813.5 ms outside the measured UpdateCity and Unity GC times.
+- The B modwork export grew the Mono heap by +35,504,128 B. The final read was 24,128,384 B below the heap ceiling. 16q’s modwork export added 32,210,944 B.
+- E’s resident RSS arithmetic passed at both post-retime boundaries with 3/3 ownership identities. Candidate physical footprint rose 4.8G → 4.9G → 5.0G, while the reused reference rounded to 4.7G at all three reads. Candidate vmmap writable regions marked swapped out grew from 2.7G to 3.4G while ps RSS fell.
+- F’s flattened geometry shows in the Position[]/Double[] counts. FrozenLink counted 27,930 / 41,895 / 27,930 across the reads and mutable definitions counted 13,965 / 13,965 / 13,965. The 27,930 before and timed counts are two 13,965-link sets. The whole-graph census reports the combined type counts across owners.
+- Largest reported root changes present in both F reads · `runtime.simulation` +5,896,064 B, `static.BlendshapeBake.scratch` +1,034,512 B, `runtime.ordinaryOwnershipIndex` +146,720 B, `static.RetainedCensus.Layouts` +61,928 B, `static.BodyMerge.poses` +53,824 B, `static.BodyMerge.finalPoses` +32,768 B. Root changes describe first-reach attribution.
+- The prescribed combined window created the retained `runtime.gcSampler` root after F’s before-read. It accounted for 873,824 B in both after-reads. Subtracting it for attribution leaves +7,296,016 B of whole-graph growth. The check uses the full census delta. Simulation got 600 s of play at 2× between reads, from day 2 at 15:30 to about 19:50.
+- `RouteLeg` increased from 4,197 to 17,915 objects (+1,426,672 B) during that interval. The combined link-definition count returned from 55,860 immediately after 2→1 to its before-read count of 41,895 at road +30 s. The extra definition set at the first read was transient. The timed census was 2,715,976 B below 16q’s timed read despite growing from a smaller before-read.
+
+| Raw export in run directory | SHA-256 |
+| --- | --- |
+| gc-day-gc.json | 37456185696fe4da53397716be33c86817dc1a555bd2346245a6acb07bd5c211 |
+| gc-day-frames.json | b46e24e5f9aa9c8ad55709623e740132215d0a15733ef4114f7ea38a04bc705e |
+| gc-day-retime-gc.json | df54cf2a7c508bd9c5426a059177ed56562315a96e0f9252af11ad3da7eddfba |
+| gc-day-retime-frames.json | 9133b55eba189391b5ca6ca8ce060116a03ac11c3343f005f45c84c6b7adc1cd |
+| gc-night-gc.json | 8cba235ce03ad9a118072962232616ac204605f011d7345c310379515d1bf6df |
+| street-frames.json | c0c632fcd2c87969ca4d399b2141b254e2212231f1ae235cb04be89b37f8fb39 |
+| gc-day-retime-f-before.json | 7cdbad0cbe68f02126689b3d703ea5fc65990ab753cbad69a132b98a6d4c563b |
+| gc-day-retime-f-after.json | a95a56280bf6f0576ff81c0f620157c7b0528fdc7b7817f1c107e014baa47021 |
+| gc-day-retime-f-road-plus30.json | 6f3c307c7a3175682ff0e36306676298262aa695f64eac7113c8099abcbe31e5 |
+
+### Exact operation errors and exclusions
+
+No rig command returned an error.
+
+Recovered launch-shell error `zsh:3: read-only variable: status`. It affected status capture after the stage and probe build commands. The receipt, staged SHA-256 and built probe were independently checked before launch.
+
+- **NOT RUN** · GR-5 locked-PC and 60 fps arms. Mac-only run. PC 19c values are historical.
+- **NOT RUN** · #246 check 4, unchanged since 16d. #293 save checks passed in 16h and #313 leaves save files, codec, threading and schema unchanged.
+- **NOT RUN** · #295 checks, completed in 16i / 16k-donor. Inspector timing passed in 16l and remains unchanged.
+- **NOT RUN** · Other out-of-scope checks, including busy shop, separate visual look review, food ring and replay. Camera-pan acceptance was measured in C.
+- **NOT RUN** · New no-mod reference windows. The game version and fixture matched 16q, so those records were reused.
