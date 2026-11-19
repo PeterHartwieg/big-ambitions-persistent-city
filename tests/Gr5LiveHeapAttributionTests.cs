@@ -57,18 +57,28 @@ public sealed class Gr5LiveHeapAttributionTests
     [Fact]
     public void CollectionRowsCarryTheBodyCountsNotedBeforeTheCollectionAndNotingAllocatesNothing()
     {
+        static void Run(GcPauseSampler target, ref int collections)
+        {
+            for (int frame = 1; frame <= 2000; frame++)
+            {
+                target.NoteBodies(frame / 40, frame / 80);
+                if (frame % 500 == 0) collections++;
+                target.Observe(frame * 16.0, collections, 0, 0, 1000 + frame, frame);
+            }
+        }
+        var warm = new GcPauseSampler(4096);
+        warm.Start(1000);
+        warm.Observe(0, 0, 0, 0, 1000, 0);
+        int warmed = 0;
+        Run(warm, ref warmed);
         var sampler = new GcPauseSampler(4096);
         sampler.Start(1000);
         sampler.Observe(0, 0, 0, 0, 1000, 0);
         int gen0 = 0;
         long before = GC.GetAllocatedBytesForCurrentThread();
-        for (int frame = 1; frame <= 2000; frame++)
-        {
-            sampler.NoteBodies(frame / 40, frame / 80);
-            if (frame % 500 == 0) gen0++;
-            sampler.Observe(frame * 16.0, gen0, 0, 0, 1000 + frame, frame);
-        }
-        Assert.Equal(0, GC.GetAllocatedBytesForCurrentThread() - before);
+        Run(sampler, ref gen0);
+        long allocated = GC.GetAllocatedBytesForCurrentThread() - before;
+        Assert.Equal(0, allocated);
         Assert.Equal(4, sampler.CollectionRowCount);
         for (int i = 0; i < 4; i++)
         {
