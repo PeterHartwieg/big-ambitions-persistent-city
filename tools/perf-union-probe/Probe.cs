@@ -160,7 +160,7 @@ namespace PerfUnionProbe
                 if (action == "heap") return Wrap(Status(), Heap());
                 Require(armed, "f4b_not_armed");
                 if (action == "measure-start") { var before = Status(); StartMeasurement(args); return Wrap(before, Status()); }
-                if (action == "measure-stop") { var before = Status(); StopMeasurement("explicit-stop"); return Wrap(before, Status()); }
+                if (action == "measure-stop") { var stop = ReadStop(); var before = Status(); StopMeasurement("explicit-stop", stop); return Wrap(before, Status()); }
                 if (action == "page") return Wrap(Status(), Page(args));
                 if (action == "disarm") { var before = Status(); Disarm(); stopReason = "disarmed"; return Wrap(before, Status()); }
                 return Wrap(Status(), new JObject { ["supported"] = false, ["refusal"] = "f4b_unsupported_action", ["action"] = action });
@@ -573,12 +573,29 @@ namespace PerfUnionProbe
             pendingWindowStart = true; measuring = true;
         }
 
-        private static void StopMeasurement(string reason, bool writeStopFrame = true)
+        private readonly struct StopRead
+        {
+            public StopRead(int collections, int frame, long heap, long used) { Collections = collections; Frame = frame; Heap = heap; Used = used; }
+            public int Collections { get; }
+            public int Frame { get; }
+            public long Heap { get; }
+            public long Used { get; }
+        }
+
+        private static StopRead ReadStop()
+        {
+            int collections = GC.CollectionCount(0);
+            ReadMonoHeap(out long heap, out long used);
+            return new StopRead(collections, Time.frameCount, heap, used);
+        }
+
+        private static void StopMeasurement(string reason, bool writeStopFrame = true) => StopMeasurement(reason, ReadStop(), writeStopFrame);
+
+        private static void StopMeasurement(string reason, StopRead stop, bool writeStopFrame = true)
         {
             if (!measuring) return;
-            int stopCollections = GC.CollectionCount(0);
-            ReadMonoHeap(out monoHeapStop, out monoUsedStop);
-            collectionSeries.Note(stopCollections, monoUsedStop, Time.frameCount);
+            monoHeapStop = stop.Heap; monoUsedStop = stop.Used;
+            collectionSeries.Note(stop.Collections, stop.Used, stop.Frame);
             if (reason == "explicit-stop") Rescan(true);
             long now = Stopwatch.GetTimestamp();
             if (writeStopFrame && currentFrame > firstMeasureFrame) { frameDiagnostic = true; WriteFrame(currentFrame + 1, now, true); }
