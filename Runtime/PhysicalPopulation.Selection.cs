@@ -41,6 +41,7 @@ namespace PersistentCity.Runtime
         }
         public void RestoreInterior() { if (bindings.Count != 0) SuspendBeforeNativeFastForward(); }
         public bool HasBodies => bindings.Count != 0;
+        public int BoundBodies => bindings.Count;
         public int Followers
         {
             get { int count = 0; foreach (var binding in bindings.Values) if (binding.Person != null && binding.Journey != null) count++; return count; }

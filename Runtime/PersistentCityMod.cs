@@ -304,7 +304,9 @@ namespace PersistentCity.Runtime
                 RefreshBusinessTypes(simulation.State.Places, target, "hour");
                 ModFrames.Charge(GcAllocationSegment.ModFood);
                 simulation.RefreshOptionalStops();
+                ModFrames.Detail(GcAllocationSegment.ModOptionalStopsRefresh);
                 RunPhysical(physicalBeforeAdvance ??= () => physical?.BeforeAdvance());
+                ModFrames.Detail(GcAllocationSegment.ModOptionalStopsPhysical);
                 ModFrames.Charge(GcAllocationSegment.ModOptionalStops);
                 double clockRate = NativeTravelPace.ClockRate;
                 long retimeStarted = Stopwatch.GetTimestamp();

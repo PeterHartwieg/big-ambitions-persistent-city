@@ -672,4 +672,38 @@ public sealed class Gr5AllocationMeasure
             });
         }
     }
+
+    [Fact]
+    public void MeasureRigScaleDayRetainedGrowth()
+    {
+        if (PerfGate.Variable("PC_GR5_DAY_RETAINED") == null) return;
+        var state = RigCity();
+        var grid = new RoadGrid(state.Places);
+        var simulator = new CitySimulator(state, grid);
+        simulator.AttachFoodMarket(new VisitorRoutineTests.Market { Shops = F5gPopulationFillTests.Shops(state) });
+        simulator.AttachOptionalStops(new StopSpots(), OptionalStopPolicy.ApprovedChoicePercentage);
+        double day = Math.Floor(state.Minute / 1440) * 1440 + 1440;
+        string? startText = PerfGate.Variable("PC_GR5_DAY_RETAINED_START");
+        double start = day + (startText == null ? 15.5 * 60 : double.Parse(startText) * 60);
+        simulator.AdvanceTo(start, int.MaxValue);
+        Dictionary<string, (long, long)> Take(string title)
+        {
+            var heap = new RetainedHeap();
+            heap.Add("simulator", simulator);
+            var map = heap.Types.ToDictionary(r => r.Name, r => (r.Objects, r.Bytes));
+            Console.WriteLine(title + " objects " + heap.Objects + " bytes " + heap.Bytes);
+            foreach (var row in heap.Roots) Console.WriteLine("  root " + row.Name + " " + row.Bytes);
+            return map;
+        }
+        var before = Take("start");
+        double minute = start;
+        foreach (double minutes in new[] { 60.0, 120, 174, 260 })
+        {
+            for (; minute < start + minutes; minute += 1.0 / 30) Frame(simulator, minute);
+            var after = Take("+" + minutes);
+            foreach (var row in after.Select(p => (p.Key, p.Value.Item1 - (before.TryGetValue(p.Key, out var b) ? b.Item1 : 0), p.Value.Item2 - (before.TryGetValue(p.Key, out var c) ? c.Item2 : 0)))
+                .Where(r => Math.Abs(r.Item3) > 20000).OrderByDescending(r => Math.Abs(r.Item3)).Take(25))
+                Console.WriteLine("   " + row.Key + " objects " + row.Item2 + " bytes " + row.Item3);
+        }
+    }
 }

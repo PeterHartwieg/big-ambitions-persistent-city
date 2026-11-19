@@ -357,4 +357,53 @@ public sealed class Gr5NetworkFootprintTests
         }
         Assert.True(growth < allowance, "retained growth " + growth);
     }
+
+    [Theory]
+    [InlineData(0.05)]
+    [InlineData(0.25)]
+    public void ARetimedCityRetainsNoMoreThanAnUnretimedCityAtTheSameGameMinute(double playMinutes)
+    {
+        const long allowance = 1_000_000;
+        const string native = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+        (CityState State, CitySimulator City, TrafficNetwork One, TrafficRateCache Cache, double Start) Build()
+        {
+            var one = new TrafficNetwork(native, SignalledRoad(1), 1);
+            var city = Gr5NetworkRequeueTests.RoadCity(750, 2250, new Gr5NetworkRequeueTests.SwappablePlanner { TrafficNetwork = one });
+            city.RefreshTrafficClosures();
+            city.AdvanceTo(city.State.Minute + 2, int.MaxValue);
+            var cache = new TrafficRateCache();
+            cache.Remember(1, one);
+            return (city.State, city, one, cache, city.State.Minute);
+        }
+        var retimed = Build();
+        var control = Build();
+        Assert.Equal(retimed.Start, control.Start);
+        var before = Census(retimed.City, retimed.Cache);
+        var controlBefore = Census(control.City, control.Cache);
+        Assert.Equal(controlBefore.Bytes, before.Bytes);
+        var driver = new ClockRetimeDriver();
+        var doubled = SignalledRoad(2).ToDictionary(n => n.Id, n => n.Signal);
+        var two = retimed.One.Rerated(2, id => doubled[id]);
+        var city = FullRetime(retimed.State, retimed.City, driver, 2, two);
+        city.AdvanceTo(retimed.Start + playMinutes, int.MaxValue);
+        Assert.True(retimed.Cache.TryGet(1, out var back));
+        city = FullRetime(retimed.State, city, driver, 1, back);
+        double end = retimed.State.Minute + 0.01;
+        city.AdvanceTo(end, int.MaxValue);
+        control.City.AdvanceTo(end, int.MaxValue);
+        Assert.Equal(end, control.State.Minute);
+        var after = Census(city, retimed.Cache);
+        var controlAfter = Census(control.City, control.Cache);
+        long excess = after.Bytes - controlAfter.Bytes;
+        output.WriteLine("750 drivers, " + retimed.One.Links.Count + " links; retime 1->2, " + playMinutes.ToString("R") + " game minutes at 2x, retime 2->1, 0.01 minutes; control plays the same minutes at 1x. Retimed growth "
+            + (after.Bytes - before.Bytes) + " B, control growth " + (controlAfter.Bytes - controlBefore.Bytes) + " B, retimed minus control " + excess + " B (Mono 64-bit layout model)");
+        foreach (var row in after.Types.Take(12))
+        {
+            var other = controlAfter.Types.FirstOrDefault(r => r.Name == row.Name);
+            output.WriteLine("  " + row.Name + ": control " + (other?.Objects ?? 0) + " / retimed " + row.Objects + " objects, " + ((row.Bytes - (other?.Bytes ?? 0)) / 1e6).ToString("+0.000;-0.000") + " MB");
+        }
+        Assert.Equal(1, after.Types.First(r => r.Name == "CitySimulator").Objects);
+        Assert.All(city.State.Citizens.Where(c => c.Phase == CitizenPhase.Travelling), c => Assert.Null(c.Journey!.PresentationCells));
+        Assert.True(excess < allowance, "retimed minus control " + excess);
+    }
 }

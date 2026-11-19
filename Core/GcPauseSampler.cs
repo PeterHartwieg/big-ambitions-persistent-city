@@ -41,6 +41,8 @@ namespace PersistentCity.Core
         public long HeapAfter;
         public double PreviousFrameMs;
         public double NextFrameMs;
+        public int OwnedBodies;
+        public int BoundBodies;
     }
 
     public enum GcAllocationSegment
@@ -57,12 +59,12 @@ namespace PersistentCity.Core
         AdvancePlanningSlice, AdvancePlanningFinish,
         PhysicalSetupPlaces, PhysicalSetupBodies, PhysicalSetupVehicles, PhysicalSetupAmbient, PhysicalSetupPreflight,
         PhysicalUnattributedSetup, PhysicalUnattributedUpdate, PhysicalUnattributedWaiting, PhysicalUnattributedEntry,
-        ModRoutesRetime,
+        ModRoutesRetime, ModOptionalStopsRefresh, ModOptionalStopsPhysical,
     }
 
     public sealed class GcPauseSampler
     {
-        public const int Segments = 62;
+        public const int Segments = 64;
         private static readonly string[] SegmentNames =
         {
             "mod", "advance", "physical", "physical_ambient", "physical_vehicles", "physical_bindings",
@@ -77,14 +79,14 @@ namespace PersistentCity.Core
             "advance_planning_slice", "advance_planning_finish",
             "physical_setup_places", "physical_setup_bodies", "physical_setup_vehicles", "physical_setup_ambient", "physical_setup_preflight",
             "physical_unattributed_setup", "physical_unattributed_update", "physical_unattributed_waiting", "physical_unattributed_entry",
-            "mod_routes_retime",
+            "mod_routes_retime", "mod_optional_stops_refresh", "mod_optional_stops_physical",
         };
 
         public static string SegmentName(GcAllocationSegment segment) => SegmentNames[(int)segment];
 
         public static bool IsOuter(GcAllocationSegment segment) => segment >= GcAllocationSegment.ModPrelude && segment <= GcAllocationSegment.ModOther
             || segment >= GcAllocationSegment.ModRoutesSpeeds && segment <= GcAllocationSegment.ModClosuresLinks
-            || segment == GcAllocationSegment.ModRoutesRetime;
+            || segment >= GcAllocationSegment.ModRoutesRetime;
 
         public static bool IsSub(GcAllocationSegment segment) => segment >= GcAllocationSegment.ModRoutesSpeeds;
 
@@ -101,6 +103,7 @@ namespace PersistentCity.Core
             >= GcAllocationSegment.ModClosuresNetwork and <= GcAllocationSegment.ModClosuresLinks => GcAllocationSegment.ModClosures,
             >= GcAllocationSegment.AdvanceEventsTraffic and <= GcAllocationSegment.AdvanceEventsOther => GcAllocationSegment.AdvanceEvents,
             >= GcAllocationSegment.AdvancePlanningSlice and <= GcAllocationSegment.AdvancePlanningFinish => GcAllocationSegment.AdvancePlanning,
+            >= GcAllocationSegment.ModOptionalStopsRefresh => GcAllocationSegment.ModOptionalStops,
             >= GcAllocationSegment.PhysicalSetupPlaces => GcAllocationSegment.PhysicalUnattributed,
             _ => segment,
         };
@@ -175,7 +178,7 @@ namespace PersistentCity.Core
             FrameRecorder.Reset();
             Array.Clear(segmentBytes, 0, Segments); Array.Clear(segmentSamples, 0, Segments); Array.Clear(segmentSkipped, 0, Segments);
             HeapStart = HeapEnd = HeapPeak = lastHeap = heapBytes;
-            baselined = false; pendingModMs = 0;
+            baselined = false; pendingModMs = 0; ownedBodies = boundBodies = -1;
             Running = true;
         }
 
@@ -204,6 +207,10 @@ namespace PersistentCity.Core
         }
 
         public void ModWork(double milliseconds) { if (Running && baselined) pendingModMs = milliseconds; }
+
+        private int ownedBodies = -1, boundBodies = -1;
+
+        public void NoteBodies(int owned, int bound) { ownedBodies = owned; boundBodies = bound; }
 
         public void Allocated(GcAllocationSegment segment, long heapBefore, long heapAfter, bool collected)
         {
@@ -345,7 +352,8 @@ namespace PersistentCity.Core
                 if (collectionRowCount < CollectionRowCapacity)
                 {
                     collectionRows[collectionRowCount++] = new GcCollectionRow { Frame = frameNumber, FrameMs = frameMilliseconds, ModMs = modMilliseconds,
-                        Gen0 = gen0, Gen1 = gen1, Gen2 = gen2, HeapBefore = lastHeap, HeapAfter = heapBytes, PreviousFrameMs = previousCollected ? -1 : previousFrameMs, NextFrameMs = -1 };
+                        Gen0 = gen0, Gen1 = gen1, Gen2 = gen2, HeapBefore = lastHeap, HeapAfter = heapBytes, PreviousFrameMs = previousCollected ? -1 : previousFrameMs, NextFrameMs = -1,
+                        OwnedBodies = ownedBodies, BoundBodies = boundBodies };
                     rowAwaitsNext = true;
                 }
             }
@@ -457,7 +465,8 @@ namespace PersistentCity.Core
                 text.Append("{\"frame\":").Append(N(r.Frame)).Append(",\"frame_ms\":").Append(D(r.FrameMs)).Append(",\"mod_ms\":").Append(D(r.ModMs))
                     .Append(",\"gen0\":").Append(N(r.Gen0)).Append(",\"gen1\":").Append(N(r.Gen1)).Append(",\"gen2\":").Append(N(r.Gen2))
                     .Append(",\"heap_before_bytes\":").Append(N(r.HeapBefore)).Append(",\"heap_after_bytes\":").Append(N(r.HeapAfter))
-                    .Append(",\"previous_frame_ms\":").Append(D(r.PreviousFrameMs)).Append(",\"next_frame_ms\":").Append(D(r.NextFrameMs)).Append('}');
+                    .Append(",\"previous_frame_ms\":").Append(D(r.PreviousFrameMs)).Append(",\"next_frame_ms\":").Append(D(r.NextFrameMs))
+                    .Append(",\"owned_bodies\":").Append(N(r.OwnedBodies)).Append(",\"bound_bodies\":").Append(N(r.BoundBodies)).Append('}');
             }
             text.Append(']');
             S(text, "pause_ms_over_neighbours", PauseOverNeighboursSpread());
