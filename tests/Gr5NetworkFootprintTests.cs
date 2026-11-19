@@ -357,4 +357,66 @@ public sealed class Gr5NetworkFootprintTests
         }
         Assert.True(growth < allowance, "retained growth " + growth);
     }
+
+    [Theory]
+    [InlineData(0.05, true)]
+    [InlineData(0.25, true)]
+    [InlineData(2.0, false)]
+    public void ARetimedCityRetainsNoMoreThanAnUnretimedCityAtTheSameGameMinute(double playMinutes, bool sameState)
+    {
+        const long allowance = 1_000_000;
+        const string native = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+        (CityState State, CitySimulator City, TrafficNetwork One, TrafficRateCache Cache, double Start) Build()
+        {
+            var one = new TrafficNetwork(native, SignalledRoad(1), 1);
+            var city = Gr5NetworkRequeueTests.RoadCity(750, 2250, new Gr5NetworkRequeueTests.SwappablePlanner { TrafficNetwork = one });
+            city.RefreshTrafficClosures();
+            city.AdvanceTo(city.State.Minute + 2, int.MaxValue);
+            var cache = new TrafficRateCache();
+            cache.Remember(1, one);
+            return (city.State, city, one, cache, city.State.Minute);
+        }
+        var retimed = Build();
+        var control = Build();
+        Assert.Equal(retimed.Start, control.Start);
+        var before = Census(retimed.City, retimed.Cache);
+        var controlBefore = Census(control.City, control.Cache);
+        Assert.Equal(controlBefore.Bytes, before.Bytes);
+        var driver = new ClockRetimeDriver();
+        var doubled = SignalledRoad(2).ToDictionary(n => n.Id, n => n.Signal);
+        var two = retimed.One.Rerated(2, id => doubled[id]);
+        var city = FullRetime(retimed.State, retimed.City, driver, 2, two);
+        city.AdvanceTo(retimed.Start + playMinutes, int.MaxValue);
+        Assert.True(retimed.Cache.TryGet(1, out var back));
+        city = FullRetime(retimed.State, city, driver, 1, back);
+        double end = retimed.State.Minute + 0.01;
+        city.AdvanceTo(end, int.MaxValue);
+        control.City.AdvanceTo(end, int.MaxValue);
+        Assert.Equal(end, control.State.Minute);
+        var after = Census(city, retimed.Cache);
+        var controlAfter = Census(control.City, control.Cache);
+        long excess = after.Bytes - controlAfter.Bytes;
+        output.WriteLine("750 drivers, " + retimed.One.Links.Count + " links; retime 1->2, " + playMinutes.ToString("R") + " game minutes at 2x, retime 2->1, 0.01 minutes; control plays the same minutes at 1x. Retimed growth "
+            + (after.Bytes - before.Bytes) + " B, control growth " + (controlAfter.Bytes - controlBefore.Bytes) + " B, retimed minus control " + excess + " B (Mono 64-bit layout model)");
+        foreach (var row in after.Types.Take(12))
+        {
+            var other = controlAfter.Types.FirstOrDefault(r => r.Name == row.Name);
+            output.WriteLine("  " + row.Name + ": control " + (other?.Objects ?? 0) + " / retimed " + row.Objects + " objects, " + ((row.Bytes - (other?.Bytes ?? 0)) / 1e6).ToString("+0.000;-0.000") + " MB");
+        }
+        Assert.Equal(1, after.Types.First(r => r.Name == "CitySimulator").Objects);
+        Assert.All(city.State.Citizens.Where(c => c.Phase == CitizenPhase.Travelling), c => Assert.Null(c.Journey!.PresentationCells));
+        foreach (string name in new[] { "RouteLeg", "RouteLeg[]", "Position[]", "Double[]", "Int64[]", "TrafficLinkDefinition", "FrozenLink" })
+        {
+            var start = before.Types.FirstOrDefault(r => r.Name == name);
+            var last = after.Types.FirstOrDefault(r => r.Name == name);
+            output.WriteLine("  final read " + name + ": " + (start?.Objects ?? 0) + " -> " + (last?.Objects ?? 0) + " objects, " + (((last?.Bytes ?? 0) - (start?.Bytes ?? 0)) / 1e6).ToString("+0.000;-0.000") + " MB since the before read");
+        }
+        long Growth(string name) => (after.Types.FirstOrDefault(r => r.Name == name)?.Bytes ?? 0) - (before.Types.FirstOrDefault(r => r.Name == name)?.Bytes ?? 0);
+        long routeAndGeometry = Growth("RouteLeg") + Growth("RouteLeg[]") + Growth("Route") + Growth("Position[]") + Growth("Double[]") + Growth("FrozenLink") + Growth("FrozenSignal")
+            + Growth("TrafficLinkDefinition") + Growth("TrafficSignalSchedule");
+        output.WriteLine("  route, geometry and traffic-definition growth " + routeAndGeometry + " B; raw growth without the released Int64[] cell arrays " + (after.Bytes - before.Bytes - Growth("Int64[]")) + " B");
+        Assert.True(routeAndGeometry < allowance, "route, geometry and traffic-definition growth " + routeAndGeometry);
+        if (sameState) Assert.True(excess < allowance, "retimed minus control " + excess);
+        Assert.True(after.Bytes - before.Bytes < allowance, "raw retained growth " + (after.Bytes - before.Bytes));
+    }
 }

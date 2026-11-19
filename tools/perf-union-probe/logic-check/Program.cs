@@ -306,6 +306,22 @@ internal static class Program
         Check(r.Page(0, 2, out int a) && a == 2 && r.Page(0, 2, out _) && r.Page(2, 2, out _) && r.Drained == 2, "paging acknowledges earlier rows; the same page may be read again");
         Check(!r.Page(1, 2, out _) && !r.Page(5, 2, out _), "a drained or future offset is refused");
         Check(r.TryWrite(out int slot) && slot == 0 && r.Written == 5, "drained slots are reused");
+        var series = new CollectionSeries();
+        series.Note(5, 900, 1);
+        Check(series.Retained == 0 && !series.Due(5), "a collection series records nothing before the window begins");
+        series.Begin(3);
+        series.Note(3, 1000, 10);
+        Check(series.Retained == 0 && series.Collections == 0, "a frame without a new collection adds no row");
+        series.Note(4, 1100, 11); series.Note(4, 1150, 12);
+        series.Note(4, 1180, 12);
+        Check(series.Retained == 1 && series.Last == 1100, "a stop read in the same frame without a new collection keeps the last boundary sample");
+        series.Note(6, 1300, 12);
+        Check(series.Retained == 2 && series.Collections == 3 && series.FrameAt(1) == 12 && series.Last == 1300 && series.Growth == 200,
+            "a collection followed by stop in the same frame is recorded at the stop read and counts every collection");
+        for (int i = 0; i < CollectionSeries.Limit + 2; i++) series.Note(7 + i, 2000 + i, 20 + i);
+        Check(series.Retained == CollectionSeries.Limit && series.Truncated && series.Collections == CollectionSeries.Limit + 5, "a full series counts further collections and reports truncation");
+        series.Begin(100);
+        Check(series.Retained == 0 && series.Collections == 0 && series.First == -1 && series.Growth == 0, "a new window starts an empty series");
     }
 
     private const string PinnedHarmonySha256 = "7b9e756306fa3d7620e02a857c8927a6ab04973f9bd8a77d3866700a6deac55c";

@@ -160,7 +160,7 @@ namespace PerfUnionProbe
                 if (action == "heap") return Wrap(Status(), Heap());
                 Require(armed, "f4b_not_armed");
                 if (action == "measure-start") { var before = Status(); StartMeasurement(args); return Wrap(before, Status()); }
-                if (action == "measure-stop") { var before = Status(); StopMeasurement("explicit-stop"); return Wrap(before, Status()); }
+                if (action == "measure-stop") { var stop = ReadStop(); var before = Status(); StopMeasurement("explicit-stop", stop); return Wrap(before, Status()); }
                 if (action == "page") return Wrap(Status(), Page(args));
                 if (action == "disarm") { var before = Status(); Disarm(); stopReason = "disarmed"; return Wrap(before, Status()); }
                 return Wrap(Status(), new JObject { ["supported"] = false, ["refusal"] = "f4b_unsupported_action", ["action"] = action });
@@ -469,6 +469,7 @@ namespace PerfUnionProbe
         {
             if (nowFrame == currentFrame) return;
             if (measuring && currentFrame >= 0 && currentFrame > firstMeasureFrame) WriteFrame(nowFrame, now, false);
+            if (measuring) NoteCollections();
             if (union.Depth != 0)
             {
                 crossFrame++; union.Abandon();
@@ -526,6 +527,24 @@ namespace PerfUnionProbe
         }
 
         private static long monoHeapStart = -1, monoUsedStart = -1, monoHeapStop = -1, monoUsedStop = -1;
+        private static readonly CollectionSeries collectionSeries = new CollectionSeries();
+
+        private static void NoteCollections()
+        {
+            int count = GC.CollectionCount(0);
+            if (!collectionSeries.Due(count)) return;
+            ReadMonoHeap(out _, out long used);
+            collectionSeries.Note(count, used, Time.frameCount);
+        }
+
+        private static JObject CollectionUsed()
+        {
+            var rows = new JArray();
+            for (int i = 0; i < collectionSeries.Retained; i++) rows.Add(new JObject { ["frame"] = collectionSeries.FrameAt(i), ["used_bytes"] = collectionSeries.UsedAt(i) });
+            return new JObject { ["collections"] = collectionSeries.Collections, ["retained"] = collectionSeries.Retained, ["truncated"] = collectionSeries.Truncated,
+                ["first_used_bytes"] = collectionSeries.First, ["last_used_bytes"] = collectionSeries.Last, ["growth_bytes"] = collectionSeries.Growth, ["rows"] = rows,
+                ["qualification"] = "Profiler Mono used size at the first frame boundary after each gen0 collection in the window, or at measure-stop for a collection in the final partial frame; it includes what was allocated between the collection and that read. growth_bytes is last minus first, the window's live-heap growth without a forced collection." };
+        }
         private static long armHeapBefore = -1, armUsedBefore = -1, armHeapAfter = -1, armUsedAfter = -1, startScanHeap = -1, startScanUsed = -1;
 
         private static void ReadMonoHeap(out long heap, out long used)
@@ -545,6 +564,7 @@ namespace PerfUnionProbe
             ReadMonoHeap(out startScanHeap, out startScanUsed); monoHeapStop = monoUsedStop = -1;
             Rescan(true); unexpectedAtWindowStart = coverage?.Unexpected.Count ?? 0; patchSetChanged = false;
             ReadMonoHeap(out monoHeapStart, out monoUsedStart);
+            collectionSeries.Begin(GC.CollectionCount(0));
             crossFrame = timedExceptions = 0; unknownScopeCalls = 0; totalSaves = totalSceneEvents = 0;
             union.ResetAll();
             long now = Stopwatch.GetTimestamp();
@@ -553,10 +573,29 @@ namespace PerfUnionProbe
             pendingWindowStart = true; measuring = true;
         }
 
-        private static void StopMeasurement(string reason, bool writeStopFrame = true)
+        private readonly struct StopRead
+        {
+            public StopRead(int collections, int frame, long heap, long used) { Collections = collections; Frame = frame; Heap = heap; Used = used; }
+            public int Collections { get; }
+            public int Frame { get; }
+            public long Heap { get; }
+            public long Used { get; }
+        }
+
+        private static StopRead ReadStop()
+        {
+            int collections = GC.CollectionCount(0);
+            ReadMonoHeap(out long heap, out long used);
+            return new StopRead(collections, Time.frameCount, heap, used);
+        }
+
+        private static void StopMeasurement(string reason, bool writeStopFrame = true) => StopMeasurement(reason, ReadStop(), writeStopFrame);
+
+        private static void StopMeasurement(string reason, StopRead stop, bool writeStopFrame = true)
         {
             if (!measuring) return;
-            ReadMonoHeap(out monoHeapStop, out monoUsedStop);
+            monoHeapStop = stop.Heap; monoUsedStop = stop.Used;
+            collectionSeries.Note(stop.Collections, stop.Used, stop.Frame);
             if (reason == "explicit-stop") Rescan(true);
             long now = Stopwatch.GetTimestamp();
             if (writeStopFrame && currentFrame > firstMeasureFrame) { frameDiagnostic = true; WriteFrame(currentFrame + 1, now, true); }
@@ -632,6 +671,7 @@ namespace PerfUnionProbe
                 ["mono_heap"] = new JObject { ["start_bytes"] = monoHeapStart, ["start_used_bytes"] = monoUsedStart, ["stop_bytes"] = monoHeapStop, ["stop_used_bytes"] = monoUsedStop,
                     ["now_bytes"] = MonoHeapNow(true), ["now_used_bytes"] = MonoHeapNow(false), ["arm_before_bytes"] = armHeapBefore, ["arm_before_used_bytes"] = armUsedBefore,
                     ["arm_after_bytes"] = armHeapAfter, ["arm_after_used_bytes"] = armUsedAfter, ["start_scan_before_bytes"] = startScanHeap, ["start_scan_before_used_bytes"] = startScanUsed, ["frame_components_bytes"] = (long)frameComponents.Length * sizeof(float),
+                    ["after_collection_used"] = CollectionUsed(),
                     ["qualification"] = "Profiler Mono heap size and used size before and after arm, before and after the forced patch scan at window start (start is after it), at stop before the forced patch scan, and at read time; no forced collection." },
                 ["boundary_source"] = boundarySource, ["probe_patches_installed"] = Harmony.HasAnyPatches(PatchId), ["player_loop_entry"] = LoopEntryPresent(), ["stopwatch_frequency"] = Stopwatch.Frequency, ["stopwatch_high_resolution"] = Stopwatch.IsHighResolution,
                 ["harmony_version"] = typeof(Harmony).Assembly.GetName().Version?.ToString(),

@@ -24,6 +24,7 @@ namespace PersistentCity.Runtime
             if (sampler == null || !sampler.Running) return 0;
             long now = System.Diagnostics.Stopwatch.GetTimestamp();
             sampler.CounterFrame(GcAllocationCounter.Read(), GcAllocationCounter.Collections);
+            sampler.NoteBodies(BodyMerge.Owned, physical?.BoundBodies ?? 0);
             sampler.Observe(now * GcMillisecondsPerTimestamp, GcCount(0), GcCount(1), GcCount(2), GC.GetTotalMemory(false), Time.frameCount);
             return now;
         }
@@ -141,7 +142,7 @@ namespace PersistentCity.Runtime
             long started = System.Diagnostics.Stopwatch.GetTimestamp();
             var census = RetainedCensusOf(this, save!.modData);
             double elapsed = (System.Diagnostics.Stopwatch.GetTimestamp() - started) * GcMillisecondsPerTimestamp;
-            Debug.Log(RetainedPrefix + census.ReportJson(48, elapsed, RetainedCountedTypes));
+            Debug.Log(RetainedPrefix + census.ReportJson(48, elapsed, RetainedCountedTypes, RetainedCensus.InstrumentRoot));
         }
 
         internal static readonly Type[] RetainedCountedTypes = { typeof(CitySimulator), typeof(MultimodalRoutes), typeof(RoadRoutes), typeof(WalkingRoutes), typeof(TrafficRoadNetwork), typeof(TrafficKernel) };

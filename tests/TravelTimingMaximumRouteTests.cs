@@ -346,7 +346,7 @@ public sealed class TravelTimingMaximumRouteTests
             bytes += GC.GetAllocatedBytesForCurrentThread() - allocated;
             Assert.Equal(SaveCodec.Write(whole), SaveCodec.Write(sliced));
         }
-        Assert.All(sliced.Citizens, c => Assert.NotNull(c.Journey!.PresentationCells));
+        Assert.All(sliced.Citizens.Where(c => c.Phase == CitizenPhase.Travelling), c => Assert.Null(c.Journey!.PresentationCells));
         Assert.True(simulator.ActiveJourneys.Grid.Matches(simulator.ActiveJourneys.BodyCandidates, true));
         Assert.True(simulator.ActiveJourneyIndexMatchesState());
         double later = sliced.Minute + 0.5;

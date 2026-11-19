@@ -256,7 +256,21 @@ namespace PersistentCity.Core
 
         public long ObjectsOf(Type type) => byType.TryGetValue(type, out var row) ? row.Objects : foreign.TryGetValue(type, out var outside) ? outside.Objects : 0;
 
-        public string ReportJson(int top, double elapsedMilliseconds, IEnumerable<Type>? counted = null)
+        public string ReportJson(int top, double elapsedMilliseconds, IEnumerable<Type>? counted = null) => ReportJson(top, elapsedMilliseconds, counted, null);
+
+        public static bool InstrumentRoot(string root) => root == "runtime.gcSampler" || root == "static.PhysicalPedestrians.growLog"
+            || root.StartsWith("static.RetainedCensus.", StringComparison.Ordinal) || root.StartsWith("static.ModFrames.", StringComparison.Ordinal)
+            || root.StartsWith("static.PhysicalAllocation.", StringComparison.Ordinal) || root.StartsWith("static.AdvanceAllocation.", StringComparison.Ordinal);
+
+        public Row Diagnostics(Func<string, bool> diagnostic)
+        {
+            var total = new Row("diagnostics");
+            foreach (var root in byRoot)
+                if (diagnostic(root.Name)) { total.Objects += root.Objects; total.Bytes += root.Bytes; total.ScannedBytes += root.ScannedBytes; }
+            return total;
+        }
+
+        public string ReportJson(int top, double elapsedMilliseconds, IEnumerable<Type>? counted, Func<string, bool>? diagnostic)
         {
             string N(long value) => value.ToString(CultureInfo.InvariantCulture);
             string S(string value) => "\"" + value.Replace("\\", "\\\\").Replace("\"", "\\\"") + "\"";
@@ -280,6 +294,22 @@ namespace PersistentCity.Core
                 .Append(",\"roots\":").Append(N(byRoot.Count)).Append(",\"foreign_objects\":").Append(N(ForeignObjects))
                 .Append(",\"failures\":").Append(N(Failures))
                 .Append(",\"elapsed_ms\":").Append(Math.Round(elapsedMilliseconds, 1).ToString("0.#", CultureInfo.InvariantCulture));
+            if (diagnostic != null)
+            {
+                var instruments = Diagnostics(diagnostic);
+                report.Append(",\"diagnostic_objects\":").Append(N(instruments.Objects)).Append(",\"diagnostic_bytes\":").Append(N(instruments.Bytes))
+                    .Append(",\"city_objects\":").Append(N(Objects - instruments.Objects)).Append(",\"city_bytes\":").Append(N(Bytes - instruments.Bytes))
+                    .Append(",\"diagnostic_roots\":[");
+                bool firstRoot = true;
+                foreach (var root in byRoot)
+                {
+                    if (root.Objects == 0 || !diagnostic(root.Name)) continue;
+                    if (!firstRoot) report.Append(',');
+                    firstRoot = false;
+                    report.Append(S(root.Name));
+                }
+                report.Append(']');
+            }
             Rows(report, "top_roots", byRoot.Where(r => r.Objects > 0).OrderByDescending(r => r.Bytes).ThenBy(r => r.Name, StringComparer.Ordinal), true);
             Rows(report, "top_types", Types, true);
             Rows(report, "foreign_types", Foreign, false);

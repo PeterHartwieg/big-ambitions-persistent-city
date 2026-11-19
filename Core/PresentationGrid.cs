@@ -272,6 +272,7 @@ namespace PersistentCity.Core
             var cached = journey!.IsCommitted ? journey.PresentationCells : null;
             if (cached != null)
             {
+                journey.PresentationCells = null;
                 if (ReferenceEquals(cached, Unplaceable)) return false;
                 output.AddRange(cached);
                 return true;
