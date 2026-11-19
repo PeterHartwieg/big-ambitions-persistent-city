@@ -17,7 +17,7 @@ Every GR-5 rig run from now on must:
 
 ## Latest evidence
 
-- **19 November e, Mac (rig 16s), build `424071e3`**. 0 pass / 0 partial / 3 fail / 1 NOT RUN / 3 REPORTED. Street union p95 5.4978 ms. **PROVISIONAL (shared Mac / Mono)**. [19e results](#rig-results--18-november-2026-e-mac-rig-16s-gr-5-317-twenty-second-fix-at-424071e3).
+- **19 November e, Mac (rig 16s), build `424071e3`**. 0 pass / 0 partial / 3 fail / 1 NOT RUN / 3 REPORTED. Street union p95 5.4978 ms. **PROVISIONAL (shared Mac / Mono)**. [19e results](#rig-results--19-november-2026-e-mac-rig-16s-gr-5-317-twenty-sixth-fix-at-424071e3).
 
 - **19 November d, Mac (rig 16r), build `d0066bbe`**. 3 pass / 0 partial / 3 fail / 0 NOT RUN. Street union p95 4.1554 ms. **PROVISIONAL (shared Mac / Mono)**. [19d results](#rig-results--19-november-2026-d-mac-rig-16r-gr-5-313-twenty-fifth-fix-at-d0066bbe).
 
@@ -15910,7 +15910,7 @@ Recovered launch-shell error `zsh:3: read-only variable: status`. It affected st
 - **NOT RUN** · Other out-of-scope checks, including busy shop, separate visual look review, food ring and replay. Camera-pan acceptance was measured in C.
 - **NOT RUN** · New no-mod reference windows. The game version and fixture matched 16q, so those records were reused.
 
-## Rig results — 18 November 2026 e, Mac (rig 16s; GR-5 #317 twenty-second fix at 424071e3)
+## Rig results — 19 November 2026 e, Mac (rig 16s; GR-5 #317 twenty-sixth fix at 424071e3)
 
 Run `persistent-city-rig-2026-11-19e-mac`, role `rig_test` on agentmac, 19 November Europe/Berlin. #317 is the twenty-sixth fix at `424071e3`. All Mac timings are **PROVISIONAL** (shared Mac / Mono). The historical comparison is Mac 16r at `d0066bbe` and, where comparable, non-provisional PC 19c at `f9b9dfd8`. PC uses a different host and stack with a 957-resident / 1,914-visitor fixture and a configured 60 fps target.
 
@@ -16289,7 +16289,7 @@ The cached 16q night export predates `after_collection_used`. Its forced-GC live
 
 B natural-collection live growth was +18,509,824 B. The 16q no-mod forced-GC brackets grew 10,092,544 B. These values use distinct sampling methods and neither supplies the missing candidate D bracket.
 
-The sampler’s end-of-collection-frame body counts and heap are contemporaneous. Both can move over the course of play. The no-mod day series supplies the same-time comparison without Persistent City.
+The sampler’s end-of-collection-frame body counts and heap are contemporaneous. Both can move over the course of play. The same-time day footprint comparison is unavailable: the Mac launcher disk guard (12 GiB free floor) blocked the fresh day no-mod arm.
 
 ### E. RSS and owned memory
 
@@ -16357,7 +16357,7 @@ Input-only growth — B total and — B city. The 16r-protocol growth was +8,265
 
 ### L. Repeated retime leak rule
 
-The repeated-retime process produced no read sets. See the exact errors and resource readbacks below.
+The repeated-retime process produced no read sets because the Mac launcher disk guard (12 GiB free floor) blocked the fresh start. Every reading is NOT RUN. See the exact errors and resource readbacks below.
 
 | Read | PID | Native day / hour / minute | s from road | Read-set wall s | Full precision travelClockRate | Footprint | Owned = live + unmerged |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -16367,28 +16367,28 @@ The repeated-retime process produced no read sets. See the exact errors and reso
 
 | Reading | Cycle deltas | Final minus R0 | Post-R0 range relative to R0 | Verdict |
 | --- | --- | --- | --- | --- |
-| Retained bytes |  | — | — | NOT ESTABLISHED |
-| Retained objects |  | — | — | NOT ESTABLISHED |
-| City bytes |  | — | — | NOT ESTABLISHED |
-| City objects |  | — | — | NOT ESTABLISHED |
-| Diagnostic bytes |  | — | — | NOT ESTABLISHED |
-| Diagnostic objects |  | — | — | NOT ESTABLISHED |
-| CitySimulator |  | — | — | NOT ESTABLISHED |
-| RouteLeg |  | — | — | NOT ESTABLISHED |
-| Int64[] |  | — | — | NOT ESTABLISHED |
-| Position[] |  | — | — | NOT ESTABLISHED |
-| Double[] |  | — | — | NOT ESTABLISHED |
-| RoadRoutes |  | — | — | NOT ESTABLISHED |
-| Forced GC live B |  | — | — | NOT ESTABLISHED |
-| Mono size B |  | — | — | NOT ESTABLISHED |
-| Mono used B |  | — | — | NOT ESTABLISHED |
-| RSS KiB |  | — | — | NOT ESTABLISHED |
-| ownedBodyCombiners |  | — | — | NOT ESTABLISHED |
-| liveMergedMeshes |  | — | — | NOT ESTABLISHED |
-| unmergedBodyCombiners |  | — | — | NOT ESTABLISHED |
-| liveMergedVertices |  | — | — | NOT ESTABLISHED |
-| bakeScratchBytes |  | — | — | NOT ESTABLISHED |
-| Footprint (rounded) B |  | — | — | NOT ESTABLISHED |
+| Retained bytes | — | — | — | NOT RUN |
+| Retained objects | — | — | — | NOT RUN |
+| City bytes | — | — | — | NOT RUN |
+| City objects | — | — | — | NOT RUN |
+| Diagnostic bytes | — | — | — | NOT RUN |
+| Diagnostic objects | — | — | — | NOT RUN |
+| CitySimulator | — | — | — | NOT RUN |
+| RouteLeg | — | — | — | NOT RUN |
+| Int64[] | — | — | — | NOT RUN |
+| Position[] | — | — | — | NOT RUN |
+| Double[] | — | — | — | NOT RUN |
+| RoadRoutes | — | — | — | NOT RUN |
+| Forced GC live B | — | — | — | NOT RUN |
+| Mono size B | — | — | — | NOT RUN |
+| Mono used B | — | — | — | NOT RUN |
+| RSS KiB | — | — | — | NOT RUN |
+| ownedBodyCombiners | — | — | — | NOT RUN |
+| liveMergedMeshes | — | — | — | NOT RUN |
+| unmergedBodyCombiners | — | — | — | NOT RUN |
+| liveMergedVertices | — | — | — | NOT RUN |
+| bakeScratchBytes | — | — | — | NOT RUN |
+| Footprint (rounded) B | — | — | — | NOT RUN |
 
 Cycle deltas run R0→R1, R1→R2 and onward. PASS indicates a flat series or one that levelled off or receded over succeeding reads. The range uses all post-baseline readings and gives the observed plateau or fluctuation relative to R0. A rising series with successively smaller increments remains NOT ESTABLISHED. The displayed footprint is rounded by vmmap.
 
@@ -16469,8 +16469,8 @@ The cached 16q night probe has no collection series. The census exposes six expl
 - Inspector timing. Passed on 16l and remains unchanged.
 - Other out-of-scope checks, including busy-shop timing, separate visual look review, food ring and replay. C records camera-pan acceptance and A/B record merges.
 - Fresh no-mod night and street/RSS windows. D night and E reuse the 16q references.
-- L and F input-only. Fresh start did not reach the launcher’s resource threshold.
-- D night candidate. Fresh start did not reach the launcher’s resource threshold.
-- D day no-mod reference. Fresh start did not reach the launcher’s resource threshold.
+- L and F input-only. The Mac launcher disk guard blocked the fresh start: free disk stayed below its 12 GiB floor.
+- D night candidate. The Mac launcher disk guard blocked the fresh start: free disk stayed below its 12 GiB floor.
+- D day no-mod reference. The Mac launcher disk guard blocked the fresh start: free disk stayed below its 12 GiB floor.
 
 Full collection, allocation, near-spike and frame JSON stays at `~/HART-Builds/persistent-city-rig-2026-11-19e-mac/`. The export index is `raw-evidence-sha256.json` (SHA-256 `0b31844cbb6575d554e847f4976cfd4d17085feb4b9be3da57684012501d668c`).
