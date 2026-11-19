@@ -347,7 +347,7 @@ public sealed class Gr5NetworkFootprintTests
         long growth = after.Bytes - before.Bytes;
         output.WriteLine(one.Links.Count + " links (" + signals + " signalled), 750 drivers, before read after a warm-up 1->0.5->1 retime, unwarmed rate-2 cache, retime 1->2, 0.05 game minutes at 2x, retime 2->" + returnRate.ToString("R") + ": simulation "
             + before.Roots[0].Bytes + " -> " + after.Roots[0].Bytes + " B, cache " + before.Roots[1].Bytes + " -> " + after.Roots[1].Bytes + " B, total growth " + growth
-            + " B; " + city.Traffic!.VehicleCount + " vehicles in traffic; kernel shares " + city.Traffic!.DefinitionsSharedWith(one.Links) + " of " + one.Links.Count + " definitions (Mono 64-bit layout model)");
+            + " B; " + city.Traffic!.VehicleCount + " vehicles in traffic; kernel shares " + city.Traffic!.DefinitionsSharedWith(back.Links) + " of " + back.Links.Count + " definitions with the returned network (Mono 64-bit layout model)");
         foreach (string name in new[] { "CitySimulator", "TrafficKernel", "TrafficJourneys", "ActiveJourneyIndex" })
             output.WriteLine("  count " + name + ": " + (before.Types.FirstOrDefault(r => r.Name == name)?.Objects ?? 0) + " -> " + (after.Types.FirstOrDefault(r => r.Name == name)?.Objects ?? 0));
         foreach (var row in after.Types.Take(12))
