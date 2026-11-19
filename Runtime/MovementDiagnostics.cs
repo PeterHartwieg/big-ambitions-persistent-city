@@ -103,7 +103,8 @@ namespace PersistentCity.Runtime
                 return;
             }
             if (action == "population") { GcPopulationCommand(detail); return; }
-            Debug.LogWarning("[Persistent City] Unknown command. Use: pc gc start | pc gc report | pc gc stop | pc gc frames [start|stop] | pc gc population [<persons>|off] (FT cities only)");
+            if (action == "retained" && detail.Length == 0) { GcRetainedCommand(); return; }
+            Debug.LogWarning("[Persistent City] Unknown command. Use: pc gc start | pc gc report | pc gc stop | pc gc frames [start|stop] | pc gc population [<persons>|off] | pc gc retained (FT cities only)");
         }
 
         public object GcDiagnostics
@@ -127,6 +128,42 @@ namespace PersistentCity.Runtime
             try { heap = UnityEngine.Profiling.Profiler.GetMonoHeapSizeLong(); used = UnityEngine.Profiling.Profiler.GetMonoUsedSizeLong(); } catch (Exception) { }
             var state = simulation?.State;
             return new GcReportContext(state?.Citizens.Count ?? 0, state?.Visitors.Count ?? 0, simulation?.MeasurementPersonTarget, GC.MaxGeneration, incremental, heap, used);
+        }
+
+        public const string RetainedPrefix = "[Persistent City] gc retained ";
+
+        private void GcRetainedCommand()
+        {
+            var save = SaveGameManager.Current;
+            if (!VendorDiagnosticCity(save?.SaveGameName)) { Debug.LogWarning("[Persistent City] gc retained refused: the census needs a disposable FT city."); return; }
+            if (gcSampler?.Running == true || gcSampler?.FrameRecorder.Armed == true)
+            { Debug.LogWarning("[Persistent City] gc retained refused: a gc measurement or frame recording is running. Use pc gc stop first."); return; }
+            long started = System.Diagnostics.Stopwatch.GetTimestamp();
+            var census = RetainedCensusOf(this, save!.modData);
+            double elapsed = (System.Diagnostics.Stopwatch.GetTimestamp() - started) * GcMillisecondsPerTimestamp;
+            Debug.Log(RetainedPrefix + census.ReportJson(48, elapsed, RetainedCountedTypes));
+        }
+
+        internal static readonly Type[] RetainedCountedTypes = { typeof(CitySimulator), typeof(MultimodalRoutes), typeof(RoadRoutes), typeof(WalkingRoutes), typeof(TrafficRoadNetwork), typeof(TrafficKernel) };
+
+        internal static RetainedCensus RetainedCensusOf(object runtime, IDictionary<string, string>? modData)
+        {
+            var census = new RetainedCensus(RetainedWalkable);
+            census.AddOwnedEntries(modData, "persistentcity:", "save.modData.");
+            census.AddFields("runtime.", runtime, typeof(MonoBehaviour));
+            var assemblies = new List<System.Reflection.Assembly>();
+            foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
+                if ((assembly.GetName().Name ?? "").StartsWith("PersistentCity", StringComparison.Ordinal)) assemblies.Add(assembly);
+            assemblies.Sort((a, b) => StringComparer.Ordinal.Compare(a.GetName().Name, b.GetName().Name));
+            census.AddStatics(assemblies, "static.");
+            return census;
+        }
+
+        internal static bool RetainedWalkable(Type type)
+        {
+            string name = type.Assembly.GetName().Name ?? "";
+            return name.StartsWith("PersistentCity", StringComparison.Ordinal) || name == "mscorlib" || name == "netstandard"
+                || name.StartsWith("System", StringComparison.Ordinal) || name.StartsWith("Newtonsoft", StringComparison.Ordinal);
         }
 
         private void GcPopulationCommand(string detail)

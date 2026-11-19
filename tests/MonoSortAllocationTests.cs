@@ -63,7 +63,7 @@ public sealed class MonoSortAllocationTests
 
     private static readonly HashSet<string> Cold = new HashSet<string>(StringComparer.Ordinal)
     {
-        "BusinessTypeIndex.Rebuild", "RivalFoodSettings.ClampServiceLimits", "RivalServiceLoad.Image", "GcPauseSampler.Spread",
+        "BusinessTypeIndex.Rebuild", "RivalFoodSettings.ClampServiceLimits", "RivalServiceLoad.Image", "GcPauseSampler.Spread", "GcPauseSampler.PauseOverNeighboursSpread",
     };
 
     private static IEnumerable<(string Site, string Call)> AllocatingSorts(Assembly assembly, Func<Type, bool> include)

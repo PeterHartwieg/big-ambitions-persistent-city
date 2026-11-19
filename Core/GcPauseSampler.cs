@@ -39,6 +39,8 @@ namespace PersistentCity.Core
         public int Gen2;
         public long HeapBefore;
         public long HeapAfter;
+        public double PreviousFrameMs;
+        public double NextFrameMs;
     }
 
     public enum GcAllocationSegment
@@ -113,6 +115,9 @@ namespace PersistentCity.Core
         public const int CollectionRowCapacity = 64;
         private readonly GcCollectionRow[] collectionRows = new GcCollectionRow[CollectionRowCapacity];
         private int collectionRowCount;
+        private readonly double[] neighbourScratch = new double[CollectionRowCapacity];
+        private double previousFrameMs = -1;
+        private bool rowAwaitsNext, previousCollected;
         private long frameNumber = -1, lastFrameNumber = -1;
 
         private readonly float[] frameMs;
@@ -164,7 +169,7 @@ namespace PersistentCity.Core
             AllocationCounter = allocationCounter ?? "heap_used";
             nested = false; lastCounter = -1; counterFrameBytes = counterFrames = 0;
             Array.Clear(collections, 0, collections.Length);
-            stored = 0; collectionRowCount = 0; lastFrameNumber = -1; Frames = 0; CollectionFrames = 0; heapBeforeSum = heapAfterSum = heapPairs = 0;
+            stored = 0; collectionRowCount = 0; previousFrameMs = -1; rowAwaitsNext = previousCollected = false; lastFrameNumber = -1; Frames = 0; CollectionFrames = 0; heapBeforeSum = heapAfterSum = heapPairs = 0;
             MaxFrameMs = MaxModMs = 0; collectionSpikes = frameSpikes = 0;
             frameAllocatedBytes = allocationFrames = 0;
             FrameRecorder.Reset();
@@ -322,7 +327,7 @@ namespace PersistentCity.Core
         public long SegmentSamples(GcAllocationSegment segment) => segmentSamples[(int)segment];
         public long SegmentSkipped(GcAllocationSegment segment) => segmentSkipped[(int)segment];
 
-        public void Rebaseline() { baselined = false; pendingModMs = 0; lastCounter = -1; }
+        public void Rebaseline() { baselined = false; pendingModMs = 0; lastCounter = -1; previousFrameMs = -1; previousCollected = rowAwaitsNext = false; }
 
         public void Frame(double frameMilliseconds, double modMilliseconds, int gen0, int gen1, int gen2, long heapBytes)
         {
@@ -332,15 +337,20 @@ namespace PersistentCity.Core
             Frames++;
             if (frameMilliseconds > MaxFrameMs) MaxFrameMs = frameMilliseconds;
             if (modMilliseconds > MaxModMs) MaxModMs = modMilliseconds;
+            if (rowAwaitsNext) { collectionRows[collectionRowCount - 1].NextFrameMs = gc ? -1 : frameMilliseconds; rowAwaitsNext = false; }
             if (gc)
             {
                 CollectionFrames++;
                 if (lastHeap >= 0 && heapBytes >= 0) { heapBeforeSum += lastHeap; heapAfterSum += heapBytes; heapPairs++; }
                 if (collectionRowCount < CollectionRowCapacity)
+                {
                     collectionRows[collectionRowCount++] = new GcCollectionRow { Frame = frameNumber, FrameMs = frameMilliseconds, ModMs = modMilliseconds,
-                        Gen0 = gen0, Gen1 = gen1, Gen2 = gen2, HeapBefore = lastHeap, HeapAfter = heapBytes };
+                        Gen0 = gen0, Gen1 = gen1, Gen2 = gen2, HeapBefore = lastHeap, HeapAfter = heapBytes, PreviousFrameMs = previousCollected ? -1 : previousFrameMs, NextFrameMs = -1 };
+                    rowAwaitsNext = true;
+                }
             }
             else if (lastHeap >= 0 && heapBytes >= lastHeap) { frameAllocatedBytes += heapBytes - lastHeap; allocationFrames++; }
+            previousFrameMs = frameMilliseconds; previousCollected = gc;
             if (heapBytes > HeapPeak) HeapPeak = heapBytes;
             if (heapBytes >= 0) { lastHeap = heapBytes; HeapEnd = heapBytes; }
             if (frameMilliseconds >= SpikeMilliseconds) { frameSpikes++; if (gc) collectionSpikes++; }
@@ -358,6 +368,20 @@ namespace PersistentCity.Core
         public GcCollectionRow CollectionRow(int index) => index < collectionRowCount ? collectionRows[index] : throw new ArgumentOutOfRangeException(nameof(index));
 
         public int CollectionSpikes() => collectionSpikes;
+
+        public GcSpread PauseOverNeighboursSpread()
+        {
+            int count = 0;
+            for (int i = 0; i < collectionRowCount; i++)
+            {
+                var row = collectionRows[i];
+                if (row.PreviousFrameMs < 0 || row.NextFrameMs < 0) continue;
+                neighbourScratch[count++] = Math.Max(0, row.FrameMs - 0.5 * (row.PreviousFrameMs + row.NextFrameMs));
+            }
+            if (count == 0) return new GcSpread(0, 0, 0, 0);
+            Array.Sort(neighbourScratch, 0, count);
+            return new GcSpread(count, Rank(neighbourScratch, count, .50), Rank(neighbourScratch, count, .95), neighbourScratch[count - 1]);
+        }
 
         public int FrameSpikes() => frameSpikes;
 
@@ -432,9 +456,12 @@ namespace PersistentCity.Core
                 if (i > 0) text.Append(',');
                 text.Append("{\"frame\":").Append(N(r.Frame)).Append(",\"frame_ms\":").Append(D(r.FrameMs)).Append(",\"mod_ms\":").Append(D(r.ModMs))
                     .Append(",\"gen0\":").Append(N(r.Gen0)).Append(",\"gen1\":").Append(N(r.Gen1)).Append(",\"gen2\":").Append(N(r.Gen2))
-                    .Append(",\"heap_before_bytes\":").Append(N(r.HeapBefore)).Append(",\"heap_after_bytes\":").Append(N(r.HeapAfter)).Append('}');
+                    .Append(",\"heap_before_bytes\":").Append(N(r.HeapBefore)).Append(",\"heap_after_bytes\":").Append(N(r.HeapAfter))
+                    .Append(",\"previous_frame_ms\":").Append(D(r.PreviousFrameMs)).Append(",\"next_frame_ms\":").Append(D(r.NextFrameMs)).Append('}');
             }
-            text.Append("]}");
+            text.Append(']');
+            S(text, "pause_ms_over_neighbours", PauseOverNeighboursSpread());
+            text.Append('}');
             return text.ToString();
         }
 
@@ -442,12 +469,13 @@ namespace PersistentCity.Core
         {
             var pause = PauseSpread();
             var outside = PauseWithoutModSpread();
+            var neighbours = PauseOverNeighboursSpread();
             string M(long bytes) => bytes < 0 ? "n/a" : (bytes / 1048576.0).ToString("0.0", CultureInfo.InvariantCulture) + " MB";
             string D(double value) => value.ToString("0.00", CultureInfo.InvariantCulture);
             return "[Persistent City] gc measurement (diagnostic only): persons=" + (context.Residents + context.Visitors).ToString(CultureInfo.InvariantCulture)
                 + " frames=" + Frames.ToString(CultureInfo.InvariantCulture) + " collections gen0/1/2=" + collections[0].ToString(CultureInfo.InvariantCulture)
                 + "/" + collections[1].ToString(CultureInfo.InvariantCulture) + "/" + collections[2].ToString(CultureInfo.InvariantCulture)
-                + " pause p50/p95/max=" + D(pause.P50) + "/" + D(pause.P95) + "/" + D(pause.Max) + " ms (outside UpdateCity p95/max=" + D(outside.P95) + "/" + D(outside.Max) + " ms), gc frames >= 30 ms=" + CollectionSpikes().ToString(CultureInfo.InvariantCulture)
+                + " pause p50/p95/max=" + D(pause.P50) + "/" + D(pause.P95) + "/" + D(pause.Max) + " ms (outside UpdateCity p95/max=" + D(outside.P95) + "/" + D(outside.Max) + " ms, over neighbouring frames p95/max=" + D(neighbours.P95) + "/" + D(neighbours.Max) + " ms), gc frames >= 30 ms=" + CollectionSpikes().ToString(CultureInfo.InvariantCulture)
                 + ", heap " + M(HeapStart) + " -> " + M(HeapEnd) + " (peak " + M(HeapPeak) + ")";
         }
     }

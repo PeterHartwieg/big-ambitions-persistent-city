@@ -642,6 +642,8 @@ namespace PersistentCity.Runtime
             routeRebuild = null;
             simulation = rebuild.TakeResult();
             vendorMarket?.Rebind(simulation);
+            RebindVendorDecisionDiagnostics(simulation);
+            ForgetResearchSnapshot();
             seenPlanningRequests = seenEventRestarts = seenInlineRestarts = 0;
             log?.Info("Clock retime: body release " + Milliseconds(retimeReleaseMilliseconds) + " ms over "
                 + retimeReleaseUpdates.ToString(System.Globalization.CultureInfo.InvariantCulture) + " updates, journey retime "
@@ -1017,6 +1019,7 @@ namespace PersistentCity.Runtime
 
         private void Detach()
         {
+            foodDecisions.Detach(); ForgetResearchSnapshot();
             FlushSaveHandOff();
             settings.MarketResearch.ClearAvailability(); ResearchAgencyDialog.Detach(); ResearchBilling.Detach();
             DetachSaveEpoch();
