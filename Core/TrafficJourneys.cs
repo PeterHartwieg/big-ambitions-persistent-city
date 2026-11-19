@@ -110,6 +110,13 @@ namespace PersistentCity.Core
             finally { closureLinks.Clear(); refreshingClosures = false; }
         }
 
+        internal void ReleasePlannerHooks(CitySimulator replacement)
+        {
+            if (ReferenceEquals(routes, replacement.routes)) return;
+            if (routes is ITrafficRoutePlanner planner) planner.SetTrafficForecast(null);
+            if (routes is ITrafficEntryRoutePlanner entryPlanner) entryPlanner.SetTrafficEntryForecast(null);
+        }
+
         private void PublishTrafficSnapshot()
         {
             State.SnapshotSynchronizer = CaptureTraffic;
