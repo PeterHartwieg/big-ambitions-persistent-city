@@ -306,6 +306,7 @@ namespace PersistentCity.Runtime
             public ParkBuild(LocationHappinessTrigger trigger, Place place, string key, (Collider Collider, Vector3 Outside)[] inputs, ResumableSamples<(Collider Collider, Vector3 Outside)> run)
             { Trigger = trigger; Origin = place.Position; PlaceId = place.Id; Key = key; Inputs = inputs; Run = run; }
             public (Collider Collider, Vector3 Outside)[] Inputs { get; }
+            public bool Tainted { get; set; }
             public LocationHappinessTrigger Trigger { get; }
             public Position Origin { get; }
             public string PlaceId { get; }
@@ -328,11 +329,12 @@ namespace PersistentCity.Runtime
                         || !parkActivity.Admit(place.Id, trigger.gameObject.activeInHierarchy, false)) continue;
                     long started = System.Diagnostics.Stopwatch.GetTimestamp();
                     var fresh = SetUpPark(trigger, place, key);
-                    if (!parkBuilds.TryGetValue(key, out var build) || !ReferenceEquals(build.Trigger, trigger) || !ReferenceEquals(build.PlaceId, place.Id)
+                    if (!parkBuilds.TryGetValue(key, out var build) || build.Tainted || !ReferenceEquals(build.Trigger, trigger) || !ReferenceEquals(build.PlaceId, place.Id)
                         || !build.Origin.Equals(place.Position) || !build.Run.SameInputs(fresh.Inputs, ParkInputComparer.Instance))
                         build = fresh;
                     parkBuilds.Remove(key);
                     build.Run.Continue(ParkSampleSpot, build, long.MaxValue);
+                    if (build.Tainted) { build = SetUpPark(trigger, place, key); build.Run.Continue(ParkSampleSpot, build, long.MaxValue); }
                     ParkBuilds++;
                     MaximumParkMilliseconds = Math.Max(MaximumParkMilliseconds, MillisecondsSince(started));
                     if (build.Run.Spots.Count == 0) return Array.Empty<OptionalStopSpot>();
@@ -368,7 +370,12 @@ namespace PersistentCity.Runtime
             public int GetHashCode((Collider Collider, Vector3 Outside) value) => System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(value.Collider);
         }
         private static readonly Func<ParkBuild, (Collider Collider, Vector3 Outside), int, OptionalStopSpot?> ParkSampleSpot
-            = (build, input, count) => ParkSpot(build.Origin, build.PlaceId, build.Key, count, input.Collider, input.Outside);
+            = (build, input, count) =>
+            {
+                if (build.Tainted) return null;
+                if (input.Collider == null || !input.Collider.enabled || !input.Collider.gameObject.activeInHierarchy) { build.Tainted = true; return null; }
+                return ParkSpot(build.Origin, build.PlaceId, build.Key, count, input.Collider, input.Outside);
+            };
         private static OptionalStopSpot? ParkSpot(Position origin, string placeId, string key, int count, Collider collider, Vector3 outside)
         {
             if (collider == null) return null;
@@ -385,6 +392,7 @@ namespace PersistentCity.Runtime
             private Place?[] boundPlaces = Array.Empty<Place?>();
             private string[] boundKeys = Array.Empty<string>();
             private bool[] resolved = Array.Empty<bool>();
+            public bool Ready => owner.parkTriggers != null && !owner.scans.Due(DwellKind.Resting);
             public int Count
             {
                 get
@@ -434,8 +442,11 @@ namespace PersistentCity.Runtime
             {
                 var build = Build(index, out _, out _, out string key);
                 if (build == null) return true;
-                try { return build.Run.Continue(ParkSampleSpot, build, deadlineTimestamp); }
+                bool done;
+                try { done = build.Run.Continue(ParkSampleSpot, build, deadlineTimestamp, sampleFirst: false); }
                 catch (Exception) { owner.parkBuilds.Remove(key); throw; }
+                if (build.Tainted) { owner.parkBuilds.Remove(key); return true; }
+                return done;
             }
         }
         private LocationHappinessTrigger[]? parkTriggers;
@@ -497,7 +508,8 @@ namespace PersistentCity.Runtime
             public AudienceWarmTargets(OptionalStopEnvironment owner) { this.owner = owner; }
             private List<Place> Candidates => owner.audienceCandidates ??= owner.places.Values
                 .Where(p => p.Kind == PlaceKind.Shop || p.Kind == PlaceKind.Leisure).OrderBy(p => p.Id, StringComparer.Ordinal).ToList();
-            public int Count => owner.scans.Due(DwellKind.Audience) || owner.performers.Count == 0 ? 0 : Candidates.Count;
+            public bool Ready => !owner.scans.Due(DwellKind.Audience) && owner.performers.Count != 0;
+            public int Count => Ready ? Candidates.Count : 0;
             public bool Warm(int index)
             {
                 var place = Candidates[index];
@@ -509,7 +521,7 @@ namespace PersistentCity.Runtime
             public bool Continue(int index, long deadlineTimestamp)
             {
                 var place = Candidates[index];
-                return owner.audiences.TryGet(place, owner.performers.Near(place), SampleAudienceSpot, deadlineTimestamp, out _);
+                return owner.audiences.TryGet(place, owner.performers.Near(place), SampleAudienceSpot, deadlineTimestamp, out _, sampleFirst: false);
             }
         }
         private static readonly Func<Place, AudienceTarget, int, OptionalStopSpot?> SampleAudienceSpot = SampleAudience;

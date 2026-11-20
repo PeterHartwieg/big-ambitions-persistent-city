@@ -62,8 +62,9 @@ namespace PersistentCity.Runtime
         public int Sampled => next;
         public IReadOnlyList<OptionalStopSpot> Spots => spots;
 
-        public bool Continue<TState>(Func<TState, TInput, int, OptionalStopSpot?> sample, TState state, long deadlineTimestamp)
+        public bool Continue<TState>(Func<TState, TInput, int, OptionalStopSpot?> sample, TState state, long deadlineTimestamp, bool sampleFirst = true)
         {
+            if (!sampleFirst && next < inputs.Length && Stopwatch.GetTimestamp() >= deadlineTimestamp) return false;
             while (next < inputs.Length)
             {
                 var found = sample(state, inputs[next++], spots.Count);
@@ -78,6 +79,7 @@ namespace PersistentCity.Runtime
 
     internal interface IGeometryWarmTarget
     {
+        bool Ready { get; }
         int Count { get; }
         bool Warm(int index);
         bool Started(int index);
@@ -100,20 +102,22 @@ namespace PersistentCity.Runtime
 
         public void Run(GeometryFrameBudget budget, int frameNumber, IGeometryWarmTarget target)
         {
-            if (Idle) return;
+            if (Idle || !target.Ready) return;
             long started = clock();
             if (!budget.TryDeadline(frameNumber, started, out long deadline)) return;
-            bool worked = false;
+            bool worked = false, counted = false;
             try
             {
                 int count = target.Count;
                 if (count == 0) return;
+                counted = true;
                 for (int visited = 0; visited < count; visited++)
                 {
                     if (clock() >= deadline) return;
                     int index = cursor % count;
                     if (target.Warm(index)) { cursor = index + 1; continue; }
                     worked = true;
+                    if (clock() >= deadline) return;
                     if (!target.Started(index))
                     {
                         Setups++;
@@ -129,8 +133,8 @@ namespace PersistentCity.Runtime
             finally
             {
                 double elapsed = (clock() - started) * 1000.0 / Stopwatch.Frequency;
-                budget.Spend(elapsed); Slices++;
-                if (elapsed > MaximumMilliseconds) MaximumMilliseconds = elapsed;
+                budget.Spend(elapsed);
+                if (counted) { Slices++; if (elapsed > MaximumMilliseconds) MaximumMilliseconds = elapsed; }
             }
         }
     }
@@ -175,7 +179,7 @@ namespace PersistentCity.Runtime
         }
 
         public bool TryGet(Place place, IReadOnlyList<AudienceTarget> targets, Func<Place, AudienceTarget, int, OptionalStopSpot?> sample,
-            long deadlineTimestamp, out IReadOnlyList<OptionalStopSpot> spots)
+            long deadlineTimestamp, out IReadOnlyList<OptionalStopSpot> spots, bool sampleFirst = true)
         {
             if (!entries.TryGetValue(place.Id, out var entry) || !entry.Matches(place.Position, targets))
             {
@@ -191,7 +195,7 @@ namespace PersistentCity.Runtime
             if (entry.Run != null)
             {
                 bool done;
-                try { done = entry.Run.Continue(SampleMember, (sample, place), deadlineTimestamp); }
+                try { done = entry.Run.Continue(SampleMember, (sample, place), deadlineTimestamp, sampleFirst); }
                 catch (Exception) { entries.Remove(place.Id); throw; }
                 if (!done) { spots = Array.Empty<OptionalStopSpot>(); return false; }
                 entry.Spots = entry.Run.Take(); entry.Run = null;

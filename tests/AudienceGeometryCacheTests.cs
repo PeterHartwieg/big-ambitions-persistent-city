@@ -112,10 +112,12 @@ public sealed class AudienceGeometryCacheTests
     {
         private readonly Clock clock;
         public readonly int[] Samples; public readonly bool[] SetUp, Done; public int Starts, Continues, CountReads;
-        public double StartMilliseconds, SampleMilliseconds;
+        public double StartMilliseconds, SampleMilliseconds, WarmMilliseconds;
+        public bool IsReady = true;
+        public bool Ready => IsReady;
         public Parks(Clock clock, int count, int samples) { this.clock = clock; Samples = Enumerable.Repeat(samples, count).ToArray(); SetUp = new bool[count]; Done = new bool[count]; }
         public int Count { get { CountReads++; return Samples.Length; } }
-        public bool Warm(int index) => Done[index];
+        public bool Warm(int index) { clock.Advance(WarmMilliseconds); return Done[index]; }
         public bool Started(int index) => SetUp[index];
         public void Start(int index) { Starts++; SetUp[index] = true; clock.Advance(StartMilliseconds); }
         public bool Continue(int index, long deadline)
@@ -190,6 +192,59 @@ public sealed class AudienceGeometryCacheTests
         warmup.Reset();
         warmup.Run(budget, ++frames, parks);
         Assert.True(warmup.Idle);
+    }
+
+    [Fact]
+    public void ALookupThatExhaustsTheBudgetStartsNoParkSetup()
+    {
+        var clock = new Clock();
+        var budget = new GeometryFrameBudget();
+        var warmup = new GeometryWarmup(() => clock.Now);
+        var parks = new Parks(clock, 2, 1) { WarmMilliseconds = 1.2 };
+        warmup.Run(budget, 1, parks);
+        Assert.Equal(0, parks.Starts);
+        Assert.Equal(0, parks.Continues);
+        parks.WarmMilliseconds = 0;
+        warmup.Run(budget, 2, parks);
+        Assert.Equal(2, parks.Starts);
+    }
+
+    [Fact]
+    public void AudiencePreparationPastTheDeadlineRunsNoSample()
+    {
+        var place = new Place { Id = "venue" };
+        var members = new[] { new AudienceTarget(new object(), new object(), "show", new Position(1, 0, 0)) };
+        int calls = 0;
+        OptionalStopSpot? Sample(Place p, AudienceTarget member, int angle) { calls++; return Spot(p, member, angle); }
+        var cache = new AudienceGeometryCache();
+        Assert.False(cache.TryGet(place, members, Sample, 0, out var none, sampleFirst: false));
+        Assert.Empty(none);
+        Assert.Equal(0, calls);
+        Assert.True(cache.Pending(place, members));
+        Assert.Equal(1, cache.Builds);
+        Assert.True(cache.TryGet(place, members, Sample, long.MaxValue, out var spots, sampleFirst: false));
+        Assert.Equal(AudienceGeometryCache.Angles, calls);
+        Assert.Equal(AudienceGeometryCache.Angles, spots.Count);
+        Assert.Equal(1, cache.Builds);
+    }
+
+    [Fact]
+    public void ATargetWithNothingToWarmCountsNoSliceAndNoDeferral()
+    {
+        var clock = new Clock();
+        var budget = new GeometryFrameBudget();
+        var warmup = new GeometryWarmup(() => clock.Now);
+        var idle = new Parks(clock, 2, 1) { IsReady = false };
+        var empty = new Parks(clock, 0, 1);
+        budget.Spend(GeometryFrameBudget.DefaultFrameMilliseconds);
+        warmup.Run(budget, 1, idle);
+        Assert.Equal(0, idle.CountReads);
+        Assert.Equal(0, budget.Deferrals);
+        warmup.Run(budget, 2, empty);
+        warmup.Run(budget, 3, idle);
+        Assert.Equal(0, warmup.Slices);
+        Assert.Equal(0, budget.Deferrals);
+        Assert.Equal(1, empty.CountReads);
     }
 
     [Fact]
