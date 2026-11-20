@@ -37,6 +37,7 @@ internal static class Program
         BoundaryClips();
         CounterReset();
         AdvanceRecords();
+        UnitRecords();
         Union();
         Inventory(expectHash);
         CoverageLifecycle();
@@ -190,6 +191,40 @@ internal static class Program
         }
         Check(AdvanceCallRule.Record(300_000, 10_000_000) && !AdvanceCallRule.Record(299_000, 10_000_000), "exact 30.0 / 29.9 ms at 10 MHz QPC");
         Check(!AdvanceCallRule.Record(-1, 10_000_000), "negative duration not recorded");
+    }
+
+    private static void UnitRecords()
+    {
+        var units = new PersistentCity.Core.OptionalStopUnitSeams();
+        units.BeginCall();
+        units.Seam(0.5); units.EndUnit("citizen", 2.0);
+        units.Seam(6.0); units.Seam(1.0); units.EndUnit("traffic", 9.0);
+        units.EndUnit("food-continuation", 1.0);
+        units.Seam(5.5); units.EndUnit("citizen", 8.0);
+        units.EndUnit("snapshot", 0.1);
+        units.EndCall();
+        var source = ReflectedUnitSeams.Bind(units.GetType());
+        Check(source != null, "probe binds the Core per-unit optional-stop recorder by reflection");
+        if (source == null) return;
+        source.Target = units;
+        var record = new AdvanceCallRecord { Frame = 7, DurationTicks = 400_000, OptionalStopMilliseconds = 13.0 };
+        AdvanceCallRows.ReadUnits(ref record, source);
+        var fields = AdvanceCallRows.Fields(record, 1e-4).ToDictionary(f => f.Key, f => f.Value);
+        foreach (string name in new[] { "optional_stop_ms", "slowest_unit", "slowest_unit_ms", "slowest_unit_optional_stop_ms", "unit_optional_stop_max_ms",
+                     "unit_optional_stop_p95_ms", "units", AdvanceCallRows.UnitsOverThresholdField })
+            Check(fields.ContainsKey(name), "advance call record has " + name);
+        Check(Equals(fields["optional_stop_ms"], 13.0), "call-total optional_stop_ms is the whole-call seam delta, unchanged");
+        Check(Equals(fields["slowest_unit"], "traffic") && Equals(fields["slowest_unit_ms"], 9.0), "slowest unit is the longest unit, not unknown");
+        Check(Equals(fields["slowest_unit_optional_stop_ms"], 7.0), "slowest unit's optional-stop time is its own seam, not the call total");
+        Check(Equals(fields["unit_optional_stop_max_ms"], 7.0) && Equals(fields["unit_optional_stop_p95_ms"], 7.0), "unit seam maximum and p95");
+        Check(Equals(fields["units"], 5), "unit count");
+        var over = (UnitOptionalStop[])fields[AdvanceCallRows.UnitsOverThresholdField];
+        Check(over.Length == 2 && over[0].Unit == 1 && over[0].Kind == "traffic" && over[0].OptionalStopMilliseconds == 7.0
+            && over[1].Unit == 3 && over[1].Kind == "citizen" && over[1].OptionalStopMilliseconds == 5.5, "units over 5 ms are listed with their own seam");
+        var unread = AdvanceCallRows.Fields(new AdvanceCallRecord { OptionalStopMilliseconds = double.NaN }, 1e-4).ToDictionary(f => f.Key, f => f.Value);
+        Check(Equals(unread["slowest_unit"], "unknown") && unread["optional_stop_ms"] == null && unread["slowest_unit_optional_stop_ms"] == null
+            && unread[AdvanceCallRows.UnitsOverThresholdField] == null, "a call without per-unit data reports unknown and nulls");
+        Check(ReflectedUnitSeams.Bind(typeof(AdvanceCallRecord)) == null, "binding refuses a type without the per-unit contract");
     }
 
     private static void Union()

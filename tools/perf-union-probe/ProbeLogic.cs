@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 
 namespace PerfUnionProbe
 {
@@ -136,6 +137,107 @@ namespace PerfUnionProbe
         public int CollectionsDelta;
         public double OptionalStopMilliseconds;
         public double TargetMinute;
+        public bool UnitsRead;
+        public int Units;
+        public string SlowestUnitKind;
+        public double SlowestUnitMilliseconds, SlowestUnitOptionalStopMilliseconds, MaximumUnitOptionalStopMilliseconds, P95UnitOptionalStopMilliseconds;
+        public UnitOptionalStop[] UnitsOverThreshold;
+    }
+
+    public struct UnitOptionalStop
+    {
+        public int Unit;
+        public string Kind;
+        public double OptionalStopMilliseconds;
+    }
+
+    public interface IUnitSeamSource
+    {
+        int Units { get; }
+        string SlowestUnitKind { get; }
+        double SlowestUnitMilliseconds { get; }
+        double SlowestUnitSeamMilliseconds { get; }
+        double MaximumUnitSeamMilliseconds { get; }
+        double P95UnitSeamMilliseconds();
+        double UnitSeamMilliseconds(int unit);
+        string UnitKind(int unit);
+    }
+
+    public sealed class ReflectedUnitSeams : IUnitSeamSource
+    {
+        private PropertyInfo units, slowestKind, slowestMs, slowestSeam, maximumSeam;
+        private MethodInfo p95, unitSeam, unitKind;
+        public object Target;
+        public static ReflectedUnitSeams Bind(Type type)
+        {
+            const BindingFlags Flags = BindingFlags.Public | BindingFlags.Instance;
+            PropertyInfo P(string name, Type expected) { var p = type.GetProperty(name, Flags); return p != null && p.PropertyType == expected ? p : null; }
+            MethodInfo M(string name, Type returns, params Type[] args) { var m = type.GetMethod(name, Flags, null, args, null); return m != null && m.ReturnType == returns ? m : null; }
+            var bound = new ReflectedUnitSeams
+            {
+                units = P("Units", typeof(int)), slowestKind = P("SlowestUnitKind", typeof(string)), slowestMs = P("SlowestUnitMilliseconds", typeof(double)),
+                slowestSeam = P("SlowestUnitSeamMilliseconds", typeof(double)), maximumSeam = P("MaximumUnitSeamMilliseconds", typeof(double)),
+                p95 = M("P95UnitSeamMilliseconds", typeof(double)), unitSeam = M("UnitSeamMilliseconds", typeof(double), typeof(int)),
+                unitKind = M("UnitKind", typeof(string), typeof(int)),
+            };
+            return bound.units == null || bound.slowestKind == null || bound.slowestMs == null || bound.slowestSeam == null || bound.maximumSeam == null
+                || bound.p95 == null || bound.unitSeam == null || bound.unitKind == null ? null : bound;
+        }
+        public int Units => (int)units.GetValue(Target);
+        public string SlowestUnitKind => (string)slowestKind.GetValue(Target);
+        public double SlowestUnitMilliseconds => (double)slowestMs.GetValue(Target);
+        public double SlowestUnitSeamMilliseconds => (double)slowestSeam.GetValue(Target);
+        public double MaximumUnitSeamMilliseconds => (double)maximumSeam.GetValue(Target);
+        public double P95UnitSeamMilliseconds() => (double)p95.Invoke(Target, null);
+        public double UnitSeamMilliseconds(int unit) => (double)unitSeam.Invoke(Target, new object[] { unit });
+        public string UnitKind(int unit) => (string)unitKind.Invoke(Target, new object[] { unit });
+    }
+
+    public static class AdvanceCallRows
+    {
+        public const double UnitThresholdMilliseconds = 5;
+        public const string UnitsOverThresholdField = "units_optional_stop_over_5ms";
+
+        public static void ReadUnits(ref AdvanceCallRecord record, IUnitSeamSource source)
+        {
+            int units = source.Units;
+            var over = new List<UnitOptionalStop>();
+            for (int i = 0; i < units; i++)
+            {
+                double seam = source.UnitSeamMilliseconds(i);
+                if (seam > UnitThresholdMilliseconds) over.Add(new UnitOptionalStop { Unit = i, Kind = source.UnitKind(i), OptionalStopMilliseconds = seam });
+            }
+            record.Units = units;
+            record.SlowestUnitKind = string.IsNullOrEmpty(source.SlowestUnitKind) ? "none" : source.SlowestUnitKind;
+            record.SlowestUnitMilliseconds = source.SlowestUnitMilliseconds;
+            record.SlowestUnitOptionalStopMilliseconds = source.SlowestUnitSeamMilliseconds;
+            record.MaximumUnitOptionalStopMilliseconds = source.MaximumUnitSeamMilliseconds;
+            record.P95UnitOptionalStopMilliseconds = source.P95UnitSeamMilliseconds();
+            record.UnitsOverThreshold = over.ToArray();
+            record.UnitsRead = true;
+        }
+
+        public static List<KeyValuePair<string, object>> Fields(AdvanceCallRecord c, double toMs)
+        {
+            object Number(double value) => double.IsNaN(value) ? null : (object)value;
+            bool read = c.UnitsRead;
+            return new List<KeyValuePair<string, object>>
+            {
+                new KeyValuePair<string, object>("frame", c.Frame),
+                new KeyValuePair<string, object>("start_qpc", c.StartQpc),
+                new KeyValuePair<string, object>("duration_ms", c.DurationTicks * toMs),
+                new KeyValuePair<string, object>("gc_delta", c.CollectionsDelta),
+                new KeyValuePair<string, object>("target_minute", c.TargetMinute),
+                new KeyValuePair<string, object>("slowest_unit", read ? c.SlowestUnitKind : "unknown"),
+                new KeyValuePair<string, object>("optional_stop_ms", Number(c.OptionalStopMilliseconds)),
+                new KeyValuePair<string, object>("units", read ? (object)c.Units : null),
+                new KeyValuePair<string, object>("slowest_unit_ms", read ? Number(c.SlowestUnitMilliseconds) : null),
+                new KeyValuePair<string, object>("slowest_unit_optional_stop_ms", read ? Number(c.SlowestUnitOptionalStopMilliseconds) : null),
+                new KeyValuePair<string, object>("unit_optional_stop_max_ms", read ? Number(c.MaximumUnitOptionalStopMilliseconds) : null),
+                new KeyValuePair<string, object>("unit_optional_stop_p95_ms", read ? Number(c.P95UnitOptionalStopMilliseconds) : null),
+                new KeyValuePair<string, object>(UnitsOverThresholdField, read ? (object)(c.UnitsOverThreshold ?? new UnitOptionalStop[0]) : null),
+            };
+        }
     }
 
     public sealed class UnionClock

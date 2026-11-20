@@ -105,7 +105,10 @@ namespace PersistentCity.Runtime
         private double planningMilliseconds, maxPlanningSliceMilliseconds;
         private string slowestPlanningUnit = "";
         private long slowestPlanningUnitNavMeshQueries;
-        private double slowestAdvanceUnitMilliseconds, slowestAdvanceStopMilliseconds;
+        private double slowestAdvanceUnitMilliseconds, slowestAdvanceStopMilliseconds, slowestAdvanceCallStopMilliseconds;
+        private double slowestAdvanceMaximumUnitStopMilliseconds, slowestAdvanceP95UnitStopMilliseconds;
+        private int slowestAdvanceStopUnits, slowestAdvanceUnitsOverStopThreshold;
+        private string slowestAdvanceUnitsOverStopText = "";
         private string slowestAdvanceUnit = "";
         private int slowestAdvanceCollections;
         private OptionalStopEnvironment? stopEnvironment;
@@ -467,7 +470,13 @@ namespace PersistentCity.Runtime
                         + slowestAdvanceUnitMilliseconds.ToString("F3", System.Globalization.CultureInfo.InvariantCulture) + " ms ("
                         + (slowestAdvanceUnit.Length == 0 ? "none" : slowestAdvanceUnit) + "), optional-stop reads "
                         + slowestAdvanceStopMilliseconds.ToString("F3", System.Globalization.CultureInfo.InvariantCulture) + " ms, "
-                        + slowestAdvanceCollections + " garbage collections completed during it. Optional-stop reads this observation (refresh and advancement): "
+                        + slowestAdvanceCollections + " garbage collections completed during it. Optional-stop reads per unit in the slowest advance: "
+                        + slowestAdvanceStopUnits + " units, call total "
+                        + slowestAdvanceCallStopMilliseconds.ToString("F3", System.Globalization.CultureInfo.InvariantCulture) + " ms, maximum "
+                        + slowestAdvanceMaximumUnitStopMilliseconds.ToString("F3", System.Globalization.CultureInfo.InvariantCulture) + " ms, p95 "
+                        + slowestAdvanceP95UnitStopMilliseconds.ToString("F3", System.Globalization.CultureInfo.InvariantCulture) + " ms, "
+                        + slowestAdvanceUnitsOverStopThreshold + " units over 5 ms [" + slowestAdvanceUnitsOverStopText
+                        + "]. Optional-stop reads this observation (refresh and advancement): "
                         + (stopEnvironment?.SeamCalls ?? 0) + " calls, "
                         + (stopEnvironment?.SeamMilliseconds ?? 0).ToString("F3", System.Globalization.CultureInfo.InvariantCulture) + " ms total, "
                         + (stopEnvironment?.MaximumSeamMilliseconds ?? 0).ToString("F3", System.Globalization.CultureInfo.InvariantCulture) + " ms maximum, "
@@ -532,9 +541,11 @@ namespace PersistentCity.Runtime
             int collectionsBefore = GC.CollectionCount(0);
             stopEnvironment?.Maintain();
             AdvanceAllocation.Detail(GcAllocationSegment.AdvanceStops);
-            double stopsBefore = stopEnvironment?.SeamMilliseconds ?? 0;
+            var unitSeams = stopEnvironment?.UnitSeams;
+            unitSeams?.BeginCall();
             void Unit(string kind)
             {
+                unitSeams?.EndUnit(kind, elapsed - unitStarted);
                 if (elapsed - unitStarted > slowestUnit) { slowestUnit = elapsed - unitStarted; slowestKind = kind; }
                 unitStarted = elapsed;
             }
@@ -585,11 +596,12 @@ namespace PersistentCity.Runtime
             finally { active.SynchronizeSnapshot(); NativeCityClock.ObserveSimulationLag(target, active.State.Minute); }
             elapsed = (Stopwatch.GetTimestamp() - started) * MillisecondsPerTimestamp;
             Unit("snapshot");
+            unitSeams?.EndCall();
             if (elapsed > maxAdvanceMilliseconds)
             {
                 slowestAdvanceUnitMilliseconds = slowestUnit; slowestAdvanceUnit = slowestKind;
                 slowestAdvanceCollections = GC.CollectionCount(0) - collectionsBefore;
-                slowestAdvanceStopMilliseconds = (stopEnvironment?.SeamMilliseconds ?? 0) - stopsBefore;
+                ObserveSlowestAdvanceStops(unitSeams);
             }
             advanceFrames++;
             advanceEvents += events;
@@ -603,6 +615,17 @@ namespace PersistentCity.Runtime
             long restarts = active.EventRestarts, inline = active.InlineAfterRestarts;
             eventRestarts += restarts - seenEventRestarts; inlineRestarts += inline - seenInlineRestarts;
             seenEventRestarts = restarts; seenInlineRestarts = inline;
+        }
+
+        private void ObserveSlowestAdvanceStops(OptionalStopUnitSeams? unitSeams)
+        {
+            slowestAdvanceStopMilliseconds = unitSeams?.SlowestUnitSeamMilliseconds ?? 0;
+            slowestAdvanceCallStopMilliseconds = unitSeams?.CallSeamMilliseconds ?? 0;
+            slowestAdvanceMaximumUnitStopMilliseconds = unitSeams?.MaximumUnitSeamMilliseconds ?? 0;
+            slowestAdvanceP95UnitStopMilliseconds = unitSeams?.P95UnitSeamMilliseconds() ?? 0;
+            slowestAdvanceStopUnits = unitSeams?.Units ?? 0;
+            slowestAdvanceUnitsOverStopThreshold = unitSeams?.UnitsOverThreshold() ?? 0;
+            slowestAdvanceUnitsOverStopText = slowestAdvanceUnitsOverStopThreshold == 0 ? "" : unitSeams!.OverThresholdText();
         }
 
         private void UpdateInspector()
@@ -739,7 +762,9 @@ namespace PersistentCity.Runtime
             slowestPlanningUnit = ""; slowestPlanningUnitNavMeshQueries = 0;
             closureFrames = 0; closureMilliseconds = maxClosureMilliseconds = 0;
             maxAdvanceEvents = 0;
-            slowestAdvanceUnitMilliseconds = slowestAdvanceStopMilliseconds = 0; slowestAdvanceUnit = ""; slowestAdvanceCollections = 0;
+            slowestAdvanceUnitMilliseconds = slowestAdvanceStopMilliseconds = slowestAdvanceCallStopMilliseconds = 0; slowestAdvanceUnit = ""; slowestAdvanceCollections = 0;
+            slowestAdvanceMaximumUnitStopMilliseconds = slowestAdvanceP95UnitStopMilliseconds = 0;
+            slowestAdvanceStopUnits = slowestAdvanceUnitsOverStopThreshold = 0; slowestAdvanceUnitsOverStopText = "";
             stopEnvironment?.ResetSeamDiagnostics();
             gateChanges = roadSnapshots = waitingFrames = 0;
             roadRebuildReasons.Clear(); slowRoutingFrames = routingFrameLogs = 0;

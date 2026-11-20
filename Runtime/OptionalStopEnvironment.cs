@@ -83,6 +83,7 @@ namespace PersistentCity.Runtime
         public double SeamMilliseconds { get; private set; }
         public double MaximumSeamMilliseconds { get; private set; }
         public long ParkTriggerScans { get; private set; }
+        public OptionalStopUnitSeams UnitSeams { get; } = new OptionalStopUnitSeams();
         public void ResetSeamDiagnostics()
         {
             SeamCalls = ParkTriggerScans = 0; SeamMilliseconds = MaximumSeamMilliseconds = 0;
@@ -113,6 +114,7 @@ namespace PersistentCity.Runtime
             double elapsed = (System.Diagnostics.Stopwatch.GetTimestamp() - started) * 1000.0 / System.Diagnostics.Stopwatch.Frequency;
             SeamCalls++; SeamMilliseconds += elapsed;
             if (elapsed > MaximumSeamMilliseconds) MaximumSeamMilliseconds = elapsed;
+            UnitSeams.Seam(elapsed);
         }
         public IReadOnlyList<OptionalStopSpot> Spots(Place place, DwellKind kind)
         {

@@ -110,7 +110,8 @@ namespace PerfUnionProbe
         internal static Func<double> withheld;
         internal static Func<bool> accountingLimited;
         private static Func<double> clockFactor;
-        private static Func<object, object> readSimulation, readState, readStopEnvironment;
+        private static Func<object, object> readSimulation, readState, readStopEnvironment, readUnitSeams;
+        private static ReflectedUnitSeams unitSeamSource;
         private static Func<object, double> readMinute, readSeam;
         private static PropertyInfo accountingDiagnostics, saveEpochDiagnostics;
 
@@ -249,6 +250,9 @@ namespace PerfUnionProbe
             var stops = runtimeType.GetField("stopEnvironment", All);
             var seam = stops?.FieldType.GetProperty("SeamMilliseconds", BindingFlags.Public | BindingFlags.Instance);
             if (stops != null && seam != null && seam.PropertyType == typeof(double)) { readStopEnvironment = ObjectGetter(stops); readSeam = DoubleGetter(seam); }
+            var unitSeams = readStopEnvironment == null ? null : stops.FieldType.GetProperty("UnitSeams", BindingFlags.Public | BindingFlags.Instance);
+            unitSeamSource = unitSeams == null ? null : ReflectedUnitSeams.Bind(unitSeams.PropertyType);
+            readUnitSeams = unitSeamSource == null ? null : ObjectGetter(unitSeams);
             accountingDiagnostics = runtimeType.GetProperty("AccountingDiagnostics", BindingFlags.Public | BindingFlags.Instance);
             saveEpochDiagnostics = runtimeType.GetProperty("SaveEpochDiagnostics", BindingFlags.Public | BindingFlags.Instance);
         }
@@ -406,6 +410,22 @@ namespace PerfUnionProbe
             var stops = readStopEnvironment(runtime);
             return stops == null ? double.NaN : readSeam(stops);
         }
+
+        internal static void ReadUnitSeams(ref AdvanceCallRecord record)
+        {
+            if (readUnitSeams == null || unitSeamSource == null || runtime == null) return;
+            try
+            {
+                var stops = readStopEnvironment(runtime);
+                var units = stops == null ? null : readUnitSeams(stops);
+                if (units == null) return;
+                unitSeamSource.Target = units;
+                AdvanceCallRows.ReadUnits(ref record, unitSeamSource);
+            }
+            catch (Exception) { record.UnitsRead = false; unitSeamFailures++; }
+            finally { unitSeamSource.Target = null; }
+        }
+        internal static long unitSeamFailures;
 
         private static void InstallLoop()
         {
@@ -618,7 +638,7 @@ namespace PerfUnionProbe
             union.Abandon(); shimInstalled = holdsBound = advanceBound = false; coverage = null; patchWatch = null;
             mode = "none"; runtime = null; pc = null; shimFactor = double.NaN;
             heldOrdinary = heldSkip = boundaryClips = null; withheld = null; accountingLimited = null; clockFactor = null;
-            readSimulation = readState = readStopEnvironment = null; readMinute = readSeam = null;
+            readSimulation = readState = readStopEnvironment = readUnitSeams = null; readMinute = readSeam = null; unitSeamSource = null;
         }
 
         private void OnDestroy() => Disarm();
@@ -655,6 +675,8 @@ namespace PerfUnionProbe
                     ["components"] = new JArray(componentNames), ["component_unbound"] = Names("component-unbound") }),
                 ["holds_bound"] = NotApplicable(() => holdsBound), ["advance_records_bound"] = NotApplicable(() => advanceBound),
                 ["optional_stop_seam_bound"] = NotApplicable(() => readSeam != null),
+                ["optional_stop_unit_seams_bound"] = NotApplicable(() => readUnitSeams != null),
+                ["optional_stop_unit_seam_failures"] = NotApplicable(() => unitSeamFailures),
                 ["calendar_factor"] = candidate ? (JToken)(clockFactor?.Invoke() ?? double.NaN) : shimFactor,
                 ["pace_shim"] = mode == "reference" ? (JToken)new JObject { ["active"] = shimInstalled, ["factor"] = shimFactor,
                     ["ticks"] = shimTicks, ["multiplied"] = shimMultiplied, ["changes_native_state"] = true } : "n/a",
@@ -742,10 +764,12 @@ namespace PerfUnionProbe
                 count = callCount; int limit = Number(args, "limit", 128, 256);
                 for (int i = (int)Math.Min(offset, int.MaxValue); i < Math.Min(count, offset + limit); i++)
                 {
-                    var c = calls[i];
-                    rows.Add(new JObject { ["frame"] = c.Frame, ["start_qpc"] = c.StartQpc, ["duration_ms"] = c.DurationTicks * ToMs,
-                        ["gc_delta"] = c.CollectionsDelta, ["target_minute"] = c.TargetMinute, ["slowest_unit"] = "unknown",
-                        ["optional_stop_ms"] = double.IsNaN(c.OptionalStopMilliseconds) ? JValue.CreateNull() : (JToken)c.OptionalStopMilliseconds });
+                    var row = new JObject();
+                    foreach (var field in AdvanceCallRows.Fields(calls[i], ToMs))
+                        row[field.Key] = field.Value is UnitOptionalStop[] over
+                            ? new JArray(over.Select(u => new JObject { ["unit"] = u.Unit, ["kind"] = u.Kind, ["optional_stop_ms"] = u.OptionalStopMilliseconds }))
+                            : field.Value == null ? JValue.CreateNull() : new JValue(field.Value);
+                    rows.Add(row);
                 }
             }
             else if (section == "scopes")
@@ -850,9 +874,11 @@ namespace PerfUnionProbe
             if (!AdvanceCallRule.Record(duration, Stopwatch.Frequency)) return;
             if (Session.callCount >= Session.calls.Length) { Session.callDropped++; return; }
             double seam = Session.SeamMilliseconds();
-            Session.calls[Session.callCount++] = new AdvanceCallRecord { Frame = __state.Frame, StartQpc = __state.Start, DurationTicks = duration,
+            var record = new AdvanceCallRecord { Frame = __state.Frame, StartQpc = __state.Start, DurationTicks = duration,
                 CollectionsDelta = GC.CollectionCount(0) - __state.Collections, TargetMinute = __0,
                 OptionalStopMilliseconds = double.IsNaN(seam) || double.IsNaN(__state.Seam) ? double.NaN : seam - __state.Seam };
+            Session.ReadUnitSeams(ref record);
+            Session.calls[Session.callCount++] = record;
             Session.observerTicks += Stopwatch.GetTimestamp() - end;
         }
     }
