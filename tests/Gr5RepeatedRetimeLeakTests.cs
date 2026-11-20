@@ -193,6 +193,42 @@ public sealed class Gr5RepeatedRetimeLeakTests
     }
 
     [Fact]
+    public void TheProductionBakeScratchPlateausAtTheLookCatalogueAcrossAnLRampAndThenStopsAllocating()
+    {
+        const long plateau16t = 1_718_964;
+        var scratch = BlendshapeBakePlan.NewScratch<(float X, float Y, float Z)>();
+        var raw = Enumerable.Range(0, 24).Select(i => 500 + (i * 7919) % 3500).Distinct().ToArray();
+        long vertices = plateau16t / (BlendshapeBakePlan.ScratchWidth * BlendshapeBakePlan.ScratchElementBytes);
+        double scale = (double)vertices / raw.Sum();
+        var catalogue = raw.Select(v => Math.Max(64, (int)(v * scale))).Distinct().ToArray();
+        long catalogueBytes = catalogue.Sum(length => scratch.CostOf(length));
+        Assert.InRange(catalogueBytes, plateau16t * 9 / 10, plateau16t * 11 / 10);
+        int[] bodiesAt = { 8, 9, 12, 16, 24, 31, 63 };
+        int Part(int body, int part) => catalogue[(int)(((uint)(body * 2654435761u) >> 7) + (uint)(part * 40503)) % catalogue.Length];
+        void Spawn(int bodies) { for (int body = 0; body < bodies; body++) for (int part = 0; part < 5; part++) scratch.Take(Part(body, part)); }
+        var ramp = new List<long>();
+        foreach (int bodies in bodiesAt) { Spawn(bodies); ramp.Add(scratch.Bytes); }
+        for (int length = 0; length < catalogue.Length; length++) scratch.Take(catalogue[length]);
+        long allocations = scratch.Allocations, plateau = scratch.Bytes;
+        var matched = new List<long>(8);
+        long allocated = GC.GetAllocatedBytesForCurrentThread();
+        for (int cycle = 0; cycle < 5; cycle++) { Spawn(63); for (int length = 0; length < catalogue.Length; length++) scratch.Take(catalogue[length]); matched.Add(scratch.Bytes); }
+        long churn = GC.GetAllocatedBytesForCurrentThread() - allocated;
+        output.WriteLine("production bake scratch (budget " + BlendshapeBakePlan.ScratchBudgetBytes + " B), " + catalogue.Length + " body part lengths, catalogue " + catalogueBytes
+            + " B: L ramp R0..+30 min " + string.Join(", ", ramp) + "; after every look " + plateau + " B; 5 matched cycles " + string.Join(", ", matched)
+            + "; allocations " + allocations + ", evictions " + scratch.Evictions + ", bytes allocated in the matched cycles " + churn);
+        for (int i = 1; i < ramp.Count; i++) Assert.True(ramp[i] >= ramp[i - 1]);
+        Assert.All(ramp, b => Assert.True(b <= catalogueBytes));
+        Assert.Equal(catalogueBytes, plateau);
+        Assert.All(matched, b => Assert.Equal(plateau, b));
+        Assert.Equal(catalogue.Length, allocations);
+        Assert.Equal(allocations, scratch.Allocations);
+        Assert.Equal(0, scratch.Evictions);
+        Assert.Equal(0, churn);
+        Assert.True(BlendshapeBakePlan.ScratchBudgetBytes >= 2 * catalogueBytes);
+    }
+
+    [Fact]
     public void BakeScratchStaysWithinItsBudgetAndStopsAllocatingOnceTheBodyLooksRepeat()
     {
         const long budget = 2L * 1024 * 1024;
@@ -256,6 +292,7 @@ public sealed class Gr5RepeatedRetimeLeakTests
         var retimedReads = new List<RetainedHeap> { Census(("simulation", city), ("driver", driver)) };
         var controlReads = new List<RetainedHeap> { Census(("simulation", control.City), ("driver", new ClockRetimeDriver())) };
         var instrument = new List<long> { InstrumentBytes() };
+        var travelling = new List<int> { Travelling(city) };
         double start = state.Minute;
         for (int cycle = 1; cycle <= cycles; cycle++)
         {
@@ -271,6 +308,7 @@ public sealed class Gr5RepeatedRetimeLeakTests
             walk.Add("simulation", city);
             Assert.Equal(1, walk.ObjectsOf(typeof(CitySimulator)));
             instrument.Add(InstrumentBytes());
+            travelling.Add(Travelling(city));
             retimedReads.Add(Census(("simulation", city), ("driver", driver)));
             controlReads.Add(Census(("simulation", control.City), ("driver", new ClockRetimeDriver())));
         }
@@ -289,6 +327,21 @@ public sealed class Gr5RepeatedRetimeLeakTests
         for (int i = 2; i < settled.Count; i++) rising &= settled[i] > settled[i - 1];
         Assert.False(rising, "excess without journey legs rose at every checkpoint: " + string.Join(", ", settled));
         Assert.All(settled, e => Assert.True(e < Allowance, "retimed minus control " + e + " B"));
+        for (int i = 1; i <= cycles; i++)
+        {
+            long extra = Objects(retimedReads[i], "RouteLeg") - Objects(controlReads[i], "RouteLeg");
+            Assert.True(extra <= 2L * i * Math.Max(1, travelling.Take(i + 1).Max()), "extra RouteLeg at R" + i + " " + extra + " exceeds one per travelling journey per retime");
+        }
+        var inFlight = state.Citizens.Concat(state.VisitorRoutines).Where(c => c.Phase == CitizenPhase.Travelling).ToList();
+        double drainedAt = (inFlight.Count == 0 ? state.Minute : inFlight.Max(c => c.NextEventMinute)) + 0.01;
+        city.AdvanceTo(drainedAt, int.MaxValue); control.City.AdvanceTo(drainedAt, int.MaxValue);
+        var drained = Census(("simulation", city), ("driver", driver));
+        var drainedControl = Census(("simulation", control.City), ("driver", new ClockRetimeDriver()));
+        output.WriteLine("  drained at minute " + drainedAt.ToString("0.00") + ": RouteLeg " + Objects(drained, "RouteLeg") + "/" + Objects(drainedControl, "RouteLeg")
+            + ", retimed minus control " + (drained.Bytes - drainedControl.Bytes).ToString("+0;-0") + " B");
+        Assert.True(drained.Bytes - drainedControl.Bytes < Allowance, "drained retimed minus control " + (drained.Bytes - drainedControl.Bytes) + " B");
+        Assert.True(Objects(drained, "RouteLeg") - Objects(drainedControl, "RouteLeg") <= inFlight.Count + 2,
+            "drained RouteLeg " + Objects(drained, "RouteLeg") + " vs control " + Objects(drainedControl, "RouteLeg") + " with " + inFlight.Count + " journeys in flight at R" + cycles);
     }
 
     [Fact]

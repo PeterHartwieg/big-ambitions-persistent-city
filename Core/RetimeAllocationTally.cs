@@ -6,6 +6,13 @@ namespace PersistentCity.Core
 {
     public enum RetimeAllocationStage { Release, Journeys, Routes, Commit, Rebuild }
 
+    public readonly struct RetimeAllocationMark
+    {
+        public RetimeAllocationMark(long counter, int collections) { Counter = counter; Collections = collections; }
+        public long Counter { get; }
+        public int Collections { get; }
+    }
+
     public sealed class RetimeAllocationTally
     {
         private const int Stages = 5;
@@ -18,6 +25,8 @@ namespace PersistentCity.Core
         public long UsedBefore { get; private set; }
         public long HeapAfter { get; private set; }
         public long UsedAfter { get; private set; }
+        public int Spans { get; private set; }
+        public int InvalidSpans { get; private set; }
 
         public long this[RetimeAllocationStage stage] => bytes[(int)stage];
 
@@ -29,15 +38,22 @@ namespace PersistentCity.Core
         public void Begin(long heap, long used)
         {
             if (open) return;
+            Clear();
             open = true;
-            Array.Clear(bytes, 0, Stages);
-            HeapBefore = heap; UsedBefore = used; HeapAfter = UsedAfter = 0;
+            HeapBefore = heap; UsedBefore = used;
         }
 
-        public void Add(RetimeAllocationStage stage, long before, long after)
+        public void Observe(ClockRetimeOutcome outcome)
         {
-            if (!open) throw new InvalidOperationException("The retime tally is not open.");
-            if (after > before) bytes[(int)stage] += after - before;
+            if (outcome == ClockRetimeOutcome.None && open) Reset();
+        }
+
+        public void Add(RetimeAllocationStage stage, RetimeAllocationMark before, RetimeAllocationMark after)
+        {
+            if (!open) return;
+            Spans++;
+            if (after.Collections != before.Collections || after.Counter < before.Counter) { InvalidSpans++; return; }
+            bytes[(int)stage] += after.Counter - before.Counter;
         }
 
         public void Finish(long heap, long used)
@@ -47,7 +63,13 @@ namespace PersistentCity.Core
             open = false;
         }
 
-        public void Reset() { open = false; Array.Clear(bytes, 0, Stages); HeapBefore = UsedBefore = HeapAfter = UsedAfter = 0; }
+        public void Reset() { open = false; Clear(); }
+
+        private void Clear()
+        {
+            Array.Clear(bytes, 0, Stages);
+            HeapBefore = UsedBefore = HeapAfter = UsedAfter = 0; Spans = InvalidSpans = 0;
+        }
 
         public string Describe(string counter)
         {
@@ -57,8 +79,10 @@ namespace PersistentCity.Core
                 if (i > 0) text.Append(" / ");
                 text.Append(Names[i]).Append(' ').Append(bytes[i].ToString(CultureInfo.InvariantCulture)).Append(" B");
             }
-            return text.Append(", total ").Append(Total.ToString(CultureInfo.InvariantCulture))
-                .Append(" B; Mono heap / used at start ").Append(HeapBefore.ToString(CultureInfo.InvariantCulture)).Append(" / ").Append(UsedBefore.ToString(CultureInfo.InvariantCulture))
+            text.Append(", total ").Append(Total.ToString(CultureInfo.InvariantCulture)).Append(" B over ").Append(Spans.ToString(CultureInfo.InvariantCulture))
+                .Append(" spans, ").Append(InvalidSpans.ToString(CultureInfo.InvariantCulture)).Append(" spans excluded because a collection ran inside them");
+            if (InvalidSpans > 0) text.Append(" (totals are a lower bound)");
+            return text.Append("; Mono heap / used at start ").Append(HeapBefore.ToString(CultureInfo.InvariantCulture)).Append(" / ").Append(UsedBefore.ToString(CultureInfo.InvariantCulture))
                 .Append(" B, at finish ").Append(HeapAfter.ToString(CultureInfo.InvariantCulture)).Append(" / ").Append(UsedAfter.ToString(CultureInfo.InvariantCulture))
                 .Append(" B, heap growth ").Append((HeapAfter - HeapBefore).ToString(CultureInfo.InvariantCulture)).Append(" B").ToString();
         }

@@ -298,7 +298,7 @@ namespace PersistentCity.Runtime
                     Fail("Game clock moved behind the population snapshot. Reload the matching save; no state was overwritten.");
                     return;
                 }
-                if (routeRebuild != null) { long rebuildMark = RetimeMark(); ContinueRouteRebuild(rebuildMark); WaitForRetime(); return; }
+                if (routeRebuild != null) { var rebuildMark = RetimeMark(); ContinueRouteRebuild(rebuildMark); WaitForRetime(); return; }
                 if (vendorMarket?.Prepare((long)target) == true) { ModFrames.Charge(GcAllocationSegment.ModFood); return; }
                 foodMarket?.RefreshRoutineHours(target);
                 RefreshBusinessTypes(simulation.State.Places, target, "hour");
@@ -313,16 +313,18 @@ namespace PersistentCity.Runtime
                 if (retimeDriver.Holding && physical == null && (retimedRoutes == null || retimedRoutesRate != clockRate)
                     && ClockRetimeStages.Next(clockRate, simulation.State.TravelClockRate, false) != ClockRetimeStage.None)
                 {
-                    long routesMark = RetimeMark();
+                    var routesMark = RetimeMark();
                     retimedRoutes = new MultimodalRoutes(simulation.State.Places, NativeTravelPace.WalkingMetresPerSecond / clockRate, clockRate, dependency, routeObjects);
                     retimedRoutesRate = clockRate;
-                    retimeAllocation.Add(RetimeAllocationStage.Routes, routesMark, GcAllocationCounter.Read());
+                    retimeAllocation.Add(RetimeAllocationStage.Routes, routesMark, GcAllocationCounter.Mark());
                     WaitForRetime(); return;
                 }
                 double retimeBudget = frameBudget.Exclusive(UpdateCityClock.Elapsed(), ClockRetimeStages.SliceMilliseconds);
-                long retimeMark = GcAllocationCounter.Read();
+                GcAllocationCounter.Probe();
+                var retimeMark = GcAllocationCounter.Mark();
                 var retime = retimeDriver.Update(simulation.State, clockRate, physical != null, NativeTravelPace.WalkingMetresPerSecond, retimeBudget);
-                long updated = retime == ClockRetimeOutcome.None ? retimeMark : GcAllocationCounter.Read();
+                var updated = retime == ClockRetimeOutcome.None ? retimeMark : GcAllocationCounter.Mark();
+                retimeAllocation.Observe(retime);
                 if (retime != ClockRetimeOutcome.None)
                 {
                     OpenRetimeTally();
@@ -333,16 +335,16 @@ namespace PersistentCity.Runtime
                     retimeReleaseMilliseconds = 0; retimeReleaseUpdates = 0; retimedRoutes = null;
                     if (physical?.ReleasingForRetime == true)
                     {
-                        if (ReleaseBodiesForRetime(retimeStarted, retimeBudget)) { physical.Dispose(); physical = null; retimeAllocation.Reset(); }
+                        if (ReleaseBodiesForRetime(retimeStarted, retimeBudget, tracked: false)) { physical.Dispose(); physical = null; }
                         else { WaitForRetime(); return; }
                     }
-                    else { releaseOvershoot.Reset(); if (retimeAllocation.Open) retimeAllocation.Reset(); }
+                    else releaseOvershoot.Reset();
                 }
                 else
                 {
                     if (retime == ClockRetimeOutcome.ReleaseBodies)
                     {
-                        if (ReleaseBodiesForRetime(retimeStarted, retimeBudget)) { physical!.Dispose(); physical = null; }
+                        if (ReleaseBodiesForRetime(retimeStarted, retimeBudget, tracked: true)) { physical!.Dispose(); physical = null; }
                         retimeReleaseUpdates++;
                         retimeReleaseMilliseconds += (Stopwatch.GetTimestamp() - retimeStarted) * MillisecondsPerTimestamp;
                     }
@@ -362,10 +364,10 @@ namespace PersistentCity.Runtime
                         if (routes != null) swapped.ReuseRoadSceneForRetiming(routes);
                         routes = swapped;
                         seenRoadSnapshots = 0; clockRetimingRoutes = true;
-                        long swapMark = GcAllocationCounter.Read();
+                        var swapMark = GcAllocationCounter.Mark();
                         retimeAllocation.Add(RetimeAllocationStage.Routes, updated, swapMark);
                         routeRebuild = simulation.BeginRebuildRoutes(routes, retimeDriver.TakeRetimedTraffic());
-                        retimeAllocation.Add(RetimeAllocationStage.Rebuild, swapMark, GcAllocationCounter.Read());
+                        retimeAllocation.Add(RetimeAllocationStage.Rebuild, swapMark, GcAllocationCounter.Mark());
                         rebuildOvershoot.Reset();
                     }
                     WaitForRetime(); return;
@@ -649,31 +651,31 @@ namespace PersistentCity.Runtime
             retimeAllocation.Begin(heap, used);
         }
 
-        private long RetimeMark() { OpenRetimeTally(); return GcAllocationCounter.Read(); }
+        private RetimeAllocationMark RetimeMark() { OpenRetimeTally(); return GcAllocationCounter.Mark(); }
 
-        private bool ReleaseBodiesForRetime(long started, double budgetMilliseconds)
+        private bool ReleaseBodiesForRetime(long started, double budgetMilliseconds, bool tracked)
         {
-            long mark = RetimeMark();
+            var mark = tracked ? RetimeMark() : GcAllocationCounter.Mark();
             long deadline = releaseOvershoot.Deadline(started, budgetMilliseconds);
             bool released = physical!.ReleaseForRetime(deadline);
             releaseOvershoot.Observe(deadline, Stopwatch.GetTimestamp());
-            retimeAllocation.Add(RetimeAllocationStage.Release, mark, GcAllocationCounter.Read());
+            retimeAllocation.Add(RetimeAllocationStage.Release, mark, GcAllocationCounter.Mark());
             return released;
         }
 
-        private void ContinueRouteRebuild(long mark)
+        private void ContinueRouteRebuild(RetimeAllocationMark mark)
         {
             var rebuild = routeRebuild!;
             long deadline = rebuildOvershoot.Deadline(Stopwatch.GetTimestamp(), frameBudget.Exclusive(UpdateCityClock.Elapsed(), ClockRetimeStages.SliceMilliseconds));
             bool done = rebuild.Step(deadline);
             rebuildOvershoot.Observe(deadline, Stopwatch.GetTimestamp());
             if (done) FinishRouteRebuild(rebuild, mark);
-            else retimeAllocation.Add(RetimeAllocationStage.Rebuild, mark, GcAllocationCounter.Read());
+            else retimeAllocation.Add(RetimeAllocationStage.Rebuild, mark, GcAllocationCounter.Mark());
         }
 
         private void FinishRouteRebuild(RouteRebuild rebuild) => FinishRouteRebuild(rebuild, RetimeMark());
 
-        private void FinishRouteRebuild(RouteRebuild rebuild, long mark)
+        private void FinishRouteRebuild(RouteRebuild rebuild, RetimeAllocationMark mark)
         {
             if (!rebuild.Step(long.MaxValue)) throw new InvalidOperationException("The route rebuild did not finish.");
             routeRebuild = null;
@@ -696,9 +698,10 @@ namespace PersistentCity.Runtime
             retimeReleaseMilliseconds = 0; retimeReleaseUpdates = 0;
         }
 
-        private string RetimeAllocationLine(long mark)
+        private string RetimeAllocationLine(RetimeAllocationMark mark)
         {
-            retimeAllocation.Add(RetimeAllocationStage.Rebuild, mark, GcAllocationCounter.Read());
+            if (!retimeAllocation.Open) OpenRetimeTally();
+            retimeAllocation.Add(RetimeAllocationStage.Rebuild, mark, GcAllocationCounter.Mark());
             long heap = -1, used = -1;
             try { heap = UnityEngine.Profiling.Profiler.GetMonoHeapSizeLong(); used = UnityEngine.Profiling.Profiler.GetMonoUsedSizeLong(); } catch (Exception) { }
             retimeAllocation.Finish(heap, used);

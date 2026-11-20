@@ -16,6 +16,12 @@ namespace PersistentCity.Core
 
     public sealed class BlendshapeBakePlan
     {
+        public const long ScratchBudgetBytes = 4L * 1024 * 1024;
+        public const int ScratchWidth = 3;
+        public const long ScratchElementBytes = 12;
+
+        public static LengthScratch<T> NewScratch<T>() where T : struct => new LengthScratch<T>(ScratchWidth, ScratchElementBytes, ScratchBudgetBytes);
+
         private readonly struct Source
         {
             public Source(int vertexCount, int firstShape) { VertexCount = vertexCount; FirstShape = firstShape; }

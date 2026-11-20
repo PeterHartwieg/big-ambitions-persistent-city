@@ -17,13 +17,19 @@ namespace PersistentCity.Runtime
             _ => "heap_used",
         };
 
+        private static bool probed;
+
         public static string Probe()
         {
+            if (probed) return Name;
             source = Source.Heap;
             foreach (var candidate in Candidates)
                 if (Allocates(candidate)) { source = candidate; break; }
+            probed = true;
             return Name;
         }
+
+        public static RetimeAllocationMark Mark() => new RetimeAllocationMark(Read(), Collections);
 
         private static readonly Source[] Candidates = { Source.Thread, Source.BoehmLibrary, Source.BoehmWindows, Source.BoehmInternal };
 

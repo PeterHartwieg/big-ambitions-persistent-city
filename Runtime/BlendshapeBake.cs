@@ -10,8 +10,7 @@ namespace PersistentCity.Runtime
     {
         private static readonly BlendshapeBakePlan plan = new BlendshapeBakePlan();
         private static readonly Dictionary<Mesh, string[]> names = new Dictionary<Mesh, string[]>();
-        public const long ScratchBudgetBytes = 4L * 1024 * 1024;
-        private static readonly LengthScratch<Vector3> scratch = new LengthScratch<Vector3>(3, 12, ScratchBudgetBytes);
+        private static readonly LengthScratch<Vector3> scratch = BlendshapeBakePlan.NewScratch<Vector3>();
         private static readonly List<Vector3> vertices = new List<Vector3>(), normals = new List<Vector3>();
         private static readonly List<Vector4> tangents = new List<Vector4>();
         public static long Bakes { get; private set; }
