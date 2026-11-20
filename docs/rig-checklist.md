@@ -17238,7 +17238,7 @@ Original native and PC exports, full Player.log files, host snapshots, exact sta
 
 ## Rig results — 20 November 2026 b, Mac (rig 16u, GR-5 #322 and #323 at 68f63933)
 
-**0 pass / 1 partial / 3 fail / 0 NOT RUN / 2 REPORTED. PROVISIONAL** for timing. The totals cover rows A–E and L; the one partial is L's NOT ESTABLISHED result, and 0 NOT RUN counts those rows only (unrun arms are listed under NOT RUN below). on the shared Mac / Mono rig. Role rig_test, instance agentmac. Evidence run persistent-city-rig-2026-11-20b-mac.
+**0 pass / 1 partial / 3 fail / 0 NOT RUN / 2 REPORTED. PROVISIONAL** for timing on the shared Mac / Mono rig. The totals cover rows A–E and L; the one partial is L's NOT ESTABLISHED result, and 0 NOT RUN counts those rows only (unrun arms are listed under NOT RUN below). Role rig_test, instance agentmac. Evidence run persistent-city-rig-2026-11-20b-mac.
 Raw receipts, JSON, Player.log and controller traces remain at ~/Coding_Projects/.agent-logs/persistent-city-rig-2026-11-20b-mac/. The Markdown ban covers new docs/checks paths, so this section is the evidence report.
 
 | Check | Outcome | Readback |
