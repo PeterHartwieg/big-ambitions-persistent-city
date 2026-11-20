@@ -18,7 +18,9 @@ public sealed class Gr5RetimeReleaseTests
             => new Route { Legs = new() { new RouteLeg { From = a.Position, To = b.Position, Mode = TravelMode.Walk, Minutes = Math.Max(1, Position.Distance(a.Position, b.Position) / 2) } } };
     }
 
-    private static (PhysicalPopulation Bodies, PhysicalPedestrians Pool) Walkers(int walkers)
+    private static (PhysicalPopulation Bodies, PhysicalPedestrians Pool) Walkers(int walkers) { var w = WalkerCity(walkers); return (w.Bodies, w.Pool); }
+
+    private static (PhysicalPopulation Bodies, PhysicalPedestrians Pool, CitySimulator City, Func<PhysicalPopulation> Rebind) WalkerCity(int walkers)
     {
         StreetFoodHooks.Reset(); NavMesh.Reset(); AmbientPedestrians.Reserved.Clear();
         const double now = 1440 + 600;
@@ -37,12 +39,53 @@ public sealed class Gr5RetimeReleaseTests
         }
         var city = new CitySimulator(state, new Walk());
         NativeTravelPace.Focus = new Position(100, 0, 0); Time.Next(3);
-        var bodies = new PhysicalPopulation(new Transform { Component = new PopulationRuntime() }, city, new MultimodalRoutes(),
+        PhysicalPopulation Rebind() => new PhysicalPopulation(new Transform { Component = new PopulationRuntime() }, city, new MultimodalRoutes(),
             typeof(Gr5RetimeReleaseTests).Assembly, new VendorBodyTests.Log(), 64, 8, 120, new DwellSpots());
+        var bodies = Rebind();
         var pool = PhysicalPedestrians.Last!;
         double minute = now;
         for (int i = 0; i < 120; i++) { minute += 1 / 180.0; city.AdvanceTo(minute); Time.Next(1 / 60f); bodies.Update(); }
-        return (bodies, pool);
+        return (bodies, pool, city, Rebind);
+    }
+
+    private static List<(int Bound, int Pooled)> Checkpoints(int walkers, int cycles, bool retime)
+    {
+        var (bodies, pool, city, rebind) = WalkerCity(walkers);
+        var reads = new List<(int, int)> { (pool.Active.Count, pool.Acquisitions.Select(a => a.Actor).Distinct().Count() - pool.Active.Count) };
+        double minute = city.State.Minute;
+        try
+        {
+            for (int cycle = 0; cycle < cycles; cycle++)
+            {
+                if (retime)
+                {
+                    int updates = 0;
+                    while (!bodies.ReleaseForRetime(long.MaxValue)) Assert.True(++updates < 16, "release did not finish");
+                    Assert.Empty(pool.Active);
+                    bodies.Dispose();
+                    bodies = rebind();
+                    pool = PhysicalPedestrians.Last!;
+                }
+                for (int i = 0; i < 120; i++) { minute += 1 / 180.0; city.AdvanceTo(minute); Time.Next(1 / 60f); bodies.Update(); }
+                reads.Add((pool.Active.Count, pool.Acquisitions.Select(a => a.Actor).Distinct().Count() - pool.Active.Count));
+            }
+        }
+        finally { bodies.Dispose(); }
+        return reads;
+    }
+
+    [Fact]
+    public void RepeatedRetimeReleasesRebindTheSameBodiesAsAnUnretimedControlAtMatchedCheckpoints()
+    {
+        const int walkers = 24, cycles = 4;
+        var control = Checkpoints(walkers, cycles, retime: false);
+        var retimed = Checkpoints(walkers, cycles, retime: true);
+        Assert.True(control[0].Bound >= 4, control[0].Bound.ToString());
+        for (int i = 0; i <= cycles; i++)
+        {
+            Assert.Equal(control[i].Bound, retimed[i].Bound);
+            Assert.True(retimed[i].Pooled <= control[i].Pooled, "R" + i + " idle pooled bodies " + retimed[i].Pooled + " vs control " + control[i].Pooled);
+        }
     }
 
     [Fact]

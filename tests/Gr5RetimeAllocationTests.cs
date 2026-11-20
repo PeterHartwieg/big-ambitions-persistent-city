@@ -155,7 +155,7 @@ public sealed class Gr5RetimeAllocationTests
     }
 
     [Fact]
-    public void AHeapUsedCounterExcludesASliceWithACollectionAndReportsTheLowerBound()
+    public void AHeapUsedCounterIsReportedAsHeapUsedDeltasWithOrWithoutACollection()
     {
         var state = Gr5AllocationMeasure.RigCity();
         var simulator = new CitySimulator(state, new Gr5AdvanceSegmentMeasure.Straight());
@@ -182,8 +182,24 @@ public sealed class Gr5RetimeAllocationTests
         Assert.True(slice >= 3);
         Assert.True(tally.InvalidSpans >= 1);
         Assert.Equal(slice, tally.Spans);
-        Assert.Contains(tally.InvalidSpans + " spans excluded because a collection ran inside them (totals are a lower bound)", line);
-        Assert.True(tally.Total >= 0);
+        Assert.StartsWith("heap-used deltas, not allocated bytes (heap_used) ", line);
+        Assert.Contains(tally.InvalidSpans + " spans excluded because a collection ran inside them (heap used moves by whole blocks, so these values do not attribute allocation to a stage)", line);
+        Assert.DoesNotContain("allocated (", line);
+        Assert.DoesNotContain("lower bound", line);
+        var quiet = new RetimeAllocationTally();
+        quiet.Begin(1, 1);
+        quiet.Add(RetimeAllocationStage.Journeys, new RetimeAllocationMark(1_000, 7), new RetimeAllocationMark(9_000, 7));
+        quiet.Finish(1, 1);
+        string calm = quiet.Describe(RetimeAllocationTally.HeapUsedCounter);
+        Assert.StartsWith("heap-used deltas, not allocated bytes (heap_used) ", calm);
+        Assert.Contains("0 spans excluded because a collection ran inside them (heap used moves by whole blocks", calm);
+        foreach (string counter in new[] { "boehm_total", "thread" })
+        {
+            Assert.True(RetimeAllocationTally.CountsAllocation(counter));
+            Assert.StartsWith("allocated (" + counter + ") ", quiet.Describe(counter));
+            Assert.DoesNotContain("heap-used", quiet.Describe(counter));
+        }
+        Assert.False(RetimeAllocationTally.CountsAllocation("heap_used"));
         var direct = new RetimeAllocationTally();
         direct.Begin(0, 0);
         direct.Add(RetimeAllocationStage.Journeys, new RetimeAllocationMark(5_000, 3), new RetimeAllocationMark(1_000, 4));
@@ -191,6 +207,8 @@ public sealed class Gr5RetimeAllocationTests
         direct.Add(RetimeAllocationStage.Journeys, new RetimeAllocationMark(4_000, 4), new RetimeAllocationMark(4_600, 4));
         Assert.Equal(600, direct.Total);
         Assert.Equal(2, direct.InvalidSpans);
+        direct.Finish(0, 0);
+        Assert.Contains("2 spans excluded because a collection ran inside them (totals are a lower bound)", direct.Describe("boehm_total"));
     }
 
     [Fact]

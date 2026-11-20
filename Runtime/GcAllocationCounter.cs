@@ -14,7 +14,7 @@ namespace PersistentCity.Runtime
         {
             Source.Thread => "thread",
             Source.BoehmLibrary or Source.BoehmWindows or Source.BoehmInternal => "boehm_total",
-            _ => "heap_used",
+            _ => RetimeAllocationTally.HeapUsedCounter,
         };
 
         private static bool probed;

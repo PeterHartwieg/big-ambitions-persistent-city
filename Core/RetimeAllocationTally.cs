@@ -71,9 +71,14 @@ namespace PersistentCity.Core
             HeapBefore = UsedBefore = HeapAfter = UsedAfter = 0; Spans = InvalidSpans = 0;
         }
 
+        public const string HeapUsedCounter = "heap_used";
+
+        public static bool CountsAllocation(string counter) => !string.Equals(counter, HeapUsedCounter, StringComparison.Ordinal);
+
         public string Describe(string counter)
         {
-            var text = new StringBuilder("allocated (").Append(counter).Append(") ");
+            bool allocation = CountsAllocation(counter);
+            var text = new StringBuilder(allocation ? "allocated (" : "heap-used deltas, not allocated bytes (").Append(counter).Append(") ");
             for (int i = 0; i < Stages; i++)
             {
                 if (i > 0) text.Append(" / ");
@@ -81,7 +86,8 @@ namespace PersistentCity.Core
             }
             text.Append(", total ").Append(Total.ToString(CultureInfo.InvariantCulture)).Append(" B over ").Append(Spans.ToString(CultureInfo.InvariantCulture))
                 .Append(" spans, ").Append(InvalidSpans.ToString(CultureInfo.InvariantCulture)).Append(" spans excluded because a collection ran inside them");
-            if (InvalidSpans > 0) text.Append(" (totals are a lower bound)");
+            if (!allocation) text.Append(" (heap used moves by whole blocks, so these values do not attribute allocation to a stage)");
+            else if (InvalidSpans > 0) text.Append(" (totals are a lower bound)");
             return text.Append("; Mono heap / used at start ").Append(HeapBefore.ToString(CultureInfo.InvariantCulture)).Append(" / ").Append(UsedBefore.ToString(CultureInfo.InvariantCulture))
                 .Append(" B, at finish ").Append(HeapAfter.ToString(CultureInfo.InvariantCulture)).Append(" / ").Append(UsedAfter.ToString(CultureInfo.InvariantCulture))
                 .Append(" B, heap growth ").Append((HeapAfter - HeapBefore).ToString(CultureInfo.InvariantCulture)).Append(" B").ToString();
