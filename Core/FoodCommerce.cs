@@ -355,6 +355,7 @@ namespace PersistentCity.Core
         }
         internal void Step()
         {
+            ContinuationStep = "step";
             if (pendingDecision != null)
             {
                 var pendingMeal=pendingDecision;

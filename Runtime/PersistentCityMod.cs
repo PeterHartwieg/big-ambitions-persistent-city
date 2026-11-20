@@ -109,8 +109,7 @@ namespace PersistentCity.Runtime
         private double slowestSliceUnitMilliseconds, slowestSliceUnitNavMeshMilliseconds, slowestSliceJobMilliseconds;
         private int slowestSliceUnitNavMeshQueries;
         private long slowestSliceUnitNavMeshSamples;
-        private double slowestFoodContinuationMilliseconds;
-        private string slowestFoodContinuationStep = "";
+        private readonly FoodContinuationMaximum slowestFoodContinuation = new FoodContinuationMaximum();
         private double slowestAdvanceUnitMilliseconds, slowestAdvanceStopMilliseconds, slowestAdvanceCallStopMilliseconds;
         private double slowestAdvanceMaximumUnitStopMilliseconds, slowestAdvanceP95UnitStopMilliseconds;
         private int slowestAdvanceStopUnits, slowestAdvanceUnitsOverStopThreshold;
@@ -534,8 +533,8 @@ namespace PersistentCity.Runtime
                         + ", path reserve ms " + (routes?.JobPathReserveMilliseconds ?? 0) + ". "
                         + PlanningSliceAnatomy.Text(maxPlanningSliceMilliseconds, slowestSliceJobMilliseconds, slowestSliceUnitStage, slowestSliceUnitMilliseconds,
                             slowestSliceUnitNavMeshMilliseconds, slowestSliceUnitNavMeshQueries, slowestSliceUnitNavMeshSamples)
-                        + " Slowest food continuation: " + slowestFoodContinuationMilliseconds.ToString("F3", System.Globalization.CultureInfo.InvariantCulture)
-                        + " ms (" + (slowestFoodContinuationStep.Length == 0 ? "none" : slowestFoodContinuationStep) + "). "
+                        + " Slowest food continuation: " + slowestFoodContinuation.Milliseconds.ToString("F3", System.Globalization.CultureInfo.InvariantCulture)
+                        + " ms (" + (slowestFoodContinuation.Step.Length == 0 ? "none" : slowestFoodContinuation.Step) + "). "
                         + (physical?.Diagnostics ?? "Physical population inactive."));
                     if (simulation.Traffic != null)
                         log?.Info("Citywide traffic: " + (simulation.Traffic.VehicleCount - simulation.ThroughCarCount) + " persistent cars, "
@@ -608,14 +607,14 @@ namespace PersistentCity.Runtime
                             if (citizenEvents >= citizenLimit || elapsed >= timeBudget) break;
                             continue;
                         }
+                        slowestFoodContinuation.Begin();
                         var result = active.AdvanceFrameSlice(target, 1);
+                        slowestFoodContinuation.End(result.FoodContinuationEvents > 0, active.FoodContinuationStep);
                         AdvanceAllocation.Sub(GcPauseSampler.AdvanceEventSegment(result.TrafficEvents, result.FoodContinuationEvents, result.CitizenEvents, result.PlanningPending));
                         AdvanceAllocation.Detail(GcAllocationSegment.AdvanceEvents);
                         events += result.Events;
                         citizenEvents += result.CitizenEvents;
                         elapsed = (Stopwatch.GetTimestamp() - started) * MillisecondsPerTimestamp;
-                        if (result.FoodContinuationEvents > 0 && elapsed - unitStarted > slowestFoodContinuationMilliseconds)
-                        { slowestFoodContinuationMilliseconds = elapsed - unitStarted; slowestFoodContinuationStep = active.FoodContinuationStep; }
                         Unit(result.PlanningPending ? "citizen-route-begin" : result.TrafficEvents > 0 ? "traffic"
                             : result.FoodContinuationEvents > 0 ? "food-continuation" : result.CitizenEvents > 0 ? "citizen" : "other");
                         if (result.PlanningPending) { pendingAtEnd = elapsed >= timeBudget; if (pendingAtEnd) break; continue; }
@@ -809,7 +808,7 @@ namespace PersistentCity.Runtime
             slowestPlanningUnit = ""; slowestPlanningUnitNavMeshQueries = 0;
             slowestSliceUnitStage = ""; slowestSliceUnitMilliseconds = slowestSliceUnitNavMeshMilliseconds = slowestSliceJobMilliseconds = 0;
             slowestSliceUnitNavMeshQueries = 0; slowestSliceUnitNavMeshSamples = 0;
-            slowestFoodContinuationMilliseconds = 0; slowestFoodContinuationStep = "";
+            slowestFoodContinuation.Reset();
             closureFrames = 0; closureMilliseconds = maxClosureMilliseconds = 0;
             maxAdvanceEvents = 0;
             slowestAdvanceUnitMilliseconds = slowestAdvanceStopMilliseconds = slowestAdvanceCallStopMilliseconds = 0; slowestAdvanceUnit = ""; slowestAdvanceCollections = 0;

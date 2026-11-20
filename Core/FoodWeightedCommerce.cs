@@ -32,6 +32,7 @@ namespace PersistentCity.Core
             && (int)(minute/1440)>=state.ChoiceStartsDay && (int)(minute/1440)>=state.AwarenessStartsDay && (NeedsRivalPreparation(minute) || !AwarenessReady);
         internal void ContinueAwarenessPreparation()
         {
+            ContinuationStep="awareness";
             if (HasPendingCampaignPublication) { ContinueCampaignPublication(); return; }
             if(NeedsRivalPreparation(city.State.Minute))
             {

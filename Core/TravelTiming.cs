@@ -370,8 +370,10 @@ namespace PersistentCity.Core
                 if (elapsed > route.Minutes || arrivalDifference > arrivalTolerance)
                     throw new ArgumentException("Journey clock does not match its route.", nameof(state));
                 bool mapped = trafficOwned;
-                var replacement = RetimeJoiningSplits(route, elapsed, legacy, walk, rate, ratio, false, mapped, !mapped, out var map, out int completed, out int merges);
-                if (merges > 0 && !SameJoinedPose(citizen, replacement, elapsed, CitySimulator.NormalizeJourneyElapsed(rawElapsed, replacement.Minutes, state.Minute)))
+                var replacement = RetimeJoiningSplits(route, elapsed, legacy, walk, rate, ratio, false, mapped, true, trafficOwned ? trafficRoutes[citizen.Identity.Id] : null,
+                    out var map, out int completed, out int merges);
+                if (merges > 0 && !SameJoinedPose(citizen, replacement, elapsed,
+                    map != null ? map.Map(elapsed) : CitySimulator.NormalizeJourneyElapsed(rawElapsed, replacement.Minutes, state.Minute)))
                     replacement = Retime(route, elapsed, legacy, walk, rate, ratio, false, mapped, out map, out completed);
                 if (replacement.Legs.Count > MaxLegs
                     && !MergeCompletedLegs(replacement, completed, elapsed, trafficOwned ? trafficRoutes[citizen.Identity.Id] : null))
@@ -450,7 +452,7 @@ namespace PersistentCity.Core
             elapsed = Math.Max(0, elapsed);
             foreach (var leg in route.Legs)
             {
-                if (elapsed <= leg.Minutes) return leg.Mode == TravelMode.Car ? Position.Lerp(leg.From, leg.To, Math.Min(1, elapsed / leg.Minutes)) : position;
+                if (elapsed <= leg.Minutes) return leg.Mode == TravelMode.Car ? Position.Toward(leg.From, leg.To, elapsed / leg.Minutes) : position;
                 if (leg.Mode == TravelMode.Car) position = leg.To;
                 elapsed -= leg.Minutes;
             }
@@ -535,10 +537,10 @@ namespace PersistentCity.Core
 
         private static Route Retime(Route original, double elapsed, bool legacy, double walkSpeed, double rate, double ratio,
             bool keepCurrent, bool mapped, out NominalMap? map, out int completed)
-            => RetimeJoiningSplits(original, elapsed, legacy, walkSpeed, rate, ratio, keepCurrent, mapped, false, out map, out completed, out _);
+            => RetimeJoiningSplits(original, elapsed, legacy, walkSpeed, rate, ratio, keepCurrent, mapped, false, null, out map, out completed, out _);
 
         private static Route RetimeJoiningSplits(Route original, double elapsed, bool legacy, double walkSpeed, double rate, double ratio,
-            bool keepCurrent, bool mapped, bool mergeFragments, out NominalMap? map, out int completed, out int merges)
+            bool keepCurrent, bool mapped, bool mergeFragments, TrafficVehicleState? traffic, out NominalMap? map, out int completed, out int merges)
         {
             merges = 0;
             int mergeCount = 0;
@@ -566,17 +568,21 @@ namespace PersistentCity.Core
             double fragmentStart = 0, fragmentRemaining = 0;
             void AddCompleted(RouteLeg leg, Position from, Position to, double minutes, string service, double oldMinutes, double? oldEnd, bool splitPrefix, double remaining)
             {
-                if (mergeFragments && mapping == null && fragment >= 0 && fragment == route.Legs.Count - 1)
+                if (mergeFragments && fragment >= 0 && fragment == route.Legs.Count - 1)
                 {
                     var previous = route.Legs[fragment];
                     double end = newOffset + minutes;
                     double after = splitPrefix ? 0 : remaining - minutes;
                     double merged = fragmentRemaining - after;
                     if (fragmentRemaining - merged != after) merged = end - fragmentStart;
-                    if (ContinuesFragment(previous, leg.Mode, from, to, service) && Position.Finite(merged) && merged > 0 && merged <= MaxLegMinutes)
+                    if (ContinuesFragment(previous, leg.Mode, from, to, service) && Position.Finite(merged) && merged > 0 && merged <= MaxLegMinutes
+                        && fragmentStart + merged >= newOffset && !OverlapsRetainedTraffic(traffic, fragmentStart, fragmentStart + merged, elapsed))
                     {
+                        double joinedEnd = fragmentStart + merged, segmentEnd = oldEnd ?? oldOffset + oldMinutes;
+                        mapping?.Segments.Add((oldOffset, segmentEnd, newOffset, joinedEnd));
+                        if (mapping != null && leg.Mode == TravelMode.Car && Position.Distance(from, to) > 0) mapping.UnscaledCarPrefixes.Add((newOffset, joinedEnd));
                         route.Legs[fragment] = previous.CopyAs(previous.From, to, merged, service, splitPrefix);
-                        oldOffset = oldEnd ?? oldOffset + oldMinutes; newOffset = fragmentStart + merged;
+                        oldOffset = segmentEnd; newOffset = joinedEnd;
                         mergeCount++;
                         return;
                     }

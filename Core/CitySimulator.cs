@@ -729,7 +729,7 @@ namespace PersistentCity.Core
             foreach (var leg in person.Journey.Legs)
             {
                 if (elapsed <= leg.Minutes)
-                    return leg.Mode == TravelMode.Car ? Position.Lerp(leg.From, leg.To, Math.Min(1, elapsed / leg.Minutes)) : position;
+                    return leg.Mode == TravelMode.Car ? Position.Toward(leg.From, leg.To, elapsed / leg.Minutes) : position;
                 if (leg.Mode == TravelMode.Car) position = leg.To;
                 elapsed -= leg.Minutes;
             }

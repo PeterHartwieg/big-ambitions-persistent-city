@@ -24,11 +24,45 @@ public sealed class Gr5AdvanceAttributionTests
     }
 
     [Fact]
+    public void TheFoodContinuationMaximumTimesOnlyTheFoodUnitAndNotTheSetupBeforeIt()
+    {
+        var maximum = new FoodContinuationMaximum();
+        System.Threading.Thread.Sleep(40);
+        maximum.Begin();
+        maximum.End(true, "decision-quote");
+        Assert.InRange(maximum.Milliseconds, 0, 20);
+        Assert.Equal("decision-quote", maximum.Step);
+        maximum.Begin(); System.Threading.Thread.Sleep(40); maximum.End(false, "citizen");
+        Assert.Equal("decision-quote", maximum.Step);
+        maximum.Reset();
+        Assert.Equal(0, maximum.Milliseconds); Assert.Equal("", maximum.Step);
+    }
+
+    [Fact]
+    public void AFoodStepStartsWithoutTheNameOfThePreviousStep()
+    {
+        var (_, city) = Gr5FoodDecisionTests.FoodCity();
+        while (!city.AdvanceTo(2 * 1440 + 11 * 60, 256).CaughtUp) { }
+        bool sawCommit = false;
+        for (double minute = 2 * 1440 + 11 * 60; minute < 2 * 1440 + 12 * 60 && !sawCommit; minute += 1.0 / 30)
+            for (int unit = 0; unit < 64; unit++)
+            {
+                var result = city.AdvanceFrameSlice(minute, 1);
+                if (result.FoodContinuationEvents > 0 && city.FoodContinuationStep == "decision-commit") sawCommit = true;
+                if (result.CaughtUp) break;
+            }
+        Assert.True(sawCommit);
+        var food = (FoodCommerce)typeof(CitySimulator).GetField("food", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!.GetValue(city)!;
+        typeof(FoodCommerce).GetMethod("Step", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!.Invoke(food, null);
+        Assert.NotEqual("decision-commit", city.FoodContinuationStep);
+    }
+
+    [Fact]
     public void EveryFoodContinuationUnitNamesTheFoodStepItRan()
     {
         var (_, city) = Gr5FoodDecisionTests.FoodCity();
         while (!city.AdvanceTo(2 * 1440 + 11 * 60, 256).CaughtUp) { }
-        var known = new HashSet<string> { "campaign", "rival-refresh", "decision-check", "decision-quote", "decision-quote-evaluate", "decision-evaluate", "decision-commit" };
+        var known = new HashSet<string> { "awareness", "campaign", "rival-refresh", "decision-check", "decision-quote", "decision-quote-evaluate", "decision-evaluate", "decision-commit" };
         foreach (var stage in Enum.GetNames(typeof(FoodAwarenessCatalogue.BuildStage))) known.Add("awareness-" + stage.ToLowerInvariant());
         var seen = new SortedDictionary<string, int>(StringComparer.Ordinal);
         for (double minute = 2 * 1440 + 11 * 60; minute < 2 * 1440 + 13 * 60; minute += 1.0 / 30)

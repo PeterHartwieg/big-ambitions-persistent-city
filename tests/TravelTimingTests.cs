@@ -262,6 +262,31 @@ public sealed class TravelTimingTests
         Assert.Equal(SaveReadStatus.Loaded, SaveWire.Read(SaveCodec.Write(state)).Status);
     }
 
+    [Fact]
+    public void RepeatedRetimesOfARoundedNativeRoadLegKeepOneJoinedSplitAndTheExactPose()
+    {
+        var state = City(TravelMode.Car); var citizen = state.Citizens[0];
+        state.TravelTimingVersion = 1;
+        citizen.Journey!.Legs = new()
+        {
+            new RouteLeg { From = new Position(-36.16057586669922, 0, 0), To = new Position(44.64554214477539, 0, 0), Minutes = 12,
+                Mode = TravelMode.Car, ServiceId = "native:road:v1:timing-native:0:1" }
+        };
+        state.Places[0].Position = new Position(-36.16057586669922, 0, 0); state.Places[1].Position = new Position(44.64554214477539, 0, 0);
+        citizen.Car!.ParkedPosition = state.Places[0].Position;
+        citizen.DepartureMinute = 1440; citizen.NextEventMinute = 1452;
+        double rate = 1;
+        foreach (double minute in new[] { 1443, 1447.73, 1447.76, 1447.79, 1447.82, 1447.85, 1447.88, 1447.91 })
+        {
+            state.Minute = minute;
+            var before = (Position(state), CarPosition(state));
+            rate = rate == 1 ? 2 : 1;
+            Assert.True(TravelTiming.Apply(state, 2, rate));
+            Assert.Equal(before, (Position(state), CarPosition(state)));
+            Assert.InRange(citizen.Journey!.Legs.Count, 1, 2);
+        }
+    }
+
     [Theory]
     [InlineData("native:road:v1:missing")]
     [InlineData("native:road:v1:timing-native:bad:1")]

@@ -107,6 +107,35 @@ public sealed class TravelTimingCollapsedNativeTailTests
     }
 
     [Fact]
+    public void ATrafficOwnedCarRetimedThreeTimesOneTwoOneOnItsFirstEdgeHoldsOneSplitLegLikeItsControl()
+    {
+        var (state, citizen, raw) = Captured(gap: 0.7);
+        var (control, controlCitizen, _) = Captured(gap: 0.7);
+        double rate = 1;
+        for (int retime = 0; retime < 6; retime++)
+        {
+            double next = rate == 1 ? 2 : 1;
+            var simulation = new CitySimulator(state, new Planner(rate));
+            var reference = new CitySimulator(control, new Planner(1));
+            double minute = state.Minute + 0.02;
+            simulation.AdvanceTo(minute); reference.AdvanceTo(minute);
+            state.PrepareForSave(); state.SnapshotSynchronizer = null;
+            control.PrepareForSave(); control.SnapshotSynchronizer = null;
+            Assert.True(simulation.Traffic!.TryGetVehicle("car", out _));
+            var before = (citizen.Journey!.PositionAt(minute - citizen.DepartureMinute), simulation.SampleJourney(citizen).Position);
+            Assert.True(TravelTiming.Apply(state, 2, next, out int degraded));
+            Assert.Equal(0, degraded);
+            rate = next;
+            var after = new CitySimulator(state, new Planner(rate));
+            Assert.True(after.Traffic!.TryGetVehicle("car", out _));
+            Assert.Equal(before.Item2, after.SampleJourney(citizen).Position);
+            Assert.InRange(citizen.Journey!.Legs.Count, 2, controlCitizen.Journey!.Legs.Count + 1);
+        }
+        Assert.Equal(2, controlCitizen.Journey!.Legs.Count);
+        Assert.Equal(3, citizen.Journey!.Legs.Count);
+    }
+
+    [Fact]
     public void CollapsedInteriorTailSurvivesSaveCodecRoundtripWithTheSamePoseAndOwnership()
     {
         var (state, _, raw) = Captured(); Assert.True(TravelTiming.Apply(state, 2, 2));

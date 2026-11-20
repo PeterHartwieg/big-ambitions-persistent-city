@@ -22,6 +22,7 @@ namespace PersistentCity.Core
         public static bool Finite(double value) => !double.IsNaN(value) && !double.IsInfinity(value);
         public static double Distance(Position a, Position b) => Math.Sqrt((a.X-b.X)*(a.X-b.X)+(a.Y-b.Y)*(a.Y-b.Y)+(a.Z-b.Z)*(a.Z-b.Z));
         public static Position Lerp(Position a, Position b, double t) => new Position(a.X+(b.X-a.X)*t, a.Y+(b.Y-a.Y)*t, a.Z+(b.Z-a.Z)*t);
+        public static Position Toward(Position a, Position b, double t) => t >= 1 ? b : Lerp(a, b, t);
     }
 
     public sealed class CitizenIdentity
@@ -219,7 +220,7 @@ namespace PersistentCity.Core
             if (Legs.Count == 0) throw new InvalidOperationException("A route must contain a leg.");
             foreach (var leg in Legs)
             {
-                if (elapsed <= leg.Minutes) return Position.Lerp(leg.From, leg.To, Math.Max(0, elapsed / leg.Minutes));
+                if (elapsed <= leg.Minutes) return Position.Toward(leg.From, leg.To, Math.Max(0, elapsed / leg.Minutes));
                 elapsed -= leg.Minutes;
             }
             return Legs[Legs.Count - 1].To;
