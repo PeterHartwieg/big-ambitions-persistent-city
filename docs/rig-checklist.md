@@ -16479,11 +16479,11 @@ Full collection, allocation, near-spike and frame JSON stays at `~/HART-Builds/p
 
 ## Rig results — 20 November 2026 a, Mac (rig 16t, GR-5 #320 at 2ae50ea1)
 
-**1 pass / 0 partial / 3 fail / 0 NOT RUN / 2 REPORTED.** All Mac timings are **PROVISIONAL (shared Mac / Mono)**. Run `persistent-city-rig-2026-11-20a-mac`, role `rig_test`, isolated `agentmac`. [PR #320 checks and offline evidence](https://github.com/PeterHartwieg/big-ambitions-persistent-city/pull/320).
+**1 pass / 0 partial / 3 fail / 0 NOT RUN / 2 REPORTED.** All Mac timing and memory results are **PROVISIONAL (shared Mac / Mono)**. Run `persistent-city-rig-2026-11-20a-mac`, role `rig_test`, isolated `agentmac`. [PR #320 checks and offline evidence](https://github.com/PeterHartwieg/big-ambitions-persistent-city/pull/320).
 
 | Check | Status | Result |
 | --- | --- | --- |
-| A | FAIL | A steady 7 gen0, 94.181 ms pause p95 (gen0 above five, pause above ~36 ms, citizen frame optional-stop read total above 5 ms). A repeat 8 gen0, 45.132 ms pause p95 (gen0 above five, pause above ~36 ms). |
+| A | FAIL | A steady 7 gen0, 94.181 ms pause p95 (gen0 above five, pause above ~36 ms). The citizen advancement frame's optional-stop read total was 5.205 ms; the per-citizen-unit 5 ms threshold could not be evaluated because the instrumentation does not time optional stops per unit. A repeat 8 gen0, 45.132 ms pause p95 (gen0 above five, pause above ~36 ms). |
 | B | FAIL | B 20× 6 gen0, 82.522 ms pause p95, 1,480.671232 MB at report (pause above ~36 ms, heap above 1.47 GB). B 60× 6 gen0, 83.288 ms pause p95, 1,607.614464 MB at report (pause above ~36 ms, heap above 1.47 GB). |
 | C | PASS | Union p95 4.3283 ms, 0 union spikes, retime sub bound 8.54 ms, rebuild slowest 5 ms. |
 | D | REPORTED | 3/3 live footprint exports plus the cached 16q night reference. Candidate forced-live gaps at start / stop 6.723 / 13.571% day and 11.54 / 11.019% night. |
@@ -16902,6 +16902,8 @@ Gated processes have no census walks. In the attribution processes, the load and
 | 16h | 4.1956 | 4.2265 | 4.2911 | 217.805 | 869.968 | 3 | — | — |
 | 19c PC | 0.339 | 3.718 | 3.812 | 129.834 | 428.113 | 0 | 18.634 | 4.8 |
 
+Achieved street cadence: 16t about 6.75 fps (4,065 frames over 602.495 s). PC 19c is historical context from a different Windows host and fixture; it achieved 12.84 fps against a 60 fps target.
+
 Street began at x=215, z=0 after the 20× gated B export in the same process. PC phase recorder on and GC sampler off. 9/9 accepted pans at 60.72 / 120.8 / 180.93 / 240.91 / 301 / 361.02 / 420.98 / 480.9 / 541.47 s. Rate changes were acknowledged at 200.339893 / 400.340915 s. Complete mod-work coverage true.
 
 | Retime | Player.log |
@@ -17157,7 +17159,7 @@ The forced-live gap uses the same recorded 15:30 no-mod start throughout. The la
 | A repeat | start | 2026-11-20T07:30:49.087629+00:00 | 22,274 | 4.95 5.82 5.15 | 59% | 1 / 0 | 96.9 Big Ambitions Agent Tests Mac, 94.2 com.apple.Virtualization.VirtualMachine, 56.7 Grok Bot Helper, 42.3 WindowServer, 9.0 node |
 | A repeat | end | 2026-11-20T07:40:54.664924+00:00 | 22,274 | 8.37 7.82 6.23 | 62% | 1 / 0 | 100.7 com.apple.Virtualization.VirtualMachine, 85.0 Big Ambitions Agent Tests Mac, 45.8 WindowServer, 10.7 Grok Bot Helper, 8.2 coreaudiod |
 | B 20× | start | 2026-11-20T07:53:34.995642+00:00 | 25,779 | 13.71 10.99 8.27 | 61% | 1 / 0 | 118.9 node, 96.0 Big Ambitions Agent Tests Mac, 42.7 WindowServer, 20.5 Grok Bot Helper (Renderer), 17.4 Grok Bot Helper |
-| B 20× | end | 2026-11-20T08:03:40.896313+00:00 | 25,779 | 8.69 6.96 6.88 | 55% | 1 / 0 | 203.3 io.tailscale.ipn.macsys.network-extension, 73.4 Big Ambitions Agent Tests Mac, 46.1 WindowServer, 27.6 hpc-c1120-410f64a9ea721898abb4f73ccc5d7e47f5d1bb5c [mux], 22.8 Grok Bot Helper (Renderer) |
+| B 20× | end | 2026-11-20T08:03:40.896313+00:00 | 25,779 | 8.69 6.96 6.88 | 55% | 1 / 0 | 203.3 io.tailscale.ipn.macsys.network-extension, 73.4 Big Ambitions Agent Tests Mac, 46.1 WindowServer, 27.6 background mux process, 22.8 Grok Bot Helper (Renderer) |
 | B 60× | start | 2026-11-20T08:28:02.437075+00:00 | 36,358 | 8.97 10.11 9.52 | 56% | 1 / 0 | 117.8 io.tailscale.ipn.macsys.network-extension, 88.4 Big Ambitions Agent Tests Mac, 83.5 com.apple.Virtualization.VirtualMachine, 47.1 appstoreagent, 42.3 WindowServer |
 | B 60× | end | 2026-11-20T08:38:08.476404+00:00 | 36,358 | 8.80 8.39 8.47 | 62% | 1 / 0 | 111.0 com.apple.Virtualization.VirtualMachine, 74.9 Big Ambitions Agent Tests Mac, 43.0 WindowServer, 16.0 Grok Bot Helper, 15.8 Grok Bot Helper (Renderer) |
 | C street | start | 2026-11-20T08:09:29.905962+00:00 | 25,779 | 7.94 7.21 6.98 | 54% | 1 / 0 | 175.3 io.tailscale.ipn.macsys.network-extension, 104.0 node, 92.5 Big Ambitions Agent Tests Mac, 44.8 WindowServer, 21.6 Grok Bot Helper (Renderer) |
