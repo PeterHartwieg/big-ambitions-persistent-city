@@ -307,6 +307,17 @@ namespace PersistentCity.Runtime
         public bool JobAdmissionExhaustedForFrame => jobAdmissionHeldFrame == Time.frameCount
             || jobPathFrame == Time.frameCount && jobFramePaths >= MaximumJobPathsPerFrame;
         public string LastJobUnit { get; private set; } = "";
+        public double LastContinueMilliseconds { get; private set; }
+        public double SliceUnitMilliseconds { get; private set; }
+        public string SliceUnitStage { get; private set; } = "";
+        public double SliceUnitNavMeshMilliseconds { get; private set; }
+        public int SliceUnitNavMeshQueries { get; private set; }
+        public long SliceUnitNavMeshSamples { get; private set; }
+        public void ResetSliceAnatomy()
+        {
+            LastContinueMilliseconds = 0; SliceUnitMilliseconds = 0; SliceUnitStage = "";
+            SliceUnitNavMeshMilliseconds = 0; SliceUnitNavMeshQueries = 0; SliceUnitNavMeshSamples = 0;
+        }
         private static readonly string[] StageNames =
         {
             "validate", "home-curbs", "home-curb-walk", "direct-walk", "subway-stations", "subway-connector", "subway-candidates",
@@ -383,6 +394,13 @@ namespace PersistentCity.Runtime
                 if (Completed) return true;
                 if (double.IsNaN(budgetMilliseconds) || budgetMilliseconds < 0) throw new ArgumentOutOfRangeException(nameof(budgetMilliseconds));
                 long started = Stopwatch.GetTimestamp();
+                owner.ResetSliceAnatomy();
+                try { return ContinueUnits(budgetMilliseconds, started); }
+                finally { owner.LastContinueMilliseconds = (Stopwatch.GetTimestamp() - started) * 1000.0 / Stopwatch.Frequency; }
+            }
+
+            private bool ContinueUnits(double budgetMilliseconds, long started)
+            {
                 long deadline = double.IsPositiveInfinity(budgetMilliseconds)
                     ? long.MaxValue : started + (long)(budgetMilliseconds * Stopwatch.Frequency / 1000);
                 if (RevisionChanged())
@@ -407,12 +425,20 @@ namespace PersistentCity.Runtime
                     first = false;
                     units++;
                     owner.JobUnits++; owner.LastJobUnit = StageNames[(int)stage];
-                    long before = owner.Metrics.NavMeshPathQueries;
+                    long before = owner.Metrics.NavMeshPathQueries, samplesBefore = owner.Metrics.NavMeshSampleQueries;
                     double pathTimeBefore = owner.Metrics.NavMeshPathMilliseconds;
+                    long unitStarted = Stopwatch.GetTimestamp();
                     try { Unit(deadline); }
                     finally
                     {
                         int queries = (int)(owner.Metrics.NavMeshPathQueries - before);
+                        double unitMilliseconds = (Stopwatch.GetTimestamp() - unitStarted) * 1000.0 / Stopwatch.Frequency;
+                        if (unitMilliseconds > owner.SliceUnitMilliseconds)
+                        {
+                            owner.SliceUnitMilliseconds = unitMilliseconds; owner.SliceUnitStage = owner.LastJobUnit;
+                            owner.SliceUnitNavMeshMilliseconds = owner.Metrics.NavMeshPathMilliseconds - pathTimeBefore;
+                            owner.SliceUnitNavMeshQueries = queries; owner.SliceUnitNavMeshSamples = owner.Metrics.NavMeshSampleQueries - samplesBefore;
+                        }
                         if (finite) owner.jobFramePaths += queries;
                         if (queries > 0)
                         {

@@ -22,6 +22,7 @@ namespace PersistentCity.Core
         public static bool Finite(double value) => !double.IsNaN(value) && !double.IsInfinity(value);
         public static double Distance(Position a, Position b) => Math.Sqrt((a.X-b.X)*(a.X-b.X)+(a.Y-b.Y)*(a.Y-b.Y)+(a.Z-b.Z)*(a.Z-b.Z));
         public static Position Lerp(Position a, Position b, double t) => new Position(a.X+(b.X-a.X)*t, a.Y+(b.Y-a.Y)*t, a.Z+(b.Z-a.Z)*t);
+        public static Position Toward(Position a, Position b, double t) => t >= 1 ? b : Lerp(a, b, t);
     }
 
     public sealed class CitizenIdentity
@@ -98,12 +99,13 @@ namespace PersistentCity.Core
         }
         internal RoadTag RoadTag { get; private set; }
         internal bool Frozen { get; private set; }
-        internal RouteLeg CopyAs(Position from, Position to, double minutes, string service)
+        internal bool SplitPrefix { get; private set; }
+        internal RouteLeg CopyAs(Position from, Position to, double minutes, string service, bool splitPrefix = false)
         {
-            if (Frozen && from.X == this.from.X && from.Y == this.from.Y && from.Z == this.from.Z
+            if (Frozen && splitPrefix == SplitPrefix && from.X == this.from.X && from.Y == this.from.Y && from.Z == this.from.Z
                 && to.X == this.to.X && to.Y == this.to.Y && to.Z == this.to.Z && minutes == this.minutes
                 && string.Equals(service, serviceId, StringComparison.Ordinal)) return this;
-            var copy = new RouteLeg { from = from, to = to, mode = mode, minutes = minutes };
+            var copy = new RouteLeg { from = from, to = to, mode = mode, minutes = minutes, SplitPrefix = splitPrefix };
             if (string.Equals(service, serviceId, StringComparison.Ordinal)) { copy.serviceId = serviceId; copy.RoadTag = RoadTag; }
             else copy.ServiceId = service;
             return copy;
@@ -218,7 +220,7 @@ namespace PersistentCity.Core
             if (Legs.Count == 0) throw new InvalidOperationException("A route must contain a leg.");
             foreach (var leg in Legs)
             {
-                if (elapsed <= leg.Minutes) return Position.Lerp(leg.From, leg.To, Math.Max(0, elapsed / leg.Minutes));
+                if (elapsed <= leg.Minutes) return Position.Toward(leg.From, leg.To, Math.Max(0, elapsed / leg.Minutes));
                 elapsed -= leg.Minutes;
             }
             return Legs[Legs.Count - 1].To;

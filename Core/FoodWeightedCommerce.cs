@@ -25,15 +25,18 @@ namespace PersistentCity.Core
         private long publishedInvalidation=-1;
         internal bool AwarenessCurrent => AwarenessReady;
         internal bool HasPendingCampaignPublication => (CampaignProvider as IFoodCampaignPreparation)?.HasPendingPublication == true;
-        internal void ContinueCampaignPublication() => ((IFoodCampaignPreparation)CampaignProvider!).ContinuePublication();
+        internal string ContinuationStep { get; private set; } = "";
+        internal void ContinueCampaignPublication() { ContinuationStep="campaign"; ((IFoodCampaignPreparation)CampaignProvider!).ContinuePublication(); }
         internal bool NeedsAwarenessPreparation(double minute) => HasPendingCampaignPublication || rivalResumeNeedsRefresh && NeedsRivalPreparation(minute)
             || pendingDecision==null && state.ChoicePolicyVersion==FoodChoicePolicy.Version
             && (int)(minute/1440)>=state.ChoiceStartsDay && (int)(minute/1440)>=state.AwarenessStartsDay && (NeedsRivalPreparation(minute) || !AwarenessReady);
         internal void ContinueAwarenessPreparation()
         {
+            ContinuationStep="awareness";
             if (HasPendingCampaignPublication) { ContinueCampaignPublication(); return; }
             if(NeedsRivalPreparation(city.State.Minute))
             {
+                ContinuationStep="rival-refresh";
                 var rivals=(IRivalFoodMarket)market; rivals.ContinueRivalRefresh(city.State.Minute);
                 if(!rivals.NeedsRivalRefresh(city.State.Minute)) rivalResumeNeedsRefresh=false;
                 return;
@@ -46,10 +49,13 @@ namespace PersistentCity.Core
                 buildingScopes=state.Shops;buildingCount=state.Shops.Count;
                 awarenessBuilder=FoodAwarenessCatalogue.BeginSparseBuild(AwarenessEntries());
             }
+            ContinuationStep=AwarenessStepNames[(int)awarenessBuilder.Stage];
             if(!awarenessBuilder.Continue()) return;
             awarenessCatalogue=awarenessBuilder.Result;awarenessBuilder.Dispose();awarenessBuilder=null;
             awarenessRevision=buildingRevision;publishedInvalidation=buildingInvalidation;awarenessScopes=buildingScopes;awarenessCount=buildingCount;
         }
+        private static readonly string[] AwarenessStepNames=Array.ConvertAll((FoodAwarenessCatalogue.BuildStage[])Enum.GetValues(typeof(FoodAwarenessCatalogue.BuildStage)),
+            stage=>"awareness-"+stage.ToString().ToLowerInvariant());
         private FoodAwarenessCatalogue AwarenessCatalogue() => AwarenessReady ? awarenessCatalogue!
             : throw new InvalidOperationException("Awareness image must finish bounded preparation before capture.");
         private FoodScope? ScopeAtPlace(string place)
@@ -341,6 +347,7 @@ namespace PersistentCity.Core
 
         private void ContinueFoodDecision(ResidentMeal meal,CitizenState person)
         {
+            ContinuationStep="decision-check";
             var d=meal.Decision!;
             if(d.Tuning==null) d.Tuning=FoodDecisionTuning.Capture(ChoiceSettings);
             bool atStop=d.ContextKey.StartsWith("stop:",StringComparison.Ordinal);
@@ -349,8 +356,9 @@ namespace PersistentCity.Core
             {EndDecision(meal);Finish(meal,MealStatus.Missed,"Schedule or shop changed before departure");return;}
             var origin=city.FindPlace(stop.PlaceId);
             var preferences=QuotePreferences(d.Deadline-d.OriginAt);
-            if(d.Result!=FoodDecisionResult.Evaluating) {CommitFoodDecision(meal,person,stop,d,atStop,preferences);return;}
+            if(d.Result!=FoodDecisionResult.Evaluating) {ContinuationStep="decision-commit";CommitFoodDecision(meal,person,stop,d,atStop,preferences);return;}
             bool requested=false;
+            ContinuationStep="decision-quote";
             while(d.QuotesDone<2*d.Shops.Count)
             {
                 var s=d.Shops[d.QuotesDone/2]; bool outward=d.QuotesDone%2==0;
@@ -387,6 +395,7 @@ namespace PersistentCity.Core
                 }
                 d.QuotesDone++;
             }
+            ContinuationStep=requested ? "decision-quote-evaluate" : "decision-evaluate";
             var intent=EvaluateDecision(meal,person,d,stop,out var businesses,out var quotes);
             var evaluated=evaluatedOffers;evaluated.Clear();
             var allowance=AvailableForMeal(meal);

@@ -370,7 +370,7 @@ namespace PersistentCity.Core
                 if (ordinaryOwnership?.Pending == true)
                 { ordinaryOwnership.Continue(); count++; continue; }
                 if (food?.HasPendingCampaignPublication == true)
-                { food.ContinueCampaignPublication(); count++; foodContinuationCount++; continue; }
+                { long foodStarted = FoodClock(); food.ContinueCampaignPublication(); FoodTimed(foodStarted); count++; foodContinuationCount++; continue; }
                 double citizenMinute = due.Count == 0 ? double.PositiveInfinity : due.Min!.Minute;
                 double trafficMinute = traffic?.NextEventMinute ?? double.PositiveInfinity;
                 double foodMinute = food?.NextMinute ?? double.PositiveInfinity;
@@ -403,7 +403,7 @@ namespace PersistentCity.Core
                 if (next == activation) { State.Capabilities.Active = true; count++; continue; }
                 if(food?.NeedsAwarenessPreparation(next)==true)
                 {
-                    food.ContinueAwarenessPreparation();count++;foodContinuationCount++;continue;
+                    long foodStarted = FoodClock(); food.ContinueAwarenessPreparation(); FoodTimed(foodStarted); count++; foodContinuationCount++; continue;
                 }
                 bool postingFirst = food?.PostingDueAt(next) == true
                     && foodMinute <= citizenMinute && foodMinute <= trafficMinute;
@@ -411,7 +411,9 @@ namespace PersistentCity.Core
                 {
                     traffic?.AdvanceTo(next, 0);
                     bool continuation = food!.HasPendingDecision;
+                    long stepStarted = continuation ? FoodClock() : 0;
                     food.Step(); count++;
+                    if (continuation) FoodTimed(stepStarted);
                     if (continuation) foodContinuationCount++;
                     continue;
                 }
@@ -457,6 +459,11 @@ namespace PersistentCity.Core
         }
         private PendingEvent? pending, spareEvent;
         public bool PlanningPending => pending != null;
+        public string FoodContinuationStep => food?.ContinuationStep ?? "";
+        internal Func<long> FoodClock { get; set; } = System.Diagnostics.Stopwatch.GetTimestamp;
+        internal double FoodClockFrequency { get; set; } = System.Diagnostics.Stopwatch.Frequency;
+        public double LastFoodContinuationMilliseconds { get; private set; }
+        private void FoodTimed(long started) => LastFoodContinuationMilliseconds = (FoodClock() - started) * 1000.0 / FoodClockFrequency;
         public long PlanningRequests { get; private set; }
         private bool InProgress(Due item) => pending != null && ReferenceEquals(pending.Item, item);
         public long EventRestarts { get; private set; }
@@ -728,7 +735,7 @@ namespace PersistentCity.Core
             foreach (var leg in person.Journey.Legs)
             {
                 if (elapsed <= leg.Minutes)
-                    return leg.Mode == TravelMode.Car ? Position.Lerp(leg.From, leg.To, Math.Min(1, elapsed / leg.Minutes)) : position;
+                    return leg.Mode == TravelMode.Car ? Position.Toward(leg.From, leg.To, elapsed / leg.Minutes) : position;
                 if (leg.Mode == TravelMode.Car) position = leg.To;
                 elapsed -= leg.Minutes;
             }

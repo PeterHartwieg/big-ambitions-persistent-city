@@ -253,10 +253,38 @@ public sealed class TravelTimingTests
         double before = Position(state).X;
         Assert.True(TravelTiming.Apply(state, 2, 0.5));
         Assert.Equal(before, Position(state).X, 8);
-        Assert.Equal(4, citizen.Journey.Legs.Count);
-        Assert.All(citizen.Journey.Legs.Take(3), leg => Assert.Equal("native:road:fragment1:timing-native:0:1", leg.ServiceId));
-        Assert.Equal("native:road:v1:timing-native:1:2", citizen.Journey.Legs[3].ServiceId);
+        Assert.Equal(3, citizen.Journey.Legs.Count);
+        Assert.All(citizen.Journey.Legs.Take(2), leg => Assert.Equal("native:road:fragment1:timing-native:0:1", leg.ServiceId));
+        Assert.Equal(new Position(0, 0, 0), citizen.Journey.Legs[0].From);
+        Assert.Equal(citizen.Journey.Legs[0].To, citizen.Journey.Legs[1].From);
+        Assert.Equal(new Position(60, 0, 0), citizen.Journey.Legs[1].To);
+        Assert.Equal("native:road:v1:timing-native:1:2", citizen.Journey.Legs[2].ServiceId);
         Assert.Equal(SaveReadStatus.Loaded, SaveWire.Read(SaveCodec.Write(state)).Status);
+    }
+
+    [Fact]
+    public void RepeatedRetimesOfARoundedNativeRoadLegKeepOneJoinedSplitAndTheExactPose()
+    {
+        var state = City(TravelMode.Car); var citizen = state.Citizens[0];
+        state.TravelTimingVersion = 1;
+        citizen.Journey!.Legs = new()
+        {
+            new RouteLeg { From = new Position(-36.16057586669922, 0, 0), To = new Position(44.64554214477539, 0, 0), Minutes = 12,
+                Mode = TravelMode.Car, ServiceId = "native:road:v1:timing-native:0:1" }
+        };
+        state.Places[0].Position = new Position(-36.16057586669922, 0, 0); state.Places[1].Position = new Position(44.64554214477539, 0, 0);
+        citizen.Car!.ParkedPosition = state.Places[0].Position;
+        citizen.DepartureMinute = 1440; citizen.NextEventMinute = 1452;
+        double rate = 1;
+        foreach (double minute in new[] { 1443, 1447.73, 1447.76, 1447.79, 1447.82, 1447.85, 1447.88, 1447.91 })
+        {
+            state.Minute = minute;
+            var before = (Position(state), CarPosition(state));
+            rate = rate == 1 ? 2 : 1;
+            Assert.True(TravelTiming.Apply(state, 2, rate));
+            Assert.Equal(before, (Position(state), CarPosition(state)));
+            Assert.InRange(citizen.Journey!.Legs.Count, 1, 2);
+        }
     }
 
     [Theory]

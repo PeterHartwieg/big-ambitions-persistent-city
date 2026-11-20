@@ -105,6 +105,11 @@ namespace PersistentCity.Runtime
         private double planningMilliseconds, maxPlanningSliceMilliseconds;
         private string slowestPlanningUnit = "";
         private long slowestPlanningUnitNavMeshQueries;
+        private string slowestSliceUnitStage = "";
+        private double slowestSliceUnitMilliseconds, slowestSliceUnitNavMeshMilliseconds, slowestSliceJobMilliseconds;
+        private int slowestSliceUnitNavMeshQueries;
+        private long slowestSliceUnitNavMeshSamples;
+        private readonly FoodContinuationMaximum slowestFoodContinuation = new FoodContinuationMaximum();
         private double slowestAdvanceUnitMilliseconds, slowestAdvanceStopMilliseconds, slowestAdvanceCallStopMilliseconds;
         private double slowestAdvanceMaximumUnitStopMilliseconds, slowestAdvanceP95UnitStopMilliseconds;
         private int slowestAdvanceStopUnits, slowestAdvanceUnitsOverStopThreshold;
@@ -526,6 +531,10 @@ namespace PersistentCity.Runtime
                         + inlineRestarts + "), road search restarts " + (routes?.RoadSearchRestarts ?? 0)
                         + ", units " + (routes?.JobUnits ?? 0) + ", reused plan jobs " + (routes?.JobsReused ?? 0) + ", query/unit admission deferrals " + (routes?.JobAdmissionDeferrals ?? 0)
                         + ", path reserve ms " + (routes?.JobPathReserveMilliseconds ?? 0) + ". "
+                        + PlanningSliceAnatomy.Text(maxPlanningSliceMilliseconds, slowestSliceJobMilliseconds, slowestSliceUnitStage, slowestSliceUnitMilliseconds,
+                            slowestSliceUnitNavMeshMilliseconds, slowestSliceUnitNavMeshQueries, slowestSliceUnitNavMeshSamples)
+                        + " Slowest food continuation: " + slowestFoodContinuation.Milliseconds.ToString("F3", System.Globalization.CultureInfo.InvariantCulture)
+                        + " ms (" + (slowestFoodContinuation.Step.Length == 0 ? "none" : slowestFoodContinuation.Step) + "). "
                         + (physical?.Diagnostics ?? "Physical population inactive."));
                     if (simulation.Traffic != null)
                         log?.Info("Citywide traffic: " + (simulation.Traffic.VehicleCount - simulation.ThroughCarCount) + " persistent cars, "
@@ -574,6 +583,7 @@ namespace PersistentCity.Runtime
                         {
                             long sliceStarted = Stopwatch.GetTimestamp();
                             long queriesBefore = routes?.Metrics.NavMeshPathQueries ?? 0;
+                            routes?.ResetSliceAnatomy();
                             bool finished = active.ContinuePlanning(Math.Max(0, timeBudget - elapsed));
                             AdvanceAllocation.Sub(finished ? GcAllocationSegment.AdvancePlanningFinish : GcAllocationSegment.AdvancePlanningSlice);
                             AdvanceAllocation.Detail(GcAllocationSegment.AdvancePlanning);
@@ -584,6 +594,11 @@ namespace PersistentCity.Runtime
                                 maxPlanningSliceMilliseconds = slice;
                                 slowestPlanningUnit = routes?.LastJobUnit ?? "";
                                 slowestPlanningUnitNavMeshQueries = (routes?.Metrics.NavMeshPathQueries ?? 0) - queriesBefore;
+                                slowestSliceUnitStage = routes?.SliceUnitStage ?? ""; slowestSliceUnitMilliseconds = routes?.SliceUnitMilliseconds ?? 0;
+                                slowestSliceUnitNavMeshMilliseconds = routes?.SliceUnitNavMeshMilliseconds ?? 0;
+                                slowestSliceUnitNavMeshQueries = routes?.SliceUnitNavMeshQueries ?? 0;
+                                slowestSliceUnitNavMeshSamples = routes?.SliceUnitNavMeshSamples ?? 0;
+                                slowestSliceJobMilliseconds = routes?.LastContinueMilliseconds ?? 0;
                             }
                             elapsed = (Stopwatch.GetTimestamp() - started) * MillisecondsPerTimestamp;
                             Unit("route-planning");
@@ -593,6 +608,7 @@ namespace PersistentCity.Runtime
                             continue;
                         }
                         var result = active.AdvanceFrameSlice(target, 1);
+                        slowestFoodContinuation.Observe(result.FoodContinuationEvents > 0, active.LastFoodContinuationMilliseconds, active.FoodContinuationStep);
                         AdvanceAllocation.Sub(GcPauseSampler.AdvanceEventSegment(result.TrafficEvents, result.FoodContinuationEvents, result.CitizenEvents, result.PlanningPending));
                         AdvanceAllocation.Detail(GcAllocationSegment.AdvanceEvents);
                         events += result.Events;
@@ -789,6 +805,9 @@ namespace PersistentCity.Runtime
             eventRestarts = inlineRestarts = 0;
             planningMilliseconds = maxPlanningSliceMilliseconds = 0;
             slowestPlanningUnit = ""; slowestPlanningUnitNavMeshQueries = 0;
+            slowestSliceUnitStage = ""; slowestSliceUnitMilliseconds = slowestSliceUnitNavMeshMilliseconds = slowestSliceJobMilliseconds = 0;
+            slowestSliceUnitNavMeshQueries = 0; slowestSliceUnitNavMeshSamples = 0;
+            slowestFoodContinuation.Reset();
             closureFrames = 0; closureMilliseconds = maxClosureMilliseconds = 0;
             maxAdvanceEvents = 0;
             slowestAdvanceUnitMilliseconds = slowestAdvanceStopMilliseconds = slowestAdvanceCallStopMilliseconds = 0; slowestAdvanceUnit = ""; slowestAdvanceCollections = 0;
