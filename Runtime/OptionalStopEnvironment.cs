@@ -333,8 +333,7 @@ namespace PersistentCity.Runtime
                         || !build.Origin.Equals(place.Position) || !build.Run.SameInputs(fresh.Inputs, ParkInputComparer.Instance))
                         build = fresh;
                     parkBuilds.Remove(key);
-                    build.Run.Continue(ParkSampleSpot, build, long.MaxValue);
-                    if (build.Tainted) { build = SetUpPark(trigger, place, key); build.Run.Continue(ParkSampleSpot, build, long.MaxValue); }
+                    build.Run.Continue(ParkArrivalSpot, build, long.MaxValue);
                     ParkBuilds++;
                     MaximumParkMilliseconds = Math.Max(MaximumParkMilliseconds, MillisecondsSince(started));
                     if (build.Run.Spots.Count == 0) return Array.Empty<OptionalStopSpot>();
@@ -369,6 +368,8 @@ namespace PersistentCity.Runtime
                 => ReferenceEquals(a.Collider, b.Collider) && a.Outside.x.Equals(b.Outside.x) && a.Outside.y.Equals(b.Outside.y) && a.Outside.z.Equals(b.Outside.z);
             public int GetHashCode((Collider Collider, Vector3 Outside) value) => System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(value.Collider);
         }
+        private static readonly Func<ParkBuild, (Collider Collider, Vector3 Outside), int, OptionalStopSpot?> ParkArrivalSpot
+            = (build, input, count) => ParkSpot(build.Origin, build.PlaceId, build.Key, count, input.Collider, input.Outside);
         private static readonly Func<ParkBuild, (Collider Collider, Vector3 Outside), int, OptionalStopSpot?> ParkSampleSpot
             = (build, input, count) =>
             {
