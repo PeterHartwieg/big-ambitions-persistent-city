@@ -17,7 +17,7 @@ Every GR-5 rig run from now on must:
 
 ## Latest evidence
 
-- **20 November b, Mac (rig 16u), build 68f63933**. 0 pass / 1 partial / 3 fail / 0 NOT RUN / 2 REPORTED. Street union p95 4 ms. **PROVISIONAL (shared Mac / Mono)**. [20b results](#rig-results--20-november-2026-b-mac-rig-16u-gr-5-322-and-323-at-68f63933).
+- **20 November b, Mac (rig 16u), build 68f63933**. 0 pass / 1 partial / 3 fail / 0 NOT RUN / 2 REPORTED across A–E and L; the partial is L (NOT ESTABLISHED). Street union p95 4 ms. **PROVISIONAL (shared Mac / Mono)**. [20b results](#rig-results--20-november-2026-b-mac-rig-16u-gr-5-322-and-323-at-68f63933).
 
 - **20 November a, Mac (rig 16t), build `2ae50ea1`**. 1 pass / 0 partial / 3 fail / 0 NOT RUN / 2 REPORTED. Street union p95 4.3283 ms. **PROVISIONAL (shared Mac / Mono)**. [20a results](#rig-results--20-november-2026-a-mac-rig-16t-gr-5-320-at-2ae50ea1).
 
@@ -17238,14 +17238,14 @@ Original native and PC exports, full Player.log files, host snapshots, exact sta
 
 ## Rig results — 20 November 2026 b, Mac (rig 16u, GR-5 #322 and #323 at 68f63933)
 
-**0 pass / 1 partial / 3 fail / 0 NOT RUN / 2 REPORTED. PROVISIONAL** for timing on the shared Mac / Mono rig. Role rig_test, instance agentmac. Evidence run persistent-city-rig-2026-11-20b-mac.
+**0 pass / 1 partial / 3 fail / 0 NOT RUN / 2 REPORTED. PROVISIONAL** for timing. The totals cover rows A–E and L; the one partial is L's NOT ESTABLISHED result, and 0 NOT RUN counts those rows only (unrun arms are listed under NOT RUN below). on the shared Mac / Mono rig. Role rig_test, instance agentmac. Evidence run persistent-city-rig-2026-11-20b-mac.
 Raw receipts, JSON, Player.log and controller traces remain at ~/Coding_Projects/.agent-logs/persistent-city-rig-2026-11-20b-mac/. The Markdown ban covers new docs/checks paths, so this section is the evidence report.
 
 | Check | Outcome | Readback |
 | --- | --- | --- |
 | A | FAIL | A steady 7 gen0, 32.276 ms pause p95 (gen0 above about five). A repeat 8 gen0, 102.675 ms pause p95 (gen0 above about five, pause above about 36 ms). |
 | B | FAIL | B 20× 7 gen0, 35.917 ms pause p95, 1429.880832 MB heap (gen0 above about five). B 60× 6 gen0, 33.833 ms pause p95, 1455.7184 MB heap. |
-| C | FAIL | Union p95 4 ms, 1 mod-work spike, retime subphase bound 13.627 ms. |
+| C | FAIL | Union p95 4 ms met the <5 ms gate. Frame 42,273 at 31.5575 ms missed #322 check 3's no-spike expectation (see the C spike row). Retime subphase bound 13.627 ms exceeded #322's ≤11.3 ms expectation. |
 | D | REPORTED | 4/4 footprint arms exported collection-by-collection Mono used heap. |
 | E | REPORTED | 3/3 RSS reads in KiB 5,037,264 / 5,043,824 / 5,090,656. Mesh identity true / true / true. |
 | L | NOT ESTABLISHED | 7 matched retime cycles, max native offset 0.17601 min, diagnostic bytes 1,928 / 1,928 / 1,928 / 1,928 / 1,928 / 1,928 / 1,928 / 1,928, drain RouteLeg excess 1,282. Evidence remains open for census bytes, RouteLeg drain bound. |
@@ -17689,8 +17689,9 @@ Counts show total / retained / truncated. Unity frame IDs join union and PC phas
 
 The A steady process provides the day candidate. Its forced collections bracket the measurement. The night candidate loaded the fixture again in the B 60× process after its bracket closed. The candidate’s footprint includes that process lifetime. The no-mod night arm ran in its own fresh process with the current probe and retained the rig’s reference mod stack with Persistent City absent.
 The day baseline comes from 16t on the same fixture and game build, with matching sealed-file and RLO hashes and a complete after_collection_used series.
+The Mono heap / used columns are the probe heap section's `mono_heap_bytes` / `mono_used_bytes`, read after the forced full collection at each boundary, for both arms. The 16t report's reference used values 1,153,531,904 / 1,132,802,048 B are the same export's probe boundary reads (`mono_heap.start_used_bytes` / `stop_used_bytes`, no forced collection), so they differ from the forced-read values here.
 
-| Boundary | Candidate / reference heap B | Heap gap MB / % | Candidate / reference forced live B | Live gap MB / % | Candidate Mono heap / used B | Reference Mono heap / used B |
+| Boundary | Candidate / reference heap B | Heap gap MB / % | Candidate / reference forced live B | Live gap MB / % | Candidate forced-read Mono heap / used B | Reference forced-read Mono heap / used B |
 | --- | --- | --- | --- | --- | --- | --- |
 | 15:30 start | 1,308,803,072 / 1,239,728,128 | 69.074944 / 5.571782 | 1,156,169,728 / 1,042,743,296 | 113.426432 / 10.877695 | 1,308,803,072 / 1,157,091,328 | 1,239,728,128 / 1,043,759,104 |
 | 15:30 stop | 1,407,746,048 / 1,214,545,920 | 193.200128 / 15.90719 | 1,235,832,832 / 1,058,099,200 | 177.733632 / 16.797445 | 1,407,746,048 / 1,236,770,816 | 1,214,545,920 / 1,058,766,848 |
@@ -17734,7 +17735,7 @@ The day baseline comes from 16t on the same fixture and game build, with matchin
 | 01:00 reference | 16,994 | 1,110,933,504 |
 | 01:00 reference | 19,565 | 1,112,825,856 |
 
-The 16u night baseline is cached for FT GR5 13f Timing v1, Loaded Big Ambitions (Build 3682), probe commit 68f63933ae10eb4dfe223dc81fbea51b1f0024a6. Raw export is ~/Coding_Projects/.agent-logs/persistent-city-rig-2026-11-20b-mac/d-night-reference-measure-stop.json.
+The 16u night reference was measured in a fresh process during 16u, and its export is retained for reuse, for FT GR5 13f Timing v1, Loaded Big Ambitions (Build 3682), probe commit 68f63933ae10eb4dfe223dc81fbea51b1f0024a6. Raw export is ~/Coding_Projects/.agent-logs/persistent-city-rig-2026-11-20b-mac/d-night-reference-measure-stop.json.
 
 
 ### E — RSS and owned memory around A immediate retime
@@ -17886,7 +17887,7 @@ Rig 16t used a retimed process alone. Its R1→R5 census was 55,930,968→59,139
 
 | Operation | Exact error |
 | --- | --- |
-| Auxiliary probe stage (recovered) | Not a mod folder under the isolated ModsLocal: ~/Library/Application Support/com.hovgaardgames.bigambitions.agenttests.mac/ModsLocal/PerfUnionProbe |
+| Auxiliary probe stage — recovered tooling/operator staging error | Not a mod folder under the isolated ModsLocal: ~/Library/Application Support/com.hovgaardgames.bigambitions.agenttests.mac/ModsLocal/PerfUnionProbe |
 
 
 ### NOT RUN
