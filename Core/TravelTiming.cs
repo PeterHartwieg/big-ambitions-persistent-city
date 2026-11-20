@@ -534,16 +534,19 @@ namespace PersistentCity.Core
             if (vehicle == null) return true;
             double end = start + merged, middle = start + previous.Minutes;
             foreach (var span in vehicle.Route)
-                foreach (double boundary in new[] { span.StartNominalMinutes, span.EndNominalMinutes })
-                {
-                    if (!(boundary > start) || !(boundary < end)) continue;
-                    Position separate = boundary <= middle
-                        ? Position.Lerp(previous.From, previous.To, (boundary - start) / previous.Minutes)
-                        : Position.Lerp(previous.To, to, Math.Min(1, (boundary - middle) / minutes));
-                    Position joined = Position.Lerp(previous.From, to, (boundary - start) / merged);
-                    if (!(Position.Distance(separate, joined) <= SpanGeometryMetres)) return false;
-                }
+                if (!BoundaryKept(span.StartNominalMinutes, previous, start, middle, end, to, minutes, merged)
+                    || !BoundaryKept(span.EndNominalMinutes, previous, start, middle, end, to, minutes, merged)) return false;
             return true;
+        }
+
+        private static bool BoundaryKept(double boundary, RouteLeg previous, double start, double middle, double end, Position to, double minutes, double merged)
+        {
+            if (!(boundary > start) || !(boundary < end)) return true;
+            Position separate = boundary <= middle
+                ? Position.Lerp(previous.From, previous.To, (boundary - start) / previous.Minutes)
+                : Position.Lerp(previous.To, to, Math.Min(1, (boundary - middle) / minutes));
+            Position joined = Position.Lerp(previous.From, to, (boundary - start) / merged);
+            return Position.Distance(separate, joined) <= SpanGeometryMetres;
         }
 
         private static double SegmentDistance(Position point, Position from, Position to)

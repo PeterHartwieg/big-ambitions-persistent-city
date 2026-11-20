@@ -23,37 +23,53 @@ public sealed class Gr5AdvanceAttributionTests
             + "NavMesh paths 0.000 ms over 0 queries, other work 0.000 ms, 0 NavMesh samples.", PlanningSliceAnatomy.Text(3, 0, "", 0, 0, 0, 0));
     }
 
+    private sealed class ClockedPlanner : IRoutePlanner, ICitizenRoutePlanner, ITrafficRoutePlanner
+    {
+        private readonly RushSpikeReplay.Planner inner = new RushSpikeReplay.Planner();
+        public long Ticks, Plans;
+        public bool Armed;
+        public TrafficNetwork? TrafficNetwork { get { if (Armed) Ticks += 1_000_000; return inner.TrafficNetwork; } }
+        public void SetTrafficForecast(Func<int, double, TrafficLinkForecast>? forecast) => inner.SetTrafficForecast(forecast);
+        public bool IsTrafficLinkClosed(int linkId) => inner.IsTrafficLinkClosed(linkId);
+        public Route? Plan(Place from, Place to, double minute, TravelPreferences preferences) { Tick(); return inner.Plan(from, to, minute, preferences); }
+        public Route? Plan(Place from, Place to, double minute, CitizenState citizen) { Tick(); return inner.Plan(from, to, minute, citizen); }
+        private void Tick() { if (Armed) { Ticks += 5; Plans++; } }
+    }
+
     [Fact]
     public void FoodContinuationTimeCoversOnlyTheFoodDispatchAndNotTheSurroundingAdvanceWork()
     {
-        var (_, city) = Gr5FoodDecisionTests.FoodCity();
+        var state = RushSpikeReplay.Create();
+        var planner = new ClockedPlanner();
+        var city = new CitySimulator(state, planner);
+        city.AttachFoodMarket(new Gr5FoodDecisionTests.CachedMarket()); city.EnableHouseholdFinances();
+        city.AttachOptionalStops(new RushSpikeReplay.Stops(), OptionalStopPolicy.ApprovedChoicePercentage);
         while (!city.AdvanceTo(2 * 1440 + 11 * 60, 256).CaughtUp) { }
-        long ticks = 0; int reads = 0;
-        city.FoodClock = () => { reads++; return ticks += 7; };
+        city.FoodClock = () => planner.Ticks;
         city.FoodClockFrequency = 1000;
+        planner.Armed = true;
         var maximum = new FoodContinuationMaximum();
-        int food = 0;
+        int food = 0, quoted = 0;
         for (double minute = 2 * 1440 + 11 * 60; minute < 2 * 1440 + 12 * 60; minute += 1.0 / 30)
             for (int unit = 0; unit < 64; unit++)
             {
-                ticks += 1_000_000;
-                int before = reads;
+                long plansBefore = planner.Plans, ticksBefore = planner.Ticks;
                 var result = city.AdvanceFrameSlice(minute, 1);
-                ticks += 1_000_000;
                 if (result.FoodContinuationEvents > 0)
                 {
                     food++;
-                    Assert.Equal(before + 2, reads);
-                    Assert.Equal(7, city.LastFoodContinuationMilliseconds);
+                    long plans = planner.Plans - plansBefore;
+                    if (plans > 0) quoted++;
+                    Assert.True(planner.Ticks - ticksBefore >= 1_000_000, "the slice ran no traffic network read");
+                    Assert.Equal(5.0 * plans, city.LastFoodContinuationMilliseconds);
                 }
-                else Assert.Equal(before, reads);
                 maximum.Observe(result.FoodContinuationEvents > 0, city.LastFoodContinuationMilliseconds, city.FoodContinuationStep);
                 if (result.CaughtUp) break;
             }
-        Assert.True(food > 0);
-        Assert.Equal(7, maximum.Milliseconds);
+        Assert.True(food > 0); Assert.True(quoted > 0);
+        Assert.InRange(maximum.Milliseconds, 5, 1000);
         maximum.Observe(false, 1_000_000, "citizen");
-        Assert.Equal(7, maximum.Milliseconds);
+        Assert.InRange(maximum.Milliseconds, 5, 1000);
         maximum.Reset();
         Assert.Equal(0, maximum.Milliseconds); Assert.Equal("", maximum.Step);
     }
