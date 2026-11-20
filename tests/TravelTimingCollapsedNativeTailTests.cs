@@ -135,6 +135,85 @@ public sealed class TravelTimingCollapsedNativeTailTests
         Assert.Equal(3, citizen.Journey!.Legs.Count);
     }
 
+    private sealed class RoadPlanner : IRoutePlanner, ITrafficRoutePlanner
+    {
+        public RoadPlanner(double[] x, Func<int, bool> boundary, double rate)
+        {
+            TrafficNetwork = new TrafficNetwork(Native, Enumerable.Range(0, x.Length).Select(i => new TrafficNetworkNode
+            { Id = i, Position = P(x[i]), AllowsCar = true, KilometresPerHour = 36, Boundary = i > 0 && i < x.Length - 1 && boundary(i),
+                Successors = i == x.Length - 1 ? Array.Empty<int>() : new[] { i + 1 } }).ToArray(), rate);
+        }
+        public TrafficNetwork TrafficNetwork { get; }
+        public Route? Plan(Place a, Place b, double minute, TravelPreferences preferences) => null;
+        public void SetTrafficForecast(Func<int, double, TrafficLinkForecast>? forecast) { }
+        public bool IsTrafficLinkClosed(int linkId) => false;
+    }
+
+    private static CityState Road(double[] x, double departure)
+    {
+        var route = new Route { Legs = new() };
+        for (int i = 0; i + 1 < x.Length; i++)
+            route.Legs.Add(new RouteLeg { From = P(x[i]), To = P(x[i + 1]), Minutes = Position.Distance(P(x[i]), P(x[i + 1])) / 10, Mode = TravelMode.Car, ServiceId = Tag(i, i + 1) });
+        var state = Population.Create(new[] { new CitizenIdentity { Id = "car", Name = "Car", Age = 30, Persona = Persona.Commuter } }, new[]
+        { new Place { Id = "a", Name = "Home", Kind = PlaceKind.Home, Capacity = 1, Position = route.Legs[0].From },
+          new Place { Id = "b", Name = "Work", Kind = PlaceKind.Work, Capacity = 1, Position = route.Legs[^1].To } }, "road-retime", "0.40.4", 7, departure);
+        var citizen = state.Citizens[0]; citizen.PlaceId = citizen.HomeId = "a"; citizen.DestinationId = citizen.DayPlaceId = "b";
+        citizen.Phase = CitizenPhase.Travelling; citizen.DestinationActivity = Activity.Work; citizen.ActivityUntilMinute = departure + 500;
+        citizen.Journey = route; citizen.DepartureMinute = departure; citizen.NextEventMinute = departure + route.Minutes;
+        citizen.Preferences.OwnsCar = true; citizen.Car = new CarState { Id = "car:car", ParkedPosition = route.Legs[0].From };
+        state.Minute = departure; state.TravelTimingVersion = 1; state.TravelClockRate = 1;
+        return state;
+    }
+
+    private static (int Retimed, int Control)[] ReplayRoad(double[] x, Func<int, bool> boundary, double departure, double[] minutes)
+    {
+        var state = Road(x, departure); var control = Road(x, departure);
+        var counts = new System.Collections.Generic.List<(int, int)>();
+        double rate = 1;
+        foreach (double minute in minutes)
+        {
+            var simulation = new CitySimulator(state, new RoadPlanner(x, boundary, rate));
+            var reference = new CitySimulator(control, new RoadPlanner(x, boundary, 1));
+            simulation.AdvanceTo(minute); reference.AdvanceTo(minute);
+            state.PrepareForSave(); state.SnapshotSynchronizer = null; control.PrepareForSave(); control.SnapshotSynchronizer = null;
+            Assert.True(simulation.Traffic!.TryGetVehicle("car", out _));
+            var citizen = state.Citizens[0];
+            var before = (simulation.SampleJourney(citizen), simulation.PositionOf(citizen), simulation.CarPositionOf(citizen)!.Value);
+            double next = rate == 1 ? 2 : 1;
+            Assert.True(TravelTiming.Apply(state, 2, next, out int degraded));
+            Assert.Equal(0, degraded);
+            rate = next;
+            var after = new CitySimulator(state, new RoadPlanner(x, boundary, rate));
+            Assert.True(after.Traffic!.TryGetVehicle("car", out _));
+            var sample = after.SampleJourney(citizen);
+            Assert.Equal(before.Item1.Position, sample.Position); Assert.Equal(before.Item1.CarPosition, sample.CarPosition);
+            Assert.InRange(Position.Distance(before.Item2, after.PositionOf(citizen)), 0, 1e-9);
+            Assert.InRange(Position.Distance(before.Item3, after.CarPositionOf(citizen)!.Value), 0, 1e-9);
+            if (rate == 1) counts.Add((citizen.Journey!.Legs.Count, control.Citizens[0].Journey!.Legs.Count));
+        }
+        return counts.ToArray();
+    }
+
+    [Fact]
+    public void ATrafficOwnedCarRetimedOnALaterSectionEdgeHoldsOneSplitLegAgainstItsControl()
+    {
+        var counts = ReplayRoad(new[] { -100, -93.79607075257044, -89.87251385202283, -71.32886139365327, -45.705420815248715 }, i => i == 1, 1440,
+            new[] { 1443.410, 1443.433, 1443.456, 1443.479, 1443.502, 1443.525 });
+        Assert.All(counts, c => Assert.InRange(c.Retimed, c.Control, c.Control + 1));
+    }
+
+    [Fact]
+    public void ATrafficOwnedCarCrossingSectionsBetweenRetimesKeepsOneLegPerRetimedSectionBoundary()
+    {
+        var x = Enumerable.Range(0, 41).Select(i => i * 10.0).ToArray();
+        var minutes = new System.Collections.Generic.List<double>();
+        for (int cycle = 0; cycle < 4; cycle++) { minutes.Add(cycle * 2 + 0.5); minutes.Add(cycle * 2 + 0.52); }
+        var counts = ReplayRoad(x, i => i % 2 == 0, 0, minutes.ToArray());
+        Assert.Equal(4, counts.Length);
+        for (int cycle = 0; cycle < counts.Length; cycle++)
+            Assert.InRange(counts[cycle].Retimed, counts[cycle].Control, counts[cycle].Control + cycle + 1);
+    }
+
     [Fact]
     public void CollapsedInteriorTailSurvivesSaveCodecRoundtripWithTheSamePoseAndOwnership()
     {

@@ -527,6 +527,37 @@ namespace PersistentCity.Core
             return false;
         }
 
+        private static bool StraddlesRetainedTraffic(TrafficVehicleState? vehicle, double start, double end, double elapsed)
+        {
+            if (vehicle == null) return false;
+            bool active = vehicle.RouteIndex >= 0 && !vehicle.Completed && elapsed < vehicle.Route[vehicle.RouteIndex].EndNominalMinutes;
+            double tolerance = Math.Max(1e-9, Math.Abs(end) * 1e-12);
+            for (int i = 0; i < vehicle.Route.Count; i++)
+            {
+                if (active && i == vehicle.RouteIndex) continue;
+                var span = vehicle.Route[i];
+                if (span.StartNominalMinutes < end && span.EndNominalMinutes > start
+                    && (span.StartNominalMinutes > start + tolerance || span.EndNominalMinutes < end - tolerance)) return true;
+            }
+            return false;
+        }
+
+        private static double MappedJoinEnd(Route route, int fragment, double end, double minutes)
+        {
+            if (!(end > 0) || !Position.Finite(end)) return double.NaN;
+            long bits = BitConverter.DoubleToInt64Bits(end);
+            for (int distance = 0; distance <= 32; distance++)
+                for (int sign = 1; sign >= -1; sign -= 2)
+                {
+                    if (distance == 0 && sign < 0) continue;
+                    double candidate = BitConverter.Int64BitsToDouble(bits + sign * distance);
+                    double remaining = candidate;
+                    for (int i = 0; i < fragment; i++) remaining -= route.Legs[i].Minutes;
+                    if (remaining == minutes) return candidate;
+                }
+            return double.NaN;
+        }
+
         private static double SegmentDistance(Position point, Position from, Position to)
         {
             double x = to.X - from.X, y = to.Y - from.Y, z = to.Z - from.Z;
@@ -575,10 +606,11 @@ namespace PersistentCity.Core
                     double after = splitPrefix ? 0 : remaining - minutes;
                     double merged = fragmentRemaining - after;
                     if (fragmentRemaining - merged != after) merged = end - fragmentStart;
+                    double joinedEnd = mapping != null && splitPrefix ? MappedJoinEnd(route, fragment, fragmentStart + merged, merged) : fragmentStart + merged;
                     if (ContinuesFragment(previous, leg.Mode, from, to, service) && Position.Finite(merged) && merged > 0 && merged <= MaxLegMinutes
-                        && fragmentStart + merged >= newOffset && !OverlapsRetainedTraffic(traffic, fragmentStart, fragmentStart + merged, elapsed))
+                        && Position.Finite(joinedEnd) && joinedEnd >= newOffset && !StraddlesRetainedTraffic(traffic, fragmentStart, joinedEnd, elapsed))
                     {
-                        double joinedEnd = fragmentStart + merged, segmentEnd = oldEnd ?? oldOffset + oldMinutes;
+                        double segmentEnd = oldEnd ?? oldOffset + oldMinutes;
                         mapping?.Segments.Add((oldOffset, segmentEnd, newOffset, joinedEnd));
                         if (mapping != null && leg.Mode == TravelMode.Car && Position.Distance(from, to) > 0) mapping.UnscaledCarPrefixes.Add((newOffset, joinedEnd));
                         route.Legs[fragment] = previous.CopyAs(previous.From, to, merged, service, splitPrefix);

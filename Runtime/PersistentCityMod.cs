@@ -607,9 +607,8 @@ namespace PersistentCity.Runtime
                             if (citizenEvents >= citizenLimit || elapsed >= timeBudget) break;
                             continue;
                         }
-                        slowestFoodContinuation.Begin();
                         var result = active.AdvanceFrameSlice(target, 1);
-                        slowestFoodContinuation.End(result.FoodContinuationEvents > 0, active.FoodContinuationStep);
+                        slowestFoodContinuation.Observe(result.FoodContinuationEvents > 0, active.LastFoodContinuationMilliseconds, active.FoodContinuationStep);
                         AdvanceAllocation.Sub(GcPauseSampler.AdvanceEventSegment(result.TrafficEvents, result.FoodContinuationEvents, result.CitizenEvents, result.PlanningPending));
                         AdvanceAllocation.Detail(GcAllocationSegment.AdvanceEvents);
                         events += result.Events;

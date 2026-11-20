@@ -24,16 +24,36 @@ public sealed class Gr5AdvanceAttributionTests
     }
 
     [Fact]
-    public void TheFoodContinuationMaximumTimesOnlyTheFoodUnitAndNotTheSetupBeforeIt()
+    public void FoodContinuationTimeCoversOnlyTheFoodDispatchAndNotTheSurroundingAdvanceWork()
     {
+        var (_, city) = Gr5FoodDecisionTests.FoodCity();
+        while (!city.AdvanceTo(2 * 1440 + 11 * 60, 256).CaughtUp) { }
+        long ticks = 0; int reads = 0;
+        city.FoodClock = () => { reads++; return ticks += 7; };
+        city.FoodClockFrequency = 1000;
         var maximum = new FoodContinuationMaximum();
-        System.Threading.Thread.Sleep(40);
-        maximum.Begin();
-        maximum.End(true, "decision-quote");
-        Assert.InRange(maximum.Milliseconds, 0, 20);
-        Assert.Equal("decision-quote", maximum.Step);
-        maximum.Begin(); System.Threading.Thread.Sleep(40); maximum.End(false, "citizen");
-        Assert.Equal("decision-quote", maximum.Step);
+        int food = 0;
+        for (double minute = 2 * 1440 + 11 * 60; minute < 2 * 1440 + 12 * 60; minute += 1.0 / 30)
+            for (int unit = 0; unit < 64; unit++)
+            {
+                ticks += 1_000_000;
+                int before = reads;
+                var result = city.AdvanceFrameSlice(minute, 1);
+                ticks += 1_000_000;
+                if (result.FoodContinuationEvents > 0)
+                {
+                    food++;
+                    Assert.Equal(before + 2, reads);
+                    Assert.Equal(7, city.LastFoodContinuationMilliseconds);
+                }
+                else Assert.Equal(before, reads);
+                maximum.Observe(result.FoodContinuationEvents > 0, city.LastFoodContinuationMilliseconds, city.FoodContinuationStep);
+                if (result.CaughtUp) break;
+            }
+        Assert.True(food > 0);
+        Assert.Equal(7, maximum.Milliseconds);
+        maximum.Observe(false, 1_000_000, "citizen");
+        Assert.Equal(7, maximum.Milliseconds);
         maximum.Reset();
         Assert.Equal(0, maximum.Milliseconds); Assert.Equal("", maximum.Step);
     }
