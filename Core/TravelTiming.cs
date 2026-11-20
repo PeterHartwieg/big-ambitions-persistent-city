@@ -527,35 +527,23 @@ namespace PersistentCity.Core
             return false;
         }
 
-        private static bool StraddlesRetainedTraffic(TrafficVehicleState? vehicle, double start, double end, double elapsed)
-        {
-            if (vehicle == null) return false;
-            bool active = vehicle.RouteIndex >= 0 && !vehicle.Completed && elapsed < vehicle.Route[vehicle.RouteIndex].EndNominalMinutes;
-            double tolerance = Math.Max(1e-9, Math.Abs(end) * 1e-12);
-            for (int i = 0; i < vehicle.Route.Count; i++)
-            {
-                if (active && i == vehicle.RouteIndex) continue;
-                var span = vehicle.Route[i];
-                if (span.StartNominalMinutes < end && span.EndNominalMinutes > start
-                    && (span.StartNominalMinutes > start + tolerance || span.EndNominalMinutes < end - tolerance)) return true;
-            }
-            return false;
-        }
+        private const double SpanGeometryMetres = 0.0001;
 
-        private static double MappedJoinEnd(Route route, int fragment, double end, double minutes)
+        private static bool SpanGeometryKept(TrafficVehicleState? vehicle, RouteLeg previous, double start, Position to, double minutes, double merged)
         {
-            if (!(end > 0) || !Position.Finite(end)) return double.NaN;
-            long bits = BitConverter.DoubleToInt64Bits(end);
-            for (int distance = 0; distance <= 32; distance++)
-                for (int sign = 1; sign >= -1; sign -= 2)
+            if (vehicle == null) return true;
+            double end = start + merged, middle = start + previous.Minutes;
+            foreach (var span in vehicle.Route)
+                foreach (double boundary in new[] { span.StartNominalMinutes, span.EndNominalMinutes })
                 {
-                    if (distance == 0 && sign < 0) continue;
-                    double candidate = BitConverter.Int64BitsToDouble(bits + sign * distance);
-                    double remaining = candidate;
-                    for (int i = 0; i < fragment; i++) remaining -= route.Legs[i].Minutes;
-                    if (remaining == minutes) return candidate;
+                    if (!(boundary > start) || !(boundary < end)) continue;
+                    Position separate = boundary <= middle
+                        ? Position.Lerp(previous.From, previous.To, (boundary - start) / previous.Minutes)
+                        : Position.Lerp(previous.To, to, Math.Min(1, (boundary - middle) / minutes));
+                    Position joined = Position.Lerp(previous.From, to, (boundary - start) / merged);
+                    if (!(Position.Distance(separate, joined) <= SpanGeometryMetres)) return false;
                 }
-            return double.NaN;
+            return true;
         }
 
         private static double SegmentDistance(Position point, Position from, Position to)
@@ -606,9 +594,10 @@ namespace PersistentCity.Core
                     double after = splitPrefix ? 0 : remaining - minutes;
                     double merged = fragmentRemaining - after;
                     if (fragmentRemaining - merged != after) merged = end - fragmentStart;
-                    double joinedEnd = mapping != null && splitPrefix ? MappedJoinEnd(route, fragment, fragmentStart + merged, merged) : fragmentStart + merged;
+                    double joinedEnd = fragmentStart + merged;
                     if (ContinuesFragment(previous, leg.Mode, from, to, service) && Position.Finite(merged) && merged > 0 && merged <= MaxLegMinutes
-                        && Position.Finite(joinedEnd) && joinedEnd >= newOffset && !StraddlesRetainedTraffic(traffic, fragmentStart, joinedEnd, elapsed))
+                        && Position.Finite(joinedEnd) && joinedEnd >= newOffset && !OverlapsRetainedTraffic(traffic, fragmentStart, joinedEnd, elapsed)
+                        && SpanGeometryKept(traffic, previous, fragmentStart, to, minutes, merged))
                     {
                         double segmentEnd = oldEnd ?? oldOffset + oldMinutes;
                         mapping?.Segments.Add((oldOffset, segmentEnd, newOffset, joinedEnd));

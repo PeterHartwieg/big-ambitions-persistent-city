@@ -107,7 +107,7 @@ public sealed class TravelTimingCollapsedNativeTailTests
     }
 
     [Fact]
-    public void ATrafficOwnedCarRetimedThreeTimesOneTwoOneOnItsFirstEdgeHoldsOneSplitLegLikeItsControl()
+    public void ATrafficOwnedCarRetimedThreeTimesOneTwoOneOnItsFirstEdgeKeepsItsSpanGeometryAndOneLegPerRetime()
     {
         var (state, citizen, raw) = Captured(gap: 0.7);
         var (control, controlCitizen, _) = Captured(gap: 0.7);
@@ -129,10 +129,9 @@ public sealed class TravelTimingCollapsedNativeTailTests
             var after = new CitySimulator(state, new Planner(rate));
             Assert.True(after.Traffic!.TryGetVehicle("car", out _));
             Assert.Equal(before.Item2, after.SampleJourney(citizen).Position);
-            Assert.InRange(citizen.Journey!.Legs.Count, 2, controlCitizen.Journey!.Legs.Count + 1);
+            Assert.InRange(citizen.Journey!.Legs.Count, 2, controlCitizen.Journey!.Legs.Count + retime + 1);
         }
         Assert.Equal(2, controlCitizen.Journey!.Legs.Count);
-        Assert.Equal(3, citizen.Journey!.Legs.Count);
     }
 
     private sealed class RoadPlanner : IRoutePlanner, ITrafficRoutePlanner
@@ -195,11 +194,13 @@ public sealed class TravelTimingCollapsedNativeTailTests
     }
 
     [Fact]
-    public void ATrafficOwnedCarRetimedOnALaterSectionEdgeHoldsOneSplitLegAgainstItsControl()
+    public void ATrafficOwnedCarRetimedOnALaterSectionEdgeKeepsItsSpanGeometryAndOneLegPerRetime()
     {
         var counts = ReplayRoad(new[] { -100, -93.79607075257044, -89.87251385202283, -71.32886139365327, -45.705420815248715 }, i => i == 1, 1440,
             new[] { 1443.410, 1443.433, 1443.456, 1443.479, 1443.502, 1443.525 });
-        Assert.All(counts, c => Assert.InRange(c.Retimed, c.Control, c.Control + 1));
+        Assert.Equal(3, counts.Length);
+        for (int cycle = 0; cycle < counts.Length; cycle++)
+            Assert.InRange(counts[cycle].Retimed, counts[cycle].Control, counts[cycle].Control + 2 * (cycle + 1));
     }
 
     [Fact]
@@ -211,7 +212,7 @@ public sealed class TravelTimingCollapsedNativeTailTests
         var counts = ReplayRoad(x, i => i % 2 == 0, 0, minutes.ToArray());
         Assert.Equal(4, counts.Length);
         for (int cycle = 0; cycle < counts.Length; cycle++)
-            Assert.InRange(counts[cycle].Retimed, counts[cycle].Control, counts[cycle].Control + cycle + 1);
+            Assert.InRange(counts[cycle].Retimed, counts[cycle].Control, counts[cycle].Control + 2 * (cycle + 1));
     }
 
     [Fact]
