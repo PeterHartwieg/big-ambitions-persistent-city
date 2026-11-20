@@ -242,10 +242,8 @@ namespace PersistentCity.Core
             MemorySettings = memorySettings ?? new FoodMemorySettings(); MemorySettings.Clamp();
             memoryStore = (campaign as FoodCampaignSource)?.ReferencesFor(state) ?? new FoodMemoryStore(state);
             if(state.Residents.Count==0) { state.ChoiceStartsDay=(int)Math.Floor(city.State.Minute/1440)+1; state.AwarenessStartsDay=state.ChoiceStartsDay; state.RivalStartsDay=state.ChoiceStartsDay; }
-            records = state.Residents.ToDictionary(r => r.ResidentId, StringComparer.Ordinal);
+            records = new Dictionary<string, ResidentMeal>(state.Residents.Count, StringComparer.Ordinal);
             storedMemoryProvider = new StoredMemoryAwareness(this);
-            AdoptRecordWallets();
-            InitializeRepresentation();
             attachSteps = AttachSteps();
             if (staged) return;
             while (attachSteps.MoveNext()) { }
@@ -261,6 +259,22 @@ namespace PersistentCity.Core
         }
         private IEnumerator<bool> AttachSteps()
         {
+            var saved = state.Residents;
+            for (int index = 0; index < saved.Count; index++)
+            {
+                var meal = saved[index];
+                records.Add(meal.ResidentId, meal);
+                if (index % AttachMealsPerStep == AttachMealsPerStep - 1) yield return false;
+            }
+            yield return false;
+            for (int index = 0; index < saved.Count; index++)
+            {
+                AdoptRecordWallet(saved[index]);
+                if (index % AttachMealsPerStep == AttachMealsPerStep - 1) yield return false;
+            }
+            yield return false;
+            InitializeRepresentation();
+            yield return false;
             long rivalPeriod = RivalServiceCalibration.Period(city.State.Minute);
             var residents = state.Residents;
             for (int index = 0; index < residents.Count; index++)
@@ -277,9 +291,13 @@ namespace PersistentCity.Core
                 if (index % AttachMealsPerStep == AttachMealsPerStep - 1) yield return false;
             }
             yield return false;
-            budgetDue.Build();
+            budgetDue.BeginBuild();
             yield return false;
-            Feedback = FoodMoneyCounters.Attach(state);
+            while (!budgetDue.ContinueBuild(AttachMealsPerStep)) yield return false;
+            yield return false;
+            var counters = FoodMoneyCounters.Begin(state);
+            while (!counters.AttachStep(AttachMealsPerStep)) yield return false;
+            Feedback = counters;
             yield return true;
         }
         private static bool Active(ResidentMeal m) => m.Status == MealStatus.Travelling || m.Status == MealStatus.Serving;

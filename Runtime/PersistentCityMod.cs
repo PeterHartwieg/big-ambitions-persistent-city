@@ -457,7 +457,13 @@ namespace PersistentCity.Runtime
                         + (stopEnvironment?.SeamCalls ?? 0) + " calls, "
                         + (stopEnvironment?.SeamMilliseconds ?? 0).ToString("F3", System.Globalization.CultureInfo.InvariantCulture) + " ms total, "
                         + (stopEnvironment?.MaximumSeamMilliseconds ?? 0).ToString("F3", System.Globalization.CultureInfo.InvariantCulture) + " ms maximum, "
-                        + (stopEnvironment?.ParkTriggerScans ?? 0) + " park trigger scans. Routes: "
+                        + (stopEnvironment?.ParkTriggerScans ?? 0) + " park trigger scans; geometry door samples "
+                        + (stopEnvironment?.DoorSamples ?? 0) + " (maximum " + (stopEnvironment?.MaximumDoorMilliseconds ?? 0).ToString("F3", System.Globalization.CultureInfo.InvariantCulture)
+                        + " ms), park builds on demand " + (stopEnvironment?.ParkBuilds ?? 0) + " (maximum " + (stopEnvironment?.MaximumParkMilliseconds ?? 0).ToString("F3", System.Globalization.CultureInfo.InvariantCulture)
+                        + " ms with setup), audience builds on demand " + (stopEnvironment?.AudienceBuilds ?? 0) + " (maximum " + (stopEnvironment?.MaximumAudienceMilliseconds ?? 0).ToString("F3", System.Globalization.CultureInfo.InvariantCulture)
+                        + " ms), warm-up park/audience slices " + (stopEnvironment?.ParkWarmup.Slices ?? 0) + "/" + (stopEnvironment?.AudienceWarmup.Slices ?? 0)
+                        + " (setups " + (stopEnvironment?.ParkWarmup.Setups ?? 0) + ", maximum " + Math.Max(stopEnvironment?.ParkWarmup.MaximumMilliseconds ?? 0, stopEnvironment?.AudienceWarmup.MaximumMilliseconds ?? 0).ToString("F3", System.Globalization.CultureInfo.InvariantCulture)
+                        + " ms, failures " + ((stopEnvironment?.ParkWarmup.Failures ?? 0) + (stopEnvironment?.AudienceWarmup.Failures ?? 0)) + "), frame-budget deferrals " + (stopEnvironment?.GeometryDeferrals ?? 0) + ". Routes: "
                         + roadSnapshots + " road snapshots started (" + gateChanges + " for gate changes), "
                         + waitingFrames + " frames waiting for routes; rebuild reasons ["
                         + string.Join(", ", roadRebuildReasons.OrderBy(pair => pair.Key, StringComparer.Ordinal).Select(pair => pair.Key + "=" + pair.Value))

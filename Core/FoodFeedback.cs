@@ -218,13 +218,31 @@ namespace PersistentCity.Core
 
         public static FoodMoneyCounters Attach(FoodCommerceState state)
         {
+            var counters = Begin(state);
+            while (!counters.AttachStep(int.MaxValue)) { }
+            return counters;
+        }
+        internal static FoodMoneyCounters Begin(FoodCommerceState state)
+        {
             var counters = new FoodMoneyCounters(state ?? throw new ArgumentNullException(nameof(state)));
-            counters.Rebuild(); return counters;
+            counters.Reset(); return counters;
+        }
+        private int attached;
+        internal bool AttachStep(int count)
+        {
+            var residents = state.Residents;
+            int end = (int)Math.Min(residents.Count, (long)attached + count);
+            for (; attached < end; attached++) Add(residents[attached]);
+            return attached == residents.Count;
+        }
+        private void Reset()
+        {
+            Array.Clear(high, 0, high.Length); Array.Clear(low, 0, low.Length); Array.Clear(flagCounts, 0, flagCounts.Length);
+            meals = budgets = uncertain = blocked = 0; Rebuilds++; attached = 0;
         }
         private void Rebuild()
         {
-            Array.Clear(high, 0, high.Length); Array.Clear(low, 0, low.Length); Array.Clear(flagCounts, 0, flagCounts.Length);
-            meals = budgets = uncertain = blocked = 0; Rebuilds++;
+            Reset();
             foreach (var meal in state.Residents) Add(meal);
         }
         public FoodMoneySnapshot Snapshot()

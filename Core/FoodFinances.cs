@@ -42,13 +42,26 @@ namespace PersistentCity.Core
             }
             public void Build()
             {
+                BeginBuild();
+                while (!ContinueBuild(int.MaxValue)) { }
+            }
+            private int scheduled;
+            internal void BeginBuild()
+            {
                 items.Sort((a, b) => StringComparer.Ordinal.Compare(a.Id, b.Id));
-                for (int i = 0; i < items.Count; i++)
+                scheduled = 0;
+            }
+            internal bool ContinueBuild(int entries)
+            {
+                int end = (int)Math.Min(items.Count, (long)scheduled + entries);
+                for (; scheduled < end; scheduled++)
                 {
-                    var e = items[i]; e.Index = i;
+                    var e = items[scheduled]; e.Index = scheduled;
                     Schedule(e); e.Minute = Math.Min(e.Wallet.NextPostingMinute, e.WageAt);
                 }
+                if (scheduled < items.Count) return false;
                 for (int i = items.Count / 2 - 1; i >= 0; i--) Repair(i);
+                return true;
             }
             private void Schedule(Entry e)
             {
@@ -130,16 +143,13 @@ namespace PersistentCity.Core
         private readonly BudgetQueue budgetDue;
         private double NextBudgetMinute => budgetDue.Minute;
         internal EssentialNeeds EssentialNeeds { get; set; } = EssentialNeeds.None;
-        private void AdoptRecordWallets()
+        private void AdoptRecordWallet(ResidentMeal meal)
         {
-            foreach (var meal in state.Residents)
-            {
-                var person = city.FindCitizen(meal.ResidentId);
-                if (person == null) { if (meal.Budget != null) throw new InvalidOperationException("A wallet has no person: " + meal.ResidentId + "."); continue; }
-                if (person.Wallet == null) person.Wallet = meal.Budget;
-                else if (meal.Budget == null) meal.Budget = person.Wallet;
-                else if (!ReferenceEquals(person.Wallet, meal.Budget)) throw new InvalidOperationException("A food record holds a wallet that is not its person's: " + meal.ResidentId + ".");
-            }
+            var person = city.FindCitizen(meal.ResidentId);
+            if (person == null) { if (meal.Budget != null) throw new InvalidOperationException("A wallet has no person: " + meal.ResidentId + "."); return; }
+            if (person.Wallet == null) person.Wallet = meal.Budget;
+            else if (meal.Budget == null) meal.Budget = person.Wallet;
+            else if (!ReferenceEquals(person.Wallet, meal.Budget)) throw new InvalidOperationException("A food record holds a wallet that is not its person's: " + meal.ResidentId + ".");
         }
         internal void EnrolCreated(CitizenState person)
         {

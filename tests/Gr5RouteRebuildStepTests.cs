@@ -180,6 +180,52 @@ public sealed class Gr5RouteRebuildStepTests
     }
 
     [Fact]
+    public void TheRigScaleFoodAttachRunsInMealSizedUnitsAndKeepsTheMoneyCounters()
+    {
+        var state = Gr5AllocationMeasure.RigCity();
+        var city = new CitySimulator(state, new Gr5AdvanceSegmentMeasure.Straight());
+        city.AttachFoodMarket(new VisitorRoutineTests.Market { Shops = F5gPopulationFillTests.Shops(state) });
+        city.AttachOptionalStops(new Gr5AllocationMeasure.StopSpots(), OptionalStopPolicy.ApprovedChoicePercentage);
+        city.AdvanceTo(Math.Floor(state.Minute / 1440) * 1440 + 1440 + 15.5 * 60, int.MaxValue);
+        int meals = state.Food!.Residents.Count;
+        Assert.True(meals >= 3000, "meals " + meals);
+        var times = new List<List<double>>(); var units = new List<int>();
+        string? committed = null;
+        foreach (double rate in new[] { 2.0, 1, 2, 1 })
+        {
+            var rebuild = city.BeginRebuildRoutes(new Gr5AdvanceSegmentMeasure.Straight(), null);
+            var unitTimes = new List<double>();
+            while (true)
+            {
+                int collections = GC.CollectionCount(0);
+                long started = Stopwatch.GetTimestamp();
+                bool done = rebuild.Step(0);
+                double unit = (Stopwatch.GetTimestamp() - started) * 1000.0 / Stopwatch.Frequency;
+                unitTimes.Add(GC.CollectionCount(0) == collections ? unit : double.MaxValue);
+                if (done) break;
+            }
+            city = rebuild.TakeResult();
+            Assert.Equal(rebuild.Units, rebuild.Updates);
+            units.Add(rebuild.Units); times.Add(unitTimes);
+            Assert.Equal(FoodMoneyCounters.Rescan(state.Food!), city.FoodMoney!.Snapshot());
+            Assert.Equal(1, city.FoodMoney!.Rebuilds);
+            string hash = Hash(state);
+            committed ??= hash;
+            Assert.Equal(committed, hash);
+        }
+        var whole = city.RebuildRoutes(new Gr5AdvanceSegmentMeasure.Straight(), null);
+        Assert.Equal(committed, Hash(state));
+        Assert.Equal(FoodMoneyCounters.Rescan(state.Food!), whole.FoodMoney!.Snapshot());
+        int chunks = (meals + FoodCommerce.AttachMealsPerStep - 1) / FoodCommerce.AttachMealsPerStep;
+        Assert.All(units, u => Assert.Equal(units[0], u));
+        var best = Enumerable.Range(0, units[0]).Select(i => times.Min(t => t[i])).ToList();
+        double slowest = best.Max();
+        output.WriteLine("rig-scale rebuild units " + string.Join(", ", units) + ", slowest unit (best of 4) " + slowest.ToString("0.000") + " ms at unit " + best.IndexOf(slowest) + " (.NET)");
+        Assert.True(units[0] >= 3 * chunks, "units " + units[0]);
+        PerfGate.Under(slowest, 1.25, "slowest rig-scale rebuild unit with the food attach sliced, best of 4 (.NET)");
+    }
+
+    [Fact]
     public void AFailedRebuildCannotBeSteppedAgainAndAFinishedOneReturnsItsResult()
     {
         var (state, city) = Gr5FoodDecisionTests.FoodCity();

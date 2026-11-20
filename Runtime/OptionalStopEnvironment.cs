@@ -56,12 +56,16 @@ namespace PersistentCity.Runtime
                     case SceneScan.Parks:
                         MaintainScans++; ParkTriggerScans++;
                         parkTriggers = UnityEngine.Object.FindObjectsOfType<LocationHappinessTrigger>(true);
-                        scans.Completed(SceneScan.Parks);
+                        scans.Completed(SceneScan.Parks); parkWarmup.Reset();
                         return;
                     case SceneScan.Performers:
                         MaintainScans++; ScanPerformers(); scans.Completed(SceneScan.Performers);
+                        audienceCandidates = null; audienceWarmup.Reset();
                         return;
                 }
+                int frame = Time.frameCount;
+                parkWarmup.Run(geometryBudget, frame, parkTargets ??= new ParkWarmTargets(this));
+                audienceWarmup.Run(geometryBudget, frame, audienceTargets ??= new AudienceWarmTargets(this));
             }
             catch (Exception) { }
         }
@@ -79,7 +83,28 @@ namespace PersistentCity.Runtime
         public double SeamMilliseconds { get; private set; }
         public double MaximumSeamMilliseconds { get; private set; }
         public long ParkTriggerScans { get; private set; }
-        public void ResetSeamDiagnostics() { SeamCalls = ParkTriggerScans = 0; SeamMilliseconds = MaximumSeamMilliseconds = 0; }
+        public void ResetSeamDiagnostics()
+        {
+            SeamCalls = ParkTriggerScans = 0; SeamMilliseconds = MaximumSeamMilliseconds = 0;
+            DoorSamples = ParkBuilds = AudienceBuilds = 0; MaximumDoorMilliseconds = MaximumParkMilliseconds = MaximumAudienceMilliseconds = 0;
+            parkWarmup.ResetDiagnostics(); audienceWarmup.ResetDiagnostics();
+            deferralsSeen = geometryBudget.Deferrals;
+        }
+        public long DoorSamples { get; private set; }
+        public long ParkBuilds { get; private set; }
+        public long AudienceBuilds { get; private set; }
+        public double MaximumDoorMilliseconds { get; private set; }
+        public double MaximumParkMilliseconds { get; private set; }
+        public double MaximumAudienceMilliseconds { get; private set; }
+        public GeometryWarmup ParkWarmup => parkWarmup;
+        public GeometryWarmup AudienceWarmup => audienceWarmup;
+        private long deferralsSeen;
+        public long GeometryDeferrals => geometryBudget.Deferrals - deferralsSeen;
+        private readonly GeometryFrameBudget geometryBudget = new GeometryFrameBudget();
+        private readonly GeometryWarmup parkWarmup = new GeometryWarmup(), audienceWarmup = new GeometryWarmup();
+        private ParkWarmTargets? parkTargets;
+        private AudienceWarmTargets? audienceTargets;
+        private static double MillisecondsSince(long started) => (System.Diagnostics.Stopwatch.GetTimestamp() - started) * 1000.0 / System.Diagnostics.Stopwatch.Frequency;
         private int seamDepth;
         private long BeginSeam() { seamDepth++; return System.Diagnostics.Stopwatch.GetTimestamp(); }
         private void RecordSeam(long started)
@@ -108,13 +133,25 @@ namespace PersistentCity.Runtime
             string key = SpotKey(place, kind);
             if (kind == DwellKind.Resting)
                 return cached.TryGetValue(key, out var park) ? park : ParkEdge(place, key);
-            if (!NativeDoorPresent(place, kind) || !doors.TryQueue(place, out var line) || line == null)
+            if (!NativeDoorPresent(place, kind) || !TryDoorQueue(place, out var line) || line == null)
                 return Array.Empty<OptionalStopSpot>();
             if (cached.TryGetValue(key, out var known)) return known;
             var result = line.Spots.Select((p, index) => new OptionalStopSpot { Id = key + ":" + index,
                 TargetId = place.Id, Position = p, Facing = kind == DwellKind.WindowShopping ? line.Door
                     : new Position(2 * p.X - line.Door.X, p.Y, 2 * p.Z - line.Door.Z) }).ToArray();
             cached[key] = result; return result;
+        }
+        private bool TryDoorQueue(Place place, out DoorQueue? line)
+        {
+            bool before = doors.SampledThisFrame;
+            long started = System.Diagnostics.Stopwatch.GetTimestamp();
+            bool found = doors.TryQueue(place, out line);
+            if (!before && doors.SampledThisFrame)
+            {
+                DoorSamples++;
+                MaximumDoorMilliseconds = Math.Max(MaximumDoorMilliseconds, MillisecondsSince(started));
+            }
+            return found;
         }
         private readonly Dictionary<(string, DwellKind), string> spotKeys = new Dictionary<(string, DwellKind), string>();
         private string SpotKey(Place place, DwellKind kind)
@@ -264,10 +301,24 @@ namespace PersistentCity.Runtime
                     }
             return owner;
         }
+        private sealed class ParkBuild
+        {
+            public ParkBuild(LocationHappinessTrigger trigger, Place place, string key, (Collider Collider, Vector3 Outside)[] inputs, ResumableSamples<(Collider Collider, Vector3 Outside)> run)
+            { Trigger = trigger; Origin = place.Position; PlaceId = place.Id; Key = key; Inputs = inputs; Run = run; }
+            public (Collider Collider, Vector3 Outside)[] Inputs { get; }
+            public bool Tainted { get; set; }
+            public LocationHappinessTrigger Trigger { get; }
+            public Position Origin { get; }
+            public string PlaceId { get; }
+            public string Key { get; }
+            public ResumableSamples<(Collider Collider, Vector3 Outside)> Run { get; }
+        }
+        private readonly Dictionary<string, ParkBuild> parkBuilds = new Dictionary<string, ParkBuild>(StringComparer.Ordinal);
+        private static bool ParkPlace(Place place) => place.Id.StartsWith("scene-park:", StringComparison.Ordinal)
+            && place.EvidenceSource.StartsWith("native-park-volume;", StringComparison.Ordinal);
         private IReadOnlyList<OptionalStopSpot> ParkEdge(Place place, string key)
         {
-            if (!place.Id.StartsWith("scene-park:", StringComparison.Ordinal)
-                || !place.EvidenceSource.StartsWith("native-park-volume;", StringComparison.Ordinal)) return Array.Empty<OptionalStopSpot>();
+            if (!ParkPlace(place)) return Array.Empty<OptionalStopSpot>();
             if (parkTriggers == null || scans.Due(DwellKind.Resting)) return Array.Empty<OptionalStopSpot>();
             {
                 bool destroyed = false;
@@ -276,27 +327,128 @@ namespace PersistentCity.Runtime
                     if (trigger == null) { destroyed = true; continue; }
                     if (!OutdoorPlaces.StaticSceneKey(trigger.transform, out string scene) || "scene-park:" + scene != place.Id
                         || !parkActivity.Admit(place.Id, trigger.gameObject.activeInHierarchy, false)) continue;
-                    var result = new List<OptionalStopSpot>();
-                    foreach (var collider in trigger.GetComponentsInChildren<Collider>(false))
-                    {
-                        if (collider == null || !collider.enabled || !collider.isTrigger
-                            || collider is MeshCollider mesh && !mesh.convex) continue;
-                        var b = collider.bounds; var center = b.center; center.y = (float)place.Position.Y;
-                        foreach (var outside in new[] { new Vector3(b.min.x - 2, center.y, center.z), new Vector3(b.max.x + 2, center.y, center.z),
-                            new Vector3(center.x, center.y, b.min.z - 2), new Vector3(center.x, center.y, b.max.z + 2) })
-                        {
-                            var edge = collider.ClosestPoint(outside);
-                            if (!Sample(place.Position, edge, out var point) || (collider.ClosestPoint(PhysicalPedestrianBody.Vector(point))
-                                - PhysicalPedestrianBody.Vector(point)).sqrMagnitude > 0.25f) continue;
-                            result.Add(new OptionalStopSpot { Id = key + ":" + result.Count, TargetId = place.Id, Position = point, Facing = place.Position });
-                        }
-                    }
-                    if (result.Count == 0) return result;
-                    targets[place.Id] = trigger.transform; cached[key] = result.ToArray(); return cached[key];
+                    long started = System.Diagnostics.Stopwatch.GetTimestamp();
+                    var fresh = SetUpPark(trigger, place, key);
+                    if (!parkBuilds.TryGetValue(key, out var build) || build.Tainted || !ReferenceEquals(build.Trigger, trigger) || !ReferenceEquals(build.PlaceId, place.Id)
+                        || !build.Origin.Equals(place.Position) || !build.Run.SameInputs(fresh.Inputs, ParkInputComparer.Instance))
+                        build = fresh;
+                    parkBuilds.Remove(key);
+                    build.Run.Continue(ParkArrivalSpot, build, long.MaxValue);
+                    ParkBuilds++;
+                    MaximumParkMilliseconds = Math.Max(MaximumParkMilliseconds, MillisecondsSince(started));
+                    if (build.Run.Spots.Count == 0) return Array.Empty<OptionalStopSpot>();
+                    targets[place.Id] = trigger.transform;
+                    var result = build.Run.Take();
+                    cached[key] = result; return result;
                 }
                 if (destroyed) scans.ParkTriggerLost();
             }
             return Array.Empty<OptionalStopSpot>();
+        }
+        private static ParkBuild SetUpPark(LocationHappinessTrigger trigger, Place place, string key)
+        {
+            var inputs = new List<(Collider, Vector3)>();
+            foreach (var collider in trigger.GetComponentsInChildren<Collider>(false))
+            {
+                if (collider == null || !collider.enabled || !collider.isTrigger
+                    || collider is MeshCollider mesh && !mesh.convex) continue;
+                var b = collider.bounds; var center = b.center; center.y = (float)place.Position.Y;
+                inputs.Add((collider, new Vector3(b.min.x - 2, center.y, center.z)));
+                inputs.Add((collider, new Vector3(b.max.x + 2, center.y, center.z)));
+                inputs.Add((collider, new Vector3(center.x, center.y, b.min.z - 2)));
+                inputs.Add((collider, new Vector3(center.x, center.y, b.max.z + 2)));
+            }
+            var array = inputs.ToArray();
+            return new ParkBuild(trigger, place, key, array, new ResumableSamples<(Collider, Vector3)>(array));
+        }
+        private sealed class ParkInputComparer : IEqualityComparer<(Collider Collider, Vector3 Outside)>
+        {
+            public static readonly ParkInputComparer Instance = new ParkInputComparer();
+            public bool Equals((Collider Collider, Vector3 Outside) a, (Collider Collider, Vector3 Outside) b)
+                => ReferenceEquals(a.Collider, b.Collider) && a.Outside.x.Equals(b.Outside.x) && a.Outside.y.Equals(b.Outside.y) && a.Outside.z.Equals(b.Outside.z);
+            public int GetHashCode((Collider Collider, Vector3 Outside) value) => System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(value.Collider);
+        }
+        private static readonly Func<ParkBuild, (Collider Collider, Vector3 Outside), int, OptionalStopSpot?> ParkArrivalSpot
+            = (build, input, count) => ParkSpot(build.Origin, build.PlaceId, build.Key, count, input.Collider, input.Outside);
+        private static readonly Func<ParkBuild, (Collider Collider, Vector3 Outside), int, OptionalStopSpot?> ParkSampleSpot
+            = (build, input, count) =>
+            {
+                if (build.Tainted) return null;
+                if (input.Collider == null || !input.Collider.enabled || !input.Collider.gameObject.activeInHierarchy) { build.Tainted = true; return null; }
+                return ParkSpot(build.Origin, build.PlaceId, build.Key, count, input.Collider, input.Outside);
+            };
+        private static OptionalStopSpot? ParkSpot(Position origin, string placeId, string key, int count, Collider collider, Vector3 outside)
+        {
+            if (collider == null) return null;
+            var edge = collider.ClosestPoint(outside);
+            if (!Sample(origin, edge, out var point) || (collider.ClosestPoint(PhysicalPedestrianBody.Vector(point))
+                - PhysicalPedestrianBody.Vector(point)).sqrMagnitude > 0.25f) return null;
+            return new OptionalStopSpot { Id = key + ":" + count, TargetId = placeId, Position = point, Facing = origin };
+        }
+        private sealed class ParkWarmTargets : IGeometryWarmTarget
+        {
+            private readonly OptionalStopEnvironment owner;
+            public ParkWarmTargets(OptionalStopEnvironment owner) { this.owner = owner; }
+            private LocationHappinessTrigger[]? bound;
+            private Place?[] boundPlaces = Array.Empty<Place?>();
+            private string[] boundKeys = Array.Empty<string>();
+            private bool[] resolved = Array.Empty<bool>();
+            public bool Ready => owner.parkTriggers != null && !owner.scans.Due(DwellKind.Resting);
+            public int Count
+            {
+                get
+                {
+                    var triggers = owner.parkTriggers;
+                    if (triggers == null || owner.scans.Due(DwellKind.Resting)) return 0;
+                    if (!ReferenceEquals(bound, triggers))
+                    {
+                        bound = triggers; boundPlaces = new Place?[triggers.Length];
+                        boundKeys = new string[triggers.Length]; resolved = new bool[triggers.Length];
+                    }
+                    return triggers.Length;
+                }
+            }
+            private bool Resolve(int index, out LocationHappinessTrigger trigger, out Place place, out string key)
+            {
+                trigger = bound![index]; place = null!; key = "";
+                if (trigger == null || !trigger.gameObject.activeInHierarchy) return false;
+                if (!resolved[index])
+                {
+                    resolved[index] = true;
+                    if (OutdoorPlaces.StaticSceneKey(trigger.transform, out string scene)
+                        && owner.places.TryGetValue("scene-park:" + scene, out var found) && ParkPlace(found))
+                    { boundPlaces[index] = found; boundKeys[index] = owner.SpotKey(found, DwellKind.Resting); }
+                }
+                var known = boundPlaces[index];
+                if (known == null) return false;
+                place = known; key = boundKeys[index];
+                return !owner.cached.ContainsKey(key);
+            }
+            private ParkBuild? Build(int index, out LocationHappinessTrigger trigger, out Place place, out string key)
+            {
+                if (!Resolve(index, out trigger, out place, out key)) return null;
+                return owner.parkBuilds.TryGetValue(key, out var build) && ReferenceEquals(build.Trigger, trigger) ? build : null;
+            }
+            public bool Warm(int index)
+            {
+                if (!Resolve(index, out var trigger, out _, out string key)) return true;
+                return owner.parkBuilds.TryGetValue(key, out var build) && ReferenceEquals(build.Trigger, trigger) && build.Run.Complete;
+            }
+            public bool Started(int index) => Build(index, out _, out _, out _) != null;
+            public void Start(int index)
+            {
+                if (Resolve(index, out var trigger, out var place, out string key)) owner.parkBuilds[key] = SetUpPark(trigger, place, key);
+            }
+            public bool Continue(int index, long deadlineTimestamp)
+            {
+                var build = Build(index, out _, out _, out string key);
+                if (build == null) return true;
+                bool done;
+                try { done = build.Run.Continue(ParkSampleSpot, build, deadlineTimestamp, sampleFirst: false); }
+                catch (Exception) { owner.parkBuilds.Remove(key); throw; }
+                if (build.Tainted) { owner.parkBuilds.Remove(key); return true; }
+                return done;
+            }
         }
         private LocationHappinessTrigger[]? parkTriggers;
         private static bool SameScenes(List<int> recorded)
@@ -342,27 +494,48 @@ namespace PersistentCity.Runtime
         private IReadOnlyList<OptionalStopSpot> Audience(Place place)
         {
             if (scans.Due(DwellKind.Audience)) return Array.Empty<OptionalStopSpot>();
-            return audiences.Get(place, performers.Near(place), SampleAudience);
+            var near = performers.Near(place);
+            if (audiences.Cached(place, near, out var known)) return known;
+            long started = System.Diagnostics.Stopwatch.GetTimestamp();
+            var spots = audiences.Get(place, near, SampleAudienceSpot);
+            AudienceBuilds++;
+            MaximumAudienceMilliseconds = Math.Max(MaximumAudienceMilliseconds, MillisecondsSince(started));
+            return spots;
         }
-        private static IReadOnlyList<OptionalStopSpot> SampleAudience(Place place, IReadOnlyList<AudienceTarget> image)
+        private List<Place>? audienceCandidates;
+        private sealed class AudienceWarmTargets : IGeometryWarmTarget
         {
-            var result = new List<OptionalStopSpot>();
-            foreach (var member in image)
+            private readonly OptionalStopEnvironment owner;
+            public AudienceWarmTargets(OptionalStopEnvironment owner) { this.owner = owner; }
+            private List<Place> Candidates => owner.audienceCandidates ??= owner.places.Values
+                .Where(p => p.Kind == PlaceKind.Shop || p.Kind == PlaceKind.Leisure).OrderBy(p => p.Id, StringComparer.Ordinal).ToList();
+            public bool Ready => !owner.scans.Due(DwellKind.Audience) && owner.performers.Count != 0;
+            public int Count => Ready ? Candidates.Count : 0;
+            public bool Warm(int index)
             {
-                var center = PhysicalPedestrianBody.Vector(member.Position);
-                string target = member.Id;
-                for (int i = 0; i < 8; i++)
-                {
-                    double angle = i * Math.PI / 4;
-                    var wanted = center + new Vector3((float)Math.Cos(angle) * 2, 0, (float)Math.Sin(angle) * 2);
-                    if (!Sample(place.Position, wanted, out var point)
-                        || !NavMesh.FindClosestEdge(PhysicalPedestrianBody.Vector(point), out var edge, WalkingRoutes.DryFilter)
-                        || Vector3.Distance(edge.position, PhysicalPedestrianBody.Vector(point)) > 0.8f) continue;
-                    result.Add(new OptionalStopSpot { Id = target + ":" + i, TargetId = target,
-                        Position = point, Facing = PhysicalPedestrianBody.Point(center) });
-                }
+                var place = Candidates[index];
+                var near = owner.performers.Near(place);
+                return near.Count == 0 || owner.audiences.Cached(place, near, out _);
             }
-            return result;
+            public bool Started(int index) => true;
+            public void Start(int index) { }
+            public bool Continue(int index, long deadlineTimestamp)
+            {
+                var place = Candidates[index];
+                return owner.audiences.TryGet(place, owner.performers.Near(place), SampleAudienceSpot, deadlineTimestamp, out _, sampleFirst: false);
+            }
+        }
+        private static readonly Func<Place, AudienceTarget, int, OptionalStopSpot?> SampleAudienceSpot = SampleAudience;
+        private static OptionalStopSpot? SampleAudience(Place place, AudienceTarget member, int i)
+        {
+            var center = PhysicalPedestrianBody.Vector(member.Position);
+            double angle = i * Math.PI / 4;
+            var wanted = center + new Vector3((float)Math.Cos(angle) * 2, 0, (float)Math.Sin(angle) * 2);
+            if (!Sample(place.Position, wanted, out var point)
+                || !NavMesh.FindClosestEdge(PhysicalPedestrianBody.Vector(point), out var edge, WalkingRoutes.DryFilter)
+                || Vector3.Distance(edge.position, PhysicalPedestrianBody.Vector(point)) > 0.8f) return null;
+            return new OptionalStopSpot { Id = member.Id + ":" + i, TargetId = member.Id,
+                Position = point, Facing = PhysicalPedestrianBody.Point(center) };
         }
         public OptionalStopAvailability Available(OptionalStopState stop)
         {
@@ -405,12 +578,13 @@ namespace PersistentCity.Runtime
             if (Position.Distance(stop.Position, geometry.Position) > 0.01) return OptionalStopAvailability.Unavailable;
             return OptionalStopAvailability.Ready;
         }
+        private static NavMeshPath? samplePath;
         private static bool Sample(Position from, Vector3 wanted, out Position point)
         {
             point = default;
             if (!NavMesh.SamplePosition(wanted, out var hit, 0.45f, WalkingRoutes.DryFilter)
                 || Vector3.Distance(hit.position, wanted) > 0.45f) return false;
-            var path = new NavMeshPath();
+            var path = samplePath ??= new NavMeshPath();
             if (!NavMesh.CalculatePath(PhysicalPedestrianBody.Vector(from), hit.position, WalkingRoutes.DryFilter, path)
                 || path.status != NavMeshPathStatus.PathComplete) return false;
             point = PhysicalPedestrianBody.Point(hit.position); return true;
