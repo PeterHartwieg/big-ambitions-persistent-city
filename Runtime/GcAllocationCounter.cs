@@ -14,16 +14,22 @@ namespace PersistentCity.Runtime
         {
             Source.Thread => "thread",
             Source.BoehmLibrary or Source.BoehmWindows or Source.BoehmInternal => "boehm_total",
-            _ => "heap_used",
+            _ => RetimeAllocationTally.HeapUsedCounter,
         };
+
+        private static bool probed;
 
         public static string Probe()
         {
+            if (probed) return Name;
             source = Source.Heap;
             foreach (var candidate in Candidates)
                 if (Allocates(candidate)) { source = candidate; break; }
+            probed = true;
             return Name;
         }
+
+        public static RetimeAllocationMark Mark() => new RetimeAllocationMark(Read(), Collections);
 
         private static readonly Source[] Candidates = { Source.Thread, Source.BoehmLibrary, Source.BoehmWindows, Source.BoehmInternal };
 

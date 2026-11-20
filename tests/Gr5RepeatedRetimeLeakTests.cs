@@ -63,6 +63,14 @@ public sealed class Gr5RepeatedRetimeLeakTests
         }
     }
 
+    private static long OwnedLegs(CityState state)
+    {
+        var legs = new HashSet<RouteLeg>(ReferenceEqualityComparer.Instance);
+        foreach (var person in state.Citizens.Concat(state.VisitorRoutines))
+            if (person.Journey != null) foreach (var leg in person.Journey.Legs) legs.Add(leg);
+        return legs.Count;
+    }
+
     private static int Travelling(CitySimulator city) => city.State.Citizens.Count(c => c.Phase == CitizenPhase.Travelling)
         + city.State.VisitorRoutines.Count(c => c.Phase == CitizenPhase.Travelling);
 
@@ -157,6 +165,352 @@ public sealed class Gr5RepeatedRetimeLeakTests
         city.AdvanceTo(drainedAt, int.MaxValue); control.City.AdvanceTo(drainedAt, int.MaxValue);
         Judge("rig food city, " + state.Citizens.Count + " residents, " + state.VisitorRoutines.Count + " visitors, " + state.Food!.Residents.Count + " meals", retimedReads, controlReads, travelling,
             Census(("simulation", city), ("driver", driver)), Census(("simulation", control.City), ("driver", new ClockRetimeDriver())));
+    }
+
+    private static long InstrumentBytes()
+    {
+        var census = new RetainedCensus();
+        census.AddStatics(new[] { typeof(RetainedCensus).Assembly }, "static.");
+        return census.Roots.Where(r => r.Name.StartsWith("static.RetainedCensus.", StringComparison.Ordinal)).Sum(r => r.Bytes);
+    }
+
+    private static object NovelGraph(int walk)
+    {
+        var element = new[] { typeof(byte), typeof(short), typeof(long), typeof(float), typeof(decimal), typeof(char), typeof(ushort), typeof(uint) }[walk];
+        var list = (System.Collections.IList)Activator.CreateInstance(typeof(List<>).MakeGenericType(typeof(ValueTuple<,>).MakeGenericType(element, typeof(string))))!;
+        var map = Activator.CreateInstance(typeof(Dictionary<,>).MakeGenericType(element, typeof(List<string>)))!;
+        return new object[] { list, map, Array.CreateInstance(element, 4) };
+    }
+
+    [Fact]
+    public void RepeatedCensusWalksOverNewTypesRetainNothingInTheCensusInstrument()
+    {
+        long before = InstrumentBytes();
+        var reads = new List<long>();
+        for (int walk = 0; walk < 8; walk++)
+        {
+            var census = new RetainedCensus();
+            census.Add("graph", NovelGraph(walk));
+            census.Add("city", Gr5AllocationMeasure.RigCity());
+            Assert.True(census.Bytes > 0);
+            reads.Add(InstrumentBytes());
+        }
+        output.WriteLine("census instrument retained bytes before / after each of 8 walks over new types (Mono 64-bit layout model): " + before + " / " + string.Join(", ", reads));
+        Assert.All(reads, read => Assert.Equal(before, read));
+        Assert.Equal(0, before);
+    }
+
+    private sealed class StandInMesh { public bool Alive = true; public int Vertices; }
+    private sealed class StandInBody { public bool Alive = true; public int Person; public StandInMesh? Mesh; }
+
+    private sealed class BodyReplay
+    {
+        private const int Ceiling = 96;
+        private readonly int[] catalogue;
+        public readonly MergedBodyLedger<StandInBody, StandInMesh> Ledger = new(b => b.Alive, m => m.Alive, m => m.Vertices);
+        public readonly LengthScratch<(float X, float Y, float Z)> Scratch = BlendshapeBakePlan.NewScratch<(float X, float Y, float Z)>();
+        private readonly Dictionary<int, StandInBody> active = new();
+        private readonly List<StandInBody> idle = new(), all = new(), reserve = new();
+        public int Reserved => reserve.Count;
+        public BodyReplay(int[] catalogue) { this.catalogue = catalogue; }
+
+        private int Part(int person, int part) => catalogue[(person + part * 13) % catalogue.Length];
+
+        private void Destroy(StandInBody body)
+        {
+            Ledger.Forget(body);
+            if (body.Mesh != null) { Ledger.CountReleased(body.Mesh); body.Mesh.Alive = false; }
+            body.Alive = false;
+        }
+
+        public void Show(int visible)
+        {
+            foreach (var person in active.Keys.Where(p => p >= visible).ToList()) { idle.Add(active[person]); active.Remove(person); }
+            for (int person = 0; person < visible; person++)
+            {
+                if (active.ContainsKey(person)) continue;
+                var body = idle.FirstOrDefault(b => b.Person == person);
+                if (body != null) { idle.Remove(body); active.Add(person, body); continue; }
+                body = new StandInBody { Person = person };
+                all.Add(body);
+                Ledger.Own(body);
+                int vertices = 0;
+                for (int part = 0; part < 5; part++) { int length = Part(person, part); Scratch.Take(length); vertices += length; }
+                body.Mesh = new StandInMesh { Vertices = vertices };
+                Ledger.Merged(body, body.Mesh);
+                active.Add(person, body);
+            }
+        }
+
+        public void Retime(bool leak)
+        {
+            foreach (var body in active.Values) idle.Add(body);
+            active.Clear();
+            if (reserve.Count > 0) { foreach (var kept in reserve) Destroy(kept); reserve.Clear(); Scratch.Clear(); }
+            foreach (var body in idle) reserve.Add(body);
+            foreach (var body in all) if (!idle.Contains(body)) Destroy(body);
+            if (reserve.Count == 0) Scratch.Clear();
+            idle.Clear(); all.Clear();
+            Ledger.PruneOwned(); Ledger.Prune();
+            if (leak) { reserve.Clear(); return; }
+            foreach (var kept in reserve)
+            {
+                if (all.Count >= Ceiling) { Destroy(kept); continue; }
+                all.Add(kept); idle.Add(kept);
+            }
+            reserve.Clear();
+        }
+
+        public (int Owned, int Live, long Vertices, int Unmerged, long Scratch) Read()
+        {
+            int live = Ledger.LiveMeshes(out long vertices);
+            return (Ledger.Owned, live, vertices, Ledger.Unmerged, Scratch.Bytes);
+        }
+    }
+
+    private static List<(int Owned, int Live, long Vertices, int Unmerged, long Scratch)> ReplayBodies(int[] catalogue, int[] visibleAt, bool retime, bool leak)
+    {
+        var replay = new BodyReplay(catalogue);
+        var reads = new List<(int, int, long, int, long)>();
+        for (int checkpoint = 0; checkpoint < visibleAt.Length; checkpoint++)
+        {
+            if (retime && checkpoint > 0 && checkpoint < visibleAt.Length - 1)
+                for (int leg = 0; leg < 2; leg++) { replay.Retime(leak); replay.Show(Math.Max(1, visibleAt[checkpoint] / 2)); }
+            replay.Show(visibleAt[checkpoint]);
+            replay.Show(Math.Max(1, visibleAt[checkpoint] - 3));
+            replay.Show(visibleAt[checkpoint]);
+            reads.Add(replay.Read());
+        }
+        return reads;
+    }
+
+    [Fact]
+    public void RepeatedRetimeBodyReleaseAndReserveAdoptionKeepOwnershipMeshesAndScratchMatchedToAControl()
+    {
+        var raw = Enumerable.Range(0, 100).Select(i => 300 + i * 37 + (i * 7919) % 900).Distinct().ToArray();
+        double scale = (double)(1_718_964 / (BlendshapeBakePlan.ScratchWidth * BlendshapeBakePlan.ScratchElementBytes)) / raw.Sum();
+        var catalogue = raw.Select(v => Math.Max(64, (int)(v * scale))).Distinct().ToArray();
+        int[] visibleAt = { 8, 9, 12, 16, 24, 31, 63 };
+        var control = ReplayBodies(catalogue, visibleAt, retime: false, leak: false);
+        var retimed = ReplayBodies(catalogue, visibleAt, retime: true, leak: false);
+        var leaky = ReplayBodies(catalogue, visibleAt, retime: true, leak: true);
+        string Row(List<(int Owned, int Live, long Vertices, int Unmerged, long Scratch)> r) => string.Join(", ", r.Select(x => x.Owned + "/" + x.Live + "/" + x.Vertices + "/" + x.Scratch));
+        output.WriteLine("owned / live meshes / live vertices / bake scratch at R0..+30 min (production MergedBodyLedger and bake scratch policy, PhysicalPedestrians reserve rules):");
+        output.WriteLine("  control " + Row(control));
+        output.WriteLine("  retimed " + Row(retimed));
+        output.WriteLine("  leaky retimed (reserve neither adopted nor destroyed) " + Row(leaky));
+        for (int i = 0; i < visibleAt.Length; i++)
+        {
+            Assert.Equal(retimed[i].Owned, retimed[i].Live + retimed[i].Unmerged);
+            Assert.Equal(control[i].Owned, retimed[i].Owned);
+            Assert.Equal(control[i].Live, retimed[i].Live);
+            Assert.Equal(control[i].Vertices, retimed[i].Vertices);
+            Assert.Equal(control[i].Scratch, retimed[i].Scratch);
+            Assert.True(retimed[i].Scratch <= BlendshapeBakePlan.ScratchBudgetBytes / 2);
+        }
+        Assert.Contains(Enumerable.Range(0, visibleAt.Length), i => leaky[i].Owned > control[i].Owned && leaky[i].Vertices > control[i].Vertices);
+    }
+
+    [Fact]
+    public void ProductionBakeScratchGrowsOnlyWithFirstLookEncountersAndRetimeRebakesAddNothing()
+    {
+        const long plateau16t = 1_718_964;
+        var raw = Enumerable.Range(0, 100).Select(i => 300 + i * 37 + (i * 7919) % 900).Distinct().ToArray();
+        long vertices = plateau16t / (BlendshapeBakePlan.ScratchWidth * BlendshapeBakePlan.ScratchElementBytes);
+        double scale = (double)vertices / raw.Sum();
+        var catalogue = raw.Select(v => Math.Max(64, (int)(v * scale))).Distinct().ToArray();
+        int Part(int body, int part) => catalogue[(body + part * 13) % catalogue.Length];
+        int[] bodiesAt = { 8, 9, 12, 16, 24, 31, 63 };
+        var control = BlendshapeBakePlan.NewScratch<(float X, float Y, float Z)>();
+        var retimed = BlendshapeBakePlan.NewScratch<(float X, float Y, float Z)>();
+        void Bake(LengthScratch<(float X, float Y, float Z)> scratch, int body) { for (int part = 0; part < 5; part++) scratch.Take(Part(body, part)); }
+        var controlReads = new List<long>(); var retimedReads = new List<long>();
+        int spawned = 0;
+        for (int checkpoint = 0; checkpoint < bodiesAt.Length; checkpoint++)
+        {
+            for (; spawned < bodiesAt[checkpoint]; spawned++) { Bake(control, spawned); Bake(retimed, spawned); }
+            if (checkpoint > 0 && checkpoint < bodiesAt.Length - 1)
+                for (int retime = 0; retime < 2; retime++) for (int body = 0; body < spawned; body++) Bake(retimed, body);
+            controlReads.Add(control.Bytes); retimedReads.Add(retimed.Bytes);
+        }
+        long seen = retimed.Bytes, allocations = retimed.Allocations;
+        var matched = new List<long>(8);
+        long allocated = GC.GetAllocatedBytesForCurrentThread();
+        for (int cycle = 0; cycle < 5; cycle++) { for (int body = 0; body < spawned; body++) Bake(retimed, body); matched.Add(retimed.Bytes); }
+        long churn = GC.GetAllocatedBytesForCurrentThread() - allocated;
+        long catalogueBytes = catalogue.Sum(length => retimed.CostOf(length));
+        output.WriteLine("production bake scratch (budget " + BlendshapeBakePlan.ScratchBudgetBytes + " B), catalogue " + catalogue.Length + " lengths / " + catalogueBytes
+            + " B, bodies at R0..+30 min " + string.Join(", ", bodiesAt) + ": control (first encounters only) " + string.Join(", ", controlReads)
+            + "; retimed (every live body re-baked twice per checkpoint) " + string.Join(", ", retimedReads) + "; 5 matched cycles after the ramp " + string.Join(", ", matched)
+            + "; allocations " + allocations + ", evictions " + retimed.Evictions + ", bytes allocated in the matched cycles " + churn + " (.NET)");
+        Assert.Equal(controlReads, retimedReads);
+        bool risesLikeL = true;
+        for (int i = 1; i < controlReads.Count - 1; i++) risesLikeL &= controlReads[i] > controlReads[i - 1];
+        Assert.True(risesLikeL, "the replay should rise at every L checkpoint from first encounters alone: " + string.Join(", ", controlReads));
+        Assert.True(seen <= catalogueBytes);
+        Assert.All(matched, b => Assert.Equal(seen, b));
+        Assert.Equal(allocations, retimed.Allocations);
+        Assert.Equal(control.Allocations, retimed.Allocations);
+        Assert.Equal(0, retimed.Evictions);
+        Assert.Equal(0, churn);
+        Assert.True(BlendshapeBakePlan.ScratchBudgetBytes >= 2 * catalogueBytes);
+    }
+
+    [Fact]
+    public void BakeScratchStaysWithinItsBudgetAndStopsAllocatingOnceTheBodyLooksRepeat()
+    {
+        const long budget = 2L * 1024 * 1024;
+        var scratch = new LengthScratch<(float X, float Y, float Z)>(3, 12, budget);
+        var catalogue = Enumerable.Range(0, 48).Select(i => 400 + (i * 7919) % 3600).Distinct().ToArray();
+        var reads = new List<(long Bytes, long Allocations)>();
+        for (int cycle = 0; cycle < 6; cycle++)
+        {
+            int seen = Math.Min(catalogue.Length, 8 * (cycle + 1));
+            for (int body = 0; body < 40; body++)
+                for (int part = 0; part < 4; part++)
+                {
+                    int length = catalogue[(body * 5 + part * 11 + cycle) % seen];
+                    var arrays = scratch.Take(length);
+                    Assert.Equal(3, arrays.Length);
+                    Assert.All(arrays, a => Assert.Equal(length, a.Length));
+                    Assert.True(scratch.Bytes <= budget || scratch.Count == 1, "bake scratch " + scratch.Bytes + " B over its budget");
+                }
+            reads.Add((scratch.Bytes, scratch.Allocations));
+        }
+        output.WriteLine("bake scratch bytes / allocations at the end of 6 cycles, " + catalogue.Length + " body part lengths, budget " + budget + " B: "
+            + string.Join(", ", reads.Select(r => r.Bytes + " / " + r.Allocations)) + "; evictions " + scratch.Evictions);
+        Assert.All(reads, r => Assert.True(r.Bytes <= budget));
+        long unbounded = catalogue.Sum(length => scratch.CostOf(length));
+        Assert.True(unbounded > budget, "the catalogue " + unbounded + " B must exceed the budget for this test to bound anything");
+
+        var repeat = new LengthScratch<(float X, float Y, float Z)>(3, 12, budget);
+        var looks = catalogue.Take(12).ToArray();
+        foreach (int length in looks) repeat.Take(length);
+        long allocated = GC.GetAllocatedBytesForCurrentThread();
+        for (int round = 0; round < 50; round++) foreach (int length in looks) repeat.Take(length);
+        Assert.Equal(0, GC.GetAllocatedBytesForCurrentThread() - allocated);
+        Assert.Equal(looks.Length, repeat.Allocations);
+        Assert.Equal(0, repeat.Evictions);
+    }
+
+    [Fact]
+    public void FiveOneTwoOneRetimesAtTheRigSpacingRetainNoMoreThanAnUnretimedControl()
+    {
+        const int cycles = 5;
+        const double spacing = 10;
+        (CityState State, CitySimulator City) Build()
+        {
+            var state = Gr5AllocationMeasure.RigCity();
+            var city = new CitySimulator(state, new Gr5AdvanceSegmentMeasure.Straight());
+            city.AttachFoodMarket(new VisitorRoutineTests.Market { Shops = F5gPopulationFillTests.Shops(state) });
+            city.AttachOptionalStops(new Gr5AllocationMeasure.StopSpots(), OptionalStopPolicy.ApprovedChoicePercentage);
+            city.AdvanceTo(Math.Floor(state.Minute / 1440) * 1440 + 1440 + 15.5 * 60, int.MaxValue);
+            return (state, city);
+        }
+        var retimed = Build(); var control = Build();
+        var driver = new ClockRetimeDriver();
+        var city = retimed.City; var state = retimed.State;
+        var split = new Dictionary<CitizenState, (Route Journey, int Planned, int Added)>();
+        int retimes = 0, retimedJourneys = 0, maxAddedPerRetime = 0;
+        CitySimulator Retime(double rate)
+        {
+            var before = state.Citizens.Concat(state.VisitorRoutines).Where(p => p.Journey != null)
+                .Select(p => (Person: p, Journey: p.Journey!, Legs: p.Journey!.Legs.Count)).ToList();
+            while (driver.Update(state, rate, false, 1.4, ClockRetimeStages.SliceMilliseconds) != ClockRetimeOutcome.Committed) { }
+            var rebuild = city.BeginRebuildRoutes(new Gr5AdvanceSegmentMeasure.Straight(), driver.TakeRetimedTraffic());
+            while (!rebuild.Step(0)) { }
+            var result = rebuild.TakeResult();
+            retimes++;
+            foreach (var old in before)
+            {
+                var person = old.Person;
+                if (person.Journey == null || ReferenceEquals(person.Journey, old.Journey)) continue;
+                int added = person.Journey.Legs.Count - old.Legs;
+                Assert.True(added <= 1, "retime " + retimes + " gave " + person.Identity.Id + " " + added + " extra legs; only the active leg may split");
+                retimedJourneys++; maxAddedPerRetime = Math.Max(maxAddedPerRetime, added);
+                var tracked = split.TryGetValue(person, out var known) && ReferenceEquals(known.Journey, old.Journey) ? known : (old.Journey, old.Legs, 0);
+                split[person] = (person.Journey, tracked.Item2, tracked.Item3 + added);
+            }
+            return result;
+        }
+        long HeldSplits()
+        {
+            long held = 0;
+            foreach (var person in split.Keys.ToList())
+            {
+                var entry = split[person];
+                if (!ReferenceEquals(person.Journey, entry.Journey)) { split.Remove(person); continue; }
+                Assert.Equal(entry.Planned + entry.Added, person.Journey!.Legs.Count);
+                held += entry.Added;
+            }
+            return held;
+        }
+        var retimedReads = new List<RetainedHeap> { Census(("simulation", city), ("driver", driver)) };
+        var controlReads = new List<RetainedHeap> { Census(("simulation", control.City), ("driver", new ClockRetimeDriver())) };
+        var instrument = new List<long> { InstrumentBytes() };
+        var travelling = new List<int> { Travelling(city) };
+        var retimedOwned = new List<long> { OwnedLegs(state) };
+        var controlOwned = new List<long> { OwnedLegs(control.State) };
+        var held = new List<long> { 0 };
+        double start = state.Minute;
+        for (int cycle = 1; cycle <= cycles; cycle++)
+        {
+            city = Retime(2);
+            city.AdvanceTo(state.Minute + 0.05, int.MaxValue);
+            city = Retime(1);
+            double end = start + cycle * spacing;
+            city.AdvanceTo(end, int.MaxValue);
+            control.City.AdvanceTo(end, int.MaxValue);
+            Assert.Equal(end, control.State.Minute);
+            Assert.True(city.ActiveJourneyIndexMatchesState());
+            var walk = new RetainedCensus();
+            walk.Add("simulation", city);
+            Assert.Equal(1, walk.ObjectsOf(typeof(CitySimulator)));
+            instrument.Add(InstrumentBytes());
+            travelling.Add(Travelling(city));
+            retimedOwned.Add(OwnedLegs(state));
+            controlOwned.Add(OwnedLegs(control.State));
+            held.Add(HeldSplits());
+            retimedReads.Add(Census(("simulation", city), ("driver", driver)));
+            controlReads.Add(Census(("simulation", control.City), ("driver", new ClockRetimeDriver())));
+        }
+        var settled = retimedReads.Zip(controlReads, (r, c) => Settled(r) - Settled(c)).ToList();
+        output.WriteLine("rig food city, five 1->2->1 retimes " + spacing + " game minutes apart from 15:30 (the 16t L spacing), Mono 64-bit layout model:");
+        for (int i = 0; i <= cycles; i++)
+            output.WriteLine("  R" + i + " retimed " + retimedReads[i].Bytes + " B / control " + controlReads[i].Bytes + " B / excess without journey legs " + settled[i].ToString("+0;-0")
+                + " B; RouteLeg " + Objects(retimedReads[i], "RouteLeg") + "/" + Objects(controlReads[i], "RouteLeg") + ", String " + Objects(retimedReads[i], "String") + "/" + Objects(controlReads[i], "String")
+                + "; census instrument " + instrument[i] + " B");
+        Assert.Equal(0, settled[0]);
+        Assert.All(instrument, b => Assert.Equal(0, b));
+        Assert.All(retimedReads, heap => Assert.Equal(1, Objects(heap, "CitySimulator")));
+        long first = settled[1], plateau = settled.Skip(1).Max();
+        Assert.True(plateau - first < PlateauAllowance, "excess without journey legs rose by " + (plateau - first) + " B after R1: " + string.Join(", ", settled));
+        bool rising = true;
+        for (int i = 2; i < settled.Count; i++) rising &= settled[i] > settled[i - 1];
+        Assert.False(rising, "excess without journey legs rose at every checkpoint: " + string.Join(", ", settled));
+        Assert.All(settled, e => Assert.True(e < Allowance, "retimed minus control " + e + " B"));
+        for (int i = 0; i <= cycles; i++)
+        {
+            Assert.Equal(Objects(retimedReads[i], "RouteLeg"), retimedOwned[i]);
+            Assert.Equal(Objects(controlReads[i], "RouteLeg"), controlOwned[i]);
+            output.WriteLine("  R" + i + " RouteLeg retimed / control " + retimedOwned[i] + " / " + controlOwned[i] + ", every one owned by a current journey; legs added by retime splits and still held " + held[i]);
+            long excess = retimedOwned[i] - controlOwned[i];
+            Assert.True(Math.Abs(excess - held[i]) <= 2, "R" + i + " RouteLeg excess " + excess + " is not explained by the " + held[i] + " split legs held by live journeys");
+        }
+        var inFlight = state.Citizens.Concat(state.VisitorRoutines).Where(c => c.Phase == CitizenPhase.Travelling).ToList();
+        double drainedAt = (inFlight.Count == 0 ? state.Minute : inFlight.Max(c => c.NextEventMinute)) + 0.01;
+        city.AdvanceTo(drainedAt, int.MaxValue); control.City.AdvanceTo(drainedAt, int.MaxValue);
+        var drained = Census(("simulation", city), ("driver", driver));
+        var drainedControl = Census(("simulation", control.City), ("driver", new ClockRetimeDriver()));
+        output.WriteLine("  drained at minute " + drainedAt.ToString("0.00") + ": RouteLeg " + Objects(drained, "RouteLeg") + "/" + Objects(drainedControl, "RouteLeg")
+            + ", retimed minus control " + (drained.Bytes - drainedControl.Bytes).ToString("+0;-0") + " B");
+        Assert.True(drained.Bytes - drainedControl.Bytes < Allowance, "drained retimed minus control " + (drained.Bytes - drainedControl.Bytes) + " B");
+        Assert.Equal(Objects(drained, "RouteLeg"), OwnedLegs(state));
+        output.WriteLine("  " + retimes + " retimes replaced " + retimedJourneys + " journeys, at most " + maxAddedPerRetime + " added leg per journey per retime; split legs still held after drain " + HeldSplits());
+        Assert.Equal(0, HeldSplits());
+        Assert.Equal(Objects(drainedControl, "RouteLeg"), OwnedLegs(control.State));
+        Assert.True(Objects(drained, "RouteLeg") - Objects(drainedControl, "RouteLeg") <= inFlight.Count + 2,
+            "drained RouteLeg " + Objects(drained, "RouteLeg") + " vs control " + Objects(drainedControl, "RouteLeg") + " with " + inFlight.Count + " journeys in flight at R" + cycles);
     }
 
     [Fact]

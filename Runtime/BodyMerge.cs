@@ -23,7 +23,7 @@ namespace PersistentCity.Runtime
         private static Action<SkinnedMeshCombiner>? validate;
         private static AccessTools.FieldRef<SkinnedMeshCombiner, Vector3>? originalPosition, originalRotation, originalScale;
         private static bool hooked;
-        private static readonly HashSet<SkinnedMeshCombiner> owned = new HashSet<SkinnedMeshCombiner>();
+        private static readonly MergedBodyLedger<SkinnedMeshCombiner, Mesh> ledger = new MergedBodyLedger<SkinnedMeshCombiner, Mesh>(combiner => combiner != null, mesh => mesh != null, mesh => mesh.vertexCount);
         private static readonly BodyMergePlan plan = new BodyMergePlan();
         private static readonly BodyMergeGate gate = new BodyMergeGate();
         private static readonly BodyMergeFallbacks fallbacks = new BodyMergeFallbacks();
@@ -53,23 +53,14 @@ namespace PersistentCity.Runtime
         public static string Fallbacks => fallbacks.Describe();
         public static bool Hooked => hooked;
         public static bool Disabled => !gate.Allows;
-        public static int Owned => owned.Count;
+        public static int Owned => ledger.Owned;
 
-        public static int Unmerged
-        {
-            get
-            {
-                PruneMeshes();
-                int unmerged = 0;
-                foreach (var combiner in owned) if (combiner != null && !mergedMeshes.ContainsKey(combiner)) unmerged++;
-                return unmerged;
-            }
-        }
+        public static int Unmerged => ledger.Unmerged;
 
         public static void Install()
         {
-            owned.RemoveWhere(combiner => combiner == null);
-            PruneMeshes();
+            ledger.PruneOwned();
+            ledger.Prune();
             if (hooked || LastError.Length != 0) return;
             try
             {
@@ -87,49 +78,33 @@ namespace PersistentCity.Runtime
             catch (Exception error) { LastError = error.GetType().Name + ": " + error.Message; }
         }
 
-        public static void Own(SkinnedMeshCombiner? combiner) { if (combiner != null) owned.Add(combiner); }
+        public static void Own(SkinnedMeshCombiner? combiner) { if (combiner != null) ledger.Own(combiner); }
 
-        public static void Forget(SkinnedMeshCombiner? combiner) { if (!ReferenceEquals(combiner, null)) { owned.Remove(combiner!); mergedMeshes.Remove(combiner!); } }
+        public static void Forget(SkinnedMeshCombiner? combiner) { if (!ReferenceEquals(combiner, null)) ledger.Forget(combiner); }
 
-        private static readonly Dictionary<SkinnedMeshCombiner, Mesh> mergedMeshes = new Dictionary<SkinnedMeshCombiner, Mesh>();
-        private static readonly List<SkinnedMeshCombiner> stale = new List<SkinnedMeshCombiner>();
-        public static long ReleasedMeshes { get; private set; }
-        public static long ReleasedVertices { get; private set; }
+        public static long ReleasedMeshes => ledger.ReleasedMeshes;
+        public static long ReleasedVertices => ledger.ReleasedVertices;
 
         public static void Release(SkinnedMeshCombiner? combiner)
         {
             if (ReferenceEquals(combiner, null)) return;
-            owned.Remove(combiner!);
-            mergedMeshes.Remove(combiner!);
-            PruneMeshes();
+            ledger.Forget(combiner);
+            ledger.Prune();
             if (combiner == null) return;
             var result = combiner.resultMergeGameObject;
             if (result == null) return;
             var renderer = result.GetComponent<SkinnedMeshRenderer>();
             var mesh = renderer != null ? renderer.sharedMesh : null;
             if (mesh == null) return;
-            ReleasedMeshes++; ReleasedVertices += mesh.vertexCount;
+            ledger.CountReleased(mesh);
             Object.Destroy(mesh);
         }
 
-        public static int LiveMeshes(out long vertices)
-        {
-            PruneMeshes();
-            vertices = 0;
-            foreach (var mesh in mergedMeshes.Values) vertices += mesh.vertexCount;
-            return mergedMeshes.Count;
-        }
-
-        private static void PruneMeshes()
-        {
-            foreach (var pair in mergedMeshes) if (pair.Key == null || pair.Value == null) stale.Add(pair.Key!);
-            foreach (var combiner in stale) mergedMeshes.Remove(combiner);
-            stale.Clear();
-        }
+        public static int LiveMeshes(out long vertices) => ledger.LiveMeshes(out vertices);
 
         private static bool MergePrefix(SkinnedMeshCombiner __instance)
         {
-            if (!owned.Contains(__instance)) return true;
+            if (!ledger.Owns(__instance)) return true;
             if (!gate.Allows) return Fallback(BodyMergeFallback.FastOff);
             try
             {
@@ -304,7 +279,7 @@ namespace PersistentCity.Runtime
                 combiner.resultMergeGameObject = result;
                 combiner.resultMergeOriginalGameObjects = originals;
                 if (combiner.onCombineMeshs != null) combiner.onCombineMeshs.Invoke();
-                mergedMeshes[combiner] = combined;
+                ledger.Merged(combiner, combined);
                 Fast++;
             }
             catch (Exception error)

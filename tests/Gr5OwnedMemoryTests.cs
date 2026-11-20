@@ -27,15 +27,16 @@ public sealed class Gr5OwnedMemoryTests
         int release = merge.IndexOf("public static void Release(SkinnedMeshCombiner? combiner)", StringComparison.Ordinal);
         Assert.True(release > 0);
         string releaseBody = merge.Substring(release, merge.IndexOf("public static int LiveMeshes", release, StringComparison.Ordinal) - release);
-        Assert.Contains("owned.Remove(combiner!);", releaseBody);
+        Assert.Contains("ledger.Forget(combiner);", releaseBody);
         Assert.Contains("combiner.resultMergeGameObject", releaseBody);
         Assert.Contains("Object.Destroy(mesh);", releaseBody);
-        Assert.Contains("mergedMeshes.Remove(combiner!);\n            PruneMeshes();", releaseBody.Replace("\r", ""));
-        int keyed = merge.IndexOf("mergedMeshes[combiner] = combined;", StringComparison.Ordinal);
+        Assert.Contains("ledger.Forget(combiner);\n            ledger.Prune();", releaseBody.Replace("\r", ""));
+        Assert.Contains("ledger.CountReleased(mesh);\n            Object.Destroy(mesh);", releaseBody.Replace("\r", ""));
+        int keyed = merge.IndexOf("ledger.Merged(combiner, combined);", StringComparison.Ordinal);
         Assert.True(keyed > 0, "a redress replaces the combiner's previous mesh instead of adding another");
         Assert.True(keyed < merge.IndexOf("Fast++;", keyed, StringComparison.Ordinal), "only a finished merge is tracked, so Discard never leaves an entry");
         Assert.DoesNotContain("HashSet<Mesh>", merge);
-        Assert.Contains("PruneMeshes();\n            if (hooked", merge.Replace("\r", ""));
+        Assert.Contains("ledger.PruneOwned();\n            ledger.Prune();\n            if (hooked", merge.Replace("\r", ""));
     }
 
     [Fact]

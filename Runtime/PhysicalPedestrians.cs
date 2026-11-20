@@ -34,7 +34,7 @@ namespace PersistentCity.Runtime
         public bool LastDeferred { get; private set; }
         public string LookDiagnostics => AppearanceBuilds + " built/" + AppearanceReuses + " reused/" + AppearanceDeferred + " deferred/"
             + idle.Count + " idle/" + all.Count + " owned/" + Adopted + " adopted/" + BlendshapeBake.Bakes + " baked/" + BlendshapeBake.ScratchSizes + " bake sizes/"
-            + BlendshapeBake.ScratchBytes / 1024 + " KB bake scratch/" + Instantiated + " grown/" + Trimmed + " trimmed/"
+            + BlendshapeBake.ScratchBytes / 1024 + " KB bake scratch/" + BlendshapeBake.ScratchEvictions + " bake scratch evictions/" + Instantiated + " grown/" + Trimmed + " trimmed/"
             + budget.Gate!.Fitted + " fitted/" + budget.Gate.Waited + " waited/"
             + budget.Gate.EstimateMilliseconds.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture) + " ms build/"
             + BodyMerge.Fast + " fast merges/" + BodyMerge.Native + " native merges/" + BodyMerge.Failed + " failed merges" + (BodyMerge.Disabled ? "/fast merge off" : "")

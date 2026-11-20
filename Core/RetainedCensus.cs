@@ -21,7 +21,7 @@ namespace PersistentCity.Core
 
         public const string PolicyId = "retained-census-v1";
         public const int Header = 16, ArrayHeader = 32, Pointer = 8;
-        private static readonly Dictionary<Type, Layout> Layouts = new Dictionary<Type, Layout>();
+        private readonly Dictionary<Type, Layout> layouts = new Dictionary<Type, Layout>();
         private readonly Dictionary<object, bool> seen = new Dictionary<object, bool>(Identity.Instance);
         private readonly Dictionary<Type, Row> byType = new Dictionary<Type, Row>();
         private readonly Dictionary<Type, Row> foreign = new Dictionary<Type, Row>();
@@ -190,31 +190,28 @@ namespace PersistentCity.Core
             }
         }
 
-        private static Layout Of(Type type)
+        private Layout Of(Type type)
         {
-            lock (Layouts)
-            {
-                if (Layouts.TryGetValue(type, out var known)) return known;
-                var layout = new Layout();
-                var fields = new List<FieldInfo>();
-                for (var at = type; at != null && at != typeof(object) && at != typeof(ValueType); at = at.BaseType)
-                    foreach (var field in at.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly))
-                    {
-                        var f = field.FieldType;
-                        if (f.IsPointer || f == typeof(IntPtr) || f == typeof(UIntPtr)) { layout.Bytes += Pointer; continue; }
-                        if (!f.IsValueType) { layout.Bytes += Pointer; layout.References++; fields.Add(field); continue; }
-                        if (f.IsPrimitive || f.IsEnum) { layout.Bytes += Primitive(f); continue; }
-                        if (f == type) { layout.Bytes += Pointer; continue; }
-                        var inner = Of(f);
-                        layout.Bytes += inner.Bytes; layout.References += inner.References;
-                        if (inner.References > 0) fields.Add(field);
-                    }
-                if (type.IsValueType && layout.Bytes == 0) layout.Bytes = 1;
-                if (type.IsValueType && layout.Bytes > 1) layout.Bytes = (int)Align(layout.Bytes, Math.Min(Pointer, Largest(type)));
-                layout.Fields = fields.ToArray();
-                Layouts[type] = layout;
-                return layout;
-            }
+            if (layouts.TryGetValue(type, out var known)) return known;
+            var layout = new Layout();
+            var fields = new List<FieldInfo>();
+            for (var at = type; at != null && at != typeof(object) && at != typeof(ValueType); at = at.BaseType)
+                foreach (var field in at.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly))
+                {
+                    var f = field.FieldType;
+                    if (f.IsPointer || f == typeof(IntPtr) || f == typeof(UIntPtr)) { layout.Bytes += Pointer; continue; }
+                    if (!f.IsValueType) { layout.Bytes += Pointer; layout.References++; fields.Add(field); continue; }
+                    if (f.IsPrimitive || f.IsEnum) { layout.Bytes += Primitive(f); continue; }
+                    if (f == type) { layout.Bytes += Pointer; continue; }
+                    var inner = Of(f);
+                    layout.Bytes += inner.Bytes; layout.References += inner.References;
+                    if (inner.References > 0) fields.Add(field);
+                }
+            if (type.IsValueType && layout.Bytes == 0) layout.Bytes = 1;
+            if (type.IsValueType && layout.Bytes > 1) layout.Bytes = (int)Align(layout.Bytes, Math.Min(Pointer, Largest(type)));
+            layout.Fields = fields.ToArray();
+            layouts[type] = layout;
+            return layout;
         }
 
         private static int Largest(Type type)
