@@ -10,12 +10,14 @@ namespace PersistentCity.Runtime
     {
         private static readonly BlendshapeBakePlan plan = new BlendshapeBakePlan();
         private static readonly Dictionary<Mesh, string[]> names = new Dictionary<Mesh, string[]>();
-        private static readonly Dictionary<int, Vector3[][]> scratch = new Dictionary<int, Vector3[][]>();
+        public const long ScratchBudgetBytes = 4L * 1024 * 1024;
+        private static readonly LengthScratch<Vector3> scratch = new LengthScratch<Vector3>(3, 12, ScratchBudgetBytes);
         private static readonly List<Vector3> vertices = new List<Vector3>(), normals = new List<Vector3>();
         private static readonly List<Vector4> tangents = new List<Vector4>();
         public static long Bakes { get; private set; }
-        public static long ScratchBytes { get; private set; }
+        public static long ScratchBytes => scratch.Bytes;
         public static int ScratchSizes => scratch.Count;
+        public static long ScratchEvictions => scratch.Evictions;
         public static long Steps { get; private set; }
 
         internal static bool Adopt(SkinnedMeshCombiner? combiner)
@@ -59,7 +61,7 @@ namespace PersistentCity.Runtime
             {
                 var step = steps[i];
                 Mesh mesh = sources[step.Source].sharedMesh;
-                var buffer = Scratch(step.VertexCount);
+                var buffer = scratch.Take(step.VertexCount);
                 mesh.GetBlendShapeFrameVertices(step.Shape, mesh.GetBlendShapeFrameCount(step.Shape) - 1, buffer[0], buffer[1], buffer[2]);
                 Vector3[] dv = buffer[0], dn = buffer[1], dt = buffer[2];
                 float scale = step.Scale;
@@ -90,15 +92,6 @@ namespace PersistentCity.Runtime
             return found;
         }
 
-        private static Vector3[][] Scratch(int length)
-        {
-            if (scratch.TryGetValue(length, out var buffer)) return buffer;
-            buffer = new[] { new Vector3[length], new Vector3[length], new Vector3[length] };
-            scratch.Add(length, buffer);
-            ScratchBytes += 36L * length;
-            return buffer;
-        }
-
-        internal static void Clear() { names.Clear(); scratch.Clear(); plan.Clear(); ScratchBytes = 0; }
+        internal static void Clear() { names.Clear(); scratch.Clear(); plan.Clear(); }
     }
 }

@@ -159,6 +159,138 @@ public sealed class Gr5RepeatedRetimeLeakTests
             Census(("simulation", city), ("driver", driver)), Census(("simulation", control.City), ("driver", new ClockRetimeDriver())));
     }
 
+    private static long InstrumentBytes()
+    {
+        var census = new RetainedCensus();
+        census.AddStatics(new[] { typeof(RetainedCensus).Assembly }, "static.");
+        return census.Roots.Where(r => r.Name.StartsWith("static.RetainedCensus.", StringComparison.Ordinal)).Sum(r => r.Bytes);
+    }
+
+    private static object NovelGraph(int walk)
+    {
+        var element = new[] { typeof(byte), typeof(short), typeof(long), typeof(float), typeof(decimal), typeof(char), typeof(ushort), typeof(uint) }[walk];
+        var list = (System.Collections.IList)Activator.CreateInstance(typeof(List<>).MakeGenericType(typeof(ValueTuple<,>).MakeGenericType(element, typeof(string))))!;
+        var map = Activator.CreateInstance(typeof(Dictionary<,>).MakeGenericType(element, typeof(List<string>)))!;
+        return new object[] { list, map, Array.CreateInstance(element, 4) };
+    }
+
+    [Fact]
+    public void RepeatedCensusWalksOverNewTypesRetainNothingInTheCensusInstrument()
+    {
+        long before = InstrumentBytes();
+        var reads = new List<long>();
+        for (int walk = 0; walk < 8; walk++)
+        {
+            var census = new RetainedCensus();
+            census.Add("graph", NovelGraph(walk));
+            census.Add("city", Gr5AllocationMeasure.RigCity());
+            Assert.True(census.Bytes > 0);
+            reads.Add(InstrumentBytes());
+        }
+        output.WriteLine("census instrument retained bytes before / after each of 8 walks over new types (Mono 64-bit layout model): " + before + " / " + string.Join(", ", reads));
+        Assert.All(reads, read => Assert.Equal(before, read));
+        Assert.Equal(0, before);
+    }
+
+    [Fact]
+    public void BakeScratchStaysWithinItsBudgetAndStopsAllocatingOnceTheBodyLooksRepeat()
+    {
+        const long budget = 2L * 1024 * 1024;
+        var scratch = new LengthScratch<(float X, float Y, float Z)>(3, 12, budget);
+        var catalogue = Enumerable.Range(0, 48).Select(i => 400 + (i * 7919) % 3600).Distinct().ToArray();
+        var reads = new List<(long Bytes, long Allocations)>();
+        for (int cycle = 0; cycle < 6; cycle++)
+        {
+            int seen = Math.Min(catalogue.Length, 8 * (cycle + 1));
+            for (int body = 0; body < 40; body++)
+                for (int part = 0; part < 4; part++)
+                {
+                    int length = catalogue[(body * 5 + part * 11 + cycle) % seen];
+                    var arrays = scratch.Take(length);
+                    Assert.Equal(3, arrays.Length);
+                    Assert.All(arrays, a => Assert.Equal(length, a.Length));
+                    Assert.True(scratch.Bytes <= budget || scratch.Count == 1, "bake scratch " + scratch.Bytes + " B over its budget");
+                }
+            reads.Add((scratch.Bytes, scratch.Allocations));
+        }
+        output.WriteLine("bake scratch bytes / allocations at the end of 6 cycles, " + catalogue.Length + " body part lengths, budget " + budget + " B: "
+            + string.Join(", ", reads.Select(r => r.Bytes + " / " + r.Allocations)) + "; evictions " + scratch.Evictions);
+        Assert.All(reads, r => Assert.True(r.Bytes <= budget));
+        long unbounded = catalogue.Sum(length => scratch.CostOf(length));
+        Assert.True(unbounded > budget, "the catalogue " + unbounded + " B must exceed the budget for this test to bound anything");
+
+        var repeat = new LengthScratch<(float X, float Y, float Z)>(3, 12, budget);
+        var looks = catalogue.Take(12).ToArray();
+        foreach (int length in looks) repeat.Take(length);
+        long allocated = GC.GetAllocatedBytesForCurrentThread();
+        for (int round = 0; round < 50; round++) foreach (int length in looks) repeat.Take(length);
+        Assert.Equal(0, GC.GetAllocatedBytesForCurrentThread() - allocated);
+        Assert.Equal(looks.Length, repeat.Allocations);
+        Assert.Equal(0, repeat.Evictions);
+    }
+
+    [Fact]
+    public void FiveOneTwoOneRetimesAtTheRigSpacingRetainNoMoreThanAnUnretimedControl()
+    {
+        const int cycles = 5;
+        const double spacing = 10;
+        (CityState State, CitySimulator City) Build()
+        {
+            var state = Gr5AllocationMeasure.RigCity();
+            var city = new CitySimulator(state, new Gr5AdvanceSegmentMeasure.Straight());
+            city.AttachFoodMarket(new VisitorRoutineTests.Market { Shops = F5gPopulationFillTests.Shops(state) });
+            city.AttachOptionalStops(new Gr5AllocationMeasure.StopSpots(), OptionalStopPolicy.ApprovedChoicePercentage);
+            city.AdvanceTo(Math.Floor(state.Minute / 1440) * 1440 + 1440 + 15.5 * 60, int.MaxValue);
+            return (state, city);
+        }
+        var retimed = Build(); var control = Build();
+        var driver = new ClockRetimeDriver();
+        var city = retimed.City; var state = retimed.State;
+        CitySimulator Retime(double rate)
+        {
+            while (driver.Update(state, rate, false, 1.4, ClockRetimeStages.SliceMilliseconds) != ClockRetimeOutcome.Committed) { }
+            var rebuild = city.BeginRebuildRoutes(new Gr5AdvanceSegmentMeasure.Straight(), driver.TakeRetimedTraffic());
+            while (!rebuild.Step(0)) { }
+            return rebuild.TakeResult();
+        }
+        var retimedReads = new List<RetainedHeap> { Census(("simulation", city), ("driver", driver)) };
+        var controlReads = new List<RetainedHeap> { Census(("simulation", control.City), ("driver", new ClockRetimeDriver())) };
+        var instrument = new List<long> { InstrumentBytes() };
+        double start = state.Minute;
+        for (int cycle = 1; cycle <= cycles; cycle++)
+        {
+            city = Retime(2);
+            city.AdvanceTo(state.Minute + 0.05, int.MaxValue);
+            city = Retime(1);
+            double end = start + cycle * spacing;
+            city.AdvanceTo(end, int.MaxValue);
+            control.City.AdvanceTo(end, int.MaxValue);
+            Assert.Equal(end, control.State.Minute);
+            Assert.True(city.ActiveJourneyIndexMatchesState());
+            var walk = new RetainedCensus();
+            walk.Add("simulation", city);
+            Assert.Equal(1, walk.ObjectsOf(typeof(CitySimulator)));
+            instrument.Add(InstrumentBytes());
+            retimedReads.Add(Census(("simulation", city), ("driver", driver)));
+            controlReads.Add(Census(("simulation", control.City), ("driver", new ClockRetimeDriver())));
+        }
+        var settled = retimedReads.Zip(controlReads, (r, c) => Settled(r) - Settled(c)).ToList();
+        output.WriteLine("rig food city, five 1->2->1 retimes " + spacing + " game minutes apart from 15:30 (the 16t L spacing), Mono 64-bit layout model:");
+        for (int i = 0; i <= cycles; i++)
+            output.WriteLine("  R" + i + " retimed " + retimedReads[i].Bytes + " B / control " + controlReads[i].Bytes + " B / excess without journey legs " + settled[i].ToString("+0;-0")
+                + " B; RouteLeg " + Objects(retimedReads[i], "RouteLeg") + "/" + Objects(controlReads[i], "RouteLeg") + ", String " + Objects(retimedReads[i], "String") + "/" + Objects(controlReads[i], "String")
+                + "; census instrument " + instrument[i] + " B");
+        Assert.Equal(0, settled[0]);
+        Assert.All(instrument, b => Assert.Equal(0, b));
+        Assert.All(retimedReads, heap => Assert.Equal(1, Objects(heap, "CitySimulator")));
+        long first = settled[1], plateau = settled.Skip(1).Max();
+        Assert.True(plateau - first < PlateauAllowance, "excess without journey legs rose by " + (plateau - first) + " B after R1: " + string.Join(", ", settled));
+        bool rising = true;
+        for (int i = 2; i < settled.Count; i++) rising &= settled[i] > settled[i - 1];
+        Assert.False(rising, "excess without journey legs rose at every checkpoint: " + string.Join(", ", settled));
+        Assert.All(settled, e => Assert.True(e < Allowance, "retimed minus control " + e + " B"));
+    }
+
     [Fact]
     public void PrePositioningTheRigFoodCityToNightAtSixtyTimesRetainsNoMoreThanAtTwentyTimes()
     {
