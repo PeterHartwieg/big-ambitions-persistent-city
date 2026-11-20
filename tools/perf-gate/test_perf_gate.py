@@ -450,13 +450,17 @@ class SummaryLineTests(unittest.TestCase):
         line = SUMMARY_FIXTURE[0].replace(
             'optional-stop reads 0.000 ms, 1 garbage collections completed during it. ',
             'optional-stop reads 0.250 ms, 1 garbage collections completed during it. Optional-stop reads per unit in the slowest advance: '
-            '52 units, call total 13.500 ms, maximum 6.125 ms, p95 5.500 ms, 2 units over 5 ms [traffic#3 6.125 ms; citizen#9 5.500 ms]. ')
+            '52 units, call total 13.500 ms, maximum 6.125 ms, p95 5.500 ms, 2 units over 5 ms [traffic#3 6.125 ms; citizen#9 5.500 ms]. '
+            'Optional-stop units over 5 ms this observation: 3 units in 2 advances, maximum 6.125 ms (traffic) '
+            '[advance 8.000 ms: citizen#0 5.300 ms | advance 42.483 ms: traffic#3 6.125 ms; citizen#9 5.500 ms]. ')
         self.assertNotEqual(line, SUMMARY_FIXTURE[0])
         parsed = summary_lines.parse_line(line)
         self.assertEqual(parsed['slowest_advance'], dict(unit_ms=39.688, unit_kind='route-planning', optional_stop_ms=0.25, gc_count=1))
         self.assertEqual(parsed['slowest_advance_stops'], dict(units=52, call_total_ms=13.5, max_ms=6.125, p95_ms=5.5, over_5ms_count=2,
                                                                over_5ms='traffic#3 6.125 ms; citizen#9 5.500 ms'))
         self.assertEqual(parsed['optional_stops'], dict(calls=88, total_ms=3.115, max_ms=0.412, park_trigger_scans=0))
+        self.assertEqual(parsed['stop_crossings'], dict(units=3, advances=2, max_ms=6.125, max_kind='traffic',
+                                                        listed='advance 8.000 ms: citizen#0 5.300 ms | advance 42.483 ms: traffic#3 6.125 ms; citizen#9 5.500 ms'))
         empty = summary_lines.parse_line(line.replace('2 units over 5 ms [traffic#3 6.125 ms; citizen#9 5.500 ms]', '0 units over 5 ms []'))
         self.assertEqual((empty['slowest_advance_stops']['over_5ms_count'], empty['slowest_advance_stops']['over_5ms']), (0, ''))
         self.assertIsNone(summary_lines.parse_line(SUMMARY_FIXTURE[0])['slowest_advance_stops'])

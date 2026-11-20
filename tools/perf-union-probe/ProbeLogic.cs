@@ -128,6 +128,7 @@ namespace PerfUnionProbe
             if (frequency <= 0) throw new ArgumentOutOfRangeException(nameof(frequency));
             return durationTicks >= 0 && durationTicks * 1000 >= ThresholdMilliseconds * frequency;
         }
+        public static bool RecordUnits(double maximumUnitOptionalStopMilliseconds) => maximumUnitOptionalStopMilliseconds > AdvanceCallRows.UnitThresholdMilliseconds;
     }
 
     public struct AdvanceCallRecord
@@ -137,6 +138,7 @@ namespace PerfUnionProbe
         public int CollectionsDelta;
         public double OptionalStopMilliseconds;
         public double TargetMinute;
+        public bool Over30;
         public bool UnitsRead;
         public int Units;
         public string SlowestUnitKind;
@@ -154,6 +156,7 @@ namespace PerfUnionProbe
     public interface IUnitSeamSource
     {
         int Units { get; }
+        bool Completed { get; }
         string SlowestUnitKind { get; }
         double SlowestUnitMilliseconds { get; }
         double SlowestUnitSeamMilliseconds { get; }
@@ -161,12 +164,13 @@ namespace PerfUnionProbe
         double P95UnitSeamMilliseconds();
         double UnitSeamMilliseconds(int unit);
         string UnitKind(int unit);
+        int NextUnitOverThreshold(int from);
     }
 
     public sealed class ReflectedUnitSeams : IUnitSeamSource
     {
-        private PropertyInfo units, slowestKind, slowestMs, slowestSeam, maximumSeam;
-        private MethodInfo p95, unitSeam, unitKind;
+        private PropertyInfo units, completed, slowestKind, slowestMs, slowestSeam, maximumSeam;
+        private MethodInfo p95, unitSeam, unitKind, nextOver;
         public object Target;
         public static ReflectedUnitSeams Bind(Type type)
         {
@@ -175,13 +179,13 @@ namespace PerfUnionProbe
             MethodInfo M(string name, Type returns, params Type[] args) { var m = type.GetMethod(name, Flags, null, args, null); return m != null && m.ReturnType == returns ? m : null; }
             var bound = new ReflectedUnitSeams
             {
-                units = P("Units", typeof(int)), slowestKind = P("SlowestUnitKind", typeof(string)), slowestMs = P("SlowestUnitMilliseconds", typeof(double)),
+                units = P("Units", typeof(int)), completed = P("Completed", typeof(bool)), slowestKind = P("SlowestUnitKind", typeof(string)), slowestMs = P("SlowestUnitMilliseconds", typeof(double)),
                 slowestSeam = P("SlowestUnitSeamMilliseconds", typeof(double)), maximumSeam = P("MaximumUnitSeamMilliseconds", typeof(double)),
                 p95 = M("P95UnitSeamMilliseconds", typeof(double)), unitSeam = M("UnitSeamMilliseconds", typeof(double), typeof(int)),
-                unitKind = M("UnitKind", typeof(string), typeof(int)),
+                unitKind = M("UnitKind", typeof(string), typeof(int)), nextOver = M("NextUnitOverThreshold", typeof(int), typeof(int)),
             };
             return bound.units == null || bound.slowestKind == null || bound.slowestMs == null || bound.slowestSeam == null || bound.maximumSeam == null
-                || bound.p95 == null || bound.unitSeam == null || bound.unitKind == null ? null : bound;
+                || bound.p95 == null || bound.unitSeam == null || bound.unitKind == null || bound.completed == null || bound.nextOver == null ? null : bound;
         }
         public int Units => (int)units.GetValue(Target);
         public string SlowestUnitKind => (string)slowestKind.GetValue(Target);
@@ -191,6 +195,9 @@ namespace PerfUnionProbe
         public double P95UnitSeamMilliseconds() => (double)p95.Invoke(Target, null);
         public double UnitSeamMilliseconds(int unit) => (double)unitSeam.Invoke(Target, new object[] { unit });
         public string UnitKind(int unit) => (string)unitKind.Invoke(Target, new object[] { unit });
+        public bool Completed => (bool)completed.GetValue(Target);
+        public int NextUnitOverThreshold(int from) => (int)nextOver.Invoke(Target, new object[] { from });
+        public PropertyInfo MaximumProperty => maximumSeam;
     }
 
     public static class AdvanceCallRows
@@ -200,13 +207,11 @@ namespace PerfUnionProbe
 
         public static void ReadUnits(ref AdvanceCallRecord record, IUnitSeamSource source)
         {
+            if (!source.Completed) { record.UnitsRead = false; return; }
             int units = source.Units;
             var over = new List<UnitOptionalStop>();
-            for (int i = 0; i < units; i++)
-            {
-                double seam = source.UnitSeamMilliseconds(i);
-                if (seam > UnitThresholdMilliseconds) over.Add(new UnitOptionalStop { Unit = i, Kind = source.UnitKind(i), OptionalStopMilliseconds = seam });
-            }
+            for (int i = source.NextUnitOverThreshold(0); i >= 0 && i < units; i = source.NextUnitOverThreshold(i + 1))
+                over.Add(new UnitOptionalStop { Unit = i, Kind = source.UnitKind(i), OptionalStopMilliseconds = source.UnitSeamMilliseconds(i) });
             record.Units = units;
             record.SlowestUnitKind = string.IsNullOrEmpty(source.SlowestUnitKind) ? "none" : source.SlowestUnitKind;
             record.SlowestUnitMilliseconds = source.SlowestUnitMilliseconds;
@@ -228,6 +233,8 @@ namespace PerfUnionProbe
                 new KeyValuePair<string, object>("duration_ms", c.DurationTicks * toMs),
                 new KeyValuePair<string, object>("gc_delta", c.CollectionsDelta),
                 new KeyValuePair<string, object>("target_minute", c.TargetMinute),
+                new KeyValuePair<string, object>("over_30ms", c.Over30),
+                new KeyValuePair<string, object>("record_reason", c.Over30 ? "duration_ge30" : "unit_optional_stop_over_5ms"),
                 new KeyValuePair<string, object>("slowest_unit", read ? c.SlowestUnitKind : "unknown"),
                 new KeyValuePair<string, object>("optional_stop_ms", Number(c.OptionalStopMilliseconds)),
                 new KeyValuePair<string, object>("units", read ? (object)c.Units : null),

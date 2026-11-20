@@ -225,6 +225,23 @@ internal static class Program
         Check(Equals(unread["slowest_unit"], "unknown") && unread["optional_stop_ms"] == null && unread["slowest_unit_optional_stop_ms"] == null
             && unread[AdvanceCallRows.UnitsOverThresholdField] == null, "a call without per-unit data reports unknown and nulls");
         Check(ReflectedUnitSeams.Bind(typeof(AdvanceCallRecord)) == null, "binding refuses a type without the per-unit contract");
+        Check(AdvanceCallRule.RecordUnits(5.3) && !AdvanceCallRule.RecordUnits(5.0) && !AdvanceCallRule.RecordUnits(double.NaN),
+            "a call under 30 ms is recorded when one unit's optional-stop time is over 5 ms");
+        Check(Equals(fields["over_30ms"], false) && Equals(fields["record_reason"], "unit_optional_stop_over_5ms"), "record reason for a sub-30 ms unit crossing");
+        var interrupted = new PersistentCity.Core.OptionalStopUnitSeams();
+        interrupted.BeginCall();
+        interrupted.Seam(6.0); interrupted.EndUnit("citizen", 7.0);
+        interrupted.Seam(4.0);
+        interrupted.EndCall(false);
+        interrupted.Seam(9.0);
+        source.Target = interrupted;
+        var failed = new AdvanceCallRecord { DurationTicks = 400_000, OptionalStopMilliseconds = 10.0, Over30 = true };
+        AdvanceCallRows.ReadUnits(ref failed, source);
+        var failedFields = AdvanceCallRows.Fields(failed, 1e-4).ToDictionary(f => f.Key, f => f.Value);
+        Check(!failed.UnitsRead && Equals(failedFields["slowest_unit"], "unknown") && failedFields["unit_optional_stop_max_ms"] == null
+            && failedFields[AdvanceCallRows.UnitsOverThresholdField] == null, "an interrupted advance exports no per-unit fields");
+        Check(Equals(failedFields["optional_stop_ms"], 10.0) && Equals(failedFields["duration_ms"], 40.0), "an interrupted advance keeps its call total and duration");
+        Check(interrupted.CallSeamMilliseconds == 10.0, "seams after an interrupted call is closed are not charged to it");
     }
 
     private static void Union()

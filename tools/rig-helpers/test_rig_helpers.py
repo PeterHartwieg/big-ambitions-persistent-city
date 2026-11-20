@@ -103,6 +103,7 @@ class PrestagePathTests(unittest.TestCase):
 class FakeBridge:
     def __init__(self):
         self.commands = []
+        self.autosave = {'enabled': True, 'autosave_disabled': True, 'suppressed': True}
 
     def __call__(self, args):
         self.commands.append(args)
@@ -111,6 +112,8 @@ class FakeBridge:
             line = json.loads(args[2])['line']
             output = ['[Persistent City] gc retained ' + json.dumps({'bytes': 10, 'objects': 2, 'type_counts': {'RouteLeg': 4}})] if line == 'pc gc retained' else []
             body = {'result': {'output': output}}
+        elif kind == 'autosave':
+            body = self.autosave
         elif kind == 'op' and args[1] == 'perf_union':
             body = {'after': {'mono_heap': {'now_bytes': 5}, 'after_forced_gc_bytes': 7}}
         elif kind == 'op' and args[1] == 'pcstate':
@@ -177,6 +180,38 @@ class RetentionRunnerTests(unittest.TestCase):
             module.snapshot('R0')
         self.assertIn("'console'", str(raised.exception))
         self.assertEqual(self.bridge.console_lines(), ['pc gc retained'])
+
+    def test_snapshot_rejects_an_autosave_on_receipt_before_the_census(self):
+        retention = self.local(importlib.import_module('retention'))
+        self.bridge.autosave = {'enabled': True, 'autosave_disabled': False, 'suppressed': False}
+        with self.assertRaisesRegex(RuntimeError, 'autosave is not suppressed'):
+            retention.snapshot('R0')
+        self.assertEqual(self.bridge.console_lines(), [])
+        self.assertFalse((self.stage / 'retention-R0-set.json').exists())
+        self.bridge.autosave = {'enabled': True, 'autosave_disabled': True, 'suppressed': False}
+        with self.assertRaises(RuntimeError):
+            self.common.auto('half-suppressed')
+
+    def test_wrap_reads_the_hart_builds_run_directory(self):
+        with HomeDir() as home:
+            sys.modules.pop('rigcommon', None)
+            common = importlib.import_module('rigcommon')
+            self.assertFalse(common.wrap())
+            signal = home / 'HART-Builds/rig-test-run/WRAP_UP_NOW.md'
+            signal.parent.mkdir(parents=True)
+            signal.write_text('stop')
+            self.assertTrue(common.wrap())
+
+    def test_no_run_and_no_stage_refuses_to_write_evidence(self):
+        with HomeDir() as home, mock.patch.dict(os.environ, {'PC_RIG_RUN': '', 'PC_RIG_STAGE': ''}):
+            sys.modules.pop('rigcommon', None)
+            common = importlib.import_module('rigcommon')
+            self.assertIsNone(common.STAGE)
+            with self.assertRaises(RuntimeError):
+                common.write('retention-failure', {'error': 'x'})
+            with self.assertRaises(RuntimeError):
+                common.archive('retention')
+            self.assertFalse((home / 'Coding_Projects').exists())
 
     def test_bridge_calls_require_the_lock_owner(self):
         with mock.patch.dict(os.environ, {'BA_LOCK_OWNER': 'someone-else'}):

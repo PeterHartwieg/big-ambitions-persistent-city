@@ -9,7 +9,7 @@ from rigpaths import absolute
 
 HOME = absolute('~')
 RUN = os.environ.get('PC_RIG_RUN', '')
-STAGE = absolute(os.environ.get('PC_RIG_STAGE') or ('~/Coding_Projects/.agent-logs/' + RUN))
+STAGE = absolute(os.environ['PC_RIG_STAGE']) if os.environ.get('PC_RIG_STAGE') else absolute('~/Coding_Projects/.agent-logs/' + RUN) if RUN else None
 RIG = absolute(os.environ.get('PC_RIG_CHECKOUT') or '~/Coding_Projects/big-ambitions/big-ambitions-agent-rig')
 SUPPORT = absolute(os.environ.get('PC_RIG_SUPPORT') or '~/Library/Application Support/BigAmbitionsAgentTestsMac')
 LOG = absolute(os.environ.get('PC_RIG_PLAYER_LOG') or (SUPPORT / 'Player-agent.log'))
@@ -22,13 +22,19 @@ def require_lock():
         raise RuntimeError(f'BA_LOCK_OWNER must equal PC_RIG_RUN ({RUN!r})')
 
 
+def stage():
+    if STAGE is None:
+        raise RuntimeError('PC_RIG_RUN or PC_RIG_STAGE must be set before writing rig evidence')
+    STAGE.mkdir(parents=True, exist_ok=True)
+    return STAGE
+
+
 def now():
     return datetime.datetime.now(datetime.timezone.utc).isoformat()
 
 
 def write(label, data):
-    STAGE.mkdir(parents=True, exist_ok=True)
-    (STAGE / (label + '.json')).write_text(json.dumps(data, indent=2, default=str) + '\n')
+    (stage() / (label + '.json')).write_text(json.dumps(data, indent=2, default=str) + '\n')
     return data
 
 
@@ -40,9 +46,8 @@ def run(label, *args, allow=False):
     require_lock()
     print(label, now(), flush=True)
     result = bridge(list(args))
-    STAGE.mkdir(parents=True, exist_ok=True)
-    (STAGE / (label + '.stdout')).write_text(result.stdout)
-    (STAGE / (label + '.stderr')).write_text(result.stderr)
+    (stage() / (label + '.stdout')).write_text(result.stdout)
+    (stage() / (label + '.stderr')).write_text(result.stderr)
     try:
         data = json.loads(result.stdout)
     except ValueError:
@@ -69,7 +74,10 @@ def console(label, line):
 
 
 def auto(label):
-    return run(label, 'autosave')
+    receipt = run(label, 'autosave')
+    if receipt.get('autosave_disabled') is not True or receipt.get('suppressed') is not True:
+        raise RuntimeError(f'{label}: autosave is not suppressed: {receipt}')
+    return receipt
 
 
 def prop(label, name):
@@ -77,13 +85,18 @@ def prop(label, name):
 
 
 def wrap():
-    return any(p.exists() for p in (STAGE / 'WRAP_UP_NOW.md', HOME / 'Coding_Projects/.agent-logs/WRAP_UP_NOW.md'))
+    paths = [HOME / 'Coding_Projects/.agent-logs/WRAP_UP_NOW.md']
+    if STAGE is not None:
+        paths.append(STAGE / 'WRAP_UP_NOW.md')
+    if RUN:
+        paths.append(HOME / 'HART-Builds' / RUN / 'WRAP_UP_NOW.md')
+    return any(p.exists() for p in paths)
 
 
 def archive(label):
+    target = stage() / (label + '-Player.log')
     if LOG.exists():
-        STAGE.mkdir(parents=True, exist_ok=True)
-        (STAGE / (label + '-Player.log')).write_bytes(LOG.read_bytes())
+        target.write_bytes(LOG.read_bytes())
 
 
 def log_size():
@@ -112,7 +125,7 @@ def idle(label):
 
 def stop(label):
     data = run(label, 'stop', allow=True)
-    result = json.loads((STAGE / (label + '.json')).read_text())
+    result = json.loads((stage() / (label + '.json')).read_text())
     if result['exit']:
         if data.get('error') == 'stop_timeout' or 'stop --force' in json.dumps(data):
             if run(label + '-stuck-status', 'status')['running']:
@@ -148,7 +161,7 @@ def start_and_load(label, recovery=True, retained_after_load=False):
             if resources['disk_free_gib'] >= 12 and resources['memory_free_percent'] >= 20:
                 start_label = tag + '-start' if not attempt else tag + '-resource-retry-' + str(attempt) + '-start'
                 result = run(start_label, 'start', '--mode', 'headless', '--rig-test', allow=True)
-                if json.loads((STAGE / (start_label + '.json')).read_text())['exit'] == 0:
+                if json.loads((stage() / (start_label + '.json')).read_text())['exit'] == 0:
                     break
                 if 'Insufficient Mac resource headroom' not in json.dumps(result):
                     raise RuntimeError(f'{start_label}: {result}')
@@ -276,8 +289,7 @@ def footprint(label, pid):
     except subprocess.TimeoutExpired as exc:
         write(label + '-vmmap-error', {'command': args, 'error': str(exc)})
         return None
-    STAGE.mkdir(parents=True, exist_ok=True)
-    (STAGE / (label + '.vmmap')).write_text(result.stdout + result.stderr)
+    (stage() / (label + '.vmmap')).write_text(result.stdout + result.stderr)
     write(label + '-vmmap', {'command': args, 'exit': result.returncode})
     return next((line.split(':', 1)[1].strip() for line in result.stdout.splitlines() if line.startswith('Physical footprint:')), None)
 

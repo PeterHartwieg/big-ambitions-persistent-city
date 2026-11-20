@@ -90,6 +90,36 @@ public sealed class OptionalStopUnitSeamsTests
     }
 
     [Fact]
+    public void InterruptedCallIsClosedIncompleteAndStopsAccumulating()
+    {
+        var r = new OptionalStopUnitSeams();
+        r.BeginCall();
+        r.Seam(6); r.EndUnit("citizen", 7);
+        r.Seam(3);
+        r.EndCall(false);
+        r.Seam(20);
+        r.EndUnit("other", 30);
+        Assert.False(r.Completed);
+        Assert.False(r.CallOpen);
+        Assert.Equal(9, r.CallSeamMilliseconds);
+        Assert.Equal(1, r.Units);
+        r.BeginCall();
+        Assert.False(r.Completed);
+        r.EndCall();
+        Assert.True(r.Completed);
+    }
+
+    [Fact]
+    public void MaximumKindAndNextUnitOverThresholdWalkTheCrossings()
+    {
+        var r = Advance(("citizen", 1, new[] { 5.5 }), ("traffic", 1, new[] { 1.0 }), ("food-continuation", 1, new[] { 8.0 }), ("snapshot", 1, new[] { 5.0 }));
+        Assert.Equal("food-continuation", r.MaximumUnitSeamKind);
+        Assert.Equal(0, r.NextUnitOverThreshold(0));
+        Assert.Equal(2, r.NextUnitOverThreshold(1));
+        Assert.Equal(-1, r.NextUnitOverThreshold(3));
+    }
+
+    [Fact]
     public void LongCallsGrowWithoutLosingUnits()
     {
         var r = Advance(Enumerable.Range(0, 300).Select(i => ("citizen", i == 250 ? 10.0 : 1.0, new[] { i == 250 ? 2.5 : 0.01 })).ToArray());
@@ -110,6 +140,10 @@ public sealed class OptionalStopUnitSeamsTests
         Assert.Contains("unitSeams?.EndUnit(kind, elapsed - unitStarted);", mod);
         Assert.Contains("slowestAdvanceStopMilliseconds = unitSeams?.SlowestUnitSeamMilliseconds ?? 0;", mod);
         Assert.DoesNotContain("stopsBefore", mod);
+        Assert.Matches(@"try\s*\{\s*bool hiddenSkip", mod);
+        Assert.Contains("completed = true;\n            }\n            finally { unitSeams?.EndCall(completed); }", mod.Replace("\r\n", "\n"));
+        Assert.Contains("ObserveStopCrossings(unitSeams, elapsed);", mod);
+        Assert.Contains("Optional-stop units over 5 ms this observation: ", mod);
         Assert.Contains("Optional-stop reads per unit in the slowest advance: ", mod);
     }
 }

@@ -29,13 +29,15 @@ namespace PersistentCity.Core
         public double SlowestUnitMilliseconds { get; private set; }
         public double SlowestUnitSeamMilliseconds => SlowestUnit < 0 ? 0 : seams[SlowestUnit];
         public double MaximumUnitSeamMilliseconds { get; private set; }
+        public string MaximumUnitSeamKind { get; private set; } = "";
+        public bool Completed { get; private set; }
         public double UnitSeamMilliseconds(int unit) => unit >= 0 && unit < Units ? seams[unit] : throw new ArgumentOutOfRangeException(nameof(unit));
         public string UnitKind(int unit) => unit >= 0 && unit < Units ? kinds[unit] : throw new ArgumentOutOfRangeException(nameof(unit));
 
         public void BeginCall()
         {
             Units = 0; open = 0; CallSeamMilliseconds = 0; SlowestUnit = -1; SlowestUnitKind = ""; SlowestUnitMilliseconds = 0;
-            MaximumUnitSeamMilliseconds = 0; callOpen = true;
+            MaximumUnitSeamMilliseconds = 0; MaximumUnitSeamKind = ""; Completed = false; callOpen = true;
         }
 
         public void Seam(double milliseconds)
@@ -53,11 +55,21 @@ namespace PersistentCity.Core
             }
             seams[Units] = open; kinds[Units] = kind;
             if (unitMilliseconds > SlowestUnitMilliseconds) { SlowestUnitMilliseconds = unitMilliseconds; SlowestUnit = Units; SlowestUnitKind = kind; }
-            if (open > MaximumUnitSeamMilliseconds) MaximumUnitSeamMilliseconds = open;
+            if (open > MaximumUnitSeamMilliseconds) { MaximumUnitSeamMilliseconds = open; MaximumUnitSeamKind = kind; }
             Units++; open = 0;
         }
 
-        public void EndCall() => callOpen = false;
+        public void EndCall(bool completed = true)
+        {
+            if (!callOpen) return;
+            callOpen = false; Completed = completed;
+        }
+
+        public int NextUnitOverThreshold(int from)
+        {
+            for (int i = Math.Max(0, from); i < Units; i++) if (seams[i] > ThresholdMilliseconds) return i;
+            return -1;
+        }
 
         public double P95UnitSeamMilliseconds()
         {

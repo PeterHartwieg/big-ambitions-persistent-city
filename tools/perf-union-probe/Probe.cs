@@ -112,7 +112,7 @@ namespace PerfUnionProbe
         private static Func<double> clockFactor;
         private static Func<object, object> readSimulation, readState, readStopEnvironment, readUnitSeams;
         private static ReflectedUnitSeams unitSeamSource;
-        private static Func<object, double> readMinute, readSeam;
+        private static Func<object, double> readMinute, readSeam, readUnitMaximum;
         private static PropertyInfo accountingDiagnostics, saveEpochDiagnostics;
 
         internal static double shimFactor = double.NaN;
@@ -253,6 +253,7 @@ namespace PerfUnionProbe
             var unitSeams = readStopEnvironment == null ? null : stops.FieldType.GetProperty("UnitSeams", BindingFlags.Public | BindingFlags.Instance);
             unitSeamSource = unitSeams == null ? null : ReflectedUnitSeams.Bind(unitSeams.PropertyType);
             readUnitSeams = unitSeamSource == null ? null : ObjectGetter(unitSeams);
+            readUnitMaximum = unitSeamSource == null ? null : DoubleGetter(unitSeamSource.MaximumProperty);
             accountingDiagnostics = runtimeType.GetProperty("AccountingDiagnostics", BindingFlags.Public | BindingFlags.Instance);
             saveEpochDiagnostics = runtimeType.GetProperty("SaveEpochDiagnostics", BindingFlags.Public | BindingFlags.Instance);
         }
@@ -425,7 +426,14 @@ namespace PerfUnionProbe
             catch (Exception) { record.UnitsRead = false; unitSeamFailures++; }
             finally { unitSeamSource.Target = null; }
         }
-        internal static long unitSeamFailures;
+        internal static long unitSeamFailures, callsOver30, callsUnitOver5;
+        internal static double UnitMaximum()
+        {
+            if (readUnitMaximum == null || readUnitSeams == null || runtime == null) return double.NaN;
+            var stops = readStopEnvironment(runtime);
+            var units = stops == null ? null : readUnitSeams(stops);
+            return units == null ? double.NaN : readUnitMaximum(units);
+        }
 
         private static void InstallLoop()
         {
@@ -580,7 +588,7 @@ namespace PerfUnionProbe
             string label = (string)args["window"] ?? "";
             Require(label.Length <= 64 && label.All(ch => char.IsLetterOrDigit(ch) || ch == '-' || ch == '_' || ch == '.'), "f4b_invalid_window_label");
             window = label; error = ""; stopReason = "measuring";
-            frameRing.Reset(); tickRing.Reset(); sampleRing.Reset(); callCount = 0; callDropped = sampleFailures = advanceCalls = 0;
+            frameRing.Reset(); tickRing.Reset(); sampleRing.Reset(); callCount = 0; callDropped = sampleFailures = advanceCalls = callsOver30 = callsUnitOver5 = 0;
             ReadMonoHeap(out startScanHeap, out startScanUsed); monoHeapStop = monoUsedStop = -1;
             Rescan(true); unexpectedAtWindowStart = coverage?.Unexpected.Count ?? 0; patchSetChanged = false;
             ReadMonoHeap(out monoHeapStart, out monoUsedStart);
@@ -638,7 +646,7 @@ namespace PerfUnionProbe
             union.Abandon(); shimInstalled = holdsBound = advanceBound = false; coverage = null; patchWatch = null;
             mode = "none"; runtime = null; pc = null; shimFactor = double.NaN;
             heldOrdinary = heldSkip = boundaryClips = null; withheld = null; accountingLimited = null; clockFactor = null;
-            readSimulation = readState = readStopEnvironment = readUnitSeams = null; readMinute = readSeam = null; unitSeamSource = null;
+            readSimulation = readState = readStopEnvironment = readUnitSeams = null; readMinute = readSeam = readUnitMaximum = null; unitSeamSource = null;
         }
 
         private void OnDestroy() => Disarm();
@@ -683,7 +691,8 @@ namespace PerfUnionProbe
                 ["frames"] = frameRing.Written, ["frames_drained"] = frameRing.Drained, ["frame_dropped"] = frameRing.Dropped, ["frame_capacity"] = FrameLimit,
                 ["ticks"] = NotApplicable(() => tickRing.Written), ["ticks_drained"] = NotApplicable(() => tickRing.Drained), ["tick_dropped"] = NotApplicable(() => tickRing.Dropped),
                 ["hold_events"] = NotApplicable(() => holds.Events.Count), ["held_now"] = NotApplicable(() => holds.Held),
-                ["advance_calls"] = NotApplicable(() => advanceCalls), ["advance_records_ge30"] = NotApplicable(() => callCount),
+                ["advance_calls"] = NotApplicable(() => advanceCalls), ["advance_records_ge30"] = NotApplicable(() => callsOver30),
+                ["advance_records_unit_optional_stop_over_5ms"] = NotApplicable(() => callsUnitOver5),
                 ["advance_record_dropped"] = NotApplicable(() => callDropped),
                 ["diagnostic_samples"] = NotApplicable(() => sampleRing.Written), ["diagnostic_dropped"] = NotApplicable(() => sampleRing.Dropped),
                 ["diagnostic_failures"] = NotApplicable(() => sampleFailures),
@@ -871,14 +880,19 @@ namespace PerfUnionProbe
             long end = Stopwatch.GetTimestamp();
             Session.advanceCalls++;
             long duration = end - __state.Start;
-            if (!AdvanceCallRule.Record(duration, Stopwatch.Frequency)) return;
-            if (Session.callCount >= Session.calls.Length) { Session.callDropped++; return; }
+            bool over30 = AdvanceCallRule.Record(duration, Stopwatch.Frequency);
+            if (!over30 && !AdvanceCallRule.RecordUnits(Session.UnitMaximum())) { Session.observerTicks += Stopwatch.GetTimestamp() - end; return; }
+            if (Session.callCount >= Session.calls.Length) { Session.callDropped++; Session.observerTicks += Stopwatch.GetTimestamp() - end; return; }
             double seam = Session.SeamMilliseconds();
             var record = new AdvanceCallRecord { Frame = __state.Frame, StartQpc = __state.Start, DurationTicks = duration,
-                CollectionsDelta = GC.CollectionCount(0) - __state.Collections, TargetMinute = __0,
+                CollectionsDelta = GC.CollectionCount(0) - __state.Collections, TargetMinute = __0, Over30 = over30,
                 OptionalStopMilliseconds = double.IsNaN(seam) || double.IsNaN(__state.Seam) ? double.NaN : seam - __state.Seam };
             Session.ReadUnitSeams(ref record);
-            Session.calls[Session.callCount++] = record;
+            if (over30 || record.UnitsRead)
+            {
+                Session.calls[Session.callCount++] = record;
+                if (over30) Session.callsOver30++; else Session.callsUnitOver5++;
+            }
             Session.observerTicks += Stopwatch.GetTimestamp() - end;
         }
     }

@@ -44,14 +44,14 @@ def backup_profile(stage, fixture, home='~', profile=PROFILE, rig=RIG_SUPPORT, p
     for path in sorted(set(paths)):
         if path.is_dir():
             continue
-        key = str(path.relative_to(home))
+        key = path.relative_to(home).as_posix()
         manifest[key] = sha(path) if path.exists() else None
         if path.exists():
             target = backup / key
             target.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(path, target)
-    rlo = {str(p.relative_to(home)): sha(p) for p in (profile / 'ModsLocal/RealLifeOverhaul').rglob('*') if p.is_file()}
-    sealed = {str(p.relative_to(home)): sha(p) for p in (profile / 'SaveGames').rglob('*') if p.is_file() and fixture in p.name}
+    rlo = {p.relative_to(home).as_posix(): sha(p) for p in (profile / 'ModsLocal/RealLifeOverhaul').rglob('*') if p.is_file()}
+    sealed = {p.relative_to(home).as_posix(): sha(p) for p in (profile / 'SaveGames').rglob('*') if p.is_file() and fixture in p.name}
     (stage / 'pre-stage-manifest.json').write_text(json.dumps({'files': manifest, 'rlo': rlo, 'sealed': sealed}, indent=2))
     return manifest, rlo, sealed
 
