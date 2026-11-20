@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 
 namespace PerfUnionProbe
 {
@@ -127,6 +128,9 @@ namespace PerfUnionProbe
             if (frequency <= 0) throw new ArgumentOutOfRangeException(nameof(frequency));
             return durationTicks >= 0 && durationTicks * 1000 >= ThresholdMilliseconds * frequency;
         }
+        public static bool RecordUnits(double maximumUnitOptionalStopMilliseconds) => maximumUnitOptionalStopMilliseconds > AdvanceCallRows.UnitThresholdMilliseconds;
+        public static bool AdmitUnits(bool failed, double maximumUnitOptionalStopMilliseconds) => !failed && RecordUnits(maximumUnitOptionalStopMilliseconds);
+        public static bool ExportUnits(bool failed) => !failed;
     }
 
     public struct AdvanceCallRecord
@@ -136,6 +140,113 @@ namespace PerfUnionProbe
         public int CollectionsDelta;
         public double OptionalStopMilliseconds;
         public double TargetMinute;
+        public bool Over30;
+        public bool UnitsRead;
+        public int Units;
+        public string SlowestUnitKind;
+        public double SlowestUnitMilliseconds, SlowestUnitOptionalStopMilliseconds, MaximumUnitOptionalStopMilliseconds, P95UnitOptionalStopMilliseconds;
+        public UnitOptionalStop[] UnitsOverThreshold;
+    }
+
+    public struct UnitOptionalStop
+    {
+        public int Unit;
+        public string Kind;
+        public double OptionalStopMilliseconds;
+    }
+
+    public interface IUnitSeamSource
+    {
+        int Units { get; }
+        bool Completed { get; }
+        string SlowestUnitKind { get; }
+        double SlowestUnitMilliseconds { get; }
+        double SlowestUnitSeamMilliseconds { get; }
+        double MaximumUnitSeamMilliseconds { get; }
+        double P95UnitSeamMilliseconds();
+        double UnitSeamMilliseconds(int unit);
+        string UnitKind(int unit);
+        int NextUnitOverThreshold(int from);
+    }
+
+    public sealed class ReflectedUnitSeams : IUnitSeamSource
+    {
+        private PropertyInfo units, completed, slowestKind, slowestMs, slowestSeam, maximumSeam;
+        private MethodInfo p95, unitSeam, unitKind, nextOver;
+        public object Target;
+        public static ReflectedUnitSeams Bind(Type type)
+        {
+            const BindingFlags Flags = BindingFlags.Public | BindingFlags.Instance;
+            PropertyInfo P(string name, Type expected) { var p = type.GetProperty(name, Flags); return p != null && p.PropertyType == expected ? p : null; }
+            MethodInfo M(string name, Type returns, params Type[] args) { var m = type.GetMethod(name, Flags, null, args, null); return m != null && m.ReturnType == returns ? m : null; }
+            var bound = new ReflectedUnitSeams
+            {
+                units = P("Units", typeof(int)), completed = P("Completed", typeof(bool)), slowestKind = P("SlowestUnitKind", typeof(string)), slowestMs = P("SlowestUnitMilliseconds", typeof(double)),
+                slowestSeam = P("SlowestUnitSeamMilliseconds", typeof(double)), maximumSeam = P("MaximumUnitSeamMilliseconds", typeof(double)),
+                p95 = M("P95UnitSeamMilliseconds", typeof(double)), unitSeam = M("UnitSeamMilliseconds", typeof(double), typeof(int)),
+                unitKind = M("UnitKind", typeof(string), typeof(int)), nextOver = M("NextUnitOverThreshold", typeof(int), typeof(int)),
+            };
+            return bound.units == null || bound.slowestKind == null || bound.slowestMs == null || bound.slowestSeam == null || bound.maximumSeam == null
+                || bound.p95 == null || bound.unitSeam == null || bound.unitKind == null || bound.completed == null || bound.nextOver == null ? null : bound;
+        }
+        public int Units => (int)units.GetValue(Target);
+        public string SlowestUnitKind => (string)slowestKind.GetValue(Target);
+        public double SlowestUnitMilliseconds => (double)slowestMs.GetValue(Target);
+        public double SlowestUnitSeamMilliseconds => (double)slowestSeam.GetValue(Target);
+        public double MaximumUnitSeamMilliseconds => (double)maximumSeam.GetValue(Target);
+        public double P95UnitSeamMilliseconds() => (double)p95.Invoke(Target, null);
+        public double UnitSeamMilliseconds(int unit) => (double)unitSeam.Invoke(Target, new object[] { unit });
+        public string UnitKind(int unit) => (string)unitKind.Invoke(Target, new object[] { unit });
+        public bool Completed => (bool)completed.GetValue(Target);
+        public int NextUnitOverThreshold(int from) => (int)nextOver.Invoke(Target, new object[] { from });
+        public PropertyInfo MaximumProperty => maximumSeam;
+    }
+
+    public static class AdvanceCallRows
+    {
+        public const double UnitThresholdMilliseconds = 5;
+        public const string UnitsOverThresholdField = "units_optional_stop_over_5ms";
+
+        public static void ReadUnits(ref AdvanceCallRecord record, IUnitSeamSource source)
+        {
+            if (!source.Completed) { record.UnitsRead = false; return; }
+            int units = source.Units;
+            var over = new List<UnitOptionalStop>();
+            for (int i = source.NextUnitOverThreshold(0); i >= 0 && i < units; i = source.NextUnitOverThreshold(i + 1))
+                over.Add(new UnitOptionalStop { Unit = i, Kind = source.UnitKind(i), OptionalStopMilliseconds = source.UnitSeamMilliseconds(i) });
+            record.Units = units;
+            record.SlowestUnitKind = string.IsNullOrEmpty(source.SlowestUnitKind) ? "none" : source.SlowestUnitKind;
+            record.SlowestUnitMilliseconds = source.SlowestUnitMilliseconds;
+            record.SlowestUnitOptionalStopMilliseconds = source.SlowestUnitSeamMilliseconds;
+            record.MaximumUnitOptionalStopMilliseconds = source.MaximumUnitSeamMilliseconds;
+            record.P95UnitOptionalStopMilliseconds = source.P95UnitSeamMilliseconds();
+            record.UnitsOverThreshold = over.ToArray();
+            record.UnitsRead = true;
+        }
+
+        public static List<KeyValuePair<string, object>> Fields(AdvanceCallRecord c, double toMs)
+        {
+            object Number(double value) => double.IsNaN(value) ? null : (object)value;
+            bool read = c.UnitsRead;
+            return new List<KeyValuePair<string, object>>
+            {
+                new KeyValuePair<string, object>("frame", c.Frame),
+                new KeyValuePair<string, object>("start_qpc", c.StartQpc),
+                new KeyValuePair<string, object>("duration_ms", c.DurationTicks * toMs),
+                new KeyValuePair<string, object>("gc_delta", c.CollectionsDelta),
+                new KeyValuePair<string, object>("target_minute", c.TargetMinute),
+                new KeyValuePair<string, object>("over_30ms", c.Over30),
+                new KeyValuePair<string, object>("record_reason", c.Over30 ? "duration_ge30" : "unit_optional_stop_over_5ms"),
+                new KeyValuePair<string, object>("slowest_unit", read ? c.SlowestUnitKind : "unknown"),
+                new KeyValuePair<string, object>("optional_stop_ms", Number(c.OptionalStopMilliseconds)),
+                new KeyValuePair<string, object>("units", read ? (object)c.Units : null),
+                new KeyValuePair<string, object>("slowest_unit_ms", read ? Number(c.SlowestUnitMilliseconds) : null),
+                new KeyValuePair<string, object>("slowest_unit_optional_stop_ms", read ? Number(c.SlowestUnitOptionalStopMilliseconds) : null),
+                new KeyValuePair<string, object>("unit_optional_stop_max_ms", read ? Number(c.MaximumUnitOptionalStopMilliseconds) : null),
+                new KeyValuePair<string, object>("unit_optional_stop_p95_ms", read ? Number(c.P95UnitOptionalStopMilliseconds) : null),
+                new KeyValuePair<string, object>(UnitsOverThresholdField, read ? (object)(c.UnitsOverThreshold ?? new UnitOptionalStop[0]) : null),
+            };
+        }
     }
 
     public sealed class UnionClock
@@ -238,9 +349,62 @@ namespace PerfUnionProbe
         }
     }
 
+    public sealed class AdvanceCallBuffer
+    {
+        public AdvanceCallBuffer(int slowCapacity, int unitCapacity)
+        {
+            Slow = new AdvanceCallRecord[slowCapacity]; Unit = new AdvanceCallRecord[unitCapacity];
+        }
+        public AdvanceCallRecord[] Slow { get; }
+        public AdvanceCallRecord[] Unit { get; }
+        public int SlowCount { get; private set; }
+        public int UnitCount { get; private set; }
+        public long SlowDropped { get; private set; }
+        public long UnitDropped { get; private set; }
+        public bool Full(bool over30) => over30 ? SlowCount >= Slow.Length : UnitCount >= Unit.Length;
+        public bool Add(AdvanceCallRecord record)
+        {
+            if (record.Over30)
+            {
+                if (SlowCount >= Slow.Length) { SlowDropped++; return false; }
+                Slow[SlowCount++] = record; return true;
+            }
+            if (!record.UnitsRead) return false;
+            if (UnitCount >= Unit.Length) { UnitDropped++; return false; }
+            Unit[UnitCount++] = record; return true;
+        }
+        public int MergedCount => SlowCount + UnitCount;
+        public AdvanceCallRecord[] Chronological()
+        {
+            var merged = new AdvanceCallRecord[MergedCount];
+            int s = 0, u = 0, n = 0;
+            while (s < SlowCount || u < UnitCount)
+                merged[n++] = u >= UnitCount || (s < SlowCount && Slow[s].StartQpc <= Unit[u].StartQpc) ? Slow[s++] : Unit[u++];
+            return merged;
+        }
+        public void Drop(bool over30) { if (over30) SlowDropped++; else UnitDropped++; }
+        public void Reset() { SlowCount = UnitCount = 0; SlowDropped = UnitDropped = 0; }
+    }
+
+    public static class CallPage
+    {
+        public const int Separator = 1;
+        public static int Fit(Func<int, int> rowLength, int start, int end, int budget)
+        {
+            int used = 0, taken = 0;
+            for (int i = start; i < end; i++)
+            {
+                int length = rowLength(i) + Separator;
+                if (taken > 0 && used + length > budget) break;
+                used += length; taken++;
+            }
+            return taken;
+        }
+    }
+
     public static class ProbeCapacity
     {
-        public const int Frames = 131072, Ticks = 262144, Calls = 4096, Diagnostics = 8192;
+        public const int Frames = 131072, Ticks = 262144, Calls = 4096, UnitCalls = 4096, Diagnostics = 8192;
         public const int FramePage = 96, TickPage = 256, DiagnosticPage = 32;
     }
 

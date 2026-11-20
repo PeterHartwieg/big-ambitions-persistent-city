@@ -13,6 +13,12 @@ SEGMENTS = [
     ('slowest_advance', r'Slowest advance: unit ' + NUM + r' ms \(([^)]*)\), optional-stop reads ' + NUM + r' ms, ' + INT
      + r' garbage collections completed during it\.',
      [('unit_ms', 'f'), ('unit_kind', 's'), ('optional_stop_ms', 'f'), ('gc_count', 'i')]),
+    ('slowest_advance_stops', r'Optional-stop reads per unit in the slowest advance: ' + INT + r' units, call total ' + NUM
+     + r' ms, maximum ' + NUM + r' ms, p95 ' + NUM + r' ms, ' + INT + r' units over 5 ms \[([^\]]*)\]\.',
+     [('units', 'i'), ('call_total_ms', 'f'), ('max_ms', 'f'), ('p95_ms', 'f'), ('over_5ms_count', 'i'), ('over_5ms', 's')]),
+    ('stop_crossings', r'Optional-stop units over 5 ms this observation: ' + INT + r' units in ' + INT + r' advances, maximum ' + NUM
+     + r' ms \(([^)]*)\) \[(.*?)\]\. Optional-stop reads this observation',
+     [('units', 'i'), ('advances', 'i'), ('max_ms', 'f'), ('max_kind', 's'), ('listed', 's')]),
     ('optional_stops', r'Optional-stop reads this observation \(refresh and advancement\): ' + INT + r' calls, ' + NUM + r' ms total, '
      + NUM + r' ms maximum, ' + INT + r' park trigger scans\.',
      [('calls', 'i'), ('total_ms', 'f'), ('max_ms', 'f'), ('park_trigger_scans', 'i')]),

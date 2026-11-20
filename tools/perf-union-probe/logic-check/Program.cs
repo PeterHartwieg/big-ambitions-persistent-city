@@ -37,6 +37,7 @@ internal static class Program
         BoundaryClips();
         CounterReset();
         AdvanceRecords();
+        UnitRecords();
         Union();
         Inventory(expectHash);
         CoverageLifecycle();
@@ -190,6 +191,117 @@ internal static class Program
         }
         Check(AdvanceCallRule.Record(300_000, 10_000_000) && !AdvanceCallRule.Record(299_000, 10_000_000), "exact 30.0 / 29.9 ms at 10 MHz QPC");
         Check(!AdvanceCallRule.Record(-1, 10_000_000), "negative duration not recorded");
+    }
+
+    private static void UnitRecords()
+    {
+        var units = new PersistentCity.Core.OptionalStopUnitSeams();
+        units.BeginCall();
+        units.Seam(0.5); units.EndUnit("citizen", 2.0);
+        units.Seam(6.0); units.Seam(1.0); units.EndUnit("traffic", 9.0);
+        units.EndUnit("food-continuation", 1.0);
+        units.Seam(5.5); units.EndUnit("citizen", 8.0);
+        units.EndUnit("snapshot", 0.1);
+        units.EndCall();
+        var source = ReflectedUnitSeams.Bind(units.GetType());
+        Check(source != null, "probe binds the Core per-unit optional-stop recorder by reflection");
+        if (source == null) return;
+        source.Target = units;
+        var record = new AdvanceCallRecord { Frame = 7, DurationTicks = 400_000, OptionalStopMilliseconds = 13.0 };
+        AdvanceCallRows.ReadUnits(ref record, source);
+        var fields = AdvanceCallRows.Fields(record, 1e-4).ToDictionary(f => f.Key, f => f.Value);
+        foreach (string name in new[] { "optional_stop_ms", "slowest_unit", "slowest_unit_ms", "slowest_unit_optional_stop_ms", "unit_optional_stop_max_ms",
+                     "unit_optional_stop_p95_ms", "units", AdvanceCallRows.UnitsOverThresholdField })
+            Check(fields.ContainsKey(name), "advance call record has " + name);
+        Check(Equals(fields["optional_stop_ms"], 13.0), "call-total optional_stop_ms is the whole-call seam delta, unchanged");
+        Check(Equals(fields["slowest_unit"], "traffic") && Equals(fields["slowest_unit_ms"], 9.0), "slowest unit is the longest unit, not unknown");
+        Check(Equals(fields["slowest_unit_optional_stop_ms"], 7.0), "slowest unit's optional-stop time is its own seam, not the call total");
+        Check(Equals(fields["unit_optional_stop_max_ms"], 7.0) && Equals(fields["unit_optional_stop_p95_ms"], 7.0), "unit seam maximum and p95");
+        Check(Equals(fields["units"], 5), "unit count");
+        var over = (UnitOptionalStop[])fields[AdvanceCallRows.UnitsOverThresholdField];
+        Check(over.Length == 2 && over[0].Unit == 1 && over[0].Kind == "traffic" && over[0].OptionalStopMilliseconds == 7.0
+            && over[1].Unit == 3 && over[1].Kind == "citizen" && over[1].OptionalStopMilliseconds == 5.5, "units over 5 ms are listed with their own seam");
+        var unread = AdvanceCallRows.Fields(new AdvanceCallRecord { OptionalStopMilliseconds = double.NaN }, 1e-4).ToDictionary(f => f.Key, f => f.Value);
+        Check(Equals(unread["slowest_unit"], "unknown") && unread["optional_stop_ms"] == null && unread["slowest_unit_optional_stop_ms"] == null
+            && unread[AdvanceCallRows.UnitsOverThresholdField] == null, "a call without per-unit data reports unknown and nulls");
+        Check(ReflectedUnitSeams.Bind(typeof(AdvanceCallRecord)) == null, "binding refuses a type without the per-unit contract");
+        Check(AdvanceCallRule.RecordUnits(5.3) && !AdvanceCallRule.RecordUnits(5.0) && !AdvanceCallRule.RecordUnits(double.NaN),
+            "a call under 30 ms is recorded when one unit's optional-stop time is over 5 ms");
+        Check(Equals(fields["over_30ms"], false) && Equals(fields["record_reason"], "unit_optional_stop_over_5ms"), "record reason for a sub-30 ms unit crossing");
+        var interrupted = new PersistentCity.Core.OptionalStopUnitSeams();
+        interrupted.BeginCall();
+        interrupted.Seam(6.0); interrupted.EndUnit("citizen", 7.0);
+        interrupted.Seam(4.0);
+        interrupted.EndCall(false);
+        interrupted.Seam(9.0);
+        source.Target = interrupted;
+        var failed = new AdvanceCallRecord { DurationTicks = 400_000, OptionalStopMilliseconds = 10.0, Over30 = true };
+        AdvanceCallRows.ReadUnits(ref failed, source);
+        var failedFields = AdvanceCallRows.Fields(failed, 1e-4).ToDictionary(f => f.Key, f => f.Value);
+        Check(!failed.UnitsRead && Equals(failedFields["slowest_unit"], "unknown") && failedFields["unit_optional_stop_max_ms"] == null
+            && failedFields[AdvanceCallRows.UnitsOverThresholdField] == null, "an interrupted advance exports no per-unit fields");
+        Check(Equals(failedFields["optional_stop_ms"], 10.0) && Equals(failedFields["duration_ms"], 40.0), "an interrupted advance keeps its call total and duration");
+        Check(interrupted.CallSeamMilliseconds == 10.0, "seams after an interrupted call is closed are not charged to it");
+        var stale = new PersistentCity.Core.OptionalStopUnitSeams();
+        stale.BeginCall(); stale.Seam(6.0); stale.EndUnit("citizen", 7.0); stale.EndCall();
+        source.Target = stale;
+        Check(stale.Completed && AdvanceCallRule.AdmitUnits(false, stale.MaximumUnitSeamMilliseconds), "a completed crossing is admitted");
+        Check(!AdvanceCallRule.AdmitUnits(true, stale.MaximumUnitSeamMilliseconds),
+            "a call that throws before BeginCall is not admitted on the previous call's unit maximum");
+        var thrown = new AdvanceCallRecord { DurationTicks = 400_000, OptionalStopMilliseconds = 2.5, Over30 = true };
+        if (AdvanceCallRule.ExportUnits(true)) AdvanceCallRows.ReadUnits(ref thrown, source);
+        var thrownFields = AdvanceCallRows.Fields(thrown, 1e-4).ToDictionary(f => f.Key, f => f.Value);
+        Check(!thrown.UnitsRead && Equals(thrownFields["slowest_unit"], "unknown") && thrownFields["unit_optional_stop_max_ms"] == null
+            && Equals(thrownFields["optional_stop_ms"], 2.5) && Equals(thrownFields["duration_ms"], 40.0),
+            "a failed 30 ms call keeps duration and call total but not the previous call's unit timings");
+        AdvanceBuffer();
+    }
+
+    private static void AdvanceBuffer()
+    {
+        var buffer = new AdvanceCallBuffer(2, 3);
+        for (int i = 0; i < 5; i++) buffer.Add(new AdvanceCallRecord { Frame = i, UnitsRead = true });
+        Check(buffer.UnitCount == 3 && buffer.UnitDropped == 2 && buffer.SlowCount == 0 && buffer.SlowDropped == 0, "threshold-only records fill only their own buffer");
+        Check(buffer.Add(new AdvanceCallRecord { Frame = 10, Over30 = true }) && buffer.Add(new AdvanceCallRecord { Frame = 11, Over30 = true }),
+            "30 ms records keep their capacity after the threshold-only buffer is full");
+        Check(!buffer.Add(new AdvanceCallRecord { Frame = 12, Over30 = true }) && buffer.SlowDropped == 1 && buffer.UnitDropped == 2, "drops are counted per record type");
+        Check(!buffer.Add(new AdvanceCallRecord { Frame = 13 }) && buffer.UnitDropped == 2, "a threshold-only record without unit data is not stored");
+        Check(buffer.Full(true) && buffer.Full(false), "both buffers report full");
+        buffer.Drop(false);
+        Check(buffer.UnitDropped == 3, "explicit drop counts against its own type");
+        var export = buffer.Chronological();
+        Check(export.Length == 5 && export.Select(r => r.Frame).OrderBy(f => f).SequenceEqual(new[] { 0, 1, 2, 10, 11 }) && buffer.MergedCount == 5,
+            "the calls export merges both record types in chronological order");
+        var mixed = new AdvanceCallBuffer(4, 4);
+        mixed.Add(new AdvanceCallRecord { Frame = 1, StartQpc = 100, Over30 = true });
+        mixed.Add(new AdvanceCallRecord { Frame = 2, StartQpc = 200, UnitsRead = true, UnitsOverThreshold = new[] { new UnitOptionalStop { Unit = 3, Kind = "citizen", OptionalStopMilliseconds = 5.3 } } });
+        mixed.Add(new AdvanceCallRecord { Frame = 3, StartQpc = 300, Over30 = true });
+        var rows = mixed.Chronological().Select(r => AdvanceCallRows.Fields(r, 1e-4).ToDictionary(f => f.Key, f => f.Value)).ToArray();
+        Check(rows.Select(r => (int)r["frame"]).SequenceEqual(new[] { 1, 2, 3 }) && Equals(rows[1]["over_30ms"], false)
+            && Equals(rows[1]["record_reason"], "unit_optional_stop_over_5ms") && ((UnitOptionalStop[])rows[1][AdvanceCallRows.UnitsOverThresholdField]).Length == 1,
+            "the normal calls export includes a sub-30 ms advance with a unit crossing between 30 ms calls");
+        var window = new AdvanceCallBuffer(4096, 4096);
+        window.Add(new AdvanceCallRecord { Frame = 0, StartQpc = 0, Over30 = true });
+        for (int i = 1; i < 128; i++)
+            window.Add(new AdvanceCallRecord { Frame = i, StartQpc = i, UnitsRead = true, UnitsOverThreshold = new[] { new UnitOptionalStop { Unit = 1, Kind = "citizen", OptionalStopMilliseconds = 5.5 } } });
+        var paged = window.Chronological();
+        int RowLength(int i) => paged[i].Over30 ? 330 : 426;
+        int offset = 0, pages = 0, budget = 48000 - 4000 - 512;
+        var seen = new List<AdvanceCallRecord>();
+        while (offset < paged.Length && pages < 10)
+        {
+            int take = CallPage.Fit(RowLength, offset, Math.Min(paged.Length, offset + 128), budget);
+            int used = Enumerable.Range(offset, take).Sum(i => RowLength(i) + CallPage.Separator);
+            Check(take > 0 && used <= budget, "page " + pages + " fits the reply budget");
+            seen.AddRange(paged.Skip(offset).Take(take));
+            offset += take; pages++;
+        }
+        Check(pages > 1 && seen.Count == 128 && seen.Count(r => r.Over30) == 1 && seen.Count(r => !r.Over30) == 127
+            && seen.Select(r => r.Frame).SequenceEqual(Enumerable.Range(0, 128)), "paging a mixed window recovers every slow and threshold-only record in order");
+        Check(CallPage.Fit(_ => 100_000, 0, 3, 1000) == 1, "an oversized single row is still returned so paging advances");
+        Check(CallPage.Fit(_ => 10, 5, 5, 1000) == 0, "an empty range returns no rows");
+        buffer.Reset();
+        Check(buffer.SlowCount == 0 && buffer.UnitCount == 0 && buffer.SlowDropped == 0 && buffer.UnitDropped == 0, "reset clears both buffers");
     }
 
     private static void Union()

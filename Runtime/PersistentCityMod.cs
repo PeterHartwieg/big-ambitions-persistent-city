@@ -105,7 +105,14 @@ namespace PersistentCity.Runtime
         private double planningMilliseconds, maxPlanningSliceMilliseconds;
         private string slowestPlanningUnit = "";
         private long slowestPlanningUnitNavMeshQueries;
-        private double slowestAdvanceUnitMilliseconds, slowestAdvanceStopMilliseconds;
+        private double slowestAdvanceUnitMilliseconds, slowestAdvanceStopMilliseconds, slowestAdvanceCallStopMilliseconds;
+        private double slowestAdvanceMaximumUnitStopMilliseconds, slowestAdvanceP95UnitStopMilliseconds;
+        private int slowestAdvanceStopUnits, slowestAdvanceUnitsOverStopThreshold;
+        private string slowestAdvanceUnitsOverStopText = "";
+        private int observedStopCrossingUnits, observedStopCrossingAdvances;
+        private double observedStopCrossingMaximumMilliseconds;
+        private string observedStopCrossingMaximumKind = "", observedStopCrossingText = "";
+        private const int ListedStopCrossingAdvances = 4;
         private string slowestAdvanceUnit = "";
         private int slowestAdvanceCollections;
         private OptionalStopEnvironment? stopEnvironment;
@@ -467,7 +474,18 @@ namespace PersistentCity.Runtime
                         + slowestAdvanceUnitMilliseconds.ToString("F3", System.Globalization.CultureInfo.InvariantCulture) + " ms ("
                         + (slowestAdvanceUnit.Length == 0 ? "none" : slowestAdvanceUnit) + "), optional-stop reads "
                         + slowestAdvanceStopMilliseconds.ToString("F3", System.Globalization.CultureInfo.InvariantCulture) + " ms, "
-                        + slowestAdvanceCollections + " garbage collections completed during it. Optional-stop reads this observation (refresh and advancement): "
+                        + slowestAdvanceCollections + " garbage collections completed during it. Optional-stop reads per unit in the slowest advance: "
+                        + slowestAdvanceStopUnits + " units, call total "
+                        + slowestAdvanceCallStopMilliseconds.ToString("F3", System.Globalization.CultureInfo.InvariantCulture) + " ms, maximum "
+                        + slowestAdvanceMaximumUnitStopMilliseconds.ToString("F3", System.Globalization.CultureInfo.InvariantCulture) + " ms, p95 "
+                        + slowestAdvanceP95UnitStopMilliseconds.ToString("F3", System.Globalization.CultureInfo.InvariantCulture) + " ms, "
+                        + slowestAdvanceUnitsOverStopThreshold + " units over 5 ms [" + slowestAdvanceUnitsOverStopText
+                        + "]. Optional-stop units over 5 ms this observation: " + observedStopCrossingUnits + " units in "
+                        + observedStopCrossingAdvances + " advances, maximum "
+                        + observedStopCrossingMaximumMilliseconds.ToString("F3", System.Globalization.CultureInfo.InvariantCulture) + " ms ("
+                        + (observedStopCrossingMaximumKind.Length == 0 ? "none" : observedStopCrossingMaximumKind) + ") ["
+                        + observedStopCrossingText + (observedStopCrossingAdvances > ListedStopCrossingAdvances ? " | +" + (observedStopCrossingAdvances - ListedStopCrossingAdvances) + " more advances" : "")
+                        + "]. Optional-stop reads this observation (refresh and advancement): "
                         + (stopEnvironment?.SeamCalls ?? 0) + " calls, "
                         + (stopEnvironment?.SeamMilliseconds ?? 0).ToString("F3", System.Globalization.CultureInfo.InvariantCulture) + " ms total, "
                         + (stopEnvironment?.MaximumSeamMilliseconds ?? 0).ToString("F3", System.Globalization.CultureInfo.InvariantCulture) + " ms maximum, "
@@ -532,64 +550,72 @@ namespace PersistentCity.Runtime
             int collectionsBefore = GC.CollectionCount(0);
             stopEnvironment?.Maintain();
             AdvanceAllocation.Detail(GcAllocationSegment.AdvanceStops);
-            double stopsBefore = stopEnvironment?.SeamMilliseconds ?? 0;
+            bool pendingAtEnd = false, completed = false;
+            var unitSeams = stopEnvironment?.UnitSeams;
+            unitSeams?.BeginCall();
             void Unit(string kind)
             {
+                unitSeams?.EndUnit(kind, elapsed - unitStarted);
                 if (elapsed - unitStarted > slowestUnit) { slowestUnit = elapsed - unitStarted; slowestKind = kind; }
                 unitStarted = elapsed;
             }
-            bool hiddenSkip = NativeCityClock.ProcessingEconomySkip;
-            var budget = new PopulationFrameBudget(Time.unscaledDeltaTime, hiddenSkip);
-            int citizenLimit = budget.CitizenEvents;
-            double timeBudget = hiddenSkip ? budget.Milliseconds : frameBudget.Advance(budget.Milliseconds, UpdateCityClock.Elapsed());
-            bool pendingAtEnd = false;
             try
             {
-                for (int step = 0; step < budget.Units; step++)
+                bool hiddenSkip = NativeCityClock.ProcessingEconomySkip;
+                var budget = new PopulationFrameBudget(Time.unscaledDeltaTime, hiddenSkip);
+                int citizenLimit = budget.CitizenEvents;
+                double timeBudget = hiddenSkip ? budget.Milliseconds : frameBudget.Advance(budget.Milliseconds, UpdateCityClock.Elapsed());
+                try
                 {
-                    if (routes != null && !routes.ReadyForPopulation) { pendingAtEnd = active.PlanningPending; break; }
-                    if (active.PlanningPending)
+                    for (int step = 0; step < budget.Units; step++)
                     {
-                        long sliceStarted = Stopwatch.GetTimestamp();
-                        long queriesBefore = routes?.Metrics.NavMeshPathQueries ?? 0;
-                        bool finished = active.ContinuePlanning(Math.Max(0, timeBudget - elapsed));
-                        AdvanceAllocation.Sub(finished ? GcAllocationSegment.AdvancePlanningFinish : GcAllocationSegment.AdvancePlanningSlice);
-                        AdvanceAllocation.Detail(GcAllocationSegment.AdvancePlanning);
-                        double slice = (Stopwatch.GetTimestamp() - sliceStarted) * MillisecondsPerTimestamp;
-                        planningSlices++; planningMilliseconds += slice;
-                        if (slice > maxPlanningSliceMilliseconds)
+                        if (routes != null && !routes.ReadyForPopulation) { pendingAtEnd = active.PlanningPending; break; }
+                        if (active.PlanningPending)
                         {
-                            maxPlanningSliceMilliseconds = slice;
-                            slowestPlanningUnit = routes?.LastJobUnit ?? "";
-                            slowestPlanningUnitNavMeshQueries = (routes?.Metrics.NavMeshPathQueries ?? 0) - queriesBefore;
+                            long sliceStarted = Stopwatch.GetTimestamp();
+                            long queriesBefore = routes?.Metrics.NavMeshPathQueries ?? 0;
+                            bool finished = active.ContinuePlanning(Math.Max(0, timeBudget - elapsed));
+                            AdvanceAllocation.Sub(finished ? GcAllocationSegment.AdvancePlanningFinish : GcAllocationSegment.AdvancePlanningSlice);
+                            AdvanceAllocation.Detail(GcAllocationSegment.AdvancePlanning);
+                            double slice = (Stopwatch.GetTimestamp() - sliceStarted) * MillisecondsPerTimestamp;
+                            planningSlices++; planningMilliseconds += slice;
+                            if (slice > maxPlanningSliceMilliseconds)
+                            {
+                                maxPlanningSliceMilliseconds = slice;
+                                slowestPlanningUnit = routes?.LastJobUnit ?? "";
+                                slowestPlanningUnitNavMeshQueries = (routes?.Metrics.NavMeshPathQueries ?? 0) - queriesBefore;
+                            }
+                            elapsed = (Stopwatch.GetTimestamp() - started) * MillisecondsPerTimestamp;
+                            Unit("route-planning");
+                            if (!finished) { if (elapsed >= timeBudget || routes?.JobAdmissionExhaustedForFrame == true) { pendingAtEnd = active.PlanningPending; break; } continue; }
+                            events++; citizenEvents++; planningEvents++;
+                            if (citizenEvents >= citizenLimit || elapsed >= timeBudget) break;
+                            continue;
                         }
+                        var result = active.AdvanceFrameSlice(target, 1);
+                        AdvanceAllocation.Sub(GcPauseSampler.AdvanceEventSegment(result.TrafficEvents, result.FoodContinuationEvents, result.CitizenEvents, result.PlanningPending));
+                        AdvanceAllocation.Detail(GcAllocationSegment.AdvanceEvents);
+                        events += result.Events;
+                        citizenEvents += result.CitizenEvents;
                         elapsed = (Stopwatch.GetTimestamp() - started) * MillisecondsPerTimestamp;
-                        Unit("route-planning");
-                        if (!finished) { if (elapsed >= timeBudget || routes?.JobAdmissionExhaustedForFrame == true) { pendingAtEnd = active.PlanningPending; break; } continue; }
-                        events++; citizenEvents++; planningEvents++;
-                        if (citizenEvents >= citizenLimit || elapsed >= timeBudget) break;
-                        continue;
+                        Unit(result.PlanningPending ? "citizen-route-begin" : result.TrafficEvents > 0 ? "traffic"
+                            : result.FoodContinuationEvents > 0 ? "food-continuation" : result.CitizenEvents > 0 ? "citizen" : "other");
+                        if (result.PlanningPending) { pendingAtEnd = elapsed >= timeBudget; if (pendingAtEnd) break; continue; }
+                        if (result.CaughtUp || result.ThroughRoutePending || citizenEvents >= citizenLimit || elapsed >= timeBudget) break;
                     }
-                    var result = active.AdvanceFrameSlice(target, 1);
-                    AdvanceAllocation.Sub(GcPauseSampler.AdvanceEventSegment(result.TrafficEvents, result.FoodContinuationEvents, result.CitizenEvents, result.PlanningPending));
-                    AdvanceAllocation.Detail(GcAllocationSegment.AdvanceEvents);
-                    events += result.Events;
-                    citizenEvents += result.CitizenEvents;
-                    elapsed = (Stopwatch.GetTimestamp() - started) * MillisecondsPerTimestamp;
-                    Unit(result.PlanningPending ? "citizen-route-begin" : result.TrafficEvents > 0 ? "traffic"
-                        : result.FoodContinuationEvents > 0 ? "food-continuation" : result.CitizenEvents > 0 ? "citizen" : "other");
-                    if (result.PlanningPending) { pendingAtEnd = elapsed >= timeBudget; if (pendingAtEnd) break; continue; }
-                    if (result.CaughtUp || result.ThroughRoutePending || citizenEvents >= citizenLimit || elapsed >= timeBudget) break;
                 }
+                finally { active.SynchronizeSnapshot(); NativeCityClock.ObserveSimulationLag(target, active.State.Minute); }
+                elapsed = (Stopwatch.GetTimestamp() - started) * MillisecondsPerTimestamp;
+                Unit("snapshot");
+                completed = true;
             }
-            finally { active.SynchronizeSnapshot(); NativeCityClock.ObserveSimulationLag(target, active.State.Minute); }
-            elapsed = (Stopwatch.GetTimestamp() - started) * MillisecondsPerTimestamp;
-            Unit("snapshot");
+            finally { unitSeams?.EndCall(completed); }
+            ObserveStopCrossings(unitSeams, elapsed);
             if (elapsed > maxAdvanceMilliseconds)
             {
                 slowestAdvanceUnitMilliseconds = slowestUnit; slowestAdvanceUnit = slowestKind;
                 slowestAdvanceCollections = GC.CollectionCount(0) - collectionsBefore;
-                slowestAdvanceStopMilliseconds = (stopEnvironment?.SeamMilliseconds ?? 0) - stopsBefore;
+                ObserveSlowestAdvanceStops(unitSeams);
             }
             advanceFrames++;
             advanceEvents += events;
@@ -603,6 +629,32 @@ namespace PersistentCity.Runtime
             long restarts = active.EventRestarts, inline = active.InlineAfterRestarts;
             eventRestarts += restarts - seenEventRestarts; inlineRestarts += inline - seenInlineRestarts;
             seenEventRestarts = restarts; seenInlineRestarts = inline;
+        }
+
+        private void ObserveStopCrossings(OptionalStopUnitSeams? unitSeams, double advanceMilliseconds)
+        {
+            if (unitSeams == null || !unitSeams.Completed || unitSeams.MaximumUnitSeamMilliseconds <= OptionalStopUnitSeams.ThresholdMilliseconds) return;
+            observedStopCrossingAdvances++;
+            observedStopCrossingUnits += unitSeams.UnitsOverThreshold();
+            if (unitSeams.MaximumUnitSeamMilliseconds > observedStopCrossingMaximumMilliseconds)
+            {
+                observedStopCrossingMaximumMilliseconds = unitSeams.MaximumUnitSeamMilliseconds;
+                observedStopCrossingMaximumKind = unitSeams.MaximumUnitSeamKind;
+            }
+            if (observedStopCrossingAdvances > ListedStopCrossingAdvances) return;
+            observedStopCrossingText += (observedStopCrossingText.Length == 0 ? "" : " | ") + "advance "
+                + advanceMilliseconds.ToString("F3", System.Globalization.CultureInfo.InvariantCulture) + " ms: " + unitSeams.OverThresholdText();
+        }
+
+        private void ObserveSlowestAdvanceStops(OptionalStopUnitSeams? unitSeams)
+        {
+            slowestAdvanceStopMilliseconds = unitSeams?.SlowestUnitSeamMilliseconds ?? 0;
+            slowestAdvanceCallStopMilliseconds = unitSeams?.CallSeamMilliseconds ?? 0;
+            slowestAdvanceMaximumUnitStopMilliseconds = unitSeams?.MaximumUnitSeamMilliseconds ?? 0;
+            slowestAdvanceP95UnitStopMilliseconds = unitSeams?.P95UnitSeamMilliseconds() ?? 0;
+            slowestAdvanceStopUnits = unitSeams?.Units ?? 0;
+            slowestAdvanceUnitsOverStopThreshold = unitSeams?.UnitsOverThreshold() ?? 0;
+            slowestAdvanceUnitsOverStopText = slowestAdvanceUnitsOverStopThreshold == 0 ? "" : unitSeams!.OverThresholdText();
         }
 
         private void UpdateInspector()
@@ -739,7 +791,11 @@ namespace PersistentCity.Runtime
             slowestPlanningUnit = ""; slowestPlanningUnitNavMeshQueries = 0;
             closureFrames = 0; closureMilliseconds = maxClosureMilliseconds = 0;
             maxAdvanceEvents = 0;
-            slowestAdvanceUnitMilliseconds = slowestAdvanceStopMilliseconds = 0; slowestAdvanceUnit = ""; slowestAdvanceCollections = 0;
+            slowestAdvanceUnitMilliseconds = slowestAdvanceStopMilliseconds = slowestAdvanceCallStopMilliseconds = 0; slowestAdvanceUnit = ""; slowestAdvanceCollections = 0;
+            slowestAdvanceMaximumUnitStopMilliseconds = slowestAdvanceP95UnitStopMilliseconds = 0;
+            slowestAdvanceStopUnits = slowestAdvanceUnitsOverStopThreshold = 0; slowestAdvanceUnitsOverStopText = "";
+            observedStopCrossingUnits = observedStopCrossingAdvances = 0; observedStopCrossingMaximumMilliseconds = 0;
+            observedStopCrossingMaximumKind = observedStopCrossingText = "";
             stopEnvironment?.ResetSeamDiagnostics();
             gateChanges = roadSnapshots = waitingFrames = 0;
             roadRebuildReasons.Clear(); slowRoutingFrames = routingFrameLogs = 0;
