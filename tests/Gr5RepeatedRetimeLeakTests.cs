@@ -200,6 +200,117 @@ public sealed class Gr5RepeatedRetimeLeakTests
         Assert.Equal(0, before);
     }
 
+    private sealed class StandInMesh { public bool Alive = true; public int Vertices; }
+    private sealed class StandInBody { public bool Alive = true; public int Person; public StandInMesh? Mesh; }
+
+    private sealed class BodyReplay
+    {
+        private const int Ceiling = 96;
+        private readonly int[] catalogue;
+        public readonly MergedBodyLedger<StandInBody, StandInMesh> Ledger = new(b => b.Alive, m => m.Alive, m => m.Vertices);
+        public readonly LengthScratch<(float X, float Y, float Z)> Scratch = BlendshapeBakePlan.NewScratch<(float X, float Y, float Z)>();
+        private readonly Dictionary<int, StandInBody> active = new();
+        private readonly List<StandInBody> idle = new(), all = new(), reserve = new();
+        public int Reserved => reserve.Count;
+        public BodyReplay(int[] catalogue) { this.catalogue = catalogue; }
+
+        private int Part(int person, int part) => catalogue[(person + part * 13) % catalogue.Length];
+
+        private void Destroy(StandInBody body)
+        {
+            Ledger.Forget(body);
+            if (body.Mesh != null) { Ledger.CountReleased(body.Mesh); body.Mesh.Alive = false; }
+            body.Alive = false;
+        }
+
+        public void Show(int visible)
+        {
+            foreach (var person in active.Keys.Where(p => p >= visible).ToList()) { idle.Add(active[person]); active.Remove(person); }
+            for (int person = 0; person < visible; person++)
+            {
+                if (active.ContainsKey(person)) continue;
+                var body = idle.FirstOrDefault(b => b.Person == person);
+                if (body != null) { idle.Remove(body); active.Add(person, body); continue; }
+                body = new StandInBody { Person = person };
+                all.Add(body);
+                Ledger.Own(body);
+                int vertices = 0;
+                for (int part = 0; part < 5; part++) { int length = Part(person, part); Scratch.Take(length); vertices += length; }
+                body.Mesh = new StandInMesh { Vertices = vertices };
+                Ledger.Merged(body, body.Mesh);
+                active.Add(person, body);
+            }
+        }
+
+        public void Retime(bool leak)
+        {
+            foreach (var body in active.Values) idle.Add(body);
+            active.Clear();
+            if (reserve.Count > 0) { foreach (var kept in reserve) Destroy(kept); reserve.Clear(); Scratch.Clear(); }
+            foreach (var body in idle) reserve.Add(body);
+            foreach (var body in all) if (!idle.Contains(body)) Destroy(body);
+            if (reserve.Count == 0) Scratch.Clear();
+            idle.Clear(); all.Clear();
+            Ledger.PruneOwned(); Ledger.Prune();
+            if (leak) { reserve.Clear(); return; }
+            foreach (var kept in reserve)
+            {
+                if (all.Count >= Ceiling) { Destroy(kept); continue; }
+                all.Add(kept); idle.Add(kept);
+            }
+            reserve.Clear();
+        }
+
+        public (int Owned, int Live, long Vertices, int Unmerged, long Scratch) Read()
+        {
+            int live = Ledger.LiveMeshes(out long vertices);
+            return (Ledger.Owned, live, vertices, Ledger.Unmerged, Scratch.Bytes);
+        }
+    }
+
+    private static List<(int Owned, int Live, long Vertices, int Unmerged, long Scratch)> ReplayBodies(int[] catalogue, int[] visibleAt, bool retime, bool leak)
+    {
+        var replay = new BodyReplay(catalogue);
+        var reads = new List<(int, int, long, int, long)>();
+        for (int checkpoint = 0; checkpoint < visibleAt.Length; checkpoint++)
+        {
+            if (retime && checkpoint > 0 && checkpoint < visibleAt.Length - 1)
+                for (int leg = 0; leg < 2; leg++) { replay.Retime(leak); replay.Show(Math.Max(1, visibleAt[checkpoint] / 2)); }
+            replay.Show(visibleAt[checkpoint]);
+            replay.Show(Math.Max(1, visibleAt[checkpoint] - 3));
+            replay.Show(visibleAt[checkpoint]);
+            reads.Add(replay.Read());
+        }
+        return reads;
+    }
+
+    [Fact]
+    public void RepeatedRetimeBodyReleaseAndReserveAdoptionKeepOwnershipMeshesAndScratchMatchedToAControl()
+    {
+        var raw = Enumerable.Range(0, 100).Select(i => 300 + i * 37 + (i * 7919) % 900).Distinct().ToArray();
+        double scale = (double)(1_718_964 / (BlendshapeBakePlan.ScratchWidth * BlendshapeBakePlan.ScratchElementBytes)) / raw.Sum();
+        var catalogue = raw.Select(v => Math.Max(64, (int)(v * scale))).Distinct().ToArray();
+        int[] visibleAt = { 8, 9, 12, 16, 24, 31, 63 };
+        var control = ReplayBodies(catalogue, visibleAt, retime: false, leak: false);
+        var retimed = ReplayBodies(catalogue, visibleAt, retime: true, leak: false);
+        var leaky = ReplayBodies(catalogue, visibleAt, retime: true, leak: true);
+        string Row(List<(int Owned, int Live, long Vertices, int Unmerged, long Scratch)> r) => string.Join(", ", r.Select(x => x.Owned + "/" + x.Live + "/" + x.Vertices + "/" + x.Scratch));
+        output.WriteLine("owned / live meshes / live vertices / bake scratch at R0..+30 min (production MergedBodyLedger and bake scratch policy, PhysicalPedestrians reserve rules):");
+        output.WriteLine("  control " + Row(control));
+        output.WriteLine("  retimed " + Row(retimed));
+        output.WriteLine("  leaky retimed (reserve neither adopted nor destroyed) " + Row(leaky));
+        for (int i = 0; i < visibleAt.Length; i++)
+        {
+            Assert.Equal(retimed[i].Owned, retimed[i].Live + retimed[i].Unmerged);
+            Assert.Equal(control[i].Owned, retimed[i].Owned);
+            Assert.Equal(control[i].Live, retimed[i].Live);
+            Assert.Equal(control[i].Vertices, retimed[i].Vertices);
+            Assert.Equal(control[i].Scratch, retimed[i].Scratch);
+            Assert.True(retimed[i].Scratch <= BlendshapeBakePlan.ScratchBudgetBytes / 2);
+        }
+        Assert.Contains(Enumerable.Range(0, visibleAt.Length), i => leaky[i].Owned > control[i].Owned && leaky[i].Vertices > control[i].Vertices);
+    }
+
     [Fact]
     public void ProductionBakeScratchGrowsOnlyWithFirstLookEncountersAndRetimeRebakesAddNothing()
     {
@@ -299,12 +410,40 @@ public sealed class Gr5RepeatedRetimeLeakTests
         var retimed = Build(); var control = Build();
         var driver = new ClockRetimeDriver();
         var city = retimed.City; var state = retimed.State;
+        var split = new Dictionary<CitizenState, (Route Journey, int Planned, int Added)>();
+        int retimes = 0, retimedJourneys = 0, maxAddedPerRetime = 0;
         CitySimulator Retime(double rate)
         {
+            var before = state.Citizens.Concat(state.VisitorRoutines).Where(p => p.Journey != null)
+                .Select(p => (Person: p, Journey: p.Journey!, Legs: p.Journey!.Legs.Count)).ToList();
             while (driver.Update(state, rate, false, 1.4, ClockRetimeStages.SliceMilliseconds) != ClockRetimeOutcome.Committed) { }
             var rebuild = city.BeginRebuildRoutes(new Gr5AdvanceSegmentMeasure.Straight(), driver.TakeRetimedTraffic());
             while (!rebuild.Step(0)) { }
-            return rebuild.TakeResult();
+            var result = rebuild.TakeResult();
+            retimes++;
+            foreach (var old in before)
+            {
+                var person = old.Person;
+                if (person.Journey == null || ReferenceEquals(person.Journey, old.Journey)) continue;
+                int added = person.Journey.Legs.Count - old.Legs;
+                Assert.True(added <= 1, "retime " + retimes + " gave " + person.Identity.Id + " " + added + " extra legs; only the active leg may split");
+                retimedJourneys++; maxAddedPerRetime = Math.Max(maxAddedPerRetime, added);
+                var tracked = split.TryGetValue(person, out var known) && ReferenceEquals(known.Journey, old.Journey) ? known : (old.Journey, old.Legs, 0);
+                split[person] = (person.Journey, tracked.Item2, tracked.Item3 + added);
+            }
+            return result;
+        }
+        long HeldSplits()
+        {
+            long held = 0;
+            foreach (var person in split.Keys.ToList())
+            {
+                var entry = split[person];
+                if (!ReferenceEquals(person.Journey, entry.Journey)) { split.Remove(person); continue; }
+                Assert.Equal(entry.Planned + entry.Added, person.Journey!.Legs.Count);
+                held += entry.Added;
+            }
+            return held;
         }
         var retimedReads = new List<RetainedHeap> { Census(("simulation", city), ("driver", driver)) };
         var controlReads = new List<RetainedHeap> { Census(("simulation", control.City), ("driver", new ClockRetimeDriver())) };
@@ -312,6 +451,7 @@ public sealed class Gr5RepeatedRetimeLeakTests
         var travelling = new List<int> { Travelling(city) };
         var retimedOwned = new List<long> { OwnedLegs(state) };
         var controlOwned = new List<long> { OwnedLegs(control.State) };
+        var held = new List<long> { 0 };
         double start = state.Minute;
         for (int cycle = 1; cycle <= cycles; cycle++)
         {
@@ -330,6 +470,7 @@ public sealed class Gr5RepeatedRetimeLeakTests
             travelling.Add(Travelling(city));
             retimedOwned.Add(OwnedLegs(state));
             controlOwned.Add(OwnedLegs(control.State));
+            held.Add(HeldSplits());
             retimedReads.Add(Census(("simulation", city), ("driver", driver)));
             controlReads.Add(Census(("simulation", control.City), ("driver", new ClockRetimeDriver())));
         }
@@ -352,7 +493,9 @@ public sealed class Gr5RepeatedRetimeLeakTests
         {
             Assert.Equal(Objects(retimedReads[i], "RouteLeg"), retimedOwned[i]);
             Assert.Equal(Objects(controlReads[i], "RouteLeg"), controlOwned[i]);
-            output.WriteLine("  R" + i + " RouteLeg retimed / control " + retimedOwned[i] + " / " + controlOwned[i] + ", every one owned by a current journey");
+            output.WriteLine("  R" + i + " RouteLeg retimed / control " + retimedOwned[i] + " / " + controlOwned[i] + ", every one owned by a current journey; legs added by retime splits and still held " + held[i]);
+            long excess = retimedOwned[i] - controlOwned[i];
+            Assert.True(Math.Abs(excess - held[i]) <= 2, "R" + i + " RouteLeg excess " + excess + " is not explained by the " + held[i] + " split legs held by live journeys");
         }
         var inFlight = state.Citizens.Concat(state.VisitorRoutines).Where(c => c.Phase == CitizenPhase.Travelling).ToList();
         double drainedAt = (inFlight.Count == 0 ? state.Minute : inFlight.Max(c => c.NextEventMinute)) + 0.01;
@@ -363,6 +506,8 @@ public sealed class Gr5RepeatedRetimeLeakTests
             + ", retimed minus control " + (drained.Bytes - drainedControl.Bytes).ToString("+0;-0") + " B");
         Assert.True(drained.Bytes - drainedControl.Bytes < Allowance, "drained retimed minus control " + (drained.Bytes - drainedControl.Bytes) + " B");
         Assert.Equal(Objects(drained, "RouteLeg"), OwnedLegs(state));
+        output.WriteLine("  " + retimes + " retimes replaced " + retimedJourneys + " journeys, at most " + maxAddedPerRetime + " added leg per journey per retime; split legs still held after drain " + HeldSplits());
+        Assert.Equal(0, HeldSplits());
         Assert.Equal(Objects(drainedControl, "RouteLeg"), OwnedLegs(control.State));
         Assert.True(Objects(drained, "RouteLeg") - Objects(drainedControl, "RouteLeg") <= inFlight.Count + 2,
             "drained RouteLeg " + Objects(drained, "RouteLeg") + " vs control " + Objects(drainedControl, "RouteLeg") + " with " + inFlight.Count + " journeys in flight at R" + cycles);

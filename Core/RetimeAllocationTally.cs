@@ -26,7 +26,9 @@ namespace PersistentCity.Core
         public long HeapAfter { get; private set; }
         public long UsedAfter { get; private set; }
         public int Spans { get; private set; }
-        public int InvalidSpans { get; private set; }
+        public int InvalidSpans => CollectedSpans + FallingSpans;
+        public int CollectedSpans { get; private set; }
+        public int FallingSpans { get; private set; }
 
         public long this[RetimeAllocationStage stage] => bytes[(int)stage];
 
@@ -52,7 +54,8 @@ namespace PersistentCity.Core
         {
             if (!open) return;
             Spans++;
-            if (after.Collections != before.Collections || after.Counter < before.Counter) { InvalidSpans++; return; }
+            if (after.Collections != before.Collections) { CollectedSpans++; return; }
+            if (after.Counter < before.Counter) { FallingSpans++; return; }
             bytes[(int)stage] += after.Counter - before.Counter;
         }
 
@@ -68,7 +71,7 @@ namespace PersistentCity.Core
         private void Clear()
         {
             Array.Clear(bytes, 0, Stages);
-            HeapBefore = UsedBefore = HeapAfter = UsedAfter = 0; Spans = InvalidSpans = 0;
+            HeapBefore = UsedBefore = HeapAfter = UsedAfter = 0; Spans = CollectedSpans = FallingSpans = 0;
         }
 
         public const string HeapUsedCounter = "heap_used";
@@ -85,7 +88,9 @@ namespace PersistentCity.Core
                 text.Append(Names[i]).Append(' ').Append(bytes[i].ToString(CultureInfo.InvariantCulture)).Append(" B");
             }
             text.Append(", total ").Append(Total.ToString(CultureInfo.InvariantCulture)).Append(" B over ").Append(Spans.ToString(CultureInfo.InvariantCulture))
-                .Append(" spans, ").Append(InvalidSpans.ToString(CultureInfo.InvariantCulture)).Append(" spans excluded because a collection ran inside them");
+                .Append(" spans, ").Append(InvalidSpans.ToString(CultureInfo.InvariantCulture)).Append(" spans excluded (")
+                .Append(CollectedSpans.ToString(CultureInfo.InvariantCulture)).Append(" with a collection inside, ")
+                .Append(FallingSpans.ToString(CultureInfo.InvariantCulture)).Append(" where the counter fell)");
             if (!allocation) text.Append(" (heap used moves by whole blocks, so these values do not attribute allocation to a stage)");
             else if (InvalidSpans > 0) text.Append(" (totals are a lower bound)");
             return text.Append("; Mono heap / used at start ").Append(HeapBefore.ToString(CultureInfo.InvariantCulture)).Append(" / ").Append(UsedBefore.ToString(CultureInfo.InvariantCulture))
