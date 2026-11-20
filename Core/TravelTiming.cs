@@ -370,7 +370,9 @@ namespace PersistentCity.Core
                 if (elapsed > route.Minutes || arrivalDifference > arrivalTolerance)
                     throw new ArgumentException("Journey clock does not match its route.", nameof(state));
                 bool mapped = trafficOwned;
-                var replacement = Retime(route, elapsed, legacy, walk, rate, ratio, false, mapped, out var map, out int completed);
+                var replacement = RetimeJoiningSplits(route, elapsed, legacy, walk, rate, ratio, false, mapped, !mapped, out var map, out int completed, out int merges);
+                if (merges > 0 && !SameJoinedPose(citizen, replacement, elapsed, CitySimulator.NormalizeJourneyElapsed(rawElapsed, replacement.Minutes, state.Minute)))
+                    replacement = Retime(route, elapsed, legacy, walk, rate, ratio, false, mapped, out map, out completed);
                 if (replacement.Legs.Count > MaxLegs
                     && !MergeCompletedLegs(replacement, completed, elapsed, trafficOwned ? trafficRoutes[citizen.Identity.Id] : null))
                 {
@@ -433,11 +435,34 @@ namespace PersistentCity.Core
 
         private static void ValidateSampledPose(CitizenState citizen, Route replacement, double oldElapsed, double resumedElapsed)
         {
+            if (!SamePose(citizen, replacement, oldElapsed, resumedElapsed))
+                throw new ArgumentException("Retimed journey cannot preserve its measured physical pose.");
+        }
+
+        private static bool SameJoinedPose(CitizenState citizen, Route replacement, double oldElapsed, double resumedElapsed)
+            => SamePose(citizen, replacement, oldElapsed, resumedElapsed)
+                && Nullable.Equals(CarAt(citizen.Journey!, oldElapsed, citizen.Car?.ParkedPosition), CarAt(replacement, resumedElapsed, citizen.Car?.ParkedPosition));
+
+        private static Position? CarAt(Route route, double elapsed, Position? parked)
+        {
+            if (parked == null) return null;
+            var position = parked.Value;
+            elapsed = Math.Max(0, elapsed);
+            foreach (var leg in route.Legs)
+            {
+                if (elapsed <= leg.Minutes) return leg.Mode == TravelMode.Car ? Position.Lerp(leg.From, leg.To, Math.Min(1, elapsed / leg.Minutes)) : position;
+                if (leg.Mode == TravelMode.Car) position = leg.To;
+                elapsed -= leg.Minutes;
+            }
+            return position;
+        }
+
+        private static bool SamePose(CitizenState citizen, Route replacement, double oldElapsed, double resumedElapsed)
+        {
             var oldSample = CitySimulator.SampleRoute(citizen.Journey!, oldElapsed, citizen.Car?.ParkedPosition);
             var newSample = CitySimulator.SampleRoute(replacement, resumedElapsed, citizen.Car?.ParkedPosition);
-            if (!oldSample.Position.Equals(newSample.Position) || !Nullable.Equals(oldSample.CarPosition, newSample.CarPosition)
-                || oldSample.Mode != newSample.Mode)
-                throw new ArgumentException("Retimed journey cannot preserve its measured physical pose.");
+            return oldSample.Position.Equals(newSample.Position) && Nullable.Equals(oldSample.CarPosition, newSample.CarPosition)
+                && oldSample.Mode == newSample.Mode;
         }
 
         private static void ValidateCommittedRoute(Route route, Position from, Position to, CitizenState citizen)
@@ -510,32 +535,62 @@ namespace PersistentCity.Core
 
         private static Route Retime(Route original, double elapsed, bool legacy, double walkSpeed, double rate, double ratio,
             bool keepCurrent, bool mapped, out NominalMap? map, out int completed)
+            => RetimeJoiningSplits(original, elapsed, legacy, walkSpeed, rate, ratio, keepCurrent, mapped, false, out map, out completed, out _);
+
+        private static Route RetimeJoiningSplits(Route original, double elapsed, bool legacy, double walkSpeed, double rate, double ratio,
+            bool keepCurrent, bool mapped, bool mergeFragments, out NominalMap? map, out int completed, out int merges)
         {
+            merges = 0;
+            int mergeCount = 0;
             var route = new Route(new RouteLegs(original.Legs.Count + 1));
             NominalMap? mapping = null;
             if (mapped) { mapping = new NominalMap(); mapping.Segments.Capacity = original.Legs.Count + 2; mapping.UnscaledCarPrefixes.Capacity = original.Legs.Count + 1; }
             map = mapping;
             completed = 0;
             double oldOffset = 0, newOffset = 0;
-            void Add(RouteLeg leg, Position from, Position to, double minutes, string service, double oldMinutes, double? oldEnd = null)
+            void Add(RouteLeg leg, Position from, Position to, double minutes, string service, double oldMinutes, double? oldEnd = null, bool splitPrefix = false)
             {
-                route.Legs.Add(Copy(leg, from, to, minutes, service));
+                route.Legs.Add(Copy(leg, from, to, minutes, service, splitPrefix));
                 double end = oldEnd ?? oldOffset + oldMinutes;
                 mapping?.Segments.Add((oldOffset, end, newOffset, newOffset + minutes));
                 oldOffset = end; newOffset += minutes;
             }
-            void AddUnscaledCarPrefix(RouteLeg leg, Position from, Position to, double minutes, string service, double oldMinutes, double? oldEnd = null)
+            void AddUnscaledCarPrefix(RouteLeg leg, Position from, Position to, double minutes, string service, double oldMinutes, double? oldEnd = null, bool splitPrefix = false)
             {
                 double start = newOffset;
-                Add(leg, from, to, minutes, service, oldMinutes, oldEnd);
+                Add(leg, from, to, minutes, service, oldMinutes, oldEnd, splitPrefix);
                 if (mapping != null && leg.Mode == TravelMode.Car && Position.Distance(leg.From, leg.To) > 0)
                     mapping.UnscaledCarPrefixes.Add((start, newOffset));
+            }
+            int fragment = -1;
+            double fragmentStart = 0, fragmentRemaining = 0;
+            void AddCompleted(RouteLeg leg, Position from, Position to, double minutes, string service, double oldMinutes, double? oldEnd, bool splitPrefix, double remaining)
+            {
+                if (mergeFragments && mapping == null && fragment >= 0 && fragment == route.Legs.Count - 1)
+                {
+                    var previous = route.Legs[fragment];
+                    double end = newOffset + minutes;
+                    double after = splitPrefix ? 0 : remaining - minutes;
+                    double merged = fragmentRemaining - after;
+                    if (fragmentRemaining - merged != after) merged = end - fragmentStart;
+                    if (ContinuesFragment(previous, leg.Mode, from, to, service) && Position.Finite(merged) && merged > 0 && merged <= MaxLegMinutes)
+                    {
+                        route.Legs[fragment] = previous.CopyAs(previous.From, to, merged, service, splitPrefix);
+                        oldOffset = oldEnd ?? oldOffset + oldMinutes; newOffset = fragmentStart + merged;
+                        mergeCount++;
+                        return;
+                    }
+                }
+                fragmentStart = newOffset; fragmentRemaining = remaining;
+                AddUnscaledCarPrefix(leg, from, to, minutes, service, oldMinutes, oldEnd, splitPrefix);
+                fragment = route.Legs.Count - 1;
             }
             if (elapsed == original.Minutes)
             {
                 foreach (var leg in original.Legs)
                     AddUnscaledCarPrefix(leg, leg.From, leg.To, leg.Minutes, leg.ServiceId, leg.Minutes);
                 completed = route.Legs.Count;
+                merges = mergeCount;
                 return route;
             }
             double remainingElapsed = elapsed;
@@ -549,7 +604,7 @@ namespace PersistentCity.Core
                 double oldLegEnd = oldOffset + leg.Minutes;
                 if (!reachedPresent && elapsed >= oldLegEnd)
                 {
-                    AddUnscaledCarPrefix(leg, leg.From, leg.To, leg.Minutes, leg.ServiceId, leg.Minutes);
+                    AddCompleted(leg, leg.From, leg.To, leg.Minutes, leg.ServiceId, leg.Minutes, null, leg.SplitPrefix, remainingElapsed);
                     remainingElapsed -= leg.Minutes;
                     completed = route.Legs.Count;
                     continue;
@@ -584,7 +639,7 @@ namespace PersistentCity.Core
                         bool nativeTail = leg.Mode == TravelMode.Car && Position.Distance(leg.From, leg.To) > 0
                             && splitService.StartsWith("native:road:fragment1:", StringComparison.Ordinal);
                         var point = sampledEndpoint ? leg.To : Position.Lerp(leg.From, leg.To, remainingElapsed / leg.Minutes);
-                        AddUnscaledCarPrefix(leg, leg.From, point, remainingElapsed, splitService, remainingElapsed, elapsed);
+                        AddCompleted(leg, leg.From, point, remainingElapsed, splitService, remainingElapsed, elapsed, true, remainingElapsed);
                         completed = route.Legs.Count;
                         double oldTail = leg.Minutes - remainingElapsed;
                         if (sampledEndpoint || (nativeTail && point.Equals(leg.To)))
@@ -610,8 +665,17 @@ namespace PersistentCity.Core
                 }
                 reachedPresent = true;
             }
+            merges = mergeCount;
             return route;
         }
+
+        private const double FragmentDeviationMetres = 0.000001;
+
+        private static bool ContinuesFragment(RouteLeg previous, TravelMode mode, Position from, Position to, string service)
+            => previous.SplitPrefix && previous.Mode == mode && (mode == TravelMode.Walk || mode == TravelMode.Car)
+                && string.Equals(previous.ServiceId, service, StringComparison.Ordinal) && previous.To.Equals(from)
+                && Position.Distance(previous.From, from) > 0.000001 && Position.Distance(from, to) > 0.000001
+                && SegmentDistance(from, previous.From, to) <= FragmentDeviationMetres;
 
         private static bool RepresentableNativeTail(RouteLeg leg, Position point)
         {
@@ -660,8 +724,8 @@ namespace PersistentCity.Core
             return "";
         }
 
-        private static RouteLeg Copy(RouteLeg source, Position from, Position to, double minutes, string service)
-            => source.CopyAs(from, to, minutes, service);
+        private static RouteLeg Copy(RouteLeg source, Position from, Position to, double minutes, string service, bool splitPrefix = false)
+            => source.CopyAs(from, to, minutes, service, splitPrefix);
 
         private static void Rate(double value, string name)
         {

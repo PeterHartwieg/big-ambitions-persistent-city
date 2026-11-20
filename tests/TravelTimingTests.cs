@@ -253,9 +253,12 @@ public sealed class TravelTimingTests
         double before = Position(state).X;
         Assert.True(TravelTiming.Apply(state, 2, 0.5));
         Assert.Equal(before, Position(state).X, 8);
-        Assert.Equal(4, citizen.Journey.Legs.Count);
-        Assert.All(citizen.Journey.Legs.Take(3), leg => Assert.Equal("native:road:fragment1:timing-native:0:1", leg.ServiceId));
-        Assert.Equal("native:road:v1:timing-native:1:2", citizen.Journey.Legs[3].ServiceId);
+        Assert.Equal(3, citizen.Journey.Legs.Count);
+        Assert.All(citizen.Journey.Legs.Take(2), leg => Assert.Equal("native:road:fragment1:timing-native:0:1", leg.ServiceId));
+        Assert.Equal(new Position(0, 0, 0), citizen.Journey.Legs[0].From);
+        Assert.Equal(citizen.Journey.Legs[0].To, citizen.Journey.Legs[1].From);
+        Assert.Equal(new Position(60, 0, 0), citizen.Journey.Legs[1].To);
+        Assert.Equal("native:road:v1:timing-native:1:2", citizen.Journey.Legs[2].ServiceId);
         Assert.Equal(SaveReadStatus.Loaded, SaveWire.Read(SaveCodec.Write(state)).Status);
     }
 

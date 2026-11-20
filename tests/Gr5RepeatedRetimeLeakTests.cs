@@ -411,7 +411,7 @@ public sealed class Gr5RepeatedRetimeLeakTests
         var driver = new ClockRetimeDriver();
         var city = retimed.City; var state = retimed.State;
         var split = new Dictionary<CitizenState, (Route Journey, int Planned, int Added)>();
-        int retimes = 0, retimedJourneys = 0, maxAddedPerRetime = 0;
+        int retimes = 0, retimedJourneys = 0, maxAddedPerRetime = 0, maxHeldPerJourney = 0;
         CitySimulator Retime(double rate)
         {
             var before = state.Citizens.Concat(state.VisitorRoutines).Where(p => p.Journey != null)
@@ -430,6 +430,7 @@ public sealed class Gr5RepeatedRetimeLeakTests
                 retimedJourneys++; maxAddedPerRetime = Math.Max(maxAddedPerRetime, added);
                 var tracked = split.TryGetValue(person, out var known) && ReferenceEquals(known.Journey, old.Journey) ? known : (old.Journey, old.Legs, 0);
                 split[person] = (person.Journey, tracked.Item2, tracked.Item3 + added);
+                maxHeldPerJourney = Math.Max(maxHeldPerJourney, tracked.Item3 + added);
             }
             return result;
         }
@@ -496,7 +497,10 @@ public sealed class Gr5RepeatedRetimeLeakTests
             output.WriteLine("  R" + i + " RouteLeg retimed / control " + retimedOwned[i] + " / " + controlOwned[i] + ", every one owned by a current journey; legs added by retime splits and still held " + held[i]);
             long excess = retimedOwned[i] - controlOwned[i];
             Assert.True(Math.Abs(excess - held[i]) <= 2, "R" + i + " RouteLeg excess " + excess + " is not explained by the " + held[i] + " split legs held by live journeys");
+            Assert.True(held[i] <= travelling[i], "R" + i + " split legs held " + held[i] + " exceed one per travelling journey (" + travelling[i] + ")");
         }
+        output.WriteLine("  most split legs held by one journey across all retimes: " + maxHeldPerJourney);
+        Assert.True(maxHeldPerJourney <= 1, "a journey held " + maxHeldPerJourney + " split legs; repeated retimes must not add a leg per retime");
         var inFlight = state.Citizens.Concat(state.VisitorRoutines).Where(c => c.Phase == CitizenPhase.Travelling).ToList();
         double drainedAt = (inFlight.Count == 0 ? state.Minute : inFlight.Max(c => c.NextEventMinute)) + 0.01;
         city.AdvanceTo(drainedAt, int.MaxValue); control.City.AdvanceTo(drainedAt, int.MaxValue);
