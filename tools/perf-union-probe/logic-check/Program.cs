@@ -269,6 +269,17 @@ internal static class Program
         Check(buffer.Full(true) && buffer.Full(false), "both buffers report full");
         buffer.Drop(false);
         Check(buffer.UnitDropped == 3, "explicit drop counts against its own type");
+        var export = buffer.Chronological();
+        Check(export.Length == 5 && export.Select(r => r.Frame).OrderBy(f => f).SequenceEqual(new[] { 0, 1, 2, 10, 11 }) && buffer.MergedCount == 5,
+            "the calls export merges both record types in chronological order");
+        var mixed = new AdvanceCallBuffer(4, 4);
+        mixed.Add(new AdvanceCallRecord { Frame = 1, StartQpc = 100, Over30 = true });
+        mixed.Add(new AdvanceCallRecord { Frame = 2, StartQpc = 200, UnitsRead = true, UnitsOverThreshold = new[] { new UnitOptionalStop { Unit = 3, Kind = "citizen", OptionalStopMilliseconds = 5.3 } } });
+        mixed.Add(new AdvanceCallRecord { Frame = 3, StartQpc = 300, Over30 = true });
+        var rows = mixed.Chronological().Select(r => AdvanceCallRows.Fields(r, 1e-4).ToDictionary(f => f.Key, f => f.Value)).ToArray();
+        Check(rows.Select(r => (int)r["frame"]).SequenceEqual(new[] { 1, 2, 3 }) && Equals(rows[1]["over_30ms"], false)
+            && Equals(rows[1]["record_reason"], "unit_optional_stop_over_5ms") && ((UnitOptionalStop[])rows[1][AdvanceCallRows.UnitsOverThresholdField]).Length == 1,
+            "the normal calls export includes a sub-30 ms advance with a unit crossing between 30 ms calls");
         buffer.Reset();
         Check(buffer.SlowCount == 0 && buffer.UnitCount == 0 && buffer.SlowDropped == 0 && buffer.UnitDropped == 0, "reset clears both buffers");
     }

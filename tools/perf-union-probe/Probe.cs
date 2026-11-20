@@ -770,8 +770,8 @@ namespace PerfUnionProbe
             }
             else if (section == "calls" || section == "unit_calls")
             {
-                var source = section == "calls" ? calls.Slow : calls.Unit;
-                count = section == "calls" ? calls.SlowCount : calls.UnitCount; int limit = Number(args, "limit", 128, 256);
+                var source = section == "calls" ? calls.Chronological() : calls.Unit;
+                count = section == "calls" ? calls.MergedCount : calls.UnitCount; int limit = Number(args, "limit", 128, 256);
                 for (int i = (int)Math.Min(offset, int.MaxValue); i < Math.Min(count, offset + limit); i++)
                 {
                     var row = new JObject();

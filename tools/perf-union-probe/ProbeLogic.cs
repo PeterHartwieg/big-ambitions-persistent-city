@@ -373,6 +373,15 @@ namespace PerfUnionProbe
             if (UnitCount >= Unit.Length) { UnitDropped++; return false; }
             Unit[UnitCount++] = record; return true;
         }
+        public int MergedCount => SlowCount + UnitCount;
+        public AdvanceCallRecord[] Chronological()
+        {
+            var merged = new AdvanceCallRecord[MergedCount];
+            int s = 0, u = 0, n = 0;
+            while (s < SlowCount || u < UnitCount)
+                merged[n++] = u >= UnitCount || (s < SlowCount && Slow[s].StartQpc <= Unit[u].StartQpc) ? Slow[s++] : Unit[u++];
+            return merged;
+        }
         public void Drop(bool over30) { if (over30) SlowDropped++; else UnitDropped++; }
         public void Reset() { SlowCount = UnitCount = 0; SlowDropped = UnitDropped = 0; }
     }
