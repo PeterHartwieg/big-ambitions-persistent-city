@@ -161,7 +161,7 @@ namespace PerfUnionProbe
                 Require(armed, "f4b_not_armed");
                 if (action == "measure-start") { var before = Status(); StartMeasurement(args); return Wrap(before, Status()); }
                 if (action == "measure-stop") { var stop = ReadStop(); var before = Status(); StopMeasurement("explicit-stop", stop); return Wrap(before, Status()); }
-                if (action == "page") return Wrap(Status(), Page(args));
+                if (action == "page") { var status = Status(); return Wrap(status, Page(args, ReplyLimit - status.ToString(Formatting.None).Length - PageEnvelope)); }
                 if (action == "disarm") { var before = Status(); Disarm(); stopReason = "disarmed"; return Wrap(before, Status()); }
                 return Wrap(Status(), new JObject { ["supported"] = false, ["refusal"] = "f4b_unsupported_action", ["action"] = action });
             }
@@ -714,7 +714,17 @@ namespace PerfUnionProbe
             };
         }
 
-        private static JObject Page(JObject args)
+        private const int PageEnvelope = 512;
+        private static JObject CallRow(AdvanceCallRecord record)
+        {
+            var row = new JObject();
+            foreach (var field in AdvanceCallRows.Fields(record, ToMs))
+                row[field.Key] = field.Value is UnitOptionalStop[] over
+                    ? new JArray(over.Select(u => new JObject { ["unit"] = u.Unit, ["kind"] = u.Kind, ["optional_stop_ms"] = u.OptionalStopMilliseconds }))
+                    : field.Value == null ? JValue.CreateNull() : new JValue(field.Value);
+            return row;
+        }
+        private static JObject Page(JObject args, int budget)
         {
             string section = (string)args["section"];
             bool streamed = section == "frames" || section == "ticks" || section == "diagnostics";
@@ -772,15 +782,10 @@ namespace PerfUnionProbe
             {
                 var source = section == "calls" ? calls.Chronological() : calls.Unit;
                 count = section == "calls" ? calls.MergedCount : calls.UnitCount; int limit = Number(args, "limit", 128, 256);
-                for (int i = (int)Math.Min(offset, int.MaxValue); i < Math.Min(count, offset + limit); i++)
-                {
-                    var row = new JObject();
-                    foreach (var field in AdvanceCallRows.Fields(source[i], ToMs))
-                        row[field.Key] = field.Value is UnitOptionalStop[] over
-                            ? new JArray(over.Select(u => new JObject { ["unit"] = u.Unit, ["kind"] = u.Kind, ["optional_stop_ms"] = u.OptionalStopMilliseconds }))
-                            : field.Value == null ? JValue.CreateNull() : new JValue(field.Value);
-                    rows.Add(row);
-                }
+                int start = (int)Math.Min(offset, int.MaxValue), end = (int)Math.Min(count, offset + limit);
+                var built = new JObject[Math.Max(0, end - start)];
+                int take = CallPage.Fit(i => (built[i - start] = CallRow(source[i])).ToString(Formatting.None).Length, start, end, budget);
+                for (int i = 0; i < take; i++) rows.Add(built[i]);
             }
             else if (section == "scopes")
             {

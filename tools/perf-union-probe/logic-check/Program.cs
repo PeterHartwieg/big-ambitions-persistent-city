@@ -280,6 +280,26 @@ internal static class Program
         Check(rows.Select(r => (int)r["frame"]).SequenceEqual(new[] { 1, 2, 3 }) && Equals(rows[1]["over_30ms"], false)
             && Equals(rows[1]["record_reason"], "unit_optional_stop_over_5ms") && ((UnitOptionalStop[])rows[1][AdvanceCallRows.UnitsOverThresholdField]).Length == 1,
             "the normal calls export includes a sub-30 ms advance with a unit crossing between 30 ms calls");
+        var window = new AdvanceCallBuffer(4096, 4096);
+        window.Add(new AdvanceCallRecord { Frame = 0, StartQpc = 0, Over30 = true });
+        for (int i = 1; i < 128; i++)
+            window.Add(new AdvanceCallRecord { Frame = i, StartQpc = i, UnitsRead = true, UnitsOverThreshold = new[] { new UnitOptionalStop { Unit = 1, Kind = "citizen", OptionalStopMilliseconds = 5.5 } } });
+        var paged = window.Chronological();
+        int RowLength(int i) => paged[i].Over30 ? 330 : 426;
+        int offset = 0, pages = 0, budget = 48000 - 4000 - 512;
+        var seen = new List<AdvanceCallRecord>();
+        while (offset < paged.Length && pages < 10)
+        {
+            int take = CallPage.Fit(RowLength, offset, Math.Min(paged.Length, offset + 128), budget);
+            int used = Enumerable.Range(offset, take).Sum(i => RowLength(i) + CallPage.Separator);
+            Check(take > 0 && used <= budget, "page " + pages + " fits the reply budget");
+            seen.AddRange(paged.Skip(offset).Take(take));
+            offset += take; pages++;
+        }
+        Check(pages > 1 && seen.Count == 128 && seen.Count(r => r.Over30) == 1 && seen.Count(r => !r.Over30) == 127
+            && seen.Select(r => r.Frame).SequenceEqual(Enumerable.Range(0, 128)), "paging a mixed window recovers every slow and threshold-only record in order");
+        Check(CallPage.Fit(_ => 100_000, 0, 3, 1000) == 1, "an oversized single row is still returned so paging advances");
+        Check(CallPage.Fit(_ => 10, 5, 5, 1000) == 0, "an empty range returns no rows");
         buffer.Reset();
         Check(buffer.SlowCount == 0 && buffer.UnitCount == 0 && buffer.SlowDropped == 0 && buffer.UnitDropped == 0, "reset clears both buffers");
     }

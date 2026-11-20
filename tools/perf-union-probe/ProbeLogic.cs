@@ -386,6 +386,22 @@ namespace PerfUnionProbe
         public void Reset() { SlowCount = UnitCount = 0; SlowDropped = UnitDropped = 0; }
     }
 
+    public static class CallPage
+    {
+        public const int Separator = 1;
+        public static int Fit(Func<int, int> rowLength, int start, int end, int budget)
+        {
+            int used = 0, taken = 0;
+            for (int i = start; i < end; i++)
+            {
+                int length = rowLength(i) + Separator;
+                if (taken > 0 && used + length > budget) break;
+                used += length; taken++;
+            }
+            return taken;
+        }
+    }
+
     public static class ProbeCapacity
     {
         public const int Frames = 131072, Ticks = 262144, Calls = 4096, UnitCalls = 4096, Diagnostics = 8192;
