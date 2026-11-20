@@ -40,12 +40,13 @@ def snapshot(key):
         rss = rss_kib(pid)
         gc = prop(mark + '-mesh', 'GcDiagnostics')
         food = prop(mark + '-rate', 'FoodDiagnostics')
-        return write(mark + '-set', {'utc': now(), 'start_monotonic': start, 'seconds': time.monotonic() - start,
-                                     'pid': pid, 'native': food.get('native'), 'rate': food.get('value', {}).get('travelClockRate'),
-                                     'census': retained, 'heap': heap, 'mono': mono, 'rss_kib': rss, 'footprint': footprint(mark, pid),
-                                     'mesh': {f: gc.get('value', {}).get(f) for f in FIELDS}})
+        sample = {'utc': now(), 'start_monotonic': start, 'seconds': time.monotonic() - start,
+                  'pid': pid, 'native': food.get('native'), 'rate': food.get('value', {}).get('travelClockRate'),
+                  'census': retained, 'heap': heap, 'mono': mono, 'rss_kib': rss, 'footprint': footprint(mark, pid),
+                  'mesh': {f: gc.get('value', {}).get(f) for f in FIELDS}}
     finally:
         auto(mark + '-autosave-after')
+    return write(mark + '-set', sample)
 
 
 def immediate():

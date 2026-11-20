@@ -242,6 +242,35 @@ internal static class Program
             && failedFields[AdvanceCallRows.UnitsOverThresholdField] == null, "an interrupted advance exports no per-unit fields");
         Check(Equals(failedFields["optional_stop_ms"], 10.0) && Equals(failedFields["duration_ms"], 40.0), "an interrupted advance keeps its call total and duration");
         Check(interrupted.CallSeamMilliseconds == 10.0, "seams after an interrupted call is closed are not charged to it");
+        var stale = new PersistentCity.Core.OptionalStopUnitSeams();
+        stale.BeginCall(); stale.Seam(6.0); stale.EndUnit("citizen", 7.0); stale.EndCall();
+        source.Target = stale;
+        Check(stale.Completed && AdvanceCallRule.AdmitUnits(false, stale.MaximumUnitSeamMilliseconds), "a completed crossing is admitted");
+        Check(!AdvanceCallRule.AdmitUnits(true, stale.MaximumUnitSeamMilliseconds),
+            "a call that throws before BeginCall is not admitted on the previous call's unit maximum");
+        var thrown = new AdvanceCallRecord { DurationTicks = 400_000, OptionalStopMilliseconds = 2.5, Over30 = true };
+        if (AdvanceCallRule.ExportUnits(true)) AdvanceCallRows.ReadUnits(ref thrown, source);
+        var thrownFields = AdvanceCallRows.Fields(thrown, 1e-4).ToDictionary(f => f.Key, f => f.Value);
+        Check(!thrown.UnitsRead && Equals(thrownFields["slowest_unit"], "unknown") && thrownFields["unit_optional_stop_max_ms"] == null
+            && Equals(thrownFields["optional_stop_ms"], 2.5) && Equals(thrownFields["duration_ms"], 40.0),
+            "a failed 30 ms call keeps duration and call total but not the previous call's unit timings");
+        AdvanceBuffer();
+    }
+
+    private static void AdvanceBuffer()
+    {
+        var buffer = new AdvanceCallBuffer(2, 3);
+        for (int i = 0; i < 5; i++) buffer.Add(new AdvanceCallRecord { Frame = i, UnitsRead = true });
+        Check(buffer.UnitCount == 3 && buffer.UnitDropped == 2 && buffer.SlowCount == 0 && buffer.SlowDropped == 0, "threshold-only records fill only their own buffer");
+        Check(buffer.Add(new AdvanceCallRecord { Frame = 10, Over30 = true }) && buffer.Add(new AdvanceCallRecord { Frame = 11, Over30 = true }),
+            "30 ms records keep their capacity after the threshold-only buffer is full");
+        Check(!buffer.Add(new AdvanceCallRecord { Frame = 12, Over30 = true }) && buffer.SlowDropped == 1 && buffer.UnitDropped == 2, "drops are counted per record type");
+        Check(!buffer.Add(new AdvanceCallRecord { Frame = 13 }) && buffer.UnitDropped == 2, "a threshold-only record without unit data is not stored");
+        Check(buffer.Full(true) && buffer.Full(false), "both buffers report full");
+        buffer.Drop(false);
+        Check(buffer.UnitDropped == 3, "explicit drop counts against its own type");
+        buffer.Reset();
+        Check(buffer.SlowCount == 0 && buffer.UnitCount == 0 && buffer.SlowDropped == 0 && buffer.UnitDropped == 0, "reset clears both buffers");
     }
 
     private static void Union()

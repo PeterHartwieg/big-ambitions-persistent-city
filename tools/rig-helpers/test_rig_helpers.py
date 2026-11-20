@@ -192,6 +192,23 @@ class RetentionRunnerTests(unittest.TestCase):
         with self.assertRaises(RuntimeError):
             self.common.auto('half-suppressed')
 
+    def test_failed_autosave_postcheck_publishes_no_sample(self):
+        retention = self.local(importlib.import_module('retention'))
+        on = {'enabled': True, 'autosave_disabled': True, 'suppressed': True}
+        off = {'enabled': True, 'autosave_disabled': False, 'suppressed': False}
+        receipts = iter([on, off])
+        original = self.bridge.__call__
+
+        def bridge(args):
+            if args[0] == 'autosave':
+                self.bridge.autosave = next(receipts)
+            return original(args)
+        self.common.bridge = bridge
+        with self.assertRaisesRegex(RuntimeError, 'R0-autosave-after: autosave is not suppressed'):
+            retention.snapshot('R0')
+        self.assertEqual(self.bridge.console_lines(), ['pc gc retained', 'pc movement status', 'pc population manifest'])
+        self.assertFalse((self.stage / 'retention-R0-set.json').exists())
+
     def test_wrap_reads_the_hart_builds_run_directory(self):
         with HomeDir() as home:
             sys.modules.pop('rigcommon', None)

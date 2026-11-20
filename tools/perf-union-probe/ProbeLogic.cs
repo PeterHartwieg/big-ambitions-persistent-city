@@ -129,6 +129,8 @@ namespace PerfUnionProbe
             return durationTicks >= 0 && durationTicks * 1000 >= ThresholdMilliseconds * frequency;
         }
         public static bool RecordUnits(double maximumUnitOptionalStopMilliseconds) => maximumUnitOptionalStopMilliseconds > AdvanceCallRows.UnitThresholdMilliseconds;
+        public static bool AdmitUnits(bool failed, double maximumUnitOptionalStopMilliseconds) => !failed && RecordUnits(maximumUnitOptionalStopMilliseconds);
+        public static bool ExportUnits(bool failed) => !failed;
     }
 
     public struct AdvanceCallRecord
@@ -347,9 +349,37 @@ namespace PerfUnionProbe
         }
     }
 
+    public sealed class AdvanceCallBuffer
+    {
+        public AdvanceCallBuffer(int slowCapacity, int unitCapacity)
+        {
+            Slow = new AdvanceCallRecord[slowCapacity]; Unit = new AdvanceCallRecord[unitCapacity];
+        }
+        public AdvanceCallRecord[] Slow { get; }
+        public AdvanceCallRecord[] Unit { get; }
+        public int SlowCount { get; private set; }
+        public int UnitCount { get; private set; }
+        public long SlowDropped { get; private set; }
+        public long UnitDropped { get; private set; }
+        public bool Full(bool over30) => over30 ? SlowCount >= Slow.Length : UnitCount >= Unit.Length;
+        public bool Add(AdvanceCallRecord record)
+        {
+            if (record.Over30)
+            {
+                if (SlowCount >= Slow.Length) { SlowDropped++; return false; }
+                Slow[SlowCount++] = record; return true;
+            }
+            if (!record.UnitsRead) return false;
+            if (UnitCount >= Unit.Length) { UnitDropped++; return false; }
+            Unit[UnitCount++] = record; return true;
+        }
+        public void Drop(bool over30) { if (over30) SlowDropped++; else UnitDropped++; }
+        public void Reset() { SlowCount = UnitCount = 0; SlowDropped = UnitDropped = 0; }
+    }
+
     public static class ProbeCapacity
     {
-        public const int Frames = 131072, Ticks = 262144, Calls = 4096, Diagnostics = 8192;
+        public const int Frames = 131072, Ticks = 262144, Calls = 4096, UnitCalls = 4096, Diagnostics = 8192;
         public const int FramePage = 96, TickPage = 256, DiagnosticPage = 32;
     }
 
