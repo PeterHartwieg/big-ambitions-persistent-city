@@ -44,6 +44,12 @@ SEGMENTS = [
     ('planning_jobs', r'compatibility count ' + INT + r'\), road search restarts ' + INT + r', units ' + INT
      + r', query/unit admission deferrals ' + INT + r', path reserve ms ' + NUM + r'\.',
      [('inline_restarts', 'i'), ('road_search_restarts', 'i'), ('units', 'i'), ('admission_deferrals', 'i'), ('path_reserve_ms', 'f')]),
+    ('planning_slice', r'Slowest planning slice: ' + NUM + r' ms, route job ' + NUM + r' ms, outside the route job ' + NUM
+     + r' ms; its slowest unit (\S+) ' + NUM + r' ms, NavMesh paths ' + NUM + r' ms over ' + INT + r' queries, other work ' + NUM
+     + r' ms, ' + INT + r' NavMesh samples\.',
+     [('slice_ms', 'f'), ('route_job_ms', 'f'), ('outside_job_ms', 'f'), ('unit_stage', 's'), ('unit_ms', 'f'),
+      ('unit_navmesh_ms', 'f'), ('unit_navmesh_queries', 'i'), ('unit_other_ms', 'f'), ('unit_navmesh_samples', 'i')]),
+    ('food_continuation', r'Slowest food continuation: ' + NUM + r' ms \((\S+)\)\.', [('max_ms', 'f'), ('step', 's')]),
 ]
 COMPILED = [(name, re.compile(pattern), fields) for name, pattern, fields in SEGMENTS]
 PHYSICAL = re.compile(r'(physical=.*)$')

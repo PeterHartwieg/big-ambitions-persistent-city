@@ -457,6 +457,7 @@ namespace PersistentCity.Core
         }
         private PendingEvent? pending, spareEvent;
         public bool PlanningPending => pending != null;
+        public string FoodContinuationStep => food?.ContinuationStep ?? "";
         public long PlanningRequests { get; private set; }
         private bool InProgress(Due item) => pending != null && ReferenceEquals(pending.Item, item);
         public long EventRestarts { get; private set; }

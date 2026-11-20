@@ -465,6 +465,22 @@ class SummaryLineTests(unittest.TestCase):
         self.assertEqual((empty['slowest_advance_stops']['over_5ms_count'], empty['slowest_advance_stops']['over_5ms']), (0, ''))
         self.assertIsNone(summary_lines.parse_line(SUMMARY_FIXTURE[0])['slowest_advance_stops'])
 
+    def test_parser_reads_the_slowest_planning_slice_anatomy(self):
+        line = SUMMARY_FIXTURE[0].replace(
+            'path reserve ms 2.5. ',
+            'path reserve ms 2.5. Slowest planning slice: 892.516 ms, route job 892.400 ms, outside the route job 0.116 ms; '
+            'its slowest unit direct-walk 892.300 ms, NavMesh paths 891.900 ms over 1 queries, other work 0.400 ms, 2 NavMesh samples. '
+            'Slowest food continuation: 17.773 ms (decision-evaluate). ')
+        self.assertNotEqual(line, SUMMARY_FIXTURE[0])
+        parsed = summary_lines.parse_line(line)
+        self.assertEqual(parsed['planning_slice'], dict(slice_ms=892.516, route_job_ms=892.4, outside_job_ms=0.116, unit_stage='direct-walk',
+                                                        unit_ms=892.3, unit_navmesh_ms=891.9, unit_navmesh_queries=1, unit_other_ms=0.4,
+                                                        unit_navmesh_samples=2))
+        self.assertIsNotNone(parsed['planning_jobs'])
+        self.assertEqual(parsed['food_continuation'], dict(max_ms=17.773, step='decision-evaluate'))
+        self.assertIsNone(summary_lines.parse_line(SUMMARY_FIXTURE[0])['food_continuation'])
+        self.assertIsNone(summary_lines.parse_line(SUMMARY_FIXTURE[0])['planning_slice'])
+
     def spikes(self):
         return [dict(frame=10, advance_ms=42.49), dict(frame=20, advance_ms=35.0), dict(frame=30, advance_ms=None)]
 
