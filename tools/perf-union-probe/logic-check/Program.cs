@@ -407,6 +407,9 @@ internal static class Program
         long g13 = 20L * 60 * fps;
         Check(g13 <= ProbeCapacity.Frames && Run(ProbeCapacity.Frames, g13, 0, 0) == 0, "a 20-minute G13 window at 90 FPS fits the frame buffer undrained");
         Check(Run(ProbeCapacity.Ticks, g13, 0, 0) == 0, "its ticks (one native tick per frame) fit undrained");
+        long tickBytes = (long)ProbeCapacity.Ticks * Unsafe.SizeOf<TickRecord>();
+        Check(Unsafe.SizeOf<TickRecord>() == 40 && tickBytes <= 5_300_000,
+            "the tick ring holds " + (tickBytes / 1e6).ToString("0.00") + " MB of pointer-free rows (was 262,144 x 48 B = 12.58 MB)");
         Check(Run(ProbeCapacity.Diagnostics, 20 * 60, 0, 0) == 0, "its once-per-second diagnostics fit undrained");
         long soak = 4L * 3600 * fps;
         Check(Run(ProbeCapacity.Frames, soak, 0, 0) > 0, "an undrained 4-hour window reports dropped frames, never silent overwrite");
@@ -574,6 +577,182 @@ internal static class Program
         bool threw = false;
         try { p.Configure(new string[LoopPhaseRecorder.MaxPhases + 1]); } catch (ArgumentOutOfRangeException) { threw = true; }
         Check(threw, "more phases than the recorder holds are refused");
+        SubPhases();
+    }
+
+    private static void SubPhases()
+    {
+        var names = new List<string> { "frame-start" };
+        foreach (var phase in new[] { "Update", "PreLateUpdate", "PostLateUpdate", "TimeUpdate" })
+            for (int k = 0; k < 9; k++) names.Add(phase + ".System" + k);
+        names.Add("Initialization");
+        var sub = new LoopPhaseRecorder(LoopPhaseRecorder.MaxSubPhases);
+        sub.Configure(names.ToArray());
+        Check(sub.Phases == 38 && sub.Capacity == LoopPhaseRecorder.MaxSubPhases, "the subsystem recorder holds more phases than the top-level recorder");
+        int update = names.IndexOf("Update.System0"), skinned = names.IndexOf("PostLateUpdate.System3"), wait = names.IndexOf("TimeUpdate.System0");
+        void Frame(int frame, long at, int gc, double updateMs, double skinnedMs, double waitMs, int gcAt)
+        {
+            sub.Begin(at, gc);
+            long t = at + 5; int collections = gc;
+            for (int i = 1; i < names.Count; i++)
+            {
+                if (i == gcAt) collections++;
+                sub.Stamp(i, t, collections);
+                t += i == update ? (long)updateMs : i == skinned ? (long)skinnedMs : i == wait ? (long)waitMs : 0;
+            }
+            sub.Close(frame, t + 1, collections, 0, false, false, 1.0);
+        }
+        Frame(1, 0, 3, 4, 2, 20, -1);
+        Frame(2, 100, 3, 31, 35, 24, update);
+        Check(sub.Retained == 1 && sub.GcPhase(0) == update - 1, "the collection is placed in the subsystem stamped before it");
+        var top = new int[3];
+        int taken = sub.LargestExcessPhases(0, top);
+        Check(taken == 3 && top[0] == skinned && top[1] == update && top[2] == wait,
+            "subsystems are ranked by growth against the previous frame (" + string.Join(",", top.Select(i => names[i])) + ")");
+        Check(sub.PhaseMs(0, skinned) == 35 && sub.PreviousPhaseMs(0, skinned) == 2, "a subsystem keeps its time and the previous frame's");
+        double sum = 0; for (int i = 0; i < names.Count; i++) sum += sub.PhaseMs(0, i);
+        Check(Math.Abs(sum - sub.WholeMs(0)) < 1e-9, "subsystems tile the whole frame");
+        Frame(3, 300, 4, 5, 3, 20, skinned + 1);
+        long before = GC.GetAllocatedBytesForCurrentThread();
+        for (int i = 0; i < 500; i++) { Frame(10 + i, 1000 + 200 * i, 5 + i, 5, 3, 20, i % 5 == 0 ? wait : -1); sub.LargestExcessPhases(0, top); }
+        long allocated = GC.GetAllocatedBytesForCurrentThread() - before;
+        Check(allocated == 0, "subsystem stamps, rows and ranking allocate nothing after configuration (" + allocated + " B, .NET)");
+        var cleared = new LoopPhaseRecorder(LoopPhaseRecorder.MaxSubPhases);
+        cleared.Configure(names.ToArray());
+        cleared.Begin(0, 1); cleared.Close(1, 33, 2, 0, false, false, 1.0);
+        Check(cleared.Retained == 1 && cleared.LargestExcessPhases(0, top) == 0, "a first-frame collection has no previous frame to rank against");
+        bool threw = false;
+        try { _ = new LoopPhaseRecorder(LoopPhaseRecorder.MaxSubPhases + 1); } catch (ArgumentOutOfRangeException) { threw = true; }
+        Check(threw, "a recorder above the subsystem capacity is refused");
+        SubPhaseLoopOrder();
+    }
+
+    private static readonly string[] UnityLoop = { "TimeUpdate", "Initialization", "EarlyUpdate", "FixedUpdate", "PreUpdate", "Update", "PreLateUpdate", "PostLateUpdate" };
+    private static readonly string[] Detailed = { "Update", "PreLateUpdate", "PostLateUpdate", "TimeUpdate" };
+
+    private static void Walk(SubPhasePlan plan, string[] systems, string[][] children, int early, LoopPhaseRecorder rec, int frame, ref long t, ref int gc, string[] gcAt, string slow, long slowMs)
+    {
+        int n = systems.Length;
+        rec.Begin(t, gc);
+        void Run(string key, ref long at, ref int collections)
+        {
+            if (Array.IndexOf(gcAt, key) >= 0) collections++;
+            at += key == slow ? slowMs : 1;
+        }
+        for (int k = 0; k < n; k++)
+        {
+            int i = (early + k) % n;
+            int root = plan.RootBefore(i);
+            if (root >= 0) rec.Stamp(root, t, gc);
+            if (children[i] == null) Run(systems[i], ref t, ref gc);
+            else
+                for (int c = 0; c <= children[i].Length; c++)
+                {
+                    int phase = plan.Before(i, c);
+                    if (phase >= 0) rec.Stamp(phase, t, gc);
+                    if (c == children[i].Length || children[i][c] == null) continue;
+                    Run(systems[i] + "." + children[i][c], ref t, ref gc);
+                }
+            if (i == n - 1)
+            {
+                rec.Stamp(plan.RootBefore(n), t, gc);
+                Run(SubPhasePlan.Tail, ref t, ref gc);
+            }
+        }
+        rec.Close(frame, t, gc, 0, false, false, 1.0);
+    }
+
+    private static void SubPhaseLoopOrder()
+    {
+        var children = new[]
+        {
+            new[] { "WaitForLastPresentationAndUpdateTime" }, new[] { "PlayerUpdateTime", "AsyncUploadTimeSlicedUpdate" },
+            new[] { null, "UpdateMainGameViewRect", "ScriptRunDelayedStartupFrame" }, new[] { "ScriptRunBehaviourFixedUpdate", "PhysicsFixedUpdate" },
+            new[] { "PhysicsUpdate" }, new[] { "ScriptRunBehaviourUpdate", "ScriptRunDelayedDynamicFrameRate" },
+            new[] { "ScriptRunBehaviourLateUpdate" }, new[] { "UpdateAllSkinnedMeshes", "PresentAfterDraw" }
+        };
+        var plan = SubPhasePlan.Build(UnityLoop, children, 2, Detailed, LoopPhaseRecorder.MaxSubPhases);
+        var names = plan.Names.ToList();
+        int At(string name) => names.IndexOf(name);
+        var expected = new[] { "EarlyUpdate", "FixedUpdate", "PreUpdate", "Update.ScriptRunBehaviourUpdate", "PreLateUpdate.ScriptRunBehaviourLateUpdate",
+            "PostLateUpdate.PresentAfterDraw", SubPhasePlan.Tail, "TimeUpdate.WaitForLastPresentationAndUpdateTime", "Initialization" };
+        bool ordered = expected.All(n => At(n) >= 0);
+        for (int k = 1; ordered && k < expected.Length; k++) ordered = At(expected[k - 1]) < At(expected[k]);
+        Check(ordered && !plan.Truncated && names[0] == "EarlyUpdate" && names[names.Count - 1] == "Initialization"
+            && At(SubPhasePlan.Tail) == At("PostLateUpdate.PresentAfterDraw") + 1 && plan.RootBefore(UnityLoop.Length) == At(SubPhasePlan.Tail),
+            "subsystem stamps follow the installed loop from EarlyUpdate, name every top-level phase and put the loop tail after PostLateUpdate (" + string.Join(",", names) + ")");
+        var rec = new LoopPhaseRecorder(LoopPhaseRecorder.MaxSubPhases);
+        rec.Configure(plan.Names);
+        long t = 0; int gc = 10;
+        Walk(plan, UnityLoop, children, 2, rec, 1, ref t, ref gc, new string[0], null, 0);
+        Walk(plan, UnityLoop, children, 2, rec, 2, ref t, ref gc, new[] { "FixedUpdate.PhysicsFixedUpdate" }, "FixedUpdate.PhysicsFixedUpdate", 30);
+        Check(rec.Retained == 1 && rec.GcPhase(0) == At("FixedUpdate") && rec.LargestExcessPhase(0) == At("FixedUpdate"),
+            "a FixedUpdate collection is charged to FixedUpdate, not frame start (" + names[Math.Max(0, rec.GcPhase(0))] + ")");
+        Walk(plan, UnityLoop, children, 2, rec, 3, ref t, ref gc, new string[0], null, 0);
+        Walk(plan, UnityLoop, children, 2, rec, 4, ref t, ref gc, new[] { SubPhasePlan.Tail }, SubPhasePlan.Tail, 50);
+        Check(rec.Retained == 2 && rec.GcPhase(1) == At(SubPhasePlan.Tail) && rec.LargestExcessPhase(1) == At(SubPhasePlan.Tail),
+            "work and a collection between PostLateUpdate and the next TimeUpdate go to the loop tail, not PostLateUpdate.PresentAfterDraw or .unstamped ("
+            + names[Math.Max(0, rec.GcPhase(1))] + "," + names[Math.Max(0, rec.LargestExcessPhase(1))] + ")");
+        Walk(plan, UnityLoop, children, 2, rec, 5, ref t, ref gc, new string[0], null, 0);
+        int from = gc;
+        Walk(plan, UnityLoop, children, 2, rec, 6, ref t, ref gc, new[] { "Update.ScriptRunBehaviourUpdate", "PostLateUpdate.PresentAfterDraw" }, null, 0);
+        var collected = new int[LoopPhaseRecorder.MaxSubPhases];
+        int phases = rec.CollectedPhases(2, collected);
+        int update = At("Update.ScriptRunBehaviourUpdate"), present = At("PostLateUpdate.PresentAfterDraw");
+        Check(rec.Retained == 3 && rec.RowCollections(2) == 2 && phases == 2 && collected[0] == update && collected[1] == present
+            && rec.PhaseGen0From(2, update) == from + 1 && rec.PhaseGen0Through(2, update) == from + 1
+            && rec.PhaseGen0From(2, present) == from + 2 && rec.PhaseGen0Through(2, present) == from + 2
+            && rec.CollectionPhase(2, from + 2) == present,
+            "two collections in one frame keep their own subsystem gen0 ranges");
+        var wide = (string[][])children.Clone();
+        wide[5] = Enumerable.Range(0, 20).Select(k => "System" + k).ToArray();
+        var small = SubPhasePlan.Build(UnityLoop, wide, 2, Detailed, 12);
+        var smallNames = small.Names.ToList();
+        Check(small.Truncated && smallNames.Count <= 12 && smallNames.Contains("Update" + SubPhasePlan.Unstamped)
+            && new[] { "PreLateUpdate", "PostLateUpdate", "TimeUpdate" }.All(p => smallNames.Any(n => n.StartsWith(p + ".", StringComparison.Ordinal)))
+            && smallNames.Contains(SubPhasePlan.Tail) && smallNames[smallNames.Count - 1] == "Initialization",
+            "children past the cap share a parent-level unstamped bucket and later phases keep their stamps (" + string.Join(",", smallNames) + ")");
+        var capped = new LoopPhaseRecorder(LoopPhaseRecorder.MaxSubPhases);
+        capped.Configure(small.Names);
+        t = 0; gc = 0;
+        Walk(small, UnityLoop, wide, 2, capped, 1, ref t, ref gc, new string[0], null, 0);
+        Walk(small, UnityLoop, wide, 2, capped, 2, ref t, ref gc, new[] { "Update.System19" }, null, 0);
+        Check(capped.Retained == 1 && capped.GcPhase(0) == smallNames.IndexOf("Update" + SubPhasePlan.Unstamped),
+            "a collection in a child past the cap lands in its parent's unstamped bucket");
+        RootCallbacks();
+    }
+
+    private static void RootCallbacks()
+    {
+        var systems = new[] { "TimeUpdate", "Initialization", "ModBeforeEarly", "EarlyUpdate", "FixedUpdate", "PreUpdate", "Update", "ModBetween", "PreLateUpdate", "PostLateUpdate", "ModAfterLast" };
+        var children = new[]
+        {
+            new[] { "WaitForLastPresentationAndUpdateTime" }, new[] { "PlayerUpdateTime" }, null,
+            new[] { null, "UpdateMainGameViewRect" }, new[] { "PhysicsFixedUpdate" }, new[] { "PhysicsUpdate" },
+            new[] { "ScriptRunBehaviourUpdate" }, null, new[] { "ScriptRunBehaviourLateUpdate" }, new[] { "UpdateAllSkinnedMeshes", "PresentAfterDraw" }, null
+        };
+        const int early = 3;
+        var plan = SubPhasePlan.Build(systems, children, early, Detailed, LoopPhaseRecorder.MaxSubPhases);
+        var names = plan.Names.ToList();
+        int At(string name) => names.IndexOf(name);
+        var expected = new[] { "EarlyUpdate", "Update.ScriptRunBehaviourUpdate", "ModBetween", "PreLateUpdate.ScriptRunBehaviourLateUpdate",
+            "PostLateUpdate.PresentAfterDraw", "ModAfterLast", SubPhasePlan.Tail, "TimeUpdate.WaitForLastPresentationAndUpdateTime", "Initialization", "ModBeforeEarly" };
+        bool ordered = expected.All(n => At(n) >= 0);
+        for (int k = 1; ordered && k < expected.Length; k++) ordered = At(expected[k - 1]) < At(expected[k]);
+        Check(ordered && names[names.Count - 1] == "ModBeforeEarly" && plan.RootBefore(2) == At("ModBeforeEarly") && plan.RootBefore(7) == At("ModBetween")
+            && plan.RootBefore(10) == At("ModAfterLast") && plan.RootBefore(systems.Length) == At(SubPhasePlan.Tail),
+            "top-level callbacks without children get their own stamp in loop order (" + string.Join(",", names) + ")");
+        var rec = new LoopPhaseRecorder(LoopPhaseRecorder.MaxSubPhases);
+        rec.Configure(plan.Names);
+        long t = 0; int gc = 0, row = 0;
+        foreach (var key in new[] { "ModBetween", "ModAfterLast", "ModBeforeEarly", SubPhasePlan.Tail })
+        {
+            Walk(plan, systems, children, early, rec, 2 * row + 1, ref t, ref gc, new string[0], null, 0);
+            Walk(plan, systems, children, early, rec, 2 * row + 2, ref t, ref gc, new[] { key }, key, 50);
+            Check(rec.Retained == row + 1 && rec.GcPhase(row) == At(key) && rec.LargestExcessPhase(row) == At(key),
+                "a 50 ms collection in " + key + " is charged to " + key + " (" + names[Math.Max(0, rec.GcPhase(row))] + "," + names[Math.Max(0, rec.LargestExcessPhase(row))] + ")");
+            row++;
+        }
     }
 
     private const string PinnedHarmonySha256 = "7b9e756306fa3d7620e02a857c8927a6ab04973f9bd8a77d3866700a6deac55c";
