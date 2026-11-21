@@ -628,7 +628,7 @@ internal static class Program
     }
 
     private static readonly string[] UnityLoop = { "TimeUpdate", "Initialization", "EarlyUpdate", "FixedUpdate", "PreUpdate", "Update", "PreLateUpdate", "PostLateUpdate" };
-    private static readonly string[] Detailed = { "PreUpdate", "Update", "PreLateUpdate", "PostLateUpdate", "TimeUpdate" };
+    private static readonly string[] Detailed = SubPhasePlan.DetailedParents;
 
     private static void Walk(SubPhasePlan plan, string[] systems, string[][] children, int early, LoopPhaseRecorder rec, int frame, ref long t, ref int gc, string[] gcAt, string slow, long slowMs)
     {

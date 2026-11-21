@@ -720,6 +720,7 @@ namespace PerfUnionProbe
     public sealed class SubPhasePlan
     {
         public const string Tail = "loop-tail", Unstamped = ".unstamped";
+        public static readonly string[] DetailedParents = { "PreUpdate", "Update", "PreLateUpdate", "PostLateUpdate", "TimeUpdate" };
         private readonly int[][] before;
         private readonly int[] rootBefore;
 

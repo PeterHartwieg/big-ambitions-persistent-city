@@ -94,8 +94,6 @@ namespace PerfUnionProbe
         private static readonly int[] subRanking = new int[4];
         private static readonly int[] subCollected = new int[LoopPhaseRecorder.MaxSubPhases];
         private static bool subPhasesTruncated;
-        private static readonly Type[] SubPhaseParents = { typeof(UnityEngine.PlayerLoop.PreUpdate), typeof(UnityEngine.PlayerLoop.Update), typeof(UnityEngine.PlayerLoop.PreLateUpdate),
-            typeof(UnityEngine.PlayerLoop.PostLateUpdate), typeof(UnityEngine.PlayerLoop.TimeUpdate) };
         private static Action<string> markDiagnostic;
         private static string startScan = "none", stopScan = "none";
         private static readonly RingCursor frameRing = new RingCursor(FrameLimit);
@@ -526,7 +524,7 @@ namespace PerfUnionProbe
                 children[i] = kept[i].Select(c => c.type == typeof(PerfUnionPhaseStamp) || c.type == typeof(PerfUnionFrameStart) ? null : c.type?.Name ?? "unnamed").ToArray();
             }
             var plan = SubPhasePlan.Build(systems.Select(s => s.type?.Name ?? "unnamed").ToArray(), children, early,
-                SubPhaseParents.Select(t => t.Name).ToArray(), LoopPhaseRecorder.MaxSubPhases);
+                SubPhasePlan.DetailedParents, LoopPhaseRecorder.MaxSubPhases);
             for (int i = 0; i < systems.Length; i++)
             {
                 if (kept[i] == null) continue;

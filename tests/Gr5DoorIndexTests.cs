@@ -239,6 +239,15 @@ public sealed class Gr5DoorIndexTests
             PhysicalPedestrians.VisiblePoint = null;
             NativeTravelPace.Focus = shop; Time.Next(3);
             var city = City(1800, 31, out _);
+            for (int far = 0; far < 60000; far++)
+            {
+                var distant = new CityBuildingController();
+                var farDoor = new Door();
+                farDoor.doorTransform.position = new Vector3(5000 + far % 250 * 30, 0, 5000 + far / 250 * 30);
+                farDoor.doorTransform.forward = new Vector3(0, 0, 1);
+                distant.entranceDoors.Add(farDoor);
+                city.cityBuildingControllers.Add(distant);
+            }
             var door = new Door();
             door.doorTransform.position = new Vector3(100, 0, -0.5f);
             door.doorTransform.forward = new Vector3(0, 0, 1);
@@ -274,7 +283,14 @@ public sealed class Gr5DoorIndexTests
             Assert.Equal(before + 1, spots.PendingRequests);
             Assert.True(pool.Active.ContainsKey("w"), "the arriving walker keeps its body while its door lookup waits for the index");
             int waits = 1;
-            while (spots.IndexPending() && waits < 1000) { Tick(); waits++; Assert.True(pool.Active.ContainsKey("w")); }
+            while (spots.IndexPending() && waits < 1000)
+            {
+                long asked = spots.PendingRequests;
+                Tick(); waits++;
+                Assert.True(pool.Active.ContainsKey("w"), "the walker keeps its body on deferred update " + waits);
+                Assert.Equal(asked + 1, spots.PendingRequests);
+            }
+            Assert.True(waits > 1, "the index needs several slices, so the walker asks again across updates");
             Tick();
             Assert.True(spots.TryQueue(simulation.FindPlace("shop"), out var line));
             Assert.True(pool.Active.ContainsKey("w"), "the walker joins the queue once the lookup completes");
