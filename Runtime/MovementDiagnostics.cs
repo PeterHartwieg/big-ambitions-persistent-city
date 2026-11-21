@@ -144,10 +144,15 @@ namespace PersistentCity.Runtime
             long started = System.Diagnostics.Stopwatch.GetTimestamp();
             var census = RetainedCensusOf(this, save!.modData);
             double elapsed = (System.Diagnostics.Stopwatch.GetTimestamp() - started) * GcMillisecondsPerTimestamp;
-            Debug.Log(RetainedPrefix + census.ReportJson(48, elapsed, RetainedCountedTypes, RetainedCensus.InstrumentRoot));
+            Debug.Log(RetainedPrefix + census.ReportJson(48, elapsed, RetainedCountedTypes, RetainedCensus.InstrumentRoot, RetainedTrackedTypes,
+                RetainedCensus.JourneyLegs(simulation?.State)));
         }
 
         internal static readonly Type[] RetainedCountedTypes = { typeof(CitySimulator), typeof(MultimodalRoutes), typeof(RoadRoutes), typeof(WalkingRoutes), typeof(TrafficRoadNetwork), typeof(TrafficKernel) };
+
+        internal static readonly Type[] RetainedTrackedTypes = { typeof(RouteLeg), typeof(RouteLeg[]), typeof(List<RouteLeg>), typeof(RouteLegs), typeof(Route),
+            typeof(Position[]), typeof(double[]), typeof(long[]), typeof(int[]), typeof(string), typeof(CitizenState), typeof(TrafficVehicleState), typeof(TrafficRouteLeg),
+            typeof(TrafficRouteLeg[]), typeof(List<TrafficRouteLeg>), typeof(TrafficKernelState), typeof(CitySimulator), typeof(MultimodalRoutes), typeof(RoadRoutes) };
 
         internal static RetainedCensus RetainedCensusOf(object runtime, IDictionary<string, string>? modData)
         {

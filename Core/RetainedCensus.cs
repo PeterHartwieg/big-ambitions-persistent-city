@@ -253,6 +253,70 @@ namespace PersistentCity.Core
 
         public long ObjectsOf(Type type) => byType.TryGetValue(type, out var row) ? row.Objects : foreign.TryGetValue(type, out var outside) ? outside.Objects : 0;
 
+        public long BytesOf(Type type) => byType.TryGetValue(type, out var row) ? row.Bytes : 0;
+
+        public readonly struct JourneyLegLedger
+        {
+            public JourneyLegLedger(long journeys, long travelling, long legs, long splitPrefixes, long mostLegs)
+            { Journeys = journeys; Travelling = travelling; Legs = legs; SplitPrefixes = splitPrefixes; MostLegs = mostLegs; }
+            public long Journeys { get; }
+            public long Travelling { get; }
+            public long Legs { get; }
+            public long SplitPrefixes { get; }
+            public long MostLegs { get; }
+        }
+
+        public static JourneyLegLedger JourneyLegs(CityState? state)
+        {
+            if (state == null) return default;
+            var legs = new HashSet<RouteLeg>(LegIdentity.Instance);
+            long journeys = 0, travelling = 0, splits = 0, most = 0;
+            foreach (var person in PersonTable.Schedules(state))
+            {
+                if (person.Phase == CitizenPhase.Travelling) travelling++;
+                if (person.Journey == null) continue;
+                journeys++;
+                most = Math.Max(most, person.Journey.Legs.Count);
+                foreach (var leg in person.Journey.Legs) if (leg != null && legs.Add(leg) && leg.SplitPrefix) splits++;
+            }
+            return new JourneyLegLedger(journeys, travelling, legs.Count, splits, most);
+        }
+
+        private sealed class LegIdentity : IEqualityComparer<RouteLeg>
+        {
+            public static readonly LegIdentity Instance = new LegIdentity();
+            public bool Equals(RouteLeg x, RouteLeg y) => ReferenceEquals(x, y);
+            public int GetHashCode(RouteLeg value) => RuntimeHelpers.GetHashCode(value);
+        }
+
+        public string ReportJson(int top, double elapsedMilliseconds, IEnumerable<Type>? counted, Func<string, bool>? diagnostic, IEnumerable<Type>? tracked, JourneyLegLedger? journeyLegs)
+        {
+            string report = ReportJson(top, elapsedMilliseconds, counted, diagnostic);
+            var text = new StringBuilder(report, 0, report.Length - 1, report.Length + 2048).Append(",\"tracked_types\":[");
+            bool first = true;
+            foreach (var type in tracked ?? Array.Empty<Type>())
+            {
+                if (!first) text.Append(',');
+                first = false;
+                text.Append("{\"name\":\"").Append(Name(type).Replace("\\", "\\\\").Replace("\"", "\\\""))
+                    .Append("\",\"objects\":").Append(ObjectsOf(type).ToString(CultureInfo.InvariantCulture))
+                    .Append(",\"bytes\":").Append(BytesOf(type).ToString(CultureInfo.InvariantCulture)).Append('}');
+            }
+            text.Append(']');
+            if (journeyLegs is JourneyLegLedger ledger)
+            {
+                long retained = ObjectsOf(typeof(RouteLeg));
+                text.Append(",\"route_legs\":{\"retained\":").Append(retained.ToString(CultureInfo.InvariantCulture))
+                    .Append(",\"in_current_journeys\":").Append(ledger.Legs.ToString(CultureInfo.InvariantCulture))
+                    .Append(",\"outside_current_journeys\":").Append((retained - ledger.Legs).ToString(CultureInfo.InvariantCulture))
+                    .Append(",\"journeys\":").Append(ledger.Journeys.ToString(CultureInfo.InvariantCulture))
+                    .Append(",\"travelling\":").Append(ledger.Travelling.ToString(CultureInfo.InvariantCulture))
+                    .Append(",\"split_prefix_legs\":").Append(ledger.SplitPrefixes.ToString(CultureInfo.InvariantCulture))
+                    .Append(",\"most_legs_in_a_journey\":").Append(ledger.MostLegs.ToString(CultureInfo.InvariantCulture)).Append('}');
+            }
+            return text.Append('}').ToString();
+        }
+
         public string ReportJson(int top, double elapsedMilliseconds, IEnumerable<Type>? counted = null) => ReportJson(top, elapsedMilliseconds, counted, null);
 
         public static bool InstrumentRoot(string root) => root == "runtime.gcSampler" || root == "static.PhysicalPedestrians.growLog"

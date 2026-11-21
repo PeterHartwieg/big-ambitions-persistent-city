@@ -146,6 +146,9 @@ namespace PersistentCity.Core
             public CityState State { get; }
             public double ClockRate => rate;
             public int Degraded { get; private set; }
+            public int Split { get; private set; }
+            public int Joined { get; private set; }
+            public int JoinsRefused { get; private set; }
             public int Prepared => next;
             public int Count => schedules.Count;
             public bool Ready => trafficDone;
@@ -374,7 +377,11 @@ namespace PersistentCity.Core
                     out var map, out int completed, out int merges);
                 if (merges > 0 && !SameJoinedPose(citizen, replacement, elapsed,
                     map != null ? map.Map(elapsed) : CitySimulator.NormalizeJourneyElapsed(rawElapsed, replacement.Minutes, state.Minute)))
+                {
                     replacement = Retime(route, elapsed, legacy, walk, rate, ratio, false, mapped, out map, out completed);
+                    JoinsRefused++;
+                }
+                else if (merges > 0) Joined++;
                 if (replacement.Legs.Count > MaxLegs
                     && !MergeCompletedLegs(replacement, completed, elapsed, trafficOwned ? trafficRoutes[citizen.Identity.Id] : null))
                 {
@@ -406,6 +413,7 @@ namespace PersistentCity.Core
                     arrival = state.Minute;
                 if (!Position.Finite(arrival) || arrival < state.Minute || arrival > MaxMinute)
                     throw new ArgumentException("Retimed arrival exceeds the supported clock.", nameof(state));
+                if (replacement.Legs.Count > route.Legs.Count) Split++;
                 PresentationGrid.Precompute(replacement.Commit());
                 var change = new Change { Citizen = citizen, Route = replacement, EventMinute = arrival, Elapsed = elapsed,
                     DepartureMinute = departure == citizen.DepartureMinute ? (double?)null : departure };
