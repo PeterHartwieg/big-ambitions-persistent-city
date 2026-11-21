@@ -24,9 +24,8 @@ namespace PersistentCity.Runtime
             if (sampler == null || !sampler.Running) return 0;
             long now = System.Diagnostics.Stopwatch.GetTimestamp();
             sampler.CounterFrame(GcAllocationCounter.Read(), GcAllocationCounter.Collections);
-            sampler.NoteBodies(BodyMerge.Owned, physical?.BoundBodies ?? 0, physical?.GrowIntegrating ?? false);
-            sampler.Observe(now * GcMillisecondsPerTimestamp, GcCount(0), GcCount(1), GcCount(2), GC.GetTotalMemory(false), Time.frameCount,
-                DiagnosticFrames.Marks, DiagnosticFrames.LastSource);
+            sampler.NoteBodies(BodyMerge.Owned, physical?.BoundBodies ?? 0, physical?.GrowSample ?? default);
+            sampler.Observe(now * GcMillisecondsPerTimestamp, GcCount(0), GcCount(1), GcCount(2), GC.GetTotalMemory(false), Time.frameCount, DiagnosticFrames.Current);
             return now;
         }
 
@@ -121,7 +120,7 @@ namespace PersistentCity.Runtime
                     ownedBodyCombiners = BodyMerge.Owned, unmergedBodyCombiners = BodyMerge.Unmerged, reservedBodies = PhysicalPedestrians.ReserveCount, liveMergedMeshes = meshes, liveMergedVertices = vertices,
                     releasedMergedMeshes = BodyMerge.ReleasedMeshes, releasedMergedVertices = BodyMerge.ReleasedVertices, bakeScratchBytes = BlendshapeBake.ScratchBytes,
                     asyncIntegrationTimeMs = AsyncIntegrationMilliseconds(), backgroundLoadingPriority = Application.backgroundLoadingPriority.ToString(),
-                    bodyGrowIntegrating = physical?.GrowIntegrating ?? false };
+                    bodyGrowIntegrating = physical?.GrowSample.Pending ?? false };
             }
         }
 

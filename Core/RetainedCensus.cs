@@ -258,28 +258,38 @@ namespace PersistentCity.Core
         public readonly struct JourneyLegLedger
         {
             public JourneyLegLedger(long journeys, long travelling, long legs, long splitPrefixes, long mostLegs)
-            { Journeys = journeys; Travelling = travelling; Legs = legs; SplitPrefixes = splitPrefixes; MostLegs = mostLegs; }
+                : this(journeys, travelling, legs, splitPrefixes, mostLegs, 0) { }
+            public JourneyLegLedger(long journeys, long travelling, long legs, long splitPrefixes, long mostLegs, long mostSplitPrefixes)
+            { Journeys = journeys; Travelling = travelling; Legs = legs; SplitPrefixes = splitPrefixes; MostLegs = mostLegs; MostSplitPrefixes = mostSplitPrefixes; }
             public long Journeys { get; }
             public long Travelling { get; }
             public long Legs { get; }
             public long SplitPrefixes { get; }
             public long MostLegs { get; }
+            public long MostSplitPrefixes { get; }
         }
 
         public static JourneyLegLedger JourneyLegs(CityState? state)
         {
             if (state == null) return default;
             var legs = new HashSet<RouteLeg>(LegIdentity.Instance);
-            long journeys = 0, travelling = 0, splits = 0, most = 0;
+            long journeys = 0, travelling = 0, splits = 0, most = 0, mostSplits = 0;
             foreach (var person in PersonTable.Schedules(state))
             {
                 if (person.Phase == CitizenPhase.Travelling) travelling++;
                 if (person.Journey == null) continue;
                 journeys++;
                 most = Math.Max(most, person.Journey.Legs.Count);
-                foreach (var leg in person.Journey.Legs) if (leg != null && legs.Add(leg) && leg.SplitPrefix) splits++;
+                long own = 0;
+                foreach (var leg in person.Journey.Legs)
+                {
+                    if (leg == null) continue;
+                    if (leg.SplitPrefix) own++;
+                    if (legs.Add(leg) && leg.SplitPrefix) splits++;
+                }
+                mostSplits = Math.Max(mostSplits, own);
             }
-            return new JourneyLegLedger(journeys, travelling, legs.Count, splits, most);
+            return new JourneyLegLedger(journeys, travelling, legs.Count, splits, most, mostSplits);
         }
 
         private sealed class LegIdentity : IEqualityComparer<RouteLeg>
@@ -312,7 +322,8 @@ namespace PersistentCity.Core
                     .Append(",\"journeys\":").Append(ledger.Journeys.ToString(CultureInfo.InvariantCulture))
                     .Append(",\"travelling\":").Append(ledger.Travelling.ToString(CultureInfo.InvariantCulture))
                     .Append(",\"split_prefix_legs\":").Append(ledger.SplitPrefixes.ToString(CultureInfo.InvariantCulture))
-                    .Append(",\"most_legs_in_a_journey\":").Append(ledger.MostLegs.ToString(CultureInfo.InvariantCulture)).Append('}');
+                    .Append(",\"most_legs_in_a_journey\":").Append(ledger.MostLegs.ToString(CultureInfo.InvariantCulture))
+                    .Append(",\"most_split_prefixes_in_a_journey\":").Append(ledger.MostSplitPrefixes.ToString(CultureInfo.InvariantCulture)).Append('}');
             }
             return text.Append('}').ToString();
         }

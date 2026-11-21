@@ -228,6 +228,7 @@ namespace PersistentCity.Runtime
         private AsyncInstantiateOperation<GameObject>? growing;
         public long GrowsStarted { get; private set; }
         public bool GrowIntegrating => growing != null && !growing.isDone;
+        public long GrowsCancelledPending { get; private set; }
         public double GrowStartMaximum { get; private set; }
         public double GrowFinishMaximum { get; private set; }
         private bool hierarchySized;
@@ -296,7 +297,7 @@ namespace PersistentCity.Runtime
             var pending = growing;
             growing = null;
             if (pending == null) return;
-            if (!pending.isDone) { pending.Cancel(); return; }
+            if (!pending.isDone) { pending.Cancel(); GrowsCancelledPending++; return; }
             var made = pending.Result;
             if (made != null) foreach (var instance in made) if (instance != null) UnityEngine.Object.Destroy(instance);
         }

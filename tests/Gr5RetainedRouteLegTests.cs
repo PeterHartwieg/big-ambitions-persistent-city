@@ -26,6 +26,7 @@ public sealed class Gr5RetainedRouteLegTests
             Retained = legs.GetProperty("retained").GetInt64(); InJourneys = legs.GetProperty("in_current_journeys").GetInt64();
             Outside = legs.GetProperty("outside_current_journeys").GetInt64(); Travelling = legs.GetProperty("travelling").GetInt64();
             Splits = legs.GetProperty("split_prefix_legs").GetInt64();
+            MostSplits = legs.GetProperty("most_split_prefixes_in_a_journey").GetInt64();
             TopTypes = root.GetProperty("top_types").GetArrayLength();
         }
         public Dictionary<string, long> Types { get; }
@@ -34,6 +35,7 @@ public sealed class Gr5RetainedRouteLegTests
         public long Outside { get; }
         public long Travelling { get; }
         public long Splits { get; }
+        public long MostSplits { get; }
         public int TopTypes { get; }
     }
 
@@ -86,6 +88,9 @@ public sealed class Gr5RetainedRouteLegTests
             controlReads.Add(Census(control.City, controlDriver));
         }
         var gap = new List<long>();
+        var unexplained = new List<long>();
+        var mostSplits = new List<long>();
+        var outside = new List<long>();
         for (int i = 0; i <= cycles; i++)
         {
             var r = retimedReads[i]; var c = controlReads[i];
@@ -102,12 +107,35 @@ public sealed class Gr5RetainedRouteLegTests
             Assert.True(r.Splits <= r.Travelling, "R" + i + " split prefixes " + r.Splits + " exceed one per travelling journey");
             Assert.True(Math.Abs(extra - r.Splits) <= 2, "R" + i + " the retimed excess " + extra + " is the " + r.Splits + " split prefixes held by journeys");
             Assert.True(extra <= Math.Max(r.Travelling, c.Travelling) + 2, "R" + i + " retimed journeys hold " + extra + " more legs than the control, above one per travelling journey");
-            gap.Add(extra);
+            Assert.True(r.MostSplits <= 1, "R" + i + " a journey holds " + r.MostSplits + " split prefixes after repeated retimes");
+            gap.Add(extra); unexplained.Add(extra - r.Splits); mostSplits.Add(r.MostSplits); outside.Add(r.Outside);
         }
-        bool rising = true;
-        for (int i = 2; i < gap.Count; i++) rising &= gap[i] > gap[i - 1];
-        Assert.False(rising, "retimed minus control RouteLeg rose at every checkpoint: " + string.Join(", ", gap));
-        output.WriteLine("retimed minus control RouteLeg R0..R" + cycles + ": " + string.Join(", ", gap));
+        output.WriteLine("retimed minus control RouteLeg R0..R" + cycles + ": " + string.Join(", ", gap) + "; travelling " + string.Join(", ", retimedReads.Select(r => r.Travelling))
+            + "; excess not explained by split prefixes " + string.Join(", ", unexplained) + "; most split prefixes in one journey " + string.Join(", ", mostSplits)
+            + "; raw gap " + (StillClimbing(gap) ? "rises past its earlier maximum" : "plateaus"));
+        Assert.False(StillClimbing(unexplained), "RouteLeg excess beyond the split prefixes climbs: " + string.Join(", ", unexplained));
+        Assert.False(StillClimbing(mostSplits), "split prefixes per journey climb: " + string.Join(", ", mostSplits));
+        Assert.False(StillClimbing(outside), "RouteLeg outside current journeys climbs: " + string.Join(", ", outside));
+    }
+
+    private static bool StillClimbing(IReadOnlyList<long> series)
+    {
+        if (series.Count < 4) return false;
+        long earlier = long.MinValue;
+        for (int i = 1; i < series.Count - 1; i++) earlier = Math.Max(earlier, series[i]);
+        return series[series.Count - 1] > earlier;
+    }
+
+    [Fact]
+    public void TheLeakRuleFailsALateRiseAfterAnEarlyDipAndPassesAPlateau()
+    {
+        var rig16v = new long[] { 0, 1538, 1440, 1916, -369, 1776, 2235, 2831 };
+        Assert.True(StillClimbing(rig16v), "the 16v RouteLeg gap R4..R7 rises after the R4 dip");
+        Assert.True(StillClimbing(new long[] { 0, 5, -3, 1, 2, 3, 4, 6 }), "a slow late rise after a dip fails");
+        Assert.False(StillClimbing(new long[] { 0, 40, -10, 38, 41, 39, 40, 41 }), "a plateau that touches its earlier maximum passes");
+        Assert.False(StillClimbing(new long[] { 0, 0, 0, 0, 0, 0, 0, 0 }));
+        bool everyStepRose(IReadOnlyList<long> s) { for (int i = 2; i < s.Count; i++) if (s[i] <= s[i - 1]) return false; return true; }
+        Assert.False(everyStepRose(rig16v), "the earlier every-step rule passed the 16v gap");
     }
 
     [Fact]
@@ -124,5 +152,6 @@ public sealed class Gr5RetainedRouteLegTests
         Assert.Equal(2, ledger.Journeys);
         Assert.Equal(2, ledger.Legs);
         Assert.Equal(0, RetainedCensus.JourneyLegs(null).Legs);
+        Assert.Equal(0, ledger.MostSplitPrefixes);
     }
 }

@@ -34,6 +34,7 @@ namespace PersistentCity.Core
         public long Frame;
         public double FrameMs;
         public double ModMs;
+        public double LateMs;
         public int Gen0;
         public int Gen1;
         public int Gen2;
@@ -47,7 +48,26 @@ namespace PersistentCity.Core
         public GcAsyncGrow AsyncGrow;
     }
 
-    public enum GcAsyncGrow { None, Pending, Integrated }
+    public enum GcAsyncGrow { None, Pending, Integrated, Cancelled, Unknown }
+
+    public readonly struct GcGrowSample
+    {
+        public GcGrowSample(bool pending, long started, long cancelledPending) { Pending = pending; Started = started; CancelledPending = cancelledPending; }
+        public bool Pending { get; }
+        public long Started { get; }
+        public long CancelledPending { get; }
+
+        public static GcAsyncGrow Outcome(GcGrowSample before, GcGrowSample now)
+        {
+            long started = now.Started - before.Started, cancelled = now.CancelledPending - before.CancelledPending;
+            if (started < 0 || cancelled < 0) return GcAsyncGrow.Unknown;
+            long ended = (before.Pending ? 1 : 0) + started - (now.Pending ? 1 : 0);
+            if (ended < 0) return GcAsyncGrow.Unknown;
+            if (ended == 0) return cancelled != 0 ? GcAsyncGrow.Unknown : now.Pending ? GcAsyncGrow.Pending : GcAsyncGrow.None;
+            if (cancelled == 0) return GcAsyncGrow.Integrated;
+            return cancelled == ended ? GcAsyncGrow.Cancelled : GcAsyncGrow.Unknown;
+        }
+    }
 
     public enum GcAllocationSegment
     {
@@ -129,6 +149,8 @@ namespace PersistentCity.Core
 
         private readonly float[] frameMs;
         private readonly float[] modMs;
+        private readonly float[] lateMs;
+        private readonly float[] modWorkMs;
         private readonly bool[] collected;
         private readonly bool[] diagnostic;
         private int lastMarks;
@@ -138,7 +160,7 @@ namespace PersistentCity.Core
         private long heapBeforeSum, heapAfterSum, heapPairs;
         private long lastHeap = -1;
         private readonly int[] lastCounts = new int[Generations];
-        private double lastStampMs, pendingModMs;
+        private double lastStampMs, pendingModMs, pendingLateMs;
         private bool baselined;
         private int collectionSpikes, frameSpikes;
         private long frameAllocatedBytes, allocationFrames;
@@ -156,7 +178,7 @@ namespace PersistentCity.Core
         public GcPauseSampler(int capacity = DefaultCapacity)
         {
             if (capacity < 1) throw new ArgumentOutOfRangeException(nameof(capacity));
-            frameMs = new float[capacity]; modMs = new float[capacity]; collected = new bool[capacity]; diagnostic = new bool[capacity];
+            frameMs = new float[capacity]; modMs = new float[capacity]; lateMs = new float[capacity]; modWorkMs = new float[capacity]; collected = new bool[capacity]; diagnostic = new bool[capacity];
         }
 
         public bool Running { get; private set; }
@@ -169,6 +191,7 @@ namespace PersistentCity.Core
         public long HeapPeak { get; private set; } = -1;
         public double MaxFrameMs { get; private set; }
         public double MaxModMs { get; private set; }
+        public double MaxLateMs { get; private set; }
         public long DiagnosticFrameCount { get; private set; }
         public long DiagnosticCollectionFrames { get; private set; }
         public long Collections(int generation) => collections[generation];
@@ -181,12 +204,12 @@ namespace PersistentCity.Core
             nested = false; lastCounter = -1; counterFrameBytes = counterFrames = 0;
             Array.Clear(collections, 0, collections.Length);
             stored = 0; collectionRowCount = 0; previousFrameMs = -1; rowAwaitsNext = previousCollected = false; lastFrameNumber = -1; Frames = 0; CollectionFrames = 0; heapBeforeSum = heapAfterSum = heapPairs = 0;
-            MaxFrameMs = MaxModMs = 0; collectionSpikes = frameSpikes = 0; DiagnosticFrameCount = DiagnosticCollectionFrames = 0; lastMarks = -1;
+            MaxFrameMs = MaxModMs = MaxLateMs = 0; collectionSpikes = frameSpikes = 0; DiagnosticFrameCount = DiagnosticCollectionFrames = 0; lastMarks = -1;
             frameAllocatedBytes = allocationFrames = 0;
             FrameRecorder.Reset();
             Array.Clear(segmentBytes, 0, Segments); Array.Clear(segmentSamples, 0, Segments); Array.Clear(segmentSkipped, 0, Segments);
             HeapStart = HeapEnd = HeapPeak = lastHeap = heapBytes;
-            baselined = false; pendingModMs = 0; ownedBodies = boundBodies = -1; growBefore = growNow = false;
+            baselined = false; pendingModMs = pendingLateMs = 0; ownedBodies = boundBodies = -1; growBefore = growNow = default; growSampled = false;
             Running = true;
         }
 
@@ -202,6 +225,9 @@ namespace PersistentCity.Core
         public void Observe(double stampMilliseconds, int gen0Total, int gen1Total, int gen2Total, long heapBytes, long unityFrame)
             => Observe(stampMilliseconds, gen0Total, gen1Total, gen2Total, heapBytes, unityFrame, -1, null);
 
+        public void Observe(double stampMilliseconds, int gen0Total, int gen1Total, int gen2Total, long heapBytes, long unityFrame, DiagnosticMark mark)
+            => Observe(stampMilliseconds, gen0Total, gen1Total, gen2Total, heapBytes, unityFrame, mark.Sequence, mark.Source);
+
         public void Observe(double stampMilliseconds, int gen0Total, int gen1Total, int gen2Total, long heapBytes, long unityFrame, int diagnosticMarks, string? diagnosticSource)
         {
             if (!Running) return;
@@ -209,30 +235,34 @@ namespace PersistentCity.Core
             if (baselined)
             {
                 frameNumber = lastFrameNumber;
-                Frame(stampMilliseconds - lastStampMs, pendingModMs, gen0Total - lastCounts[0], gen1Total - lastCounts[1], gen2Total - lastCounts[2], heapBytes,
+                Frame(stampMilliseconds - lastStampMs, pendingModMs, pendingLateMs, gen0Total - lastCounts[0], gen1Total - lastCounts[1], gen2Total - lastCounts[2], heapBytes,
                     marks >= 0 && lastMarks >= 0 && marks != lastMarks ? (string.IsNullOrEmpty(diagnosticSource) ? "unnamed" : diagnosticSource) : null);
                 frameNumber = -1;
             }
             else if (heapBytes >= 0) lastHeap = heapBytes;
-            lastMarks = marks; growBefore = growNow;
+            lastMarks = marks; growBefore = growNow; growBeforeSampled = growSampled;
             lastFrameNumber = unityFrame;
             lastStampMs = stampMilliseconds; lastCounts[0] = gen0Total; lastCounts[1] = gen1Total; lastCounts[2] = gen2Total;
-            pendingModMs = 0; baselined = true;
+            pendingModMs = pendingLateMs = 0; baselined = true;
         }
 
         public void ModWork(double milliseconds) { if (Running && baselined) pendingModMs = milliseconds; }
 
-        public void LateModWork(double milliseconds) { if (Running && baselined && milliseconds > 0) pendingModMs += milliseconds; }
+        public void LateModWork(double milliseconds) { if (Running && baselined && milliseconds > 0) pendingLateMs += milliseconds; }
 
         private int ownedBodies = -1, boundBodies = -1;
 
-        private bool growBefore, growNow;
+        private GcGrowSample growBefore, growNow;
+        private bool growSampled, growBeforeSampled;
 
         public void NoteBodies(int owned, int bound) { ownedBodies = owned; boundBodies = bound; }
 
-        public void NoteBodies(int owned, int bound, bool growIntegrating) { ownedBodies = owned; boundBodies = bound; growNow = growIntegrating; }
+        public void NoteBodies(int owned, int bound, GcGrowSample grow) { ownedBodies = owned; boundBodies = bound; growNow = grow; growSampled = true; }
 
-        private static string GrowName(GcAsyncGrow grow) => grow == GcAsyncGrow.Integrated ? "integrated" : grow == GcAsyncGrow.Pending ? "pending" : "none";
+        private static string GrowName(GcAsyncGrow grow) => grow switch
+        {
+            GcAsyncGrow.Integrated => "integrated", GcAsyncGrow.Pending => "pending", GcAsyncGrow.Cancelled => "cancelled", GcAsyncGrow.Unknown => "unknown", _ => "none",
+        };
 
         public void Allocated(GcAllocationSegment segment, long heapBefore, long heapAfter, bool collected)
         {
@@ -356,9 +386,12 @@ namespace PersistentCity.Core
         public long SegmentSamples(GcAllocationSegment segment) => segmentSamples[(int)segment];
         public long SegmentSkipped(GcAllocationSegment segment) => segmentSkipped[(int)segment];
 
-        public void Rebaseline() { baselined = false; pendingModMs = 0; lastCounter = -1; previousFrameMs = -1; previousCollected = rowAwaitsNext = false; }
+        public void Rebaseline() { baselined = false; pendingModMs = pendingLateMs = 0; lastCounter = -1; previousFrameMs = -1; previousCollected = rowAwaitsNext = false; }
 
         public void Frame(double frameMilliseconds, double modMilliseconds, int gen0, int gen1, int gen2, long heapBytes, string? diagnosticSource = null)
+            => Frame(frameMilliseconds, modMilliseconds, 0, gen0, gen1, gen2, heapBytes, diagnosticSource);
+
+        public void Frame(double frameMilliseconds, double modMilliseconds, double lateMilliseconds, int gen0, int gen1, int gen2, long heapBytes, string? diagnosticSource = null)
         {
             if (!Running) return;
             bool gc = gen0 > 0 || gen1 > 0 || gen2 > 0;
@@ -368,6 +401,7 @@ namespace PersistentCity.Core
             Frames++;
             if (frameMilliseconds > MaxFrameMs) MaxFrameMs = frameMilliseconds;
             if (modMilliseconds > MaxModMs) MaxModMs = modMilliseconds;
+            if (lateMilliseconds > MaxLateMs) MaxLateMs = lateMilliseconds;
             if (rowAwaitsNext) { collectionRows[collectionRowCount - 1].NextFrameMs = gc ? -1 : frameMilliseconds; rowAwaitsNext = false; }
             if (gc)
             {
@@ -375,10 +409,10 @@ namespace PersistentCity.Core
                 if (lastHeap >= 0 && heapBytes >= 0) { heapBeforeSum += lastHeap; heapAfterSum += heapBytes; heapPairs++; }
                 if (collectionRowCount < CollectionRowCapacity)
                 {
-                    collectionRows[collectionRowCount++] = new GcCollectionRow { Frame = frameNumber, FrameMs = frameMilliseconds, ModMs = modMilliseconds,
+                    collectionRows[collectionRowCount++] = new GcCollectionRow { Frame = frameNumber, FrameMs = frameMilliseconds, ModMs = modMilliseconds, LateMs = lateMilliseconds,
                         Gen0 = gen0, Gen1 = gen1, Gen2 = gen2, HeapBefore = lastHeap, HeapAfter = heapBytes, PreviousFrameMs = previousCollected ? -1 : previousFrameMs, NextFrameMs = -1,
                         OwnedBodies = ownedBodies, BoundBodies = boundBodies, Diagnostic = diagnosticSource ?? "",
-                        AsyncGrow = !growBefore ? GcAsyncGrow.None : growNow ? GcAsyncGrow.Pending : GcAsyncGrow.Integrated };
+                        AsyncGrow = growBeforeSampled && growSampled ? GcGrowSample.Outcome(growBefore, growNow) : GcAsyncGrow.Unknown };
                     rowAwaitsNext = true;
                 }
             }
@@ -388,14 +422,18 @@ namespace PersistentCity.Core
             if (heapBytes >= 0) { lastHeap = heapBytes; HeapEnd = heapBytes; }
             if (frameMilliseconds >= SpikeMilliseconds) { frameSpikes++; if (gc) collectionSpikes++; }
             if (stored == frameMs.Length) return;
-            frameMs[stored] = (float)frameMilliseconds; modMs[stored] = (float)modMilliseconds; collected[stored] = gc; diagnostic[stored] = tooling;
+            frameMs[stored] = (float)frameMilliseconds; modMs[stored] = (float)modMilliseconds; lateMs[stored] = (float)lateMilliseconds;
+            modWorkMs[stored] = (float)(modMilliseconds + lateMilliseconds); collected[stored] = gc; diagnostic[stored] = tooling;
             stored++;
         }
 
         public GcSpread FrameSpread(bool withCollection) => Spread(frameMs, withCollection, 0);
         public GcSpread ModSpread(bool withCollection) => Spread(modMs, withCollection, 0);
+        public GcSpread LateSpread(bool withCollection) => Spread(lateMs, withCollection, 0);
+        public GcSpread ModWorkSpread(bool withCollection) => Spread(modWorkMs, withCollection, 0);
         public GcSpread PauseSpread() => Spread(frameMs, true, FrameSpread(false).P50);
         public GcSpread PauseWithoutModSpread() => Spread(frameMs, true, FrameSpread(false).P50, modMs);
+        public GcSpread PauseWithoutModWorkSpread() => Spread(frameMs, true, FrameSpread(false).P50, modWorkMs);
         public GcSpread PauseIncludingDiagnosticSpread() => Spread(frameMs, true, FrameSpread(false).P50, null, true);
         public GcSpread DiagnosticFrameSpread() => Spread(frameMs, null, 0, null, true, true);
         public int CollectionRowCount => collectionRowCount;
@@ -485,6 +523,12 @@ namespace PersistentCity.Core
             }
             FrameRecorder.AppendJson(text.Append(','));
             S(text, "pause_ms_without_mod", PauseWithoutModSpread());
+            S(text, "pause_ms_without_mod_work", PauseWithoutModWorkSpread());
+            S(text, "late_ms_gc", LateSpread(true));
+            S(text, "late_ms_plain", LateSpread(false));
+            S(text, "mod_work_ms_gc", ModWorkSpread(true));
+            S(text, "mod_work_ms_plain", ModWorkSpread(false));
+            text.Append(",\"max_late_ms\":").Append(D(MaxLateMs));
             text.Append(",\"collection_rows_retained\":").Append(N(collectionRowCount))
                 .Append(",\"collection_rows_truncated\":").Append(CollectionRowsTruncated ? "true" : "false")
                 .Append(",\"collection_rows\":[");
@@ -492,7 +536,7 @@ namespace PersistentCity.Core
             {
                 var r = collectionRows[i];
                 if (i > 0) text.Append(',');
-                text.Append("{\"frame\":").Append(N(r.Frame)).Append(",\"frame_ms\":").Append(D(r.FrameMs)).Append(",\"mod_ms\":").Append(D(r.ModMs))
+                text.Append("{\"frame\":").Append(N(r.Frame)).Append(",\"frame_ms\":").Append(D(r.FrameMs)).Append(",\"mod_ms\":").Append(D(r.ModMs)).Append(",\"late_ms\":").Append(D(r.LateMs))
                     .Append(",\"gen0\":").Append(N(r.Gen0)).Append(",\"gen1\":").Append(N(r.Gen1)).Append(",\"gen2\":").Append(N(r.Gen2))
                     .Append(",\"heap_before_bytes\":").Append(N(r.HeapBefore)).Append(",\"heap_after_bytes\":").Append(N(r.HeapAfter))
                     .Append(",\"previous_frame_ms\":").Append(D(r.PreviousFrameMs)).Append(",\"next_frame_ms\":").Append(D(r.NextFrameMs))
@@ -520,13 +564,14 @@ namespace PersistentCity.Core
         {
             var pause = PauseSpread();
             var outside = PauseWithoutModSpread();
+            var outsideWork = PauseWithoutModWorkSpread();
             var neighbours = PauseOverNeighboursSpread();
             string M(long bytes) => bytes < 0 ? "n/a" : (bytes / 1048576.0).ToString("0.0", CultureInfo.InvariantCulture) + " MB";
             string D(double value) => value.ToString("0.00", CultureInfo.InvariantCulture);
             return "[Persistent City] gc measurement (diagnostic only): persons=" + (context.Residents + context.Visitors).ToString(CultureInfo.InvariantCulture)
                 + " frames=" + Frames.ToString(CultureInfo.InvariantCulture) + " collections gen0/1/2=" + collections[0].ToString(CultureInfo.InvariantCulture)
                 + "/" + collections[1].ToString(CultureInfo.InvariantCulture) + "/" + collections[2].ToString(CultureInfo.InvariantCulture)
-                + " pause p50/p95/max=" + D(pause.P50) + "/" + D(pause.P95) + "/" + D(pause.Max) + " ms (outside UpdateCity p95/max=" + D(outside.P95) + "/" + D(outside.Max) + " ms, over neighbouring frames p95/max=" + D(neighbours.P95) + "/" + D(neighbours.Max) + " ms), gc frames >= 30 ms=" + CollectionSpikes().ToString(CultureInfo.InvariantCulture)
+                + " pause p50/p95/max=" + D(pause.P50) + "/" + D(pause.P95) + "/" + D(pause.Max) + " ms (outside UpdateCity p95/max=" + D(outside.P95) + "/" + D(outside.Max) + " ms, outside UpdateCity and LateUpdate p95/max=" + D(outsideWork.P95) + "/" + D(outsideWork.Max) + " ms, over neighbouring frames p95/max=" + D(neighbours.P95) + "/" + D(neighbours.Max) + " ms), gc frames >= 30 ms=" + CollectionSpikes().ToString(CultureInfo.InvariantCulture)
                 + ", heap " + M(HeapStart) + " -> " + M(HeapEnd) + " (peak " + M(HeapPeak) + ")"
                 + ", diagnostic frames " + DiagnosticFrameCount.ToString(CultureInfo.InvariantCulture) + " (" + DiagnosticCollectionFrames.ToString(CultureInfo.InvariantCulture)
                 + " with a collection, left out of the pause; pause p95/max with them " + D(PauseIncludingDiagnosticSpread().P95) + "/" + D(PauseIncludingDiagnosticSpread().Max) + " ms)";

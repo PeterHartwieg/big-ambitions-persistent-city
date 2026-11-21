@@ -657,7 +657,8 @@ namespace PerfUnionProbe
 
         private readonly struct StopRead
         {
-            public StopRead(int collections, int frame, long heap, long used) { Collections = collections; Frame = frame; Heap = heap; Used = used; }
+            public StopRead(int collections, int frame, long heap, long used, long ticks) { Collections = collections; Frame = frame; Heap = heap; Used = used; Ticks = ticks; }
+            public long Ticks { get; }
             public int Collections { get; }
             public int Frame { get; }
             public long Heap { get; }
@@ -666,9 +667,10 @@ namespace PerfUnionProbe
 
         private static StopRead ReadStop()
         {
+            long ticks = Stopwatch.GetTimestamp();
             int collections = GC.CollectionCount(0);
             ReadMonoHeap(out long heap, out long used);
-            return new StopRead(collections, Time.frameCount, heap, used);
+            return new StopRead(collections, Time.frameCount, heap, used, ticks);
         }
 
         private static void StopMeasurement(string reason, bool writeStopFrame = true) => StopMeasurement(reason, ReadStop(), writeStopFrame);
@@ -678,6 +680,8 @@ namespace PerfUnionProbe
             if (!measuring) return;
             monoHeapStop = stop.Heap; monoUsedStop = stop.Used;
             collectionSeries.Note(stop.Collections, stop.Used, stop.Frame);
+            if (currentFrame >= 0 && currentFrame > firstMeasureFrame)
+                phases.Close(currentFrame, stop.Ticks, stop.Collections, union.FrameTicks * ToMs, true, frameLate, ToMs, true);
             if (reason == "explicit-stop") stopScan = Rescan(false);
             long now = Stopwatch.GetTimestamp();
             if (writeStopFrame && currentFrame > firstMeasureFrame) { frameDiagnostic = true; WriteFrame(currentFrame + 1, now, true); }
@@ -801,6 +805,7 @@ namespace PerfUnionProbe
             return new JObject { ["frame"] = phases.Frame(r), ["whole_frame_ms"] = phases.WholeMs(r), ["previous_whole_ms"] = Ms(phases.PreviousWholeMs(r)),
                 ["next_whole_ms"] = Ms(phases.NextWholeMs(r)), ["excess_ms"] = phases.PreviousWholeMs(r) < 0 ? JValue.CreateNull() : (JToken)phases.ExcessMs(r),
                 ["mod_work_ms"] = phases.ModWorkMs(r), ["collections"] = phases.RowCollections(r), ["diagnostic"] = phases.Diagnostic(r), ["late_boundary"] = phases.Late(r),
+                ["partial"] = phases.Partial(r),
                 ["gc_phase"] = PhaseLabel(phases.GcPhase(r)), ["largest_excess_phase"] = PhaseLabel(phases.LargestExcessPhase(r)),
                 ["phase_ms"] = now, ["previous_phase_ms"] = before, ["phase_excess_ms"] = grew };
         }

@@ -479,6 +479,20 @@ internal static class Program
         Check(p.Retained == LoopPhaseRecorder.Limit && p.Truncated && p.Collections == LoopPhaseRecorder.Limit + 5, "rows stop at the limit and further collections are counted");
         Check(p.PreviousWholeMs(3) == -1, "a collection frame after a collection frame has no clean previous frame");
         p.Reset();
+        var series = new CollectionSeries();
+        series.Begin(40);
+        Frame(300, 9000, 40, plain, -1);
+        p.Begin(9033, 40);
+        for (int i = 1; i < 4; i++) p.Stamp(i, 9033 + plain[i], i == 3 ? 41 : 40);
+        series.Note(41, 1000, 301);
+        p.Close(301, 9033 + 12, 41, 1.5, true, false, 1.0, true);
+        Check(series.Collections == 1 && p.Collections == 1 && p.Retained == 1 && p.Frame(0) == series.FrameAt(0) && !p.Truncated,
+            "a collection just before stop is in the collection series and the collections page");
+        Check(p.Partial(0) && p.Diagnostic(0) && p.WholeMs(0) == 12 && p.GcPhase(0) == 2 && p.NextWholeMs(0) == -1 && p.PhaseMs(0, 4) == 0,
+            "the stop frame row is partial, ends at the stop read and names the phase that ran the collection");
+        p.Begin(9100, 41); p.Close(302, 9133, 41, 0, false, false, 1.0);
+        Check(p.NextWholeMs(0) == -1 && p.Partial(0), "a partial row takes no next frame");
+        p.Reset();
         long before = GC.GetAllocatedBytesForCurrentThread();
         for (int i = 0; i < 1000; i++) Frame(100 + i, 10000 + 40 * i, 100 + i / 3, plain, i % 3 == 0 ? 3 : -1);
         long allocated = GC.GetAllocatedBytesForCurrentThread() - before;

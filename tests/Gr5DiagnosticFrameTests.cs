@@ -12,8 +12,8 @@ public sealed class Gr5DiagnosticFrameTests
     private readonly ITestOutputHelper output;
     public Gr5DiagnosticFrameTests(ITestOutputHelper output) { this.output = output; }
 
-    private static readonly double[] RepeatCollectionFrames = { 51.114, 63.173, 60.21, 60.914, 61.869, 64.676, 60.668, 642.998 };
-    private const double PlainFrame = 33.757;
+    private static readonly double[] CollectionFrames = { 48.0, 55.5, 52.25, 57.0, 50.5, 54.0, 53.75, 420.0 };
+    private const double PlainFrame = 33.5;
 
     private static GcPauseSampler Replay(bool markLast, out double stamp)
     {
@@ -23,13 +23,13 @@ public sealed class Gr5DiagnosticFrameTests
         stamp = 0;
         sampler.Observe(stamp, gen0, 0, 0, 1_300_000_000, 1, marks, "");
         long frame = 2;
-        for (int c = 0; c < RepeatCollectionFrames.Length; c++)
+        for (int c = 0; c < CollectionFrames.Length; c++)
         {
             for (int i = 0; i < 300; i++) { stamp += PlainFrame + (i % 3 == 0 ? 0.4 : 0); sampler.Observe(stamp, gen0, 0, 0, 1_300_000_000 + i, frame++, marks, "probe status"); }
-            bool tooling = markLast && c == RepeatCollectionFrames.Length - 1;
+            bool tooling = markLast && c == CollectionFrames.Length - 1;
             if (tooling) marks++;
-            stamp += RepeatCollectionFrames[c]; gen0++;
-            sampler.Observe(stamp, gen0, 0, 0, 1_200_000_000, frame++, marks, tooling ? "probe measure-stop" : "probe status");
+            stamp += CollectionFrames[c]; gen0++;
+            sampler.Observe(stamp, gen0, 0, 0, 1_200_000_000, frame++, new DiagnosticMark(marks, tooling ? "probe measure-stop" : "probe status"));
         }
         stamp += PlainFrame;
         sampler.Observe(stamp, gen0, 0, 0, 1_200_000_100, frame, marks, "probe status");
@@ -37,22 +37,22 @@ public sealed class Gr5DiagnosticFrameTests
     }
 
     [Fact]
-    public void TheProbeStopFrameOfRig16vAImmediateLeavesThePauseAndIsReportedOnItsOwn()
+    public void AMarkedCollectionFrameLeavesThePauseAndIsReportedOnItsOwn()
     {
         var before = Replay(markLast: false, out _);
         var after = Replay(markLast: true, out _);
-        output.WriteLine("16v A immediate collection frames, pause p95 / max ms: unmarked " + before.PauseSpread().P95 + " / " + before.PauseSpread().Max
-            + "; probe stop frame marked " + after.PauseSpread().P95 + " / " + after.PauseSpread().Max + " (with it " + after.PauseIncludingDiagnosticSpread().P95 + ")");
-        Assert.True(before.PauseSpread().P95 > 600, "red: the 643 ms probe stop frame sets the window's pause p95");
+        output.WriteLine("synthetic collection frames, pause p95 / max ms: unmarked " + before.PauseSpread().P95 + " / " + before.PauseSpread().Max
+            + "; last frame marked " + after.PauseSpread().P95 + " / " + after.PauseSpread().Max + " (with it " + after.PauseIncludingDiagnosticSpread().P95 + ")");
+        Assert.True(before.PauseSpread().P95 > 380, "red: an unmarked 420 ms collection frame sets the window's pause p95");
         Assert.Equal(8, after.Collections(0));
         Assert.Equal(8, after.CollectionFrames);
         Assert.Equal(1, after.DiagnosticFrameCount);
         Assert.Equal(1, after.DiagnosticCollectionFrames);
         Assert.Equal(7, after.PauseSpread().Count);
-        Assert.True(after.PauseSpread().P95 < 36, "pause p95 " + after.PauseSpread().P95);
+        Assert.Equal(57.0 - after.FrameSpread(false).P50, after.PauseSpread().P95, 3);
         Assert.Equal(before.PauseSpread().P95, after.PauseIncludingDiagnosticSpread().P95);
         Assert.Equal(1, after.DiagnosticFrameSpread().Count);
-        Assert.Equal(642.998, after.DiagnosticFrameSpread().Max, 3);
+        Assert.Equal(420.0, after.DiagnosticFrameSpread().Max, 3);
         Assert.Equal("probe measure-stop", after.CollectionRow(7).Diagnostic);
         Assert.Equal("", after.CollectionRow(0).Diagnostic);
         Assert.Equal(before.FrameSpread(false).P50, after.FrameSpread(false).P50);
@@ -120,30 +120,111 @@ public sealed class Gr5DiagnosticFrameTests
         Assert.True(DiagnosticFrames.Marks - start >= 64);
         Assert.False(string.IsNullOrEmpty(DiagnosticFrames.LastSource));
     }
+
     [Fact]
-    public void ACollectionFrameNamesAnAsyncBodyGrowThatFinishedInsideIt()
+    public void AReadPairsEachMarkSequenceWithTheSourceThatPublishedIt()
+    {
+        const int writers = 4, perWriter = 20000;
+        var sources = new string[writers * perWriter];
+        for (int i = 0; i < sources.Length; i++) sources[i] = "pc writer " + i;
+        var bySequence = new System.Collections.Concurrent.ConcurrentDictionary<int, string>();
+        int mismatches = 0, reads = 0;
+        using var done = new System.Threading.ManualResetEventSlim();
+        var reader = new System.Threading.Thread(() =>
+        {
+            var seen = new System.Collections.Generic.List<DiagnosticMark>(1 << 16);
+            while (!done.IsSet) { if (seen.Count < seen.Capacity) seen.Add(DiagnosticFrames.Current); }
+            foreach (var mark in seen)
+            {
+                if (mark.Source.Length == 0 || !mark.Source.StartsWith("pc writer ", StringComparison.Ordinal)) continue;
+                if (!bySequence.TryGetValue(mark.Sequence, out var expected)) continue;
+                reads++;
+                if (!ReferenceEquals(expected, mark.Source)) mismatches++;
+            }
+        });
+        reader.Start();
+        var hooks = System.Threading.Tasks.Parallel.For(0, writers, w =>
+        {
+            for (int i = 0; i < perWriter; i++)
+            {
+                string source = sources[w * perWriter + i];
+                DiagnosticFrames.Mark(source);
+                var after = DiagnosticFrames.Current;
+                if (ReferenceEquals(after.Source, source)) bySequence[after.Sequence] = source;
+            }
+        });
+        System.Threading.Thread.Sleep(50);
+        done.Set(); reader.Join();
+        var final = DiagnosticFrames.Current;
+        Assert.True(hooks.IsCompleted);
+        Assert.Equal(final.Sequence, DiagnosticFrames.Marks);
+        Assert.True(reads > 0, "the reader saw a writer's mark");
+        output.WriteLine(reads + " concurrent reads paired with their publishing source");
+        Assert.Equal(0, mismatches);
+    }
+
+    [Fact]
+    public void ReadingTheMarkSnapshotAllocatesNothing()
+    {
+        DiagnosticFrames.Mark("pc gc report");
+        long before = GC.GetAllocatedBytesForCurrentThread();
+        int total = 0;
+        for (int i = 0; i < 10000; i++) { var mark = DiagnosticFrames.Current; total += mark.Sequence + mark.Source.Length; }
+        Assert.Equal(before, GC.GetAllocatedBytesForCurrentThread());
+        Assert.NotEqual(0, total);
+    }
+    [Fact]
+    public void ACollectionFrameNamesTheAsyncBodyGrowOutcomeOverTheWholeInterval()
     {
         var sampler = new GcPauseSampler(64);
         sampler.Start(1);
         double at = 0;
         int gen0 = 0;
-        void Step(bool integrating, bool collect) { sampler.NoteBodies(10, 4, integrating); at += collect ? 60 : 34; if (collect) gen0++; sampler.Observe(at, gen0, 0, 0, 1, (long)at); }
+        long started = 0, cancelled = 0;
+        void Step(bool pending, bool collect) { sampler.NoteBodies(10, 4, new GcGrowSample(pending, started, cancelled)); at += collect ? 60 : 34; if (collect) gen0++; sampler.Observe(at, gen0, 0, 0, 1, (long)at); }
         Step(false, false);
-        Step(true, false);
+        started++; Step(true, false);
         Step(true, true);
         Step(false, true);
+        started++; Step(false, true);
+        started++; Step(true, true);
         Step(false, true);
-        Assert.Equal(GcAsyncGrow.Pending, sampler.CollectionRow(0).AsyncGrow);
-        Assert.Equal(GcAsyncGrow.Integrated, sampler.CollectionRow(1).AsyncGrow);
-        Assert.Equal(GcAsyncGrow.None, sampler.CollectionRow(2).AsyncGrow);
+        Step(false, true);
+        started++; Step(true, false);
+        cancelled++; Step(false, true);
+        started++; cancelled++; Step(false, true);
+        started++; Step(true, false);
+        cancelled++; started++; Step(false, true);
+        started++; Step(true, false);
+        cancelled++; started++; Step(true, true);
+        var expected = new[]
+        {
+            GcAsyncGrow.Pending, GcAsyncGrow.Integrated, GcAsyncGrow.Integrated, GcAsyncGrow.Pending, GcAsyncGrow.Integrated, GcAsyncGrow.None,
+            GcAsyncGrow.Cancelled, GcAsyncGrow.Cancelled, GcAsyncGrow.Unknown, GcAsyncGrow.Cancelled,
+        };
+        Assert.Equal(expected, Enumerable.Range(0, sampler.CollectionRowCount).Select(i => sampler.CollectionRow(i).AsyncGrow).ToArray());
         using var report = JsonDocument.Parse(sampler.ReportJson(new GcReportContext(1, 1, null, 0, true, 1, 1)));
-        Assert.Equal(new[] { "pending", "integrated", "none" }, report.RootElement.GetProperty("collection_rows").EnumerateArray().Select(r => r.GetProperty("async_grow").GetString()).ToArray());
+        Assert.Equal(new[] { "pending", "integrated", "integrated", "pending", "integrated", "none", "cancelled", "cancelled", "unknown", "cancelled" },
+            report.RootElement.GetProperty("collection_rows").EnumerateArray().Select(r => r.GetProperty("async_grow").GetString()).ToArray());
         long before = GC.GetAllocatedBytesForCurrentThread();
-        for (int i = 0; i < 2000; i++) Step(i % 3 == 0, i % 50 == 0);
+        for (int i = 0; i < 2000; i++) { if (i % 3 == 0) started++; Step(i % 3 == 0, i % 50 == 0); }
         Assert.Equal(before, GC.GetAllocatedBytesForCurrentThread());
     }
+
     [Fact]
-    public void LateUpdateWorkJoinsTheFramesModWorkAndLeavesThePauseWithoutModWork()
+    public void ACollectionRowWithoutAGrowSampleSaysUnknown()
+    {
+        var sampler = new GcPauseSampler(64);
+        sampler.Start(1);
+        sampler.NoteBodies(1, 1);
+        sampler.Observe(0, 0, 0, 0, 1, 1);
+        sampler.Observe(60, 1, 0, 0, 1, 2);
+        Assert.Equal(GcAsyncGrow.Unknown, sampler.CollectionRow(0).AsyncGrow);
+        Assert.Equal(GcAsyncGrow.Unknown, GcGrowSample.Outcome(new GcGrowSample(false, 5, 0), new GcGrowSample(false, 4, 0)));
+    }
+
+    [Fact]
+    public void LateUpdateIsKeptApartFromUpdateCityAndBothPausesAreReported()
     {
         var sampler = new GcPauseSampler(64);
         sampler.Start(1);
@@ -153,8 +234,20 @@ public sealed class Gr5DiagnosticFrameTests
         sampler.Observe(34, 0, 0, 0, 1, 2);
         sampler.ModWork(1); sampler.LateModWork(6);
         sampler.Observe(94, 1, 0, 0, 1, 3);
-        Assert.Equal(3.5, sampler.ModSpread(false).Max, 6);
-        Assert.Equal(7, sampler.CollectionRow(0).ModMs, 6);
-        Assert.Equal(60 - 34 - 7, sampler.PauseWithoutModSpread().Max, 3);
+        Assert.Equal(2, sampler.ModSpread(false).Max, 6);
+        Assert.Equal(1.5, sampler.LateSpread(false).Max, 6);
+        Assert.Equal(3.5, sampler.ModWorkSpread(false).Max, 6);
+        Assert.Equal(1, sampler.CollectionRow(0).ModMs, 6);
+        Assert.Equal(6, sampler.CollectionRow(0).LateMs, 6);
+        Assert.Equal(60 - 34 - 1, sampler.PauseWithoutModSpread().Max, 3);
+        Assert.Equal(60 - 34 - 7, sampler.PauseWithoutModWorkSpread().Max, 3);
+        using var report = JsonDocument.Parse(sampler.ReportJson(new GcReportContext(1, 1, null, 0, true, 1, 1)));
+        var root = report.RootElement;
+        Assert.Equal(25, root.GetProperty("pause_ms_without_mod").GetProperty("max").GetDouble(), 3);
+        Assert.Equal(19, root.GetProperty("pause_ms_without_mod_work").GetProperty("max").GetDouble(), 3);
+        Assert.Equal(6, root.GetProperty("collection_rows")[0].GetProperty("late_ms").GetDouble(), 3);
+        Assert.Equal(1, root.GetProperty("collection_rows")[0].GetProperty("mod_ms").GetDouble(), 3);
+        Assert.Equal(6, root.GetProperty("max_late_ms").GetDouble(), 3);
+        Assert.Contains("outside UpdateCity p95/max=25.00/25.00 ms, outside UpdateCity and LateUpdate p95/max=19.00/19.00 ms", sampler.ReportHuman(new GcReportContext(1, 1, null, 0, true, 1, 1)));
     }
 }

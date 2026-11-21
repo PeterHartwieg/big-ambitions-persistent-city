@@ -471,7 +471,7 @@ namespace PerfUnionProbe
         private readonly double[] rowPrevious = new double[Limit * MaxPhases];
         private readonly int[] rowFrame = new int[Limit], rowCollections = new int[Limit], rowGcPhase = new int[Limit];
         private readonly double[] rowWhole = new double[Limit], rowPreviousWhole = new double[Limit], rowNextWhole = new double[Limit], rowMod = new double[Limit];
-        private readonly bool[] rowDiagnostic = new bool[Limit], rowLate = new bool[Limit], rowPreviousCollected = new bool[Limit];
+        private readonly bool[] rowDiagnostic = new bool[Limit], rowLate = new bool[Limit], rowPreviousCollected = new bool[Limit], rowPartial = new bool[Limit];
         private string[] names = Array.Empty<string>();
         private double previousWhole = -1;
         private bool open, previousCollected, rowAwaitsNext;
@@ -511,6 +511,9 @@ namespace PerfUnionProbe
         }
 
         public void Close(int frame, long endTicks, int collections, double modWorkMs, bool diagnostic, bool late, double ticksToMs)
+            => Close(frame, endTicks, collections, modWorkMs, diagnostic, late, ticksToMs, false);
+
+        public void Close(int frame, long endTicks, int collections, double modWorkMs, bool diagnostic, bool late, double ticksToMs, bool partial)
         {
             if (!open) return;
             open = false;
@@ -532,7 +535,7 @@ namespace PerfUnionProbe
                 if (Retained < Limit)
                 {
                     int r = Retained++;
-                    rowFrame[r] = frame; rowWhole[r] = whole; rowMod[r] = modWorkMs; rowDiagnostic[r] = diagnostic; rowLate[r] = late;
+                    rowFrame[r] = frame; rowWhole[r] = whole; rowMod[r] = modWorkMs; rowDiagnostic[r] = diagnostic; rowLate[r] = late; rowPartial[r] = partial;
                     rowCollections[r] = collections - startCollections; rowGcPhase[r] = gcPhase;
                     rowPreviousWhole[r] = previousCollected ? -1 : previousWhole; rowPreviousCollected[r] = previousCollected; rowNextWhole[r] = -1;
                     for (int p = 0; p < MaxPhases; p++)
@@ -540,7 +543,7 @@ namespace PerfUnionProbe
                         rowPhases[r * MaxPhases + p] = p < phases ? current[p] : 0;
                         rowPrevious[r * MaxPhases + p] = p < phases && previousWhole >= 0 ? previous[p] : -1;
                     }
-                    rowAwaitsNext = true;
+                    rowAwaitsNext = !partial;
                 }
             }
             for (int p = 0; p < phases; p++) previous[p] = current[p];
@@ -554,6 +557,7 @@ namespace PerfUnionProbe
         public double ModWorkMs(int row) => rowMod[Row(row)];
         public bool Diagnostic(int row) => rowDiagnostic[Row(row)];
         public bool Late(int row) => rowLate[Row(row)];
+        public bool Partial(int row) => rowPartial[Row(row)];
         public int RowCollections(int row) => rowCollections[Row(row)];
         public int GcPhase(int row) => rowGcPhase[Row(row)];
         public double PhaseMs(int row, int phase) => rowPhases[Row(row) * MaxPhases + Phase(phase)];
