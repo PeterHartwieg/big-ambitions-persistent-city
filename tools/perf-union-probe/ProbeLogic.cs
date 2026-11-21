@@ -659,7 +659,70 @@ namespace PerfUnionProbe
 
         private double Grew(int row, int phase) => PhaseMs(row, phase) - PreviousPhaseMs(row, phase);
 
+        public int CollectedPhases(int row, int[] into)
+        {
+            if (into == null) throw new ArgumentNullException(nameof(into));
+            int taken = 0;
+            for (int p = 0; p < names.Length && taken < into.Length; p++)
+                if (PhaseCollections(row, p) > 0) into[taken++] = p;
+            return taken;
+        }
+
         private int Row(int row) => row >= 0 && row < Retained ? row : throw new ArgumentOutOfRangeException(nameof(row));
         private int Phase(int phase) => phase >= 0 && phase < names.Length ? phase : throw new ArgumentOutOfRangeException(nameof(phase));
+    }
+
+    public sealed class SubPhasePlan
+    {
+        public const string Tail = "loop-tail", Unstamped = ".unstamped";
+        private readonly int[][] before;
+
+        private SubPhasePlan(string[] names, int[][] before, bool truncated) { Names = names; this.before = before; Truncated = truncated; }
+
+        public string[] Names { get; }
+        public bool Truncated { get; }
+
+        public int Before(int system, int child)
+        {
+            var stamps = before[system];
+            return stamps == null || child < 0 || child >= stamps.Length ? -1 : stamps[child];
+        }
+
+        public static SubPhasePlan Build(string[] systems, string[][] children, int early, ICollection<string> detailed, int capacity)
+        {
+            if (systems == null || children == null || children.Length != systems.Length) throw new ArgumentException("one child list per system");
+            if (early < 0 || early >= systems.Length || children[early] == null) throw new ArgumentOutOfRangeException(nameof(early));
+            int n = systems.Length;
+            var order = new List<int>();
+            for (int k = 0; k < n; k++) if (children[(early + k) % n] != null) order.Add((early + k) % n);
+            if (order.Count + 1 > capacity) throw new ArgumentOutOfRangeException(nameof(capacity));
+            var names = new List<string>();
+            var before = new int[n][];
+            bool truncated = false;
+            int Add(string name) { names.Add(name); return names.Count - 1; }
+            for (int o = 0; o < order.Count; o++)
+            {
+                int i = order[o];
+                var list = children[i];
+                var stamps = before[i] = new int[list.Length + 1];
+                for (int c = 0; c < stamps.Length; c++) stamps[c] = -1;
+                int laterParents = order.Count - 1 - o;
+                bool detail = detailed != null && detailed.Contains(systems[i]);
+                int firstChild = Array.FindIndex(list, c => c != null);
+                if (o == 0) Add(systems[i]);
+                else if (!detail || firstChild != 0) stamps[0] = Add(systems[i]);
+                if (detail)
+                {
+                    for (int c = 0; c < list.Length; c++)
+                    {
+                        if (list[c] == null || (o == 0 && c == firstChild && firstChild == 0)) continue;
+                        if (names.Count + 2 + laterParents + 1 <= capacity) stamps[c] = Add(systems[i] + "." + list[c]);
+                        else { stamps[c] = Add(systems[i] + Unstamped); truncated = true; break; }
+                    }
+                }
+                if (o == order.Count - 1) stamps[list.Length] = Add(Tail);
+            }
+            return new SubPhasePlan(names.ToArray(), before, truncated);
+        }
     }
 }

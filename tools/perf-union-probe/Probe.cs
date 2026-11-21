@@ -92,6 +92,7 @@ namespace PerfUnionProbe
         internal static readonly LoopPhaseRecorder phases = new LoopPhaseRecorder();
         internal static readonly LoopPhaseRecorder subPhases = new LoopPhaseRecorder(LoopPhaseRecorder.MaxSubPhases);
         private static readonly int[] subRanking = new int[4];
+        private static readonly int[] subCollected = new int[LoopPhaseRecorder.MaxSubPhases];
         private static bool subPhasesTruncated;
         private static readonly Type[] SubPhaseParents = { typeof(UnityEngine.PlayerLoop.Update), typeof(UnityEngine.PlayerLoop.PreLateUpdate),
             typeof(UnityEngine.PlayerLoop.PostLateUpdate), typeof(UnityEngine.PlayerLoop.TimeUpdate) };
@@ -472,7 +473,7 @@ namespace PerfUnionProbe
                 var children = systems[i].subSystemList ?? Array.Empty<PlayerLoopSystem>();
                 var start = new PlayerLoopSystem { type = typeof(PerfUnionFrameStart), updateDelegate = FrameStart };
                 systems[i].subSystemList = new[] { start }.Concat(children.Where(c => c.type != typeof(PerfUnionFrameStart))).ToArray();
-                InstallSubStamps(systems);
+                InstallSubStamps(systems, i);
                 InstallPhaseStamps(systems, i);
                 PlayerLoop.SetPlayerLoop(loop);
                 loopInstalled = true; boundarySource = "player-loop-early-update";
@@ -501,35 +502,32 @@ namespace PerfUnionProbe
             if (measuring) phases.Stamp(phase, Stopwatch.GetTimestamp(), GC.CollectionCount(0));
         }
 
-        private static void InstallSubStamps(PlayerLoopSystem[] systems)
+        private static void InstallSubStamps(PlayerLoopSystem[] systems, int early)
         {
-            var names = new List<string> { "frame-start" };
-            subPhasesTruncated = false;
-            PlayerLoopSystem Stamp(string name)
+            var kept = new PlayerLoopSystem[systems.Length][];
+            var children = new string[systems.Length][];
+            for (int i = 0; i < systems.Length; i++)
             {
-                int phase = names.Count;
-                names.Add(name);
-                return new PlayerLoopSystem { type = typeof(PerfUnionSubStamp), updateDelegate = () => SubStamp(phase) };
+                if (systems[i].subSystemList == null) continue;
+                kept[i] = systems[i].subSystemList.Where(c => c.type != typeof(PerfUnionSubStamp)).ToArray();
+                children[i] = kept[i].Select(c => c.type == typeof(PerfUnionPhaseStamp) || c.type == typeof(PerfUnionFrameStart) ? null : c.type?.Name ?? "unnamed").ToArray();
             }
-            foreach (var parent in SubPhaseParents)
+            var plan = SubPhasePlan.Build(systems.Select(s => s.type?.Name ?? "unnamed").ToArray(), children, early,
+                SubPhaseParents.Select(t => t.Name).ToArray(), LoopPhaseRecorder.MaxSubPhases);
+            for (int i = 0; i < systems.Length; i++)
             {
-                int i = Array.FindIndex(systems, s => s.type == parent);
-                if (i < 0 || systems[i].subSystemList == null) continue;
-                var children = new List<PlayerLoopSystem>();
-                foreach (var child in systems[i].subSystemList.Where(c => c.type != typeof(PerfUnionSubStamp)))
+                if (kept[i] == null) continue;
+                var stamped = new List<PlayerLoopSystem>();
+                for (int c = 0; c <= kept[i].Length; c++)
                 {
-                    bool ours = child.type == typeof(PerfUnionPhaseStamp) || child.type == typeof(PerfUnionFrameStart);
-                    if (!ours && names.Count < LoopPhaseRecorder.MaxSubPhases - 1) children.Add(Stamp(parent.Name + "." + (child.type?.Name ?? "unnamed")));
-                    else if (!ours) subPhasesTruncated = true;
-                    children.Add(child);
+                    int phase = plan.Before(i, c);
+                    if (phase >= 0) stamped.Add(new PlayerLoopSystem { type = typeof(PerfUnionSubStamp), updateDelegate = () => SubStamp(phase) });
+                    if (c < kept[i].Length) stamped.Add(kept[i][c]);
                 }
-                systems[i].subSystemList = children.ToArray();
+                systems[i].subSystemList = stamped.ToArray();
             }
-            int initialization = Array.FindIndex(systems, s => s.type == typeof(UnityEngine.PlayerLoop.Initialization));
-            if (initialization >= 0 && systems[initialization].subSystemList != null)
-                systems[initialization].subSystemList = new[] { Stamp("Initialization") }
-                    .Concat(systems[initialization].subSystemList.Where(c => c.type != typeof(PerfUnionSubStamp))).ToArray();
-            subPhases.Configure(names.ToArray());
+            subPhasesTruncated = plan.Truncated;
+            subPhases.Configure(plan.Names);
         }
 
         private static void SubStamp(int phase)
@@ -858,8 +856,15 @@ namespace PerfUnionProbe
                 ranked.Add(new JObject { ["name"] = subPhases.PhaseName(p), ["ms"] = subPhases.PhaseMs(r, p), ["previous_ms"] = subPhases.PreviousPhaseMs(r, p),
                     ["excess_ms"] = subPhases.PhaseMs(r, p) - subPhases.PreviousPhaseMs(r, p) });
             }
+            var collected = new JArray();
+            int phasesCollected = subPhases.CollectedPhases(r, subCollected);
+            for (int k = 0; k < phasesCollected; k++)
+            {
+                int p = subCollected[k];
+                collected.Add(new JObject { ["phase"] = subPhases.PhaseName(p), ["gen0_from"] = subPhases.PhaseGen0From(r, p), ["gen0_through"] = subPhases.PhaseGen0Through(r, p) });
+            }
             int gc = subPhases.GcPhase(r);
-            return new JObject { ["available"] = true, ["gc_sub_phase"] = gc >= 0 ? subPhases.PhaseName(gc) : "unknown", ["largest_excess"] = ranked };
+            return new JObject { ["available"] = true, ["gc_sub_phase"] = gc >= 0 ? subPhases.PhaseName(gc) : "unknown", ["collection_sub_phases"] = collected, ["largest_excess"] = ranked };
         }
 
         private const int PageEnvelope = 512;
@@ -938,7 +943,10 @@ namespace PerfUnionProbe
             else if (section == "collections")
             {
                 count = phases.Retained; int limit = Number(args, "limit", 16, LoopPhaseRecorder.Limit);
-                for (int i = (int)Math.Min(offset, int.MaxValue); i < Math.Min(count, offset + limit); i++) rows.Add(CollectionRow(i));
+                int start = (int)Math.Min(offset, int.MaxValue), end = (int)Math.Min(count, offset + limit);
+                var built = new JObject[Math.Max(0, end - start)];
+                int take = CallPage.Fit(i => (built[i - start] = CollectionRow(i)).ToString(Formatting.None).Length, start, end, budget);
+                for (int i = 0; i < take; i++) rows.Add(built[i]);
             }
             else if (section == "scopes")
             {
