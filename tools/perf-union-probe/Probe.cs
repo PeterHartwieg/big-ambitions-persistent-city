@@ -466,15 +466,16 @@ namespace PerfUnionProbe
         private static void InstallLoop()
         {
             var loop = PlayerLoop.GetCurrentPlayerLoop();
-            var systems = loop.subSystemList;
+            var systems = loop.subSystemList?.Where(s => s.type != typeof(PerfUnionSubStamp)).ToArray();
             for (int i = 0; systems != null && i < systems.Length; i++)
             {
                 if (systems[i].type != typeof(UnityEngine.PlayerLoop.EarlyUpdate)) continue;
                 var children = systems[i].subSystemList ?? Array.Empty<PlayerLoopSystem>();
                 var start = new PlayerLoopSystem { type = typeof(PerfUnionFrameStart), updateDelegate = FrameStart };
                 systems[i].subSystemList = new[] { start }.Concat(children.Where(c => c.type != typeof(PerfUnionFrameStart))).ToArray();
-                InstallSubStamps(systems, i);
+                var plan = InstallSubStamps(systems, i);
                 InstallPhaseStamps(systems, i);
+                loop.subSystemList = WithRootStamps(systems, plan);
                 PlayerLoop.SetPlayerLoop(loop);
                 loopInstalled = true; boundarySource = "player-loop-early-update";
                 return;
@@ -502,7 +503,19 @@ namespace PerfUnionProbe
             if (measuring) phases.Stamp(phase, Stopwatch.GetTimestamp(), GC.CollectionCount(0));
         }
 
-        private static void InstallSubStamps(PlayerLoopSystem[] systems, int early)
+        private static PlayerLoopSystem[] WithRootStamps(PlayerLoopSystem[] systems, SubPhasePlan plan)
+        {
+            var rooted = new List<PlayerLoopSystem>();
+            for (int r = 0; r <= systems.Length; r++)
+            {
+                int phase = plan.RootBefore(r);
+                if (phase >= 0) rooted.Add(new PlayerLoopSystem { type = typeof(PerfUnionSubStamp), updateDelegate = () => SubStamp(phase) });
+                if (r < systems.Length) rooted.Add(systems[r]);
+            }
+            return rooted.ToArray();
+        }
+
+        private static SubPhasePlan InstallSubStamps(PlayerLoopSystem[] systems, int early)
         {
             var kept = new PlayerLoopSystem[systems.Length][];
             var children = new string[systems.Length][];
@@ -528,6 +541,7 @@ namespace PerfUnionProbe
             }
             subPhasesTruncated = plan.Truncated;
             subPhases.Configure(plan.Names);
+            return plan;
         }
 
         private static void SubStamp(int phase)
@@ -540,7 +554,8 @@ namespace PerfUnionProbe
             if (!loopInstalled) return;
             loopInstalled = false;
             var loop = PlayerLoop.GetCurrentPlayerLoop();
-            var systems = loop.subSystemList;
+            var systems = loop.subSystemList?.Where(s => s.type != typeof(PerfUnionSubStamp)).ToArray();
+            loop.subSystemList = systems;
             for (int i = 0; systems != null && i < systems.Length; i++)
                 if (systems[i].subSystemList != null && systems[i].subSystemList.Any(c => c.type == typeof(PerfUnionFrameStart) || c.type == typeof(PerfUnionPhaseStamp) || c.type == typeof(PerfUnionSubStamp)))
                     systems[i].subSystemList = systems[i].subSystemList.Where(c => c.type != typeof(PerfUnionFrameStart) && c.type != typeof(PerfUnionPhaseStamp) && c.type != typeof(PerfUnionSubStamp)).ToArray();

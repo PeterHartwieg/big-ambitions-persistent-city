@@ -676,8 +676,10 @@ namespace PerfUnionProbe
     {
         public const string Tail = "loop-tail", Unstamped = ".unstamped";
         private readonly int[][] before;
+        private readonly int[] rootBefore;
 
-        private SubPhasePlan(string[] names, int[][] before, bool truncated) { Names = names; this.before = before; Truncated = truncated; }
+        private SubPhasePlan(string[] names, int[][] before, int[] rootBefore, bool truncated)
+        { Names = names; this.before = before; this.rootBefore = rootBefore; Truncated = truncated; }
 
         public string[] Names { get; }
         public bool Truncated { get; }
@@ -688,41 +690,47 @@ namespace PerfUnionProbe
             return stamps == null || child < 0 || child >= stamps.Length ? -1 : stamps[child];
         }
 
+        public int RootBefore(int system) => system < 0 || system >= rootBefore.Length ? -1 : rootBefore[system];
+
         public static SubPhasePlan Build(string[] systems, string[][] children, int early, ICollection<string> detailed, int capacity)
         {
             if (systems == null || children == null || children.Length != systems.Length) throw new ArgumentException("one child list per system");
             if (early < 0 || early >= systems.Length || children[early] == null) throw new ArgumentOutOfRangeException(nameof(early));
             int n = systems.Length;
-            var order = new List<int>();
-            for (int k = 0; k < n; k++) if (children[(early + k) % n] != null) order.Add((early + k) % n);
-            if (order.Count + 1 > capacity) throw new ArgumentOutOfRangeException(nameof(capacity));
+            if (n + 1 > capacity) throw new ArgumentOutOfRangeException(nameof(capacity));
             var names = new List<string>();
             var before = new int[n][];
+            var rootBefore = new int[n + 1];
+            for (int r = 0; r <= n; r++) rootBefore[r] = -1;
             bool truncated = false;
             int Add(string name) { names.Add(name); return names.Count - 1; }
-            for (int o = 0; o < order.Count; o++)
+            for (int o = 0; o < n; o++)
             {
-                int i = order[o];
+                int i = (early + o) % n;
+                int later = n - 1 - o + (o <= n - 1 - early ? 1 : 0);
                 var list = children[i];
-                var stamps = before[i] = new int[list.Length + 1];
-                for (int c = 0; c < stamps.Length; c++) stamps[c] = -1;
-                int laterParents = order.Count - 1 - o;
-                bool detail = detailed != null && detailed.Contains(systems[i]);
-                int firstChild = Array.FindIndex(list, c => c != null);
-                if (o == 0) Add(systems[i]);
-                else if (!detail || firstChild != 0) stamps[0] = Add(systems[i]);
-                if (detail)
+                if (list == null) rootBefore[i] = Add(systems[i]);
+                else
                 {
-                    for (int c = 0; c < list.Length; c++)
+                    var stamps = before[i] = new int[list.Length + 1];
+                    for (int c = 0; c < stamps.Length; c++) stamps[c] = -1;
+                    bool detail = detailed != null && detailed.Contains(systems[i]);
+                    int firstChild = Array.FindIndex(list, c => c != null);
+                    if (o == 0) Add(systems[i]);
+                    else if (!detail || firstChild != 0) stamps[0] = Add(systems[i]);
+                    if (detail)
                     {
-                        if (list[c] == null || (o == 0 && c == firstChild && firstChild == 0)) continue;
-                        if (names.Count + 2 + laterParents + 1 <= capacity) stamps[c] = Add(systems[i] + "." + list[c]);
-                        else { stamps[c] = Add(systems[i] + Unstamped); truncated = true; break; }
+                        for (int c = 0; c < list.Length; c++)
+                        {
+                            if (list[c] == null || (o == 0 && c == firstChild && firstChild == 0)) continue;
+                            if (names.Count + 2 + later <= capacity) stamps[c] = Add(systems[i] + "." + list[c]);
+                            else { stamps[c] = Add(systems[i] + Unstamped); truncated = true; break; }
+                        }
                     }
                 }
-                if (o == order.Count - 1) stamps[list.Length] = Add(Tail);
+                if (i == n - 1) rootBefore[n] = Add(Tail);
             }
-            return new SubPhasePlan(names.ToArray(), before, truncated);
+            return new SubPhasePlan(names.ToArray(), before, rootBefore, truncated);
         }
     }
 }
