@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 
 namespace PersistentCity.Core
 {
@@ -56,15 +55,34 @@ namespace PersistentCity.Core
         public static bool Apply(CityState state, double nativeWalkMetresPerSecond, double clockRate, out int degraded)
         {
             degraded = 0;
-            var job = Begin(state, nativeWalkMetresPerSecond, clockRate);
-            if (job == null) return false;
-            while (!job.Step(long.MaxValue)) { }
-            if (!job.Commit()) throw new InvalidOperationException("Retime inputs changed during an unsliced retime.");
-            degraded = job.Degraded;
-            return true;
+            if (state == null) throw new ArgumentNullException(nameof(state));
+            if (!Needed(state, nativeWalkMetresPerSecond, clockRate)) return false;
+            bool captured = state.Traffic == null && state.SnapshotSynchronizer != null;
+            if (captured) state.SnapshotSynchronizer!();
+            var snapshot = state.Traffic;
+            try
+            {
+                var job = Begin(state, nativeWalkMetresPerSecond, clockRate)!;
+                while (!job.Step(long.MaxValue)) { }
+                if (!job.Commit()) throw new InvalidOperationException("Retime inputs changed during an unsliced retime.");
+                degraded = job.Degraded;
+                return true;
+            }
+            catch
+            {
+                if (captured && ReferenceEquals(state.Traffic, snapshot))
+                { state.Traffic = null; state.TrafficSource = null; state.TrafficSourceState = null; }
+                throw;
+            }
         }
 
         public static TravelRetime? Begin(CityState state, double nativeWalkMetresPerSecond, double clockRate)
+        {
+            if (!Needed(state, nativeWalkMetresPerSecond, clockRate)) return null;
+            return new TravelRetime(state, nativeWalkMetresPerSecond, clockRate, state.TravelTimingVersion == 0);
+        }
+
+        private static bool Needed(CityState state, double nativeWalkMetresPerSecond, double clockRate)
         {
             if (state == null) throw new ArgumentNullException(nameof(state));
             Rate(nativeWalkMetresPerSecond, nameof(nativeWalkMetresPerSecond)); Rate(clockRate, nameof(clockRate));
@@ -73,9 +91,7 @@ namespace PersistentCity.Core
                 throw new ArgumentException("Unsupported travel timing version.", nameof(state));
             if (!Position.Finite(state.Minute) || state.Minute < 0 || state.Minute > MaxMinute)
                 throw new ArgumentException("Invalid city clock.", nameof(state));
-            bool legacy = state.TravelTimingVersion == 0;
-            if (!legacy && state.TravelClockRate == clockRate) return null;
-            return new TravelRetime(state, nativeWalkMetresPerSecond, clockRate, legacy);
+            return state.TravelTimingVersion == 0 || state.TravelClockRate != clockRate;
         }
 
         public sealed class RetimedTraffic
@@ -727,10 +743,11 @@ namespace PersistentCity.Core
         private const double FragmentDeviationMetres = 0.000001;
 
         private static bool ContinuesFragment(RouteLeg previous, TravelMode mode, Position from, Position to, string service)
-            => previous.SplitPrefix && previous.Mode == mode && (mode == TravelMode.Walk || mode == TravelMode.Car)
+            => previous.SplitPrefix && previous.Mode == mode
                 && string.Equals(previous.ServiceId, service, StringComparison.Ordinal) && previous.To.Equals(from)
-                && Position.Distance(previous.From, from) > 0.000001 && Position.Distance(from, to) > 0.000001
-                && SegmentDistance(from, previous.From, to) <= FragmentDeviationMetres;
+                && (previous.From.Equals(from) && from.Equals(to)
+                    || Position.Distance(previous.From, from) > 0.000001 && Position.Distance(from, to) > 0.000001
+                        && SegmentDistance(from, previous.From, to) <= FragmentDeviationMetres);
 
         private static bool RepresentableNativeTail(RouteLeg leg, Position point)
         {
@@ -770,14 +787,21 @@ namespace PersistentCity.Core
 
         private static string SplitService(RouteLeg leg)
         {
-            if (leg.Mode != TravelMode.Car || !leg.ServiceId.StartsWith("native:road:", StringComparison.Ordinal)) return leg.ServiceId;
-            string[] parts = leg.ServiceId.Split(':');
-            if (parts.Length == 6 && (parts[2] == "v1" || parts[2] == "fragment1") && parts[3].Length > 0 &&
-                int.TryParse(parts[4], NumberStyles.None, CultureInfo.InvariantCulture, out int from) &&
-                int.TryParse(parts[5], NumberStyles.None, CultureInfo.InvariantCulture, out int to) && from != to)
-                return parts[2] == "fragment1" ? leg.ServiceId : "native:road:fragment1:" + parts[3] + ":" + parts[4] + ":" + parts[5];
-            return "";
+            string service = leg.ServiceId;
+            if (leg.Mode != TravelMode.Car || !service.StartsWith("native:road:", StringComparison.Ordinal)) return service;
+            var tag = leg.RoadTag;
+            if (tag.Kind == RoadTagKind.None || tag.TopologyLength == 0 || tag.From == tag.To) return "";
+            return tag.Kind == RoadTagKind.Fragment1 ? service : FragmentService(service, tag.TopologyStart);
         }
+
+        private const string FragmentPrefix = "native:road:fragment1:";
+
+        private static string FragmentService(string service, int topologyStart)
+            => string.Create(FragmentPrefix.Length + service.Length - topologyStart, (service, topologyStart), (target, source) =>
+            {
+                FragmentPrefix.AsSpan().CopyTo(target);
+                source.service.AsSpan(source.topologyStart).CopyTo(target.Slice(FragmentPrefix.Length));
+            });
 
         private static RouteLeg Copy(RouteLeg source, Position from, Position to, double minutes, string service, bool splitPrefix = false)
             => source.CopyAs(from, to, minutes, service, splitPrefix);
