@@ -20120,12 +20120,12 @@ All six timed windows ran for at least 600 seconds, followed the recorded start 
 
 | Check | Outcome | Readback |
 | --- | --- | --- |
-| A | FAIL | A steady 7 gen0, pause p95 33.662 ms / inclusive 33.662 ms / 0 diagnostic collection frames. A immediate 7 gen0, pause p95 32.705 ms / inclusive 32.705 ms / 0 diagnostic collection frames. A immediate gen0 7 exceeds matched no-mod 6. |
+| A | FAIL | Failed on the immediate gen0 comparison: A immediate 7 gen0 exceeds the no-mod immediate reference of 6 captured in 16y. A steady 7 gen0 matched the reused 16x no-mod steady reference of 7. Both sampler pause p95 values met the provisional 37 ms threshold: steady 33.662 ms / inclusive 33.662 ms / 0 diagnostic collection frames, immediate 32.705 ms / inclusive 32.705 ms / 0 diagnostic collection frames. The candidate and reference windows ran under different shared-host load, so the comparison supports a provisional gate result and does not isolate the cause. |
 | B | FAIL | B 20× 5 gen0, pause p95 319.365 ms / inclusive 319.365 ms / 0 diagnostic collection frames, sampler heap 1495.465984 MB (margin -25.465984 MB). B 60× 5 gen0, pause p95 341.749 ms / inclusive 341.749 ms / 0 diagnostic collection frames, sampler heap 1482.01472 MB (margin -12.01472 MB). B 20× heap above cap. B 60× heap above cap. B 60× frame 29306 recorded 294.318 ms UpdateCity and 0.059 ms LateUpdate. B 20× exceeded 37 ms with residual outside timed mod work; matching evidence does not establish which work caused the excess. |
 | C | FAIL | UpdateCity p95 10.0021 ms, union p95 10.1866 ms, 24 union spikes, retime subphase bound 35.716 ms. Door search maximum 0.216 ms and index slice maximum 0 ms. The index was already warm in C. Slowest food continuation: 0.866 ms (rival-refresh). Missed inclusive UpdateCity p95, union p95, retime bound, ≥30 ms mod-work frames. |
 | D | REPORTED | Matched day heap and forced-live reads captured. Cached night comparison verified. |
 | E | REPORTED | RSS before / immediately after return / +30 s / +120 s 3,085,392 / 3,130,032 / 3,138,128 / 3,149,248 KiB. Owned mesh identity true / true / true / true. |
-| L | FAIL | 5 complete retime cycles and 7/7 matched reads. Outside-current-journeys-and-caches RouteLeg gaps -54 / 0 / 0 / 0 / -24 / 0 / 0. Raw RouteLeg gaps 2,238 / 508 / -248 / 900 / 308 / 2,018 / -148. Last retime above earlier max in Mono heap B 5,406,720, Mono used B 2,252,800, Forced-live B 2,220,032, RouteLeg outside caches objects 1,239, RouteLeg outside caches bytes 128,856, RouteLeg[] outside caches bytes 2,016. Drain above earlier max in Mono used B 1,675,264, Forced-live B 2,088,960, ownedBodyCombiners 6, liveMergedMeshes 6, liveMergedVertices 23,861, String objects 46, String bytes 8,008. |
+| L | FAIL | Failed on repeated growth against the 1× control: the forced-live gap rose at each retime checkpoint after R2, 40,448,000 B at R2, 43,253,760 B at R3, 44,900,352 B at R4 and 47,120,384 B at R5, and reached 49,209,344 B after the drain. The Mono used gap followed the same pattern: 40,751,104 / 43,708,416 / 45,563,904 / 47,816,704 / 49,491,968 B. The RouteLeg gap outside current journeys and caches was flat: 0 at R5 and after the drain (series -54 / 0 / 0 / 0 / -24 / 0 / 0). Supporting observations: 5 complete retime cycles and 7/7 matched reads. Raw RouteLeg gaps 2,238 / 508 / -248 / 900 / 308 / 2,018 / -148. Last retime above earlier max in Mono heap B 5,406,720, Mono used B 2,252,800, Forced-live B 2,220,032, RouteLeg outside caches objects 1,239, RouteLeg outside caches bytes 128,856, RouteLeg[] outside caches bytes 2,016. Drain above earlier max in Mono used B 1,675,264, Forced-live B 2,088,960, ownedBodyCombiners 6, liveMergedMeshes 6, liveMergedVertices 23,861, String objects 46, String bytes 8,008. |
 | P | FAIL | 1 immediate-retime advance/planning frames over 30 ms. 2 physical setup log rows. Reserved updates in this window 0. |
 | G | FAIL | 24/24 sampler gen0 ordinals paired to one probe row, phase and subsystem. A steady probe subsystem stamps exceeded their cap. A immediate probe subsystem stamps exceeded their cap. B 20× probe subsystem stamps exceeded their cap. B 60× probe subsystem stamps exceeded their cap. Unstamped subsystem buckets observed in TimeUpdate.unstamped. Both walker stamps observed steady / after both commits true / true. |
 
@@ -20885,9 +20885,9 @@ The run used the shipped probe-build and retention helpers. Local controller rec
 
 - GR-5 locked-PC and 60 fps arms. This run used agentmac. PC 19c is a historical cross-check.
 - Pointer, hover and visual feel — for Peter.
-- #246 check 4 and the unrentable fixture. Earlier evidence remains in 16d.
-- #293 save checks. 16h passed. This run wrote no save and has no save hash.
-- #295 donor checks and inspector timing. Prior evidence is in 16i, 16k-donor and 16l.
+- #246 check 4 and the unrentable fixture. Outside the 16y run scope (#338 checks 1–8). Earlier evidence remains in 16d.
+- #293 save checks. Outside the 16y run scope (#338 checks 1–8). 16h passed. This run wrote no save and has no save hash.
+- #295 donor checks and inspector timing. Outside the 16y run scope (#338 checks 1–8). Prior evidence is in 16i, 16k-donor and 16l.
 - Standalone F and night census. L supplies the retained census. B preserves the ordered heap bracket.
 - Reserved-setup advance timing. Both measured setup rows used light updates, with zero reserved updates.
 - Fresh no-mod night and RSS arms. Existing references supplied the comparisons.
