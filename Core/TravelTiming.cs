@@ -378,8 +378,13 @@ namespace PersistentCity.Core
                 if (merges > 0 && !SameJoinedPose(citizen, replacement, elapsed,
                     map != null ? map.Map(elapsed) : CitySimulator.NormalizeJourneyElapsed(rawElapsed, replacement.Minutes, state.Minute)))
                 {
-                    replacement = Retime(route, elapsed, legacy, walk, rate, ratio, false, mapped, out map, out completed);
-                    JoinsRefused++;
+                    var unjoined = Retime(route, elapsed, legacy, walk, rate, ratio, false, mapped, out var unjoinedMap, out int unjoinedCompleted);
+                    if (map != null && unjoinedMap != null && JoinKeepsMappedPose(citizen, replacement, map.Map(elapsed), unjoined, unjoinedMap.Map(elapsed), elapsed)) Joined++;
+                    else
+                    {
+                        replacement = unjoined; map = unjoinedMap; completed = unjoinedCompleted;
+                        JoinsRefused++;
+                    }
                 }
                 else if (merges > 0) Joined++;
                 if (replacement.Legs.Count > MaxLegs
@@ -452,6 +457,15 @@ namespace PersistentCity.Core
         private static bool SameJoinedPose(CitizenState citizen, Route replacement, double oldElapsed, double resumedElapsed)
             => SamePose(citizen, replacement, oldElapsed, resumedElapsed)
                 && Nullable.Equals(CarAt(citizen.Journey!, oldElapsed, citizen.Car?.ParkedPosition), CarAt(replacement, resumedElapsed, citizen.Car?.ParkedPosition));
+
+        private static bool JoinKeepsMappedPose(CitizenState citizen, Route joined, double joinedElapsed, Route unjoined, double unjoinedElapsed, double oldElapsed)
+        {
+            if (!SamePose(citizen, joined, oldElapsed, joinedElapsed) || !SamePose(citizen, unjoined, oldElapsed, unjoinedElapsed)) return false;
+            var parked = citizen.Car?.ParkedPosition;
+            Position? old = CarAt(citizen.Journey!, oldElapsed, parked), join = CarAt(joined, joinedElapsed, parked), apart = CarAt(unjoined, unjoinedElapsed, parked);
+            if (old == null || join == null || apart == null) return old == null && join == null && apart == null;
+            return Position.Distance(old.Value, join.Value) <= Position.Distance(old.Value, apart.Value);
+        }
 
         private static Position? CarAt(Route route, double elapsed, Position? parked)
         {
@@ -602,7 +616,7 @@ namespace PersistentCity.Core
                 {
                     var previous = route.Legs[fragment];
                     double end = newOffset + minutes;
-                    double after = splitPrefix ? 0 : remaining - minutes;
+                    double after = splitPrefix && oldEnd.HasValue ? 0 : remaining - minutes;
                     double merged = fragmentRemaining - after;
                     if (fragmentRemaining - merged != after) merged = end - fragmentStart;
                     double joinedEnd = fragmentStart + merged;

@@ -118,6 +118,104 @@ public sealed class Gr5RetainedRouteLegTests
         Assert.False(StillClimbing(outside), "RouteLeg outside current journeys climbs: " + string.Join(", ", outside));
     }
 
+    [Fact]
+    public void TrafficOwnedJourneysKeepABoundedSplitPrefixCountAcrossRepeatedOneTwoOneRetimes()
+    {
+        const int residents = 6, edges = 381, cycles = 10;
+        const double departure = 1440, spacing = 2.5;
+        (CityState State, CitySimulator City) Build()
+        {
+            var state = Population.Create(Enumerable.Range(0, residents).Select(i => new CitizenIdentity
+            { Id = "road" + i, Name = "Road " + i, Age = 30, AppearanceSeed = i + 1, Persona = Persona.Commuter }), new[]
+            {
+                new Place { Id = "home", Name = "Home", Kind = PlaceKind.Home, Capacity = residents, Position = new Position(-4, 0, 0) },
+                new Place { Id = "work", Name = "Work", Kind = PlaceKind.Work, Capacity = residents, Position = new Position(edges + 4, 0, 0) }
+            }, "long-road", "0.40.4", 7, departure);
+            for (int i = 0; i < residents; i++)
+            {
+                var c = state.Citizens[i];
+                c.PlaceId = c.HomeId = "home"; c.DayPlaceId = "work"; c.Phase = CitizenPhase.Travelling;
+                c.DestinationId = "work"; c.DestinationActivity = Activity.Work; c.ActivityUntilMinute = 4000;
+                c.DepartureMinute = departure - i * 0.7;
+                c.Preferences.OwnsCar = true;
+                c.Car = new CarState { Id = c.Identity.Id + ":car", ParkedPosition = new Position(0, 0, 0) };
+                var legs = new List<RouteLeg> { Leg(-4, -2, 1, TravelMode.Walk, ""), Leg(-2, 0, 1, TravelMode.Walk, "") };
+                for (int e = 0; e < edges; e++) legs.Add(Leg(e, e + 1, 0.1, TravelMode.Car, "native:road:v1:" + TravelTimingMaximumRouteTests.LongRoad.Topology + ":" + e + ":" + (e + 1)));
+                legs.Add(Leg(edges, edges + 2, 1, TravelMode.Walk, "")); legs.Add(Leg(edges + 2, edges + 4, 1, TravelMode.Walk, ""));
+                c.Journey = new Route { Legs = legs }; c.NextEventMinute = c.DepartureMinute + c.Journey.Minutes;
+            }
+            var city = new CitySimulator(state, new TravelTimingMaximumRouteTests.LongRoad(1, edges));
+            city.AdvanceTo(departure + 2 + 3.037, int.MaxValue);
+            return (state, city);
+        }
+        var retimed = Build(); var control = Build();
+        var driver = new ClockRetimeDriver();
+        var controlDriver = new ClockRetimeDriver();
+        var city = retimed.City; var state = retimed.State;
+        CitySimulator Retime(double rate)
+        {
+            while (driver.Update(state, rate, false, 2, ClockRetimeStages.SliceMilliseconds) != ClockRetimeOutcome.Committed) { }
+            Assert.Equal(0, driver.Degraded);
+            var rebuild = city.BeginRebuildRoutes(new TravelTimingMaximumRouteTests.LongRoad(rate, edges), driver.TakeRetimedTraffic());
+            while (!rebuild.Step(0)) { }
+            return rebuild.TakeResult();
+        }
+        (Read Census, int Owned, long Boundaries) Checkpoint(CitySimulator simulator, ClockRetimeDriver retimeDriver, string name, int index)
+        {
+            var city = simulator.State;
+            city.PrepareForSave();
+            long boundaries = 0;
+            foreach (var c in city.Citizens)
+            {
+                var vehicle = city.Traffic!.Vehicles.Single(v => v.VehicleId == c.Identity.Id);
+                double elapsed = city.Minute - c.DepartureMinute;
+                long started = vehicle.Route.Count(span => span.StartNominalMinutes > 2 && span.StartNominalMinutes <= elapsed);
+                long splits = c.Journey!.Legs.Count(leg => leg.SplitPrefix);
+                Assert.True(splits <= started + 2, name + " R" + index + " " + c.Identity.Id + " holds " + splits + " split prefixes against " + started + " retained traffic span starts");
+                boundaries += started;
+            }
+            return (Census(simulator, retimeDriver), city.Traffic!.Vehicles.Count, boundaries);
+        }
+        var reads = new List<((Read Census, int Owned, long Boundaries) Retimed, (Read Census, int Owned, long Boundaries) Control)>
+        { (Checkpoint(city, driver, "retimed", 0), Checkpoint(control.City, controlDriver, "control", 0)) };
+        double start = state.Minute;
+        for (int cycle = 1; cycle <= cycles; cycle++)
+        {
+            city = Retime(2);
+            city.AdvanceTo(state.Minute + 0.05, int.MaxValue);
+            city = Retime(1);
+            double end = start + cycle * spacing;
+            city.AdvanceTo(end, int.MaxValue);
+            control.City.AdvanceTo(end, int.MaxValue);
+            reads.Add((Checkpoint(city, driver, "retimed", cycle), Checkpoint(control.City, controlDriver, "control", cycle)));
+        }
+        var gap = new List<long>();
+        var unexplained = new List<long>();
+        var mostSplits = new List<long>();
+        for (int i = 0; i <= cycles; i++)
+        {
+            var (r, c) = reads[i];
+            output.WriteLine("R" + i + " RouteLeg retimed " + r.Census.Retained + " / control " + c.Census.Retained + "; split prefixes " + r.Census.Splits + " / " + c.Census.Splits
+                + "; most split prefixes in a journey " + r.Census.MostSplits + "; retained traffic span starts " + r.Boundaries + "; travelling " + r.Census.Travelling + " / " + c.Census.Travelling
+                + "; traffic-owned " + r.Owned + " / " + c.Owned);
+            Assert.Equal(residents, r.Census.Travelling); Assert.Equal(residents, c.Census.Travelling);
+            Assert.Equal(residents, r.Owned); Assert.Equal(residents, c.Owned);
+            Assert.Equal(0, r.Census.Outside); Assert.Equal(0, c.Census.Outside);
+            Assert.Equal(0, c.Census.Splits);
+            long extra = r.Census.InJourneys - c.Census.InJourneys;
+            Assert.Equal(r.Census.Splits, extra);
+            Assert.True(extra - r.Boundaries <= 2 * residents, "R" + i + " retimed journeys hold " + (extra - r.Boundaries) + " split prefixes beyond their " + r.Boundaries + " retained traffic span starts");
+            gap.Add(extra); unexplained.Add(extra - r.Boundaries); mostSplits.Add(r.Census.MostSplits);
+        }
+        output.WriteLine("retimed minus control RouteLeg R0..R" + cycles + ": " + string.Join(", ", gap) + "; beyond retained traffic span starts " + string.Join(", ", unexplained)
+            + "; most split prefixes in one journey " + string.Join(", ", mostSplits));
+        Assert.False(StillClimbing(unexplained), "RouteLeg excess beyond retained traffic span starts climbs: " + string.Join(", ", unexplained));
+        Assert.False(StillClimbing(mostSplits), "split prefixes per traffic-owned journey climb: " + string.Join(", ", mostSplits));
+    }
+
+    private static RouteLeg Leg(double from, double to, double minutes, TravelMode mode, string service) => new()
+    { From = new Position(from, 0, 0), To = new Position(to, 0, 0), Minutes = minutes, Mode = mode, ServiceId = service };
+
     private static bool StillClimbing(IReadOnlyList<long> series)
     {
         if (series.Count < 4) return false;
