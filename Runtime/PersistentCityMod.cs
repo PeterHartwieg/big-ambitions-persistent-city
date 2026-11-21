@@ -64,6 +64,7 @@ namespace PersistentCity.Runtime
         private PhysicalPopulation? physical;
         private DwellSpots dwellSpots = new DwellSpots();
         private bool physicalFailed;
+        private readonly PhysicalSetupGate physicalSetupGate = new PhysicalSetupGate();
         private readonly ResidentInspector inspector = new ResidentInspector();
         private bool inspectorFailed;
         private Action<string>? inspectorWarning;
@@ -442,10 +443,18 @@ namespace PersistentCity.Runtime
                 }
                 ApplyHoldReplay();
                 ModFrames.Charge(GcAllocationSegment.ModHoldReplay);
-                if (settings.PhysicalEnabled && !physicalFailed && physical == null && !BuildingManager.IsInsideBuilding && !NativeTravelPace.HiddenTravel)
+                double beforeSetup = UpdateCityClock.Elapsed();
+                if (settings.PhysicalEnabled && !physicalFailed && physical == null && !BuildingManager.IsInsideBuilding && !NativeTravelPace.HiddenTravel
+                    && physicalSetupGate.Admit(beforeSetup))
                 {
                     PhysicalAllocation.Begin(gcSampler);
-                    try { physical = new PhysicalPopulation(transform, simulation, routes!, dependency!, log!, settings.MaximumPedestrians, settings.MaximumVehicles, settings.PhysicalRadiusMetres, dwellSpots, settings.MovementFaultAcquirePercent); }
+                    try
+                    {
+                        physical = new PhysicalPopulation(transform, simulation, routes!, dependency!, log!, settings.MaximumPedestrians, settings.MaximumVehicles, settings.PhysicalRadiusMetres, dwellSpots, settings.MovementFaultAcquirePercent);
+                        log?.Info("Physical population setup: " + Milliseconds(UpdateCityClock.Elapsed() - beforeSetup) + " ms after "
+                            + Milliseconds(beforeSetup) + " ms of this update, waited " + physicalSetupGate.LastWait.ToString(System.Globalization.CultureInfo.InvariantCulture)
+                            + " updates for a light frame (" + physicalSetupGate.Deferred.ToString(System.Globalization.CultureInfo.InvariantCulture) + " deferred updates in total).");
+                    }
                     catch (Exception error)
                     {
                         physicalFailed = true;
