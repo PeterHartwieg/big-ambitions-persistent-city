@@ -1,7 +1,9 @@
 import datetime
 import json
+import math
 import os
 import subprocess
+import sys
 import time
 from pathlib import Path
 
@@ -13,8 +15,19 @@ STAGE = absolute(os.environ['PC_RIG_STAGE']) if os.environ.get('PC_RIG_STAGE') e
 RIG = absolute(os.environ.get('PC_RIG_CHECKOUT') or '~/Coding_Projects/big-ambitions/big-ambitions-agent-rig')
 SUPPORT = absolute(os.environ.get('PC_RIG_SUPPORT') or '~/Library/Application Support/BigAmbitionsAgentTestsMac')
 LOG = absolute(os.environ.get('PC_RIG_PLAYER_LOG') or (SUPPORT / 'Player-agent.log'))
-FIXTURE = os.environ.get('PC_RIG_FIXTURE', '')
+MAC_FIXTURE = 'FT GR5 13f Timing v1'
+NATIVE_TOLERANCE = .01
 CENSUS = '[Persistent City] gc retained '
+
+
+def default_fixture(platform=None):
+    explicit = os.environ.get('PC_RIG_FIXTURE', '')
+    if explicit:
+        return explicit
+    return MAC_FIXTURE if (platform or sys.platform) == 'darwin' else ''
+
+
+FIXTURE = default_fixture()
 
 
 def require_lock():
@@ -221,6 +234,35 @@ def go(label, target, speed):
     raise RuntimeError(f'Clock target {target} timed out: {current}')
 
 
+def native_minute(label):
+    value = (prop(label, 'AccountingDiagnostics').get('value') or {}).get('nativeMinute')
+    if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value):
+        raise RuntimeError(f'{label}: AccountingDiagnostics has no native minute: {value!r}')
+    return float(value)
+
+
+def native_reached(current, target, paused=False):
+    return current >= target - NATIVE_TOLERANCE or (paused and math.floor(current) >= math.floor(target))
+
+
+def wait_native(label, target, timeout=1800, interval=.25):
+    deadline = time.monotonic() + timeout
+    polls = 0
+    while True:
+        finish_if_wrapped(label)
+        polls += 1
+        current = native_minute(label + '-native')
+        paused = None if native_reached(current, target) else clock(label)['paused']
+        if paused is None or native_reached(current, target, paused):
+            return write(label + '-reached', {'utc': now(), 'target': target, 'native_minute': current, 'offset': current - target,
+                                              'paused': paused, 'polls': polls, 'tolerance': NATIVE_TOLERANCE})
+        if paused:
+            raise RuntimeError(f'{label}: native clock paused at {current} before {target}')
+        if time.monotonic() >= deadline:
+            raise RuntimeError(f'{label}: timed out at {current} on the way to {target}')
+        time.sleep(interval)
+
+
 def rate(label, speed, pause=False):
     return call(label, 'time', {'speed': speed, 'pause': pause, 'keep_needs': True})
 
@@ -281,8 +323,18 @@ def route_leg_read(row, key):
     return row.get('route_legs', {}).get(key)
 
 
-def game_pid():
-    return json.loads((SUPPORT / 'run.json').read_text())['pid']
+def game_pid(timeout=10.0, interval=.25):
+    deadline = time.monotonic() + timeout
+    while True:
+        try:
+            pid = json.loads((SUPPORT / 'run.json').read_text()).get('pid')
+        except (OSError, ValueError, AttributeError):
+            pid = None
+        if isinstance(pid, int) and not isinstance(pid, bool) and pid > 0:
+            return pid
+        if time.monotonic() >= deadline:
+            return None
+        time.sleep(interval)
 
 
 def rss_kib(pid):

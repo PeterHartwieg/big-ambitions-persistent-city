@@ -104,18 +104,29 @@ class FakeBridge:
     def __init__(self):
         self.commands = []
         self.autosave = {'enabled': True, 'autosave_disabled': True, 'suppressed': True}
+        self.retained = {'bytes': 10, 'objects': 2, 'type_counts': {'RouteLeg': 4}}
+        self.minute, self.step, self.paused = 3810.01, 0.0, True
 
     def __call__(self, args):
         self.commands.append(args)
         kind = args[0]
         if kind == 'call' and args[1] == 'console':
             line = json.loads(args[2])['line']
-            output = ['[Persistent City] gc retained ' + json.dumps({'bytes': 10, 'objects': 2, 'type_counts': {'RouteLeg': 4}})] if line == 'pc gc retained' else []
+            output = ['[Persistent City] gc retained ' + json.dumps(self.retained)] if line == 'pc gc retained' else []
             body = {'result': {'output': output}}
+        elif kind == 'call' and args[1] == 'state':
+            body = {'result': {'clock': {'paused': self.paused, 'time': '15:30', 'day': 3, 'run_until': None}}}
+        elif kind == 'call' and args[1] == 'time':
+            self.paused = bool(json.loads(args[2]).get('pause'))
+            body = {'session': 's'}
         elif kind == 'autosave':
             body = self.autosave
         elif kind == 'op' and args[1] == 'perf_union':
             body = {'after': {'mono_heap': {'now_bytes': 5}, 'after_forced_gc_bytes': 7}}
+        elif kind == 'op' and args[1] == 'pcstate' and json.loads(args[2])['property'] == 'AccountingDiagnostics':
+            if not self.paused:
+                self.minute += self.step
+            body = {'native': True, 'value': {'nativeMinute': self.minute}}
         elif kind == 'op' and args[1] == 'pcstate':
             body = {'native': True, 'value': {'travelClockRate': 1, 'ownedBodyCombiners': 3}}
         else:
@@ -142,6 +153,7 @@ class RetentionRunnerTests(unittest.TestCase):
         self.bridge = FakeBridge()
         self.common.bridge = self.bridge
         self.stage = root / 'stage'
+        self.support = root / 'support'
 
     def tearDown(self):
         for name in ('rigcommon', 'retention'):
@@ -224,6 +236,140 @@ class RetentionRunnerTests(unittest.TestCase):
             retention.snapshot('R0')
         self.assertEqual(self.bridge.console_lines(), ['pc gc retained', 'pc movement status', 'pc population manifest'])
         self.assertFalse((self.stage / 'retention-R0-set.json').exists())
+
+    def test_snapshot_records_the_native_minute(self):
+        retention = self.local(importlib.import_module('retention'))
+        self.assertEqual(retention.snapshot('R0')['native_minute'], 3810.01)
+
+    def test_mac_defaults_to_the_ft_fixture_and_an_explicit_fixture_wins(self):
+        with mock.patch.dict(os.environ, {'PC_RIG_FIXTURE': ''}):
+            self.assertEqual(self.common.default_fixture('darwin'), 'FT GR5 13f Timing v1')
+            self.assertEqual(self.common.default_fixture('win32'), '')
+            with mock.patch.object(sys, 'platform', 'darwin'):
+                sys.modules.pop('rigcommon', None)
+                self.assertEqual(importlib.import_module('rigcommon').FIXTURE, 'FT GR5 13f Timing v1')
+        with mock.patch.dict(os.environ, {'PC_RIG_FIXTURE': 'FT Other'}):
+            self.assertEqual(self.common.default_fixture('darwin'), 'FT Other')
+            self.assertEqual(self.common.default_fixture('win32'), 'FT Other')
+
+    def test_mac_load_sends_the_default_fixture_name(self):
+        with mock.patch.dict(os.environ, {'PC_RIG_FIXTURE': ''}), mock.patch.object(sys, 'platform', 'darwin'):
+            sys.modules.pop('rigcommon', None)
+            common = importlib.import_module('rigcommon')
+        bridge = self.bridge
+
+        def reply(args):
+            if args[0] == 'resources':
+                return subprocess.CompletedProcess(args, 0, json.dumps({'disk_free_gib': 50, 'memory_free_percent': 60}), '')
+            if args[0] == 'load':
+                return subprocess.CompletedProcess(args, 0, json.dumps({'error': 'stop-here'}), '')
+            return bridge(args)
+        common.bridge = reply
+        with self.assertRaisesRegex(RuntimeError, 'stop-here'):
+            common.start_and_load('l-retimed-initial-setup', recovery=False)
+        sent = json.loads((self.stage / 'l-retimed-initial-setup-load.json').read_text())['command']
+        self.assertEqual(json.loads(sent[2]), {'name': 'FT GR5 13f Timing v1'})
+
+    def test_pc_without_a_fixture_still_refuses_to_load(self):
+        with mock.patch.dict(os.environ, {'PC_RIG_FIXTURE': ''}), mock.patch.object(sys, 'platform', 'win32'):
+            sys.modules.pop('rigcommon', None)
+            common = importlib.import_module('rigcommon')
+        common.bridge = self.bridge
+        with self.assertRaisesRegex(RuntimeError, 'PC_RIG_FIXTURE must name the FT fixture save'):
+            common.start_and_load('l-retimed-initial-setup')
+        self.assertEqual(self.bridge.commands, [])
+
+    def test_game_pid_waits_briefly_and_returns_none_without_a_pid(self):
+        run_file = self.support / 'run.json'
+        self.assertIsNone(self.common.game_pid(timeout=0))
+        run_file.write_text(json.dumps({'mode': 'headless', 'rig_test': True}))
+        self.assertIsNone(self.common.game_pid(timeout=.05, interval=.01))
+        run_file.write_text('[]')
+        self.assertIsNone(self.common.game_pid(timeout=0))
+        run_file.write_text(json.dumps({'pid': 58706}))
+        self.assertEqual(self.common.game_pid(timeout=0), 58706)
+
+    def test_snapshot_without_a_pid_sends_nothing_to_the_game(self):
+        retention = self.local(importlib.import_module('retention'))
+        retention.game_pid = lambda: None
+        with self.assertRaisesRegex(RuntimeError, 'run.json has no game pid'):
+            retention.snapshot('drain')
+        self.assertEqual(self.bridge.commands, [])
+
+    def test_drain_target_a_fraction_above_a_fixed_native_minute_is_reached(self):
+        self.assertTrue(self.common.native_reached(3900.00999832153, 3900.0111065))
+        self.assertFalse(self.common.native_reached(3899.98, 3900.0111065))
+        self.assertTrue(self.common.native_reached(3900.01, 3900.5, paused=True))
+        self.assertFalse(self.common.native_reached(3900.01, 3900.5))
+        self.assertFalse(self.common.native_reached(3899.99, 3900.0111065, paused=True))
+        self.bridge.minute, self.bridge.paused = 3900.00999832153, True
+        reached = self.common.wait_native('l-retimed-drain', 3900.0111065, timeout=0)
+        self.assertEqual(reached['native_minute'], 3900.00999832153)
+        self.assertLess(abs(reached['offset']), self.common.NATIVE_TOLERANCE)
+
+    def test_drain_waiter_fails_fast_when_the_clock_is_paused_short_of_the_target(self):
+        self.bridge.minute, self.bridge.paused = 3899.5, True
+        with self.assertRaisesRegex(RuntimeError, 'paused at 3899.5 before 3900.0111065'):
+            self.common.wait_native('l-retimed-drain', 3900.0111065, timeout=60)
+        self.bridge.paused, self.bridge.step = False, 0.0
+        with self.assertRaisesRegex(RuntimeError, 'timed out at 3899.5 on the way to 3900.0111065'):
+            self.common.wait_native('l-retimed-drain', 3900.0111065, timeout=0)
+
+    def test_route_leg_is_read_at_every_checkpoint_from_tracked_types(self):
+        retention = self.local(importlib.import_module('retention'))
+        rows = []
+        for key, legs in (('R0', 3036), ('R1', 1538), ('R2', 1440), ('R3', 1916), ('After30GameMinutes', 11453)):
+            self.bridge.retained = {'bytes': 10, 'objects': 2, 'top_types': [{'name': 'String', 'objects': 9}],
+                                    'tracked_types': [{'name': 'RouteLeg', 'objects': legs, 'bytes': legs * 104}],
+                                    'route_legs': {'outside_current_journeys': legs // 100, 'travelling': 174}}
+            rows.append(retention.snapshot(key))
+        series = retention.readings_summary(rows)
+        self.assertEqual(series['RouteLeg'], [3036, 1538, 1440, 1916, 11453])
+        self.assertEqual(series['RouteLeg outside current journeys'], [30, 15, 14, 19, 114])
+        self.assertEqual(series['RouteLeg travelling'], [174] * 5)
+
+    def targets(self, retention, minutes):
+        args = types.SimpleNamespace(build_sha='abc', start='15:30')
+        keys = ['R%d' % i for i in range(len(minutes))]
+        rows = [{'native_minute': m, 'census': {'tracked_types': [{'name': 'RouteLeg', 'objects': 100 + i}]}, 'heap': {}, 'mono': {},
+                 'mesh': {f: 0 for f in retention.FIELDS}} for i, m in enumerate(minutes)]
+        return retention.export_targets(args, keys, rows, True)
+
+    def test_retimed_process_exports_its_checkpoint_native_minutes(self):
+        retention = self.local(importlib.import_module('retention'))
+        plan = self.targets(retention, [3810.01, 3819.143536, 3901.011407])
+        saved = json.loads((self.stage / 'retention-targets.json').read_text())
+        self.assertEqual(saved, plan)
+        self.assertEqual([p['native_minute'] for p in saved['checkpoints']], [3810.01, 3819.143536, 3901.011407])
+        self.assertEqual(saved['series']['RouteLeg'], [100, 101, 102])
+        for broken in ([3810.01, None], [3810.01, 3810.01], [], [3810.01, float('nan')]):
+            with self.assertRaisesRegex(RuntimeError, 'Retimed process did not export matched native clock targets'):
+                self.targets(retention, broken)
+
+    def test_control_reads_at_the_retimed_native_minutes(self):
+        retention = self.local(importlib.import_module('retention'))
+        plan = self.targets(retention, [3810.01, 3810.5, 3811.2, 3900.0111065])
+        retention.wait_native = lambda label, target: self.common.wait_native(label, target, timeout=5, interval=0)
+        self.bridge.minute, self.bridge.paused, self.bridge.step = 3810.01, True, .05
+        rows = retention.follow_targets(plan)
+        offsets = [row['native_minute'] - point['native_minute'] for row, point in zip(rows, plan['checkpoints'])]
+        self.assertEqual(len(rows), 4)
+        self.assertTrue(all(-self.common.NATIVE_TOLERANCE <= o < .2 for o in offsets), offsets)
+        rates = [json.loads(c[2]) for c in self.bridge.commands if c[:2] == ['call', 'time']]
+        self.assertEqual(rates, [{'speed': 1, 'pause': False, 'keep_needs': True}])
+        matched = json.loads((self.stage / 'retention-matched.json').read_text())
+        self.assertEqual(matched['keys'], ['R0', 'R1', 'R2', 'R3'])
+        self.assertEqual(matched['retimed_minus_control']['RouteLeg'], [96, 97, 98, 99])
+        self.assertTrue((self.stage / 'retention-control-R3-set.json').is_file())
+
+    def test_control_refuses_a_targets_file_without_native_minutes(self):
+        retention = self.local(importlib.import_module('retention'))
+        path = self.stage / 'retention-targets.json'
+        self.stage.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps({'build_sha': 'abc', 'fixture': '', 'checkpoints': [{'key': 'R0'}]}))
+        with self.assertRaisesRegex(RuntimeError, 'Retimed process did not export matched native clock targets'):
+            retention.main(['--build-sha', 'abc', '--control', str(path)])
+        self.assertEqual(self.bridge.commands, [])
 
     def test_wrap_reads_the_hart_builds_run_directory(self):
         with HomeDir() as home:

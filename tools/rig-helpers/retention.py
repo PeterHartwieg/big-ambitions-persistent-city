@@ -1,16 +1,22 @@
 import argparse
+import json
+import math
 import sys
 import time
 
-from rigcommon import (LOG, archive, auto, call, census, console, footprint, game_pid, go, host, idle, loaded_identity, log_size,
-                       log_since, now, optional, probe_read, prop, rate, require_lock, rss_kib, run, start_and_load, stop,
-                       route_leg_read, track_cost, type_read, wrap, write)
+from rigcommon import (FIXTURE, LOG, archive, auto, call, census, console, footprint, game_pid, go, host, idle, loaded_identity, log_size,
+                       log_since, native_minute, native_reached, now, optional, probe_read, prop, rate, require_lock, rss_kib, run,
+                       start_and_load, stop, route_leg_read, track_cost, type_read, wait_native, wrap, write)
+from rigpaths import absolute
 
 LABEL = 'retention'
+CONTROL = 'retention-control'
 FIELDS = ('ownedBodyCombiners', 'liveMergedMeshes', 'unmergedBodyCombiners', 'reservedBodies',
           'liveMergedVertices', 'bakeScratchBytes', 'monoHeapBytes', 'monoUsedBytes')
 TYPES = ('Position[]', 'Double[]', 'Int64[]', 'RouteLeg', 'CitySimulator', 'RoadRoutes')
 ROUTE_LEGS = ('in_current_journeys', 'outside_current_journeys', 'split_prefix_legs', 'travelling')
+TARGETS = 'retention-targets'
+MISSING_TARGETS = 'Retimed process did not export matched native clock targets'
 
 
 def wait_until(deadline):
@@ -28,21 +34,24 @@ def last_population_summary():
 
 def snapshot(key):
     mark = 'retention-' + key
+    pid = game_pid()
+    if pid is None:
+        raise RuntimeError(f'{mark}: run.json has no game pid')
     start = time.monotonic()
     auto(mark + '-autosave-before')
     try:
+        minute = native_minute(mark + '-native')
         retained = census(mark + '-census')
         console(mark + '-movement', 'pc movement status')
         console(mark + '-population', 'pc population manifest')
         write(mark + '-last-population-summary', last_population_summary())
         heap = probe_read(mark + '-forced', 'heap')
         mono = probe_read(mark + '-mono', 'status')['mono_heap']
-        pid = game_pid()
         rss = rss_kib(pid)
         gc = prop(mark + '-mesh', 'GcDiagnostics')
         food = prop(mark + '-rate', 'FoodDiagnostics')
         sample = {'utc': now(), 'start_monotonic': start, 'seconds': time.monotonic() - start,
-                  'pid': pid, 'native': food.get('native'), 'rate': food.get('value', {}).get('travelClockRate'),
+                  'pid': pid, 'native_minute': minute, 'native': food.get('native'), 'rate': food.get('value', {}).get('travelClockRate'),
                   'census': retained, 'heap': heap, 'mono': mono, 'rss_kib': rss, 'footprint': footprint(mark, pid),
                   'mesh': {f: gc.get('value', {}).get(f) for f in FIELDS}}
     finally:
@@ -116,31 +125,102 @@ def still_climbing(series):
     return any(all(x is not None for x in v[1:]) and v[-1] > max(v[1:-1]) for key, v in series.items() if not key.startswith('RouteLeg'))
 
 
+def checked_targets(checkpoints):
+    minutes = [point.get('native_minute') if isinstance(point, dict) else None for point in checkpoints or []]
+    valid = minutes and all(isinstance(m, (int, float)) and not isinstance(m, bool) and math.isfinite(m) for m in minutes)
+    if not valid or any(b <= a for a, b in zip(minutes, minutes[1:])) or len({p.get('key') for p in checkpoints}) != len(checkpoints):
+        raise RuntimeError(MISSING_TARGETS + ': ' + json.dumps(checkpoints, default=str))
+    return checkpoints
+
+
+def export_targets(args, keys, rows, complete):
+    checkpoints = checked_targets([{'key': key, 'native_minute': row.get('native_minute')} for key, row in zip(keys, rows)])
+    return write(TARGETS, {'format': 1, 'build_sha': args.build_sha, 'fixture': FIXTURE, 'start': args.start, 'complete': complete,
+                           'checkpoints': checkpoints, 'series': readings_summary(rows)})
+
+
+def difference(a, b):
+    numbers = all(isinstance(x, (int, float)) and not isinstance(x, bool) for x in (a, b))
+    return a - b if numbers else None
+
+
+def matched_series(plan, rows):
+    control = readings_summary(rows)
+    retimed = plan.get('series') or {}
+    return {'keys': [point['key'] for point in plan['checkpoints'][:len(rows)]],
+            'native_offsets': [difference(row.get('native_minute'), point['native_minute']) for row, point in zip(rows, plan['checkpoints'])],
+            'retimed_minus_control': {name: [difference(a, b) for a, b in zip(retimed.get(name, []), values)] for name, values in control.items()}}
+
+
+def follow_targets(plan):
+    rows, running = [], False
+    for point in checked_targets(plan.get('checkpoints')):
+        label = CONTROL + '-' + point['key'] + '-wait'
+        if not running and not native_reached(native_minute(label + '-start'), point['native_minute']):
+            rate(label + '-run', 1)
+            running = True
+        wait_native(label, point['native_minute'])
+        rows.append(snapshot('control-' + point['key']))
+        write('retention-control-series', readings_summary(rows))
+        write('retention-matched', matched_series(plan, rows))
+    return rows
+
+
+def prepare(prefix, args, start):
+    require_lock()
+    if run(prefix + '-previous-status', 'status')['running']:
+        archive(prefix + '-prior')
+        stop(prefix + '-previous-stop')
+    start_and_load(prefix + '-cold')
+    loaded_identity(prefix, args.build_sha)
+    go(prefix, start, 1)
+    call(prefix + '-position-start', 'teleport', {'who': 'player', 'x': 215, 'z': 0})
+    auto(prefix + '-autosave-pre')
+    track_cost(prefix + '-cost-before')
+    idle(prefix + '-idle-before')
+    host(prefix + '-host-start')
+
+
+def finish(prefix):
+    auto(prefix + '-autosave-post')
+    idle(prefix + '-idle-after')
+    track_cost(prefix + '-cost-after')
+    host(prefix + '-host-end')
+
+
+def control(args):
+    plan = json.loads(absolute(args.control).read_text())
+    checked_targets(plan.get('checkpoints'))
+    if plan.get('build_sha') != args.build_sha:
+        raise RuntimeError(f"control targets are for build {plan.get('build_sha')}, not {args.build_sha}")
+    if plan.get('fixture') != FIXTURE:
+        raise RuntimeError(f"control targets are for fixture {plan.get('fixture')!r}, not {FIXTURE!r}")
+    prepare(CONTROL, args, plan.get('start') or args.start)
+    rows = follow_targets(plan)
+    finish(CONTROL)
+    return rows
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description='Leak-check L: retained census across repeated clock retimes.')
     parser.add_argument('--build-sha', required=True)
     parser.add_argument('--start', default='15:30')
     parser.add_argument('--cycles', type=int, default=5)
+    parser.add_argument('--control', help='retention-targets.json from the retimed process; runs the 1x control at its native minutes')
     args = parser.parse_args(argv)
-    require_lock()
-    if run('retention-previous-status', 'status')['running']:
-        archive('retention-prior')
-        stop('retention-previous-stop')
-    start_and_load('retention-cold')
-    loaded_identity(LABEL, args.build_sha)
-    go(LABEL, args.start, 1)
-    call('retention-position-start', 'teleport', {'who': 'player', 'x': 215, 'z': 0})
-    auto('retention-autosave-pre')
-    track_cost('retention-cost-before')
-    idle('retention-idle-before')
-    host('retention-host-start')
-    rows = [snapshot('R0')]
+    if args.control:
+        return control(args)
+    prepare(LABEL, args, args.start)
+    rows, keys = [snapshot('R0')], ['R0']
+    export_targets(args, keys, rows, False)
     for n in range(1, args.cycles + 1):
         change(f'cycle{n}-1to2', 2)
         road = change(f'cycle{n}-2to1', 1)
         wait_until(road + 30)
         write(f'retention-R{n}-settle', {'seconds_after_road': time.monotonic() - road, 'utc': now()})
         rows.append(snapshot(f'R{n}'))
+        keys.append(f'R{n}')
+        export_targets(args, keys, rows, False)
         series = readings_summary(rows)
         write('retention-series', series)
         print(f'R{n}', {k: v[-1] for k, v in series.items()}, flush=True)
@@ -152,10 +232,9 @@ def main(argv=None):
     go(LABEL, f'{target // 60:02d}:{target % 60:02d}', 1)
     arrived = snapshot('After30GameMinutes')
     write('retention-arrival-series', readings_summary([rows[0], rows[-1], arrived]))
-    auto('retention-autosave-post')
-    idle('retention-idle-after')
-    track_cost('retention-cost-after')
-    host('retention-host-end')
+    export_targets(args, keys + ['After30GameMinutes'], rows + [arrived], True)
+    finish(LABEL)
+    return rows + [arrived]
 
 
 if __name__ == '__main__':
