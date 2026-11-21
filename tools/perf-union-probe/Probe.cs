@@ -541,8 +541,9 @@ namespace PerfUnionProbe
             if (nowFrame == currentFrame) return;
             if (measuring && currentFrame >= 0 && currentFrame > firstMeasureFrame)
             {
-                WriteFrame(nowFrame, now, false);
-                phases.Close(currentFrame, now, GC.CollectionCount(0), union.FrameTicks * ToMs, frameDiagnostic, frameLate, ToMs);
+                int collections = GC.CollectionCount(0);
+                WriteFrame(nowFrame, new StopRead(collections, nowFrame, -1, -1, now), false);
+                phases.Close(currentFrame, now, collections, union.FrameTicks * ToMs, frameDiagnostic, frameLate, ToMs);
             }
             if (measuring) NoteCollections();
             if (union.Depth != 0)
@@ -558,12 +559,12 @@ namespace PerfUnionProbe
             frameNative = NativeMinute(); frameLogical = LogicalMinute();
         }
 
-        private static void WriteFrame(int nextFrame, long end, bool partial)
+        private static void WriteFrame(int nextFrame, StopRead end, bool partial)
         {
             if (!frameRing.TryWrite(out int slot)) return;
             frames[slot] = new FrameRow { frame = currentFrame, skipped = Math.Max(0, nextFrame - currentFrame - 1), qpc = frameStartQpc,
-                modWorkMs = union.FrameTicks * ToMs, wholeFrameMs = (end - frameStartQpc) * ToMs, observerMs = observerTicks * ToMs,
-                boundaryMs = boundaryTicks * ToMs, gc = GC.CollectionCount(0) - gcAtFrameStart, saves = frameSaves, scene = frameScene,
+                modWorkMs = union.FrameTicks * ToMs, wholeFrameMs = end.WholeMs(frameStartQpc, ToMs), observerMs = observerTicks * ToMs,
+                boundaryMs = boundaryTicks * ToMs, gc = end.CollectionsSince(gcAtFrameStart), saves = frameSaves, scene = frameScene,
                 loading = frameLoading, diagnostic = frameDiagnostic, lateBoundary = frameLate, partial = partial, crossFrame = !partial && union.Depth != 0,
                 nativeMinute = frameNative, logicalMinute = frameLogical };
             int components = union.Components;
@@ -655,16 +656,6 @@ namespace PerfUnionProbe
             pendingWindowStart = true; measuring = true;
         }
 
-        private readonly struct StopRead
-        {
-            public StopRead(int collections, int frame, long heap, long used, long ticks) { Collections = collections; Frame = frame; Heap = heap; Used = used; Ticks = ticks; }
-            public long Ticks { get; }
-            public int Collections { get; }
-            public int Frame { get; }
-            public long Heap { get; }
-            public long Used { get; }
-        }
-
         private static StopRead ReadStop()
         {
             long ticks = Stopwatch.GetTimestamp();
@@ -679,14 +670,11 @@ namespace PerfUnionProbe
         {
             if (!measuring) return;
             monoHeapStop = stop.Heap; monoUsedStop = stop.Used;
-            collectionSeries.Note(stop.Collections, stop.Used, stop.Frame);
-            if (currentFrame >= 0 && currentFrame > firstMeasureFrame)
-                phases.Close(currentFrame, stop.Ticks, stop.Collections, union.FrameTicks * ToMs, true, frameLate, ToMs, true);
+            stop.Close(collectionSeries, phases, currentFrame, currentFrame >= 0 && currentFrame > firstMeasureFrame, union.FrameTicks * ToMs, frameLate, ToMs);
             if (reason == "explicit-stop") stopScan = Rescan(false);
-            long now = Stopwatch.GetTimestamp();
-            if (writeStopFrame && currentFrame > firstMeasureFrame) { frameDiagnostic = true; WriteFrame(currentFrame + 1, now, true); }
+            if (writeStopFrame && currentFrame > firstMeasureFrame) { frameDiagnostic = true; WriteFrame(currentFrame + 1, stop, true); }
             if (pendingWindowStart) pendingWindowStart = false;
-            else holds.EndWindow(currentFrame, now);
+            else holds.EndWindow(currentFrame, stop.Ticks);
             measuring = false; stopReason = reason;
         }
 
@@ -804,7 +792,7 @@ namespace PerfUnionProbe
             }
             return new JObject { ["frame"] = phases.Frame(r), ["whole_frame_ms"] = phases.WholeMs(r), ["previous_whole_ms"] = Ms(phases.PreviousWholeMs(r)),
                 ["next_whole_ms"] = Ms(phases.NextWholeMs(r)), ["excess_ms"] = phases.PreviousWholeMs(r) < 0 ? JValue.CreateNull() : (JToken)phases.ExcessMs(r),
-                ["mod_work_ms"] = phases.ModWorkMs(r), ["collections"] = phases.RowCollections(r), ["diagnostic"] = phases.Diagnostic(r), ["late_boundary"] = phases.Late(r),
+                ["mod_work_ms"] = phases.ModWorkMs(r), ["collections"] = phases.RowCollections(r), ["gen0_through"] = phases.Gen0Through(r), ["diagnostic"] = phases.Diagnostic(r), ["late_boundary"] = phases.Late(r),
                 ["partial"] = phases.Partial(r),
                 ["gc_phase"] = PhaseLabel(phases.GcPhase(r)), ["largest_excess_phase"] = PhaseLabel(phases.LargestExcessPhase(r)),
                 ["phase_ms"] = now, ["previous_phase_ms"] = before, ["phase_excess_ms"] = grew };

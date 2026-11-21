@@ -130,10 +130,16 @@ public sealed class Gr5DiagnosticFrameTests
         var bySequence = new System.Collections.Concurrent.ConcurrentDictionary<int, string>();
         int mismatches = 0, reads = 0;
         using var done = new System.Threading.ManualResetEventSlim();
+        using var reading = new System.Threading.ManualResetEventSlim();
         var reader = new System.Threading.Thread(() =>
         {
             var seen = new System.Collections.Generic.List<DiagnosticMark>(1 << 16);
-            while (!done.IsSet) { if (seen.Count < seen.Capacity) seen.Add(DiagnosticFrames.Current); }
+            reading.Set();
+            while (!done.IsSet && seen.Count < seen.Capacity)
+            {
+                var mark = DiagnosticFrames.Current;
+                if (mark.Source.StartsWith("pc writer ", StringComparison.Ordinal)) seen.Add(mark);
+            }
             foreach (var mark in seen)
             {
                 if (mark.Source.Length == 0 || !mark.Source.StartsWith("pc writer ", StringComparison.Ordinal)) continue;
@@ -143,6 +149,7 @@ public sealed class Gr5DiagnosticFrameTests
             }
         });
         reader.Start();
+        Assert.True(reading.Wait(TimeSpan.FromSeconds(30)), "the reader started");
         var hooks = System.Threading.Tasks.Parallel.For(0, writers, w =>
         {
             for (int i = 0; i < perWriter; i++)
@@ -153,7 +160,6 @@ public sealed class Gr5DiagnosticFrameTests
                 if (ReferenceEquals(after.Source, source)) bySequence[after.Sequence] = source;
             }
         });
-        System.Threading.Thread.Sleep(50);
         done.Set(); reader.Join();
         var final = DiagnosticFrames.Current;
         Assert.True(hooks.IsCompleted);
@@ -209,6 +215,56 @@ public sealed class Gr5DiagnosticFrameTests
         long before = GC.GetAllocatedBytesForCurrentThread();
         for (int i = 0; i < 2000; i++) { if (i % 3 == 0) started++; Step(i % 3 == 0, i % 50 == 0); }
         Assert.Equal(before, GC.GetAllocatedBytesForCurrentThread());
+    }
+
+    [Fact]
+    public void ACollectionBeforeGcFrameBeginCarriesTheCumulativeGen0CountForTheJoin()
+    {
+        var sampler = new GcPauseSampler(64);
+        sampler.Start(1);
+        sampler.Observe(0, 5, 0, 0, 1, 100);
+        sampler.Observe(60, 6, 0, 0, 1, 101);
+        sampler.Observe(94, 6, 0, 0, 1, 102);
+        sampler.Observe(150, 8, 0, 0, 1, 103);
+        var early = sampler.CollectionRow(0);
+        Assert.Equal(100, early.Frame);
+        Assert.Equal(6, early.Gen0Through);
+        Assert.Equal(1, early.Gen0);
+        Assert.Equal(8, sampler.CollectionRow(1).Gen0Through);
+        Assert.Equal(2, sampler.CollectionRow(1).Gen0);
+        using var report = JsonDocument.Parse(sampler.ReportJson(new GcReportContext(1, 1, null, 0, true, 1, 1)));
+        var rows = report.RootElement.GetProperty("collection_rows");
+        Assert.Equal(new long[] { 6, 8 }, rows.EnumerateArray().Select(r => r.GetProperty("gen0_through").GetInt64()).ToArray());
+        Assert.Equal(new long[] { 100, 102 }, rows.EnumerateArray().Select(r => r.GetProperty("frame").GetInt64()).ToArray());
+        var direct = new GcPauseSampler(8);
+        direct.Start(1);
+        direct.Frame(60, 0, 1, 0, 0, 1);
+        Assert.Equal(-1, direct.CollectionRow(0).Gen0Through);
+    }
+
+    [Fact]
+    public void AGrowCancelledWhileItsPoolIsReleasedStillReadsCancelledAfterThePoolIsGone()
+    {
+        var ledger = new GcGrowLedger();
+        var sampler = new GcPauseSampler(64);
+        sampler.Start(1);
+        double at = 0;
+        int gen0 = 0;
+        void Step(GcGrowSample grow, bool collect) { sampler.NoteBodies(10, 4, grow); at += collect ? 60 : 34; if (collect) gen0++; sampler.Observe(at, gen0, 0, 0, 1, (long)at); }
+        ledger.Start();
+        Step(ledger.Sample(true), false);
+        Step(ledger.Sample(true), false);
+        ledger.CancelPending();
+        Step(ledger.Sample(false), true);
+        Step(ledger.Sample(false), false);
+        ledger.Start(); ledger.CancelPending();
+        Step(ledger.Sample(false), true);
+        ledger.Start();
+        Step(ledger.Sample(true), false);
+        Step(ledger.Sample(true), true);
+        Assert.Equal(new[] { GcAsyncGrow.Cancelled, GcAsyncGrow.Cancelled, GcAsyncGrow.Pending },
+            Enumerable.Range(0, sampler.CollectionRowCount).Select(i => sampler.CollectionRow(i).AsyncGrow).ToArray());
+        Assert.Equal(GcAsyncGrow.Unknown, GcGrowSample.Outcome(new GcGrowSample(true, 3, 0), default));
     }
 
     [Fact]

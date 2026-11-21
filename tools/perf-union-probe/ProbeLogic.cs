@@ -459,6 +459,25 @@ namespace PerfUnionProbe
             used[Retained++] = usedBytes;
         }
     }
+    public readonly struct StopRead
+    {
+        public StopRead(int collections, int frame, long heap, long used, long ticks) { Collections = collections; Frame = frame; Heap = heap; Used = used; Ticks = ticks; }
+        public long Ticks { get; }
+        public int Collections { get; }
+        public int Frame { get; }
+        public long Heap { get; }
+        public long Used { get; }
+
+        public void Close(CollectionSeries series, LoopPhaseRecorder phases, int frame, bool closePhases, double modWorkMs, bool late, double ticksToMs)
+        {
+            series.Note(Collections, Used, Frame);
+            if (closePhases) phases.Close(frame, Ticks, Collections, modWorkMs, true, late, ticksToMs, true);
+        }
+
+        public double WholeMs(long frameStartTicks, double ticksToMs) => (Ticks - frameStartTicks) * ticksToMs;
+        public int CollectionsSince(int atFrameStart) => Collections - atFrameStart;
+    }
+
     public sealed class LoopPhaseRecorder
     {
         public const int Limit = 64, MaxPhases = 12;
@@ -469,7 +488,7 @@ namespace PerfUnionProbe
         private readonly double[] current = new double[MaxPhases];
         private readonly double[] rowPhases = new double[Limit * MaxPhases];
         private readonly double[] rowPrevious = new double[Limit * MaxPhases];
-        private readonly int[] rowFrame = new int[Limit], rowCollections = new int[Limit], rowGcPhase = new int[Limit];
+        private readonly int[] rowFrame = new int[Limit], rowCollections = new int[Limit], rowGcPhase = new int[Limit], rowThrough = new int[Limit];
         private readonly double[] rowWhole = new double[Limit], rowPreviousWhole = new double[Limit], rowNextWhole = new double[Limit], rowMod = new double[Limit];
         private readonly bool[] rowDiagnostic = new bool[Limit], rowLate = new bool[Limit], rowPreviousCollected = new bool[Limit], rowPartial = new bool[Limit];
         private string[] names = Array.Empty<string>();
@@ -536,7 +555,7 @@ namespace PerfUnionProbe
                 {
                     int r = Retained++;
                     rowFrame[r] = frame; rowWhole[r] = whole; rowMod[r] = modWorkMs; rowDiagnostic[r] = diagnostic; rowLate[r] = late; rowPartial[r] = partial;
-                    rowCollections[r] = collections - startCollections; rowGcPhase[r] = gcPhase;
+                    rowCollections[r] = collections - startCollections; rowThrough[r] = collections; rowGcPhase[r] = gcPhase;
                     rowPreviousWhole[r] = previousCollected ? -1 : previousWhole; rowPreviousCollected[r] = previousCollected; rowNextWhole[r] = -1;
                     for (int p = 0; p < MaxPhases; p++)
                     {
@@ -559,6 +578,7 @@ namespace PerfUnionProbe
         public bool Late(int row) => rowLate[Row(row)];
         public bool Partial(int row) => rowPartial[Row(row)];
         public int RowCollections(int row) => rowCollections[Row(row)];
+        public int Gen0Through(int row) => rowThrough[Row(row)];
         public int GcPhase(int row) => rowGcPhase[Row(row)];
         public double PhaseMs(int row, int phase) => rowPhases[Row(row) * MaxPhases + Phase(phase)];
         public double PreviousPhaseMs(int row, int phase) => rowPrevious[Row(row) * MaxPhases + Phase(phase)];

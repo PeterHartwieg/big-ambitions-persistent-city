@@ -490,6 +490,28 @@ internal static class Program
             "a collection just before stop is in the collection series and the collections page");
         Check(p.Partial(0) && p.Diagnostic(0) && p.WholeMs(0) == 12 && p.GcPhase(0) == 2 && p.NextWholeMs(0) == -1 && p.PhaseMs(0, 4) == 0,
             "the stop frame row is partial, ends at the stop read and names the phase that ran the collection");
+        p.Reset(); series.Begin(50);
+        Frame(400, 20000, 50, plain, -1);
+        p.Begin(20033, 50);
+        for (int i = 1; i < 4; i++) p.Stamp(i, 20033 + plain[i], i == 3 ? 51 : 50);
+        var stop = new StopRead(51, 401, 2000, 1500, 20033 + 9);
+        int liveCount = 52;
+        long liveTicks = 20033 + 40;
+        stop.Close(series, p, 401, true, 0.5, false, 1.0);
+        Check(liveCount != stop.Collections && liveTicks != stop.Ticks && stop.CollectionsSince(50) == 1 && p.RowCollections(0) == 1 && series.Collections == 1
+            && stop.WholeMs(20033, 1.0) == p.WholeMs(0) && p.WholeMs(0) == 9,
+            "a collection after the stop read, during the status and patch check, reaches none of the frames export, the collections page or the series");
+        p.Reset();
+        Frame(500, 30000, 5, plain, -1);
+        Frame(501, 30033, 5, plain, 0);
+        Check(p.Retained == 1 && p.Frame(0) == 501 && p.GcPhase(0) == 0 && p.Gen0Through(0) == 6 && p.RowCollections(0) == 1,
+            "a collection in EarlyUpdate before the sampler's frame start sits under the new frame with the cumulative gen0 count the sampler row also carries");
+        p.Reset(); series.Begin(50);
+        Frame(400, 20000, 50, plain, -1);
+        p.Begin(20033, 50);
+        for (int i = 1; i < 4; i++) p.Stamp(i, 20033 + plain[i], i == 3 ? 51 : 50);
+        var stop2 = new StopRead(51, 401, 2000, 1500, 20033 + 9);
+        stop2.Close(series, p, 401, true, 0.5, false, 1.0);
         p.Begin(9100, 41); p.Close(302, 9133, 41, 0, false, false, 1.0);
         Check(p.NextWholeMs(0) == -1 && p.Partial(0), "a partial row takes no next frame");
         p.Reset();
