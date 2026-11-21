@@ -355,6 +355,8 @@ namespace PersistentCity.Runtime
             private readonly Dictionary<string, Route?> originWalkMap = new Dictionary<string, Route?>(StringComparer.Ordinal),
                 destinationWalkMap = new Dictionary<string, Route?>(StringComparer.Ordinal);
             private readonly Place point = new Place();
+            private readonly RoadRoutes.NearQuery curbQuery = new RoadRoutes.NearQuery();
+            private bool curbsBegun;
             private Route? best;
             private double bestScore = double.PositiveInfinity;
             private Place? home;
@@ -384,7 +386,7 @@ namespace PersistentCity.Runtime
                 best = null; bestScore = double.PositiveInfinity; home = null;
                 homeCurbs = null; homeCurbIndex = 0; origins = destinations = null; originWalks = destinationWalks = null; connectorIndex = 0;
                 accessWalk = egress = null; accessMetres = driveCeiling = 0; starts = ends = null;
-                endIndex = startIndex = searches = 0; drive = null;
+                endIndex = startIndex = searches = 0; drive = null; curbsBegun = false; curbQuery.Search.Cancel();
                 homeCurbList.Clear(); startList.Clear(); endList.Clear(); originList.Clear(); destinationList.Clear();
                 originWalkMap.Clear(); destinationWalkMap.Clear(); point.Position = default;
                 if (!preferenceOnly)
@@ -495,7 +497,10 @@ namespace PersistentCity.Runtime
                         else stage = Stage.DirectWalk;
                         return;
                     case Stage.HomeCurbs:
-                        homeCurbs = roads!.Near(home!.Position, 90, 2, homeCurbList); homeCurbIndex = 0;
+                        if (!curbsBegun) { roads!.BeginNear(curbQuery, home!.Position, 90, 2, homeCurbList); curbsBegun = true; }
+                        if (!roads!.ContinueNear(curbQuery, deadline)) return;
+                        curbsBegun = false;
+                        homeCurbs = homeCurbList; homeCurbIndex = 0;
                         stage = homeCurbs.Count == 0 ? Stage.DirectWalk : Stage.HomeCurbWalk;
                         return;
                     case Stage.HomeCurbWalk:
@@ -557,7 +562,10 @@ namespace PersistentCity.Runtime
                         stage = Stage.CarEnds;
                         return;
                     case Stage.CarEnds:
-                        ends = roads!.Near(to!.Position, 90, 2, endList);
+                        if (!curbsBegun) { roads!.BeginNear(curbQuery, to!.Position, 90, 2, endList); curbsBegun = true; }
+                        if (!roads!.ContinueNear(curbQuery, deadline)) return;
+                        curbsBegun = false;
+                        ends = endList;
                         endIndex = 0; searches = 0;
                         NextEnd();
                         return;
@@ -647,7 +655,7 @@ namespace PersistentCity.Runtime
 
             public void Dispose()
             {
-                drive?.Dispose(); drive = null;
+                drive?.Dispose(); drive = null; curbsBegun = false; curbQuery.Search.Cancel(); curbQuery.Owner = null; curbQuery.Result = null;
                 if (!Completed) { Result = null; stage = Stage.Done; }
                 if (pooled) return;
                 pooled = true;

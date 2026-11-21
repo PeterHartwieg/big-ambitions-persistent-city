@@ -503,36 +503,72 @@ namespace PersistentCity.Runtime
 
         public List<Curb> Near(Position position, double radius, int limit, List<Curb> result)
         {
-            result.Clear();
-            trafficBuilder?.BeginQuery();
-            if (!Ready || !position.IsFinite || Math.Abs(position.X) > 1000000 || Math.Abs(position.Z) > 1000000
-                || !Position.Finite(radius) || radius < 0 || radius > 100 || limit < 1 || limit > 2) return result;
-            var nearby = nearbyNodes;
-            nearby.Clear();
-            var cell = Cell(position); int reach = (int)Math.Ceiling(radius / 50);
-            for (int x = cell.X - reach; x <= cell.X + reach; x++)
-                for (int z = cell.Z - reach; z <= cell.Z + reach; z++)
-                    if (cells.TryGetValue((x, z), out var indices))
-                        foreach (int index in indices) if (!Disabled(index) && Position.Distance(position, nodes[index].Position) <= radius) nearby.Add(index);
-            var order = nearbyOrder ??= new NearbyOrder(nodes);
-            order.Origin = position;
-            nearby.Sort(nearbyCompare ??= order.Compare);
-            int attempts = 0;
-            foreach (int index in nearby)
-            {
-                if (++attempts > 12 || result.Count >= limit) break;
-                var road = nodes[index].Position;
-                if (!NavMesh.SamplePosition(Vector(road), out NavMeshHit hit, (float)ConnectorMetres, WalkingRoutes.DryFilter)) continue;
-                Position curb = Point(hit.position);
-                bool duplicate = false;
-                foreach (var old in result) if (old.Node == index || Position.Distance(old.Position, curb) < 5) { duplicate = true; break; }
-                if (duplicate || !ConnectorClear(curb, road)) continue;
-                result.Add(new Curb { Node = index, Position = curb });
-            }
+            var query = syncQuery ??= new NearQuery();
+            BeginNear(query, position, radius, limit, result);
+            ContinueNear(query, long.MaxValue);
             return result;
         }
 
-        private readonly List<int> nearbyNodes = new List<int>();
+        internal sealed class NearQuery : ICurbSource
+        {
+            internal readonly CurbSearch Search = new CurbSearch();
+            internal RoadRoutes? Owner;
+            internal Position Origin;
+            internal double Radius;
+            internal int Limit;
+            internal List<Curb>? Result;
+            public long Now() => Stopwatch.GetTimestamp();
+            public void CollectCell(int x, int z, List<int> into) => Owner!.CollectCell(this, x, z, into);
+            public void Order(List<int> nearby) => Owner!.OrderNearby(Origin, nearby);
+            public bool Full => Result!.Count >= Limit;
+            public void Attempt(int candidate) => Owner!.AttemptCurb(this, candidate);
+        }
+
+        private NearQuery? syncQuery;
+
+        internal void BeginNear(NearQuery query, Position position, double radius, int limit, List<Curb> result)
+        {
+            result.Clear();
+            trafficBuilder?.BeginQuery();
+            query.Owner = this; query.Origin = position; query.Radius = radius; query.Limit = limit; query.Result = result;
+            if (!Ready || !position.IsFinite || Math.Abs(position.X) > 1000000 || Math.Abs(position.Z) > 1000000
+                || !Position.Finite(radius) || radius < 0 || radius > 100 || limit < 1 || limit > 2) { query.Search.Cancel(); return; }
+            var cell = Cell(position);
+            query.Search.Begin(cell.X, cell.Z, (int)Math.Ceiling(radius / 50));
+        }
+
+        internal bool ContinueNear(NearQuery query, long deadline)
+        {
+            if (query.Search.Done) return true;
+            if (!ReferenceEquals(query.Owner, this) || !Ready) { query.Search.Cancel(); return true; }
+            trafficBuilder?.BeginQuery();
+            return query.Search.Continue(query, deadline);
+        }
+
+        private void CollectCell(NearQuery query, int x, int z, List<int> into)
+        {
+            if (!cells.TryGetValue((x, z), out var indices)) return;
+            foreach (int index in indices) if (!Disabled(index) && Position.Distance(query.Origin, nodes[index].Position) <= query.Radius) into.Add(index);
+        }
+
+        private void OrderNearby(Position origin, List<int> nearby)
+        {
+            var order = nearbyOrder ??= new NearbyOrder(nodes);
+            order.Origin = origin;
+            nearby.Sort(nearbyCompare ??= order.Compare);
+        }
+
+        private void AttemptCurb(NearQuery query, int index)
+        {
+            var result = query.Result!;
+            var road = nodes[index].Position;
+            if (!NavMesh.SamplePosition(Vector(road), out NavMeshHit hit, (float)ConnectorMetres, WalkingRoutes.DryFilter)) return;
+            Position curb = Point(hit.position);
+            foreach (var old in result) if (old.Node == index || Position.Distance(old.Position, curb) < 5) return;
+            if (!ConnectorClear(curb, road)) return;
+            result.Add(new Curb { Node = index, Position = curb });
+        }
+
         private NearbyOrder? nearbyOrder;
         private Comparison<int>? nearbyCompare;
         private sealed class NearbyOrder : IComparer<int>
@@ -574,7 +610,7 @@ namespace PersistentCity.Runtime
 
         internal sealed class RoadPlan : IDisposable
         {
-            private const int ExpansionSlice = 64;
+            internal const int ExpansionStep = 16, StepsPerUnit = 4;
             private readonly RoadRoutes owner;
             private readonly Curb from, to;
             private readonly double departureMinute, maximumEstimatedMinutes;
@@ -636,12 +672,18 @@ namespace PersistentCity.Runtime
                     if (Finished) return true;
                     if (WaitingForSpeeds) return false;
                 }
+                int steps = 0;
                 while (true)
                 {
                     bool done;
-                    try { done = search!.Advance(ExpansionSlice); }
+                    try { done = search!.Advance(ExpansionStep); }
                     catch (RoadSpeedsWaitingException) { search?.Dispose(); search = null; WaitingForSpeeds = true; return false; }
-                    if (!done) { if (deadlineTimestamp != long.MaxValue) return false; continue; }
+                    if (!done)
+                    {
+                        if (deadlineTimestamp == long.MaxValue) continue;
+                        if (++steps >= StepsPerUnit || Stopwatch.GetTimestamp() >= deadlineTimestamp) return false;
+                        continue;
+                    }
                     try { Complete(); }
                     catch (RoadSpeedsWaitingException) { search?.Dispose(); search = null; WaitingForSpeeds = true; return false; }
                     return true;
