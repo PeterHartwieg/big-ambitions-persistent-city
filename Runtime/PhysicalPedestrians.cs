@@ -226,7 +226,8 @@ namespace PersistentCity.Runtime
         private GameObject? staging;
 
         private AsyncInstantiateOperation<GameObject>? growing;
-        public long GrowsStarted { get; private set; }
+        public static readonly GcGrowLedger Grows = new GcGrowLedger();
+        public bool GrowIntegrating => growing != null && !growing.isDone;
         public double GrowStartMaximum { get; private set; }
         public double GrowFinishMaximum { get; private set; }
         private bool hierarchySized;
@@ -262,7 +263,7 @@ namespace PersistentCity.Runtime
                     growing = UnityEngine.Object.InstantiateAsync(prefab!, staging!.transform);
                     GrowStep(GrowTimer.Result);
                     growTimer.Outcome(true);
-                    GrowsStarted++;
+                    Grows.Start();
                     GrowStartMaximum = Math.Max(GrowStartMaximum, Since(started));
                     return null;
                 }
@@ -295,7 +296,7 @@ namespace PersistentCity.Runtime
             var pending = growing;
             growing = null;
             if (pending == null) return;
-            if (!pending.isDone) { pending.Cancel(); return; }
+            if (!pending.isDone) { pending.Cancel(); Grows.CancelPending(); return; }
             var made = pending.Result;
             if (made != null) foreach (var instance in made) if (instance != null) UnityEngine.Object.Destroy(instance);
         }

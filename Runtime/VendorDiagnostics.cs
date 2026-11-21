@@ -60,12 +60,14 @@ namespace PersistentCity.Runtime
         private void RoutePcCommand(string area, string action) => RoutePcDetail(area, action, "");
         private void RoutePcMovement(string area, string action, string detail, string value)
         {
+            DiagnosticFrames.Mark("pc " + area + " " + action);
             if (area == "movement") MovementCommand(action, detail, value);
             else if (area == "probe") SaleProbeCommand(action, detail, value);
             else Debug.LogWarning("[Persistent City] Unknown command. Use: pc movement corrections since <seq>");
         }
         private void RoutePcDetail(string area, string action, string detail)
         {
+            DiagnosticFrames.Mark("pc " + area + " " + action);
             if (area == "movement") { MovementCommand(action, detail, ""); return; }
             if (area == "gc") { GcCommand(action, detail); return; }
             if (area == "workplace") { WorkplaceCommand(action, detail); return; }

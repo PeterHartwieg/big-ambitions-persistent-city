@@ -65,8 +65,8 @@ namespace PersistentCity.Runtime
             censusPlaces = new List<Place>(); censusWorkplaces = new List<CensusWorkplace>();
         }
 
-        private void CensusCommand(string area, string action) => RunCensusCommand(area, action, "");
-        private void CensusDetailCommand(string area, string action, string detail) => RunCensusCommand(area, action, detail);
+        private void CensusCommand(string area, string action) { DiagnosticFrames.Mark("pc " + area + " " + action); RunCensusCommand(area, action, ""); }
+        private void CensusDetailCommand(string area, string action, string detail) { DiagnosticFrames.Mark("pc " + area + " " + action); RunCensusCommand(area, action, detail); }
 
         private void RunCensusCommand(string area, string action, string detail)
         {

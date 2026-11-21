@@ -44,6 +44,7 @@ internal static class Program
         Capacity();
         HarmonyAdapter();
         PatchWatch();
+        LoopPhases();
         Console.WriteLine("logic-check: " + (checks - failures) + "/" + checks + " checks passed");
         Console.WriteLine("expected_scope_hash " + ScopeInventory.Hash());
         if (perf) Perf();
@@ -434,6 +435,145 @@ internal static class Program
         Check(series.Retained == CollectionSeries.Limit && series.Truncated && series.Collections == CollectionSeries.Limit + 5, "a full series counts further collections and reports truncation");
         series.Begin(100);
         Check(series.Retained == 0 && series.Collections == 0 && series.First == -1 && series.Growth == 0, "a new window starts an empty series");
+    }
+
+    private static void LoopPhases()
+    {
+        var names = new[] { "EarlyUpdate", "FixedUpdate", "PreUpdate", "Update", "PreLateUpdate", "PostLateUpdate", "TimeUpdate", "Initialization" };
+        var p = new LoopPhaseRecorder();
+        p.Configure(names);
+        void Frame(int frame, long at, int gc, long[] starts, int gcPhase, double mod = 0, bool diagnostic = false)
+        {
+            p.Begin(at, gc);
+            int collections = gc;
+            for (int i = 1; i < starts.Length; i++)
+            {
+                if (gcPhase == i - 1) collections++;
+                if (starts[i] >= 0) p.Stamp(i, at + starts[i], collections);
+            }
+            if (gcPhase == starts.Length - 1) collections++;
+            p.Close(frame, at + 33, collections, mod, diagnostic, false, 1.0);
+        }
+        var plain = new long[] { 0, 2, 4, 5, 20, 22, 30, 31 };
+        Frame(10, 0, 4, plain, -1);
+        Check(p.Collections == 0 && p.Retained == 0, "a frame without a collection adds no collection row");
+        var gcFrame = new long[] { 0, 2, 4, 5, 45, 47, 55, 56 };
+        p.Begin(33, 4);
+        int c = 4;
+        for (int i = 1; i < gcFrame.Length; i++) { if (i == 4) c++; p.Stamp(i, 33 + gcFrame[i], c); }
+        p.Close(11, 33 + 58, c, 2.5, false, false, 1.0);
+        Check(p.Collections == 1 && p.Retained == 1 && p.Frame(0) == 11 && p.WholeMs(0) == 58 && p.PreviousWholeMs(0) == 33,
+            "a collection frame keeps its whole time and the previous frame's");
+        Check(p.PhaseMs(0, 3) == 40 && p.PreviousPhaseMs(0, 3) == 15 && p.GcPhase(0) == 3 && p.LargestExcessPhase(0) == 3 && p.ExcessMs(0) == 25,
+            "the phase that ran the collection and the phase that grew are named against the previous frame");
+        double sum = 0; for (int i = 0; i < names.Length; i++) sum += p.PhaseMs(0, i);
+        Check(Math.Abs(sum - p.WholeMs(0)) < 1e-9, "phases tile the whole frame");
+        Check(p.ModWorkMs(0) == 2.5 && p.NextWholeMs(0) == -1, "mod work is kept and the next frame is pending");
+        Frame(12, 91, 5, new long[] { 0, -1, 4, 5, 20, 22, 30, 31 }, -1);
+        Check(p.NextWholeMs(0) == 33, "the following frame fills the next-frame time");
+        p.Begin(124, 5); p.Close(13, 124 + 33, 5, 0, false, false, 1.0);
+        Check(p.Retained == 1, "an unstamped phase reads zero and adds no row");
+        Frame(14, 157, 5, plain, 6, 0, true);
+        Check(p.Retained == 2 && p.Diagnostic(1) && p.GcPhase(1) == 6, "a diagnostic collection frame is flagged, its collection placed in the next frame's time update");
+        for (int i = 0; i < LoopPhaseRecorder.Limit + 3; i++) Frame(20 + i, 200 + 40 * i, 6 + i, plain, 3);
+        Check(p.Retained == LoopPhaseRecorder.Limit && p.Truncated && p.Collections == LoopPhaseRecorder.Limit + 5, "rows stop at the limit and further collections are counted");
+        Check(p.PreviousWholeMs(3) == -1, "a collection frame after a collection frame has no clean previous frame");
+        p.Reset();
+        var series = new CollectionSeries();
+        series.Begin(40);
+        Frame(300, 9000, 40, plain, -1);
+        p.Begin(9033, 40);
+        for (int i = 1; i < 4; i++) p.Stamp(i, 9033 + plain[i], i == 3 ? 41 : 40);
+        series.Note(41, 1000, 301);
+        p.Close(301, 9033 + 12, 41, 1.5, true, false, 1.0, true);
+        Check(series.Collections == 1 && p.Collections == 1 && p.Retained == 1 && p.Frame(0) == series.FrameAt(0) && !p.Truncated,
+            "a collection just before stop is in the collection series and the collections page");
+        Check(p.Partial(0) && p.Diagnostic(0) && p.WholeMs(0) == 12 && p.GcPhase(0) == 2 && p.NextWholeMs(0) == -1 && p.PhaseMs(0, 4) == 0,
+            "the stop frame row is partial, ends at the stop read and names the phase that ran the collection");
+        p.Reset(); series.Begin(50);
+        Frame(400, 20000, 50, plain, -1);
+        p.Begin(20033, 50);
+        for (int i = 1; i < 4; i++) p.Stamp(i, 20033 + plain[i], i == 3 ? 51 : 50);
+        var stop = new StopRead(51, 401, 2000, 1500, 20033 + 9);
+        stop.Close(series, p, 401, true, 0.5, false, 1.0);
+        Check(stop.CollectionsSince(50) == 1 && p.RowCollections(0) == 1 && series.Collections == 1
+            && stop.WholeMs(20033, 1.0) == p.WholeMs(0) && p.WholeMs(0) == 9,
+            "a collection after the stop read, during the status and patch check, reaches none of the frames export, the collections page or the series");
+        p.Reset();
+        Frame(500, 30000, 5, plain, -1);
+        Frame(501, 30033, 5, plain, 0);
+        Check(p.Retained == 1 && p.Frame(0) == 501 && p.GcPhase(0) == 0 && p.Gen0Through(0) == 6 && p.RowCollections(0) == 1,
+            "a collection in EarlyUpdate before the sampler's frame start sits under the new frame with the cumulative gen0 count the sampler row also carries");
+        p.Reset();
+        Frame(600, 40000, 5, plain, -1);
+        p.Begin(40033, 5);
+        p.Stamp(1, 40033 + plain[1], 6); p.Stamp(2, 40033 + plain[2], 6); p.Stamp(3, 40033 + plain[3], 6);
+        for (int i = 4; i < plain.Length; i++) p.Stamp(i, 40033 + plain[i], 7);
+        p.Close(601, 40033 + 33, 7, 0.5, false, false, 1.0);
+        long[] samplerGen0 = { 1, 1 }, samplerThrough = { 6, 7 };
+        Check(p.Retained == 1 && p.RowCollections(0) == 2 && p.Gen0From(0) == 6 && p.Gen0Through(0) == 7 && p.GcPhase(0) == 0,
+            "one probe row holds the EarlyUpdate collection and the collection after GcFrameBegin in the same Unity frame");
+        Check(p.PhaseCollections(0, 0) == 1 && p.PhaseGen0From(0, 0) == 6 && p.PhaseGen0Through(0, 0) == 6
+            && p.PhaseCollections(0, 3) == 1 && p.PhaseGen0From(0, 3) == 7 && p.PhaseGen0Through(0, 3) == 7
+            && p.PhaseCollections(0, 1) == 0 && p.PhaseCollections(0, 4) == 0,
+            "the probe row exports the ordinal range of each phase that ran a collection");
+        Check(samplerThrough[0] != p.Gen0Through(0) && p.RowForCollection(samplerThrough[0] - samplerGen0[0] + 1) == 0 && p.RowForCollection(samplerThrough[1]) == 0,
+            "both sampler rows, ending at gen0 6 and 7, join the probe row through their collection ordinals where an equality join on gen0_through drops the first");
+        Check(p.CollectionPhase(0, samplerThrough[0]) == 0 && p.CollectionPhase(0, samplerThrough[1]) == 3 && p.CollectionPhase(0, 8) == -1 && p.RowForCollection(8) == -1,
+            "each sampler collection is attributed to its own phase, EarlyUpdate before GcFrameBegin and Update after it");
+        p.Reset();
+        Frame(700, 50000, 5, plain, -1);
+        Frame(701, 50033, 5, plain, 3);
+        Frame(702, 50066, 6, plain, 0);
+        long reverseGen0 = 2, reverseThrough = 7;
+        Check(p.Retained == 2 && p.Gen0From(0) == 6 && p.Gen0Through(0) == 6 && p.Gen0From(1) == 7 && p.Gen0Through(1) == 7,
+            "a collection after GcFrameBegin in one frame and one in EarlyUpdate of the next give two probe rows");
+        int firstRow = p.RowForCollection(reverseThrough - reverseGen0 + 1), secondRow = p.RowForCollection(reverseThrough);
+        Check(firstRow == 0 && secondRow == 1 && p.CollectionPhase(firstRow, reverseThrough - reverseGen0 + 1) == 3 && p.CollectionPhase(secondRow, reverseThrough) == 0,
+            "one sampler row covering gen0 6 to 7 joins both probe rows, each collection through its own row and phase");
+        int PhaseRangesHolding(long ordinal)
+        {
+            int hits = 0;
+            for (int r = 0; r < p.Retained; r++)
+                for (int ph = 0; ph < p.Phases; ph++)
+                    if (p.PhaseCollections(r, ph) > 0 && ordinal >= p.PhaseGen0From(r, ph) && ordinal <= p.PhaseGen0Through(r, ph)) hits++;
+            return hits;
+        }
+        void BoundaryReplay(int closeRead, int openRead)
+        {
+            p.Reset(); series.Begin(5);
+            p.Begin(60000, 5);
+            for (int i = 1; i < plain.Length; i++) p.Stamp(i, 60000 + plain[i], 5);
+            p.Close(800, 60033, closeRead, 0, false, false, 1.0);
+            series.Note(closeRead, 100, 801);
+            p.Begin(60033, openRead);
+            for (int i = 1; i < plain.Length; i++) p.Stamp(i, 60033 + plain[i], i <= 3 ? 6 : 7);
+            p.Close(801, 60066, 7, 0, false, false, 1.0);
+            series.Note(7, 200, 802);
+        }
+        BoundaryReplay(5, 6);
+        Check(p.Retained == 1 && p.RowForCollection(6) == -1 && PhaseRangesHolding(6) == 0 && series.Collections == 2,
+            "reading gen0 again to open the frame after a collection during boundary bookkeeping leaves the sampler's ordinal 6 in no probe row");
+        BoundaryReplay(5, 5);
+        Check(p.Retained == 1 && p.RowForCollection(6) == 0 && p.CollectionPhase(0, 6) == 0 && PhaseRangesHolding(6) == 1
+            && p.RowForCollection(7) == 0 && p.CollectionPhase(0, 7) == 3 && PhaseRangesHolding(7) == 1 && series.Collections == 2,
+            "one gen0 read closes the old frame and opens the new one, so a collection during boundary bookkeeping is in exactly one probe phase range");
+        p.Reset(); series.Begin(50);
+        Frame(400, 20000, 50, plain, -1);
+        p.Begin(20033, 50);
+        for (int i = 1; i < 4; i++) p.Stamp(i, 20033 + plain[i], i == 3 ? 51 : 50);
+        var stop2 = new StopRead(51, 401, 2000, 1500, 20033 + 9);
+        stop2.Close(series, p, 401, true, 0.5, false, 1.0);
+        p.Begin(9100, 41); p.Close(302, 9133, 41, 0, false, false, 1.0);
+        Check(p.NextWholeMs(0) == -1 && p.Partial(0), "a partial row takes no next frame");
+        p.Reset();
+        long before = GC.GetAllocatedBytesForCurrentThread();
+        for (int i = 0; i < 1000; i++) Frame(100 + i, 10000 + 40 * i, 100 + i / 3, plain, i % 3 == 0 ? 3 : -1);
+        long allocated = GC.GetAllocatedBytesForCurrentThread() - before;
+        Check(allocated == 0, "phase stamps and collection rows allocate nothing after configuration (" + allocated + " B, .NET)");
+        bool threw = false;
+        try { p.Configure(new string[LoopPhaseRecorder.MaxPhases + 1]); } catch (ArgumentOutOfRangeException) { threw = true; }
+        Check(threw, "more phases than the recorder holds are refused");
     }
 
     private const string PinnedHarmonySha256 = "7b9e756306fa3d7620e02a857c8927a6ab04973f9bd8a77d3866700a6deac55c";

@@ -271,7 +271,14 @@ def census(label):
 def type_read(row, key):
     if key in row.get('type_counts', {}):
         return row['type_counts'][key]
+    tracked = next((item['objects'] for item in row.get('tracked_types', []) if item['name'] == key), None)
+    if tracked is not None:
+        return tracked
     return next((item['objects'] for item in row.get('top_types', []) if item['name'] == key), None)
+
+
+def route_leg_read(row, key):
+    return row.get('route_legs', {}).get(key)
 
 
 def game_pid():

@@ -390,7 +390,7 @@ public sealed class TravelTimingMaximumRouteTests
         PerfGate.Under(updates.Max(), 30, "degraded first-edge retime update");
     }
 
-    private sealed class LongRoad : IRoutePlanner, ITrafficRoutePlanner
+    internal sealed class LongRoad : IRoutePlanner, ITrafficRoutePlanner
     {
         public const string Topology = "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc";
         public TrafficNetwork? TrafficNetwork { get; }

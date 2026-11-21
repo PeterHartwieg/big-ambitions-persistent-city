@@ -24,8 +24,8 @@ namespace PersistentCity.Runtime
             if (sampler == null || !sampler.Running) return 0;
             long now = System.Diagnostics.Stopwatch.GetTimestamp();
             sampler.CounterFrame(GcAllocationCounter.Read(), GcAllocationCounter.Collections);
-            sampler.NoteBodies(BodyMerge.Owned, physical?.BoundBodies ?? 0);
-            sampler.Observe(now * GcMillisecondsPerTimestamp, GcCount(0), GcCount(1), GcCount(2), GC.GetTotalMemory(false), Time.frameCount);
+            sampler.NoteBodies(BodyMerge.Owned, physical?.BoundBodies ?? 0, physical?.GrowSample ?? PhysicalPedestrians.Grows.Sample(false));
+            sampler.Observe(now * GcMillisecondsPerTimestamp, GcCount(0), GcCount(1), GcCount(2), GC.GetTotalMemory(false), Time.frameCount, DiagnosticFrames.Current);
             return now;
         }
 
@@ -112,13 +112,21 @@ namespace PersistentCity.Runtime
         {
             get
             {
+                DiagnosticFrames.Mark("gc diagnostics");
                 var context = GcContext();
                 int meshes = BodyMerge.LiveMeshes(out long vertices);
                 return new { monoHeapBytes = context.MonoHeapBytes, monoUsedBytes = context.MonoUsedBytes, totalMemoryBytes = GC.GetTotalMemory(false),
                     gen0 = GcCount(0), gen1 = GcCount(1), gen2 = GcCount(2), incremental = context.Incremental, measuring = gcSampler?.Running == true,
                     ownedBodyCombiners = BodyMerge.Owned, unmergedBodyCombiners = BodyMerge.Unmerged, reservedBodies = PhysicalPedestrians.ReserveCount, liveMergedMeshes = meshes, liveMergedVertices = vertices,
-                    releasedMergedMeshes = BodyMerge.ReleasedMeshes, releasedMergedVertices = BodyMerge.ReleasedVertices, bakeScratchBytes = BlendshapeBake.ScratchBytes };
+                    releasedMergedMeshes = BodyMerge.ReleasedMeshes, releasedMergedVertices = BodyMerge.ReleasedVertices, bakeScratchBytes = BlendshapeBake.ScratchBytes,
+                    asyncIntegrationTimeMs = AsyncIntegrationMilliseconds(), backgroundLoadingPriority = Application.backgroundLoadingPriority.ToString(),
+                    bodyGrowIntegrating = physical?.GrowSample.Pending ?? false };
             }
+        }
+
+        private static double AsyncIntegrationMilliseconds()
+        {
+            try { return AsyncInstantiateOperation.GetIntegrationTimeMS(); } catch (Exception) { return -1; }
         }
 
         private GcReportContext GcContext()
@@ -142,10 +150,15 @@ namespace PersistentCity.Runtime
             long started = System.Diagnostics.Stopwatch.GetTimestamp();
             var census = RetainedCensusOf(this, save!.modData);
             double elapsed = (System.Diagnostics.Stopwatch.GetTimestamp() - started) * GcMillisecondsPerTimestamp;
-            Debug.Log(RetainedPrefix + census.ReportJson(48, elapsed, RetainedCountedTypes, RetainedCensus.InstrumentRoot));
+            Debug.Log(RetainedPrefix + census.ReportJson(48, elapsed, RetainedCountedTypes, RetainedCensus.InstrumentRoot, RetainedTrackedTypes,
+                RetainedCensus.JourneyLegs(simulation?.State)));
         }
 
         internal static readonly Type[] RetainedCountedTypes = { typeof(CitySimulator), typeof(MultimodalRoutes), typeof(RoadRoutes), typeof(WalkingRoutes), typeof(TrafficRoadNetwork), typeof(TrafficKernel) };
+
+        internal static readonly Type[] RetainedTrackedTypes = { typeof(RouteLeg), typeof(RouteLeg[]), typeof(List<RouteLeg>), typeof(RouteLegs), typeof(Route),
+            typeof(Position[]), typeof(double[]), typeof(long[]), typeof(int[]), typeof(string), typeof(CitizenState), typeof(TrafficVehicleState), typeof(TrafficRouteLeg),
+            typeof(TrafficRouteLeg[]), typeof(List<TrafficRouteLeg>), typeof(TrafficKernelState), typeof(CitySimulator), typeof(MultimodalRoutes), typeof(RoadRoutes) };
 
         internal static RetainedCensus RetainedCensusOf(object runtime, IDictionary<string, string>? modData)
         {

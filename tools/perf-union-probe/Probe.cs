@@ -40,6 +40,8 @@ namespace PerfUnionProbe
 
     public struct PerfUnionFrameStart { }
 
+    public struct PerfUnionPhaseStamp { }
+
     public sealed class Session : MonoBehaviour
     {
         // Deliberately outside the persistentcity owner namespaces, so the inventory never sees the probe.
@@ -85,7 +87,10 @@ namespace PerfUnionProbe
         private static int unexpectedAtWindowStart;
 
         private static readonly FrameRow[] frames = new FrameRow[FrameLimit];
-        private static float[] frameComponents = Array.Empty<float>();
+        private static float[] frameComponents = new float[FrameLimit * ScopeInventory.Components.Count];
+        internal static readonly LoopPhaseRecorder phases = new LoopPhaseRecorder();
+        private static Action<string> markDiagnostic;
+        private static string startScan = "none", stopScan = "none";
         private static readonly RingCursor frameRing = new RingCursor(FrameLimit);
         private static int currentFrame = -1, firstMeasureFrame = -1;
         private static long frameStartQpc, nextDiagnosticQpc;
@@ -153,10 +158,11 @@ namespace PerfUnionProbe
                 foreach (var p in args.Properties())
                     Require(new[] { "action", "mode", "factor", "expected_scope_hash", "window", "section", "offset", "limit" }.Contains(p.Name), "f4b_unknown_argument");
                 string action = (string)args["action"];
+                MarkDiagnostic(action);
                 if (measuring) { TouchFrame(Stopwatch.GetTimestamp()); frameDiagnostic = true; }
                 if (action == "inventory") return Wrap(Status(), Inventory());
                 if (action == "status") return Wrap(Status(), Status());
-                if (action == "arm") { var before = Status(); Arm(args); return Wrap(before, Status()); }
+                if (action == "arm") { var before = Status(); Arm(args); MarkDiagnostic(action); return Wrap(before, Status()); }
                 if (action == "heap") return Wrap(Status(), Heap());
                 Require(armed, "f4b_not_armed");
                 if (action == "measure-start") { var before = Status(); StartMeasurement(args); return Wrap(before, Status()); }
@@ -170,6 +176,20 @@ namespace PerfUnionProbe
                 var code = e is InvalidOperationException && e.Message.StartsWith("f4b_", StringComparison.Ordinal) ? e.Message : "f4b_" + e.GetType().Name;
                 return new JObject { ["before"] = JValue.CreateNull(), ["after"] = new JObject { ["supported"] = false, ["refusal"] = code } };
             }
+        }
+
+        private static void MarkDiagnostic(string action)
+        {
+            var mark = markDiagnostic;
+            if (mark == null) return;
+            try { mark("probe " + action); } catch { markDiagnostic = null; }
+        }
+
+        private static Action<string> BindDiagnosticMark(Assembly assembly)
+        {
+            var type = assembly?.GetType("PersistentCity.Core.DiagnosticFrames", false);
+            var method = type?.GetMethod("Mark", BindingFlags.Public | BindingFlags.Static, null, new[] { typeof(string) }, null);
+            return method == null || method.ReturnType != typeof(void) ? null : (Action<string>)method.CreateDelegate(typeof(Action<string>));
         }
 
         private static JObject Inventory() => new JObject
@@ -208,7 +228,8 @@ namespace PerfUnionProbe
                     shimInstalled = true;
                     union = new UnionClock(0, 0, Stopwatch.Frequency); componentNames = Array.Empty<string>();
                     coverage = null; matchedScans = 0;
-                    MatchedScan();
+                    try { patchWatch = PatchStateWatch.Shared(); } catch { patchWatch = null; }
+                    PatchStateWatch.Run(patchWatch, true, Matched);
                 }
                 else
                 {
@@ -220,6 +241,7 @@ namespace PerfUnionProbe
                     Require(runtime != null, "f4b_population_runtime_absent");
                     BindReads(runtimeType);
                     BindInventory();
+                    try { markDiagnostic = BindDiagnosticMark(pc); } catch { markDiagnostic = null; }
                 }
                 InstallLoop();
                 SceneManager.sceneLoaded += SceneLoaded; SceneManager.sceneUnloaded += SceneUnloaded;
@@ -290,7 +312,7 @@ namespace PerfUnionProbe
             var components = ScopeInventory.Components.ToArray();
             componentNames = components.Select(c => c.Label).ToArray();
             union = new UnionClock(scopes, components.Length, Stopwatch.Frequency);
-            frameComponents = new float[FrameLimit * components.Length];
+            if (frameComponents.Length != FrameLimit * components.Length) frameComponents = new float[FrameLimit * components.Length];
             foreach (var pair in scopeIndex)
             {
                 try
@@ -444,12 +466,34 @@ namespace PerfUnionProbe
                 var children = systems[i].subSystemList ?? Array.Empty<PlayerLoopSystem>();
                 var start = new PlayerLoopSystem { type = typeof(PerfUnionFrameStart), updateDelegate = FrameStart };
                 systems[i].subSystemList = new[] { start }.Concat(children.Where(c => c.type != typeof(PerfUnionFrameStart))).ToArray();
+                InstallPhaseStamps(systems, i);
                 PlayerLoop.SetPlayerLoop(loop);
                 loopInstalled = true; boundarySource = "player-loop-early-update";
                 return;
             }
             boundarySource = "first-callback";
         }
+        private static void InstallPhaseStamps(PlayerLoopSystem[] systems, int early)
+        {
+            var names = new List<string>();
+            for (int k = 0; k < systems.Length && names.Count < LoopPhaseRecorder.MaxPhases; k++)
+            {
+                int i = (early + k) % systems.Length;
+                if (systems[i].subSystemList == null || systems[i].type == null) continue;
+                int phase = names.Count;
+                names.Add(systems[i].type.Name);
+                if (i == early) continue;
+                var stamp = new PlayerLoopSystem { type = typeof(PerfUnionPhaseStamp), updateDelegate = () => PhaseStamp(phase) };
+                systems[i].subSystemList = new[] { stamp }.Concat(systems[i].subSystemList.Where(c => c.type != typeof(PerfUnionPhaseStamp))).ToArray();
+            }
+            phases.Configure(names.ToArray());
+        }
+
+        private static void PhaseStamp(int phase)
+        {
+            if (measuring) phases.Stamp(phase, Stopwatch.GetTimestamp(), GC.CollectionCount(0));
+        }
+
         private static void RemoveLoop()
         {
             if (!loopInstalled) return;
@@ -457,8 +501,8 @@ namespace PerfUnionProbe
             var loop = PlayerLoop.GetCurrentPlayerLoop();
             var systems = loop.subSystemList;
             for (int i = 0; systems != null && i < systems.Length; i++)
-                if (systems[i].subSystemList != null && systems[i].subSystemList.Any(c => c.type == typeof(PerfUnionFrameStart)))
-                    systems[i].subSystemList = systems[i].subSystemList.Where(c => c.type != typeof(PerfUnionFrameStart)).ToArray();
+                if (systems[i].subSystemList != null && systems[i].subSystemList.Any(c => c.type == typeof(PerfUnionFrameStart) || c.type == typeof(PerfUnionPhaseStamp)))
+                    systems[i].subSystemList = systems[i].subSystemList.Where(c => c.type != typeof(PerfUnionFrameStart) && c.type != typeof(PerfUnionPhaseStamp)).ToArray();
             PlayerLoop.SetPlayerLoop(loop);
         }
 
@@ -495,8 +539,13 @@ namespace PerfUnionProbe
         private static void CloseFrame(int nowFrame, long now, bool fromLoop)
         {
             if (nowFrame == currentFrame) return;
-            if (measuring && currentFrame >= 0 && currentFrame > firstMeasureFrame) WriteFrame(nowFrame, now, false);
-            if (measuring) NoteCollections();
+            int collections = GC.CollectionCount(0);
+            if (measuring && currentFrame >= 0 && currentFrame > firstMeasureFrame)
+            {
+                WriteFrame(nowFrame, new StopRead(collections, nowFrame, -1, -1, now), false);
+                phases.Close(currentFrame, now, collections, union.FrameTicks * ToMs, frameDiagnostic, frameLate, ToMs);
+            }
+            if (measuring) NoteCollections(collections);
             if (union.Depth != 0)
             {
                 crossFrame++; union.Abandon();
@@ -505,16 +554,17 @@ namespace PerfUnionProbe
             if (measuring && pendingWindowStart) { pendingWindowStart = false; holds.BeginWindow(nowFrame, now); }
             currentFrame = nowFrame; frameStartQpc = now; union.ResetFrame(); observerTicks = boundaryTicks = 0;
             frameDiagnostic = false; frameScene = false; frameSaves = 0; frameLate = !fromLoop;
-            gcAtFrameStart = GC.CollectionCount(0); frameLoading = LoadScene.isLoading;
+            gcAtFrameStart = collections; frameLoading = LoadScene.isLoading;
+            if (measuring) phases.Begin(now, gcAtFrameStart);
             frameNative = NativeMinute(); frameLogical = LogicalMinute();
         }
 
-        private static void WriteFrame(int nextFrame, long end, bool partial)
+        private static void WriteFrame(int nextFrame, StopRead end, bool partial)
         {
             if (!frameRing.TryWrite(out int slot)) return;
             frames[slot] = new FrameRow { frame = currentFrame, skipped = Math.Max(0, nextFrame - currentFrame - 1), qpc = frameStartQpc,
-                modWorkMs = union.FrameTicks * ToMs, wholeFrameMs = (end - frameStartQpc) * ToMs, observerMs = observerTicks * ToMs,
-                boundaryMs = boundaryTicks * ToMs, gc = GC.CollectionCount(0) - gcAtFrameStart, saves = frameSaves, scene = frameScene,
+                modWorkMs = union.FrameTicks * ToMs, wholeFrameMs = end.WholeMs(frameStartQpc, ToMs), observerMs = observerTicks * ToMs,
+                boundaryMs = boundaryTicks * ToMs, gc = end.CollectionsSince(gcAtFrameStart), saves = frameSaves, scene = frameScene,
                 loading = frameLoading, diagnostic = frameDiagnostic, lateBoundary = frameLate, partial = partial, crossFrame = !partial && union.Depth != 0,
                 nativeMinute = frameNative, logicalMinute = frameLogical };
             int components = union.Components;
@@ -542,23 +592,27 @@ namespace PerfUnionProbe
             matchedScans++;
         }
 
-        private static void Rescan(bool full)
+        private static readonly Action Matched = MatchedScan;
+
+        private static string Rescan(bool full)
         {
+            bool scanned = false;
             if (coverage == null)
             {
-                if (full && mode == "reference") try { MatchedScan(); } catch { error = "f4b_patch_scan_failed"; }
-                return;
+                if (mode != "reference" || !full && patchWatch == null) return "none";
+                try { scanned = PatchStateWatch.Run(patchWatch, full, Matched); } catch { error = "f4b_patch_scan_failed"; }
+                return scanned ? "full" : "watch-unchanged";
             }
-            try { PatchStateWatch.Run(patchWatch, full, Scan); } catch { error = "f4b_patch_scan_failed"; }
+            try { scanned = PatchStateWatch.Run(patchWatch, full, Scan); } catch { error = "f4b_patch_scan_failed"; }
             if (measuring && coverage.Unexpected.Count > unexpectedAtWindowStart) patchSetChanged = true;
+            return scanned ? "full" : "watch-unchanged";
         }
 
         private static long monoHeapStart = -1, monoUsedStart = -1, monoHeapStop = -1, monoUsedStop = -1;
         private static readonly CollectionSeries collectionSeries = new CollectionSeries();
 
-        private static void NoteCollections()
+        private static void NoteCollections(int count)
         {
-            int count = GC.CollectionCount(0);
             if (!collectionSeries.Due(count)) return;
             ReadMonoHeap(out _, out long used);
             collectionSeries.Note(count, used, Time.frameCount);
@@ -589,7 +643,8 @@ namespace PerfUnionProbe
             window = label; error = ""; stopReason = "measuring";
             frameRing.Reset(); tickRing.Reset(); sampleRing.Reset(); calls.Reset(); sampleFailures = advanceCalls = 0;
             ReadMonoHeap(out startScanHeap, out startScanUsed); monoHeapStop = monoUsedStop = -1;
-            Rescan(true); unexpectedAtWindowStart = coverage?.Unexpected.Count ?? 0; patchSetChanged = false;
+            startScan = Rescan(false); stopScan = "none"; unexpectedAtWindowStart = coverage?.Unexpected.Count ?? 0; patchSetChanged = false;
+            phases.Reset();
             ReadMonoHeap(out monoHeapStart, out monoUsedStart);
             collectionSeries.Begin(GC.CollectionCount(0));
             crossFrame = timedExceptions = 0; unknownScopeCalls = 0; totalSaves = totalSceneEvents = 0;
@@ -600,20 +655,12 @@ namespace PerfUnionProbe
             pendingWindowStart = true; measuring = true;
         }
 
-        private readonly struct StopRead
-        {
-            public StopRead(int collections, int frame, long heap, long used) { Collections = collections; Frame = frame; Heap = heap; Used = used; }
-            public int Collections { get; }
-            public int Frame { get; }
-            public long Heap { get; }
-            public long Used { get; }
-        }
-
         private static StopRead ReadStop()
         {
+            long ticks = Stopwatch.GetTimestamp();
             int collections = GC.CollectionCount(0);
             ReadMonoHeap(out long heap, out long used);
-            return new StopRead(collections, Time.frameCount, heap, used);
+            return new StopRead(collections, Time.frameCount, heap, used, ticks);
         }
 
         private static void StopMeasurement(string reason, bool writeStopFrame = true) => StopMeasurement(reason, ReadStop(), writeStopFrame);
@@ -622,12 +669,11 @@ namespace PerfUnionProbe
         {
             if (!measuring) return;
             monoHeapStop = stop.Heap; monoUsedStop = stop.Used;
-            collectionSeries.Note(stop.Collections, stop.Used, stop.Frame);
-            if (reason == "explicit-stop") Rescan(true);
-            long now = Stopwatch.GetTimestamp();
-            if (writeStopFrame && currentFrame > firstMeasureFrame) { frameDiagnostic = true; WriteFrame(currentFrame + 1, now, true); }
+            stop.Close(collectionSeries, phases, currentFrame, currentFrame >= 0 && currentFrame > firstMeasureFrame, union.FrameTicks * ToMs, frameLate, ToMs);
+            if (reason == "explicit-stop") stopScan = Rescan(false);
+            if (writeStopFrame && currentFrame > firstMeasureFrame) { frameDiagnostic = true; WriteFrame(currentFrame + 1, stop, true); }
             if (pendingWindowStart) pendingWindowStart = false;
-            else holds.EndWindow(currentFrame, now);
+            else holds.EndWindow(currentFrame, stop.Ticks);
             measuring = false; stopReason = reason;
         }
 
@@ -642,7 +688,7 @@ namespace PerfUnionProbe
                 SceneManager.sceneLoaded -= SceneLoaded; SceneManager.sceneUnloaded -= SceneUnloaded;
                 GlobalEvents.onSaveGame -= SaveObserved; eventsSubscribed = false;
             }
-            union.Abandon(); shimInstalled = holdsBound = advanceBound = false; coverage = null; patchWatch = null;
+            union.Abandon(); shimInstalled = holdsBound = advanceBound = false; coverage = null; patchWatch = null; markDiagnostic = null;
             mode = "none"; runtime = null; pc = null; shimFactor = double.NaN;
             heldOrdinary = heldSkip = boundaryClips = null; withheld = null; accountingLimited = null; clockFactor = null;
             readSimulation = readState = readStopEnvironment = readUnitSeams = null; readMinute = readSeam = readUnitMaximum = null; unitSeamSource = null;
@@ -675,6 +721,8 @@ namespace PerfUnionProbe
                 ["coverage_complete"] = NotApplicable(() => CoverageComplete()),
                 ["patch_scans"] = NotApplicable(() => coverage?.Scans ?? 0), ["patch_state_checks"] = NotApplicable(() => patchWatch?.Checks ?? 0),
                 ["patch_state_changes"] = NotApplicable(() => patchWatch?.Changes ?? 0), ["patch_state_watch"] = NotApplicable(() => patchWatch != null), ["patch_scan_pending"] = NotApplicable(() => patchWatch?.Pending ?? false), ["matched_reference_scans"] = mode == "reference" ? (JToken)matchedScans : "n/a", ["patch_set_changed_in_window"] = NotApplicable(() => patchSetChanged),
+                ["start_scan"] = startScan, ["stop_scan"] = stopScan, ["diagnostic_mark_bound"] = NotApplicable(() => markDiagnostic != null),
+                ["collection_frames"] = CollectionFrameSummary(),
                 ["scopes"] = NotApplicable(() => new JObject { ["timed_methods"] = scopeIndex.Count, ["timed"] = Count("timed"),
                     ["untimed_transpiled"] = Names("untimed-transpiled"),
                     ["not_installed"] = new JArray(bindings.Where(b => b.Status == "timed" && b.Expected?.Kind <= ScopeKind.Finalizer && coverage != null && !coverage.Installed(b.Expected)).Select(b => b.Label).Take(64)),
@@ -703,7 +751,7 @@ namespace PerfUnionProbe
                     ["now_bytes"] = MonoHeapNow(true), ["now_used_bytes"] = MonoHeapNow(false), ["arm_before_bytes"] = armHeapBefore, ["arm_before_used_bytes"] = armUsedBefore,
                     ["arm_after_bytes"] = armHeapAfter, ["arm_after_used_bytes"] = armUsedAfter, ["start_scan_before_bytes"] = startScanHeap, ["start_scan_before_used_bytes"] = startScanUsed, ["frame_components_bytes"] = (long)frameComponents.Length * sizeof(float),
                     ["after_collection_used"] = CollectionUsed(),
-                    ["qualification"] = "Profiler Mono heap size and used size before and after arm, before and after the forced patch scan at window start (start is after it), at stop before the forced patch scan, and at read time; no forced collection." },
+                    ["qualification"] = "Profiler Mono heap size and used size before and after arm, before and after the patch check at window start (start is after it; a full scan runs only when Harmony's patch state changed since the last scan), at stop before the stop check, and at read time; no forced collection." },
                 ["boundary_source"] = boundarySource, ["probe_patches_installed"] = Harmony.HasAnyPatches(PatchId), ["player_loop_entry"] = LoopEntryPresent(), ["stopwatch_frequency"] = Stopwatch.Frequency, ["stopwatch_high_resolution"] = Stopwatch.IsHighResolution,
                 ["harmony_version"] = typeof(Harmony).Assembly.GetName().Version?.ToString(),
                 ["limits"] = "Mod work is the nested union of every timed Persistent City scope. The union includes nested probe cost; observerMs measures only part of it. "
@@ -712,6 +760,43 @@ namespace PerfUnionProbe
                     + "component-unbound and the union stays authoritative. Components are attribution only and are never summed. wholeFrameMs is wall time between "
                     + "player-loop frame starts, not CPU or GPU time. Unexpected, unbindable, off-main, cross-frame, overflow or error flags invalidate a window.",
             };
+        }
+
+        private static JObject CollectionFrameSummary()
+        {
+            int worst = -1; double excess = double.NegativeInfinity;
+            for (int r = 0; r < phases.Retained; r++)
+                if (!phases.Diagnostic(r) && phases.PreviousWholeMs(r) >= 0 && phases.ExcessMs(r) > excess) { excess = phases.ExcessMs(r); worst = r; }
+            var summary = new JObject { ["collections"] = phases.Collections, ["retained"] = phases.Retained, ["truncated"] = phases.Truncated,
+                ["phases"] = new JArray(Enumerable.Range(0, phases.Phases).Select(phases.PhaseName)), ["page_section"] = "collections" };
+            if (worst >= 0)
+                summary["worst"] = new JObject { ["frame"] = phases.Frame(worst), ["whole_frame_ms"] = phases.WholeMs(worst), ["previous_whole_ms"] = phases.PreviousWholeMs(worst),
+                    ["excess_ms"] = excess, ["mod_work_ms"] = phases.ModWorkMs(worst), ["gc_phase"] = PhaseLabel(phases.GcPhase(worst)),
+                    ["largest_excess_phase"] = PhaseLabel(phases.LargestExcessPhase(worst)) };
+            return summary;
+        }
+
+        private static string PhaseLabel(int phase) => phase >= 0 && phase < phases.Phases ? phases.PhaseName(phase) : "unknown";
+
+        private static JToken Ms(double value) => value < 0 ? JValue.CreateNull() : (JToken)value;
+
+        private static JObject CollectionRow(int r)
+        {
+            var now = new JObject(); var before = new JObject(); var grew = new JObject(); var collected = new JArray();
+            for (int p = 0; p < phases.Phases; p++)
+            {
+                string name = phases.PhaseName(p);
+                double at = phases.PhaseMs(r, p), was = phases.PreviousPhaseMs(r, p);
+                now[name] = at; before[name] = Ms(was); grew[name] = was < 0 ? JValue.CreateNull() : (JToken)(at - was);
+                if (phases.PhaseCollections(r, p) > 0)
+                    collected.Add(new JObject { ["phase"] = name, ["gen0_from"] = phases.PhaseGen0From(r, p), ["gen0_through"] = phases.PhaseGen0Through(r, p) });
+            }
+            return new JObject { ["frame"] = phases.Frame(r), ["whole_frame_ms"] = phases.WholeMs(r), ["previous_whole_ms"] = Ms(phases.PreviousWholeMs(r)),
+                ["next_whole_ms"] = Ms(phases.NextWholeMs(r)), ["excess_ms"] = phases.PreviousWholeMs(r) < 0 ? JValue.CreateNull() : (JToken)phases.ExcessMs(r),
+                ["mod_work_ms"] = phases.ModWorkMs(r), ["collections"] = phases.RowCollections(r), ["gen0_from"] = phases.Gen0From(r), ["gen0_through"] = phases.Gen0Through(r), ["collection_phases"] = collected, ["diagnostic"] = phases.Diagnostic(r), ["late_boundary"] = phases.Late(r),
+                ["partial"] = phases.Partial(r),
+                ["gc_phase"] = PhaseLabel(phases.GcPhase(r)), ["largest_excess_phase"] = PhaseLabel(phases.LargestExcessPhase(r)),
+                ["phase_ms"] = now, ["previous_phase_ms"] = before, ["phase_excess_ms"] = grew };
         }
 
         private const int PageEnvelope = 512;
@@ -786,6 +871,11 @@ namespace PerfUnionProbe
                 var built = new JObject[Math.Max(0, end - start)];
                 int take = CallPage.Fit(i => (built[i - start] = CallRow(source[i])).ToString(Formatting.None).Length, start, end, budget);
                 for (int i = 0; i < take; i++) rows.Add(built[i]);
+            }
+            else if (section == "collections")
+            {
+                count = phases.Retained; int limit = Number(args, "limit", 16, LoopPhaseRecorder.Limit);
+                for (int i = (int)Math.Min(offset, int.MaxValue); i < Math.Min(count, offset + limit); i++) rows.Add(CollectionRow(i));
             }
             else if (section == "scopes")
             {

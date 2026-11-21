@@ -760,7 +760,10 @@ namespace PersistentCity.Runtime
                 + ", slowest " + Milliseconds(retimeDriver.SlowestSliceMilliseconds) + " ms, restarts "
                 + retimeDriver.Restarts.ToString(System.Globalization.CultureInfo.InvariantCulture) + "), final slice and commit " + Milliseconds(retimeCommitMilliseconds)
                 + " ms, simulation rebuild " + Milliseconds(rebuild.Milliseconds) + " ms over "
-                + rebuild.Updates.ToString(System.Globalization.CultureInfo.InvariantCulture) + " updates (slowest " + Milliseconds(rebuild.SlowestUpdateMilliseconds) + " ms).");
+                + rebuild.Updates.ToString(System.Globalization.CultureInfo.InvariantCulture) + " updates (slowest " + Milliseconds(rebuild.SlowestUpdateMilliseconds) + " ms); journeys with a split leg "
+                + retimeDriver.Split.ToString(System.Globalization.CultureInfo.InvariantCulture) + ", earlier splits joined "
+                + retimeDriver.Joined.ToString(System.Globalization.CultureInfo.InvariantCulture) + ", joins refused for an inexact pose "
+                + retimeDriver.JoinsRefused.ToString(System.Globalization.CultureInfo.InvariantCulture) + ".");
             string allocation = RetimeAllocationLine(mark);
             log?.Info("Clock retime allocation: " + allocation + ".");
             retimeReleaseMilliseconds = 0; retimeReleaseUpdates = 0;

@@ -338,6 +338,8 @@ namespace PersistentCity.Runtime
         internal static Func<Position, bool>? VisiblePoint;
         internal static bool AppearOnScreen;
         internal Action? BeforeNavigation { get; set; }
+        internal bool GrowIntegrating { get; set; }
+        internal static readonly GcGrowLedger Grows = new();
         internal long AppearanceBuilds => Acquisitions.Count;
         internal long AppearanceReuses => 0;
         internal string LookDiagnostics => AppearanceBuilds + " built/" + AppearanceReuses + " reused";

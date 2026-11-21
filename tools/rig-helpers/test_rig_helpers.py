@@ -166,7 +166,23 @@ class RetentionRunnerTests(unittest.TestCase):
         self.assertEqual(row['census']['bytes'], 10)
         self.assertEqual(row['mesh']['ownedBodyCombiners'], 3)
         self.assertEqual(retention.readings_summary([row])['RouteLeg'], [4])
+        self.assertEqual(retention.readings_summary([row])['RouteLeg outside current journeys'], [None])
         self.assertTrue((self.stage / 'retention-R0-movement.json').is_file())
+
+    def test_tracked_types_and_route_leg_owners_are_read_when_top_types_omit_route_leg(self):
+        retention = self.local(importlib.import_module('retention'))
+        row = {'census': {'type_counts': {'CitySimulator': 1}, 'top_types': [{'name': 'String', 'objects': 9}],
+                          'tracked_types': [{'name': 'RouteLeg', 'objects': 11456, 'bytes': 1191424}],
+                          'route_legs': {'retained': 11456, 'in_current_journeys': 11400, 'outside_current_journeys': 56,
+                                         'split_prefix_legs': 310, 'travelling': 1383}},
+               'heap': {}, 'mono': {}, 'mesh': {'ownedBodyCombiners': 1, 'liveMergedMeshes': 1, 'unmergedBodyCombiners': 0,
+                                                'liveMergedVertices': 1, 'bakeScratchBytes': 1}}
+        series = retention.readings_summary([row])
+        self.assertEqual(series['RouteLeg'], [11456])
+        self.assertEqual(series['RouteLeg outside current journeys'], [56])
+        self.assertEqual(series['RouteLeg split prefix legs'], [310])
+        self.assertEqual(series['RouteLeg travelling'], [1383])
+        self.assertFalse(retention.still_climbing({'RouteLeg outside current journeys': [0, 1, 2, 3]}))
 
     def test_the_16t_import_without_console_is_caught(self):
         source = (HERE / 'retention.py').read_text()
