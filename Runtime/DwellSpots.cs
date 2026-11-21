@@ -212,7 +212,7 @@ namespace PersistentCity.Runtime
 
         private static double Since(long started) => (System.Diagnostics.Stopwatch.GetTimestamp() - started) * 1000.0 / System.Diagnostics.Stopwatch.Frequency;
 
-        private Transform? FindDoor(CityManager manager, Vector3 entrance)
+        internal Transform? FindDoor(CityManager manager, Vector3 entrance)
         {
             long started = System.Diagnostics.Stopwatch.GetTimestamp();
             DoorSearches++;

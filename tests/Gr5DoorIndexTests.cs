@@ -137,4 +137,45 @@ public sealed class Gr5DoorIndexTests
         }
         finally { CityManager.Instance = saved; NavMesh.Reset(); }
     }
+    [Fact]
+    public void AnIndexedDoorSearchAllocatesNothingAndIndexSlicesKeepTheirDeadline()
+    {
+        var saved = CityManager.Instance;
+        try
+        {
+            NavMesh.Reset();
+            var city = City(1800, 13, out var places);
+            CityManager.Instance = city;
+            var spots = new DwellSpots();
+            double slowest = 0; int slices = 0;
+            while (true)
+            {
+                long started = Stopwatch.GetTimestamp();
+                bool done = spots.WarmIndex(started + Stopwatch.Frequency / 1000);
+                slowest = Math.Max(slowest, (Stopwatch.GetTimestamp() - started) * 1000.0 / Stopwatch.Frequency);
+                slices++;
+                if (done) break;
+            }
+            output.WriteLine("door index of " + spots.IndexedDoors + " doors warmed in " + slices + " slices, slowest "
+                + slowest.ToString("0.000", System.Globalization.CultureInfo.InvariantCulture) + " ms against a 1 ms deadline (.NET)");
+            PerfGate.Under(slowest, 1.5, "door index slice");
+            var points = places.Select(p => new Vector3((float)p.Position.X, 0, (float)p.Position.Z)).ToArray();
+            foreach (var point in points) spots.FindDoor(city, point);
+            long before = GC.GetAllocatedBytesForCurrentThread();
+            int found = 0;
+            foreach (var point in points) if (spots.FindDoor(city, point) != null) found++;
+            long indexed = GC.GetAllocatedBytesForCurrentThread() - before;
+            var scan = new DwellSpots { IndexDisabled = true };
+            foreach (var point in points) scan.FindDoor(city, point);
+            before = GC.GetAllocatedBytesForCurrentThread();
+            foreach (var point in points) scan.FindDoor(city, point);
+            long scanned = GC.GetAllocatedBytesForCurrentThread() - before;
+            output.WriteLine(points.Length + " door searches, " + found + " doors found: indexed " + indexed + " B, full scan " + scanned + " B (.NET)");
+            Assert.True(found > points.Length / 2);
+            Assert.Equal(0, indexed);
+            Assert.Equal(0, scanned);
+            Assert.Equal(1, spots.IndexBuilds);
+        }
+        finally { CityManager.Instance = saved; NavMesh.Reset(); }
+    }
 }
