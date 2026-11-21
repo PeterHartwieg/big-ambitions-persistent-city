@@ -423,6 +423,71 @@ class RetentionRunnerTests(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, 'already passed the drain target'):
             retention.drain([{'native_minute': 3870.0111065}])
 
+    def test_retimed_drain_in_the_target_minute_pauses_in_place_on_the_same_day(self):
+        retention = self.local(importlib.import_module('retention'))
+        self.bridge.minute, self.bridge.paused = 3900.010, False
+        arrived = retention.drain([{'native_minute': 3870.0111065}])
+        times = [json.loads(c[2]) for c in self.bridge.commands if c[:2] == ['call', 'time']]
+        self.assertEqual(times, [{'speed': 1, 'pause': True, 'keep_needs': True}])
+        self.assertEqual(math.floor(arrived['native_minute']), 3900)
+        reached = json.loads((self.stage / 'retention-drain-reached.json').read_text())
+        self.assertLess(abs(reached['offset']), self.common.NATIVE_TOLERANCE)
+
+    def test_arrival_outside_the_target_native_minute_is_refused(self):
+        retention = self.local(importlib.import_module('retention'))
+        self.bridge.minute, self.bridge.paused, self.bridge.arrival = 3872.3, False, 1440.0
+        with mock.patch.object(self.common.time, 'sleep'):
+            with self.assertRaisesRegex(RuntimeError, 'outside the native minute of 3900.0111065'):
+                retention.drain([{'native_minute': 3870.0111065}])
+        self.assertFalse((self.stage / 'retention-drain-reached.json').exists())
+
+    def test_paused_control_already_in_the_checkpoint_minute_pauses_in_place(self):
+        retention = self.local(importlib.import_module('retention'))
+        plan = self.targets(retention, [3810.01, 3841.2], paused=(1,))
+        retention.wait_native = lambda label, target: self.common.wait_native(label, target, timeout=5, interval=0)
+        self.bridge.minute, self.bridge.paused, self.bridge.step = 3841.15, False, 0.0
+        rows = retention.follow_targets(plan)
+        times = [json.loads(c[2]) for c in self.bridge.commands if c[:2] == ['call', 'time']]
+        self.assertFalse(any('run_until' in t for t in times), times)
+        self.assertTrue(rows[1]['clock']['paused'])
+        matched = json.loads((self.stage / 'retention-matched.json').read_text())
+        self.assertEqual(matched['unmatched'], ['R0'])
+
+    def test_late_census_is_unmatched_even_when_the_first_native_read_is_in_bound(self):
+        retention = self.local(importlib.import_module('retention'))
+        plan = self.targets(retention, [3811.0])
+        retention.wait_native = lambda label, target: self.common.wait_native(label, target, timeout=5, interval=0)
+        self.bridge.minute, self.bridge.paused, self.bridge.step = 3810.6, False, .25
+        retention.follow_targets(plan)
+        matched = json.loads((self.stage / 'retention-matched.json').read_text())
+        point = matched['checkpoints'][0]
+        self.assertLessEqual(point['offset'], retention.MATCH_BOUND)
+        self.assertGreater(point['census_offset'], retention.MATCH_BOUND)
+        self.assertEqual(matched['unmatched'], ['R0'])
+        self.assertEqual(matched['retimed_minus_control']['RouteLeg'], [None])
+
+    def test_paused_control_resumes_for_a_running_checkpoint_it_already_reached(self):
+        retention = self.local(importlib.import_module('retention'))
+        plan = self.targets(retention, [3810.015])
+        retention.wait_native = lambda label, target: self.common.wait_native(label, target, timeout=5, interval=0)
+        self.bridge.minute, self.bridge.paused, self.bridge.step = 3810.010, True, .01
+        rows = retention.follow_targets(plan)
+        self.assertFalse(rows[0]['clock']['paused'])
+        matched = json.loads((self.stage / 'retention-matched.json').read_text())
+        self.assertEqual(matched['unmatched'], [])
+
+    def test_paused_snapshot_never_matches_a_running_checkpoint(self):
+        retention = self.local(importlib.import_module('retention'))
+        plan = self.targets(retention, [3810.015])
+        retention.wait_native = lambda label, target: self.common.wait_native(label, target, timeout=5, interval=0)
+        retention.rate = lambda label, speed, pause=False: {}
+        self.bridge.minute, self.bridge.paused = 3810.010, True
+        rows = retention.follow_targets(plan)
+        self.assertTrue(rows[0]['clock']['paused'])
+        matched = json.loads((self.stage / 'retention-matched.json').read_text())
+        self.assertEqual(matched['unmatched'], ['R0'])
+        self.assertTrue(matched['checkpoints'][0]['observed_paused'])
+
     def test_control_refuses_a_targets_file_without_native_minutes(self):
         retention = self.local(importlib.import_module('retention'))
         path = self.stage / 'retention-targets.json'

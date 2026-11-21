@@ -211,7 +211,7 @@ def finish_if_wrapped(label):
         raise RuntimeError('WRAP_UP_NOW')
 
 
-def go(label, target, speed):
+def go(label, target, speed, day=None):
     current = clock(label)
     if current['paused'] and current['time'] == target and current['run_until'] is None:
         return
@@ -219,7 +219,8 @@ def go(label, target, speed):
     def minutes(text):
         h, m = map(int, text.split(':'))
         return 60 * h + m
-    day = current['day'] + (minutes(current['time']) >= minutes(target))
+    if day is None:
+        day = current['day'] + (minutes(current['time']) >= minutes(target))
     if not (current['run_until'] or '').endswith(' ' + target):
         call(label + '-go-' + target.replace(':', ''), 'time', {'speed': speed, 'run_until': {'day': str(day), 'time': target}, 'keep_needs': True})
     deadline = time.monotonic() + 1800
@@ -243,6 +244,28 @@ def native_minute(label):
 
 def native_reached(current, target, paused=False):
     return current >= target - NATIVE_TOLERANCE or (paused and math.floor(current) >= math.floor(target))
+
+
+def clock_text(minute):
+    whole = math.floor(minute + NATIVE_TOLERANCE) % 1440
+    return f'{whole // 60:02d}:{whole % 60:02d}'
+
+
+def pause_at_native(label, target, speed=1):
+    current = native_minute(label + '-start')
+    here, goal = math.floor(current + NATIVE_TOLERANCE), math.floor(target + NATIVE_TOLERANCE)
+    if here > goal:
+        raise RuntimeError(f'{label}: native clock {current} already passed the minute of {target}')
+    state = clock(label)
+    if here == goal:
+        if not state['paused'] or state['run_until'] is not None:
+            rate(label + '-pause', speed, pause=True)
+    else:
+        go(label, clock_text(goal), speed, day=state['day'] + goal // 1440 - here // 1440)
+    arrived = native_minute(label + '-native')
+    if math.floor(arrived + NATIVE_TOLERANCE) != goal or not native_reached(arrived, target, paused=True):
+        raise RuntimeError(f'{label}: paused at {arrived}, outside the native minute of {target}')
+    return arrived
 
 
 def wait_native(label, target, timeout=1800, interval=.25):
