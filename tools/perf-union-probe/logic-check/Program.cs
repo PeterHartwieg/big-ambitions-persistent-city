@@ -44,6 +44,7 @@ internal static class Program
         Capacity();
         HarmonyAdapter();
         PatchWatch();
+        LoopPhases();
         Console.WriteLine("logic-check: " + (checks - failures) + "/" + checks + " checks passed");
         Console.WriteLine("expected_scope_hash " + ScopeInventory.Hash());
         if (perf) Perf();
@@ -434,6 +435,57 @@ internal static class Program
         Check(series.Retained == CollectionSeries.Limit && series.Truncated && series.Collections == CollectionSeries.Limit + 5, "a full series counts further collections and reports truncation");
         series.Begin(100);
         Check(series.Retained == 0 && series.Collections == 0 && series.First == -1 && series.Growth == 0, "a new window starts an empty series");
+    }
+
+    private static void LoopPhases()
+    {
+        var names = new[] { "EarlyUpdate", "FixedUpdate", "PreUpdate", "Update", "PreLateUpdate", "PostLateUpdate", "TimeUpdate", "Initialization" };
+        var p = new LoopPhaseRecorder();
+        p.Configure(names);
+        void Frame(int frame, long at, int gc, long[] starts, int gcPhase, double mod = 0, bool diagnostic = false)
+        {
+            p.Begin(at, gc);
+            int collections = gc;
+            for (int i = 1; i < starts.Length; i++)
+            {
+                if (gcPhase == i - 1) collections++;
+                if (starts[i] >= 0) p.Stamp(i, at + starts[i], collections);
+            }
+            if (gcPhase == starts.Length - 1) collections++;
+            p.Close(frame, at + 33, collections, mod, diagnostic, false, 1.0);
+        }
+        var plain = new long[] { 0, 2, 4, 5, 20, 22, 30, 31 };
+        Frame(10, 0, 4, plain, -1);
+        Check(p.Collections == 0 && p.Retained == 0, "a frame without a collection adds no collection row");
+        var gcFrame = new long[] { 0, 2, 4, 5, 45, 47, 55, 56 };
+        p.Begin(33, 4);
+        int c = 4;
+        for (int i = 1; i < gcFrame.Length; i++) { if (i == 4) c++; p.Stamp(i, 33 + gcFrame[i], c); }
+        p.Close(11, 33 + 58, c, 2.5, false, false, 1.0);
+        Check(p.Collections == 1 && p.Retained == 1 && p.Frame(0) == 11 && p.WholeMs(0) == 58 && p.PreviousWholeMs(0) == 33,
+            "a collection frame keeps its whole time and the previous frame's");
+        Check(p.PhaseMs(0, 3) == 40 && p.PreviousPhaseMs(0, 3) == 15 && p.GcPhase(0) == 3 && p.LargestExcessPhase(0) == 3 && p.ExcessMs(0) == 25,
+            "the phase that ran the collection and the phase that grew are named against the previous frame");
+        double sum = 0; for (int i = 0; i < names.Length; i++) sum += p.PhaseMs(0, i);
+        Check(Math.Abs(sum - p.WholeMs(0)) < 1e-9, "phases tile the whole frame");
+        Check(p.ModWorkMs(0) == 2.5 && p.NextWholeMs(0) == -1, "mod work is kept and the next frame is pending");
+        Frame(12, 91, 5, new long[] { 0, -1, 4, 5, 20, 22, 30, 31 }, -1);
+        Check(p.NextWholeMs(0) == 33, "the following frame fills the next-frame time");
+        p.Begin(124, 5); p.Close(13, 124 + 33, 5, 0, false, false, 1.0);
+        Check(p.Retained == 1, "an unstamped phase reads zero and adds no row");
+        Frame(14, 157, 5, plain, 6, 0, true);
+        Check(p.Retained == 2 && p.Diagnostic(1) && p.GcPhase(1) == 6, "a diagnostic collection frame is flagged, its collection placed in the next frame's time update");
+        for (int i = 0; i < LoopPhaseRecorder.Limit + 3; i++) Frame(20 + i, 200 + 40 * i, 6 + i, plain, 3);
+        Check(p.Retained == LoopPhaseRecorder.Limit && p.Truncated && p.Collections == LoopPhaseRecorder.Limit + 5, "rows stop at the limit and further collections are counted");
+        Check(p.PreviousWholeMs(3) == -1, "a collection frame after a collection frame has no clean previous frame");
+        p.Reset();
+        long before = GC.GetAllocatedBytesForCurrentThread();
+        for (int i = 0; i < 1000; i++) Frame(100 + i, 10000 + 40 * i, 100 + i / 3, plain, i % 3 == 0 ? 3 : -1);
+        long allocated = GC.GetAllocatedBytesForCurrentThread() - before;
+        Check(allocated == 0, "phase stamps and collection rows allocate nothing after configuration (" + allocated + " B, .NET)");
+        bool threw = false;
+        try { p.Configure(new string[LoopPhaseRecorder.MaxPhases + 1]); } catch (ArgumentOutOfRangeException) { threw = true; }
+        Check(threw, "more phases than the recorder holds are refused");
     }
 
     private const string PinnedHarmonySha256 = "7b9e756306fa3d7620e02a857c8927a6ab04973f9bd8a77d3866700a6deac55c";

@@ -459,4 +459,122 @@ namespace PerfUnionProbe
             used[Retained++] = usedBytes;
         }
     }
+    public sealed class LoopPhaseRecorder
+    {
+        public const int Limit = 64, MaxPhases = 12;
+        private readonly long[] start = new long[MaxPhases];
+        private readonly int[] gcAt = new int[MaxPhases];
+        private readonly bool[] stamped = new bool[MaxPhases];
+        private readonly double[] previous = new double[MaxPhases];
+        private readonly double[] current = new double[MaxPhases];
+        private readonly double[] rowPhases = new double[Limit * MaxPhases];
+        private readonly double[] rowPrevious = new double[Limit * MaxPhases];
+        private readonly int[] rowFrame = new int[Limit], rowCollections = new int[Limit], rowGcPhase = new int[Limit];
+        private readonly double[] rowWhole = new double[Limit], rowPreviousWhole = new double[Limit], rowNextWhole = new double[Limit], rowMod = new double[Limit];
+        private readonly bool[] rowDiagnostic = new bool[Limit], rowLate = new bool[Limit], rowPreviousCollected = new bool[Limit];
+        private string[] names = Array.Empty<string>();
+        private double previousWhole = -1;
+        private bool open, previousCollected, rowAwaitsNext;
+        private int startCollections;
+
+        public int Phases => names.Length;
+        public string PhaseName(int phase) => names[phase];
+        public int Collections { get; private set; }
+        public int Retained { get; private set; }
+        public bool Truncated => Collections > Retained;
+
+        public void Configure(string[] phaseNames)
+        {
+            if (phaseNames == null || phaseNames.Length == 0 || phaseNames.Length > MaxPhases) throw new ArgumentOutOfRangeException(nameof(phaseNames));
+            names = (string[])phaseNames.Clone();
+            Reset();
+        }
+
+        public void Reset()
+        {
+            Collections = Retained = 0; open = previousCollected = rowAwaitsNext = false; previousWhole = -1;
+            Array.Clear(stamped, 0, MaxPhases); Array.Clear(previous, 0, MaxPhases);
+        }
+
+        public void Begin(long ticks, int collections)
+        {
+            Array.Clear(stamped, 0, MaxPhases);
+            open = names.Length > 0;
+            startCollections = collections;
+            if (open) Stamp(0, ticks, collections);
+        }
+
+        public void Stamp(int phase, long ticks, int collections)
+        {
+            if (!open || phase < 0 || phase >= names.Length || stamped[phase]) return;
+            stamped[phase] = true; start[phase] = ticks; gcAt[phase] = collections;
+        }
+
+        public void Close(int frame, long endTicks, int collections, double modWorkMs, bool diagnostic, bool late, double ticksToMs)
+        {
+            if (!open) return;
+            open = false;
+            int phases = names.Length;
+            long next = endTicks; int nextGc = collections, gcPhase = -1;
+            for (int p = phases - 1; p >= 0; p--)
+            {
+                if (!stamped[p]) { start[p] = next; gcAt[p] = nextGc; }
+                current[p] = Math.Max(0, next - start[p]) * ticksToMs;
+                if (nextGc != gcAt[p]) gcPhase = p;
+                next = start[p]; nextGc = gcAt[p];
+            }
+            double whole = Math.Max(0, endTicks - start[0]) * ticksToMs;
+            bool collected = collections != startCollections;
+            if (rowAwaitsNext) { rowNextWhole[Retained - 1] = collected ? -1 : whole; rowAwaitsNext = false; }
+            if (collected)
+            {
+                Collections++;
+                if (Retained < Limit)
+                {
+                    int r = Retained++;
+                    rowFrame[r] = frame; rowWhole[r] = whole; rowMod[r] = modWorkMs; rowDiagnostic[r] = diagnostic; rowLate[r] = late;
+                    rowCollections[r] = collections - startCollections; rowGcPhase[r] = gcPhase;
+                    rowPreviousWhole[r] = previousCollected ? -1 : previousWhole; rowPreviousCollected[r] = previousCollected; rowNextWhole[r] = -1;
+                    for (int p = 0; p < MaxPhases; p++)
+                    {
+                        rowPhases[r * MaxPhases + p] = p < phases ? current[p] : 0;
+                        rowPrevious[r * MaxPhases + p] = p < phases && previousWhole >= 0 ? previous[p] : -1;
+                    }
+                    rowAwaitsNext = true;
+                }
+            }
+            for (int p = 0; p < phases; p++) previous[p] = current[p];
+            previousWhole = whole; previousCollected = collected;
+        }
+
+        public int Frame(int row) => rowFrame[Row(row)];
+        public double WholeMs(int row) => rowWhole[Row(row)];
+        public double PreviousWholeMs(int row) => rowPreviousWhole[Row(row)];
+        public double NextWholeMs(int row) => rowNextWhole[Row(row)];
+        public double ModWorkMs(int row) => rowMod[Row(row)];
+        public bool Diagnostic(int row) => rowDiagnostic[Row(row)];
+        public bool Late(int row) => rowLate[Row(row)];
+        public int RowCollections(int row) => rowCollections[Row(row)];
+        public int GcPhase(int row) => rowGcPhase[Row(row)];
+        public double PhaseMs(int row, int phase) => rowPhases[Row(row) * MaxPhases + Phase(phase)];
+        public double PreviousPhaseMs(int row, int phase) => rowPrevious[Row(row) * MaxPhases + Phase(phase)];
+
+        public double ExcessMs(int row) => PreviousWholeMs(row) < 0 ? -1 : WholeMs(row) - PreviousWholeMs(row);
+
+        public int LargestExcessPhase(int row)
+        {
+            int best = -1; double most = double.NegativeInfinity;
+            for (int p = 0; p < names.Length; p++)
+            {
+                double before = PreviousPhaseMs(row, p);
+                if (before < 0) return -1;
+                double grew = PhaseMs(row, p) - before;
+                if (grew > most) { most = grew; best = p; }
+            }
+            return best;
+        }
+
+        private int Row(int row) => row >= 0 && row < Retained ? row : throw new ArgumentOutOfRangeException(nameof(row));
+        private int Phase(int phase) => phase >= 0 && phase < names.Length ? phase : throw new ArgumentOutOfRangeException(nameof(phase));
+    }
 }

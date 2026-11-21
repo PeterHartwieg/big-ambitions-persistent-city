@@ -25,7 +25,8 @@ namespace PersistentCity.Runtime
             long now = System.Diagnostics.Stopwatch.GetTimestamp();
             sampler.CounterFrame(GcAllocationCounter.Read(), GcAllocationCounter.Collections);
             sampler.NoteBodies(BodyMerge.Owned, physical?.BoundBodies ?? 0);
-            sampler.Observe(now * GcMillisecondsPerTimestamp, GcCount(0), GcCount(1), GcCount(2), GC.GetTotalMemory(false), Time.frameCount);
+            sampler.Observe(now * GcMillisecondsPerTimestamp, GcCount(0), GcCount(1), GcCount(2), GC.GetTotalMemory(false), Time.frameCount,
+                DiagnosticFrames.Marks, DiagnosticFrames.LastSource);
             return now;
         }
 
@@ -112,6 +113,7 @@ namespace PersistentCity.Runtime
         {
             get
             {
+                DiagnosticFrames.Mark("gc diagnostics");
                 var context = GcContext();
                 int meshes = BodyMerge.LiveMeshes(out long vertices);
                 return new { monoHeapBytes = context.MonoHeapBytes, monoUsedBytes = context.MonoUsedBytes, totalMemoryBytes = GC.GetTotalMemory(false),
