@@ -42,6 +42,8 @@ namespace PerfUnionProbe
 
     public struct PerfUnionPhaseStamp { }
 
+    public struct PerfUnionSubStamp { }
+
     public sealed class Session : MonoBehaviour
     {
         internal const string PatchId = "f4b.perf-union-probe";
@@ -88,6 +90,11 @@ namespace PerfUnionProbe
         private static readonly FrameRow[] frames = new FrameRow[FrameLimit];
         private static float[] frameComponents = new float[FrameLimit * ScopeInventory.Components.Count];
         internal static readonly LoopPhaseRecorder phases = new LoopPhaseRecorder();
+        internal static readonly LoopPhaseRecorder subPhases = new LoopPhaseRecorder(LoopPhaseRecorder.MaxSubPhases);
+        private static readonly int[] subRanking = new int[4];
+        private static bool subPhasesTruncated;
+        private static readonly Type[] SubPhaseParents = { typeof(UnityEngine.PlayerLoop.Update), typeof(UnityEngine.PlayerLoop.PreLateUpdate),
+            typeof(UnityEngine.PlayerLoop.PostLateUpdate), typeof(UnityEngine.PlayerLoop.TimeUpdate) };
         private static Action<string> markDiagnostic;
         private static string startScan = "none", stopScan = "none";
         private static readonly RingCursor frameRing = new RingCursor(FrameLimit);
@@ -465,6 +472,7 @@ namespace PerfUnionProbe
                 var children = systems[i].subSystemList ?? Array.Empty<PlayerLoopSystem>();
                 var start = new PlayerLoopSystem { type = typeof(PerfUnionFrameStart), updateDelegate = FrameStart };
                 systems[i].subSystemList = new[] { start }.Concat(children.Where(c => c.type != typeof(PerfUnionFrameStart))).ToArray();
+                InstallSubStamps(systems);
                 InstallPhaseStamps(systems, i);
                 PlayerLoop.SetPlayerLoop(loop);
                 loopInstalled = true; boundarySource = "player-loop-early-update";
@@ -493,6 +501,42 @@ namespace PerfUnionProbe
             if (measuring) phases.Stamp(phase, Stopwatch.GetTimestamp(), GC.CollectionCount(0));
         }
 
+        private static void InstallSubStamps(PlayerLoopSystem[] systems)
+        {
+            var names = new List<string> { "frame-start" };
+            subPhasesTruncated = false;
+            PlayerLoopSystem Stamp(string name)
+            {
+                int phase = names.Count;
+                names.Add(name);
+                return new PlayerLoopSystem { type = typeof(PerfUnionSubStamp), updateDelegate = () => SubStamp(phase) };
+            }
+            foreach (var parent in SubPhaseParents)
+            {
+                int i = Array.FindIndex(systems, s => s.type == parent);
+                if (i < 0 || systems[i].subSystemList == null) continue;
+                var children = new List<PlayerLoopSystem>();
+                foreach (var child in systems[i].subSystemList.Where(c => c.type != typeof(PerfUnionSubStamp)))
+                {
+                    bool ours = child.type == typeof(PerfUnionPhaseStamp) || child.type == typeof(PerfUnionFrameStart);
+                    if (!ours && names.Count < LoopPhaseRecorder.MaxSubPhases - 1) children.Add(Stamp(parent.Name + "." + (child.type?.Name ?? "unnamed")));
+                    else if (!ours) subPhasesTruncated = true;
+                    children.Add(child);
+                }
+                systems[i].subSystemList = children.ToArray();
+            }
+            int initialization = Array.FindIndex(systems, s => s.type == typeof(UnityEngine.PlayerLoop.Initialization));
+            if (initialization >= 0 && systems[initialization].subSystemList != null)
+                systems[initialization].subSystemList = new[] { Stamp("Initialization") }
+                    .Concat(systems[initialization].subSystemList.Where(c => c.type != typeof(PerfUnionSubStamp))).ToArray();
+            subPhases.Configure(names.ToArray());
+        }
+
+        private static void SubStamp(int phase)
+        {
+            if (measuring) subPhases.Stamp(phase, Stopwatch.GetTimestamp(), GC.CollectionCount(0));
+        }
+
         private static void RemoveLoop()
         {
             if (!loopInstalled) return;
@@ -500,8 +544,8 @@ namespace PerfUnionProbe
             var loop = PlayerLoop.GetCurrentPlayerLoop();
             var systems = loop.subSystemList;
             for (int i = 0; systems != null && i < systems.Length; i++)
-                if (systems[i].subSystemList != null && systems[i].subSystemList.Any(c => c.type == typeof(PerfUnionFrameStart) || c.type == typeof(PerfUnionPhaseStamp)))
-                    systems[i].subSystemList = systems[i].subSystemList.Where(c => c.type != typeof(PerfUnionFrameStart) && c.type != typeof(PerfUnionPhaseStamp)).ToArray();
+                if (systems[i].subSystemList != null && systems[i].subSystemList.Any(c => c.type == typeof(PerfUnionFrameStart) || c.type == typeof(PerfUnionPhaseStamp) || c.type == typeof(PerfUnionSubStamp)))
+                    systems[i].subSystemList = systems[i].subSystemList.Where(c => c.type != typeof(PerfUnionFrameStart) && c.type != typeof(PerfUnionPhaseStamp) && c.type != typeof(PerfUnionSubStamp)).ToArray();
             PlayerLoop.SetPlayerLoop(loop);
         }
 
@@ -543,6 +587,7 @@ namespace PerfUnionProbe
             {
                 WriteFrame(nowFrame, new StopRead(collections, nowFrame, -1, -1, now), false);
                 phases.Close(currentFrame, now, collections, union.FrameTicks * ToMs, frameDiagnostic, frameLate, ToMs);
+                if (subPhases.Phases > 0) subPhases.Close(currentFrame, now, collections, union.FrameTicks * ToMs, frameDiagnostic, frameLate, ToMs);
             }
             if (measuring) NoteCollections(collections);
             if (union.Depth != 0)
@@ -554,7 +599,7 @@ namespace PerfUnionProbe
             currentFrame = nowFrame; frameStartQpc = now; union.ResetFrame(); observerTicks = boundaryTicks = 0;
             frameDiagnostic = false; frameScene = false; frameSaves = 0; frameLate = !fromLoop;
             gcAtFrameStart = collections; frameLoading = LoadScene.isLoading;
-            if (measuring) phases.Begin(now, gcAtFrameStart);
+            if (measuring) { phases.Begin(now, gcAtFrameStart); if (subPhases.Phases > 0) subPhases.Begin(now, gcAtFrameStart); }
             frameNative = NativeMinute(); frameLogical = LogicalMinute();
         }
 
@@ -643,7 +688,7 @@ namespace PerfUnionProbe
             frameRing.Reset(); tickRing.Reset(); sampleRing.Reset(); calls.Reset(); sampleFailures = advanceCalls = 0;
             ReadMonoHeap(out startScanHeap, out startScanUsed); monoHeapStop = monoUsedStop = -1;
             startScan = Rescan(false); stopScan = "none"; unexpectedAtWindowStart = coverage?.Unexpected.Count ?? 0; patchSetChanged = false;
-            phases.Reset();
+            phases.Reset(); if (subPhases.Phases > 0) subPhases.Reset();
             ReadMonoHeap(out monoHeapStart, out monoUsedStart);
             collectionSeries.Begin(GC.CollectionCount(0));
             crossFrame = timedExceptions = 0; unknownScopeCalls = 0; totalSaves = totalSceneEvents = 0;
@@ -668,7 +713,9 @@ namespace PerfUnionProbe
         {
             if (!measuring) return;
             monoHeapStop = stop.Heap; monoUsedStop = stop.Used;
-            stop.Close(collectionSeries, phases, currentFrame, currentFrame >= 0 && currentFrame > firstMeasureFrame, union.FrameTicks * ToMs, frameLate, ToMs);
+            bool closePhases = currentFrame >= 0 && currentFrame > firstMeasureFrame;
+            stop.Close(collectionSeries, phases, currentFrame, closePhases, union.FrameTicks * ToMs, frameLate, ToMs);
+            if (closePhases && subPhases.Phases > 0) subPhases.Close(currentFrame, stop.Ticks, stop.Collections, union.FrameTicks * ToMs, true, frameLate, ToMs, true);
             if (reason == "explicit-stop") stopScan = Rescan(false);
             if (writeStopFrame && currentFrame > firstMeasureFrame) { frameDiagnostic = true; WriteFrame(currentFrame + 1, stop, true); }
             if (pendingWindowStart) pendingWindowStart = false;
@@ -767,7 +814,8 @@ namespace PerfUnionProbe
             for (int r = 0; r < phases.Retained; r++)
                 if (!phases.Diagnostic(r) && phases.PreviousWholeMs(r) >= 0 && phases.ExcessMs(r) > excess) { excess = phases.ExcessMs(r); worst = r; }
             var summary = new JObject { ["collections"] = phases.Collections, ["retained"] = phases.Retained, ["truncated"] = phases.Truncated,
-                ["phases"] = new JArray(Enumerable.Range(0, phases.Phases).Select(phases.PhaseName)), ["page_section"] = "collections" };
+                ["phases"] = new JArray(Enumerable.Range(0, phases.Phases).Select(phases.PhaseName)), ["page_section"] = "collections",
+                ["sub_phase_count"] = subPhases.Phases, ["sub_phases_truncated"] = subPhasesTruncated };
             if (worst >= 0)
                 summary["worst"] = new JObject { ["frame"] = phases.Frame(worst), ["whole_frame_ms"] = phases.WholeMs(worst), ["previous_whole_ms"] = phases.PreviousWholeMs(worst),
                     ["excess_ms"] = excess, ["mod_work_ms"] = phases.ModWorkMs(worst), ["gc_phase"] = PhaseLabel(phases.GcPhase(worst)),
@@ -795,7 +843,23 @@ namespace PerfUnionProbe
                 ["mod_work_ms"] = phases.ModWorkMs(r), ["collections"] = phases.RowCollections(r), ["gen0_from"] = phases.Gen0From(r), ["gen0_through"] = phases.Gen0Through(r), ["collection_phases"] = collected, ["diagnostic"] = phases.Diagnostic(r), ["late_boundary"] = phases.Late(r),
                 ["partial"] = phases.Partial(r),
                 ["gc_phase"] = PhaseLabel(phases.GcPhase(r)), ["largest_excess_phase"] = PhaseLabel(phases.LargestExcessPhase(r)),
-                ["phase_ms"] = now, ["previous_phase_ms"] = before, ["phase_excess_ms"] = grew };
+                ["phase_ms"] = now, ["previous_phase_ms"] = before, ["phase_excess_ms"] = grew, ["sub_phases"] = SubPhaseRow(r) };
+        }
+
+        private static JObject SubPhaseRow(int r)
+        {
+            if (subPhases.Phases == 0 || r >= subPhases.Retained || subPhases.Frame(r) != phases.Frame(r))
+                return new JObject { ["available"] = false };
+            var ranked = new JArray();
+            int taken = subPhases.LargestExcessPhases(r, subRanking);
+            for (int k = 0; k < taken; k++)
+            {
+                int p = subRanking[k];
+                ranked.Add(new JObject { ["name"] = subPhases.PhaseName(p), ["ms"] = subPhases.PhaseMs(r, p), ["previous_ms"] = subPhases.PreviousPhaseMs(r, p),
+                    ["excess_ms"] = subPhases.PhaseMs(r, p) - subPhases.PreviousPhaseMs(r, p) });
+            }
+            int gc = subPhases.GcPhase(r);
+            return new JObject { ["available"] = true, ["gc_sub_phase"] = gc >= 0 ? subPhases.PhaseName(gc) : "unknown", ["largest_excess"] = ranked };
         }
 
         private const int PageEnvelope = 512;
