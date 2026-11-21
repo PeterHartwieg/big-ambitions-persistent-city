@@ -721,6 +721,7 @@ internal static class Program
             "a collection in a child past the cap lands in its parent's unstamped bucket");
         RootCallbacks();
         UnityLoopWithoutTruncation();
+        LargestScopePerFrame();
         ModWorkBySubPhase();
         WalkerStampAcrossRetime();
     }
@@ -839,6 +840,36 @@ internal static class Program
         var old = SubPhasePlan.Build(UnityLoop, Unity2022Children, 2, Detailed, 64);
         Check(old.Truncated && old.Names.Contains("TimeUpdate" + SubPhasePlan.Unstamped),
             "the same loop at the earlier 64-stamp cap put TimeUpdate's wait in TimeUpdate.unstamped, as rig 16x read");
+        var gameLoop = Unity2022Children.Select(c => c.ToArray()).ToArray();
+        gameLoop[4] = gameLoop[4].Concat(Enumerable.Range(0, 12).Select(k => "GamePreUpdate" + k)).ToArray();
+        gameLoop[6] = gameLoop[6].Concat(Enumerable.Range(0, 16).Select(k => "GameLateSystem" + k)).ToArray();
+        gameLoop[7] = gameLoop[7].Take(44).Concat(Enumerable.Range(0, 40).Select(k => "GamePostSystem" + k)).Concat(new[] { "PresentAfterDraw" }).ToArray();
+        var capped = SubPhasePlan.Build(UnityLoop, gameLoop, 2, Detailed, 128);
+        Check(capped.Truncated && capped.Names.Length <= 128 && capped.Names.Contains("TimeUpdate" + SubPhasePlan.Unstamped),
+            "a game loop with 85 PostLateUpdate children overflows the 128-stamp cap and falls back to TimeUpdate.unstamped, as rig 16y read in all four windows");
+        var wide = SubPhasePlan.Build(UnityLoop, gameLoop, 2, Detailed, LoopPhaseRecorder.MaxSubPhases);
+        var wideNames = wide.Names.ToList();
+        Check(!wide.Truncated && wide.Names.Length > 128 && wide.Names.Length < LoopPhaseRecorder.MaxSubPhases
+            && !wideNames.Any(n => n.EndsWith(SubPhasePlan.Unstamped, StringComparison.Ordinal))
+            && wideNames.Contains("TimeUpdate.WaitForLastPresentationAndUpdateTime") && wideNames.Contains("PostLateUpdate.GamePostSystem39"),
+            "the same game loop under the " + LoopPhaseRecorder.MaxSubPhases + "-stamp ceiling stamps every child, TimeUpdate's wait included (" + wide.Names.Length + " stamps)");
+        var sized = new LoopPhaseRecorder(wide.Names.Length);
+        sized.Configure(wide.Names);
+        Check(sized.Capacity == wide.Names.Length && sized.Phases == wide.Names.Length, "the subsystem recorder is allocated to the installed plan, not the ceiling");
+    }
+
+    private static void LargestScopePerFrame()
+    {
+        var union = new UnionClock(3, 0, 1000);
+        union.Enter(0); union.Exit(0, 0, 5);
+        union.Enter(10); union.Enter(11); union.Exit(1, 11, 300); union.Exit(2, 10, 301);
+        Check(union.FrameLargestScope == 2 && union.FrameLargestScopeTicks == 291 && union.FrameTicks == 296,
+            "the union names the frame's longest scope (outer 291 ticks over inner 289) next to the frame's union of 296 ticks");
+        union.ResetFrame();
+        Check(union.FrameLargestScope == -1 && union.FrameLargestScopeTicks == 0, "a new frame starts with no largest scope");
+        long before = GC.GetAllocatedBytesForCurrentThread();
+        for (int i = 0; i < 1000; i++) { union.Enter(i); union.Exit(i % 3, i, i + 1); union.ResetFrame(); }
+        Check(GC.GetAllocatedBytesForCurrentThread() == before, "tracking the largest scope allocates nothing per frame");
     }
 
     private static void ModWorkBySubPhase()

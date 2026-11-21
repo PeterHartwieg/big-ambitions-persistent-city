@@ -272,6 +272,8 @@ namespace PerfUnionProbe
         public long MaxTicks(int scope) => maxTicks[scope];
         public long Spikes(int scope) => spikes[scope];
         public long FrameComponentTicks(int component) => frameComponentTicks[component];
+        public int FrameLargestScope { get; private set; } = -1;
+        public long FrameLargestScopeTicks { get; private set; }
 
         public void Enter(long now) { if (depth++ == 0) unionStart = now; }
         public void Exit(int scope, long start, long now)
@@ -280,6 +282,7 @@ namespace PerfUnionProbe
             calls[scope]++; ticks[scope] += duration;
             if (duration > maxTicks[scope]) maxTicks[scope] = duration;
             if (duration >= spikeTicks) spikes[scope]++;
+            if (duration > FrameLargestScopeTicks) { FrameLargestScopeTicks = duration; FrameLargestScope = scope; }
             if (depth == 0) { Underflows++; return; }
             if (--depth == 0) FrameTicks += Math.Max(0, now - unionStart);
         }
@@ -288,7 +291,7 @@ namespace PerfUnionProbe
             if (!insideUnion) ComponentsOutsideUnion++;
             frameComponentTicks[component] += Math.Max(0, now - start);
         }
-        public void ResetFrame() { FrameTicks = 0; Array.Clear(frameComponentTicks, 0, frameComponentTicks.Length); }
+        public void ResetFrame() { FrameTicks = 0; FrameLargestScope = -1; FrameLargestScopeTicks = 0; Array.Clear(frameComponentTicks, 0, frameComponentTicks.Length); }
         public void ResetAll()
         {
             ResetFrame(); depth = 0; Underflows = ComponentsOutsideUnion = 0;
@@ -483,7 +486,7 @@ namespace PerfUnionProbe
 
     public sealed class LoopPhaseRecorder
     {
-        public const int Limit = 64, MaxPhases = 12, MaxSubPhases = 128;
+        public const int Limit = 64, MaxPhases = 12, MaxSubPhases = 512;
         private readonly int capacity;
         private readonly long[] start;
         private readonly long[] modAt;
