@@ -374,7 +374,7 @@ namespace PersistentCity.Runtime
                             : new MultimodalRoutes(simulation.State.Places, NativeTravelPace.WalkingMetresPerSecond / clockRate, clockRate, dependency, routeObjects);
                         retimedRoutes = null;
                         if (foodMarket != null) log?.Info(FoodClockReach.RetimeLine(clockRate, swapped.WalkingMetresPerMinute));
-                        if (routes != null) swapped.ReuseRoadSceneForRetiming(routes);
+                        if (routes != null) { swapped.ReuseRoadSceneForRetiming(routes); routes.ReleaseRetainedPaths(); }
                         routes = swapped;
                         seenRoadSnapshots = 0; clockRetimingRoutes = true;
                         var swapMark = GcAllocationCounter.Mark();

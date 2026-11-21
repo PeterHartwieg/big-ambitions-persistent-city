@@ -160,9 +160,14 @@ namespace PersistentCity.Runtime
             typeof(Position[]), typeof(double[]), typeof(long[]), typeof(int[]), typeof(string), typeof(CitizenState), typeof(TrafficVehicleState), typeof(TrafficRouteLeg),
             typeof(TrafficRouteLeg[]), typeof(List<TrafficRouteLeg>), typeof(TrafficKernelState), typeof(CitySimulator), typeof(MultimodalRoutes), typeof(RoadRoutes) };
 
+        internal static readonly Type[] RetainedPerRootTypes = { typeof(RouteLeg), typeof(RouteLeg[]), typeof(List<RouteLeg>), typeof(RouteLegs), typeof(Route),
+            typeof(TrafficRouteLeg), typeof(TrafficVehicleState) };
+
         internal static RetainedCensus RetainedCensusOf(object runtime, IDictionary<string, string>? modData)
         {
             var census = new RetainedCensus(RetainedWalkable);
+            census.TrackPerRoot(RetainedPerRootTypes);
+            (runtime as PopulationRuntime)?.routes?.RetainedCaches((name, cache, bound) => census.DeferCache("cache.routes." + name, cache, bound));
             census.AddOwnedEntries(modData, "persistentcity:", "save.modData.");
             census.AddFields("runtime.", runtime, typeof(MonoBehaviour));
             var assemblies = new List<System.Reflection.Assembly>();
@@ -170,6 +175,7 @@ namespace PersistentCity.Runtime
                 if ((assembly.GetName().Name ?? "").StartsWith("PersistentCity", StringComparison.Ordinal)) assemblies.Add(assembly);
             assemblies.Sort((a, b) => StringComparer.Ordinal.Compare(a.GetName().Name, b.GetName().Name));
             census.AddStatics(assemblies, "static.");
+            census.AddDeferredCaches();
             return census;
         }
 
