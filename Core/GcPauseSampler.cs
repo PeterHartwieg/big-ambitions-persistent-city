@@ -222,6 +222,8 @@ namespace PersistentCity.Core
 
         public void ModWork(double milliseconds) { if (Running && baselined) pendingModMs = milliseconds; }
 
+        public void LateModWork(double milliseconds) { if (Running && baselined && milliseconds > 0) pendingModMs += milliseconds; }
+
         private int ownedBodies = -1, boundBodies = -1;
 
         private bool growBefore, growNow;

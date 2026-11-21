@@ -142,4 +142,19 @@ public sealed class Gr5DiagnosticFrameTests
         for (int i = 0; i < 2000; i++) Step(i % 3 == 0, i % 50 == 0);
         Assert.Equal(before, GC.GetAllocatedBytesForCurrentThread());
     }
+    [Fact]
+    public void LateUpdateWorkJoinsTheFramesModWorkAndLeavesThePauseWithoutModWork()
+    {
+        var sampler = new GcPauseSampler(64);
+        sampler.Start(1);
+        sampler.LateModWork(9);
+        sampler.Observe(0, 0, 0, 0, 1, 1);
+        sampler.ModWork(2); sampler.LateModWork(1.5); sampler.LateModWork(-4);
+        sampler.Observe(34, 0, 0, 0, 1, 2);
+        sampler.ModWork(1); sampler.LateModWork(6);
+        sampler.Observe(94, 1, 0, 0, 1, 3);
+        Assert.Equal(3.5, sampler.ModSpread(false).Max, 6);
+        Assert.Equal(7, sampler.CollectionRow(0).ModMs, 6);
+        Assert.Equal(60 - 34 - 7, sampler.PauseWithoutModSpread().Max, 3);
+    }
 }
