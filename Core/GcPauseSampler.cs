@@ -150,7 +150,6 @@ namespace PersistentCity.Core
         private readonly float[] frameMs;
         private readonly float[] modMs;
         private readonly float[] lateMs;
-        private readonly float[] modWorkMs;
         private readonly bool[] collected;
         private readonly bool[] diagnostic;
         private int lastMarks;
@@ -178,7 +177,7 @@ namespace PersistentCity.Core
         public GcPauseSampler(int capacity = DefaultCapacity)
         {
             if (capacity < 1) throw new ArgumentOutOfRangeException(nameof(capacity));
-            frameMs = new float[capacity]; modMs = new float[capacity]; lateMs = new float[capacity]; modWorkMs = new float[capacity]; collected = new bool[capacity]; diagnostic = new bool[capacity];
+            frameMs = new float[capacity]; modMs = new float[capacity]; lateMs = new float[capacity]; collected = new bool[capacity]; diagnostic = new bool[capacity];
         }
 
         public bool Running { get; private set; }
@@ -423,17 +422,17 @@ namespace PersistentCity.Core
             if (frameMilliseconds >= SpikeMilliseconds) { frameSpikes++; if (gc) collectionSpikes++; }
             if (stored == frameMs.Length) return;
             frameMs[stored] = (float)frameMilliseconds; modMs[stored] = (float)modMilliseconds; lateMs[stored] = (float)lateMilliseconds;
-            modWorkMs[stored] = (float)(modMilliseconds + lateMilliseconds); collected[stored] = gc; diagnostic[stored] = tooling;
+            collected[stored] = gc; diagnostic[stored] = tooling;
             stored++;
         }
 
         public GcSpread FrameSpread(bool withCollection) => Spread(frameMs, withCollection, 0);
         public GcSpread ModSpread(bool withCollection) => Spread(modMs, withCollection, 0);
         public GcSpread LateSpread(bool withCollection) => Spread(lateMs, withCollection, 0);
-        public GcSpread ModWorkSpread(bool withCollection) => Spread(modWorkMs, withCollection, 0);
+        public GcSpread ModWorkSpread(bool withCollection) => Spread(modMs, withCollection, 0, null, false, false, lateMs);
         public GcSpread PauseSpread() => Spread(frameMs, true, FrameSpread(false).P50);
         public GcSpread PauseWithoutModSpread() => Spread(frameMs, true, FrameSpread(false).P50, modMs);
-        public GcSpread PauseWithoutModWorkSpread() => Spread(frameMs, true, FrameSpread(false).P50, modWorkMs);
+        public GcSpread PauseWithoutModWorkSpread() => Spread(frameMs, true, FrameSpread(false).P50, modMs, false, false, null, lateMs);
         public GcSpread PauseIncludingDiagnosticSpread() => Spread(frameMs, true, FrameSpread(false).P50, null, true);
         public GcSpread DiagnosticFrameSpread() => Spread(frameMs, null, 0, null, true, true);
         public int CollectionRowCount => collectionRowCount;
@@ -461,7 +460,8 @@ namespace PersistentCity.Core
         public long HeapBeforeCollection => heapPairs == 0 ? -1 : heapBeforeSum / heapPairs;
         public long HeapAfterCollection => heapPairs == 0 ? -1 : heapAfterSum / heapPairs;
 
-        private GcSpread Spread(float[] source, bool? withCollection, double baseline, float[]? less = null, bool includeDiagnostic = false, bool onlyDiagnostic = false)
+        private GcSpread Spread(float[] source, bool? withCollection, double baseline, float[]? less = null, bool includeDiagnostic = false, bool onlyDiagnostic = false,
+            float[]? plus = null, float[]? lessToo = null)
         {
             int count = 0;
             for (int i = 0; i < stored; i++) if (Counted(i, withCollection, includeDiagnostic, onlyDiagnostic)) count++;
@@ -469,7 +469,7 @@ namespace PersistentCity.Core
             if (spreadScratch.Length < count) spreadScratch = new double[stored];
             var values = spreadScratch;
             int at = 0;
-            for (int i = 0; i < stored; i++) if (Counted(i, withCollection, includeDiagnostic, onlyDiagnostic)) values[at++] = Math.Max(0, source[i] - baseline - (less == null ? 0 : less[i]));
+            for (int i = 0; i < stored; i++) if (Counted(i, withCollection, includeDiagnostic, onlyDiagnostic)) values[at++] = Math.Max(0, source[i] + (plus == null ? 0 : plus[i]) - baseline - (less == null ? 0 : less[i]) - (lessToo == null ? 0 : lessToo[i]));
             Array.Sort(values, 0, count);
             return new GcSpread(count, Rank(values, count, .50), Rank(values, count, .95), values[count - 1]);
         }
