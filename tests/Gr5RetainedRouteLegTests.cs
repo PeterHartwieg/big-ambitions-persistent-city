@@ -39,12 +39,16 @@ public sealed class Gr5RetainedRouteLegTests
         public int TopTypes { get; }
     }
 
-    private static Read Census(CitySimulator city, ClockRetimeDriver driver)
+    private static readonly Type[] TrafficTracked = Tracked.Concat(new[] { typeof(TrafficRouteLeg), typeof(TrafficRouteLeg[]), typeof(List<TrafficRouteLeg>), typeof(TrafficKernelState) }).ToArray();
+
+    private static Read Census(CitySimulator city, ClockRetimeDriver driver) => Census(city, driver, Tracked);
+
+    private static Read Census(CitySimulator city, ClockRetimeDriver driver, Type[] tracked)
     {
         var census = new RetainedCensus();
         census.Add("runtime.simulation", city);
         census.Add("runtime.retimeDriver", driver);
-        using var report = JsonDocument.Parse(census.ReportJson(1, 0, new[] { typeof(CitySimulator) }, RetainedCensus.InstrumentRoot, Tracked, RetainedCensus.JourneyLegs(city.State)));
+        using var report = JsonDocument.Parse(census.ReportJson(1, 0, new[] { typeof(CitySimulator) }, RetainedCensus.InstrumentRoot, tracked, RetainedCensus.JourneyLegs(city.State)));
         return new Read(report.RootElement.Clone());
     }
 
@@ -123,32 +127,7 @@ public sealed class Gr5RetainedRouteLegTests
     {
         const int residents = 6, edges = 381, cycles = 12;
         const double departure = 1440, spacing = 2.5;
-        (CityState State, CitySimulator City) Build()
-        {
-            var state = Population.Create(Enumerable.Range(0, residents).Select(i => new CitizenIdentity
-            { Id = "road" + i, Name = "Road " + i, Age = 30, AppearanceSeed = i + 1, Persona = Persona.Commuter }), new[]
-            {
-                new Place { Id = "home", Name = "Home", Kind = PlaceKind.Home, Capacity = residents, Position = new Position(-4, 0, 0) },
-                new Place { Id = "work", Name = "Work", Kind = PlaceKind.Work, Capacity = residents, Position = new Position(edges + 4, 0, 0) }
-            }, "long-road", "0.40.4", 7, departure);
-            for (int i = 0; i < residents; i++)
-            {
-                var c = state.Citizens[i];
-                c.PlaceId = c.HomeId = "home"; c.DayPlaceId = "work"; c.Phase = CitizenPhase.Travelling;
-                c.DestinationId = "work"; c.DestinationActivity = Activity.Work; c.ActivityUntilMinute = 4000;
-                c.DepartureMinute = departure - i * 0.7;
-                c.Preferences.OwnsCar = true;
-                c.Car = new CarState { Id = c.Identity.Id + ":car", ParkedPosition = new Position(0, 0, 0) };
-                var legs = new List<RouteLeg> { Leg(-4, -2, 1, TravelMode.Walk, ""), Leg(-2, 0, 1, TravelMode.Walk, "") };
-                for (int e = 0; e < edges; e++) legs.Add(Leg(e, e + 1, 0.1, TravelMode.Car, "native:road:v1:" + TravelTimingMaximumRouteTests.LongRoad.Topology + ":" + e + ":" + (e + 1)));
-                legs.Add(Leg(edges, edges + 2, 1, TravelMode.Walk, "")); legs.Add(Leg(edges + 2, edges + 4, 1, TravelMode.Walk, ""));
-                c.Journey = new Route { Legs = legs }; c.NextEventMinute = c.DepartureMinute + c.Journey.Minutes;
-            }
-            var city = new CitySimulator(state, new TravelTimingMaximumRouteTests.LongRoad(1, edges));
-            city.AdvanceTo(departure + 2 + 3.037, int.MaxValue);
-            return (state, city);
-        }
-        var retimed = Build(); var control = Build();
+        var retimed = RoadCity(residents, edges, departure); var control = RoadCity(residents, edges, departure);
         var driver = new ClockRetimeDriver();
         var controlDriver = new ClockRetimeDriver();
         var city = retimed.City; var state = retimed.State;
@@ -209,6 +188,120 @@ public sealed class Gr5RetainedRouteLegTests
         Assert.True(reads[cycles].Control.Completed > 0, "the replay ends with traffic spans completed");
         Assert.False(StillClimbing(gap), "raw retimed minus control RouteLeg climbs while the journeys are active: " + string.Join(", ", gap));
         Assert.False(StillClimbing(mostSplits), "split prefixes per traffic-owned journey climb: " + string.Join(", ", mostSplits));
+    }
+
+    private static (CityState State, CitySimulator City) RoadCity(int residents, int edges, double departure)
+    {
+        var state = Population.Create(Enumerable.Range(0, residents).Select(i => new CitizenIdentity
+        { Id = "road" + i, Name = "Road " + i, Age = 30, AppearanceSeed = i + 1, Persona = Persona.Commuter }), new[]
+        {
+            new Place { Id = "home", Name = "Home", Kind = PlaceKind.Home, Capacity = residents, Position = new Position(-4, 0, 0) },
+            new Place { Id = "work", Name = "Work", Kind = PlaceKind.Work, Capacity = residents, Position = new Position(edges + 4, 0, 0) }
+        }, "long-road", "0.40.4", 7, departure);
+        for (int i = 0; i < residents; i++)
+        {
+            var c = state.Citizens[i];
+            c.PlaceId = c.HomeId = "home"; c.DayPlaceId = "work"; c.Phase = CitizenPhase.Travelling;
+            c.DestinationId = "work"; c.DestinationActivity = Activity.Work; c.ActivityUntilMinute = 4000;
+            c.DepartureMinute = departure - i * 0.7;
+            c.Preferences.OwnsCar = true;
+            c.Car = new CarState { Id = c.Identity.Id + ":car", ParkedPosition = new Position(0, 0, 0) };
+            var legs = new List<RouteLeg> { Leg(-4, -2, 1, TravelMode.Walk, ""), Leg(-2, 0, 1, TravelMode.Walk, "") };
+            for (int e = 0; e < edges; e++) legs.Add(Leg(e, e + 1, 0.1, TravelMode.Car, "native:road:v1:" + TravelTimingMaximumRouteTests.LongRoad.Topology + ":" + e + ":" + (e + 1)));
+            legs.Add(Leg(edges, edges + 2, 1, TravelMode.Walk, "")); legs.Add(Leg(edges + 2, edges + 4, 1, TravelMode.Walk, ""));
+            c.Journey = new Route { Legs = legs }; c.NextEventMinute = c.DepartureMinute + c.Journey.Minutes;
+        }
+        var city = new CitySimulator(state, new TravelTimingMaximumRouteTests.LongRoad(1, edges));
+        city.AdvanceTo(departure + 2 + 3.037, int.MaxValue);
+        return (state, city);
+    }
+
+    [Fact]
+    public void ActiveTrafficHoldsNoRouteOrVehicleStateBeyondItsLiveCarsAcrossRetimesAndDrain()
+    {
+        const int residents = 6, edges = 381, cycles = 7;
+        const double departure = 1440, spacing = 2.5;
+        var retimed = RoadCity(residents, edges, departure); var control = RoadCity(residents, edges, departure);
+        var driver = new ClockRetimeDriver();
+        var controlDriver = new ClockRetimeDriver();
+        var city = retimed.City; var state = retimed.State;
+        CitySimulator Retime(double rate)
+        {
+            while (driver.Update(state, rate, false, 2, ClockRetimeStages.SliceMilliseconds) != ClockRetimeOutcome.Committed) { }
+            Assert.Equal(0, driver.Degraded);
+            var rebuild = city.BeginRebuildRoutes(new TravelTimingMaximumRouteTests.LongRoad(rate, edges), driver.TakeRetimedTraffic());
+            while (!rebuild.Step(0)) { }
+            return rebuild.TakeResult();
+        }
+        (Read Census, int Cars, long Legs) Checkpoint(CitySimulator simulator, ClockRetimeDriver retimeDriver)
+        {
+            var live = new List<TrafficVehicleState>();
+            simulator.Traffic?.CopyVehiclesInOrder(live);
+            return (Census(simulator, retimeDriver, TrafficTracked), live.Count, live.Sum(v => (long)v.Route.Count));
+        }
+        var reads = new List<(string Name, (Read Census, int Cars, long Legs) Retimed, (Read Census, int Cars, long Legs) Control)>
+        { ("R0", Checkpoint(city, driver), Checkpoint(control.City, controlDriver)) };
+        double start = state.Minute;
+        for (int cycle = 1; cycle <= cycles; cycle++)
+        {
+            city = Retime(2);
+            city.AdvanceTo(state.Minute + 0.05, int.MaxValue);
+            city = Retime(1);
+            double end = start + cycle * spacing;
+            city.AdvanceTo(end, int.MaxValue);
+            control.City.AdvanceTo(end, int.MaxValue);
+            reads.Add(("R" + cycle, Checkpoint(city, driver), Checkpoint(control.City, controlDriver)));
+        }
+        double drained = departure + 120;
+        city.AdvanceTo(drained, int.MaxValue);
+        control.City.AdvanceTo(drained, int.MaxValue);
+        reads.Add(("drain", Checkpoint(city, driver), Checkpoint(control.City, controlDriver)));
+        Assert.All(new[] { state, control.State }, s => Assert.All(s.Citizens, c => Assert.NotEqual(CitizenPhase.Travelling, c.Phase)));
+        var types = new[] { typeof(TrafficVehicleState), typeof(List<TrafficRouteLeg>), typeof(TrafficRouteLeg[]), typeof(TrafficRouteLeg), typeof(TrafficKernelState) };
+        var gaps = types.ToDictionary(t => t, _ => new List<long>());
+        foreach (var (name, r, c) in reads)
+        {
+            output.WriteLine(name + " live cars retimed " + r.Cars + " / control " + c.Cars + "; live traffic legs " + r.Legs + " / " + c.Legs + "; "
+                + string.Join("; ", types.Select(t => RetainedCensus.Name(t) + " " + r.Census.Types[RetainedCensus.Name(t)] + " / " + c.Census.Types[RetainedCensus.Name(t)])));
+            Assert.Equal(r.Cars, c.Cars);
+            foreach (var (census, cars, legs) in new[] { (r.Census, r.Cars, r.Legs), (c.Census, c.Cars, c.Legs) })
+            {
+                Assert.Equal(cars, census.Types["TrafficVehicleState"]);
+                Assert.Equal(cars, census.Types["List<TrafficRouteLeg>"]);
+                Assert.Equal(cars, census.Types["TrafficRouteLeg[]"]);
+                Assert.Equal(legs, census.Types["TrafficRouteLeg"]);
+            }
+            foreach (var t in types) gaps[t].Add(r.Census.Types[RetainedCensus.Name(t)] - c.Census.Types[RetainedCensus.Name(t)]);
+        }
+        foreach (var t in types) output.WriteLine("retimed minus control " + RetainedCensus.Name(t) + " R0..R" + cycles + ", drain: " + string.Join(", ", gaps[t]));
+        var (_, drainRetimed, drainControl) = reads[reads.Count - 1];
+        Assert.Equal(0, drainRetimed.Cars);
+        foreach (var t in types)
+        {
+            Assert.False(StillClimbing(gaps[t].Take(cycles + 1).ToList()), "retimed minus control " + RetainedCensus.Name(t) + " climbs while traffic is active: " + string.Join(", ", gaps[t]));
+            Assert.True(drainRetimed.Census.Types[RetainedCensus.Name(t)] <= drainControl.Census.Types[RetainedCensus.Name(t)],
+                RetainedCensus.Name(t) + " outlives its cars after the drain: retimed " + drainRetimed.Census.Types[RetainedCensus.Name(t)] + " / control " + drainControl.Census.Types[RetainedCensus.Name(t)]);
+        }
+    }
+
+    [Fact]
+    public void ARebuildReleasesTheConsumedTrafficSnapshotAndAnUnpreparedSecondRebuildKeepsEveryCar()
+    {
+        const int residents = 6, edges = 381;
+        var (state, city) = RoadCity(residents, edges, 1440);
+        Assert.Equal(residents, city.Traffic!.VehicleCount);
+        state.PrepareForSave();
+        Assert.Equal(residents, state.Traffic!.Vehicles.Count);
+        city = city.RebuildRoutes(new TravelTimingMaximumRouteTests.LongRoad(1, edges));
+        Assert.Null(state.Traffic);
+        city.AdvanceTo(state.Minute + 0.5, int.MaxValue);
+        city = city.RebuildRoutes(new TravelTimingMaximumRouteTests.LongRoad(1, edges));
+        Assert.Null(state.Traffic);
+        Assert.Equal(residents, city.Traffic!.VehicleCount);
+        state.PrepareForSave();
+        Assert.Equal(residents, state.Traffic!.Vehicles.Count);
+        city.AdvanceTo(1440 + 120, int.MaxValue);
+        Assert.All(state.Citizens, c => Assert.Equal(1, c.CompletedJourneys));
     }
 
     [Fact]
