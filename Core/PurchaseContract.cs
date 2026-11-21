@@ -140,10 +140,7 @@ namespace PersistentCity.Core
 
     public interface IPurchaseMarket
     {
-        /// <summary>A cheap read: whether the venue is a player business this market sells for now. False keeps it native.</summary>
         bool Serves(string venueId);
-        /// <summary>The venues <see cref="Serves"/> is true for now, for the impulse check while passing. Kept small: the
-        /// player's own supported businesses.</summary>
         IReadOnlyList<string> Venues { get; }
         IPurchaseNative? Open(PurchaseRequest request, out PurchaseRefusal refusal, out string reason);
         IDictionary<string, string> Receipts { get; }

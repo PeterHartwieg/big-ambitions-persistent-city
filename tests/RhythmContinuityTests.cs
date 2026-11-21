@@ -91,7 +91,6 @@ public sealed class RhythmContinuityTests
         }, "old-leisure", "0.40.4", 7, Midnight - 10);
         var person = city.Citizens[0];
         person.DestinationId = "leisure"; person.DestinationActivity = Activity.Leisure;
-        // Intentionally differs from the new routine's endpoint, as a policy migration can.
         person.ActivityUntilMinute = Midnight + 30;
         Assert.NotEqual(person.ActivityUntilMinute, DailyRoutine.At(person, city.Seed, Midnight).EndsAt);
         return city;

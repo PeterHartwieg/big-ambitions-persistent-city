@@ -214,7 +214,6 @@ public sealed class EconomicLedgerTests
             case "journal-value": { var c = shop.Changes[3]; c.After = 1442; shop.Changes[3] = c; break; }
         }
         person.Accrual = accrual; budget.Ledger = owner;
-        // Capture is deliberately unvalidated; use the actual encoder settings to exercise the strict reader too.
         WriteRefused(state);
         try
         {

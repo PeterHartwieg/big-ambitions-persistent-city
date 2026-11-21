@@ -848,8 +848,6 @@ namespace E5bNativeRigProof
                         && (cargo.nestedCargoInstances == null || cargo.nestedCargoInstances.Count == 0)
                         && reg.cachedAvailableProducts.Contains(cargo.itemName), "e5b_actual_advertised_unsealed_product_cargo_required");
                     Require(holder.ItemCached.producerSettings != null && holder.ItemCached.producerSettings.ResourcesRequired, "e5b_real_consuming_producer_required");
-                    // Clone only a real descriptor into its existing holder; zero quantity adds no stock.
-                    // This deliberately invalid count is negative-test state, never natural depletion evidence.
                     list = holder.cargoInstances; fault.OriginalRows = list.Cast<object>().ToArray(); fault.OriginalJson = Fingerprint(fault, list);
                     var duplicate = cargo.Copy(); duplicate.amount = 0;
                     fault.Holder = holder; fault.List = list; fault.OriginalList = list; faults.Add(fault); list.Add(duplicate);

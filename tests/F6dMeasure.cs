@@ -140,8 +140,6 @@ public sealed class F6dMeasure
                 Assert.True(result.Status == SaveReadStatus.Loaded, result.Error);
                 Assert.Equal(after, SaveCodec.Write(result.State!));
             }
-            // Conservative: retain every byte/record of E5d's outstanding B-E reserve AND its full 12Mi existing
-            // growth allowance, even though this image already contains the places, scopes and full histories.
             const int reserveChars = 19386774 + 540672 + 12582912, reserveRecords = 12710 + 320;
             long composed = after.Length + reserveChars + (long)state.Food!.Residents.Count * 13;
             int composedRecords = Math.Max(records.Streaming, records.Semantic) + reserveRecords;

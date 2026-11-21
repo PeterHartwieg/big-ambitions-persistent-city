@@ -249,10 +249,6 @@ namespace PersistentCity.Persistence
             }
         }
 
-        /// <summary>F5g: a sequence number below NextVisitorSequence without a visitor is one the fill skipped for a commuter,
-        /// so its frozen derived identity must be a student or retiree (owner decision, 8 Nov 2026). A missing number with a
-        /// working identity is a lost person and refuses the payload. A lost visitor whose identity is a student or retiree
-        /// cannot be told from a skipped number, so the guarantee is weaker than the old count equality for those.</summary>
         private static void ValidateSkippedSequences(CityState state, List<int> present)
         {
             long gaps = (long)state.NextVisitorSequence - 1 - present.Count;

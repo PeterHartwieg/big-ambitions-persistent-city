@@ -55,10 +55,6 @@ namespace PersistentCity.Core
 
         private static int BandFor(uint percentile) => percentile < 10 ? 0 : percentile < 30 ? 1 : percentile < 70 ? 2 : percentile < 90 ? 3 : 4;
 
-        /// <summary>
-        /// Player-facing words for non-neutral traits; never numbers. Loyalty/curiosity is generated but not
-        /// described: it has no effect until shop memory exists, and words must not imply behaviour that is absent.
-        /// </summary>
         public static IEnumerable<string> Words(ResidentTraits traits, Func<string, string> productName)
         {
             if (traits == null || !traits.IsValid) yield break;

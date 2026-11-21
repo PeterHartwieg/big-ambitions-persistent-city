@@ -22,6 +22,22 @@ public sealed class CommentBanTests
     }
 
     [Fact]
+    public void TheAllowlistOnlyShrinks()
+    {
+        var failures = CommentBanScanner.CheckCeiling(File.ReadAllLines(Path.Combine(Root(), "comment-excuses.txt")), CommentBanScanner.Ceiling);
+        Assert.True(failures.Count == 0, string.Join(Environment.NewLine, failures));
+    }
+
+    [Fact]
+    public void TheCeilingFailsInBothDirections()
+    {
+        var two = new[] { "Core/A.cs\ttodo\t// a", "", "Core/A.cs\ttodo\t// b" };
+        Assert.Empty(CommentBanScanner.CheckCeiling(two, 2));
+        Assert.Contains("above the ceiling of 1", Assert.Single(CommentBanScanner.CheckCeiling(two, 1)));
+        Assert.Contains("lower CommentBanScanner.Ceiling to 2", Assert.Single(CommentBanScanner.CheckCeiling(two, 3)));
+    }
+
+    [Fact]
     public void APlainCommentFailsWithItsLine()
     {
         var failures = CommentBanScanner.Check(new[] { ("Core/A.cs", "class A\n{\n    int x; // the count\n}\n") }, Array.Empty<string>());
@@ -34,6 +50,16 @@ public sealed class CommentBanTests
         var files = new[] { ("Core/A.cs", "class A\n{\n    //   TODO: drop   the\tfallback\n}\n") };
         Assert.Empty(CommentBanScanner.Check(files, new[] { "Core/A.cs\ttodo\t// TODO: drop the fallback" }));
         Assert.Single(CommentBanScanner.Check(files, new[] { "Core/B.cs\ttodo\t// TODO: drop the fallback" }), f => f.StartsWith("Core/A.cs:3:", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void OneExcuseAdmitsOneOccurrence()
+    {
+        var entry = new[] { "Core/A.cs\ttodo\t// TODO: x" };
+        Assert.Empty(CommentBanScanner.Check(new[] { ("Core/A.cs", "// TODO: x\nclass A { }\n") }, entry));
+        Assert.Equal(new[] { "Core/A.cs:3: " + CommentBanScanner.Message },
+            CommentBanScanner.Check(new[] { ("Core/A.cs", "// TODO: x\nclass A { }\n// TODO: x\n") }, entry));
+        Assert.Empty(CommentBanScanner.Check(new[] { ("Core/A.cs", "// TODO: x\nclass A { }\n// TODO: x\n") }, new[] { entry[0], entry[0] }));
     }
 
     [Fact]
@@ -52,6 +78,16 @@ public sealed class CommentBanTests
         Assert.Empty(CommentBanScanner.Scan("tools/a.py", "#!/usr/bin/env python3\n# -*- coding: utf-8 -*-\nx = 1  # noqa: E501\n"));
         Assert.Empty(CommentBanScanner.Scan("tools/a.sh", "#!/bin/sh\n# shellcheck disable=SC2086\necho $# ${#x}\n"));
         Assert.Single(CommentBanScanner.Scan("Core/A.cs", "#region Parts\nclass A { }\n"));
+    }
+
+    [Fact]
+    public void LicenseHeadersAndSuppressionsPass()
+    {
+        Assert.Empty(CommentBanScanner.Scan("Core/A.cs", "// SPDX-License-Identifier: MIT\n/* SPDX-License-Identifier: MIT */\n// ReSharper disable once UnusedMember.Local\n// ReSharper restore All\nclass A { }\n"));
+        Assert.Empty(CommentBanScanner.Scan("tools/a.py", "# SPDX-License-Identifier: MIT\nx = 1  # pylint: disable=invalid-name\ny = 2  # pyright: ignore\n"));
+        Assert.Empty(CommentBanScanner.Scan("a.csproj", "<!-- SPDX-License-Identifier: MIT -->\n<Project />\n"));
+        Assert.Equal(new[] { 1, 2, 3 }, CommentBanScanner.Scan("Core/A.cs", "// License: MIT, see LICENSE\n// ReSharper is wrong here\n// pylint: disable\nclass A { }\n").Select(c => c.Line));
+        Assert.Single(CommentBanScanner.Scan("tools/a.py", "x = 1  # the pylint: rule is noisy\n"));
     }
 
     [Fact]

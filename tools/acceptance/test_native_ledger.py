@@ -122,7 +122,6 @@ class Staleness(unittest.TestCase):
         repo.git("merge", "-q", "--no-ff", "-m", "merge", "side")
         repo.commit("Core/Alpha.cs")
         state = rm.assess(ledger(row("alpha", ["Core/Alpha.cs"], "c-a", side)), repo.dir, fingerprint="set-a")
-        # Conservative: the merge that brought the evidenced commit in also counts, as does the later commit.
         self.assertEqual(2, by_id(state)["alpha"]["debt"])
         self.assertEqual(2, state["gitQueries"])
 

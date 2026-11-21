@@ -79,8 +79,6 @@ public sealed class RivalOutflowTests
         Assert.True(read.Status == SaveReadStatus.Loaded, read.Error);
         var next = new CitySimulator(read.State!, paths); next.AttachFoodMarket(market, rivalSettings: new RivalFoodSettings { RivalChoiceWeight = weight });
         Assert.Equal(checkpoint, DevelopmentChain.Write(next.State));
-        // Transient index construction intentionally restarts on reload. Finish it once before
-        // testing a saved semantic/route boundary rather than restarting each private build unit.
         if (next.State.Food!.Residents.All(m => m.Decision == null)) next.InspectFoodAwareness("r");
         return next;
     }

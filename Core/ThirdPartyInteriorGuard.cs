@@ -13,8 +13,6 @@ namespace PersistentCity.Core
 
     public static class ThirdPartyInteriorGuard
     {
-        // Deliberately small rule language: exact names or a single trailing '*' prefix.
-        // No regex, type loading, foreign API calls, or foreign implementation knowledge.
         public static InteriorGuardVerdict Evaluate(string mode, IReadOnlyList<string>? assemblyPatterns,
             IReadOnlyList<string>? ownerIds, IEnumerable<string> assemblyNames, IEnumerable<string> patchOwners)
         {

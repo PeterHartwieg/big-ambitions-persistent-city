@@ -468,10 +468,6 @@ namespace PersistentCity.Core
         private bool InProgress(Due item) => pending != null && ReferenceEquals(pending.Item, item);
         public long EventRestarts { get; private set; }
         public long InlineAfterRestarts => 0;
-        // A changed version discards one attempt and requeues the original event. Every replay uses
-        // the same finite frame admission as its first attempt; no number of restarts grants an
-        // unlimited call. The held clock is intentional: later events can change route forecasts,
-        // employment and meals. Reordering them would make a frame cadence change city outcomes.
 
         private bool RunEvent(Due item, bool inline)
         {

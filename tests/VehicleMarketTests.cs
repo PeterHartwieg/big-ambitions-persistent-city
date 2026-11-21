@@ -144,7 +144,7 @@ public sealed class VehicleMarketTests
         var f = new Fixture(64); var meal = f.Meal("v63"); int copies = f.Api.CopyCalls;
         Assert.True(f.Market.Buy(meal, f.Now).Paid); Assert.Equal(2, f.Api.CopyCalls - copies);
         f.Receipts.Clear();
-        StreetFoodHooks.Vehicles.Reverse(); // revision has not been polled, so the old hint is deliberately wrong
+        StreetFoodHooks.Vehicles.Reverse();
         Assert.True(f.Market.Buy(meal, f.Now).Paid);
         Assert.Equal(8, StreetFoodHooks.Find("v63").Units[0]);
         Assert.Equal(10, StreetFoodHooks.Find("v00").Units[0]);

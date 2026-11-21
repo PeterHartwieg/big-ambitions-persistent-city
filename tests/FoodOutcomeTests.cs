@@ -121,7 +121,7 @@ public sealed partial class FoodCommerceTests
     {
         var (city, _, _) = Ready(count: 2, threeMeals: true, representation: 2, independent: true);
         var food = city.State.Food!;
-        food.ChoiceStartsDay=0; // This fixture deliberately constructs an already active decision.
+        food.ChoiceStartsDay=0;
         var first = food.Residents.First(m => m.HostSlot == 0);
         first.Today = new ResidentFoodToday { Day = 0, Meals = {
             new MealOutcomeRecord { Kind = MealKind.Breakfast, Status = MealOutcomeStatus.ChoseAlternative, Reason = MealReasonCode.PrefersAlternative, Outside = FoodOutsideOption.FundedHouseholdFood, At = 500 },

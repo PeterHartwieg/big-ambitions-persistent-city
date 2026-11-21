@@ -48,8 +48,6 @@ namespace PersistentCity.Core
         public IEnumerable<string> Products() => new[] { ProductId }.Concat(AdditionalProductIds);
         public string BusinessId { get; set; } = "";
         public double NextServiceAt { get; set; }
-        /// <summary>Which market serves this scope. The setter is not public, so the save writer does not see it
-        /// yet: only Shop scopes exist in a saved city until E6c's writer serializes the channel.</summary>
         public FoodScopeChannel Channel { get; private set; }
         public void UseChannel(FoodScopeChannel channel)
         {

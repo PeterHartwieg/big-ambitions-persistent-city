@@ -12,8 +12,6 @@ namespace PersistentCity.Persistence
         internal static void RequireExecutablePolicy(CityState state)
             => Require(state.MenuPolicy == FoodNameIdentity.DynamicWire,
                 "Unsupported held-product policy for this writer; preserve the payload.");
-        // Complete coherent saves rebuild every wire-local reference together. The in-memory graph
-        // contains names only; catalogue removal/order is deliberately not an input to this method.
         private static List<string> ReferencedNames25(CityState state)
         {
             var names = new SortedSet<string>(StringComparer.Ordinal);

@@ -169,9 +169,6 @@ namespace PersistentCity.Runtime
             for (int index = 0; index < QueueLength; index++)
             {
                 Vector3 wanted = door + outward * WallOffset + along * (FirstGap + Spacing * index);
-                // The point must be walkable, near where it was asked for (not snapped out into the
-                // street or onto another level), clear of other doors, and reachable in a straight
-                // line from the spot before it. The door's own carve is not tested.
                 if (!NavMesh.SamplePosition(wanted, out NavMeshHit hit, SampleRadius, WalkingRoutes.DryFilter)) break;
                 Vector3 offset = hit.position - wanted;
                 if (new Vector2(offset.x, offset.z).magnitude > LateralTolerance || Mathf.Abs(offset.y) > 0.5f) break;

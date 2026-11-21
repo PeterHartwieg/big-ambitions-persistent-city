@@ -3,7 +3,6 @@ using PersistentCity.Core;
 
 namespace PersistentCity.Runtime
 {
-    // Runtime presentation only. Deliberately absent from CityState and every save DTO.
     internal readonly struct TravelVisibility
     {
         public readonly bool FastForward, Accelerated, Loading, Inside, Parking, TimeMachine;

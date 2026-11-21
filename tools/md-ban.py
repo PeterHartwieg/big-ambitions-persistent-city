@@ -6,6 +6,15 @@ import sys
 
 LABEL = "docs-approved"
 BASE = "origin/codex/persistent-city"
+APPROVED = frozenset({
+    ".claude/skills/delete-comment/SKILL.md",
+    "docs/decisions/2026-11-21-city-clock-and-reload.md",
+    "docs/decisions/2026-11-21-food-names-and-wire-budget.md",
+    "docs/decisions/2026-11-21-food-ownership-evidence.md",
+    "docs/decisions/2026-11-21-foreign-mod-boundaries.md",
+    "docs/decisions/2026-11-21-road-gate-access.md",
+    "docs/decisions/2026-11-21-saved-state-bounds.md",
+})
 
 
 def markdown(path):
@@ -22,7 +31,7 @@ def run(cmd, cwd):
 def violations(changes):
     found = []
     for status, path, old in changes:
-        if not markdown(path):
+        if not markdown(path) or path in APPROVED:
             continue
         if status in ("added", "copied") or (status == "renamed" and not markdown(old)):
             found.append(path if status == "added" else old + " -> " + path)

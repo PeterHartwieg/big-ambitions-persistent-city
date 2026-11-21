@@ -26,8 +26,6 @@ namespace PersistentCity.Runtime
             internal FoodScope Scope = null!;
             internal WeakReference<CityBuildingController> Controller = null!;
             internal WeakReference<BuildingRegistration> Registration = null!;
-            // Reset replaces retailPrices even when it reuses the registration object.
-            // A mere collection replacement is conservatively ambiguous too.
             internal WeakReference<object>? Prices;
         }
         private readonly Dictionary<string, Entry> byBusiness = new Dictionary<string, Entry>(StringComparer.Ordinal);
