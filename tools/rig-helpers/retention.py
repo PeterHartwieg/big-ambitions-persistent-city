@@ -4,12 +4,13 @@ import time
 
 from rigcommon import (LOG, archive, auto, call, census, console, footprint, game_pid, go, host, idle, loaded_identity, log_size,
                        log_since, now, optional, probe_read, prop, rate, require_lock, rss_kib, run, start_and_load, stop,
-                       track_cost, type_read, wrap, write)
+                       route_leg_read, track_cost, type_read, wrap, write)
 
 LABEL = 'retention'
 FIELDS = ('ownedBodyCombiners', 'liveMergedMeshes', 'unmergedBodyCombiners', 'reservedBodies',
           'liveMergedVertices', 'bakeScratchBytes', 'monoHeapBytes', 'monoUsedBytes')
 TYPES = ('Position[]', 'Double[]', 'Int64[]', 'RouteLeg', 'CitySimulator', 'RoadRoutes')
+ROUTE_LEGS = ('in_current_journeys', 'outside_current_journeys', 'split_prefix_legs', 'travelling')
 
 
 def wait_until(deadline):
@@ -106,12 +107,13 @@ def readings_summary(rows):
         'live vertices': lambda r: r['mesh']['liveMergedVertices'],
         'bake scratch': lambda r: r['mesh']['bakeScratchBytes'],
         **{t: (lambda r, t=t: type_read(r['census'], t)) for t in TYPES},
+        **{'RouteLeg ' + k.replace('_', ' '): (lambda r, k=k: route_leg_read(r['census'], k)) for k in ROUTE_LEGS},
     }
     return {name: [get(r) for r in rows] for name, get in paths.items()}
 
 
 def still_climbing(series):
-    return any(all(x is not None for x in v[1:]) and v[-1] > max(v[1:-1]) for key, v in series.items() if key != 'RouteLeg')
+    return any(all(x is not None for x in v[1:]) and v[-1] > max(v[1:-1]) for key, v in series.items() if not key.startswith('RouteLeg'))
 
 
 def main(argv=None):
