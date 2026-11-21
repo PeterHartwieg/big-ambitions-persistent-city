@@ -496,7 +496,11 @@ namespace PersistentCity.Runtime
                         + (stopEnvironment?.MaximumSeamMilliseconds ?? 0).ToString("F3", System.Globalization.CultureInfo.InvariantCulture) + " ms maximum, "
                         + (stopEnvironment?.ParkTriggerScans ?? 0) + " park trigger scans; geometry door samples "
                         + (stopEnvironment?.DoorSamples ?? 0) + " (maximum " + (stopEnvironment?.MaximumDoorMilliseconds ?? 0).ToString("F3", System.Globalization.CultureInfo.InvariantCulture)
-                        + " ms), park builds on demand " + (stopEnvironment?.ParkBuilds ?? 0) + " (maximum " + (stopEnvironment?.MaximumParkMilliseconds ?? 0).ToString("F3", System.Globalization.CultureInfo.InvariantCulture)
+                        + " ms; door search maximum " + (stopEnvironment?.Doors.MaximumSearchMilliseconds ?? 0).ToString("F3", System.Globalization.CultureInfo.InvariantCulture)
+                        + " ms over " + (stopEnvironment?.Doors.DoorSearches ?? 0) + " searches, " + (stopEnvironment?.Doors.IndexedSearches ?? 0) + " indexed, NavMesh queue maximum "
+                        + (stopEnvironment?.Doors.MaximumNavigationMilliseconds ?? 0).ToString("F3", System.Globalization.CultureInfo.InvariantCulture) + " ms, door index builds "
+                        + (stopEnvironment?.Doors.IndexBuilds ?? 0) + " (" + (stopEnvironment?.Doors.IndexedDoors ?? 0) + " doors, slice maximum "
+                        + (stopEnvironment?.Doors.MaximumIndexSliceMilliseconds ?? 0).ToString("F3", System.Globalization.CultureInfo.InvariantCulture) + " ms)), park builds on demand " + (stopEnvironment?.ParkBuilds ?? 0) + " (maximum " + (stopEnvironment?.MaximumParkMilliseconds ?? 0).ToString("F3", System.Globalization.CultureInfo.InvariantCulture)
                         + " ms with setup), audience builds on demand " + (stopEnvironment?.AudienceBuilds ?? 0) + " (maximum " + (stopEnvironment?.MaximumAudienceMilliseconds ?? 0).ToString("F3", System.Globalization.CultureInfo.InvariantCulture)
                         + " ms), warm-up park/audience slices " + (stopEnvironment?.ParkWarmup.Slices ?? 0) + "/" + (stopEnvironment?.AudienceWarmup.Slices ?? 0)
                         + " (setups " + (stopEnvironment?.ParkWarmup.Setups ?? 0) + ", maximum " + Math.Max(stopEnvironment?.ParkWarmup.MaximumMilliseconds ?? 0, stopEnvironment?.AudienceWarmup.MaximumMilliseconds ?? 0).ToString("F3", System.Globalization.CultureInfo.InvariantCulture)

@@ -64,10 +64,20 @@ namespace PersistentCity.Runtime
                         return;
                 }
                 int frame = Time.frameCount;
+                WarmDoorIndex(frame);
                 parkWarmup.Run(geometryBudget, frame, parkTargets ??= new ParkWarmTargets(this));
                 audienceWarmup.Run(geometryBudget, frame, audienceTargets ??= new AudienceWarmTargets(this));
             }
             catch (Exception) { }
+        }
+        private bool doorIndexWarm;
+        private void WarmDoorIndex(int frame)
+        {
+            if (doorIndexWarm) return;
+            long started = System.Diagnostics.Stopwatch.GetTimestamp();
+            if (!geometryBudget.TryDeadline(frame, started, out long deadline)) return;
+            try { doorIndexWarm = doors.WarmIndex(deadline); }
+            finally { geometryBudget.Spend(MillisecondsSince(started)); }
         }
         private int observedFrame = -1;
         private readonly List<int> observedScenes = new List<int>();
@@ -88,13 +98,14 @@ namespace PersistentCity.Runtime
         {
             SeamCalls = ParkTriggerScans = 0; SeamMilliseconds = MaximumSeamMilliseconds = 0;
             DoorSamples = ParkBuilds = AudienceBuilds = 0; MaximumDoorMilliseconds = MaximumParkMilliseconds = MaximumAudienceMilliseconds = 0;
-            parkWarmup.ResetDiagnostics(); audienceWarmup.ResetDiagnostics();
+            parkWarmup.ResetDiagnostics(); audienceWarmup.ResetDiagnostics(); doors.ResetDiagnostics();
             deferralsSeen = geometryBudget.Deferrals;
         }
         public long DoorSamples { get; private set; }
         public long ParkBuilds { get; private set; }
         public long AudienceBuilds { get; private set; }
         public double MaximumDoorMilliseconds { get; private set; }
+        public DwellSpots Doors => doors;
         public double MaximumParkMilliseconds { get; private set; }
         public double MaximumAudienceMilliseconds { get; private set; }
         public GeometryWarmup ParkWarmup => parkWarmup;
@@ -243,6 +254,7 @@ namespace PersistentCity.Runtime
             }
             if (rebind)
             {
+                doors.ForgetDoors(); doorIndexWarm = false;
                 double elapsed = (System.Diagnostics.Stopwatch.GetTimestamp() - started) * 1000.0 / System.Diagnostics.Stopwatch.Frequency;
                 FrontageRebindCount++;
                 FrontageRebindLastMilliseconds = elapsed;
