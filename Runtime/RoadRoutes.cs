@@ -301,6 +301,8 @@ namespace PersistentCity.Runtime
         private readonly BinaryWriter topologyWriter;
         private readonly List<int[]?> agentContracts = new List<int[]?>();
         private readonly List<VehicleTypes[]?> carContracts = new List<VehicleTypes[]?>();
+        private readonly SharedContracts<int> sharedAgents = new SharedContracts<int>();
+        private readonly SharedContracts<VehicleTypes> sharedCars = new SharedContracts<VehicleTypes>();
         private readonly List<Waypoint?> nativeContracts = new List<Waypoint?>();
         private readonly List<bool> nullNeighbours = new List<bool>();
         private readonly int[] searchedAt;
@@ -424,8 +426,8 @@ namespace PersistentCity.Runtime
                 nodes.Add(node);
                 nativeContracts.Add(w);
                 nullNeighbours.Add(w?.neighbors == null);
-                agentContracts.Add(w?.allowedAgents?.ToArray());
-                carContracts.Add(w?.allowedCars?.ToArray());
+                agentContracts.Add(sharedAgents.Intern(w?.allowedAgents));
+                carContracts.Add(sharedCars.Intern(w?.allowedCars));
                 HashNode(i, w, node);
                 if (node.AllowsCar && node.Position.IsFinite && node.KilometresPerHour > 0)
                 {

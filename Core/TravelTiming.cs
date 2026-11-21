@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 
 namespace PersistentCity.Core
 {
@@ -771,14 +770,21 @@ namespace PersistentCity.Core
 
         private static string SplitService(RouteLeg leg)
         {
-            if (leg.Mode != TravelMode.Car || !leg.ServiceId.StartsWith("native:road:", StringComparison.Ordinal)) return leg.ServiceId;
-            string[] parts = leg.ServiceId.Split(':');
-            if (parts.Length == 6 && (parts[2] == "v1" || parts[2] == "fragment1") && parts[3].Length > 0 &&
-                int.TryParse(parts[4], NumberStyles.None, CultureInfo.InvariantCulture, out int from) &&
-                int.TryParse(parts[5], NumberStyles.None, CultureInfo.InvariantCulture, out int to) && from != to)
-                return parts[2] == "fragment1" ? leg.ServiceId : "native:road:fragment1:" + parts[3] + ":" + parts[4] + ":" + parts[5];
-            return "";
+            string service = leg.ServiceId;
+            if (leg.Mode != TravelMode.Car || !service.StartsWith("native:road:", StringComparison.Ordinal)) return service;
+            var tag = leg.RoadTag;
+            if (tag.Kind == RoadTagKind.None || tag.TopologyLength == 0 || tag.From == tag.To) return "";
+            return tag.Kind == RoadTagKind.Fragment1 ? service : FragmentService(service, tag.TopologyStart);
         }
+
+        private const string FragmentPrefix = "native:road:fragment1:";
+
+        private static string FragmentService(string service, int topologyStart)
+            => string.Create(FragmentPrefix.Length + service.Length - topologyStart, (service, topologyStart), (target, source) =>
+            {
+                FragmentPrefix.AsSpan().CopyTo(target);
+                source.service.AsSpan(source.topologyStart).CopyTo(target.Slice(FragmentPrefix.Length));
+            });
 
         private static RouteLeg Copy(RouteLeg source, Position from, Position to, double minutes, string service, bool splitPrefix = false)
             => source.CopyAs(from, to, minutes, service, splitPrefix);
