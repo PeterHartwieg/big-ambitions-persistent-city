@@ -17,6 +17,8 @@ Every GR-5 rig run from now on must:
 
 ## Latest evidence
 
+- **21 November d, Mac (rig 16y), build 1ff048cb**. 0 PASS / 0 PARTIAL / 6 FAIL / 0 NOT RUN / 2 REPORTED. UpdateCity p95 10.0021 ms, union p95 10.1866 ms, 24 union spikes, retime subphase bound 35.716 ms. Door search maximum 0.216 ms and index slice maximum 0 ms. The index was already warm in C. Slowest food continuation: 0.866 ms (rival-refresh). Missed inclusive UpdateCity p95, union p95, retime bound, ≥30 ms mod-work frames. **PROVISIONAL (shared Mac / Mono)**. [21d results](#rig-results--21-november-2026-d-mac-rig-16y-gr-5-338-at-1ff048cb).
+
 - **21 November c, Mac (rig 16x), build 2a86b7d0**. 2 PASS / 0 PARTIAL / 4 FAIL / 0 NOT RUN / 2 REPORTED. UpdateCity p95 4.6729 ms, union p95 4.7759 ms, 2 union spikes, retime subphase bound 15.807 ms. Missed retime bound, ≥30 ms mod-work frames. **PROVISIONAL (shared Mac / Mono)**. [21c results](#rig-results--21-november-2026-c-mac-rig-16x-gr-5-336-at-2a86b7d0).
 
 - **21 November b, Mac (rig 16w), build 2cea0a23**. 3 PASS / 0 PARTIAL / 3 FAIL / 0 NOT RUN / 2 REPORTED. Street union p95 3.9427 ms with 0 spikes. Retime sub bound 5.933 ms. **PROVISIONAL (shared Mac / Mono)**. [21b results](#rig-results--21-november-2026-b-mac-rig-16w-gr-5-327-at-2cea0a23).
@@ -20111,3 +20113,798 @@ Stage receipts were collision-safe when the two stage calls completed in the sam
 All six timed windows ran for at least 600 seconds, followed the recorded start and stop order, and had zero admitted saves. All five GC collection page sets ended at a null cursor. The candidate sets were captured before a subsequent window started. The raw command-order and save audit is in capture-integrity.json.
 
 [Procedure #336](https://github.com/PeterHartwieg/big-ambitions-persistent-city/pull/336) · [Mac 16w #329](https://github.com/PeterHartwieg/big-ambitions-persistent-city/pull/329) · [Mac 16v #326](https://github.com/PeterHartwieg/big-ambitions-persistent-city/pull/326) · [Mac 16u #324](https://github.com/PeterHartwieg/big-ambitions-persistent-city/pull/324) · [Mac 16t #321](https://github.com/PeterHartwieg/big-ambitions-persistent-city/pull/321) · [PC 19c #315](https://github.com/PeterHartwieg/big-ambitions-persistent-city/pull/315)
+
+## Rig results — 21 November 2026 d, Mac (rig 16y, GR-5 #338 at 1ff048cb)
+
+**0 PASS / 0 PARTIAL / 6 FAIL / 0 NOT RUN / 2 REPORTED.** Shared Mac / Mono timings are **PROVISIONAL**. The isolated rig used FT GR5 13f Timing v1 with 1,000 residents and 2,000 visitors. Raw evidence is under ~/Coding_Projects/.agent-logs/persistent-city-rig-2026-11-21d-mac/.
+
+| Check | Outcome | Readback |
+| --- | --- | --- |
+| A | FAIL | Failed on the immediate gen0 comparison: A immediate 7 gen0 exceeds the no-mod immediate reference of 6 captured in 16y. A steady 7 gen0 matched the reused 16x no-mod steady reference of 7. Both sampler pause p95 values met the provisional 37 ms threshold: steady 33.662 ms / inclusive 33.662 ms / 0 diagnostic collection frames, immediate 32.705 ms / inclusive 32.705 ms / 0 diagnostic collection frames. The candidate and reference windows ran under different shared-host load, so the comparison supports a provisional gate result and does not isolate the cause. |
+| B | FAIL | B 20× 5 gen0, pause p95 319.365 ms / inclusive 319.365 ms / 0 diagnostic collection frames, sampler heap 1495.465984 MB (margin -25.465984 MB). B 60× 5 gen0, pause p95 341.749 ms / inclusive 341.749 ms / 0 diagnostic collection frames, sampler heap 1482.01472 MB (margin -12.01472 MB). B 20× heap above cap. B 60× heap above cap. B 60× frame 29306 recorded 294.318 ms UpdateCity and 0.059 ms LateUpdate. B 20× exceeded 37 ms with residual outside timed mod work; matching evidence does not establish which work caused the excess. |
+| C | FAIL | UpdateCity p95 10.0021 ms, union p95 10.1866 ms, 24 union spikes, retime subphase bound 35.716 ms. Door search maximum 0.216 ms and index slice maximum 0 ms. The index was already warm in C. Slowest food continuation: 0.866 ms (rival-refresh). Missed inclusive UpdateCity p95, union p95, retime bound, ≥30 ms mod-work frames. |
+| D | REPORTED | Matched day heap and forced-live reads captured. Cached night comparison verified. |
+| E | REPORTED | RSS before / immediately after return / +30 s / +120 s 3,085,392 / 3,130,032 / 3,138,128 / 3,149,248 KiB. Owned mesh identity true / true / true / true. |
+| L | FAIL | Failed on repeated growth against the 1× control: the forced-live gap rose at each retime checkpoint after R2, 40,448,000 B at R2, 43,253,760 B at R3, 44,900,352 B at R4 and 47,120,384 B at R5, and reached 49,209,344 B after the drain. The Mono used gap followed the same pattern: 40,751,104 / 43,708,416 / 45,563,904 / 47,816,704 / 49,491,968 B. The RouteLeg gap outside current journeys and caches was flat: 0 at R5 and after the drain (series -54 / 0 / 0 / 0 / -24 / 0 / 0). Supporting observations: 5 complete retime cycles and 7/7 matched reads. Raw RouteLeg gaps 2,238 / 508 / -248 / 900 / 308 / 2,018 / -148. Last retime above earlier max in Mono heap B 5,406,720, Mono used B 2,252,800, Forced-live B 2,220,032, RouteLeg outside caches objects 1,239, RouteLeg outside caches bytes 128,856, RouteLeg[] outside caches bytes 2,016. Drain above earlier max in Mono used B 1,675,264, Forced-live B 2,088,960, ownedBodyCombiners 6, liveMergedMeshes 6, liveMergedVertices 23,861, String objects 46, String bytes 8,008. |
+| P | FAIL | 1 immediate-retime advance/planning frames over 30 ms. 2 physical setup log rows. Reserved updates in this window 0. |
+| G | FAIL | 24/24 sampler gen0 ordinals paired to one probe row, phase and subsystem. A steady probe subsystem stamps exceeded their cap. A immediate probe subsystem stamps exceeded their cap. B 20× probe subsystem stamps exceeded their cap. B 60× probe subsystem stamps exceeded their cap. Unstamped subsystem buckets observed in TimeUpdate.unstamped. Both walker stamps observed steady / after both commits true / true. |
+
+### Build, fixture and restore
+
+| Item | Readback |
+| --- | --- |
+| Tested source | 1ff048cb334e71a1141a1a3014f46cafb8910663 |
+| Official rig checkout | 1df774c930eba5d51b60cc670b37459ba8950af7 |
+| AgentRigOps SHA-256 before / restored | a775ba0c17be67fa2f355a5e4240b31dd074955bafa833664d8e5884a246297c / a775ba0c17be67fa2f355a5e4240b31dd074955bafa833664d8e5884a246297c |
+| Lease acquired UTC / purpose | 2026-11-21T20:37:27.991284Z / Persistent City 21 Nov d / rig 16y Mac rig (#338 GC/night/street door index/separation/RSS/leak L/planning+setup gate/collection+walker attribution) |
+| Game / RLO | Loaded Big Ambitions (Build 3682) / [Mod:RealLifeOverhaul] Real Life Overhaul 1.0.6 initialised. |
+| Fixture and population | FT GR5 13f Timing v1 / [Mod:PersistentCity] Persistent population active: 1000 residents, 2000 visitors, 1683 places. Native-pace walking, subway and car journeys; physical population preflight follows road initialization. Ctrl+F8 opens food business feedback. |
+| Persistent City DLL SHA-256 | 2ac2f96fa3644b9a1ef9f1a35734b23e6bf28afbf85bc5728d7de67c277e12f8 |
+| Probe DLL SHA-256 / scope hash | 225b3dd89ea2b09dfe5b749bed0619892d6e793010c5f89882349a3506c02c95 / 4e2e1f1bdedf7f54b625c67d448979ddce92d609d5134c138ef190b59f84e55b |
+| Staging command | python3 &lt;agent-rig&gt;/scripts/install-mac.py --stage-mod PersistentCity ~/HART-Builds/persistent-city-rig-2026-11-21d-mac/package (absolute paths at execution) |
+| Candidate receipt UTC / staged_mod | 20261121T203934Z / [AgentRigOps] staged_mod name=PersistentCity version=absent informational=0.10.0-persistent-city-candidate sha256=2ac2f96fa3644b9a1ef9f1a35734b23e6bf28afbf85bc5728d7de67c277e12f8 |
+| Probe receipt UTC / staged_mod | 20261121T203934Z-1 / [AgentRigOps] staged_mod name=PerfUnionProbe version=absent informational=absent sha256=225b3dd89ea2b09dfe5b749bed0619892d6e793010c5f89882349a3506c02c95 |
+| Reference absence receipt UTC | 20261121T224546Z |
+| Candidate and probe Player.log stamps | [AgentRigOps] staged_mod name=PerfUnionProbe version=absent informational=absent sha256=225b3dd89ea2b09dfe5b749bed0619892d6e793010c5f89882349a3506c02c95 / [AgentRigOps] staged_mod name=PersistentCity version=absent informational=0.10.0-persistent-city-candidate sha256=2ac2f96fa3644b9a1ef9f1a35734b23e6bf28afbf85bc5728d7de67c277e12f8 |
+| Pre-stage manifest SHA-256 | 3992e1eb98a987201d42ac5346f0f36ba23d7e63f9ab631e553e29c04f5ba387 |
+| Restored receipt SHA-256 | c7ce53dd99ade074830004f10aae2c4983af8e97457a15077f879020a0a14a7f |
+| Hashes checked / mismatches / fixture sidecars | files 34, rlo 53, sealed 4 / 0 / 0 |
+| Mod / RLO / sealed file sets match | true / true / true |
+| Autosave preference / RLO readbacks match | true / living_population true, social_media true, social_media_notices true |
+| Final player running / lease held | false / false |
+| Preflight disk GiB / memory free % | 72.2 / 79 |
+
+The original autosave and RLO option readbacks have a separate SHA-256 manifest in prestage-live-read-hashes.txt.
+
+The installer rollback lines are retained verbatim in the local stage logs. Receipt directories above are under ~/Library/Application Support/BigAmbitionsAgentTestsMac/receipt-backups/.
+
+| Disposable save | Pre-stage exists / loaded | Cleanup before / after exists | Offline after exists |
+| --- | --- | --- | --- |
+| FT RIGTMP-GR5-21d-mac | false / false | false / false | false |
+| FT RIGTMP-GR5-15c | false / false | false / false | false |
+| FT RIGTMP-GR5-15c-mac | false / false | false / false | false |
+
+| RLO option | Original stored / live | Final stored / live |
+| --- | --- | --- |
+| living_population | — / true | — / true |
+| social_media | 1 / true | 1 / true |
+| social_media_notices | 0 / false | 0 / false |
+
+### A and B — 600 s GC windows
+
+The native marker p95 uses collection-associated Unity ProfilerRecorder GC.Collect durations. Sampler pause p95 measures collection-frame excess under the sampler diagnostic rule. The day gen0 gate uses the matched day reference. The night count follows the earlier Mac convention of at most six. The approximate pause threshold is 37 ms and the night sampler heap limit is 1,470,000,000 B. Allocation is reported.
+
+| Window | Sampler gen0 / no-mod / gap | Pause p95 / incl. diagnostic / diagnostic collection frames | p95 without UpdateCity / without mod work ms | GC marker candidate / reference p95 ms | Sampler heap / used MB | Night heap margin MB | Mod alloc MB | Final summary fast / native / failed merges | Sample count |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| A steady | 7 / 7 / 0 | 33.662 / 33.662 / 0 | 33.272 / 33.248 | 28.9358 / 41.0027 | 1370.341376 / 1295.01184 | — | 94.41168 | 288 / 0 / 0 | 17,177 |
+| A immediate | 7 / 6 / 1 | 32.705 / 32.705 / 0 | 32.217 / 32.193 | 29 / 28.0455 | 1377.222656 / 1290.469376 | — | 156.730736 | 278 / 0 / 0 | 16,895 |
+| B 20× | 5 / 7 / -2 | 319.365 / 319.365 / 0 | 319.018 / 318.991 | 39.5661 / 21.3226 | 1495.465984 / 1443.377152 | -25.465984 | 39.432872 | 251 / 0 / 0 | 14,902 |
+| B 60× | 5 / 7 / -2 | 341.749 / 341.749 / 0 | 47.431 / 47.372 | 48.9009 / 21.3226 | 1482.01472 / 1440.477184 | -12.01472 | 44.774672 | 247 / 0 / 0 | 14,214 |
+
+| Window | Probe gen0 / collection frames | Probe plain excess p95 ms | Unity marker p95 ms | Native marker rows counted / retained / truncated | Sampler rows counted / retained / truncated |
+| --- | --- | --- | --- | --- | --- |
+| A steady | 7 / 7 | 35.0118 | 28.9358 | 15 / 15 / false | 7 / 7 / false |
+| A immediate | 7 / 7 | 39.13 | 29 | 15 / 15 / false | 7 / 7 / false |
+| B 20× | 5 / 5 | 330.0248 | 39.5661 | 11 / 11 / false | 5 / 5 / false |
+| B 60× | 5 / 5 | 748.9592 | 48.9009 | 10 / 10 / false | 5 / 5 / false |
+| Day immediate no-mod | 6 / 6 | 31.2576 | 28.0455 | 12 / 12 / false | — / — / — |
+| Day steady no-mod | 7 / 7 | 198.2199 | 41.0027 | 14 / 14 / false | — / — / — |
+| Night no-mod (16u) | 7 / — | — | 21.3226 | 14 / 14 / false | — / — / — |
+
+No-mod gen0 comes from the probe’s post-collection Mono reads. “No-mod” means Persistent City disabled with RLO present. The day steady comparison uses Mac 16x when the game build and sealed fixture hashes match. The new day immediate comparison uses the 16y probe at the candidate calendar factor. The cached night comparison uses Mac 16u. Older probes lack the new GC-mode, subsystem mod-time and outside-mod fields. Those fields are n/a in cached ref.
+
+| Rig | A steady | A immediate | B 20× | B 60× |
+| --- | --- | --- | --- | --- |
+| 16y | 7 / 33.662 / 28.9358 / 1,370,341,376 | 7 / 32.705 / 29 / 1,377,222,656 | 5 / 319.365 / 39.5661 / 1,495,465,984 | 5 / 341.749 / 48.9009 / 1,482,014,720 |
+| 16x | 7 / 95.84 / 38.6543 / 1,320,730,624 | 7 / 278.718 / 25.1888 / 1,378,172,928 | 7 / 34.246 / 28.2864 / 1,443,676,160 | 7 / 76.459 / 26.4889 / 1,395,245,056 |
+| 16w | 7 / 60.352 / 26.1633 / 1,370,603,520 | 8 / 32.947 / 26.7918 / 1,460,502,528 | 7 / 36.472 / 26.5828 / 1,482,752,000 | 6 / 65.187 / 25.2945 / 1,472,217,088 |
+| PC 19c | 14 / 563.157 / 17.395 / 1,091,686,400 | 14 / 24.465 / 18.784 / 1,133,801,472 | 13 / 22.636 / 17.357 / 1,169,784,832 | — |
+
+Historical cells show gen0 / sampler pause p95 ms / marker p95 ms / sampler heap B. PC 19c used a different host and stack with 957 residents and 1,914 visitors.
+
+Per-segment cells give allocated B / samples / skipped / total phase ms. Counters reflect the sampler’s Mono allocation readings.
+
+| Segment | A steady | A immediate | B 20× | B 60× |
+| --- | --- | --- | --- | --- |
+| advance | 58,780,840 / 17,178 / 0 / 0 | 67,807,736 / 16,783 / 0 / 0 | 21,008,592 / 14,903 / 0 / 0 | 24,799,528 / 14,215 / 0 / 0 |
+| advance_events | 14,927,736 / 22,424 / 0 / 522.777 | 22,211,272 / 22,993 / 0 / 544.817 | 1,270,368 / 16,122 / 0 / 398.941 | 1,714,352 / 16,010 / 0 / 418.666 |
+| advance_events_citizen | 10,415,112 / 3,341 / 0 / 184.712 | 10,226,776 / 4,650 / 0 / 190.343 | 366,352 / 760 / 0 / 154.051 | 497,920 / 857 / 0 / 138.801 |
+| advance_events_food | 2,045,616 / 1,128 / 0 / 56.018 | 9,589,760 / 1,140 / 0 / 62.491 | 144 / 270 / 0 / 29.312 | 144 / 270 / 0 / 18.295 |
+| advance_events_other | 2,832 / 10,932 / 0 / 41.312 | 0 / 10,774 / 0 / 44.11 | 0 / 12,345 / 0 / 52.184 | 0 / 10,789 / 0 / 53.108 |
+| advance_events_route_begin | 1,879,936 / 3,505 / 0 / 193.006 | 1,857,648 / 3,440 / 0 / 205.909 | 691,824 / 1,489 / 0 / 129.607 | 868,800 / 1,832 / 0 / 144.321 |
+| advance_events_traffic | 584,240 / 3,518 / 0 / 45.854 | 537,088 / 2,989 / 0 / 39.869 | 212,048 / 1,258 / 0 / 32.106 | 347,344 / 2,262 / 0 / 62.3 |
+| advance_other | 1,536 / 17,178 / 0 / 182.668 | 8,432 / 16,783 / 0 / 185.209 | 0 / 14,903 / 0 / 105.779 | 8,544 / 14,215 / 0 / 330.842 |
+| advance_planning | 41,377,392 / 9,649 / 0 / 5707.06 | 43,168,656 / 9,561 / 0 / 6064.722 | 17,592,192 / 4,087 / 0 / 4423.301 | 21,029,480 / 4,882 / 0 / 4843.107 |
+| advance_planning_finish | 12,870,520 / 3,505 / 0 / 986.806 | 15,088,928 / 3,440 / 0 / 1077.262 | 5,038,576 / 1,489 / 0 / 642.226 | 6,196,240 / 1,832 / 0 / 746.814 |
+| advance_planning_slice | 28,506,872 / 6,144 / 0 / 4718.745 | 28,079,728 / 6,121 / 0 / 4986.084 | 12,553,616 / 2,598 / 0 / 3779.758 | 14,833,240 / 3,050 / 0 / 4094.141 |
+| advance_stops | 2,474,176 / 17,178 / 0 / 66.62 | 2,418,656 / 16,783 / 0 / 61.493 | 2,146,032 / 14,903 / 0 / 95.626 | 2,047,152 / 14,215 / 0 / 104.66 |
+| frame | 912,187,392 / — / — / — | 979,505,152 / — / — / — | 752,369,664 / — / — / — | 712,048,640 / — / — / — |
+| mod | 94,411,680 / 17,178 / 0 / 0 | 156,730,736 / 16,896 / 0 / 0 | 39,432,872 / 14,903 / 0 / 0 | 44,774,672 / 14,215 / 0 / 0 |
+| mod_closures | 26,880 / 17,178 / 0 / 1133.465 | 524,944 / 16,783 / 0 / 887.576 | 48 / 14,903 / 0 / 647.119 | 10,560 / 14,215 / 0 / 960.61 |
+| mod_closures_links | 18,592 / 17,178 / 0 / 899.628 | 522,720 / 16,783 / 0 / 675.782 | 0 / 14,903 / 0 / 480.23 | 10,368 / 14,215 / 0 / 746.948 |
+| mod_closures_network | 6,944 / 17,178 / 0 / 187.561 | 2,224 / 16,783 / 0 / 182.048 | 48 / 14,903 / 0 / 126.089 | 192 / 14,215 / 0 / 167.172 |
+| mod_food | 1,279,136 / 17,178 / 0 / 73.58 | 1,277,184 / 16,888 / 0 / 79.846 | 855,152 / 14,903 / 0 / 87.305 | 855,200 / 14,215 / 0 / 106.442 |
+| mod_hold_replay | 1,344 / 17,178 / 0 / 25.236 | 64 / 16,783 / 0 / 33.509 | 0 / 14,903 / 0 / 22.532 | 0 / 14,215 / 0 / 27.661 |
+| mod_inspector | 2,538,048 / 17,178 / 0 / 118.385 | 2,472,176 / 16,783 / 0 / 114.619 | 2,146,032 / 14,903 / 0 / 116.971 | 2,046,960 / 14,215 / 0 / 136.686 |
+| mod_optional_stops | 2,519,936 / 17,178 / 0 / 1067.862 | 2,471,984 / 16,888 / 0 / 1102.409 | 2,146,032 / 14,903 / 0 / 172.04 | 2,046,960 / 14,215 / 0 / 197.158 |
+| mod_optional_stops_physical | 2,475,760 / 17,178 / 0 / 113.187 | 2,431,872 / 16,888 / 0 / 107.712 | 2,146,032 / 14,903 / 0 / 106.029 | 2,046,960 / 14,215 / 0 / 134.548 |
+| mod_optional_stops_refresh | 44,176 / 17,178 / 0 / 953.83 | 40,112 / 16,888 / 0 / 993.73 | 0 / 14,903 / 0 / 65.285 | 0 / 14,215 / 0 / 61.785 |
+| mod_other | 9,072 / 17,178 / 0 / 12.347 | 5,264 / 16,896 / 0 / 12.484 | 0 / 14,903 / 0 / 11.452 | 144 / 14,215 / 0 / 13.312 |
+| mod_physical_setup | 0 / 17,178 / 0 / 6.17 | 0 / 16,550 / 0 / 3.543 | 0 / 13,921 / 0 / 2.494 | 0 / 14,181 / 0 / 3.932 |
+| mod_prelude | 2,613,296 / 17,178 / 0 / 1623.858 | 2,540,176 / 16,896 / 0 / 1640.78 | 2,229,344 / 14,903 / 0 / 1953.432 | 2,131,136 / 14,215 / 0 / 2040.074 |
+| mod_rlo | 1,996,320 / 17,178 / 0 / 45.973 | 1,992,960 / 16,896 / 0 / 55.592 | 1,979,600 / 14,903 / 0 / 123.741 | 1,989,488 / 14,215 / 0 / 135.065 |
+| mod_routes | 3,776,784 / 17,178 / 0 / 551.527 | 56,096,032 / 16,896 / 0 / 838.171 | 3,462,928 / 14,903 / 0 / 782.879 | 3,353,232 / 14,215 / 0 / 728.028 |
+| mod_routes_nodes | 0 / 14,782 / 0 / 8.372 | 6,967,184 / 14,242 / 0 / 36.477 | 0 / 13,574 / 0 / 7.894 | 0 / 12,594 / 0 / 6.525 |
+| mod_routes_rebuild | 3,776,000 / 17,178 / 0 / 91.971 | 4,204,240 / 16,813 / 0 / 83.101 | 3,462,784 / 14,903 / 0 / 115.93 | 3,353,232 / 14,215 / 0 / 108.717 |
+| mod_routes_retime | 672 / 17,178 / 0 / 29.444 | 44,915,616 / 16,896 / 0 / 287.544 | 0 / 14,903 / 0 / 26.603 | 0 / 14,215 / 0 / 30.229 |
+| mod_routes_speeds | 0 / 14,782 / 0 / 147.732 | 1,696 / 14,242 / 0 / 138.991 | 144 / 13,574 / 0 / 154.328 | 0 / 12,594 / 0 / 160.493 |
+| mod_routes_sweep | 0 / 17,178 / 0 / 259.089 | 0 / 16,782 / 0 / 274.933 | 0 / 14,894 / 0 / 464.847 | 0 / 14,211 / 0 / 405.896 |
+| mod_summary | 571,392 / 16,180 / 0 / 13.997 | 571,408 / 16,511 / 0 / 16.235 | 567,440 / 14,524 / 0 / 80.083 | 797,376 / 13,639 / 0 / 47.168 |
+| physical | 20,282,632 / 17,178 / 0 / 0 | 20,954,696 / 16,815 / 0 / 0 | 5,037,704 / 14,903 / 0 / 0 | 6,739,864 / 14,215 / 0 / 0 |
+| physical_ambient | 64 / 17,178 / 0 / 137.54 | 5,984 / 16,781 / 0 / 125.494 | 0 / 14,903 / 0 / 133.128 | 0 / 14,215 / 0 / 139.193 |
+| physical_bindings | 3,360 / 535,083 / 0 / 469.697 | 8,400 / 508,254 / 0 / 496.861 | 4,192 / 134,465 / 0 / 179.171 | 56,160 / 174,708 / 0 / 231.12 |
+| physical_fade | 0 / 17,178 / 0 / 4.501 | 0 / 16,781 / 0 / 5.894 | 0 / 14,903 / 0 / 3.96 | 0 / 14,215 / 0 / 4.916 |
+| physical_focus | 0 / 17,178 / 0 / 75.679 | 0 / 16,781 / 0 / 72.933 | 0 / 14,903 / 0 / 68.343 | 32 / 14,215 / 0 / 77.264 |
+| physical_index | 80 / 2,244 / 0 / 18.336 | 80 / 2,212 / 0 / 21.416 | 80 / 2,041 / 0 / 77.911 | 80 / 2,076 / 0 / 66.226 |
+| physical_observe | 288,944 / 517,553 / 0 / 3429.99 | 269,648 / 491,161 / 0 / 3459.4 | 58,704 / 119,459 / 0 / 1098.729 | 221,120 / 160,311 / 0 / 1624.409 |
+| physical_parked | 1,769,760 / 1,190 / 0 / 572.146 | 1,956,896 / 1,194 / 0 / 589.446 | 1,399,568 / 1,150 / 0 / 1108.605 | 1,477,776 / 1,172 / 0 / 1098.881 |
+| physical_queues | 7,584 / 2,224 / 0 / 88.977 | 11,008 / 2,191 / 0 / 90.695 | 0 / 2,021 / 0 / 141.48 | 0 / 2,057 / 0 / 178.004 |
+| physical_release | 9,568 / 363 / 0 / 85.962 | 7,728 / 326 / 0 / 68.362 | 848 / 141 / 0 / 206.757 | 576 / 239 / 0 / 247.134 |
+| physical_roster | 14,144 / 2,224 / 0 / 442.094 | 11,328 / 2,191 / 0 / 430.554 | 448 / 2,021 / 0 / 620.034 | 512 / 2,057 / 0 / 912.007 |
+| physical_selection | 1,710,120 / 2,939 / 0 / 98.092 | 1,443,416 / 2,872 / 0 / 87.689 | 267,704 / 2,090 / 0 / 25.662 | 508,168 / 2,203 / 0 / 90.838 |
+| physical_setup_ambient | 0 / 0 / 0 / 0 | 378,912 / 4 / 0 / 3.107 | 0 / 0 / 0 / 0 | 0 / 0 / 0 / 0 |
+| physical_setup_bodies | 0 / 0 / 0 / 0 | 7,040 / 2 / 0 / 0.059 | 0 / 0 / 0 / 0 | 0 / 0 / 0 / 0 |
+| physical_setup_places | 0 / 0 / 0 / 0 | 710,608 / 2 / 0 / 3.41 | 0 / 0 / 0 / 0 | 0 / 0 / 0 / 0 |
+| physical_setup_preflight | 0 / 0 / 0 / 0 | 1,616 / 2 / 0 / 0.992 | 0 / 0 / 0 / 0 | 0 / 0 / 0 / 0 |
+| physical_setup_vehicles | 0 / 0 / 0 / 0 | 30,848 / 4 / 0 / 2.345 | 0 / 0 / 0 / 0 | 0 / 0 / 0 / 0 |
+| physical_spawn_appearance | 8,368,048 / 987 / 0 / 467.588 | 7,975,776 / 924 / 0 / 442.237 | 909,232 / 156 / 0 / 444.45 | 1,964,784 / 330 / 0 / 508.501 |
+| physical_spawn_bake | 1,978,656 / 329 / 0 / 163.552 | 1,978,656 / 308 / 0 / 164.012 | 0 / 52 / 0 / 46.056 | 0 / 110 / 0 / 73.382 |
+| physical_spawn_check | 0 / 658 / 0 / 1.246 | 0 / 616 / 0 / 1.127 | 0 / 104 / 0 / 1.745 | 0 / 220 / 0 / 3.057 |
+| physical_spawn_grow | 647,440 / 251 / 0 / 93.992 | 612,096 / 248 / 0 / 87.34 | 0 / 0 / 0 / 0 | 0 / 0 / 0 / 0 |
+| physical_spawn_pedestrian | 4,232,528 / 968 / 0 / 424.518 | 4,531,872 / 926 / 0 / 414.931 | 4,304 / 106 / 0 / 245.224 | 9,968 / 226 / 0 / 348.656 |
+| physical_spawn_randomize | 2,949,984 / 329 / 0 / 16.098 | 2,762,448 / 308 / 0 / 15.354 | 455,840 / 52 / 0 / 25.983 | 973,568 / 110 / 0 / 34.327 |
+| physical_spawn_vehicle | 120,048 / 76 / 0 / 33.224 | 76,160 / 63 / 0 / 29.166 | 20,256 / 15 / 0 / 21.277 | 27,072 / 30 / 0 / 13.682 |
+| physical_unattributed | 2,500,976 / 34,356 / 0 / 117.625 | 3,586,016 / 33,600 / 0 / 124.894 | 2,146,032 / 29,806 / 0 / 117.714 | 2,047,152 / 28,430 / 0 / 129.432 |
+| physical_unattributed_entry | 2,475,792 / 17,178 / 0 / 65.657 | 2,416,464 / 16,781 / 0 / 62.983 | 2,146,032 / 14,903 / 0 / 74.52 | 2,046,960 / 14,215 / 0 / 77.507 |
+| physical_unattributed_setup | 0 / 0 / 0 / 0 | 15,520 / 2 / 0 / 0.59 | 0 / 0 / 0 / 0 | 0 / 0 / 0 / 0 |
+| physical_unattributed_update | 25,184 / 17,178 / 0 / 43.942 | 20,688 / 16,783 / 0 / 43.633 | 0 / 14,903 / 0 / 36.11 | 192 / 14,215 / 0 / 43.604 |
+| physical_unattributed_waiting | 0 / 0 / 0 / 0 | 4,320 / 30 / 0 / 0.122 | 0 / 0 / 0 / 0 | 0 / 0 / 0 / 0 |
+| physical_vehicles | 1,257,408 / 17,178 / 0 / 449.407 | 1,070,384 / 16,781 / 0 / 438.778 | 226,336 / 14,903 / 0 / 218.989 | 426,464 / 14,215 / 0 / 325.852 |
+| physical_vendor_meals | 0 / 17,178 / 0 / 6.888 | 0 / 16,781 / 0 / 6.246 | 0 / 14,903 / 0 / 7.25 | 0 / 14,215 / 0 / 7.054 |
+
+### G — collection frame and subsystem attribution
+
+Ordinal intervals join the sampler, probe, top-level phase and subsystem. The Unity GC marker matches the probe or sampler Unity frame. An unambiguous adjacent marker with the same collection count can supply a shifted frame. The remainder is sampler frame minus UpdateCity, LateUpdate and the matched marker. Ranked subsystems show excess / mod / previous mod / outside-mod excess ms. The raw pages retain each current and previous phase duration.
+
+| Window | Ordinal | Sampler frame | Frame / UpdateCity / LateUpdate ms | GC marker ms / frame | Remainder ms | Async grow / diagnostic | Probe frame / ordinal interval | Top-level phase | Collection subsystem | Largest phase / excess ms / partial | Largest subsystem excesses |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| A steady | 227 | 7,611 | 65.988 / 0.381 / 0.02 | 25.7605 / 7,611 | 39.8265 | none /  | 7,611 / 227 / 227 | TimeUpdate | TimeUpdate.unstamped | TimeUpdate / 30.7404 / false | TimeUpdate.unstamped 30.742/0.000/0.000/30.742 / loop-tail 0.328/0.000/0.000/0.328 / PreLateUpdate.ScriptRunBehaviourLateUpdate 0.177/0.022/0.024/0.178 / PostLateUpdate.UpdateAllRenderers 0.088/0.000/0.000/0.088 |
+| A steady | 228 | 9,915 | 60.56 / 0.527 / 0.022 | 27.2064 / 9,915 | 32.8046 | none /  | 9,915 / 228 / 228 | TimeUpdate | TimeUpdate.unstamped | TimeUpdate / 35.8029 / false | TimeUpdate.unstamped 35.803/0.000/0.000/35.803 / Update.ScriptRunBehaviourUpdate 3.091/0.712/1.139/3.518 / PreLateUpdate.AIUpdatePostScript 0.097/0.000/0.000/0.097 / Update.DirectorUpdate 0.053/0.000/0.000/0.053 |
+| A steady | 229 | 12,266 | 48.171 / 0.517 / 0.018 | 25.8563 / 12,266 | 21.7797 | none /  | 12,266 / 229 / 229 | TimeUpdate | TimeUpdate.unstamped | TimeUpdate / 30.3796 / false | TimeUpdate.unstamped 30.379/0.000/0.000/30.379 / loop-tail 1.222/0.000/0.000/1.222 / PreLateUpdate.DirectorUpdateAnimationBegin 0.083/0.000/0.000/0.083 / PostLateUpdate.PlayerUpdateCanvases 0.011/0.000/0.000/0.011 |
+| A steady | 230 | 14,668 | 67.174 / 0.39 / 0.024 | 25.7916 / 14,668 | 40.9684 | none /  | 14,668 / 230 / 230 | PreLateUpdate | PreLateUpdate.ScriptRunBehaviourLateUpdate | PreLateUpdate / 32.4591 / false | PreLateUpdate.ScriptRunBehaviourLateUpdate 32.457/0.032/0.030/32.454 / FixedUpdate 0.702/0.000/0.000/0.702 / loop-tail 0.433/0.000/0.000/0.433 / PreLateUpdate.DirectorUpdateAnimationEnd 0.043/0.000/0.000/0.043 |
+| A steady | 231 | 17,080 | 57.881 / 0.853 / 0.022 | 25.914 / 17,080 | 31.092 | none /  | 17,080 / 231 / 231 | TimeUpdate | TimeUpdate.unstamped | TimeUpdate / 31.778 / false | TimeUpdate.unstamped 31.777/0.000/0.000/31.777 / Update.ScriptRunBehaviourUpdate 2.558/0.953/1.070/2.675 / PreUpdate.PersistentCityWalkerBound 0.021/0.147/0.126/0.000 / Update.DirectorUpdate 0.010/0.000/0.000/0.010 |
+| A steady | 232 | 19,489 | 54.208 / 0.702 / 0.027 | 24.7606 / 19,489 | 28.7184 | none /  | 19,489 / 232 / 232 | TimeUpdate | TimeUpdate.unstamped | TimeUpdate / 29.811 / false | TimeUpdate.unstamped 29.811/0.000/0.000/29.811 / Update.ScriptRunBehaviourUpdate 3.559/0.793/1.007/3.774 / PreLateUpdate.ScriptRunBehaviourLateUpdate 0.041/0.063/0.029/0.007 / Initialization 0.007/0.000/0.000/0.007 |
+| A steady | 233 | 21,833 | 56.415 / 1.144 / 0.029 | 24.3486 / 21,833 | 30.8934 | none /  | 21,833 / 233 / 233 | TimeUpdate | TimeUpdate.unstamped | TimeUpdate / 25.6105 / false | TimeUpdate.unstamped 25.610/0.000/0.000/25.610 / Update.ScriptRunBehaviourUpdate 1.111/1.309/0.907/0.708 / PreLateUpdate.RigMouseLate 0.596/0.000/0.000/0.596 / Update.DirectorUpdate 0.143/0.000/0.000/0.143 |
+| A immediate | 228 | 6,461 | 54.888 / 0.363 / 0.02 | 22.6235 / 6,461 | 31.8815 | none /  | 6,461 / 228 / 228 | TimeUpdate | TimeUpdate.unstamped | TimeUpdate / 19.9307 / false | TimeUpdate.unstamped 19.932/0.000/0.000/19.932 / PreLateUpdate.ScriptRunBehaviourLateUpdate 2.441/0.022/0.023/2.442 / Update.ScriptRunBehaviourUpdate 2.023/0.475/0.444/1.992 / PreLateUpdate.DirectorUpdateAnimationEnd 0.062/0.000/0.000/0.062 |
+| A immediate | 229 | 8,919 | 66.451 / 0.488 / 0.024 | 24.4464 / 8,919 | 41.4926 | none /  | 8,919 / 229 / 229 | TimeUpdate | TimeUpdate.unstamped | TimeUpdate / 39.2482 / false | TimeUpdate.unstamped 39.248/0.000/0.000/39.248 / Update.ScriptRunBehaviourUpdate 1.423/0.757/0.916/1.582 / PreLateUpdate.ScriptRunBehaviourLateUpdate 0.161/0.027/0.027/0.161 / loop-tail 0.124/0.000/0.000/0.124 |
+| A immediate | 230 | 11,228 | 60.526 / 0.579 / 0.018 | 22.0367 / 11,228 | 37.8923 | none /  | 11,228 / 230 / 230 | TimeUpdate | TimeUpdate.unstamped | TimeUpdate / 24.7715 / false | TimeUpdate.unstamped 24.772/0.000/0.000/24.772 / FixedUpdate 1.608/0.057/0.000/1.551 / loop-tail 0.836/0.000/0.000/0.836 / PreLateUpdate.DirectorUpdateAnimationEnd 0.009/0.000/0.000/0.009 |
+| A immediate | 231 | 13,741 | 66.436 / 35.602 / 0.02 | 25.4117 / 13,741 | 5.4023 | none /  | 13,741 / 231 / 231 | Update | Update.ScriptRunBehaviourUpdate | Update / 30.1169 / false | Update.ScriptRunBehaviourUpdate 30.085/35.725/3.922/-1.718 / FixedUpdate 1.952/0.000/0.000/1.952 / PostLateUpdate.UpdateAllRenderers 1.158/0.000/0.000/1.158 / PreUpdate.AIUpdate 0.083/0.000/0.000/0.083 |
+| A immediate | 232 | 16,231 | 65.221 / 0.564 / 0.021 | 24.9612 / 16,231 | 39.6748 | none /  | 16,231 / 232 / 232 | TimeUpdate | TimeUpdate.unstamped | TimeUpdate / 31.5667 / false | TimeUpdate.unstamped 31.568/0.000/0.000/31.568 / Update.ScriptRunBehaviourUpdate 1.256/0.681/0.812/1.387 / PreUpdate.PersistentCityWalkerBound 0.101/0.140/0.038/-0.001 / PreLateUpdate.ScriptRunBehaviourLateUpdate 0.080/0.050/0.017/0.048 |
+| A immediate | 233 | 18,767 | 64.706 / 0.621 / 0.019 | 24.3676 / 18,767 | 39.6984 | none /  | 18,767 / 233 / 233 | TimeUpdate | TimeUpdate.unstamped | TimeUpdate / 29.6423 / false | TimeUpdate.unstamped 29.643/0.000/0.000/29.643 / FixedUpdate 2.074/0.000/0.000/2.074 / loop-tail 0.874/0.000/0.000/0.874 / PreLateUpdate.ScriptRunBehaviourLateUpdate 0.078/0.024/0.027/0.082 |
+| A immediate | 234 | 21,187 | 66.211 / 0.675 / 0.019 | 25.386 / 21,188 | 40.131 | none /  | 21,188 / 234 / 234 | Update | Update.ScriptRunBehaviourUpdate | Update / 30.8655 / false | Update.ScriptRunBehaviourUpdate 30.868/32.062/0.742/-0.452 / FixedUpdate 2.023/0.096/0.044/1.971 / PreLateUpdate.AIUpdatePostScript 0.214/0.000/0.000/0.214 / loop-tail 0.158/0.000/0.000/0.158 |
+| B 20× | 233 | 14,295 | 77.981 / 1.274 / 0.028 | 28.22 / 14,295 | 48.459 | none /  | 14,295 / 233 / 233 | TimeUpdate | TimeUpdate.unstamped | TimeUpdate / 40.21 / false | TimeUpdate.unstamped 40.210/0.000/0.000/40.210 / FixedUpdate 2.647/0.000/0.000/2.647 / PostLateUpdate.UpdateAllRenderers 1.560/0.000/0.000/1.560 / loop-tail 0.696/0.000/0.000/0.696 |
+| B 20× | 234 | 16,625 | 353.189 / 0.347 / 0.027 | 39.5661 / 16,626 | 313.2489 | none /  | 16,626 / 234 / 234 | Update | Update.ScriptRunBehaviourUpdate | Update / 318.4262 / false | Update.ScriptRunBehaviourUpdate 317.704/318.535/0.617/-0.214 / loop-tail 11.222/0.000/0.000/11.222 / FixedUpdate 2.347/0.000/0.000/2.347 / PreLateUpdate.AIUpdatePostScript 0.785/0.000/0.000/0.785 |
+| B 20× | 235 | 19,335 | 78.56 / 0.306 / 0.025 | 26.7991 / 19,335 | 51.4299 | none /  | 19,335 / 235 / 235 | TimeUpdate | TimeUpdate.unstamped | TimeUpdate / 35.7836 / false | TimeUpdate.unstamped 35.785/0.000/0.000/35.785 / Update.ScriptRunBehaviourUpdate 2.932/0.409/0.492/3.016 / PreLateUpdate.DirectorUpdateAnimationEnd 0.427/0.000/0.000/0.427 / EarlyUpdate 0.201/0.000/0.000/0.201 |
+| B 20× | 236 | 21,991 | 51.473 / 0.288 / 0.02 | 25.7112 / 21,991 | 25.4538 | none /  | 21,991 / 236 / 236 | TimeUpdate | TimeUpdate.unstamped | TimeUpdate / 32.914 / false | TimeUpdate.unstamped 32.915/0.000/0.000/32.915 / FixedUpdate 1.759/0.000/0.000/1.759 / PostLateUpdate.UpdateAllRenderers 0.430/0.000/0.000/0.430 / PreLateUpdate.ScriptRunBehaviourLateUpdate 0.032/0.025/0.020/0.027 |
+| B 20× | 237 | 24,702 | 52.676 / 0.195 / 0.02 | 24.9925 / 24,702 | 27.4685 | none /  | 24,702 / 237 / 237 | TimeUpdate | TimeUpdate.unstamped | TimeUpdate / 30.1325 / false | TimeUpdate.unstamped 30.133/0.000/0.000/30.133 / Update.ScriptRunBehaviourUpdate 0.946/0.358/0.437/1.025 / PreLateUpdate.ScriptRunBehaviourLateUpdate 0.111/0.038/0.049/0.121 / PreLateUpdate.DirectorUpdateAnimationBegin 0.037/0.000/0.000/0.037 |
+| B 60× | 233 | 29,306 | 375.23 / 294.318 / 0.059 | 48.9009 / 29,306 | 31.9521 | none /  | 29,306 / 233 / 233 | Update | Update.ScriptRunBehaviourUpdate | Update / 350.0063 / false | Update.ScriptRunBehaviourUpdate 348.232/294.488/19.264/73.008 / FixedUpdate 283.850/0.000/0.000/283.850 / EarlyUpdate 140.325/0.000/0.000/140.325 / PreLateUpdate.AIUpdatePostScript 3.051/0.000/0.000/3.051 |
+| B 60× | 234 | 31,901 | 66.354 / 0.428 / 0.025 | 27.5294 / 31,901 | 38.3716 | none /  | 31,901 / 234 / 234 | PreLateUpdate | PreLateUpdate.ScriptRunBehaviourLateUpdate | PreLateUpdate / 35.9582 / false | PreLateUpdate.ScriptRunBehaviourLateUpdate 35.542/0.034/0.031/35.539 / PostLateUpdate.UpdateAllRenderers 0.535/0.000/0.000/0.535 / FixedUpdate 0.311/0.000/0.000/0.311 / PreLateUpdate.DirectorUpdateAnimationBegin 0.280/0.000/0.000/0.280 |
+| B 60× | 235 | 34,656 | 67.182 / 0.373 / 0.026 | 28.807 / 34,656 | 37.976 | none /  | 34,656 / 235 / 235 | TimeUpdate | TimeUpdate.unstamped | TimeUpdate / 35.8547 / false | TimeUpdate.unstamped 35.855/0.000/0.000/35.855 / FixedUpdate 2.069/0.000/0.000/2.069 / PreLateUpdate.DirectorUpdateAnimationBegin 1.193/0.000/0.000/1.193 / PreLateUpdate.DirectorUpdateAnimationEnd 0.392/0.000/0.000/0.392 |
+| B 60× | 236 | 37,359 | 72.392 / 1.871 / 0.029 | 29.8504 / 37,359 | 40.6416 | none /  | 37,359 / 236 / 236 | TimeUpdate | TimeUpdate.unstamped | TimeUpdate / 36.6479 / false | TimeUpdate.unstamped 36.647/0.000/0.000/36.647 / FixedUpdate 1.792/0.000/0.000/1.792 / loop-tail 1.042/0.000/0.000/1.042 / EarlyUpdate 0.024/0.000/0.000/0.024 |
+| B 60× | 237 | 40,013 | 73.176 / 0.297 / 0.03 | 31.0645 / 40,013 | 41.7845 | none /  | 40,013 / 237 / 237 | TimeUpdate | TimeUpdate.unstamped | TimeUpdate / 43.5067 / false | TimeUpdate.unstamped 43.508/0.000/0.000/43.508 / PreLateUpdate.RigMouseLate 1.094/0.000/0.000/1.094 / PostLateUpdate.UpdateAllRenderers 0.696/0.000/0.000/0.696 / loop-tail 0.297/0.000/0.000/0.297 |
+
+| Window | Subsystems / cap reached | Probe count / retained / truncated | Paged / Mono gen0 | Last frame / partial / gen0 | Start scan | Stop scan |
+| --- | --- | --- | --- | --- | --- | --- |
+| A steady | 128 / true | 7 / 7 / false | 7 / 7 | 23,004 / true / 0 | full | watch-unchanged |
+| A immediate | 128 / true | 7 / 7 / false | 7 / 7 | 22,155 / true / 0 | full | watch-unchanged |
+| B 20× | 128 / true | 5 / 5 / false | 5 / 5 | 27,223 / true / 0 | full | watch-unchanged |
+| B 60× | 128 / true | 5 / 5 / false | 5 / 5 | 42,230 / true / 0 | full | watch-unchanged |
+| Day immediate no-mod | 128 / true | 6 / 6 / false | 6 / 6 | 18,292 / true / 0 | watch-unchanged | watch-unchanged |
+
+| Window | Probe frames / ticks | Frame / tick drops | Saved frames |
+| --- | --- | --- | --- |
+| A steady | 17,193 / 17,193 | 0 / 0 | 0 |
+| A immediate | 16,906 / 16,906 | 0 / 0 | 0 |
+| B 20× | 14,934 / 14,934 | 0 / 0 | 0 |
+| B 60× | 14,254 / 14,254 | 0 / 0 | 0 |
+| Day immediate no-mod | 13,886 / n/a | 0 / n/a | 0 |
+
+The immediate no-mod reference has 6 exported probe collection rows. Its GC marker and probe pages are retained in the run directory.
+
+| Window | Ordinal | Probe frame | Phase mod ms | Largest outside-mod subsystem / excess ms | Subsystem mod ms |
+| --- | --- | --- | --- | --- | --- |
+| A steady | 227 | 7,611 | PreUpdate 0.0654 / Update 0.5071 / PreLateUpdate 0.0463 | TimeUpdate.unstamped / 30.7424 | PreUpdate.PersistentCityWalkerBound 0.0654 / Update.ScriptRunBehaviourUpdate 0.5071 / PreLateUpdate.PersistentCityWalkerBound 0.0244 / PreLateUpdate.ScriptRunBehaviourLateUpdate 0.0219 |
+| A steady | 228 | 9,915 | PreUpdate 0.1050 / Update 0.7118 / PreLateUpdate 0.0985 | TimeUpdate.unstamped / 35.8033 | PreUpdate.PersistentCityWalkerBound 0.1050 / Update.ScriptRunBehaviourUpdate 0.7118 / PreLateUpdate.PersistentCityWalkerBound 0.0554 / PreLateUpdate.ScriptRunBehaviourLateUpdate 0.0431 |
+| A steady | 229 | 12,266 | PreUpdate 0.1243 / Update 0.6680 / PreLateUpdate 0.1167 | TimeUpdate.unstamped / 30.3793 | PreUpdate.PersistentCityWalkerBound 0.1243 / Update.ScriptRunBehaviourUpdate 0.6680 / PreLateUpdate.PersistentCityWalkerBound 0.0932 / PreLateUpdate.ScriptRunBehaviourLateUpdate 0.0235 |
+| A steady | 230 | 14,668 | PreUpdate 0.1294 / Update 0.5102 / PreLateUpdate 0.1086 | PreLateUpdate.ScriptRunBehaviourLateUpdate / 32.4539 | PreUpdate.PersistentCityWalkerBound 0.1294 / Update.ScriptRunBehaviourUpdate 0.5102 / PreLateUpdate.PersistentCityWalkerBound 0.0762 / PreLateUpdate.ScriptRunBehaviourLateUpdate 0.0324 |
+| A steady | 231 | 17,080 | PreUpdate 0.1465 / Update 0.9528 / PreLateUpdate 0.1042 | TimeUpdate.unstamped / 31.7774 | PreUpdate.PersistentCityWalkerBound 0.1465 / Update.ScriptRunBehaviourUpdate 0.9528 / PreLateUpdate.PersistentCityWalkerBound 0.0764 / PreLateUpdate.ScriptRunBehaviourLateUpdate 0.0278 |
+| A steady | 232 | 19,489 | PreUpdate 0.2810 / Update 0.7928 / PreLateUpdate 0.2266 | TimeUpdate.unstamped / 29.8113 | PreUpdate.PersistentCityWalkerBound 0.2810 / Update.ScriptRunBehaviourUpdate 0.7928 / PreLateUpdate.PersistentCityWalkerBound 0.1632 / PreLateUpdate.ScriptRunBehaviourLateUpdate 0.0634 |
+| A steady | 233 | 21,833 | PreUpdate 0.4278 / Update 1.3089 / PreLateUpdate 0.3436 | TimeUpdate.unstamped / 25.6098 | PreUpdate.PersistentCityWalkerBound 0.4278 / Update.ScriptRunBehaviourUpdate 1.3089 / PreLateUpdate.PersistentCityWalkerBound 0.3086 / PreLateUpdate.ScriptRunBehaviourLateUpdate 0.0350 |
+| A immediate | 228 | 6,461 | PreUpdate 0.0436 / Update 0.4749 / PreLateUpdate 0.0415 | TimeUpdate.unstamped / 19.9324 | PreUpdate.PersistentCityWalkerBound 0.0436 / Update.ScriptRunBehaviourUpdate 0.4749 / PreLateUpdate.PersistentCityWalkerBound 0.0193 / PreLateUpdate.ScriptRunBehaviourLateUpdate 0.0222 |
+| A immediate | 229 | 8,919 | PreUpdate 0.0991 / Update 0.7567 / PreLateUpdate 0.0742 | TimeUpdate.unstamped / 39.2478 | PreUpdate.PersistentCityWalkerBound 0.0991 / Update.ScriptRunBehaviourUpdate 0.7567 / PreLateUpdate.PersistentCityWalkerBound 0.0476 / PreLateUpdate.ScriptRunBehaviourLateUpdate 0.0266 |
+| A immediate | 230 | 11,228 | FixedUpdate 0.0573 / PreUpdate 0.1351 / Update 0.6395 / PreLateUpdate 0.0935 | TimeUpdate.unstamped / 24.7717 | FixedUpdate 0.0573 / PreUpdate.PersistentCityWalkerBound 0.1351 / Update.ScriptRunBehaviourUpdate 0.6395 / PreLateUpdate.PersistentCityWalkerBound 0.0699 / PreLateUpdate.ScriptRunBehaviourLateUpdate 0.0236 |
+| A immediate | 231 | 13,741 | PreUpdate 0.0438 / Update 35.7254 / PreLateUpdate 0.0323 | FixedUpdate / 1.9516 | PreUpdate.PersistentCityWalkerBound 0.0438 / Update.ScriptRunBehaviourUpdate 35.7254 / PreLateUpdate.PersistentCityWalkerBound 0.0072 / PreLateUpdate.ScriptRunBehaviourLateUpdate 0.0251 |
+| A immediate | 232 | 16,231 | PreUpdate 0.1398 / Update 0.6812 / PreLateUpdate 0.1344 | TimeUpdate.unstamped / 31.5675 | PreUpdate.PersistentCityWalkerBound 0.1398 / Update.ScriptRunBehaviourUpdate 0.6812 / PreLateUpdate.PersistentCityWalkerBound 0.0846 / PreLateUpdate.ScriptRunBehaviourLateUpdate 0.0498 |
+| A immediate | 233 | 18,767 | PreUpdate 0.2761 / Update 0.7454 / PreLateUpdate 0.1800 | TimeUpdate.unstamped / 29.6429 | PreUpdate.PersistentCityWalkerBound 0.2761 / Update.ScriptRunBehaviourUpdate 0.7454 / PreLateUpdate.PersistentCityWalkerBound 0.1558 / PreLateUpdate.ScriptRunBehaviourLateUpdate 0.0242 |
+| A immediate | 234 | 21,188 | FixedUpdate 0.0956 / PreUpdate 0.3301 / Update 32.0623 / PreLateUpdate 0.2369 | FixedUpdate / 1.9709 | FixedUpdate 0.0956 / PreUpdate.PersistentCityWalkerBound 0.3301 / Update.ScriptRunBehaviourUpdate 32.0623 / PreLateUpdate.PersistentCityWalkerBound 0.2092 / PreLateUpdate.ScriptRunBehaviourLateUpdate 0.0277 |
+| B 20× | 233 | 14,295 | PreUpdate 0.1465 / Update 1.4394 / PreLateUpdate 0.0679 | TimeUpdate.unstamped / 40.2101 | PreUpdate.PersistentCityWalkerBound 0.1465 / Update.ScriptRunBehaviourUpdate 1.4394 / PreLateUpdate.PersistentCityWalkerBound 0.0307 / PreLateUpdate.ScriptRunBehaviourLateUpdate 0.0372 |
+| B 20× | 234 | 16,626 | PreUpdate 0.0649 / Update 318.5351 / PreLateUpdate 0.0783 | loop-tail / 11.2224 | PreUpdate.PersistentCityWalkerBound 0.0649 / Update.ScriptRunBehaviourUpdate 318.5351 / PreLateUpdate.PersistentCityWalkerBound 0.0375 / PreLateUpdate.ScriptRunBehaviourLateUpdate 0.0408 |
+| B 20× | 235 | 19,335 | PreUpdate 0.0553 / Update 0.4088 / PreLateUpdate 0.0588 | TimeUpdate.unstamped / 35.7854 | PreUpdate.PersistentCityWalkerBound 0.0553 / Update.ScriptRunBehaviourUpdate 0.4088 / PreLateUpdate.PersistentCityWalkerBound 0.0276 / PreLateUpdate.ScriptRunBehaviourLateUpdate 0.0312 |
+| B 20× | 236 | 21,991 | PreUpdate 0.0322 / Update 0.4513 / PreLateUpdate 0.0393 | TimeUpdate.unstamped / 32.9149 | PreUpdate.PersistentCityWalkerBound 0.0322 / Update.ScriptRunBehaviourUpdate 0.4513 / PreLateUpdate.PersistentCityWalkerBound 0.0143 / PreLateUpdate.ScriptRunBehaviourLateUpdate 0.0250 |
+| B 20× | 237 | 24,702 | PreUpdate 0.0025 / Update 0.3579 / PreLateUpdate 0.0390 | TimeUpdate.unstamped / 30.1327 | PreUpdate.PersistentCityWalkerBound 0.0025 / Update.ScriptRunBehaviourUpdate 0.3579 / PreLateUpdate.PersistentCityWalkerBound 0.0006 / PreLateUpdate.ScriptRunBehaviourLateUpdate 0.0384 |
+| B 60× | 233 | 29,306 | PreUpdate 0.0510 / Update 294.4875 / PreLateUpdate 0.1043 | FixedUpdate / 283.8497 | PreUpdate.PersistentCityWalkerBound 0.0510 / Update.ScriptRunBehaviourUpdate 294.4875 / PreLateUpdate.PersistentCityWalkerBound 0.0342 / PreLateUpdate.ScriptRunBehaviourLateUpdate 0.0701 |
+| B 60× | 234 | 31,901 | PreUpdate 0.1192 / Update 0.6043 / PreLateUpdate 0.0987 | PreLateUpdate.ScriptRunBehaviourLateUpdate / 35.5392 | PreUpdate.PersistentCityWalkerBound 0.1192 / Update.ScriptRunBehaviourUpdate 0.6043 / PreLateUpdate.PersistentCityWalkerBound 0.0652 / PreLateUpdate.ScriptRunBehaviourLateUpdate 0.0335 |
+| B 60× | 235 | 34,656 | PreUpdate 0.0852 / Update 0.5084 / PreLateUpdate 0.0746 | TimeUpdate.unstamped / 35.8549 | PreUpdate.PersistentCityWalkerBound 0.0852 / Update.ScriptRunBehaviourUpdate 0.5084 / PreLateUpdate.PersistentCityWalkerBound 0.0403 / PreLateUpdate.ScriptRunBehaviourLateUpdate 0.0343 |
+| B 60× | 236 | 37,359 | PreUpdate 0.0503 / Update 2.0948 / PreLateUpdate 0.0623 | TimeUpdate.unstamped / 36.6473 | PreUpdate.PersistentCityWalkerBound 0.0503 / Update.ScriptRunBehaviourUpdate 2.0948 / PreLateUpdate.PersistentCityWalkerBound 0.0244 / PreLateUpdate.ScriptRunBehaviourLateUpdate 0.0379 |
+| B 60× | 237 | 40,013 | PreUpdate 0.0288 / Update 0.4535 / PreLateUpdate 0.0528 | TimeUpdate.unstamped / 43.5081 | PreUpdate.PersistentCityWalkerBound 0.0288 / Update.ScriptRunBehaviourUpdate 0.4535 / PreLateUpdate.PersistentCityWalkerBound 0.0144 / PreLateUpdate.ScriptRunBehaviourLateUpdate 0.0384 |
+
+A steady walker stage, collection rows and max mod ms (PreUpdate walker / PreLateUpdate walker / AIUpdate / AIUpdatePostScript) steady / 7 / 0.4278 / 0.3086 / 0 / 0.
+A immediate walker stage, collection rows and max mod ms (PreUpdate walker / PreLateUpdate walker / AIUpdate / AIUpdatePostScript) after both commits / 7 / 0.3301 / 0.2092 / 0 / 0.
+B 20× walker stage, collection rows and max mod ms (PreUpdate walker / PreLateUpdate walker / AIUpdate / AIUpdatePostScript) post-conditioning / 5 / 0.1465 / 0.0375 / 0 / 0.
+B 60× walker stage, collection rows and max mod ms (PreUpdate walker / PreLateUpdate walker / AIUpdate / AIUpdatePostScript) post-conditioning / 5 / 0.1192 / 0.0652 / 0 / 0.
+
+The probe allocated all 128 subsystem slots and marked its stamp plan truncated. A fallback bucket groups child callbacks that lost their individual stamps. Collection range counts are TimeUpdate.unstamped 18.
+
+Unstamped buckets TimeUpdate.unstamped. Both walker stamps register positive time in A steady / after both A immediate commits true / true. The pre-retime comparison is the separate A steady process.
+
+| Window | Ordinal | Sampler / probe frame | Probe mod-work ms | Sampler UpdateCity / LateUpdate ms | GC marker ms | Probe phase mod ms |
+| --- | --- | --- | --- | --- | --- | --- |
+| A immediate | 234 | 21,187 / 21,188 | 32.7249 | 0.675 / 0.019 | 25.386 | FixedUpdate 0.0956, PreUpdate 0.3301, Update 32.0623, PreLateUpdate 0.2369 |
+| B 20× | 234 | 16,625 / 16,626 | 318.6783 | 0.347 / 0.027 | 39.5661 | PreUpdate 0.0649, Update 318.5351, PreLateUpdate 0.0783 |
+
+The rig mod-work export was complete and had no ≥30 ms row at either reported frame for these probe ordinals. The recorders disagree on mod-work attribution there.
+
+### B — ordered night heap bracket
+
+| Boundary | 20× heap / used B | 60× heap / used B | 60× minus 20× heap / used B |
+| --- | --- | --- | --- |
+| After load | 1,243,807,744 / 1,049,890,816 | 1,297,465,344 / 1,127,477,248 | 53,657,600 / 77,586,432 |
+| 00:50 before pulse | 1,361,248,256 / 1,311,236,096 | 1,364,574,208 / 1,302,245,376 | 3,325,952 / -8,990,720 |
+| Before sampler | 1,495,465,984 / 1,326,186,496 | 1,482,014,720 / 1,359,814,656 | -13,451,264 / 33,628,160 |
+| Scheduled sampler report | 1,495,465,984 / 1,443,377,152 | 1,482,014,720 / 1,440,477,184 | -13,451,264 / -2,899,968 |
+| After report | 1,495,465,984 / 1,445,621,760 | 1,482,014,720 / 1,442,222,080 | -13,451,264 / -3,399,680 |
+| After sampler stop | 1,495,465,984 / 1,448,271,872 | 1,482,014,720 / 1,445,703,680 | -13,451,264 / -2,568,192 |
+| After probe, profiler and modwork exports | 1,495,465,984 / 1,371,070,464 | 1,498,791,936 / 1,371,082,752 | 3,325,952 / 12,288 |
+
+Both candidate windows measured at 1× from 01:00. The GC sampler supplied the gated heap read. The bracket used passive Mono reads and omitted forced collections and census walks.
+
+### Retime commits and frame-bound evidence
+
+| Window | Retime | Seconds into A immediate | Commit / road / allocation readback |
+| --- | --- | --- | --- |
+| A immediate | immediate-up | 2.5768771 | Clock retime: body release 94.7 ms over 31 updates, journey retime 53.2 ms over 15 updates (snapshot 6, slowest 3.9 ms, restarts 0), final slice and commit 1.1 ms, simulation rebuild 13.7 ms over 4 updates (slowest 4.7 ms); journeys with a split leg 4, earlier splits joined 120, joins refused for an inexact pose 0. |
+| A immediate | immediate-up | 2.5768771 | Road snapshot started: frame=5311, reason=clock-rate index=-1, scene searches in this planner=0, reused unchanged snapshot=True. |
+| A immediate | immediate-return | 5.3345392 | Clock retime: body release 51.4 ms over 18 updates, journey retime 25.1 ms over 7 updates (snapshot 1, slowest 3.9 ms, restarts 0), final slice and commit 1.0 ms, simulation rebuild 13.8 ms over 4 updates (slowest 4.6 ms); journeys with a split leg 0, earlier splits joined 124, joins refused for an inexact pose 0. |
+| A immediate | immediate-return | 5.3345392 | Road snapshot started: frame=5381, reason=clock-rate index=-1, scene searches in this planner=0, reused unchanged snapshot=True. |
+| B 20× | prep-1 | — | 1 commit lines and 1 road snapshots at frames 10032. |
+| B 20× | prep-2 | — | 1 commit lines and 1 road snapshots at frames 10454. |
+| B 20× | prep-return1 | — | 1 commit lines and 1 road snapshots at frames 10832. |
+| B 60× | prep-1 | — | 1 commit lines and 1 road snapshots at frames 26784. |
+| B 60× | prep-2 | — | 1 commit lines and 1 road snapshots at frames 26811. |
+| B 60× | prep-return1 | — | 1 commit lines and 1 road snapshots at frames 26852. |
+
+The no-mod reference acknowledged 2× and 1× at 15:30 and 15:30 after measure-start.
+
+| Sampler-start reply UTC / log byte offset | Up / return log start offsets | mod_routes_retime allocated B / phase ms |
+| --- | --- | --- |
+| 2026-11-21T20:56:01.341232+00:00 / 459,045 | 459,045 / 460,458 | 44,915,616 / 287.544 |
+
+### C — street mod work and whole-frame timing
+
+| Rig | UpdateCity self / inclusive p95 ms | Union p95 / max ms | Whole p95 / max ms | Union spikes | Retime subphase bound / rebuild slowest ms |
+| --- | --- | --- | --- | --- | --- |
+| 16y | 9.186 / 10.0021 | 10.1866 / 78.9626 | 473.5798 / 2293.1236 | 24 | 35.716 / 6.7 |
+| 16x | 4.4871 / 4.6729 | 4.7759 / 32.3008 | 248.7263 / 785.1404 | 2 | 15.807 / 4.6 |
+| 16w | 3.8067 / 3.889 | 3.9427 / 19.4491 | 169.5704 / 613.8613 | 0 | 5.933 / 4 |
+| PC 19c | 0.339 / 3.718 | 3.812 / — | 129.834 / 428.113 | 0 | 18.634 / 4.8 |
+
+C followed B 20× in the same process. The city was positioned at x=215, z=0. GC sampler measuring before / after false / false. Sampler pause fields and diagnostic collection frames are unavailable with the sampler off. The PC phase recorder stayed active for C.
+
+| Accepted pans | Pans at seconds | Retime commands at seconds | Scope coverage / recorder validity | Direct retime subphase max ms |
+| --- | --- | --- | --- | --- |
+| 9 | 60.641102 / 120.735232 / 180.92454 / 241.005032 / 300.983901 / 361.702088 / 420.942989 / 481.021912 / 541.369499 | 200.4208499 / 400.9323165 | true / true | 16.962 |
+
+| C door search and index readback |
+| --- |
+| door search maximum 0.080 ms over 8 searches, 8 indexed, NavMesh queue maximum 0.062 ms, door index builds 0 (1433 doors, 0 requests waited for the index, slice maximum 0.000 ms) |
+| door search maximum 0.216 ms over 2 searches, 2 indexed, NavMesh queue maximum 0.105 ms, door index builds 0 (1433 doors, 0 requests waited for the index, slice maximum 0.000 ms) |
+
+Street used the existing index throughout its measured window. Earlier warm-up in the same process logged the following.
+
+| Before C in the shared B 20× / C process |
+| --- |
+| door search maximum 0.325 ms over 16 searches, 16 indexed, NavMesh queue maximum 1.316 ms, door index builds 1 (1433 doors, 2 requests waited for the index, slice maximum 1.001 ms) |
+
+| C slowest food continuation, verbatim |
+| --- |
+| Slowest food continuation: 0.866 ms (rival-refresh). |
+
+### Spikes and owned meshes
+
+Spike counts are counted / retained / truncated. Whole-frame spike row truncation is shown separately from mod work.
+
+| Window | Union ≥30 ms | PC phase ≥30 ms | PC phase near spikes | Whole frame ≥30 ms |
+| --- | --- | --- | --- | --- |
+| A steady | 2 / 2 / false | 2 / 2 / false | 0 / 0 / false | 16,817 / 1,024 / true |
+| A immediate | 2 / 2 / false | 2 / 2 / false | 2 / 2 / false | 16,471 / 1,024 / true |
+| B 20× | 18 / 18 / false | 18 / 18 / false | 41 / 41 / false | 14,157 / 1,024 / true |
+| B 60× | 11 / 11 / false | 11 / 11 / false | 53 / 53 / false | 12,800 / 1,024 / true |
+| C street | 24 / 24 / false | 24 / 24 / false | 58 / 58 / false | 3,518 / 1,024 / true |
+
+| Window | Unity frame | Union / whole ms / dominant scope | PC mod ms | Phase / ms | Detail / ms | Subphase / ms | GC phase |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| C street | 38,186 | 50.4117 / 355.8056 / updatecity | 50.348 | mod_closures / 29.929 | none / 0 | mod_closures_network / 27.653 | none |
+| C street | 38,196 | 48.5208 / 328.7548 / updatecity | 48.392 | physical_unattributed / 30.062 | physical_spawn_bake / 1.611 | physical_setup_places / 12.997 | none |
+| C street | 38,403 | 36.241 / 1367.8327 / updatecity | 35.46 | mod_rlo / 29.413 | none / 0 | mod_optional_stops_refresh / 2.32 | none |
+| C street | 38,415 | 38.6746 / 747.8643 / updatecity | 38.538 | mod_summary / 31.575 | none / 0 | advance_planning_slice / 3.733 | none |
+| C street | 38,519 | 38.5306 / 1724.8325 / updatecity | 37.292 | mod_optional_stops / 13.479 | none / 0 | mod_optional_stops_refresh / 12.912 | none |
+| C street | 38,521 | 33.0347 / 1452.3012 / updatecity | 32.657 | mod_optional_stops / 11.85 | none / 0 | mod_optional_stops_refresh / 11.691 | none |
+| C street | 38,526 | 78.9626 / 1850.4205 / updatecity | 77.587 | mod_rlo / 50.84 | none / 0 | mod_optional_stops_refresh / 8.546 | none |
+| C street | 38,528 | 34.5409 / 1035.2624 / updatecity | 33.534 | advance_planning / 10.175 | none / 0 | advance_planning_slice / 10.172 | none |
+| C street | 38,529 | 42.5469 / 1387.0973 / updatecity | 35.715 | advance_planning / 18.162 | none / 0 | advance_planning_slice / 18.16 | none |
+| C street | 38,530 | 39.6776 / 1206.9951 / updatecity | 38.36 | advance_planning / 10.234 | none / 0 | advance_planning_slice / 10.232 | none |
+| C street | 38,533 | 62.1358 / 788.1577 / updatecity | 61.959 | physical_observe / 50.222 | none / 0 | advance_planning_slice / 5.242 | none |
+| C street | 38,546 | 37.2044 / 317.7611 / updatecity | 37.144 | physical_spawn_appearance / 16.641 | physical_spawn_bake / 2.282 | advance_planning_slice / 2.165 | none |
+| C street | 38,547 | 37.2878 / 972.1645 / updatecity | 35.302 | mod_optional_stops / 10.636 | none / 0 | advance_planning_slice / 10.612 | none |
+| C street | 38,904 | 44.521 / 717.3179 / updatecity | 43.816 | mod_summary / 26.906 | none / 0 | mod_routes_rebuild / 5.353 | none |
+| C street | 38,908 | 32.7203 / 1332.3201 / updatecity | 31.562 | mod_optional_stops / 10.905 | none / 0 | mod_optional_stops_refresh / 10.768 | none |
+| C street | 38,923 | 60.5632 / 1360.5134 / updatecity | 59.385 | mod_rlo / 37.341 | none / 0 | mod_optional_stops_refresh / 6.24 | none |
+| C street | 38,925 | 35.6515 / 1379.2828 / updatecity | 35.554 | physical_observe / 28.952 | none / 0 | advance_planning_slice / 3.619 | none |
+| C street | 38,926 | 39.2848 / 1740.9896 / updatecity | 36.902 | mod_optional_stops / 11.694 | none / 0 | mod_optional_stops_refresh / 11.533 | none |
+| C street | 38,927 | 37.4667 / 873.54 / updatecity | 36.915 | advance_planning / 13.351 | none / 0 | advance_planning_slice / 13.349 | none |
+| C street | 38,941 | 35.0159 / 743.5199 / updatecity | 34.025 | advance_planning / 10.628 | none / 0 | advance_planning_slice / 10.627 | none |
+| C street | 38,955 | 35.3609 / 1699.6966 / updatecity | 35.062 | advance_planning / 12.482 | none / 0 | advance_planning_slice / 12.48 | none |
+| C street | 38,964 | 68.27 / 1163.8137 / updatecity | 67.315 | mod_rlo / 38.859 | none / 0 | advance_planning_slice / 9.222 | none |
+| C street | 38,965 | 44.4592 / 1205.6592 / updatecity | 42.961 | mod_optional_stops / 10.84 | none / 0 | mod_optional_stops_refresh / 10.717 | none |
+| C street | 39,164 | 37.4815 / 351.7587 / updatecity | 37.377 | physical_spawn_pedestrian / 21.643 | physical_spawn_bake / 1.685 | advance_events_citizen / 1.444 | none |
+
+| A and B window | Spike frame and union or phase duration ms |
+| --- | --- |
+| A steady | 9612 38.9225 / 9716 74.7211 |
+| A immediate | 9159 36.6146 / 13741 35.653 |
+| B 20× | 15905 33.0298 / 15993 35.6615 / 16028 30.4942 / 16104 34.5271 / 16160 81.9253 / 16170 67.8976 / 16181 40.4247 / 16189 39.4955 / 16317 31.5449 / 16318 35.3331 / 16324 48.8203 / 16331 30.9534 / 16333 40.6672 / 16345 40.2987 / 16347 37.9125 / 16352 34.1837 / 16359 31.0797 / 16561 87.4518 |
+| B 60× | 29171 52.5959 / 29247 38.2765 / 29306 294.4134 / 29307 32.9675 / 29366 31.0576 / 29426 34.9188 / 29444 46.4605 / 29447 46.585 / 29471 40.8463 / 29482 52.0333 / 29590 30.4526 |
+
+The A/B native and phase JSON contains the complete spike anatomy. Check P details the over-budget advance frame.
+
+| Window | Frame | Recorder row | Mod ms | Phase / detail / subphase / GC phase | Grow ops / kind / ms / staging ms | Result / checks / parent / own ms | Failed |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| C street | 39,164 | spike_frames | 37.377 | physical_spawn_pedestrian / physical_spawn_bake / advance_events_citizen / none | 0 / none / 0 / 0 | 0 / 0 / 0 / 0 | false |
+| C street | 37,949 | near_spike_frames | 15.861 | physical_spawn_pedestrian / physical_spawn_bake / mod_closures_links / none | 0 / none / 0 / 0 | 0 / 0 / 0 / 0 | false |
+| C street | 37,956 | near_spike_frames | 18.233 | physical_spawn_pedestrian / physical_spawn_bake / advance_events_citizen / none | 0 / none / 0 / 0 | 0 / 0 / 0 / 0 | false |
+| C street | 38,505 | near_spike_frames | 27.156 | physical_spawn_pedestrian / physical_spawn_bake / advance_planning_slice / none | 0 / none / 0 / 0 | 0 / 0 / 0 / 0 | false |
+| C street | 38,557 | near_spike_frames | 17.552 | physical_spawn_pedestrian / physical_spawn_grow / mod_routes_sweep / none | 1 / async_start / 8.655 / 0.118 | 8.531 / 0 / 0 / 0 | false |
+| C street | 38,756 | near_spike_frames | 22.027 | physical_spawn_pedestrian / physical_spawn_bake / mod_optional_stops_refresh / none | 0 / none / 0 / 0 | 0 / 0 / 0 / 0 | false |
+| C street | 38,934 | near_spike_frames | 24.555 | physical_spawn_pedestrian / physical_spawn_grow / advance_planning_slice / none | 1 / async_start / 16.311 / 0.013 | 16.291 / 0 / 0 / 0 | false |
+| C street | 38,972 | near_spike_frames | 21.456 | physical_spawn_pedestrian / physical_spawn_bake / advance_planning_slice / none | 0 / none / 0 / 0 | 0 / 0 / 0 / 0 | false |
+
+| Window | Time | Owned / live / unmerged / reserved / vertices / scratch B | Identity |
+| --- | --- | --- | --- |
+| A steady | before | 7 / 7 / 0 / 0 / 28,157 / 591,408 | true |
+| A steady | after | 121 / 121 / 0 / 0 / 479,722 / 1,718,964 | true |
+| A immediate | before | 8 / 8 / 0 / 0 / 31,851 / 591,408 | true |
+| A immediate | after | 118 / 118 / 0 / 0 / 465,233 / 1,718,964 | true |
+| B 20× | before | 70 / 70 / 0 / 0 / 282,653 / 1,718,964 | true |
+| B 20× | after | 32 / 32 / 0 / 0 / 127,747 / 1,718,964 | true |
+| B 60× | before | 89 / 89 / 0 / 0 / 350,202 / 1,718,964 | true |
+| B 60× | after | 32 / 32 / 0 / 0 / 126,424 / 1,718,964 | true |
+| C street | before | 80 / 80 / 0 / 0 / 323,909 / 1,718,964 | true |
+| C street | after | 66 / 66 / 0 / 0 / 261,446 / 1,718,964 | true |
+
+### P — immediate-retime advance and planning frames
+
+| Frame | Phase / detail / subphase | Advance / units / optional-stop total / max / p95 ms | Slowest unit / duration / optional-stop ms | Gen0 in call / Unity GC marker ms | Optional-stop units over 5 ms | Planning clause and observation bound |
+| --- | --- | --- | --- | --- | --- | --- |
+| 13,741 | advance_planning / none / advance_planning_slice | 33.3066 / 2 / 0 / 0 / 0 | route-planning / 33.2961 / 0 | 1 / 25.4117 | — | Slowest planning slice: 33.294 ms, route job 33.289 ms, outside the route job 0.004 ms; its slowest unit car-search 33.288 ms, NavMesh paths 0.000 ms over 0 queries, other work 33.288 ms, 0 NavMesh samples. / first subsequent observation at/before frame 14226 |
+
+| Window | Max ms | Game minute | Highest planning and food clause verbatim |
+| --- | --- | --- | --- |
+| A steady | 6.533 | 3869.6 | Slowest planning slice: 6.533 ms, route job 6.528 ms, outside the route job 0.005 ms; its slowest unit car-ends 3.570 ms, NavMesh paths 0.000 ms over 0 queries, other work 3.570 ms, 0 NavMesh samples. |
+| A steady | 1.822 | 3937 | Slowest food continuation: 1.822 ms (decision-quote-evaluate). |
+| A immediate | 33.294 | 3903 | Slowest planning slice: 33.294 ms, route job 33.289 ms, outside the route job 0.004 ms; its slowest unit car-search 33.288 ms, NavMesh paths 0.000 ms over 0 queries, other work 33.288 ms, 0 NavMesh samples. |
+| A immediate | 1.147 | 3935 | Slowest food continuation: 1.147 ms (decision-quote-evaluate). |
+| B 20× | 29.69 | 4420.2 | Slowest planning slice: 29.690 ms, route job 29.677 ms, outside the route job 0.013 ms; its slowest unit car-ends 29.675 ms, NavMesh paths 0.000 ms over 0 queries, other work 29.675 ms, 0 NavMesh samples. |
+| B 20× | 2.159 | 4384.6 | Slowest food continuation: 2.159 ms (rival-refresh). |
+| B 60× | 126.679 | 4395 | Slowest planning slice: 126.679 ms, route job 126.673 ms, outside the route job 0.006 ms; its slowest unit car-search 125.748 ms, NavMesh paths 0.000 ms over 0 queries, other work 125.748 ms, 0 NavMesh samples. |
+| B 60× | 0.707 | 4388 | Slowest food continuation: 0.707 ms (rival-refresh). |
+| C street | 23.419 | 5296 | Slowest planning slice: 23.419 ms, route job 23.408 ms, outside the route job 0.011 ms; its slowest unit car-ends 22.782 ms, NavMesh paths 0.000 ms over 0 queries, other work 22.782 ms, 0 NavMesh samples. |
+| C street | 0.866 | 5284 | Slowest food continuation: 0.866 ms (rival-refresh). |
+
+| Window | Advance calls / ≥30 ms / threshold | Calls / unit calls paged | Slow / unit drops | Unit seams bound / failures | Observed summaries |
+| --- | --- | --- | --- | --- | --- |
+| A steady | 17,193 / 0 / 0 | 0 / 0 | 0 / 0 | true / 0 | 10 |
+| A immediate | 16,793 / 1 / 0 | 1 / 0 | 0 / 0 | true / 0 | 10 |
+| B 20× | 14,934 / 0 / 0 | 0 / 0 | 0 / 0 | true / 0 | 10 |
+| B 60× | 14,254 / 1 / 0 | 1 / 0 | 0 / 0 | true / 0 | 10 |
+| C street | 3,286 / 0 / 0 | 0 / 0 | 0 / 0 | true / 0 | 10 |
+
+| Window | Travelling / game minute | Slowest advance unit ms / kind / optional stops ms / GC | Units / call total / max / p95 ms / over 5 ms count / reported units | Observation over 5 ms units / advances / max ms / kind | All reads calls / total ms / max ms / scans | Door count / max, park count / max, audience count / max, warm-up park / audience / setups / max / failures, deferrals |
+| --- | --- | --- | --- | --- | --- | --- |
+| A steady | 26 / 3816 | 1.718 / route-planning / 0 / 0 | 4 / 0 / 0 / 0 / 0 /  | 0 / 0 / 0 / none | 25201 / 120.192 / 0.727 / 0 | 0 / 0.000 / 0.000 / 0 / 0 / 0.000 / 0 / 1433 / 0 / 0.000 / 0 / 0.000 / 6 / 0.006 / 0 / 0 / 0 / 0.000 / 0 / 0 |
+| A immediate | 28 / 3815.1 | 6.053 / food-continuation / 0 / 0 | 2 / 0 / 0 / 0 / 0 /  | 0 / 0 / 0 / none | 25677 / 121.297 / 0.144 / 0 | 0 / 0.000 / 0.000 / 0 / 0 / 0.000 / 0 / 1433 / 0 / 0.000 / 0 / 0.000 / 5 / 0.005 / 0 / 0 / 0 / 0.000 / 0 / 0 |
+| B 20× | 423 / 4384.6 | 10.813 / route-planning / 0 / 0 | 2 / 0 / 0 / 0 / 0 /  | 0 / 0 / 0 / none | 0 / 0.000 / 0.000 / 0 | 0 / 0.000 / 0.000 / 0 / 0 / 0.000 / 0 / 1433 / 0 / 0.000 / 0 / 0.000 / 0 / 0.000 / 0 / 0 / 0 / 0.000 / 0 / 0 |
+| B 60× | 473 / 4388 | 8.258 / route-planning / 0 / 0 | 2 / 0 / 0 / 0 / 0 /  | 0 / 0 / 0 / none | 0 / 0.000 / 0.000 / 0 | 0 / 0.000 / 0.000 / 0 / 0 / 0.000 / 0 / 1433 / 0 / 0.000 / 0 / 0.000 / 0 / 0.000 / 0 / 0 / 0 / 0.000 / 0 / 0 |
+| C street | 280 / 5253.8 | 7.968 / food-continuation / 0 / 0 | 2 / 0 / 0 / 0 / 0 /  | 0 / 0 / 0 / none | 20888 / 98.781 / 0.190 / 0 | 8 / 0.149 / 0.080 / 8 / 8 / 0.062 / 0 / 1433 / 0 / 0.000 / 0 / 0.000 / 0 / 0.000 / 0 / 0 / 0 / 0.000 / 0 / 0 |
+
+The geometry table shows the observation with the highest optional-stop unit time in each window. The full population and per-unit observations are in the raw logs.
+
+| Physical population setup, verbatim | Cost / spent before setup ms / waited updates / cumulative reserved / new reserved | Observed by frame | Nearby possible frame / advance component ms / union ms |
+| --- | --- | --- | --- |
+| [Mod:PersistentCity] Physical population setup: 7.1 ms after 1.3 ms of this update, waited 1 updates for a light frame (13 deferred updates in total, 0 updates reserved without advancement). | 7.1 / 1.3 / 1 / 0 / 0 | — | — |
+| [Mod:PersistentCity] Physical population setup: 5.4 ms after 1.3 ms of this update, waited 1 updates for a light frame (14 deferred updates in total, 0 updates reserved without advancement). | 5.4 / 1.3 / 1 / 0 / 0 | — | — |
+
+The optional setup-neighbour frame export was refused with f4b_rows_already_drained_or_beyond_end after the window-tail page advanced the frame cursor.
+
+The measured retime exercised setup on light updates. The reserved-update branch remained unexercised.
+
+### D — Mono heap separation
+
+A steady supplies candidate forced-GC and probe reads outside its timed window. The no-mod day steady footprint uses the same game and fixture from 16x. The night comparison uses the B bracket and the cached 16u reference if the build and sealed fixture hashes match.
+
+| Day boundary | Metric | Candidate B | No-mod B | Gap MB / % |
+| --- | --- | --- | --- | --- |
+| before | Mono heap | 1,353,564,160 | 1,254,785,024 | 98.779136 / 7.872196 |
+| before | Mono used | 1,138,536,448 | 1,049,825,280 | 88.711168 / 8.4500888 |
+| before | Forced-GC live | 1,137,659,904 | 1,048,817,664 | 88.84224 / 8.470704 |
+| after | Mono heap | 1,403,895,808 | 1,208,877,056 | 195.018752 / 16.1322238 |
+| after | Mono used | 1,222,737,920 | 1,062,793,216 | 159.944704 / 15.049466 |
+| after | Forced-GC live | 1,221,799,936 | 1,062,166,528 | 159.633408 / 15.0290377 |
+
+| Day probe-window boundary | Metric | Candidate B | Steady reference B | Gap MB / % |
+| --- | --- | --- | --- | --- |
+| start | Mono heap | 1,353,564,160 | 1,254,785,024 | 98.779136 / 7.872196 |
+| start | Mono used | 1,162,706,944 | 1,118,830,592 | 43.876352 / 3.9216261 |
+| stop | Mono heap | 1,370,341,376 | 1,208,877,056 | 161.46432 / 13.3565543 |
+| stop | Mono used | 1,297,555,456 | 1,101,123,584 | 196.431872 / 17.8392212 |
+
+| Window | Mono heap / used start B | Mono heap / used stop B | Post-collection gen0 / reads / truncated | First / final / growth used B | Raw stop reply SHA-256 |
+| --- | --- | --- | --- | --- | --- |
+| A steady | 1,353,564,160 / 1,162,706,944 | 1,370,341,376 / 1,297,555,456 | 7 / 7 / false | 1,163,276,288 / 1,245,298,688 / 82,022,400 | 8c18cc59a9d072cc8d53bdcdb12b478510daf8ff9c38616a097aa370f91c9dd2 |
+| A immediate | 1,343,668,224 / 1,137,635,328 | 1,377,222,656 / 1,292,967,936 | 7 / 7 / false | 1,165,520,896 / 1,251,307,520 / 85,786,624 | 1ccf058d57b8a66c8867df5bc6dabdcfb07f7d8172f024f6707964e24e6aba47 |
+| B 20× | 1,495,465,984 / 1,324,122,112 | 1,495,465,984 / 1,449,160,704 | 5 / 5 / false | 1,311,375,360 / 1,331,458,048 / 20,082,688 | 04c3906774409890c29b2b60a4f307df2602de48ad6a79d1a8e516f067e0e71d |
+| B 60× | 1,482,014,720 / 1,357,045,760 | 1,482,014,720 / 1,446,526,976 | 5 / 5 / false | 1,312,854,016 / 1,333,862,400 / 21,008,384 | 0177298c41e0da72c8260d22750cbad263160da95a639c195c5660b3cbf94266 |
+| Day immediate no-mod | 1,284,849,664 / 1,133,436,928 | 1,228,357,632 / 1,130,438,656 | 6 / 6 / false | 1,075,101,696 / 1,098,063,872 / 22,962,176 | 3274299187c8e1ba03ed2d470e61b3ec2a922272c0cf23d3e67b3e082bc8a680 |
+| Day steady no-mod | 1,254,785,024 / 1,118,830,592 | 1,208,877,056 / 1,101,123,584 | 7 / 7 / false | 1,064,083,456 / 1,083,043,840 / 18,960,384 | d2ddbf95df21215b7ea24b6e2a5dd038952ab927e2149525e21b28dacd6a42c8 |
+| Night no-mod (16u) | 1,309,327,360 / 1,195,319,296 | 1,250,115,584 / 1,150,410,752 | 7 / 7 / false | 1,097,953,280 / 1,112,825,856 / 14,872,576 | 66e6729ac9a9bde26a6c76a8adee4cf28f1141e83dc6e0d5c57e4b876dfdd61b |
+
+| Night candidate | Boundary | Metric | Candidate B | 16u reference B | Gap MB / % |
+| --- | --- | --- | --- | --- | --- |
+| B 20× | start | Mono heap | 1,495,465,984 | 1,309,327,360 | 186.138624 / 14.2163549 |
+| B 20× | start | Mono used | 1,324,122,112 | 1,195,319,296 | 128.802816 / 10.7755992 |
+| B 20× | stop | Mono heap | 1,495,465,984 | 1,250,115,584 | 245.3504 / 19.6262172 |
+| B 20× | stop | Mono used | 1,449,160,704 | 1,150,410,752 | 298.749952 / 25.9689812 |
+| B 60× | start | Mono heap | 1,482,014,720 | 1,309,327,360 | 172.68736 / 13.1890133 |
+| B 60× | start | Mono used | 1,357,045,760 | 1,195,319,296 | 161.726464 / 13.5299802 |
+| B 60× | stop | Mono heap | 1,482,014,720 | 1,250,115,584 | 231.899136 / 18.5502156 |
+| B 60× | stop | Mono used | 1,446,526,976 | 1,150,410,752 | 296.116224 / 25.7400432 |
+
+Cached night reference identity matched game build 3682 and all four sealed fixture file hashes. The 16u probe DLL SHA-256 is d8067c512d83841c9124547cffcf152f396d0d48c679d4b669703f09cbde63f8.
+
+| Candidate calendar factor | Unity GC mode / incremental / slice ns | Immediate reference armed / refusal | Reference pace shim active / factor |
+| --- | --- | --- | --- |
+| 0.3333333 | Enabled / true / 3,000,000 | true / — | true / 0.3333333 |
+
+### E — RSS and owned memory around a separate retime
+
+The E sequence uses a separate 1→2→1 retime after the A immediate window. The comparison uses the cached 16q no-mod RSS read. Allowance growth uses 100 B per extra live vertex plus extra bake scratch.
+
+| Read | Native day / hour / minute | Seconds from detected commit | Candidate / no-mod / gap RSS KiB | vmmap footprint | Owned / live / unmerged / reserved / vertices / scratch B | Mono heap / used B | Allowance B | Owned identity |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Before | 2 / 18 / 17.2013454 | — | 3,085,392 / 2,383,440 / 701,952 | 5.0G | 118 / 118 / 0 / 0 / 463,948 / 1,718,964 | 1,410,777,088 / 1,398,849,536 | 0 | true |
+| Immediate | 2 / 18 / 17.2986488 | 0.6171607 | 3,130,032 / 2,383,440 / 746,592 | 5.0G | 118 / 118 / 0 / 118 / 465,522 / 1,718,964 | 1,427,554,304 / 1,301,549,056 | 157,400 | true |
+| +30 s | 2 / 18 / 25.1667538 | 30.6212188 | 3,138,128 / 2,383,440 / 754,688 | 5.0G | 118 / 118 / 0 / 0 / 469,659 / 1,718,964 | 1,427,554,304 / 1,342,926,848 | 571,100 | true |
+| +120 s | 2 / 18 / 51.2222443 | 120.6258683 | 3,149,248 / 2,383,440 / 765,808 | 5.0G | 118 / 118 / 0 / 0 / 465,520 / 1,718,964 | 1,427,554,304 / 1,339,293,696 | 157,200 | true |
+
+### L — repeated retime versus 1× control
+
+Each complete 1→2→1 pair waited for the commit and the new road snapshot. The settle interval starts at the return-to-1× road snapshot. The helper matches the control at native minutes and takes another read after the 30-game-minute drain. The final retime and drain are compared with their preceding maxima.
+
+| Checkpoint | Retimed / control native minute | Native-minute offset / matched | Retime settle s | Retimed / control TravelClockRate | RSS retimed / control KiB | vmmap footprint retimed / control |
+| --- | --- | --- | --- | --- | --- | --- |
+| R0 | 3810.010000228882 / 3810.010000228882 | 0 / true | — | 0.3333333333333333 / 0.3333333333333333 | 2,609,792 / 2,051,072 | 4.8G / 4.7G |
+| R1 | 3819.155715942383 / 3819.2221069335938 | 0.066391 / true | 30.0043304 | 0.33333335195978386 / 0.3333333333333333 | 2,248,800 / 2,589,536 | 4.8G / 4.7G |
+| R2 | 3826.2333488464355 / 3826.4222564697266 | 0.1889076 / true | 30.0012407 | 0.3333333333333333 / 0.3333333333333333 | 2,528,944 / 2,704,944 | 4.7G / 4.6G |
+| R3 | 3835.433280944824 / 3835.533363342285 | 0.1000824 / true | 30.0100063 | 0.33333334264648884 / 0.3333333333333333 | 2,518,672 / 2,768,304 | 4.7G / 4.6G |
+| R4 | 3840.0111083984375 / 3840.0111083984375 | 0 / true | 30.0067646 | 0.3333333333333333 / 0.3333333333333333 | 2,511,280 / 2,841,088 | 4.7G / 4.6G |
+| R5 | 3846.3222126960754 / 3846.455556869507 | 0.1333442 / true | 30.0015765 | 0.3333333333333333 / 0.3333333333333333 | 2,586,176 / 2,903,472 | 4.7G / 4.7G |
+| After30GameMinutes | 3877.009998321533 / 3877.009998321533 | 0 / true | — | 0.3333333333333333 / 0.3333333333333333 | 2,039,536 / 2,476,608 | 4.8G / 4.8G |
+
+| Checkpoint | Raw RouteLeg gap | Travelling | Split prefixes | Retained RouteLeg | In current journeys | Outside current journeys | In caches | Outside current journeys and caches | Journeys | Most legs in one journey | Most split prefixes in one journey |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| R0 | 2,238 | 7 / 7 | 7 / 7 | 3,137 / 899 | 194 / 194 | 2,943 / 705 | 2,943 / 651 | 0 / 54 | 7 / 7 | 46 / 46 | 1 / 1 |
+| R1 | 508 | 10 / 9 | 5 / 4 | 1,276 / 768 | 203 / 192 | 1,073 / 576 | 1,073 / 576 | 0 / 0 | 10 / 9 | 46 / 46 | 1 / 1 |
+| R2 | -248 | 23 / 23 | 12 / 3 | 797 / 1,045 | 354 / 346 | 443 / 699 | 443 / 699 | 0 / 0 | 23 / 23 | 30 / 29 | 1 / 1 |
+| R3 | 900 | 46 / 48 | 24 / 3 | 2,564 / 1,664 | 766 / 762 | 1,798 / 902 | 1,798 / 902 | 0 / 0 | 46 / 48 | 156 / 156 | 1 / 1 |
+| R4 | 308 | 59 / 59 | 45 / 2 | 2,266 / 1,958 | 1,484 / 1,160 | 782 / 798 | 782 / 774 | 0 / 24 | 59 / 59 | 265 / 215 | 2 / 1 |
+| R5 | 2,018 | 244 / 243 | 229 / 2 | 6,121 / 4,103 | 5,171 / 3,632 | 950 / 471 | 950 / 471 | 0 / 0 | 244 / 243 | 266 / 265 | 2 / 1 |
+| After30GameMinutes | -148 | 396 / 396 | 148 / 2 | 8,763 / 8,911 | 8,353 / 6,869 | 410 / 2,042 | 410 / 2,042 | 0 / 0 | 396 / 396 | 266 / 265 | 2 / 1 |
+
+Drain elapsed 30.6877856 native minutes from the last retime read. Exact target 3876.3222127, whole-minute target 3,877, observed 3877.0099983.
+
+Paired values give retimed / control.
+
+| Arm and checkpoint | Census B / objects / city B / objects / diagnostic B / objects | Owned / live / unmerged / reserved / vertices / scratch B | Owned identity | Heap / used / forced-live B | CitySimulator objects |
+| --- | --- | --- | --- | --- | --- |
+| Retimed R0 | 51,171,152 / 384,110 / 51,169,224 / 384,108 / 1,928 / 2 | 7 / 7 / 0 / 0 / 28,436 / 671,544 | true | 1,395,769,344 / 1,138,438,144 / 1,137,442,816 | 1 |
+| Retimed R1 | 50,903,760 / 390,425 / 50,901,832 / 390,423 / 1,928 / 2 | 7 / 7 / 0 / 0 / 28,353 / 759,492 | true | 1,379,549,184 / 1,141,841,920 / 1,140,948,992 | 1 |
+| Retimed R2 | 50,157,080 / 380,320 / 50,155,152 / 380,318 / 1,928 / 2 | 9 / 9 / 0 / 0 / 36,880 / 886,068 | true | 1,340,194,816 / 1,140,936,704 / 1,139,736,576 | 1 |
+| Retimed R3 | 51,339,512 / 392,319 / 51,337,584 / 392,317 / 1,928 / 2 | 12 / 12 / 0 / 0 / 47,836 / 1,079,136 | true | 1,315,799,040 / 1,145,700,352 / 1,144,377,344 | 1 |
+| Retimed R4 | 51,384,464 / 383,218 / 51,382,536 / 383,216 / 1,928 / 2 | 14 / 14 / 0 / 0 / 55,029 / 1,238,076 | true | 1,305,772,032 / 1,148,182,528 / 1,146,654,720 | 1 |
+| Retimed R5 | 52,365,696 / 390,613 / 52,363,768 / 390,611 / 1,928 / 2 | 20 / 20 / 0 / 0 / 78,832 / 1,378,944 | true | 1,334,738,944 / 1,153,765,376 / 1,152,024,576 | 1 |
+| Retimed After30GameMinutes | 54,258,512 / 397,701 / 54,256,584 / 397,699 / 1,928 / 2 | 53 / 53 / 0 / 0 / 212,549 / 1,674,072 | true | 1,342,636,032 / 1,171,341,312 / 1,170,190,336 | 1 |
+| 1× control R0 | 50,469,848 / 380,805 / 50,467,920 / 380,803 / 1,928 / 2 | 8 / 8 / 0 / 0 / 32,208 / 671,544 | true | 1,326,333,952 / 1,099,689,984 / 1,098,797,056 | 1 |
+| 1× control R1 | 50,957,384 / 380,754 / 50,955,456 / 380,752 / 1,928 / 2 | 8 / 8 / 0 / 0 / 32,018 / 759,492 | true | 1,326,333,952 / 1,099,550,720 / 1,098,674,176 | 1 |
+| 1× control R2 | 51,042,112 / 381,193 / 51,040,184 / 381,191 / 1,928 / 2 | 11 / 11 / 0 / 0 / 45,483 / 886,068 | true | 1,228,865,536 / 1,100,185,600 / 1,099,288,576 | 1 |
+| 1× control R3 | 51,549,952 / 382,422 / 51,548,024 / 382,420 / 1,928 / 2 | 15 / 15 / 0 / 0 / 60,490 / 1,079,136 | true | 1,218,347,008 / 1,101,991,936 / 1,101,123,584 | 1 |
+| 1× control R4 | 51,797,400 / 383,273 / 51,795,472 / 383,271 / 1,928 / 2 | 17 / 16 / 1 / 0 / 64,099 / 1,177,452 | true | 1,213,661,184 / 1,102,618,624 / 1,101,754,368 | 1 |
+| 1× control R5 | 52,740,128 / 389,021 / 52,738,200 / 389,019 / 1,928 / 2 | 22 / 22 / 0 / 0 / 87,566 / 1,325,412 | true | 1,218,002,944 / 1,105,948,672 / 1,104,904,192 | 1 |
+| 1× control After30GameMinutes | 54,389,576 / 399,085 / 54,387,648 / 399,083 / 1,928 / 2 | 48 / 48 / 0 / 0 / 192,353 / 1,674,072 | true | 1,293,565,952 / 1,121,849,344 / 1,120,980,992 | 1 |
+
+| Arm and checkpoint | List<RouteLeg> | List<TrafficRouteLeg> | Route | RouteLeg | RouteLeg[] | RouteLegs | TrafficRouteLeg[] | TrafficVehicleState |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Retimed R0 | 276 / 11,040 | 1 / 40 | 276 / 15,456 | 3,137 / 326,248 | 276 / 42,384 | 276 / 8,832 | 1 / 2,312 | 1 / 112 |
+| Retimed R1 | 196 / 7,840 | 0 / 0 | 196 / 10,976 | 1,276 / 132,704 | 196 / 19,384 | 196 / 6,272 | 0 / 0 | 0 / 0 |
+| Retimed R2 | 94 / 3,760 | 0 / 0 | 94 / 5,264 | 797 / 82,888 | 94 / 11,560 | 94 / 3,008 | 0 / 0 | 0 / 0 |
+| Retimed R3 | 240 / 9,600 | 1 / 40 | 240 / 13,440 | 2,564 / 266,656 | 240 / 35,696 | 240 / 7,680 | 1 / 184 | 1 / 112 |
+| Retimed R4 | 144 / 5,760 | 2 / 80 | 144 / 8,064 | 2,266 / 235,664 | 144 / 27,608 | 144 / 4,608 | 2 / 872 | 2 / 224 |
+| Retimed R5 | 340 / 13,600 | 7 / 280 | 340 / 19,040 | 6,121 / 636,584 | 340 / 66,872 | 340 / 10,880 | 7 / 4,656 | 7 / 784 |
+| Retimed After30GameMinutes | 468 / 18,720 | 7 / 280 | 468 / 26,208 | 8,763 / 911,352 | 468 / 93,696 | 468 / 14,976 | 7 / 5,232 | 7 / 784 |
+| 1× control R0 | 80 / 3,200 | 1 / 40 | 80 / 4,480 | 899 / 93,496 | 80 / 12,112 | 80 / 2,560 | 1 / 2,312 | 1 / 112 |
+| 1× control R1 | 77 / 3,080 | 1 / 40 | 77 / 4,312 | 768 / 79,872 | 77 / 11,168 | 77 / 2,464 | 1 / 2,312 | 1 / 112 |
+| 1× control R2 | 108 / 4,320 | 1 / 40 | 108 / 6,048 | 1,045 / 108,680 | 108 / 15,824 | 108 / 3,456 | 1 / 2,312 | 1 / 112 |
+| 1× control R3 | 150 / 6,000 | 2 / 80 | 150 / 8,400 | 1,664 / 173,056 | 150 / 22,192 | 150 / 4,800 | 2 / 2,496 | 2 / 224 |
+| 1× control R4 | 170 / 6,800 | 3 / 120 | 170 / 9,520 | 1,958 / 203,632 | 170 / 25,424 | 170 / 5,440 | 3 / 3,232 | 3 / 336 |
+| 1× control R5 | 320 / 12,800 | 7 / 280 | 320 / 17,920 | 4,103 / 426,712 | 320 / 55,312 | 320 / 10,240 | 7 / 6,464 | 7 / 784 |
+| 1× control After30GameMinutes | 694 / 27,760 | 7 / 280 | 694 / 38,864 | 8,911 / 926,744 | 694 / 122,104 | 694 / 22,208 | 7 / 6,736 | 7 / 784 |
+
+Tracked type cells give objects / bytes. Matched deltas for every tracked type follow below. Full per-arm counts are in the census files.
+
+| Arm and checkpoint | List<RouteLeg> | Route | RouteLeg | RouteLeg[] | RouteLegs | TrafficRouteLeg | TrafficVehicleState |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Retimed R0 | 7 / 280 | 7 / 392 | 194 / 20,176 | 7 / 1,776 | 7 / 224 | 285 / 18,240 | 1 / 112 |
+| Retimed R1 | 10 / 400 | 10 / 560 | 203 / 21,112 | 10 / 1,976 | 10 / 320 | 0 / 0 | 0 / 0 |
+| Retimed R2 | 23 / 920 | 23 / 1,288 | 354 / 36,816 | 23 / 3,656 | 23 / 736 | 0 / 0 | 0 / 0 |
+| Retimed R3 | 46 / 1,840 | 46 / 2,576 | 766 / 79,664 | 46 / 7,792 | 46 / 1,472 | 19 / 1,216 | 1 / 112 |
+| Retimed R4 | 59 / 2,360 | 59 / 3,304 | 1,484 / 154,336 | 59 / 14,104 | 59 / 1,888 | 101 / 6,464 | 2 / 224 |
+| Retimed R5 | 244 / 9,760 | 244 / 13,664 | 5,171 / 537,784 | 244 / 52,088 | 244 / 7,808 | 554 / 35,456 | 7 / 784 |
+| Retimed After30GameMinutes | 396 / 15,840 | 396 / 22,176 | 8,353 / 868,712 | 396 / 85,472 | 396 / 12,672 | 626 / 40,064 | 7 / 784 |
+| 1× control R0 | 13 / 520 | 13 / 728 | 248 / 25,792 | 13 / 2,448 | 13 / 416 | 285 / 18,240 | 1 / 112 |
+| 1× control R1 | 9 / 360 | 9 / 504 | 192 / 19,968 | 9 / 1,824 | 9 / 288 | 285 / 18,240 | 1 / 112 |
+| 1× control R2 | 23 / 920 | 23 / 1,288 | 346 / 35,984 | 23 / 3,504 | 23 / 736 | 285 / 18,240 | 1 / 112 |
+| 1× control R3 | 48 / 1,920 | 48 / 2,688 | 762 / 79,248 | 48 / 7,632 | 48 / 1,536 | 304 / 19,456 | 2 / 224 |
+| 1× control R4 | 62 / 2,480 | 62 / 3,472 | 1,184 / 123,136 | 62 / 11,536 | 62 / 1,984 | 392 / 25,088 | 3 / 336 |
+| 1× control R5 | 243 / 9,720 | 243 / 13,608 | 3,632 / 377,728 | 243 / 47,504 | 243 / 7,776 | 780 / 49,920 | 7 / 784 |
+| 1× control After30GameMinutes | 396 / 15,840 | 396 / 22,176 | 6,869 / 714,376 | 396 / 81,624 | 396 / 12,672 | 814 / 52,096 | 7 / 784 |
+
+| Arm and checkpoint | cache.routes.walking.cache | cache.routes.trains |
+| --- | --- | --- |
+| Retimed R0 | 1,024 / 4,447 / 456,648 / 267 / 2,935 | -1 / 20 / 8,504 / 2 / 8 |
+| Retimed R1 | 1,024 / 825 / 85,712 / 55 / 521 | -1 / 1,079 / 90,472 / 131 / 552 |
+| Retimed R2 | 1,024 / 483 / 55,408 / 35 / 293 | -1 / 297 / 29,944 / 36 / 150 |
+| Retimed R3 | 1,024 / 2,634 / 263,776 / 171 / 1,718 | -1 / 175 / 19,976 / 23 / 80 |
+| Retimed R4 | 1,024 / 1,202 / 120,600 / 81 / 770 | -1 / 31 / 9,256 / 4 / 12 |
+| Retimed R5 | 1,024 / 1,426 / 141,208 / 93 / 938 | -1 / 27 / 9,064 / 3 / 12 |
+| Retimed After30GameMinutes | 1,024 / 467 / 104,192 / 32 / 294 | -1 / 279 / 27,112 / 40 / 116 |
+| 1× control R0 | 1,024 / 1,019 / 101,888 / 65 / 643 | -1 / 20 / 8,504 / 2 / 8 |
+| 1× control R1 | 1,024 / 857 / 137,568 / 57 / 542 | -1 / 81 / 12,952 / 11 / 34 |
+| 1× control R2 | 1,024 / 1,111 / 158,984 / 80 / 679 | -1 / 43 / 10,280 / 5 / 20 |
+| 1× control R3 | 1,024 / 1,379 / 183,712 / 95 / 874 | -1 / 59 / 11,496 / 7 / 28 |
+| 1× control R4 | 1,024 / 1,007 / 152,112 / 69 / 640 | -1 / 293 / 28,792 / 39 / 134 |
+| 1× control R5 | 1,024 / 468 / 104,440 / 29 / 309 | -1 / 357 / 41,792 / 48 / 162 |
+| 1× control After30GameMinutes | 1,024 / 2,906 / 319,344 / 212 / 1,792 | -1 / 597 / 58,368 / 86 / 250 |
+
+Cache root cells give bound / objects / bytes / routes / route legs.
+
+| Gated retimed-minus-control series | R0 | R1 | R2 | R3 | R4 | R5 | After30GameMinutes | Last retime vs earlier max | Drain vs earlier max |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Mono heap B | 69,435,392 | 53,215,232 | 111,329,280 | 97,452,032 | 92,110,848 | 116,736,000 | 49,070,080 | 5,406,720 | -67,665,920 |
+| Mono used B | 38,748,160 | 42,291,200 | 40,751,104 | 43,708,416 | 45,563,904 | 47,816,704 | 49,491,968 | 2,252,800 | 1,675,264 |
+| Forced-live B | 38,645,760 | 42,274,816 | 40,448,000 | 43,253,760 | 44,900,352 | 47,120,384 | 49,209,344 | 2,220,032 | 2,088,960 |
+| RSS KiB | 558,720 | -340,736 | -176,000 | -249,632 | -329,808 | -317,296 | -437,072 | -876,016 | -995,792 |
+| Retained census B | 701,304 | -53,624 | -885,032 | -210,440 | -412,936 | -374,432 | -131,064 | -1,075,736 | -832,368 |
+| Retained census objects | 3,305 | 9,671 | -873 | 9,897 | -55 | 1,592 | -1,384 | -8,305 | -11,281 |
+| ownedBodyCombiners | -1 | -1 | -2 | -3 | -3 | -2 | 5 | -1 | 6 |
+| liveMergedMeshes | -1 | -1 | -2 | -3 | -2 | -2 | 5 | -1 | 6 |
+| unmergedBodyCombiners | 0 | 0 | 0 | 0 | -1 | 0 | 0 | 0 | 0 |
+| reservedBodies | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| liveMergedVertices | -3,772 | -3,665 | -8,603 | -12,654 | -9,070 | -8,734 | 20,196 | -5,069 | 23,861 |
+| bakeScratchBytes | 0 | 0 | 0 | 0 | 60,624 | 53,532 | 0 | -7,092 | -60,624 |
+| outside_current_journeys_and_caches | -54 | 0 | 0 | 0 | -24 | 0 | 0 | 0 | 0 |
+| List&lt;RouteLeg&gt; outside caches objects | -6 | 1 | 0 | -2 | -3 | 1 | 0 | 0 | -1 |
+| List&lt;RouteLeg&gt; outside caches bytes | -240 | 40 | 0 | -80 | -120 | 40 | 0 | 0 | -40 |
+| Route outside caches objects | -6 | 1 | 0 | -2 | -3 | 1 | 0 | 0 | -1 |
+| Route outside caches bytes | -336 | 56 | 0 | -112 | -168 | 56 | 0 | 0 | -56 |
+| RouteLeg outside caches objects | -54 | 11 | 8 | 4 | 300 | 1,539 | 1,484 | 1,239 | -55 |
+| RouteLeg outside caches bytes | -5,616 | 1,144 | 832 | 416 | 31,200 | 160,056 | 154,336 | 128,856 | -5,720 |
+| RouteLeg[] outside caches objects | -6 | 1 | 0 | -2 | -3 | 1 | 0 | 0 | -1 |
+| RouteLeg[] outside caches bytes | -672 | 152 | 152 | 160 | 2,568 | 4,584 | 3,848 | 2,016 | -736 |
+| RouteLegs outside caches objects | -6 | 1 | 0 | -2 | -3 | 1 | 0 | 0 | -1 |
+| RouteLegs outside caches bytes | -192 | 32 | 0 | -64 | -96 | 32 | 0 | 0 | -32 |
+| TrafficRouteLeg outside caches objects | 0 | -285 | -285 | -285 | -291 | -226 | -188 | -226 | -188 |
+| TrafficRouteLeg outside caches bytes | 0 | -18,240 | -18,240 | -18,240 | -18,624 | -14,464 | -12,032 | -14,464 | -12,032 |
+| TrafficVehicleState outside caches objects | 0 | -1 | -1 | -1 | -1 | 0 | 0 | 0 | 0 |
+| TrafficVehicleState outside caches bytes | 0 | -112 | -112 | -112 | -112 | 0 | 0 | 0 | 0 |
+
+| Tracked type (raw routes reported) | R0 onward gaps, objects | R0 onward gaps, B | Last retime vs earlier max, objects / B | Drain vs earlier max, objects / B |
+| --- | --- | --- | --- | --- |
+| CitizenState | 0 / 0 / 0 / 0 / 0 / 0 / 0 | 0 / 0 / 0 / 0 / 0 / 0 / 0 | 0 / 0 | 0 / 0 |
+| CitySimulator | 0 / 0 / 0 / 0 / 0 / 0 / 0 | 0 / 0 / 0 / 0 / 0 / 0 / 0 | 0 / 0 | 0 / 0 |
+| Double[] | 0 / 0 / 0 / 0 / 0 / 0 / 0 | 0 / 0 / -128 / 2,048 / 2,048 / 2,048 / 2,048 | 0 / 0 | 0 / 0 |
+| Int32[] | 0 / -21 / -28 / -25 / -22 / -26 / -13 | 37,104 / -102,464 / -130,824 / -122,784 / -100,032 / -106,056 / -58,264 | -26 / -143,160 | -13 / -95,368 |
+| Int64[] | 0 / 0 / 0 / 0 / 0 / 0 / -1 | 0 / -2,728 / -5,456 / -5,000 / -6,272 / -15,304 / -13,544 | 0 / -15,304 | -1 / -13,544 |
+| List&lt;RouteLeg&gt; | 196 / 119 / -14 / 90 / -26 / 20 / -226 | 7,840 / 4,760 / -560 / 3,600 / -1,040 / 800 / -9,040 | -176 / -7,040 | -422 / -16,880 |
+| List&lt;TrafficRouteLeg&gt; | 0 / -1 / -1 / -1 / -1 / 0 / 0 | 0 / -40 / -40 / -40 / -40 / 0 / 0 | 0 / 0 | 0 / 0 |
+| MultimodalRoutes | 0 / 0 / 0 / 0 / 0 / 0 / 0 | 0 / 0 / 0 / 0 / 0 / 0 / 0 | 0 / 0 | 0 / 0 |
+| Position[] | 0 / 0 / 0 / 0 / 0 / 0 / -2 | 0 / 0 / 0 / 0 / 0 / 0 / -256 | 0 / 0 | -2 / -256 |
+| RoadRoutes | 0 / 0 / 0 / 0 / 0 / 0 / 0 | 0 / 0 / 0 / 0 / 0 / 0 / 0 | 0 / 0 | 0 / 0 |
+| Route | 196 / 119 / -14 / 90 / -26 / 20 / -226 | 10,976 / 6,664 / -784 / 5,040 / -1,456 / 1,120 / -12,656 | -176 / -9,856 | -422 / -23,632 |
+| RouteLeg | 2,238 / 508 / -248 / 900 / 308 / 2,018 / -148 | 232,752 / 52,832 / -25,792 / 93,600 / 32,032 / 209,872 / -15,392 | -220 / -22,880 | -2,386 / -248,144 |
+| RouteLeg[] | 196 / 119 / -14 / 90 / -26 / 20 / -226 | 30,272 / 8,216 / -4,264 / 13,504 / 2,184 / 11,560 / -28,408 | -176 / -18,712 | -422 / -58,680 |
+| RouteLegs | 196 / 119 / -14 / 90 / -26 / 20 / -226 | 6,272 / 3,808 / -448 / 2,880 / -832 / 640 / -7,232 | -176 / -5,632 | -422 / -13,504 |
+| String | 0 / -134 / -145 / -146 / 54 / -70 / 100 | 0 / -5,056 / -6,128 / -6,152 / 34,496 / 10,048 / 42,504 | -124 / -24,448 | 46 / 8,008 |
+| TrafficKernelState | 0 / 0 / 0 / 0 / 0 / 0 / 0 | 0 / 0 / 0 / 0 / 0 / 0 / 0 | 0 / 0 | 0 / 0 |
+| TrafficRouteLeg | 0 / -285 / -285 / -285 / -291 / -226 / -188 | 0 / -18,240 / -18,240 / -18,240 / -18,624 / -14,464 / -12,032 | -226 / -14,464 | -188 / -12,032 |
+| TrafficRouteLeg[] | 0 / -1 / -1 / -1 / -1 / 0 / 0 | 0 / -2,312 / -2,312 / -2,312 / -2,360 / -1,808 / -1,504 | 0 / -1,808 | 0 / -1,504 |
+| TrafficVehicleState | 0 / -1 / -1 / -1 / -1 / 0 / 0 | 0 / -112 / -112 / -112 / -112 / 0 / 0 | 0 / 0 | 0 / 0 |
+
+| Series | Step deltas R1 onward |
+| --- | --- |
+| Mono heap B | -16,220,160 / 58,114,048 / -13,877,248 / -5,341,184 / 24,625,152 / -67,665,920 |
+| Mono used B | 3,543,040 / -1,540,096 / 2,957,312 / 1,855,488 / 2,252,800 / 1,675,264 |
+| Forced-live B | 3,629,056 / -1,826,816 / 2,805,760 / 1,646,592 / 2,220,032 / 2,088,960 |
+| RSS KiB | -899,456 / 164,736 / -73,632 / -80,176 / 12,512 / -119,776 |
+| Retained census B | -754,928 / -831,408 / 674,592 / -202,496 / 38,504 / 243,368 |
+| Retained census objects | 6,366 / -10,544 / 10,770 / -9,952 / 1,647 / -2,976 |
+| ownedBodyCombiners | 0 / -1 / -1 / 0 / 1 / 7 |
+| liveMergedMeshes | 0 / -1 / -1 / 1 / 0 / 7 |
+| unmergedBodyCombiners | 0 / 0 / 0 / -1 / 1 / 0 |
+| reservedBodies | 0 / 0 / 0 / 0 / 0 / 0 |
+| liveMergedVertices | 107 / -4,938 / -4,051 / 3,584 / 336 / 28,930 |
+| bakeScratchBytes | 0 / 0 / 0 / 60,624 / -7,092 / -53,532 |
+| outside_current_journeys_and_caches | 54 / 0 / 0 / -24 / 24 / 0 |
+| List&lt;RouteLeg&gt; outside caches objects | 7 / -1 / -2 / -1 / 4 / -1 |
+| List&lt;RouteLeg&gt; outside caches bytes | 280 / -40 / -80 / -40 / 160 / -40 |
+| Route outside caches objects | 7 / -1 / -2 / -1 / 4 / -1 |
+| Route outside caches bytes | 392 / -56 / -112 / -56 / 224 / -56 |
+| RouteLeg outside caches objects | 65 / -3 / -4 / 296 / 1,239 / -55 |
+| RouteLeg outside caches bytes | 6,760 / -312 / -416 / 30,784 / 128,856 / -5,720 |
+| RouteLeg[] outside caches objects | 7 / -1 / -2 / -1 / 4 / -1 |
+| RouteLeg[] outside caches bytes | 824 / 0 / 8 / 2,408 / 2,016 / -736 |
+| RouteLegs outside caches objects | 7 / -1 / -2 / -1 / 4 / -1 |
+| RouteLegs outside caches bytes | 224 / -32 / -64 / -32 / 128 / -32 |
+| TrafficRouteLeg outside caches objects | -285 / 0 / 0 / -6 / 65 / 38 |
+| TrafficRouteLeg outside caches bytes | -18,240 / 0 / 0 / -384 / 4,160 / 2,432 |
+| TrafficVehicleState outside caches objects | -1 / 0 / 0 / 0 / 1 / 0 |
+| TrafficVehicleState outside caches bytes | -112 / 0 / 0 / 0 / 112 / 0 |
+
+The full per-cycle type deltas are in l-series-gates.json. The tracked-type tables give each arm’s counts and paired gaps.
+
+5 complete retime cycles and 7/7 matched reads. Outside-current-journeys-and-caches RouteLeg gaps -54 / 0 / 0 / 0 / -24 / 0 / 0. Raw RouteLeg gaps 2,238 / 508 / -248 / 900 / 308 / 2,018 / -148. Last retime above earlier max in Mono heap B 5,406,720, Mono used B 2,252,800, Forced-live B 2,220,032, RouteLeg outside caches objects 1,239, RouteLeg outside caches bytes 128,856, RouteLeg[] outside caches bytes 2,016. Drain above earlier max in Mono used B 1,675,264, Forced-live B 2,088,960, ownedBodyCombiners 6, liveMergedMeshes 6, liveMergedVertices 23,861, String objects 46, String bytes 8,008.
+
+The largest native census-bracket offset was 0.4888916 min. The three traffic snapshot type count gaps at drain were 0 / 0 / 0. The maximum split prefixes in one journey is a census-wide readback across travel modes.
+
+| Arm | Tracked type | R0 | R5 | After30GameMinutes |
+| --- | --- | --- | --- | --- |
+| Retimed | RouteLeg | walking.cache 2935/305240, simulation 194/20176, trains 8/832 | simulation 5171/537784, walking.cache 938/97552, trains 12/1248 | simulation 8353/868712, walking.cache 294/30576, trains 116/12064 |
+| Retimed | RouteLeg[] | walking.cache 267/40480, simulation 7/1776, trains 2/128 | simulation 244/52088, walking.cache 93/14592, trains 3/192 | simulation 396/85472, trains 40/2688, walking.cache 32/5536 |
+| 1× control | RouteLeg | walking.cache 643/66872, simulation 248/25792, trains 8/832 | simulation 3632/377728, walking.cache 309/32136, trains 162/16848 | simulation 6869/714376, walking.cache 1792/186368, trains 250/26000 |
+| 1× control | RouteLeg[] | walking.cache 65/9536, simulation 13/2448, trains 2/128 | simulation 243/47504, trains 48/3136, walking.cache 29/4672 | simulation 396/81624, walking.cache 212/34784, trains 86/5696 |
+
+Tracked root values give objects / bytes. Simulation is runtime.simulation. Walking.cache and trains are the named cache roots. The retained census files give tracked_roots for all checkpoints and all route types.
+
+Mac 16x’s raw RouteLeg gap reached +2,334 at drain and its outside-current-journeys gap reached +505, with no cache split. Mac 16w drained to a raw gap of −6,198.
+
+### Autosave, save cost and host load
+
+Original native preferences are minutes / maximum saves / preventAutoSave. Suppression is the rig’s actual off readback. Native save activity gives attempted / refused / allowed / active frames. SaveCostDiagnostics uses the candidate runtime readbacks.
+
+| Check | Original native prefs | Off after load | Off before / after | SaveCost before / after | Save attempts / refused / allowed / native frames | Elapsed s | Probe saves |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| A steady / D / G | 5 / 3 / false | true | true / true | false / false | 13,556 / 13,556 / 0 / 0 | 600.0076393 | 0 |
+| A immediate / P / G | 5 / 3 / false | true | true / true | false / false | 13,233 / 13,233 / 0 / 0 | 600.0100655 | 0 |
+| B 20× / D / G | 5 / 3 / false | true | true / true | false / false | 14,947 / 14,947 / 0 / 0 | 600.0052008 | 0 |
+| B 60× / D / G | 5 / 3 / false | true | true / true | false / false | 14,264 / 14,264 / 0 / 0 | 600.0045792 | 0 |
+| C | 5 / 3 / false | true | true / true | false / false | 3,539 / 3,539 / 0 / 0 | 600.0001466 | 0 |
+| A no-mod immediate | 5 / 3 / false | true | true / true | — / — | 9,036 / 9,036 / 0 / 0 | 600.0074554 | 0 |
+| A / D no-mod steady | 5 / 3 / false | true | true / true | — / — | 10,044 / 10,044 / 0 / 0 | 600.0095402 | 0 |
+| B / D cached no-mod night | 5 / 3 / false | true | true / true | — / — | 11,194 / 11,194 / 0 / 0 | 600.0023826 | 0 |
+
+| Read | Original native prefs | Suppression before / after |
+| --- | --- | --- |
+| D candidate before | 5 / 3 / false | true / true |
+| D candidate after | 5 / 3 / false | true / true |
+| D reference before | 5 / 3 / false | true / true |
+| D reference after | 5 / 3 / false | true / true |
+| E before | 5 / 3 / false | true / true |
+| E after | 5 / 3 / false | true / true |
+| E 30s | 5 / 3 / false | true / true |
+| E 120s | 5 / 3 / false | true / true |
+| L retention R0 (loaded off true) | 5 / 3 / false | true / true |
+| L retention R1 (loaded off true) | 5 / 3 / false | true / true |
+| L retention R2 (loaded off true) | 5 / 3 / false | true / true |
+| L retention R3 (loaded off true) | 5 / 3 / false | true / true |
+| L retention R4 (loaded off true) | 5 / 3 / false | true / true |
+| L retention R5 (loaded off true) | 5 / 3 / false | true / true |
+| L retention After30GameMinutes (loaded off true) | 5 / 3 / false | true / true |
+| L retention-control R0 (loaded off true) | 5 / 3 / false | true / true |
+| L retention-control R1 (loaded off true) | 5 / 3 / false | true / true |
+| L retention-control R2 (loaded off true) | 5 / 3 / false | true / true |
+| L retention-control R3 (loaded off true) | 5 / 3 / false | true / true |
+| L retention-control R4 (loaded off true) | 5 / 3 / false | true / true |
+| L retention-control R5 (loaded off true) | 5 / 3 / false | true / true |
+| L retention-control After30GameMinutes (loaded off true) | 5 / 3 / false | true / true |
+
+| Window | Boundary | UTC | Session | Uptime loads 1 / 5 / 15 min | dotnet or msbuild running | Process names | Node test processes |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| A steady | start | 2026-11-21T20:42:36.686472+00:00 | e948a155 | 10.92 7.55 7.01 | false | — | node / node / node |
+| A steady | end | 2026-11-21T20:52:38.918867+00:00 | e948a155 | 5.46 5.42 6.14 | false | — | node / node / node |
+| A immediate | start | 2026-11-21T20:55:59.355537+00:00 | 495b4579 | 11.37 8.22 7.18 | false | — | node / node / node |
+| A immediate | end | 2026-11-21T21:06:01.356608+00:00 | 495b4579 | 4.03 4.08 5.39 | false | — | — |
+| B 20× | start | 2026-11-21T21:16:21.307229+00:00 | d8462daf | 14.38 8.98 6.86 | false | — | node |
+| B 20× | end | 2026-11-21T21:26:23.636858+00:00 | d8462daf | 6.17 9.05 8.28 | false | — | node / node / node |
+| B 60× | start | 2026-11-21T21:52:39.655018+00:00 | 30343e30 | 22.32 22.03 18.51 | false | — | node / node / node / node / node / node / node / node / node |
+| B 60× | end | 2026-11-21T22:02:42.658452+00:00 | 30343e30 | 26.76 19.29 17.45 | false | — | node / node / node / node / node / node / node |
+| C street | start | 2026-11-21T21:31:27.831903+00:00 | d8462daf | 6.04 7.48 7.81 | false | — | node / node / node / node / node / node |
+| C street | end | 2026-11-21T21:41:29.234476+00:00 | d8462daf | 19.00 17.85 13.01 | false | — | node / node / node / node / node / node / node |
+| Day immediate no-mod | start | 2026-11-21T22:48:02.207565+00:00 | 94cf322d | 8.62 11.53 15.81 | false | — | node / node / node |
+| Day immediate no-mod | end | 2026-11-21T22:58:03.273795+00:00 | 94cf322d | 16.13 14.22 14.54 | false | — | node |
+| Day steady no-mod | start | 2026-11-21T16:55:36.845639+00:00 | 33c5929f | 6.54 7.88 7.42 | false | — | — |
+| Day steady no-mod | end | 2026-11-21T17:05:37.477954+00:00 | 33c5929f | 6.65 8.21 7.76 | false | — | — |
+| Night no-mod (16u) | start | 2026-11-20T18:36:11.401796+00:00 | e38601af | 3.84 3.57 3.39 | false | — | — |
+| Night no-mod (16u) | end | 2026-11-20T18:46:19.627235+00:00 | e38601af | 2.52 3.23 3.35 | false | — | — |
+
+### Operator and tooling evidence
+
+| Operation / local evidence | Exact captured error |
+| --- | --- |
+| control-minute-retry-error | Initial 1× control missed the native-minute bracket at ['R1', 'R2', 'R3'] |
+| op perf_union {"action": "page", "section": "frames", "offset": 0, "limit": 1} | op perf_union page: {'before': None, 'after': {'supported': False, 'refusal': 'f4b_rows_already_drained_or_beyond_end'}} |
+| short-drain-error | Shipped retention drain span 29.687785625457764;  |
+| retention-failure | retention-control-R5-mesh: exit 1: {'error': 'ops_hook_not_ready'} {   "error": "ops_hook_not_ready" }  |
+
+The short drain’s 1 archived census read recorded CitySimulator count 1. The retimed process continued at 1× without another retime and the control used the extended target.
+
+The control retry verified autosave before polling and began the census immediately after the captured native-minute read. The clock state was read after the census. The same native-minute and census bracket limits apply.
+
+The full-drain continuation exited 0.
+The matched-minute control retry exited 0.
+
+The run used the shipped probe-build and retention helpers. Local controller recovery is listed with the corresponding operation error.
+
+### NOT RUN
+
+- GR-5 locked-PC and 60 fps arms. This run used agentmac. PC 19c is a historical cross-check.
+- Pointer, hover and visual feel — for Peter.
+- #246 check 4 and the unrentable fixture. Outside the 16y run scope (#338 checks 1–8). Earlier evidence remains in 16d.
+- #293 save checks. Outside the 16y run scope (#338 checks 1–8). 16h passed. This run wrote no save and has no save hash.
+- #295 donor checks and inspector timing. Outside the 16y run scope (#338 checks 1–8). Prior evidence is in 16i, 16k-donor and 16l.
+- Standalone F and night census. L supplies the retained census. B preserves the ordered heap bracket.
+- Reserved-setup advance timing. Both measured setup rows used light updates, with zero reserved updates.
+- Fresh no-mod night and RSS arms. Existing references supplied the comparisons.
+
+### Evidence
+
+All six timed windows ran for at least 600 seconds with the recorded start and stop order and zero admitted saves.
+
+| Window | Collections terminal / after stop / before next | Calls and unit calls terminal | Night bracket ordered / pre-position rate | Retime commits after sampler / retime B / ms |
+| --- | --- | --- | --- | --- |
+| A steady | true / true / true | true | — / — | — / — / — |
+| A immediate | true / true / true | true | — / — | true / 44,915,616 / 287.544 |
+| B 20× | true / true / true | true | true / 20 | — / — / — |
+| C street | — / — / — | true | — / — | — / — / — |
+| B 60× | true / true / true | true | true / 60 | — / — / — |
+| Day immediate no-mod | true / true / — | true | — / — | — / — / — |
+
+The raw command-order and save audit is in capture-integrity.json.
+
+[Procedure #338](https://github.com/PeterHartwieg/big-ambitions-persistent-city/pull/338) · [Mac 16x #337](https://github.com/PeterHartwieg/big-ambitions-persistent-city/pull/337) · [Mac 16w #329](https://github.com/PeterHartwieg/big-ambitions-persistent-city/pull/329) · [Mac 16v #326](https://github.com/PeterHartwieg/big-ambitions-persistent-city/pull/326) · [Mac 16u #324](https://github.com/PeterHartwieg/big-ambitions-persistent-city/pull/324) · [Mac 16t #321](https://github.com/PeterHartwieg/big-ambitions-persistent-city/pull/321) · [PC 19c #315](https://github.com/PeterHartwieg/big-ambitions-persistent-city/pull/315)
