@@ -481,6 +481,38 @@ class RetentionRunnerTests(unittest.TestCase):
         self.assertEqual(matched['unmatched'], ['R0'])
         self.assertEqual(matched['retimed_minus_control']['RouteLeg'], [None])
 
+    def test_post_census_reads_in_bound_do_not_match_brackets_that_cannot(self):
+        retention = self.local(importlib.import_module('retention'))
+        plan = self.targets(retention, [3811.0], censuses=[3811.79])
+        retention.wait_native = lambda label, target: setattr(self.bridge, 'minute', 3811.02)
+        retention.census = lambda label: (setattr(self.bridge, 'minute', 3811.31), self.bridge.retained)[1]
+        self.bridge.minute, self.bridge.paused, self.bridge.step = 3810.9, False, 0.0
+        retention.follow_targets(plan)
+        matched = json.loads((self.stage / 'retention-matched.json').read_text())
+        point = matched['checkpoints'][0]
+        self.assertAlmostEqual(point['census_gap'], -.48)
+        self.assertAlmostEqual(point['bracket_gap'], .77)
+        self.assertEqual(matched['unmatched'], ['R0'])
+        self.assertEqual(matched['retimed_minus_control']['RouteLeg'], [None])
+
+    def test_native_read_rounding_into_the_next_minute_keeps_the_displayed_day(self):
+        self.bridge.minute, self.bridge.paused = 3839.995, False
+        original = self.bridge.__call__
+
+        def lagging(args):
+            reply = original(args)
+            if args[:2] == ['call', 'state'] and self.bridge.minute < 3840:
+                body = json.loads(reply.stdout)
+                body['result']['clock'].update(time='15:59', day=3)
+                reply = subprocess.CompletedProcess(args, 0, json.dumps(body), '')
+            return reply
+        self.common.bridge = lagging
+        with mock.patch.object(self.common.time, 'sleep'):
+            arrived = self.common.pause_at_native('lagging', 3841.01)
+        times = [json.loads(c[2]) for c in self.bridge.commands if c[:2] == ['call', 'time']]
+        self.assertEqual(times[0]['run_until'], {'day': '3', 'time': '16:01'})
+        self.assertEqual(math.floor(arrived), 3841)
+
     def test_targets_without_a_retimed_census_minute_withhold_the_delta(self):
         retention = self.local(importlib.import_module('retention'))
         plan = self.targets(retention, [3811.0])

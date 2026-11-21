@@ -192,14 +192,16 @@ def follow_targets(plan):
         retimed_census = point.get('census_native_minute')
         census_gap = difference(row['census_native_minute'], retimed_census)
         census_gap = census_gap if census_gap is not None and math.isfinite(census_gap) else None
+        spread = [difference(row['census_native_minute'], point['native_minute']), difference(retimed_census, row['native_minute'])]
+        bracket_gap = max(abs(d) for d in spread) if all(d is not None and math.isfinite(d) for d in spread) else None
         if point.get('paused'):
             matched = observed and census_gap is not None and all(math.floor(m + NATIVE_TOLERANCE) == math.floor(target + NATIVE_TOLERANCE)
                                                                   for m in (row['native_minute'], row['census_native_minute'], retimed_census))
         else:
             matched = (not observed and -NATIVE_TOLERANCE <= offset and census_offset <= MATCH_BOUND
-                       and census_gap is not None and abs(census_gap) <= MATCH_BOUND)
+                       and census_gap is not None and bracket_gap is not None and bracket_gap <= MATCH_BOUND)
         matches.append({'key': point['key'], 'paused': bool(point.get('paused')), 'observed_paused': observed, 'passed_at_start': passed,
-                        'offset': offset, 'census_offset': census_offset, 'census_gap': census_gap, 'matched': matched})
+                        'offset': offset, 'census_offset': census_offset, 'census_gap': census_gap, 'bracket_gap': bracket_gap, 'matched': matched})
         write('retention-control-series', readings_summary(rows))
         write('retention-matched', matched_series(plan, rows, matches))
     return rows

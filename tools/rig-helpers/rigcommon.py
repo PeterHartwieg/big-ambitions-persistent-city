@@ -262,8 +262,8 @@ def pause_at_native(label, target, speed=1):
         if not state['paused'] or state['run_until'] is not None:
             rate(label + '-pause', speed, pause=True)
     else:
-        state_native_day = here // 1440 + (clock_minutes(state['time']) < here % 1440)
-        go(label, clock_text(goal), speed, day=state['day'] + goal // 1440 - state_native_day)
+        shown = min(((math.floor(current) // 1440 + k) * 1440 + clock_minutes(state['time']) for k in (-1, 0, 1)), key=lambda m: abs(m - current))
+        go(label, clock_text(goal), speed, day=state['day'] + goal // 1440 - shown // 1440)
     arrived = native_minute(label + '-native')
     if math.floor(arrived + NATIVE_TOLERANCE) != goal or not native_reached(arrived, target, paused=True):
         raise RuntimeError(f'{label}: paused at {arrived}, outside the native minute of {target}')
