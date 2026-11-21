@@ -211,6 +211,75 @@ public sealed class Gr5RetainedRouteLegTests
         Assert.False(StillClimbing(mostSplits), "split prefixes per traffic-owned journey climb: " + string.Join(", ", mostSplits));
     }
 
+    [Fact]
+    public void SubwayAndBusWaitsAndRidesHoldOneSplitPrefixAcrossRepeatedOneTwoOneRetimes()
+    {
+        const int residents = 6, cycles = 10;
+        const double departure = 1440, spacing = 2.5;
+        (CityState State, CitySimulator City) Build()
+        {
+            var state = Population.Create(Enumerable.Range(0, residents).Select(i => new CitizenIdentity
+            { Id = "rider" + i, Name = "Rider " + i, Age = 30, AppearanceSeed = i + 1, Persona = Persona.Commuter }), new[]
+            {
+                new Place { Id = "home", Name = "Home", Kind = PlaceKind.Home, Capacity = residents, Position = new Position(-4, 0, 0) },
+                new Place { Id = "work", Name = "Work", Kind = PlaceKind.Work, Capacity = residents, Position = new Position(404, 0, 0) }
+            }, "subway-line", "0.40.4", 7, departure);
+            for (int i = 0; i < residents; i++)
+            {
+                var c = state.Citizens[i];
+                c.PlaceId = c.HomeId = "home"; c.DayPlaceId = "work"; c.Phase = CitizenPhase.Travelling;
+                c.DestinationId = "work"; c.DestinationActivity = Activity.Work; c.ActivityUntilMinute = 4000;
+                c.DepartureMinute = departure - i * 0.7;
+                var legs = new List<RouteLeg> { Leg(-4, 0, 1, TravelMode.Walk, ""), Leg(0, 0, 9, TravelMode.Subway, "native:subway"),
+                    Leg(0, 200, 12, TravelMode.Subway, "native:subway"), Leg(200, 200, 8, TravelMode.Bus, "bus:7"), Leg(200, 300, 11, TravelMode.Bus, "bus:7"),
+                    Leg(300, 404, 9, TravelMode.Walk, "") };
+                c.Journey = new Route { Legs = legs }; c.NextEventMinute = c.DepartureMinute + c.Journey.Minutes;
+            }
+            var city = new CitySimulator(state, new FreshCityTraceTests.Walk());
+            city.AdvanceTo(departure + 1.6, int.MaxValue);
+            return (state, city);
+        }
+        var retimed = Build(); var control = Build();
+        var driver = new ClockRetimeDriver();
+        var controlDriver = new ClockRetimeDriver();
+        var city = retimed.City; var state = retimed.State;
+        CitySimulator Retime(double rate)
+        {
+            while (driver.Update(state, rate, false, 1.4, ClockRetimeStages.SliceMilliseconds) != ClockRetimeOutcome.Committed) { }
+            var rebuild = city.BeginRebuildRoutes(new FreshCityTraceTests.Walk(), driver.TakeRetimedTraffic());
+            while (!rebuild.Step(0)) { }
+            return rebuild.TakeResult();
+        }
+        var reads = new List<(Read Retimed, Read Control)> { (Census(city, driver), Census(control.City, controlDriver)) };
+        double start = state.Minute;
+        for (int cycle = 1; cycle <= cycles; cycle++)
+        {
+            city = Retime(2);
+            city.AdvanceTo(state.Minute + 0.05, int.MaxValue);
+            city = Retime(1);
+            double end = start + cycle * spacing;
+            city.AdvanceTo(end, int.MaxValue);
+            control.City.AdvanceTo(end, int.MaxValue);
+            reads.Add((Census(city, driver), Census(control.City, controlDriver)));
+        }
+        var gap = new List<long>();
+        var mostSplits = new List<long>();
+        for (int i = 0; i <= cycles; i++)
+        {
+            var (r, c) = reads[i];
+            output.WriteLine("R" + i + " RouteLeg retimed " + r.Retained + " / control " + c.Retained + "; split prefixes " + r.Splits + " / " + c.Splits
+                + "; most split prefixes in a journey " + r.MostSplits + "; travelling " + r.Travelling + " / " + c.Travelling);
+            Assert.Equal(residents, r.Travelling); Assert.Equal(residents, c.Travelling);
+            Assert.Equal(0, r.Outside);
+            gap.Add(r.InJourneys - c.InJourneys); mostSplits.Add(r.MostSplits);
+        }
+        output.WriteLine("retimed minus control RouteLeg R0..R" + cycles + ": " + string.Join(", ", gap) + "; most split prefixes in one journey " + string.Join(", ", mostSplits));
+        Assert.All(mostSplits, most => Assert.True(most <= 1, "a transit journey holds " + most + " split prefixes"));
+        Assert.All(gap, extra => Assert.True(extra <= residents, "retimed journeys hold " + extra + " more RouteLegs than the control"));
+        Assert.False(StillClimbing(gap), "raw retimed minus control RouteLeg climbs: " + string.Join(", ", gap));
+        Assert.False(StillClimbing(mostSplits), "split prefixes per transit journey climb: " + string.Join(", ", mostSplits));
+    }
+
     private static RouteLeg Leg(double from, double to, double minutes, TravelMode mode, string service) => new()
     { From = new Position(from, 0, 0), To = new Position(to, 0, 0), Minutes = minutes, Mode = mode, ServiceId = service };
 

@@ -727,10 +727,11 @@ namespace PersistentCity.Core
         private const double FragmentDeviationMetres = 0.000001;
 
         private static bool ContinuesFragment(RouteLeg previous, TravelMode mode, Position from, Position to, string service)
-            => previous.SplitPrefix && previous.Mode == mode && (mode == TravelMode.Walk || mode == TravelMode.Car)
+            => previous.SplitPrefix && previous.Mode == mode
                 && string.Equals(previous.ServiceId, service, StringComparison.Ordinal) && previous.To.Equals(from)
-                && Position.Distance(previous.From, from) > 0.000001 && Position.Distance(from, to) > 0.000001
-                && SegmentDistance(from, previous.From, to) <= FragmentDeviationMetres;
+                && (previous.From.Equals(from) && from.Equals(to)
+                    || Position.Distance(previous.From, from) > 0.000001 && Position.Distance(from, to) > 0.000001
+                        && SegmentDistance(from, previous.From, to) <= FragmentDeviationMetres);
 
         private static bool RepresentableNativeTail(RouteLeg leg, Position point)
         {
