@@ -56,21 +56,33 @@ namespace PersistentCity.Core
         {
             degraded = 0;
             if (state == null) throw new ArgumentNullException(nameof(state));
+            if (!Needed(state, nativeWalkMetresPerSecond, clockRate)) return false;
             bool captured = state.Traffic == null && state.SnapshotSynchronizer != null;
             if (captured) state.SnapshotSynchronizer!();
-            var job = Begin(state, nativeWalkMetresPerSecond, clockRate);
-            if (job == null)
+            var snapshot = state.Traffic;
+            try
             {
-                if (captured) { state.Traffic = null; state.TrafficSource = null; state.TrafficSourceState = null; }
-                return false;
+                var job = Begin(state, nativeWalkMetresPerSecond, clockRate)!;
+                while (!job.Step(long.MaxValue)) { }
+                if (!job.Commit()) throw new InvalidOperationException("Retime inputs changed during an unsliced retime.");
+                degraded = job.Degraded;
+                return true;
             }
-            while (!job.Step(long.MaxValue)) { }
-            if (!job.Commit()) throw new InvalidOperationException("Retime inputs changed during an unsliced retime.");
-            degraded = job.Degraded;
-            return true;
+            catch
+            {
+                if (captured && ReferenceEquals(state.Traffic, snapshot))
+                { state.Traffic = null; state.TrafficSource = null; state.TrafficSourceState = null; }
+                throw;
+            }
         }
 
         public static TravelRetime? Begin(CityState state, double nativeWalkMetresPerSecond, double clockRate)
+        {
+            if (!Needed(state, nativeWalkMetresPerSecond, clockRate)) return null;
+            return new TravelRetime(state, nativeWalkMetresPerSecond, clockRate, state.TravelTimingVersion == 0);
+        }
+
+        private static bool Needed(CityState state, double nativeWalkMetresPerSecond, double clockRate)
         {
             if (state == null) throw new ArgumentNullException(nameof(state));
             Rate(nativeWalkMetresPerSecond, nameof(nativeWalkMetresPerSecond)); Rate(clockRate, nameof(clockRate));
@@ -79,9 +91,7 @@ namespace PersistentCity.Core
                 throw new ArgumentException("Unsupported travel timing version.", nameof(state));
             if (!Position.Finite(state.Minute) || state.Minute < 0 || state.Minute > MaxMinute)
                 throw new ArgumentException("Invalid city clock.", nameof(state));
-            bool legacy = state.TravelTimingVersion == 0;
-            if (!legacy && state.TravelClockRate == clockRate) return null;
-            return new TravelRetime(state, nativeWalkMetresPerSecond, clockRate, legacy);
+            return state.TravelTimingVersion == 0 || state.TravelClockRate != clockRate;
         }
 
         public sealed class RetimedTraffic

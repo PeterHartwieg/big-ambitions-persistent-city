@@ -343,6 +343,25 @@ public sealed class Gr5RetainedRouteLegTests
     }
 
     [Fact]
+    public void ARejectedDirectRetimeAfterARebuildLeavesNoSnapshotForTheNextRebuild()
+    {
+        const int residents = 6, edges = 381;
+        var (state, city) = RoadCity(residents, edges, 1440);
+        city = city.RebuildRoutes(new TravelTimingMaximumRouteTests.LongRoad(1, edges));
+        Assert.Null(state.Traffic);
+        Assert.Throws<ArgumentOutOfRangeException>(() => TravelTiming.Apply(state, 1.4, double.NaN));
+        Assert.Null(state.Traffic);
+        Assert.Null(state.TrafficSource);
+        Assert.Null(state.TrafficSourceState);
+        Assert.False(TravelTiming.Apply(state, 1.4, state.TravelClockRate));
+        Assert.Null(state.Traffic);
+        city.AdvanceTo(state.Minute + 0.5, int.MaxValue);
+        city = city.RebuildRoutes(new TravelTimingMaximumRouteTests.LongRoad(1, edges));
+        Assert.Null(state.Traffic);
+        Assert.Equal(residents, city.Traffic!.VehicleCount);
+    }
+
+    [Fact]
     public void SubwayAndBusWaitsAndRidesHoldOneSplitPrefixAcrossRepeatedOneTwoOneRetimes()
     {
         const int residents = 6, cycles = 10;
