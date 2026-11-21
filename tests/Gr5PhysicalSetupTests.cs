@@ -37,4 +37,33 @@ public sealed class Gr5PhysicalSetupTests
         Assert.Equal(1, gate.LastWait);
         Assert.Equal(PhysicalSetupGate.MaximumWaitFrames + 1, gate.Deferred);
     }
+
+    [Fact]
+    public void SetupWithAnEmptyReserveOnSustainedBusyFramesRunsOnAnUpdateWithoutAdvancement()
+    {
+        const double Routing = 0.6, Advance = 9.5, SynchronousGrowth = 16.559, Setup = 3.0, Spike = 30;
+        var gate = new PhysicalSetupGate();
+        var reserve = new DressedBodyPool<string>();
+        bool setUp = false; int frames = 0, advanced = 0; double setupFrame = 0;
+        while (!setUp && frames < 100)
+        {
+            frames++;
+            double elapsed = Routing;
+            if (!gate.Reserve(true)) { elapsed += Advance; advanced++; }
+            if (!gate.Admit(elapsed)) { Assert.True(elapsed <= Spike); continue; }
+            var choice = reserve.Choose(new PersonDressing(Person("first"), 60), 0, 16, null, frames, frames / 60.0, true, out _);
+            Assert.Equal(BodyChoice.Grow, choice);
+            elapsed += Setup + SynchronousGrowth;
+            setupFrame = elapsed; setUp = true;
+        }
+        Assert.True(setUp);
+        Assert.Equal(PhysicalSetupGate.MaximumWaitFrames + 1, frames);
+        Assert.Equal(PhysicalSetupGate.MaximumWaitFrames, advanced);
+        Assert.Equal(1, gate.Reserved);
+        Assert.True(setupFrame < Spike, "setup with synchronous growth on a reserved update: " + setupFrame + " ms");
+        Assert.True(Routing + Advance + Setup + SynchronousGrowth > setupFrame + Advance - 0.001, "the reserved update carries no advancement");
+        Assert.False(gate.Reserve(true));
+        Assert.False(new PhysicalSetupGate(maximumWaitFrames: 0).Reserve(false));
+        Assert.True(new PhysicalSetupGate(maximumWaitFrames: 0).Reserve(true));
+    }
 }

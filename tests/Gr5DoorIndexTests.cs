@@ -60,8 +60,8 @@ public sealed class Gr5DoorIndexTests
         long started = Stopwatch.GetTimestamp();
         foreach (var place in places)
         {
-            Time.Next();
-            spots.TryQueue(place, out var queue);
+            DoorQueue? queue;
+            do { Time.Next(); spots.TryQueue(place, out queue); } while (queue == null && spots.Unsampled(place));
             read.Add(Describe(queue));
         }
         milliseconds = (Stopwatch.GetTimestamp() - started) * 1000.0 / Stopwatch.Frequency;
@@ -121,7 +121,8 @@ public sealed class Gr5DoorIndexTests
             added.entranceDoors.Add(door);
             CityManager.Instance.cityBuildingControllers.Add(added);
             Assert.False(spots.WarmIndex(0));
-            Time.Next(); spots.TryQueue(places[5], out _);
+            Assert.True(spots.IndexPending());
+            while (spots.IndexPending()) { Time.Next(); Assert.False(spots.TryQueue(places[5], out _)); Assert.True(spots.Unsampled(places[5])); }
             Assert.Equal(2, spots.IndexBuilds);
             Assert.Equal(spots.DoorSearches, spots.IndexedSearches);
 
@@ -132,11 +133,57 @@ public sealed class Gr5DoorIndexTests
             Assert.Equal(Describe(expected), Describe(actual));
 
             spots.ForgetDoors();
-            Time.Next(); spots.TryQueue(places[9], out _);
+            while (spots.IndexPending()) { Time.Next(); spots.TryQueue(places[9], out _); }
             Assert.Equal(3, spots.IndexBuilds);
         }
         finally { CityManager.Instance = saved; NavMesh.Reset(); }
     }
+    [Fact]
+    public void AQueueRequestBetweenWarmUpSlicesKeepsThePartialIndexAndWaitsWithoutACooldown()
+    {
+        var saved = CityManager.Instance;
+        try
+        {
+            NavMesh.Reset();
+            NavMesh.Blocked = (a, b) => Math.Abs(a.x - b.x) + Math.Abs(a.z - b.z) > 6;
+            CityManager.Instance = City(1800, 23, out var places);
+            var reference = new DwellSpots { IndexDisabled = true };
+            var expected = Queues(reference, places.Take(40), out _);
+            var spots = new DwellSpots();
+            for (int i = 0; i < 5; i++) Assert.False(spots.WarmIndex(0));
+            int progress = spots.IndexProgress;
+            Assert.Equal(5, progress);
+            double slowest = 0; int waits = 0;
+            var place = places[17];
+            while (spots.IndexPending())
+            {
+                Time.Next();
+                long started = Stopwatch.GetTimestamp();
+                Assert.False(spots.TryQueue(place, out _));
+                slowest = Math.Max(slowest, (Stopwatch.GetTimestamp() - started) * 1000.0 / Stopwatch.Frequency);
+                Assert.True(spots.SampledThisFrame);
+                Assert.True(spots.Unsampled(place), "a waiting request sets no retry cooldown");
+                Assert.True(spots.IndexProgress > progress || !spots.IndexPending(), "each waiting request continues the partial index: " + spots.IndexProgress + " after " + progress);
+                progress = spots.IndexProgress;
+                waits++;
+            }
+            Time.Next();
+            spots.TryQueue(place, out var first);
+            Assert.Equal(expected[17], Describe(first));
+            output.WriteLine("request between warm-up slices waited " + waits + " updates, slowest request " + slowest.ToString("0.000", System.Globalization.CultureInfo.InvariantCulture)
+                + " ms against a " + DwellSpots.IndexSliceMilliseconds + " ms slice (.NET)");
+            Assert.True(waits > 0);
+            Assert.Equal(waits, spots.PendingRequests);
+            Assert.Equal(1, spots.IndexBuilds);
+            Assert.Equal(0, spots.DoorSearches - spots.IndexedSearches);
+            PerfGate.Under(slowest, 2 * DwellSpots.IndexSliceMilliseconds, "door request while the index is warming");
+            var actual = Queues(spots, places.Take(40), out _);
+            Assert.Equal(expected, actual);
+            Assert.Equal(1, spots.IndexBuilds);
+        }
+        finally { CityManager.Instance = saved; NavMesh.Reset(); }
+    }
+
     [Fact]
     public void AnIndexedDoorSearchAllocatesNothingAndIndexSlicesKeepTheirDeadline()
     {

@@ -18,6 +18,15 @@ namespace PersistentCity.Core
         }
 
         public long Deferred { get; private set; }
+        public long Reserved { get; private set; }
+        public bool Due => waited >= maximumWait;
+
+        public bool Reserve(bool setupWanted)
+        {
+            if (!setupWanted || !Due) return false;
+            Reserved++;
+            return true;
+        }
         public int LastWait { get; private set; }
 
         public bool Admit(double elapsedMilliseconds)

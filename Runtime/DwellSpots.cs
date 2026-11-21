@@ -59,6 +59,12 @@ namespace PersistentCity.Runtime
             queue = null;
             if (sampledThisCall || SampledThisFrame || retryAt.TryGetValue(key, out float retry) && Time.unscaledTime < retry) return false;
             sampledThisCall = true; sampledFrame = Time.frameCount;
+            if (IndexPending())
+            {
+                PendingRequests++;
+                WarmIndex(System.Diagnostics.Stopwatch.GetTimestamp() + (long)(IndexSliceMilliseconds * System.Diagnostics.Stopwatch.Frequency / 1000));
+                return false;
+            }
             queue = Sample(key, place);
             if (queue == null) { retryAt[key] = Time.unscaledTime + RetrySeconds; return false; }
             retryAt.Remove(key);
@@ -128,11 +134,15 @@ namespace PersistentCity.Runtime
         public double MaximumSearchMilliseconds { get; private set; }
         public double MaximumNavigationMilliseconds { get; private set; }
         public double MaximumIndexSliceMilliseconds { get; private set; }
-        public void ResetDiagnostics() { DoorSearches = IndexedSearches = IndexBuilds = 0; MaximumSearchMilliseconds = MaximumNavigationMilliseconds = MaximumIndexSliceMilliseconds = 0; }
+        public long PendingRequests { get; private set; }
+        public void ResetDiagnostics() { DoorSearches = IndexedSearches = IndexBuilds = PendingRequests = 0; MaximumSearchMilliseconds = MaximumNavigationMilliseconds = MaximumIndexSliceMilliseconds = 0; }
         internal bool IndexDisabled { get; set; }
-        public void ForgetDoors() { index = null; building = null; }
+        internal int IndexProgress => building?.Cursor ?? index?.ControllerCount ?? 0;
+        public void ForgetDoors() { index = null; building = null; indexFailed = false; }
 
+        public const double IndexSliceMilliseconds = 1;
         private const float IndexCell = 20f, OtherDoorMetres = 15f;
+        private bool indexFailed;
         private DoorIndex? index, building;
         private readonly List<int> nearby = new List<int>();
         private readonly List<Vector3> otherDoors = new List<Vector3>();
@@ -160,7 +170,8 @@ namespace PersistentCity.Runtime
                 int x = Cell(point.x), z = Cell(point.z);
                 for (int dx = -1; dx <= 1; dx++)
                     for (int dz = -1; dz <= 1; dz++)
-                        if (Cells.TryGetValue(Key(x + dx, z + dz), out var at)) into.AddRange(at);
+                        if (Cells.TryGetValue(Key(x + dx, z + dz), out var at))
+                            for (int i = 0; i < at.Count; i++) into.Add(at[i]);
                 into.Sort();
             }
             private static int Cell(float value) => (int)Math.Floor(value / IndexCell);
@@ -186,9 +197,16 @@ namespace PersistentCity.Runtime
             }
         }
 
+        public bool IndexPending()
+        {
+            if (IndexDisabled || indexFailed) return false;
+            var manager = CityManager.Instance;
+            return manager != null && manager.cityBuildingControllers is System.Collections.IList && !Matches(index, manager);
+        }
+
         public bool WarmIndex(long deadline)
         {
-            if (IndexDisabled) return true;
+            if (IndexDisabled || indexFailed) return true;
             var manager = CityManager.Instance;
             if (manager == null || manager.cityBuildingControllers == null) return false;
             if (Matches(index, manager)) return true;
@@ -206,7 +224,7 @@ namespace PersistentCity.Runtime
                 index = growing; building = null; IndexBuilds++;
                 return true;
             }
-            catch (Exception) { building = null; return false; }
+            catch (Exception) { building = null; indexFailed = true; return true; }
             finally { MaximumIndexSliceMilliseconds = Math.Max(MaximumIndexSliceMilliseconds, Since(started)); }
         }
 
@@ -225,17 +243,10 @@ namespace PersistentCity.Runtime
                 if (distance < OtherDoorMetres) otherDoors.Add(front);
                 if (distance < best) { best = distance; door = candidate; }
             }
-            if (!IndexDisabled && !Matches(index, manager))
-            {
-                var controllers = manager.cityBuildingControllers;
-                var scanned = new DoorIndex(manager, controllers, ControllerCount(controllers));
-                foreach (var controller in controllers) IndexController(scanned, controller);
-                index = scanned; building = null; IndexBuilds++;
-            }
-            if (!IndexDisabled && index != null)
+            if (!IndexDisabled && Matches(index, manager))
             {
                 IndexedSearches++;
-                index.Near(entrance, nearby);
+                index!.Near(entrance, nearby);
                 foreach (int at in nearby)
                 {
                     var candidate = index.Doors[at];

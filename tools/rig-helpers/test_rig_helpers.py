@@ -203,7 +203,8 @@ class RetentionRunnerTests(unittest.TestCase):
         self.assertEqual(series['RouteLeg outside current journeys'], [56])
         self.assertEqual(series['RouteLeg split prefix legs'], [310])
         self.assertEqual(series['RouteLeg travelling'], [1383])
-        self.assertFalse(retention.still_climbing({'RouteLeg outside current journeys': [0, 1, 2, 3]}))
+        self.assertTrue(retention.still_climbing({'RouteLeg outside current journeys': [0, 1, 2, 3]}))
+        self.assertFalse(retention.still_climbing({'RouteLeg in current journeys': [0, 1, 2, 3], 'RouteLeg travelling': [0, 5, 9, 12]}))
         self.assertEqual(series['RouteLeg in caches'], [None])
         self.assertEqual(series['RouteLeg outside caches'], [None])
 
@@ -222,7 +223,21 @@ class RetentionRunnerTests(unittest.TestCase):
         self.assertEqual(series['Route outside caches'], [640])
         self.assertEqual(series['RouteLeg in caches'], [2189])
         self.assertEqual(series['RouteLeg outside current journeys and caches'], [54])
-        self.assertFalse(retention.still_climbing({'Route outside caches': [0, 1, 2, 3]}))
+        self.assertTrue(retention.still_climbing({'Route outside caches': [0, 1, 2, 3]}))
+
+    def test_route_growth_alone_keeps_the_leak_runner_collecting(self):
+        retention = self.local(importlib.import_module('retention'))
+        flat = {'census.bytes': [900, 1000, 1000, 1000], 'mono heap': [5, 6, 6, 6]}
+        self.assertFalse(retention.still_climbing(flat))
+        for name in ('RouteLeg outside current journeys', 'Route outside caches', 'Route', 'RouteLeg[]', 'List<RouteLeg>', 'RouteLegs'):
+            with self.subTest(series=name):
+                self.assertTrue(retention.still_climbing({**flat, name: [0, 20, 32, 40]}))
+        self.assertFalse(retention.still_climbing({**flat, 'Route outside caches': [0, 20, 40, 32]}))
+        row = {'census': {'tracked_types': [{'name': n, 'objects': k} for k, n in enumerate(('Route', 'RouteLeg[]', 'List<RouteLeg>', 'RouteLegs'), 1)]},
+               'heap': {}, 'mono': {}, 'mesh': {'ownedBodyCombiners': 1, 'liveMergedMeshes': 1, 'unmergedBodyCombiners': 0,
+                                                'liveMergedVertices': 1, 'bakeScratchBytes': 1}}
+        series = retention.readings_summary([row])
+        self.assertEqual([series[n] for n in ('Route', 'RouteLeg[]', 'List<RouteLeg>', 'RouteLegs')], [[1], [2], [3], [4]])
 
     def test_the_16t_import_without_console_is_caught(self):
         source = (HERE / 'retention.py').read_text()

@@ -157,9 +157,10 @@ namespace PersistentCity.Runtime
         private bool TryDoorQueue(Place place, out DoorQueue? line)
         {
             bool before = doors.SampledThisFrame;
+            long pending = doors.PendingRequests;
             long started = System.Diagnostics.Stopwatch.GetTimestamp();
             bool found = doors.TryQueue(place, out line);
-            if (!before && doors.SampledThisFrame)
+            if (!before && doors.SampledThisFrame && doors.PendingRequests == pending)
             {
                 DoorSamples++;
                 MaximumDoorMilliseconds = Math.Max(MaximumDoorMilliseconds, MillisecondsSince(started));

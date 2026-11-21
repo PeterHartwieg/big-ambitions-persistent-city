@@ -227,8 +227,8 @@ class CheckScopesTests(unittest.TestCase):
         cases = [
             ('updateDelegate = Run }', 'updateDelegate = () => Run() }', 'player-loop updateDelegate must name'),
             ('updateDelegate = Run }', 'updateDelegate = Missing }', 'player-loop updateDelegate must name'),
-            ('if (child.type != typeof(PersistentCityWalkerBound)) list.Add(Remove(child));',
-             'if (child.type != typeof(PersistentCityWalkerBound)) list.Add(Remove(child)); else child.updateFunction = default;', 'updateFunction'),
+            ('list.Add(Insert(child, ref inserted));',
+             'list.Add(Insert(child, ref inserted)); if (inserted < 0) system.updateFunction = default;', 'updateFunction'),
             ('private static void Run()', 'private static void Walk()', 'player-loop updateDelegate must name'),
         ]
         for old, new, expected in cases:

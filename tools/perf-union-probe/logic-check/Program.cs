@@ -722,6 +722,74 @@ internal static class Program
         RootCallbacks();
         UnityLoopWithoutTruncation();
         ModWorkBySubPhase();
+        WalkerStampAcrossRetime();
+    }
+
+    private const string Walker = "PersistentCityWalkerBound";
+
+    private static List<string> WalkerAttach(List<string> children)
+    {
+        var list = new List<string>();
+        foreach (var child in children)
+        {
+            if (child == "AIUpdatePostScript") list.Add(Walker);
+            list.Add(child);
+        }
+        return list;
+    }
+
+    private static List<int> StampedLayout(SubPhasePlan plan, string[][] children, int system)
+    {
+        var layout = new List<int>();
+        for (int c = 0; c <= children[system].Length; c++)
+        {
+            int phase = plan.Before(system, c);
+            if (phase >= 0) layout.Add(-2 - phase);
+            if (c < children[system].Length) layout.Add(c);
+        }
+        return layout;
+    }
+
+    private static void WalkerStampAcrossRetime()
+    {
+        string[] systems = { "TimeUpdate", "EarlyUpdate", "PreLateUpdate", "PostLateUpdate" };
+        var armedLate = WalkerAttach(new List<string> { "AIUpdatePostScript", "LegacyAnimationUpdate", "ScriptRunBehaviourLateUpdate" });
+        var children = new[] { new[] { "WaitForLastPresentationAndUpdateTime" }, new[] { "ProfilerStartFrame" }, armedLate.ToArray(), new[] { "PresentAfterDraw" } };
+        var plan = SubPhasePlan.Build(systems, children, 1, new[] { "PreLateUpdate" }, LoopPhaseRecorder.MaxSubPhases);
+        var names = plan.Names.ToList();
+        int walker = names.IndexOf("PreLateUpdate." + Walker), post = names.IndexOf("PreLateUpdate.AIUpdatePostScript");
+        var stamped = new List<string>();
+        foreach (int entry in StampedLayout(plan, children, 2)) stamped.Add(entry < 0 ? "#" + (-2 - entry) : armedLate[entry]);
+        List<string> Detached(List<string> loop) => loop.Where(e => e != Walker).ToList();
+        var oldRetime = WalkerAttach(Detached(stamped));
+        var keptRetime = stamped;
+        (double Mod, int Gc, double PostMod) Measure(List<string> layout)
+        {
+            var rec = new LoopPhaseRecorder(LoopPhaseRecorder.MaxSubPhases);
+            rec.Configure(plan.Names);
+            for (int frame = 0; frame < 2; frame++)
+            {
+                long t = frame * 1000, mod = 0; int gc = frame;
+                rec.Begin(t, gc, mod);
+                foreach (var entry in layout)
+                {
+                    if (entry.StartsWith("#", StringComparison.Ordinal)) { rec.Stamp(int.Parse(entry.Substring(1)), t, gc, mod); continue; }
+                    t += 1;
+                    if (entry == Walker) { t += 3; mod += 3; if (frame == 1) gc++; }
+                }
+                t += 2;
+                rec.Close(frame, t, gc, mod, false, false, 1.0, false, mod);
+            }
+            return (rec.Retained == 1 ? rec.PhaseModMs(0, walker) : -1, rec.Retained == 1 ? rec.GcPhase(0) : -1, rec.Retained == 1 ? rec.PhaseModMs(0, post) : -1);
+        }
+        var kept = Measure(keptRetime);
+        var moved = Measure(oldRetime);
+        Check(walker >= 0 && post >= 0 && oldRetime.IndexOf(Walker) > oldRetime.IndexOf("#" + post),
+            "removing and reinserting the walker after arming puts it behind the AIUpdatePostScript stamp");
+        Check(moved.PostMod == 3 && moved.Gc == post && moved.Mod == 0,
+            "with remove-and-reinsert, walker mod time and its collection are charged to AIUpdatePostScript (" + moved + ")");
+        Check(kept.Mod == 3 && kept.Gc == walker && kept.PostMod == 0,
+            "with the walker entry kept across detach and reattach, its mod time and collection stay on " + Walker + " (" + kept + ")");
     }
 
     private static readonly string[][] Unity2022Children =

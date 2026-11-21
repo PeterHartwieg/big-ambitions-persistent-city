@@ -431,11 +431,15 @@ namespace PersistentCity.Runtime
                 RecordRoutingFrame(prepareElapsed, closureElapsed, true);
                 if (!NativeCityClock.CheckInputEpoch(target, simulation.State.Minute)) { StopAccounting(); return; }
                 ModFrames.Charge(GcAllocationSegment.ModClosures);
-                var advanceHeap = GcAllocationBegin();
-                AdvanceAllocation.Begin(gcSampler);
-                try { AdvancePopulation(HoldReplayLimit(Math.Max(AccountingClock.Target(target), simulation.State.Minute))); }
-                finally { AdvanceAllocation.End(); }
-                GcAllocationEnd(GcAllocationSegment.Advance, advanceHeap);
+                bool setupWanted = settings.PhysicalEnabled && !physicalFailed && physical == null && !BuildingManager.IsInsideBuilding && !NativeTravelPace.HiddenTravel;
+                if (!physicalSetupGate.Reserve(setupWanted))
+                {
+                    var advanceHeap = GcAllocationBegin();
+                    AdvanceAllocation.Begin(gcSampler);
+                    try { AdvancePopulation(HoldReplayLimit(Math.Max(AccountingClock.Target(target), simulation.State.Minute))); }
+                    finally { AdvanceAllocation.End(); }
+                    GcAllocationEnd(GcAllocationSegment.Advance, advanceHeap);
+                }
                 if (simulation.PurchaseFault is string purchaseFault)
                 {
                     log?.Warn("Need purchase native restore failed; the uncertain receipt is kept: " + purchaseFault);
@@ -444,8 +448,7 @@ namespace PersistentCity.Runtime
                 ApplyHoldReplay();
                 ModFrames.Charge(GcAllocationSegment.ModHoldReplay);
                 double beforeSetup = UpdateCityClock.Elapsed();
-                if (settings.PhysicalEnabled && !physicalFailed && physical == null && !BuildingManager.IsInsideBuilding && !NativeTravelPace.HiddenTravel
-                    && physicalSetupGate.Admit(beforeSetup))
+                if (setupWanted && physicalSetupGate.Admit(beforeSetup))
                 {
                     PhysicalAllocation.Begin(gcSampler);
                     try
@@ -453,7 +456,8 @@ namespace PersistentCity.Runtime
                         physical = new PhysicalPopulation(transform, simulation, routes!, dependency!, log!, settings.MaximumPedestrians, settings.MaximumVehicles, settings.PhysicalRadiusMetres, dwellSpots, settings.MovementFaultAcquirePercent);
                         log?.Info("Physical population setup: " + Milliseconds(UpdateCityClock.Elapsed() - beforeSetup) + " ms after "
                             + Milliseconds(beforeSetup) + " ms of this update, waited " + physicalSetupGate.LastWait.ToString(System.Globalization.CultureInfo.InvariantCulture)
-                            + " updates for a light frame (" + physicalSetupGate.Deferred.ToString(System.Globalization.CultureInfo.InvariantCulture) + " deferred updates in total).");
+                            + " updates for a light frame (" + physicalSetupGate.Deferred.ToString(System.Globalization.CultureInfo.InvariantCulture) + " deferred updates in total, "
+                            + physicalSetupGate.Reserved.ToString(System.Globalization.CultureInfo.InvariantCulture) + " updates reserved without advancement).");
                     }
                     catch (Exception error)
                     {
@@ -508,7 +512,7 @@ namespace PersistentCity.Runtime
                         + " ms; door search maximum " + (stopEnvironment?.Doors.MaximumSearchMilliseconds ?? 0).ToString("F3", System.Globalization.CultureInfo.InvariantCulture)
                         + " ms over " + (stopEnvironment?.Doors.DoorSearches ?? 0) + " searches, " + (stopEnvironment?.Doors.IndexedSearches ?? 0) + " indexed, NavMesh queue maximum "
                         + (stopEnvironment?.Doors.MaximumNavigationMilliseconds ?? 0).ToString("F3", System.Globalization.CultureInfo.InvariantCulture) + " ms, door index builds "
-                        + (stopEnvironment?.Doors.IndexBuilds ?? 0) + " (" + (stopEnvironment?.Doors.IndexedDoors ?? 0) + " doors, slice maximum "
+                        + (stopEnvironment?.Doors.IndexBuilds ?? 0) + " (" + (stopEnvironment?.Doors.IndexedDoors ?? 0) + " doors, " + (stopEnvironment?.Doors.PendingRequests ?? 0) + " requests waited for the index, slice maximum "
                         + (stopEnvironment?.Doors.MaximumIndexSliceMilliseconds ?? 0).ToString("F3", System.Globalization.CultureInfo.InvariantCulture) + " ms)), park builds on demand " + (stopEnvironment?.ParkBuilds ?? 0) + " (maximum " + (stopEnvironment?.MaximumParkMilliseconds ?? 0).ToString("F3", System.Globalization.CultureInfo.InvariantCulture)
                         + " ms with setup), audience builds on demand " + (stopEnvironment?.AudienceBuilds ?? 0) + " (maximum " + (stopEnvironment?.MaximumAudienceMilliseconds ?? 0).ToString("F3", System.Globalization.CultureInfo.InvariantCulture)
                         + " ms), warm-up park/audience slices " + (stopEnvironment?.ParkWarmup.Slices ?? 0) + "/" + (stopEnvironment?.AudienceWarmup.Slices ?? 0)

@@ -14,7 +14,8 @@ LABEL = 'retention'
 CONTROL = 'retention-control'
 FIELDS = ('ownedBodyCombiners', 'liveMergedMeshes', 'unmergedBodyCombiners', 'reservedBodies',
           'liveMergedVertices', 'bakeScratchBytes', 'monoHeapBytes', 'monoUsedBytes')
-TYPES = ('Position[]', 'Double[]', 'Int64[]', 'RouteLeg', 'CitySimulator', 'RoadRoutes')
+TYPES = ('Position[]', 'Double[]', 'Int64[]', 'RouteLeg', 'Route', 'RouteLeg[]', 'List<RouteLeg>', 'RouteLegs', 'CitySimulator', 'RoadRoutes')
+LIVE_WORK = ('RouteLeg in current journeys', 'RouteLeg travelling')
 ROUTE_LEGS = ('in_current_journeys', 'outside_current_journeys', 'split_prefix_legs', 'travelling', 'in_caches', 'outside_current_journeys_and_caches')
 OUTSIDE_CACHES = ('RouteLeg', 'Route', 'RouteLeg[]', 'List<RouteLeg>', 'RouteLegs')
 TARGETS = 'retention-targets'
@@ -130,8 +131,7 @@ def readings_summary(rows):
 
 
 def still_climbing(series):
-    return any(all(x is not None for x in v[1:]) and v[-1] > max(v[1:-1]) for key, v in series.items()
-               if not key.startswith('RouteLeg') and not key.endswith(' outside caches'))
+    return any(len(v) > 2 and all(x is not None for x in v[1:]) and v[-1] > max(v[1:-1]) for key, v in series.items() if key not in LIVE_WORK)
 
 
 def checked_targets(checkpoints):
