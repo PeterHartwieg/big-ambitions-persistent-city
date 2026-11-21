@@ -628,7 +628,7 @@ internal static class Program
     }
 
     private static readonly string[] UnityLoop = { "TimeUpdate", "Initialization", "EarlyUpdate", "FixedUpdate", "PreUpdate", "Update", "PreLateUpdate", "PostLateUpdate" };
-    private static readonly string[] Detailed = { "Update", "PreLateUpdate", "PostLateUpdate", "TimeUpdate" };
+    private static readonly string[] Detailed = { "PreUpdate", "Update", "PreLateUpdate", "PostLateUpdate", "TimeUpdate" };
 
     private static void Walk(SubPhasePlan plan, string[] systems, string[][] children, int early, LoopPhaseRecorder rec, int frame, ref long t, ref int gc, string[] gcAt, string slow, long slowMs)
     {
@@ -674,7 +674,7 @@ internal static class Program
         var plan = SubPhasePlan.Build(UnityLoop, children, 2, Detailed, LoopPhaseRecorder.MaxSubPhases);
         var names = plan.Names.ToList();
         int At(string name) => names.IndexOf(name);
-        var expected = new[] { "EarlyUpdate", "FixedUpdate", "PreUpdate", "Update.ScriptRunBehaviourUpdate", "PreLateUpdate.ScriptRunBehaviourLateUpdate",
+        var expected = new[] { "EarlyUpdate", "FixedUpdate", "PreUpdate.PhysicsUpdate", "Update.ScriptRunBehaviourUpdate", "PreLateUpdate.ScriptRunBehaviourLateUpdate",
             "PostLateUpdate.PresentAfterDraw", SubPhasePlan.Tail, "TimeUpdate.WaitForLastPresentationAndUpdateTime", "Initialization" };
         bool ordered = expected.All(n => At(n) >= 0);
         for (int k = 1; ordered && k < expected.Length; k++) ordered = At(expected[k - 1]) < At(expected[k]);
@@ -732,64 +732,85 @@ internal static class Program
         var list = new List<string>();
         foreach (var child in children)
         {
-            if (child == "AIUpdatePostScript") list.Add(Walker);
+            if (child == "AIUpdate" || child == "AIUpdatePostScript") list.Add(Walker);
             list.Add(child);
         }
         return list;
     }
 
-    private static List<int> StampedLayout(SubPhasePlan plan, string[][] children, int system)
-    {
-        var layout = new List<int>();
-        for (int c = 0; c <= children[system].Length; c++)
-        {
-            int phase = plan.Before(system, c);
-            if (phase >= 0) layout.Add(-2 - phase);
-            if (c < children[system].Length) layout.Add(c);
-        }
-        return layout;
-    }
-
     private static void WalkerStampAcrossRetime()
     {
-        string[] systems = { "TimeUpdate", "EarlyUpdate", "PreLateUpdate", "PostLateUpdate" };
-        var armedLate = WalkerAttach(new List<string> { "AIUpdatePostScript", "LegacyAnimationUpdate", "ScriptRunBehaviourLateUpdate" });
-        var children = new[] { new[] { "WaitForLastPresentationAndUpdateTime" }, new[] { "ProfilerStartFrame" }, armedLate.ToArray(), new[] { "PresentAfterDraw" } };
-        var plan = SubPhasePlan.Build(systems, children, 1, new[] { "PreLateUpdate" }, LoopPhaseRecorder.MaxSubPhases);
+        string[] systems = { "TimeUpdate", "EarlyUpdate", "PreUpdate", "Update", "PreLateUpdate", "PostLateUpdate" };
+        var native = new[]
+        {
+            new List<string> { "WaitForLastPresentationAndUpdateTime" }, new List<string> { "ProfilerStartFrame" },
+            new List<string> { "PhysicsUpdate", "SendMouseEvents", "AIUpdate", "WindUpdate" }, new List<string> { "ScriptRunBehaviourUpdate" },
+            new List<string> { "AIUpdatePostScript", "LegacyAnimationUpdate", "ScriptRunBehaviourLateUpdate" }, new List<string> { "PresentAfterDraw" }
+        };
+        var armed = native.Select(WalkerAttach).ToArray();
+        var children = armed.Select(c => c.ToArray()).ToArray();
+        const int early = 1;
+        var plan = SubPhasePlan.Build(systems, children, early, Detailed, LoopPhaseRecorder.MaxSubPhases);
         var names = plan.Names.ToList();
-        int walker = names.IndexOf("PreLateUpdate." + Walker), post = names.IndexOf("PreLateUpdate.AIUpdatePostScript");
+        int preWalker = names.IndexOf("PreUpdate." + Walker), ai = names.IndexOf("PreUpdate.AIUpdate");
+        int lateWalker = names.IndexOf("PreLateUpdate." + Walker), post = names.IndexOf("PreLateUpdate.AIUpdatePostScript");
+        Check(preWalker >= 0 && ai >= 0 && lateWalker >= 0 && post >= 0 && !plan.Truncated,
+            "the production detailed parents stamp both walker entries and the native AI updates after them (" + string.Join(",", names) + ")");
         var stamped = new List<string>();
-        foreach (int entry in StampedLayout(plan, children, 2)) stamped.Add(entry < 0 ? "#" + (-2 - entry) : armedLate[entry]);
-        List<string> Detached(List<string> loop) => loop.Where(e => e != Walker).ToList();
-        var oldRetime = WalkerAttach(Detached(stamped));
-        var keptRetime = stamped;
-        (double Mod, int Gc, double PostMod) Measure(List<string> layout)
+        for (int o = 0; o < systems.Length; o++)
+        {
+            int i = (early + o) % systems.Length;
+            for (int c = 0; c <= children[i].Length; c++)
+            {
+                int phase = plan.Before(i, c);
+                if (phase >= 0) stamped.Add("#" + phase);
+                if (c < children[i].Length) stamped.Add(systems[i] + "." + children[i][c]);
+            }
+        }
+        string preEntry = "PreUpdate." + Walker, lateEntry = "PreLateUpdate." + Walker;
+        var reinserted = new List<string>();
+        foreach (var entry in stamped)
+            if (entry != preEntry && entry != lateEntry) reinserted.Add(entry);
+        for (int k = reinserted.Count - 1; k >= 0; k--)
+            if (reinserted[k] == "PreUpdate.AIUpdate") reinserted.Insert(k, preEntry);
+            else if (reinserted[k] == "PreLateUpdate.AIUpdatePostScript") reinserted.Insert(k, lateEntry);
+        (double PreMod, double AiMod, double LateMod, double PostMod, int[] Gc) Measure(List<string> layout)
         {
             var rec = new LoopPhaseRecorder(LoopPhaseRecorder.MaxSubPhases);
             rec.Configure(plan.Names);
-            for (int frame = 0; frame < 2; frame++)
+            long t = 0, mod = 0; int gc = 0;
+            var collected = new List<int>();
+            string[] gcIn = { null, preEntry, null, null, null, "PreUpdate.AIUpdate", null, lateEntry };
+            bool[] attached = { true, true, false, false, true, true, true, true };
+            for (int frame = 0; frame < gcIn.Length; frame++)
             {
-                long t = frame * 1000, mod = 0; int gc = frame;
                 rec.Begin(t, gc, mod);
                 foreach (var entry in layout)
                 {
                     if (entry.StartsWith("#", StringComparison.Ordinal)) { rec.Stamp(int.Parse(entry.Substring(1)), t, gc, mod); continue; }
                     t += 1;
-                    if (entry == Walker) { t += 3; mod += 3; if (frame == 1) gc++; }
+                    if (entry == preEntry && attached[frame]) { t += 2; mod += 2; }
+                    if (entry == lateEntry && attached[frame]) { t += 3; mod += 3; }
+                    if (entry == "PreUpdate.AIUpdate") t += 5;
+                    if (entry == gcIn[frame]) gc++;
                 }
                 t += 2;
                 rec.Close(frame, t, gc, mod, false, false, 1.0, false, mod);
             }
-            return (rec.Retained == 1 ? rec.PhaseModMs(0, walker) : -1, rec.Retained == 1 ? rec.GcPhase(0) : -1, rec.Retained == 1 ? rec.PhaseModMs(0, post) : -1);
+            for (int r = 0; r < rec.Retained; r++) collected.Add(rec.GcPhase(r));
+            int last = rec.Retained - 1;
+            return last < 0 ? (-1, -1, -1, -1, collected.ToArray())
+                : (rec.PhaseModMs(last, preWalker), rec.PhaseModMs(last, ai), rec.PhaseModMs(last, lateWalker), rec.PhaseModMs(last, post), collected.ToArray());
         }
-        var kept = Measure(keptRetime);
-        var moved = Measure(oldRetime);
-        Check(walker >= 0 && post >= 0 && oldRetime.IndexOf(Walker) > oldRetime.IndexOf("#" + post),
-            "removing and reinserting the walker after arming puts it behind the AIUpdatePostScript stamp");
-        Check(moved.PostMod == 3 && moved.Gc == post && moved.Mod == 0,
-            "with remove-and-reinsert, walker mod time and its collection are charged to AIUpdatePostScript (" + moved + ")");
-        Check(kept.Mod == 3 && kept.Gc == walker && kept.PostMod == 0,
-            "with the walker entry kept across detach and reattach, its mod time and collection stay on " + Walker + " (" + kept + ")");
+        var kept = Measure(stamped);
+        var moved = Measure(reinserted);
+        Check(reinserted.IndexOf(preEntry) > reinserted.IndexOf("#" + ai) && reinserted.IndexOf(lateEntry) > reinserted.IndexOf("#" + post),
+            "removing and reinserting both walker entries after arming puts each behind its native AI stamp");
+        Check(moved.PreMod == 0 && moved.AiMod == 2 && moved.LateMod == 0 && moved.PostMod == 3 && moved.Gc.SequenceEqual(new[] { ai, ai, post }),
+            "with remove-and-reinsert, both walkers' mod time and collections are charged to the native AI updates (" + moved.PreMod + "," + moved.AiMod + "," + moved.LateMod + "," + moved.PostMod + "; " + string.Join(",", moved.Gc.Select(g => names[g])) + ")");
+        Check(kept.PreMod == 2 && kept.AiMod == 0 && kept.LateMod == 3 && kept.PostMod == 0 && kept.Gc.SequenceEqual(new[] { preWalker, ai, lateWalker }),
+            "with both walker entries kept across detach and reattach, PreUpdate and PreLateUpdate walker mod time and collections stay on their own stamps and native AIUpdate keeps its own collection ("
+            + kept.PreMod + "," + kept.AiMod + "," + kept.LateMod + "," + kept.PostMod + "; " + string.Join(",", kept.Gc.Select(g => g >= 0 ? names[g] : "unknown")) + ")");
     }
 
     private static readonly string[][] Unity2022Children =
@@ -798,11 +819,11 @@ internal static class Program
         new[] { "ProfilerStartFrame", "UpdateCameraMotionVectors", "DirectorSampleTime", "AsyncUploadTimeSlicedUpdate", "SynchronizeInputs", "SynchronizeState", "XREarlyUpdate" },
         Enumerable.Range(0, 33).Select(k => "EarlySystem" + k).ToArray(),
         new[] { "ClearLines", "DirectorFixedSampleTime", "AudioFixedUpdate", "ScriptRunBehaviourFixedUpdate", "DirectorFixedUpdate", "LegacyFixedAnimationUpdate", "XRFixedUpdate", "PhysicsFixedUpdate", "Physics2DFixedUpdate", "PhysicsClothFixedUpdate", "DirectorFixedUpdatePostPhysics", "ScriptRunDelayedFixedFrameRate" },
-        new[] { "PhysicsUpdate", "Physics2DUpdate", "PhysicsClothUpdate", "CheckTexFieldInput", "IMGUISendQueuedEvents", "SendMouseEvents", "AIUpdate", "WindUpdate", "UpdateVideo", "NewInputUpdate" },
+        new[] { "PhysicsUpdate", "Physics2DUpdate", "PhysicsClothUpdate", "CheckTexFieldInput", "IMGUISendQueuedEvents", "SendMouseEvents", "PersistentCityWalkerBound", "AIUpdate", "WindUpdate", "UpdateVideo", "NewInputUpdate" },
         new[] { "ScriptRunBehaviourUpdate", "ScriptRunDelayedDynamicFrameRate", "ScriptRunDelayedTasks", "DirectorUpdate", "RigInput" },
-        new[] { "AIUpdatePostScript", "DirectorUpdateAnimationBegin", "LegacyAnimationUpdate", "DirectorUpdateAnimationEnd", "DirectorDeferredEvaluate", "UIElementsUpdatePanels",
+        new[] { "PersistentCityWalkerBound", "AIUpdatePostScript", "DirectorUpdateAnimationBegin", "LegacyAnimationUpdate", "DirectorUpdateAnimationEnd", "DirectorDeferredEvaluate", "UIElementsUpdatePanels",
             "EndGraphicsJobsAfterScriptUpdate", "ConstraintManagerUpdate", "ParticleSystemBeginUpdateAll", "Physics2DLateUpdate", "PhysicsLateUpdate", "ScriptRunBehaviourLateUpdate",
-            "PersistentCityWalkerBound", "RigMouseLate" },
+            "RigMouseLate" },
         Enumerable.Range(0, 44).Select(k => "PostSystem" + k).Concat(new[] { "PresentAfterDraw" }).ToArray()
     };
 
@@ -812,7 +833,7 @@ internal static class Program
         var names = plan.Names.ToList();
         Check(!plan.Truncated && names.Count <= LoopPhaseRecorder.MaxSubPhases && !names.Any(n => n.EndsWith(SubPhasePlan.Unstamped, StringComparison.Ordinal))
             && names.Contains("TimeUpdate.WaitForLastPresentationAndUpdateTime") && names.Contains("PostLateUpdate.PresentAfterDraw")
-            && names.Contains("PreLateUpdate.PersistentCityWalkerBound"),
+            && names.Contains("PreLateUpdate.PersistentCityWalkerBound") && names.Contains("PreUpdate.PersistentCityWalkerBound") && names.Contains("PreUpdate.AIUpdate"),
             "a Unity 2022 loop with 45 PostLateUpdate children stamps every child, TimeUpdate's wait included, with no unstamped bucket (" + names.Count + " of "
             + LoopPhaseRecorder.MaxSubPhases + ")");
         var old = SubPhasePlan.Build(UnityLoop, Unity2022Children, 2, Detailed, 64);

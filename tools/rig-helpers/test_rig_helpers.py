@@ -203,8 +203,6 @@ class RetentionRunnerTests(unittest.TestCase):
         self.assertEqual(series['RouteLeg outside current journeys'], [56])
         self.assertEqual(series['RouteLeg split prefix legs'], [310])
         self.assertEqual(series['RouteLeg travelling'], [1383])
-        self.assertTrue(retention.still_climbing({'RouteLeg outside current journeys': [0, 1, 2, 3]}))
-        self.assertFalse(retention.still_climbing({'RouteLeg in current journeys': [0, 1, 2, 3], 'RouteLeg travelling': [0, 5, 9, 12]}))
         self.assertEqual(series['RouteLeg in caches'], [None])
         self.assertEqual(series['RouteLeg outside caches'], [None])
 
@@ -223,21 +221,34 @@ class RetentionRunnerTests(unittest.TestCase):
         self.assertEqual(series['Route outside caches'], [640])
         self.assertEqual(series['RouteLeg in caches'], [2189])
         self.assertEqual(series['RouteLeg outside current journeys and caches'], [54])
-        self.assertTrue(retention.still_climbing({'Route outside caches': [0, 1, 2, 3]}))
 
-    def test_route_growth_alone_keeps_the_leak_runner_collecting(self):
+    def test_every_cycle_is_collected_when_raw_routes_fall_but_the_matched_gap_grows(self):
         retention = self.local(importlib.import_module('retention'))
-        flat = {'census.bytes': [900, 1000, 1000, 1000], 'mono heap': [5, 6, 6, 6]}
-        self.assertFalse(retention.still_climbing(flat))
-        for name in ('RouteLeg outside current journeys', 'Route outside caches', 'Route', 'RouteLeg[]', 'List<RouteLeg>', 'RouteLegs'):
-            with self.subTest(series=name):
-                self.assertTrue(retention.still_climbing({**flat, name: [0, 20, 32, 40]}))
-        self.assertFalse(retention.still_climbing({**flat, 'Route outside caches': [0, 20, 40, 32]}))
-        row = {'census': {'tracked_types': [{'name': n, 'objects': k} for k, n in enumerate(('Route', 'RouteLeg[]', 'List<RouteLeg>', 'RouteLegs'), 1)]},
-               'heap': {}, 'mono': {}, 'mesh': {'ownedBodyCombiners': 1, 'liveMergedMeshes': 1, 'unmergedBodyCombiners': 0,
-                                                'liveMergedVertices': 1, 'bakeScratchBytes': 1}}
-        series = retention.readings_summary([row])
-        self.assertEqual([series[n] for n in ('Route', 'RouteLeg[]', 'List<RouteLeg>', 'RouteLegs')], [[1], [2], [3], [4]])
+        retimed, plain = [100, 90, 80, 70, 60, 50], [100, 70, 48, 30, 15, 2]
+
+        def row(leg, minute):
+            return {'census': {'bytes': 1000, 'objects': 10, 'route_legs': {'outside_current_journeys_and_caches': leg},
+                               'tracked_types': [{'name': 'Route', 'objects': leg}]},
+                    'heap': {'after_forced_gc_bytes': 5}, 'mono': {'now_bytes': 6}, 'native_minute': minute, 'census_native_minute': minute,
+                    'clock': {'paused': True, 'day': '2', 'time': retention.clock_text(minute)},
+                    'mesh': {'ownedBodyCombiners': 1, 'liveMergedMeshes': 1, 'unmergedBodyCombiners': 0, 'liveMergedVertices': 1, 'bakeScratchBytes': 1}}
+        taken = []
+        retention.prepare = lambda prefix, args, start: None
+        retention.change = lambda mark, speed, take_immediate=False: 0.0
+        retention.wait_until = lambda deadline: None
+        retention.snapshot = lambda key: taken.append(key) or row(retimed[len(taken) - 1], 3000 + 10 * len(taken))
+        retention.drain = lambda rows: row(retimed[-1], 3100)
+        retention.finish = lambda prefix: None
+        retention.main(['--build-sha', 'abc', '--cycles', '5'])
+        self.assertEqual(taken, ['R0', 'R1', 'R2', 'R3', 'R4', 'R5'])
+        plan = json.loads((self.stage / (retention.TARGETS + '.json')).read_text())
+        self.assertEqual([p['key'] for p in plan['checkpoints']], ['R0', 'R1', 'R2', 'R3', 'R4', 'R5', 'After30GameMinutes'])
+        name = 'RouteLeg outside current journeys and caches'
+        self.assertEqual(plan['series'][name][:6], retimed)
+        control = [row(leg, p['native_minute']) for leg, p in zip(plain, plan['checkpoints'])]
+        matches = [{'key': p['key'], 'matched': True} for p in plan['checkpoints'][:6]]
+        gap = retention.matched_series(plan, control, matches)['retimed_minus_control'][name]
+        self.assertEqual(gap, [0, 20, 32, 40, 45, 48])
 
     def test_the_16t_import_without_console_is_caught(self):
         source = (HERE / 'retention.py').read_text()

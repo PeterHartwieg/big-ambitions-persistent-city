@@ -225,4 +225,67 @@ public sealed class Gr5DoorIndexTests
         }
         finally { CityManager.Instance = saved; NavMesh.Reset(); }
     }
+
+    [Fact]
+    public void AWalkerArrivingWhileTheDoorIndexWarmsKeepsItsBodyAndJoinsTheQueueAfterTheLookup()
+    {
+        var saved = CityManager.Instance;
+        const double now = 1440 + 600;
+        Position home = new(40, 0, 0), shop = new(100, 0, 0);
+        PhysicalPopulation? bodies = null;
+        try
+        {
+            StreetFoodHooks.Reset(); NavMesh.Reset(); AmbientPedestrians.Reserved.Clear(); PhysicalPedestrianBody.Unreachable = null;
+            PhysicalPedestrians.VisiblePoint = null;
+            NativeTravelPace.Focus = shop; Time.Next(3);
+            var city = City(1800, 31, out _);
+            var door = new Door();
+            door.doorTransform.position = new Vector3(100, 0, -0.5f);
+            door.doorTransform.forward = new Vector3(0, 0, 1);
+            var controller = new CityBuildingController();
+            controller.entranceDoors.Add(door);
+            city.cityBuildingControllers.Add(controller);
+            CityManager.Instance = city;
+            var state = Population.Create(new List<CitizenIdentity> { new() { Id = "w", Name = "W", Age = 30, AppearanceSeed = 3 } }, new[] {
+                new Place { Id = "home", Name = "Home", Kind = PlaceKind.Home, Capacity = 2, Position = home },
+                new Place { Id = "shop", Name = "Shop", Kind = PlaceKind.Shop, Capacity = 2, Position = shop, OpenMinute = 600 + 31 } }, "gr5-door", "0.40.4", 3, now);
+            var c = state.Citizens[0];
+            c.HomeId = "home"; c.MealOuting = null; c.PlaceId = "home"; c.Phase = CitizenPhase.Travelling;
+            c.DestinationId = "shop"; c.DestinationActivity = PersistentCity.Core.Activity.Shop;
+            c.Journey = PhysicalWalkerFollowTests.Legs(home, shop);
+            c.DepartureMinute = now; c.NextEventMinute = now + c.Journey.Minutes; c.ActivityUntilMinute = now + 300;
+            var simulation = new CitySimulator(state, new Walking());
+            var spots = new DwellSpots();
+            bodies = new PhysicalPopulation(new Transform { Component = new PopulationRuntime() }, simulation, new MultimodalRoutes(), typeof(Gr5DoorIndexTests).Assembly,
+                new VendorBodyTests.Log(), 8, 3, 100, spots);
+            var pool = PhysicalPedestrians.Last!;
+            void Tick() { Time.Next(0.3f); bodies.Update(); }
+            Tick();
+            Assert.True(pool.Active.ContainsKey("w"));
+            simulation.AdvanceTo(now + 30);
+            Assert.Equal(CitizenPhase.WaitingForOpening, c.Phase);
+            Tick();
+            Assert.True(pool.Active.ContainsKey("w"));
+            pool.Active["w"].Character.transform.position = PhysicalPedestrianBody.Vector(shop);
+            spots.ForgetDoors(); spots.Invalidate(simulation.FindPlace("shop"));
+            Assert.True(spots.IndexPending());
+            long before = spots.PendingRequests;
+            Tick();
+            Assert.Equal(before + 1, spots.PendingRequests);
+            Assert.True(pool.Active.ContainsKey("w"), "the arriving walker keeps its body while its door lookup waits for the index");
+            int waits = 1;
+            while (spots.IndexPending() && waits < 1000) { Tick(); waits++; Assert.True(pool.Active.ContainsKey("w")); }
+            Tick();
+            Assert.True(spots.TryQueue(simulation.FindPlace("shop"), out var line));
+            Assert.True(pool.Active.ContainsKey("w"), "the walker joins the queue once the lookup completes");
+            Assert.Contains(pool.Active["w"].Target, line!.Spots);
+            output.WriteLine("arriving walker waited " + waits + " updates for the door index");
+        }
+        finally { bodies?.Dispose(); CityManager.Instance = saved; NavMesh.Reset(); }
+    }
+
+    private sealed class Walking : IRoutePlanner
+    {
+        public Route Plan(Place a, Place b, double at, TravelPreferences p) => PhysicalWalkerFollowTests.Legs(a.Position, b.Position);
+    }
 }

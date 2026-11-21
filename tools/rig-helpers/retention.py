@@ -15,7 +15,6 @@ CONTROL = 'retention-control'
 FIELDS = ('ownedBodyCombiners', 'liveMergedMeshes', 'unmergedBodyCombiners', 'reservedBodies',
           'liveMergedVertices', 'bakeScratchBytes', 'monoHeapBytes', 'monoUsedBytes')
 TYPES = ('Position[]', 'Double[]', 'Int64[]', 'RouteLeg', 'Route', 'RouteLeg[]', 'List<RouteLeg>', 'RouteLegs', 'CitySimulator', 'RoadRoutes')
-LIVE_WORK = ('RouteLeg in current journeys', 'RouteLeg travelling')
 ROUTE_LEGS = ('in_current_journeys', 'outside_current_journeys', 'split_prefix_legs', 'travelling', 'in_caches', 'outside_current_journeys_and_caches')
 OUTSIDE_CACHES = ('RouteLeg', 'Route', 'RouteLeg[]', 'List<RouteLeg>', 'RouteLegs')
 TARGETS = 'retention-targets'
@@ -128,10 +127,6 @@ def readings_summary(rows):
         **{t + ' outside caches': (lambda r, t=t: type_outside_caches_read(r['census'], t)) for t in OUTSIDE_CACHES},
     }
     return {name: [get(r) for r in rows] for name, get in paths.items()}
-
-
-def still_climbing(series):
-    return any(len(v) > 2 and all(x is not None for x in v[1:]) and v[-1] > max(v[1:-1]) for key, v in series.items() if key not in LIVE_WORK)
 
 
 def checked_targets(checkpoints):
@@ -280,8 +275,6 @@ def main(argv=None):
         series = readings_summary(rows)
         write('retention-series', series)
         print(f'R{n}', {k: v[-1] for k, v in series.items()}, flush=True)
-        if n >= 3 and not still_climbing(series):
-            break
     arrived = drain(rows)
     write('retention-arrival-series', readings_summary([rows[0], rows[-1], arrived]))
     export_targets(args, keys + ['After30GameMinutes'], rows + [arrived], True)

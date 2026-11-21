@@ -26,7 +26,11 @@ namespace PersistentCity.Runtime
             if (VendorWaiting(citizen, out var vendor, out _) && spots.SampledThisFrame
                 && spots.Unsampled(simulation.FindPlace(vendor.PlaceId)) && simulation.View.Minute <= binding.AwaitMinute + 0.5) return true;
             binding.AwaitingArrival = false;
-            return TryJoinVendorQueue(binding) || TryJoinOptional(binding) || TryJoinQueue(binding);
+            if (TryJoinVendorQueue(binding) || TryJoinOptional(binding) || TryJoinQueue(binding)) return true;
+            if (citizen.Phase != CitizenPhase.WaitingForOpening || !places.TryGetValue(citizen.PlaceId, out var door) || !spots.Deferred(door)
+                || simulation.View.Minute > binding.AwaitMinute + 0.5) return false;
+            binding.AwaitingArrival = true;
+            return true;
         }
 
         private bool TryJoinQueue(Binding binding)

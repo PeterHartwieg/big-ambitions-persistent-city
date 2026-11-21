@@ -61,7 +61,7 @@ namespace PersistentCity.Runtime
             sampledThisCall = true; sampledFrame = Time.frameCount;
             if (IndexPending())
             {
-                PendingRequests++;
+                PendingRequests++; deferredFrame = Time.frameCount; deferredKey = key;
                 WarmIndex(System.Diagnostics.Stopwatch.GetTimestamp() + (long)(IndexSliceMilliseconds * System.Diagnostics.Stopwatch.Frequency / 1000));
                 return false;
             }
@@ -71,6 +71,10 @@ namespace PersistentCity.Runtime
             queues[key] = queue;
             return true;
         }
+
+        private int deferredFrame = -1;
+        private string? deferredKey;
+        public bool Deferred(Place place) => deferredFrame == Time.frameCount && string.Equals(deferredKey, Key(place), StringComparison.Ordinal);
 
         public bool Unsampled(Place place)
         {
