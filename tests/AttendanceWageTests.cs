@@ -105,8 +105,6 @@ public sealed class AttendanceWageTests
         {
             string before = SaveCodec.Write(restored.State);
             restored.AdvanceTo(end, 1);
-            // Shared transient awareness preparation deliberately restarts on load. Let those units
-            // finish; interrupt every published shift/citizen/posting transition instead.
             if (before != SaveCodec.Write(restored.State)) { restored = Reload(restored, routes); reloads++; }
         }
         Advance(baseline, end);

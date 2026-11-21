@@ -134,8 +134,6 @@ public sealed partial class FoodCommerceTests
         if (ledger == "prepared") meal.Budget!.PreparedFoodSpent = full;
         if (ledger == "history" || ledger == "product") city.State.Food.History.Add(row);
         var prepared = meal.Budget!.PreparedFoodSpent;
-        // F6d checks the extended identity at every ledger mutation. This deliberately invalid fixture now
-        // refuses before its daily posting, still before any hold or native checkout.
         if (ledger == "prepared")
         {
             Assert.Throws<OverflowException>(() => Advance(city, meal.DesiredAt + 30));
@@ -148,7 +146,6 @@ public sealed partial class FoodCommerceTests
         Assert.Equal(ledger == "prepared" ? "Household funds no longer available at checkout" : "Purchase would exceed the exact money range", meal.Reason);
         var b = meal.Budget;
         Assert.Equal(prepared, b.PreparedFoodSpent); Assert.Equal(Money.Zero, b.HeldPurchase);
-        // The "prepared" fixture is deliberately unbalanced; the others must still conserve.
         if (ledger != "prepared") Assert.Equal(Money.TotalUnits(new[] { b.OpeningBalance, b.IncomeReceived }),
             Money.TotalUnits(new[] { b.Balance, b.EssentialsPaid, b.HomeFoodPaid, b.PreparedFoodSpent }));
         Assert.NotEqual(MealStatus.Uncertain, meal.Status); Assert.NotEqual(MealStatus.Paid, meal.Status);

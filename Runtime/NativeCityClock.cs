@@ -115,8 +115,6 @@ namespace PersistentCity.Runtime
         private static void AccountingPrefix(ref float deltaTimeWithMultiplier)
         {
             AccountingLimited = false;
-            // Installed but not bound to the current save (the startup guard, or a save change PopulationRuntime has
-            // not handled yet): no native minute may pass before that save's snapshot attaches.
             if (patches != null && !Active) { if (deltaTimeWithMultiplier > 0) deltaTimeWithMultiplier = 0; return; }
             if (LoadScene.isLoading && StartupHold && deltaTimeWithMultiplier > 0) { deltaTimeWithMultiplier = 0; return; }
             if (!Active || LoadScene.isLoading || economyActive?.Invoke() != true || nativeClock == null || populationCaughtUp == null) return;

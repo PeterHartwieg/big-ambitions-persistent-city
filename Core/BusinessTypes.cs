@@ -9,7 +9,6 @@ namespace PersistentCity.Core
         { Type = type; EssentialCategory = essentialCategory; }
         public string Type { get; }
         public string EssentialCategory { get; }
-        /// <summary>J0 need model defaults: interval and spread in days. Every row uses the neutral numbers until GR-3 tunes them.</summary>
         public int NeedIntervalDays => BusinessTypes.NeutralIntervalDays;
         public int NeedSpreadDays => BusinessTypes.NeutralSpreadDays;
         public bool IsNeutral => Type.Length == 0;

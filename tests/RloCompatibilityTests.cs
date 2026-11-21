@@ -302,7 +302,6 @@ namespace PersistentCity.Tests
     }
 }
 
-// Deliberately synthetic public shapes. These are not copied RLO rules or a substitute population for production.
 namespace RealLifeOverhaul
 {
     public static class GoingPublic { public static bool InSession { get; set; } }

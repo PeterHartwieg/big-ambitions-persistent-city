@@ -123,8 +123,6 @@ namespace PersistentCity.Core
 
     public static class TransportAccessGeometry
     {
-        /// <summary>Intersection with one bounded conservative gate region; an unknown gate never denies
-        /// unrelated city coordinates. Touching its boundary is conservatively treated as a crossing.</summary>
         public static bool IntersectsBounds(Position a, Position b, Position min, Position max)
         {
             if (Math.Max(a.X, b.X) < min.X || Math.Min(a.X, b.X) > max.X

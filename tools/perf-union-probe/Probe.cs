@@ -44,7 +44,6 @@ namespace PerfUnionProbe
 
     public sealed class Session : MonoBehaviour
     {
-        // Deliberately outside the persistentcity owner namespaces, so the inventory never sees the probe.
         internal const string PatchId = "f4b.perf-union-probe";
         internal const int FrameLimit = ProbeCapacity.Frames, TickLimit = ProbeCapacity.Ticks, CallLimit = ProbeCapacity.Calls,
             DiagnosticLimit = ProbeCapacity.Diagnostics, ReplyLimit = 48000;

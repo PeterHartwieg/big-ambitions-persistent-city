@@ -50,7 +50,7 @@ public sealed class RloRoadSpeedOverridesTests
     {
         var fixture = new Contract(); var adapter = new RloRoadSpeedOverrides(fixture.Assembly);
         object first = fixture.Point(20), second = fixture.Point(35), unrelated = fixture.Point(20);
-        Assert.True(first.Equals(second)); // Deliberately adversarial native equality implementation.
+        Assert.True(first.Equals(second));
         object fault = fixture.Add(1, first, 30); fixture.Add(2, second, 50);
         var before = adapter.Capture();
         Assert.Equal(2, before.Count); Assert.False(before.ContainsKey(unrelated));

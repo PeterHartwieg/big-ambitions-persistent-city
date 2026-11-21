@@ -53,7 +53,6 @@ namespace PersistentCity.Core
         public string? Companion { get; }
         public string NativeContract { get; }
         public string Fallback { get; }
-        /// <summary>Off unless a later slice or a setting turns it on (D2: food.dynamic, interior.view).</summary>
         public bool OffByDefault { get; }
     }
 

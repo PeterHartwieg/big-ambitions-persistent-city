@@ -92,9 +92,6 @@ namespace PersistentCity.Core
             if (!stockout && shop.ServiceUnavailable && shop.MealsPerHour == 0 && affordableStockout && fitsVisit
                 && finish + MealRhythm.EatingMinutes(meal.Kind) < decision.Deadline)
             {
-                // Held images intentionally retain only a generic service flag. Revalidate the
-                // named bag-stockout evidence only if the necessary time/queue bounds fit.
-                // Zero throughput hides service duration, so eating alone must leave spare time.
                 var live = FailureEvidence(shop.BusinessId, shop.PlaceId, decision.OriginAt);
                 stockout = live?.Id == shop.BusinessId && live.PlaceId == shop.PlaceId && live.ServiceUnavailableReason == "Out of stock"
                     && AffordableStockout(live, allowance);

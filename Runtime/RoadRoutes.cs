@@ -15,7 +15,6 @@ using Object = UnityEngine.Object;
 
 namespace PersistentCity.Runtime
 {
-    /// <summary>Conservative public access: all vehicle gates are excluded, regardless of player property ownership.</summary>
     internal sealed class PublicRoadAccess
     {
         private readonly List<GateBox> gates = new List<GateBox>();
@@ -58,8 +57,6 @@ namespace PersistentCity.Runtime
                         && known.Fixed.HasValue && known.Fixed.Value.Same(fixedParts.Value))
                         gate = known.Gate.Covers(gate) ? known.Gate : known.Gate.Union(gate);
                 }
-                // Source-compatibility fallback only: these are conservative local exclusion dimensions,
-                // not a claim about the actual gate. A missing shape must never close the entire city.
                 else gate = new GateBox(new Bounds(door.transform.position, new Vector3(40, 20, 40)), door.name);
                 doorBoxes[door] = (fixedParts, gate);
                 gates.Add(gate);

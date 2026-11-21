@@ -22,6 +22,22 @@ public sealed class CommentBanTests
     }
 
     [Fact]
+    public void TheAllowlistOnlyShrinks()
+    {
+        var failures = CommentBanScanner.CheckCeiling(File.ReadAllLines(Path.Combine(Root(), "comment-excuses.txt")), CommentBanScanner.Ceiling);
+        Assert.True(failures.Count == 0, string.Join(Environment.NewLine, failures));
+    }
+
+    [Fact]
+    public void TheCeilingFailsInBothDirections()
+    {
+        var two = new[] { "Core/A.cs\ttodo\t// a", "", "Core/A.cs\ttodo\t// b" };
+        Assert.Empty(CommentBanScanner.CheckCeiling(two, 2));
+        Assert.Contains("above the ceiling of 1", Assert.Single(CommentBanScanner.CheckCeiling(two, 1)));
+        Assert.Contains("lower CommentBanScanner.Ceiling to 2", Assert.Single(CommentBanScanner.CheckCeiling(two, 3)));
+    }
+
+    [Fact]
     public void APlainCommentFailsWithItsLine()
     {
         var failures = CommentBanScanner.Check(new[] { ("Core/A.cs", "class A\n{\n    int x; // the count\n}\n") }, Array.Empty<string>());

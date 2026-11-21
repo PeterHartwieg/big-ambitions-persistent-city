@@ -45,8 +45,6 @@ namespace PersistentCity.Tests
         [Fact] public void SupplyAndStaffOutagesDoNotChangeWholeBusinessEligibility()
         {
             var shop = Shop(); shop.Boundary(9, true, false, true);
-            // Eligibility is solely the reviewed menu/business contract; operational outages
-            // change offers, not ownership. The policy deliberately accepts no stock/staff input.
             Assert.False(shop.Observe(shop.Signature, true, 10));
             Assert.False(shop.Boundary(11, true, false, true)); Assert.True(shop.CanServe);
         }

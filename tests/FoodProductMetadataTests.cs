@@ -296,7 +296,6 @@ public sealed class FoodProductMetadataTests
     [Fact]
     public void NameHashMatchesIndependentFixedAlgorithmAndLengthDelimitedVectors()
     {
-        // Reference strings intentionally allocate here; production streams the same UTF-16 units.
         foreach(int seed in new[]{0,957,-1,int.MaxValue})
         foreach(string id in new[]{"pc:1","pc:20","a|b:","resident:\uD83C\uDF72"})
         foreach(string name in new[]{Dumplings,ChoppedCheese,"mod:\uD83C\uDF72","x"})

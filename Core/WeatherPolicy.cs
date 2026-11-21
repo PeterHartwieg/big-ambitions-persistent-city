@@ -20,7 +20,7 @@ namespace PersistentCity.Core
             if(captured && current==lastFrame) return sample;
             sample=WeatherSample.Unknown;lastFrame=current;captured=true;
             try { var value=rain(); if(value.HasValue) sample=value.Value ? WeatherSample.Rain : WeatherSample.Dry; }
-            catch(Exception) { } // unknown is deliberately neutral, including for this frame's other boundaries
+            catch(Exception) { }
             return sample;
         }
     }

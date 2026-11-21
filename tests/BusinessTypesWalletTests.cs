@@ -156,7 +156,6 @@ public sealed class BusinessTypesWalletTests
         Assert.True(profile.IsNeutral);
         Assert.Equal("", profile.EssentialCategory);
         Assert.Equal(7, profile.NeedIntervalDays); Assert.Equal(3, profile.NeedSpreadDays);
-        // A known row uses the same neutral need numbers until GR-3 tunes them.
         Assert.Equal(7, BusinessTypes.For("ba:businesstype_clothingstore").NeedIntervalDays);
     }
 

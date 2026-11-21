@@ -42,8 +42,6 @@ namespace PersistentCity.Runtime
                 if (IgnoredOriginal) report("FoodProductOverrides: original-three overrides ignored; saved tastes and established food fits preserved.");
             }
         }
-        // E5a/E5b must supply an already detached loaded-name image at load/publication, not per frame.
-        // Pure E5c cannot infer loaded names, so this diagnostic seam is deliberately not polled.
         internal void ReportUnloadedOnce(ISet<string> loadedNames, Action<string> report)
         {
             if (unloadedReported) return;
@@ -62,9 +60,6 @@ namespace PersistentCity.Runtime
             internal bool Read(JsonReader reader)
             {
                 if (!reader.Read()) throw new JsonSerializationException("Incomplete food metadata table.");
-                // Charge canonical escaped JSON and UTF-8 independently, including punctuation.
-                // One spare separator per token makes the bound conservative without serializing
-                // or retaining a second table. Raw source whitespace is not retained metadata.
                 if (reader.Value is string text)
                 {
                     escaped+=text.Length+3; utf8+=Encoding.UTF8.GetByteCount(text)+3;

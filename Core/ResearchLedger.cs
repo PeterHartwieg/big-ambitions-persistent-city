@@ -52,11 +52,6 @@ namespace PersistentCity.Core
         bool IResearchOrderView.IsOpen => IsOpen;
     }
 
-    /// <summary>Per-city research orders and the C5 entitlement. Not attached to CityState yet (C5c).
-    /// Bounds: one open order per business, 8 open per city, 16 kept reports (the oldest Paid becomes
-    /// Replaced when a 17th is delivered) and 16 closed records (oldest dropped first). Nothing retries,
-    /// refunds or resets a terminal order; every order has its own ID, so an unknown payment blocks
-    /// only itself. Single-threaded: the dialog, the survey and the daily bill all run on the game thread.</summary>
     public sealed class ResearchLedger : IMarketResearchEntitlement
     {
         public const int MaximumOpenOrders = 8;

@@ -11,6 +11,8 @@ public static class CommentBanScanner
 {
     public const string Message = "comment ban: fix the problem or open an issue";
 
+    public const int Ceiling = 18;
+
     public static readonly string[] Categories =
         { "workaround", "known-gap", "todo", "temporary", "skipped", "imperfect-choice", "runtime-doc" };
 
@@ -90,6 +92,16 @@ public static class CommentBanScanner
         foreach (var pair in allowed.Where(p => !p.Value))
             failures.Add($"comment-excuses.txt: stale excuse, no such comment in {pair.Key.Item1}: {pair.Key.Item2}");
         return failures;
+    }
+
+    public static List<string> CheckCeiling(IEnumerable<string> allowlist, int ceiling)
+    {
+        int count = allowlist.Count(entry => entry.Length != 0);
+        if (count > ceiling)
+            return new List<string> { $"comment-excuses.txt: {count} entries, above the ceiling of {ceiling}; delete the comment instead of listing it" };
+        if (count < ceiling)
+            return new List<string> { $"comment-excuses.txt: {count} entries, below the ceiling of {ceiling}; lower CommentBanScanner.Ceiling to {count}" };
+        return new List<string>();
     }
 
     static void Hash(string s, List<(int, int)> spans)

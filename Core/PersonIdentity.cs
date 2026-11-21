@@ -3,10 +3,6 @@ using System.Globalization;
 
 namespace PersistentCity.Core
 {
-    // F5b identity and ownership core (city audit F5 #92, docs/plans/f5-population.md section 3).
-    // F5c-lite persists these types in schema 26 (Core/PersonTable.cs, Persistence/PersonWire26.cs); no routine,
-    // choice or money path reads them yet.
-
     public enum PersonKind { Resident, Visitor }
 
     public enum VisitorPattern { Commuter, DayVisit }
@@ -15,8 +11,6 @@ namespace PersistentCity.Core
 
     public enum EmploymentKind { Work, Study }
 
-    /// <summary>Fixed at <see cref="None"/> in F5's shape. Any other value is refused until a later reviewed
-    /// contract defines it; no F5 code calls native hiring or staff APIs.</summary>
     public enum NativeEmployment { None = 0 }
 
     public sealed class VisitorStay

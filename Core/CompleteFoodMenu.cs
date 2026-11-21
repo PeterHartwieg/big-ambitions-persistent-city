@@ -69,10 +69,6 @@ namespace PersistentCity.Core
         };
     }
 
-    /// <summary>E5b3 Decision 8: a superset of the city's referenced product-name table, kept by the shop market.
-    /// Seeded once from the loaded food state and economy ledger with the same sources the save writer uses, then
-    /// grown by every product a scope adopts. Every name the save can reference enters through a scope's products,
-    /// so the set never undercounts; a retired name only makes the preflight stricter until reload.</summary>
     public sealed class FoodReferencedNames
     {
         private readonly HashSet<string> set = new HashSet<string>(StringComparer.Ordinal);

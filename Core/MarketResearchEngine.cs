@@ -5,8 +5,6 @@ using System.Text;
 
 namespace PersistentCity.Core
 {
-    // Engine and input adapters are deliberately internal. Only offline friends can run C4;
-    // no Runtime caller exists until the payment/access integration is separately implemented.
     internal sealed class MarketResearchIdentity
     {
         internal MarketResearchIdentity(string city, int day, long catalogueRevision, long placeRevision, long populationRevision)

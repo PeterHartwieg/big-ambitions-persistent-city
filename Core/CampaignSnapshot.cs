@@ -15,7 +15,6 @@ namespace PersistentCity.Core
         public string Evidence => "Verified native channel/size; no verified resident-group targeting.";
     }
 
-    /// <summary>Reviewed native identifiers, not a demographic reach claim. No choice consumer yet.</summary>
     public static class CampaignTypeGroups
     {
         public static IReadOnlyList<CampaignTypeGroup> Reviewed { get; } = Array.AsReadOnly(new[] {

@@ -49,6 +49,20 @@ public sealed class MarkdownBanTests : IDisposable
     }
 
     [Fact]
+    public void OnlyTheApprovedPathsPass()
+    {
+        Write("docs/decisions/2026-11-21-road-gate-access.md", "x\n");
+        Write(".claude/skills/delete-comment/SKILL.md", "x\n");
+        Commit();
+        AssertPasses();
+        Write("docs/decisions/2026-11-21-other.md", "x\n");
+        Write(".claude/skills/other/SKILL.md", "x\n");
+        Commit();
+        AssertFails("docs/decisions/2026-11-21-other.md");
+        AssertFails(".claude/skills/other/SKILL.md");
+    }
+
+    [Fact]
     public void AnUntrackedMarkdownFileFails()
     {
         Write("loose.md", "x\n");

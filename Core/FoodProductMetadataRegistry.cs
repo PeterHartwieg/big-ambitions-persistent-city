@@ -128,9 +128,6 @@ namespace PersistentCity.Core
                 && a.OptionalBreakfastFitCents == b.OptionalBreakfastFitCents && a.OptionalLunchFitCents == b.OptionalLunchFitCents
                 && a.OptionalDinnerFitCents == b.OptionalDinnerFitCents;
         private bool Fits(int c, int b) => characters + c <= MaximumWireBudget && bytes + b <= MaximumWireBudget;
-        // Conservative wire accounting, not a claim about managed heap size: strings charge escaped JSON
-        // and UTF-8 separately plus 64 units for keys, separators, lifecycle/conflict bookkeeping.
-        // Claims charge 128 units even when fields are absent. No serialization/all-registry scan per edit.
         private static void Cost(string value, out int c, out int b)
         {
             c = value.Length + 64; b = Encoding.UTF8.GetByteCount(value) + 64;
