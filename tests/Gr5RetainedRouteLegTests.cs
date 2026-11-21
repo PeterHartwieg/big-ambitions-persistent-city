@@ -171,9 +171,6 @@ public sealed class Gr5RetainedRouteLegTests
                 var vehicle = city.Traffic!.Vehicles.Single(v => v.VehicleId == c.Identity.Id);
                 network.ValidateRemainingMapping(c.Journey!, vehicle.Route, vehicle.NominalMinutes);
                 completed += Math.Max(0, vehicle.RouteIndex);
-                if (c.Journey!.Legs.Count(l => l.SplitPrefix) >= 3) { double off = 0; double elapsed = city.Minute - c.DepartureMinute; var sb = new System.Text.StringBuilder("DUMP " + c.Identity.Id + " el=" + elapsed + " vidx=" + vehicle.RouteIndex + " done=" + vehicle.Completed + " spans=" + string.Join("|", vehicle.Route.Select(x => x.StartNominalMinutes.ToString("R") + "-" + x.EndNominalMinutes.ToString("R"))) + " legs:");
-                  foreach (var leg in c.Journey!.Legs) { if (leg.SplitPrefix || (off < elapsed + 0.3 && off > elapsed - 0.5)) sb.Append(" [" + off.ToString("F4") + "+" + leg.Minutes.ToString("F4") + (leg.SplitPrefix ? " S" : "") + " " + leg.Mode + " " + leg.ServiceId.Split(':').Skip(4).FirstOrDefault() + "]"); off += leg.Minutes; }
-                  output.WriteLine(sb.ToString()); }
             }
             return (Census(simulator, retimeDriver), city.Traffic!.Vehicles.Count, completed);
         }

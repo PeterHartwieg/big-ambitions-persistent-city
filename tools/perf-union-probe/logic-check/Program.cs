@@ -517,10 +517,20 @@ internal static class Program
             && p.PhaseCollections(0, 3) == 1 && p.PhaseGen0From(0, 3) == 7 && p.PhaseGen0Through(0, 3) == 7
             && p.PhaseCollections(0, 1) == 0 && p.PhaseCollections(0, 4) == 0,
             "the probe row exports the ordinal range of each phase that ran a collection");
-        Check(samplerThrough[0] != p.Gen0Through(0) && p.MatchSamplerRow(samplerGen0[0], samplerThrough[0]) == 0 && p.MatchSamplerRow(samplerGen0[1], samplerThrough[1]) == 0,
-            "both sampler rows, ending at gen0 6 and 7, join the probe row by overlapping ordinal range where an equality join on gen0_through drops the first");
-        Check(p.CollectionPhase(0, samplerThrough[0]) == 0 && p.CollectionPhase(0, samplerThrough[1]) == 3 && p.CollectionPhase(0, 8) == -1 && p.MatchSamplerRow(1, 8) == -1,
+        Check(samplerThrough[0] != p.Gen0Through(0) && p.RowForCollection(samplerThrough[0] - samplerGen0[0] + 1) == 0 && p.RowForCollection(samplerThrough[1]) == 0,
+            "both sampler rows, ending at gen0 6 and 7, join the probe row through their collection ordinals where an equality join on gen0_through drops the first");
+        Check(p.CollectionPhase(0, samplerThrough[0]) == 0 && p.CollectionPhase(0, samplerThrough[1]) == 3 && p.CollectionPhase(0, 8) == -1 && p.RowForCollection(8) == -1,
             "each sampler collection is attributed to its own phase, EarlyUpdate before GcFrameBegin and Update after it");
+        p.Reset();
+        Frame(700, 50000, 5, plain, -1);
+        Frame(701, 50033, 5, plain, 3);
+        Frame(702, 50066, 6, plain, 0);
+        long reverseGen0 = 2, reverseThrough = 7;
+        Check(p.Retained == 2 && p.Gen0From(0) == 6 && p.Gen0Through(0) == 6 && p.Gen0From(1) == 7 && p.Gen0Through(1) == 7,
+            "a collection after GcFrameBegin in one frame and one in EarlyUpdate of the next give two probe rows");
+        int firstRow = p.RowForCollection(reverseThrough - reverseGen0 + 1), secondRow = p.RowForCollection(reverseThrough);
+        Check(firstRow == 0 && secondRow == 1 && p.CollectionPhase(firstRow, reverseThrough - reverseGen0 + 1) == 3 && p.CollectionPhase(secondRow, reverseThrough) == 0,
+            "one sampler row covering gen0 6 to 7 joins both probe rows, each collection through its own row and phase");
         p.Reset(); series.Begin(50);
         Frame(400, 20000, 50, plain, -1);
         p.Begin(20033, 50);

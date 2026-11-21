@@ -15,7 +15,23 @@ public sealed class Gr5RetimeAllocationTests
 
     private const string Retimed = "FBA96360F4D632B36389BD60220CACCF4E42D19DE903B12D7CB442574ED2D217";
 
-    private static (string Hash, long[] Bytes) RetimeThroughRates(bool committed)
+    private const string PreChangeWithoutCompletedTrafficSpans = "2BF8FC3C4EBEA834F86819BF2200A444BA85D8A1E8408880DE63FB0CC24091DD";
+
+    private static string WithoutCompletedTrafficSpans(CityState state)
+    {
+        state.PrepareForSave();
+        state.SnapshotSynchronizer = null;
+        state.SnapshotSteps = null;
+        foreach (var vehicle in state.Traffic!.Vehicles)
+        {
+            if (vehicle.RouteIndex <= 0) continue;
+            vehicle.Route.RemoveRange(0, vehicle.RouteIndex);
+            vehicle.RouteIndex = 0;
+        }
+        return RushSpikeReplay.Sha(SaveCodec.Write(state));
+    }
+
+    private static (string Hash, string Trimmed, long[] Bytes) RetimeThroughRates(bool committed)
     {
         var (state, _) = TravelTimingMaximumRouteTests.RigScaleCity(TravelTimingMaximumRouteTests.FixtureLinks);
         if (committed) foreach (var c in state.Citizens) c.Journey = c.Journey!.Commit();
@@ -38,21 +54,23 @@ public sealed class Gr5RetimeAllocationTests
         }
         simulator.AdvanceTo(state.Minute + 0.5, int.MaxValue);
         state.PrepareForSave();
-        return (RushSpikeReplay.Sha(SaveCodec.Write(state)), bytes);
+        string hash = RushSpikeReplay.Sha(SaveCodec.Write(state));
+        return (hash, WithoutCompletedTrafficSpans(state), bytes);
     }
 
     [Fact]
-    public void RetimedJourneysTrafficAndSaveMatchThePinnedPreChangeHash()
+    public void RetimedJourneysTrafficAndSaveMatchThePreChangeOutputOnceCompletedTrafficSpansAreDropped()
     {
-        var (hash, bytes) = RetimeThroughRates(committed: false);
-        output.WriteLine(hash + "; MB per retime: " + string.Join(", ", bytes.Select(b => (b / 1e6).ToString("0.0"))));
+        var (hash, trimmed, bytes) = RetimeThroughRates(committed: false);
+        output.WriteLine(hash + "; without completed traffic spans " + trimmed + "; MB per retime: " + string.Join(", ", bytes.Select(b => (b / 1e6).ToString("0.0"))));
+        Assert.Equal(PreChangeWithoutCompletedTrafficSpans, trimmed);
         Assert.Equal(Retimed, hash);
     }
 
     [Fact]
     public void ARetimeOfCommittedJourneysStaysUnderItsAllocationCeiling()
     {
-        var (_, bytes) = RetimeThroughRates(committed: true);
+        var (_, _, bytes) = RetimeThroughRates(committed: true);
         output.WriteLine("committed journeys, MB per retime: " + string.Join(", ", bytes.Select(b => (b / 1e6).ToString("0.0"))));
         PerfGate.Under(bytes.Skip(1).Max() / 1e6, 60, "MB allocated by one retime at 13,965 links (.NET)");
     }

@@ -127,27 +127,39 @@ public sealed class Gr5DiagnosticFrameTests
         const int writers = 4, perWriter = 20000;
         var sources = new string[writers * perWriter];
         for (int i = 0; i < sources.Length; i++) sources[i] = "pc writer " + i;
+        var parallelSources = new System.Collections.Generic.HashSet<string>(sources, StringComparer.Ordinal);
         var bySequence = new System.Collections.Concurrent.ConcurrentDictionary<int, string>();
-        int mismatches = 0, reads = 0, awaited = -1;
+        int mismatches = 0, reads = 0, parallelReads = 0, awaited = -1;
         using var done = new System.Threading.ManualResetEventSlim();
         using var reading = new System.Threading.ManualResetEventSlim();
         using var observed = new System.Threading.ManualResetEventSlim();
+        using var parallelVerified = new System.Threading.ManualResetEventSlim();
         var reader = new System.Threading.Thread(() =>
         {
             var seen = new System.Collections.Generic.List<DiagnosticMark>(1 << 16);
+            DiagnosticMark pending = default;
+            bool hasPending = false;
             reading.Set();
-            while (!done.IsSet && seen.Count < seen.Capacity)
+            while (!done.IsSet)
             {
                 var mark = DiagnosticFrames.Current;
+                if (hasPending && bySequence.TryGetValue(pending.Sequence, out var confirmed))
+                {
+                    hasPending = false;
+                    if (!ReferenceEquals(confirmed, pending.Source)) mismatches++;
+                    parallelVerified.Set();
+                }
                 if (!mark.Source.StartsWith("pc writer ", StringComparison.Ordinal)) continue;
-                if (seen.Count == 0 || seen[seen.Count - 1].Sequence != mark.Sequence) seen.Add(mark);
+                if ((seen.Count == 0 || seen[seen.Count - 1].Sequence != mark.Sequence) && seen.Count < seen.Capacity) seen.Add(mark);
                 if (mark.Sequence == System.Threading.Volatile.Read(ref awaited)) observed.Set();
+                if (!parallelVerified.IsSet && parallelSources.Contains(mark.Source)) { pending = mark; hasPending = true; }
             }
             foreach (var mark in seen)
             {
                 if (mark.Source.Length == 0 || !mark.Source.StartsWith("pc writer ", StringComparison.Ordinal)) continue;
                 if (!bySequence.TryGetValue(mark.Sequence, out var expected)) continue;
                 reads++;
+                if (parallelSources.Contains(mark.Source)) parallelReads++;
                 if (!ReferenceEquals(expected, mark.Source)) mismatches++;
             }
         });
@@ -168,9 +180,9 @@ public sealed class Gr5DiagnosticFrameTests
         Assert.True(observed.IsSet, "the reader recorded a published writer sequence before the writers ran");
         var hooks = System.Threading.Tasks.Parallel.For(0, writers, w =>
         {
-            for (int i = 0; i < perWriter; i++)
+            for (int i = 0; i < perWriter || (!parallelVerified.IsSet && DateTime.UtcNow < deadline); i++)
             {
-                string source = sources[w * perWriter + i];
+                string source = sources[w * perWriter + i % perWriter];
                 DiagnosticFrames.Mark(source);
                 var after = DiagnosticFrames.Current;
                 if (ReferenceEquals(after.Source, source)) bySequence[after.Sequence] = source;
@@ -180,8 +192,9 @@ public sealed class Gr5DiagnosticFrameTests
         var final = DiagnosticFrames.Current;
         Assert.True(hooks.IsCompleted);
         Assert.Equal(final.Sequence, DiagnosticFrames.Marks);
+        Assert.True(parallelVerified.IsSet, "the reader verified a mark published by a parallel writer while the writers ran");
         Assert.True(reads > 0, "the reader saw a writer's mark");
-        output.WriteLine(reads + " concurrent reads paired with their publishing source");
+        output.WriteLine(reads + " concurrent reads paired with their publishing source, " + parallelReads + " from the parallel writers");
         Assert.Equal(0, mismatches);
     }
 
