@@ -140,7 +140,8 @@ def checked_targets(checkpoints):
 
 
 def export_targets(args, keys, rows, complete):
-    checkpoints = checked_targets([{'key': key, 'native_minute': row.get('native_minute'), 'paused': (row.get('clock') or {}).get('paused') is True,
+    checkpoints = checked_targets([{'key': key, 'native_minute': row.get('native_minute'), 'census_native_minute': row.get('census_native_minute'),
+                                    'paused': (row.get('clock') or {}).get('paused') is True,
                                     'day': (row.get('clock') or {}).get('day'), 'time': (row.get('clock') or {}).get('time')}
                                    for key, row in zip(keys, rows)])
     return write(TARGETS, {'format': 1, 'build_sha': args.build_sha, 'fixture': FIXTURE, 'start': args.start, 'complete': complete,
@@ -188,13 +189,17 @@ def follow_targets(plan):
         row = rows[-1]
         offset, census_offset = row['native_minute'] - target, row['census_native_minute'] - target
         observed = (row.get('clock') or {}).get('paused') is True
+        retimed_census = point.get('census_native_minute')
+        census_gap = difference(row['census_native_minute'], retimed_census)
+        census_gap = census_gap if census_gap is not None and math.isfinite(census_gap) else None
         if point.get('paused'):
-            matched = observed and all(math.floor(m + NATIVE_TOLERANCE) == math.floor(target + NATIVE_TOLERANCE)
-                                       for m in (row['native_minute'], row['census_native_minute']))
+            matched = observed and census_gap is not None and all(math.floor(m + NATIVE_TOLERANCE) == math.floor(target + NATIVE_TOLERANCE)
+                                                                  for m in (row['native_minute'], row['census_native_minute'], retimed_census))
         else:
-            matched = not observed and -NATIVE_TOLERANCE <= offset and census_offset <= MATCH_BOUND
+            matched = (not observed and -NATIVE_TOLERANCE <= offset and census_offset <= MATCH_BOUND
+                       and census_gap is not None and abs(census_gap) <= MATCH_BOUND)
         matches.append({'key': point['key'], 'paused': bool(point.get('paused')), 'observed_paused': observed, 'passed_at_start': passed,
-                        'offset': offset, 'census_offset': census_offset, 'matched': matched})
+                        'offset': offset, 'census_offset': census_offset, 'census_gap': census_gap, 'matched': matched})
         write('retention-control-series', readings_summary(rows))
         write('retention-matched', matched_series(plan, rows, matches))
     return rows

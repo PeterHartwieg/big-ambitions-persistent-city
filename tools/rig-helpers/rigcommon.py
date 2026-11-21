@@ -211,16 +211,17 @@ def finish_if_wrapped(label):
         raise RuntimeError('WRAP_UP_NOW')
 
 
+def clock_minutes(text):
+    h, m = map(int, text.split(':'))
+    return 60 * h + m
+
+
 def go(label, target, speed, day=None):
     current = clock(label)
     if current['paused'] and current['time'] == target and current['run_until'] is None:
         return
-
-    def minutes(text):
-        h, m = map(int, text.split(':'))
-        return 60 * h + m
     if day is None:
-        day = current['day'] + (minutes(current['time']) >= minutes(target))
+        day = current['day'] + (clock_minutes(current['time']) >= clock_minutes(target))
     if not (current['run_until'] or '').endswith(' ' + target):
         call(label + '-go-' + target.replace(':', ''), 'time', {'speed': speed, 'run_until': {'day': str(day), 'time': target}, 'keep_needs': True})
     deadline = time.monotonic() + 1800
@@ -261,7 +262,8 @@ def pause_at_native(label, target, speed=1):
         if not state['paused'] or state['run_until'] is not None:
             rate(label + '-pause', speed, pause=True)
     else:
-        go(label, clock_text(goal), speed, day=state['day'] + goal // 1440 - here // 1440)
+        state_native_day = here // 1440 + (clock_minutes(state['time']) < here % 1440)
+        go(label, clock_text(goal), speed, day=state['day'] + goal // 1440 - state_native_day)
     arrived = native_minute(label + '-native')
     if math.floor(arrived + NATIVE_TOLERANCE) != goal or not native_reached(arrived, target, paused=True):
         raise RuntimeError(f'{label}: paused at {arrived}, outside the native minute of {target}')

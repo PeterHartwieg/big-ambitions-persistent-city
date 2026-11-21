@@ -337,12 +337,13 @@ class RetentionRunnerTests(unittest.TestCase):
         self.assertEqual(series['RouteLeg outside current journeys'], [30, 15, 14, 19, 114])
         self.assertEqual(series['RouteLeg travelling'], [174] * 5)
 
-    def targets(self, retention, minutes, paused=()):
+    def targets(self, retention, minutes, paused=(), censuses=None):
         args = types.SimpleNamespace(build_sha='abc', start='15:30')
         keys = ['R%d' % i for i in range(len(minutes))]
-        rows = [{'native_minute': m, 'census': {'tracked_types': [{'name': 'RouteLeg', 'objects': 100 + i}]}, 'heap': {}, 'mono': {},
+        censuses = censuses or minutes
+        rows = [{'native_minute': m, 'census_native_minute': c, 'census': {'tracked_types': [{'name': 'RouteLeg', 'objects': 100 + i}]}, 'heap': {}, 'mono': {},
                  'clock': {'paused': i in paused, 'day': 3, 'time': retention.clock_text(m) if isinstance(m, float) and math.isfinite(m) else None},
-                 'mesh': {f: 0 for f in retention.FIELDS}} for i, m in enumerate(minutes)]
+                 'mesh': {f: 0 for f in retention.FIELDS}} for i, (m, c) in enumerate(zip(minutes, censuses))]
         return retention.export_targets(args, keys, rows, True)
 
     def test_retimed_process_exports_its_checkpoint_native_minutes(self):
@@ -465,6 +466,46 @@ class RetentionRunnerTests(unittest.TestCase):
         self.assertGreater(point['census_offset'], retention.MATCH_BOUND)
         self.assertEqual(matched['unmatched'], ['R0'])
         self.assertEqual(matched['retimed_minus_control']['RouteLeg'], [None])
+
+    def test_delayed_retimed_census_is_unmatched_against_an_earlier_control_census(self):
+        retention = self.local(importlib.import_module('retention'))
+        plan = self.targets(retention, [3811.0], censuses=[3811.79])
+        self.assertEqual(plan['checkpoints'][0]['census_native_minute'], 3811.79)
+        retention.wait_native = lambda label, target: self.common.wait_native(label, target, timeout=5, interval=0)
+        self.bridge.minute, self.bridge.paused, self.bridge.step = 3810.9, False, .06
+        retention.follow_targets(plan)
+        matched = json.loads((self.stage / 'retention-matched.json').read_text())
+        point = matched['checkpoints'][0]
+        self.assertLessEqual(point['census_offset'], retention.MATCH_BOUND)
+        self.assertGreater(abs(point['census_gap']), retention.MATCH_BOUND)
+        self.assertEqual(matched['unmatched'], ['R0'])
+        self.assertEqual(matched['retimed_minus_control']['RouteLeg'], [None])
+
+    def test_targets_without_a_retimed_census_minute_withhold_the_delta(self):
+        retention = self.local(importlib.import_module('retention'))
+        plan = self.targets(retention, [3811.0])
+        del plan['checkpoints'][0]['census_native_minute']
+        retention.wait_native = lambda label, target: self.common.wait_native(label, target, timeout=5, interval=0)
+        self.bridge.minute, self.bridge.paused, self.bridge.step = 3810.95, False, .02
+        retention.follow_targets(plan)
+        matched = json.loads((self.stage / 'retention-matched.json').read_text())
+        self.assertIsNone(matched['checkpoints'][0]['census_gap'])
+        self.assertEqual(matched['unmatched'], ['R0'])
+
+    def test_midnight_between_the_native_and_state_reads_keeps_the_target_day(self):
+        self.bridge.minute, self.bridge.paused = 4319.98, False
+        original = self.bridge.__call__
+
+        def crossing(args):
+            if args[:2] == ['call', 'state'] and not self.bridge.paused and self.bridge.minute < 4320:
+                self.bridge.minute = 4320.05
+            return original(args)
+        self.common.bridge = crossing
+        with mock.patch.object(self.common.time, 'sleep'):
+            arrived = self.common.pause_at_native('midnight', 4321.01)
+        times = [json.loads(c[2]) for c in self.bridge.commands if c[:2] == ['call', 'time']]
+        self.assertEqual(times[0]['run_until'], {'day': '4', 'time': '00:01'})
+        self.assertEqual(math.floor(arrived), 4321)
 
     def test_paused_control_resumes_for_a_running_checkpoint_it_already_reached(self):
         retention = self.local(importlib.import_module('retention'))
