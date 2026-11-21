@@ -59,12 +59,22 @@ namespace PersistentCity.Runtime
             queue = null;
             if (sampledThisCall || SampledThisFrame || retryAt.TryGetValue(key, out float retry) && Time.unscaledTime < retry) return false;
             sampledThisCall = true; sampledFrame = Time.frameCount;
+            if (IndexPending())
+            {
+                PendingRequests++; deferredFrame = Time.frameCount; deferredKey = key;
+                WarmIndex(System.Diagnostics.Stopwatch.GetTimestamp() + (long)(IndexSliceMilliseconds * System.Diagnostics.Stopwatch.Frequency / 1000));
+                return false;
+            }
             queue = Sample(key, place);
             if (queue == null) { retryAt[key] = Time.unscaledTime + RetrySeconds; return false; }
             retryAt.Remove(key);
             queues[key] = queue;
             return true;
         }
+
+        private int deferredFrame = -1;
+        private string? deferredKey;
+        public bool Deferred(Place place) => deferredFrame == Time.frameCount && string.Equals(deferredKey, Key(place), StringComparison.Ordinal);
 
         public bool Unsampled(Place place)
         {
@@ -121,28 +131,159 @@ namespace PersistentCity.Runtime
             return points.Count == 0 ? null : new DoorQueue(key, entrance, entrance, points);
         }
 
-        private static DoorQueue? Sample(string key, Place place)
+        public long DoorSearches { get; private set; }
+        public long IndexedSearches { get; private set; }
+        public long IndexBuilds { get; private set; }
+        public int IndexedDoors => index?.Count ?? 0;
+        public double MaximumSearchMilliseconds { get; private set; }
+        public double MaximumNavigationMilliseconds { get; private set; }
+        public double MaximumIndexSliceMilliseconds { get; private set; }
+        public long PendingRequests { get; private set; }
+        public void ResetDiagnostics() { DoorSearches = IndexedSearches = IndexBuilds = PendingRequests = 0; MaximumSearchMilliseconds = MaximumNavigationMilliseconds = MaximumIndexSliceMilliseconds = 0; }
+        internal bool IndexDisabled { get; set; }
+        internal int IndexProgress => building?.Cursor ?? index?.ControllerCount ?? 0;
+        public void ForgetDoors() { index = null; building = null; indexFailed = false; }
+
+        public const double IndexSliceMilliseconds = 1;
+        private const float IndexCell = 20f, OtherDoorMetres = 15f;
+        private bool indexFailed;
+        private DoorIndex? index, building;
+        private readonly List<int> nearby = new List<int>();
+        private readonly List<Vector3> otherDoors = new List<Vector3>();
+
+        private sealed class DoorIndex
+        {
+            public DoorIndex(object manager, object controllers, int controllerCount) { Manager = manager; Controllers = controllers; ControllerCount = controllerCount; }
+            public object Manager { get; }
+            public object Controllers { get; }
+            public int ControllerCount { get; }
+            public int Cursor;
+            public readonly List<Transform> Doors = new List<Transform>();
+            public readonly Dictionary<long, List<int>> Cells = new Dictionary<long, List<int>>();
+            public int Count => Doors.Count;
+            public void Add(Transform door, Vector3 front)
+            {
+                long cell = Key(Cell(front.x), Cell(front.z));
+                if (!Cells.TryGetValue(cell, out var at)) Cells.Add(cell, at = new List<int>(4));
+                at.Add(Doors.Count);
+                Doors.Add(door);
+            }
+            public void Near(Vector3 point, List<int> into)
+            {
+                into.Clear();
+                int x = Cell(point.x), z = Cell(point.z);
+                for (int dx = -1; dx <= 1; dx++)
+                    for (int dz = -1; dz <= 1; dz++)
+                        if (Cells.TryGetValue(Key(x + dx, z + dz), out var at))
+                            for (int i = 0; i < at.Count; i++) into.Add(at[i]);
+                into.Sort();
+            }
+            private static int Cell(float value) => (int)Math.Floor(value / IndexCell);
+            private static long Key(int x, int z) => ((long)x << 32) ^ (uint)z;
+        }
+
+        private static int ControllerCount(object controllers) => controllers is System.Collections.ICollection known ? known.Count : -1;
+
+        private static bool Matches(DoorIndex? candidate, CityManager manager)
+        {
+            var controllers = manager.cityBuildingControllers;
+            return candidate != null && ReferenceEquals(candidate.Manager, manager) && ReferenceEquals(candidate.Controllers, controllers)
+                && candidate.ControllerCount == ControllerCount(controllers);
+        }
+
+        private static void IndexController(DoorIndex into, CityBuildingController? controller)
+        {
+            if (controller == null || controller.entranceDoors == null) return;
+            foreach (var candidate in controller.entranceDoors)
+            {
+                if (candidate == null || candidate.doorTransform == null) continue;
+                into.Add(candidate.doorTransform, candidate.doorTransform.position + candidate.doorTransform.forward * 0.5f);
+            }
+        }
+
+        public bool IndexPending()
+        {
+            if (IndexDisabled || indexFailed) return false;
+            var manager = CityManager.Instance;
+            return manager != null && manager.cityBuildingControllers is System.Collections.IList && !Matches(index, manager);
+        }
+
+        public bool WarmIndex(long deadline)
+        {
+            if (IndexDisabled || indexFailed) return true;
+            var manager = CityManager.Instance;
+            if (manager == null || manager.cityBuildingControllers == null) return false;
+            if (Matches(index, manager)) return true;
+            if (!(manager.cityBuildingControllers is System.Collections.IList list)) return false;
+            long started = System.Diagnostics.Stopwatch.GetTimestamp();
+            if (!Matches(building, manager)) building = new DoorIndex(manager, list, list.Count);
+            try
+            {
+                var growing = building!;
+                while (growing.Cursor < list.Count)
+                {
+                    IndexController(growing, list[growing.Cursor++] as CityBuildingController);
+                    if (System.Diagnostics.Stopwatch.GetTimestamp() >= deadline) return false;
+                }
+                index = growing; building = null; IndexBuilds++;
+                return true;
+            }
+            catch (Exception) { building = null; indexFailed = true; return true; }
+            finally { MaximumIndexSliceMilliseconds = Math.Max(MaximumIndexSliceMilliseconds, Since(started)); }
+        }
+
+        private static double Since(long started) => (System.Diagnostics.Stopwatch.GetTimestamp() - started) * 1000.0 / System.Diagnostics.Stopwatch.Frequency;
+
+        internal Transform? FindDoor(CityManager manager, Vector3 entrance)
+        {
+            long started = System.Diagnostics.Stopwatch.GetTimestamp();
+            DoorSearches++;
+            Transform? door = null; float best = DoorMatchMetres;
+            otherDoors.Clear();
+            void Consider(Transform candidate)
+            {
+                Vector3 front = candidate.position + candidate.forward * 0.5f;
+                float distance = Vector3.Distance(front, entrance);
+                if (distance < OtherDoorMetres) otherDoors.Add(front);
+                if (distance < best) { best = distance; door = candidate; }
+            }
+            if (!IndexDisabled && Matches(index, manager))
+            {
+                IndexedSearches++;
+                index!.Near(entrance, nearby);
+                foreach (int at in nearby)
+                {
+                    var candidate = index.Doors[at];
+                    if (candidate != null) Consider(candidate);
+                }
+            }
+            else
+                foreach (var controller in manager.cityBuildingControllers)
+                {
+                    if (controller == null || controller.entranceDoors == null) continue;
+                    foreach (var candidate in controller.entranceDoors)
+                        if (candidate != null && candidate.doorTransform != null) Consider(candidate.doorTransform);
+                }
+            MaximumSearchMilliseconds = Math.Max(MaximumSearchMilliseconds, Since(started));
+            return door;
+        }
+
+        private DoorQueue? Sample(string key, Place place)
         {
             var manager = CityManager.Instance;
             if (manager == null || manager.cityBuildingControllers == null || !place.Position.IsFinite) return null;
             Vector3 entrance = PhysicalPedestrianBody.Vector(place.Position);
-            Transform? door = null; float best = DoorMatchMetres;
-            var otherDoors = new List<Vector3>();
-            foreach (var controller in manager.cityBuildingControllers)
-            {
-                if (controller == null || controller.entranceDoors == null) continue;
-                foreach (var candidate in controller.entranceDoors)
-                {
-                    if (candidate == null || candidate.doorTransform == null) continue;
-                    Vector3 front = candidate.doorTransform.position + candidate.doorTransform.forward * 0.5f;
-                    float distance = Vector3.Distance(front, entrance);
-                    if (distance < 15f) otherDoors.Add(front);
-                    if (distance < best) { best = distance; door = candidate.doorTransform; }
-                }
-            }
+            var door = FindDoor(manager, entrance);
             if (door == null) return null;
+            long navigation = System.Diagnostics.Stopwatch.GetTimestamp();
+            try { return Queue(key, place, entrance, door); }
+            finally { MaximumNavigationMilliseconds = Math.Max(MaximumNavigationMilliseconds, Since(navigation)); }
+        }
+
+        private DoorQueue? Queue(string key, Place place, Vector3 entrance, Transform door)
+        {
             Vector3 ownFront = door.position + door.forward * 0.5f;
-            otherDoors.RemoveAll(front => Vector3.Distance(front, ownFront) < 0.05f);
+            for (int i = otherDoors.Count - 1; i >= 0; i--) if (Vector3.Distance(otherDoors[i], ownFront) < 0.05f) otherDoors.RemoveAt(i);
             Vector3 outward = Vector3.ProjectOnPlane(door.forward, Vector3.up);
             if (outward.sqrMagnitude < 0.01f) return null;
             outward.Normalize();

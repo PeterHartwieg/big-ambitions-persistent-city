@@ -469,9 +469,12 @@ namespace PerfUnionProbe
         public long Used { get; }
 
         public void Close(CollectionSeries series, LoopPhaseRecorder phases, int frame, bool closePhases, double modWorkMs, bool late, double ticksToMs)
+            => Close(series, phases, frame, closePhases, modWorkMs, late, ticksToMs, -1);
+
+        public void Close(CollectionSeries series, LoopPhaseRecorder phases, int frame, bool closePhases, double modWorkMs, bool late, double ticksToMs, long modTicks)
         {
             series.Note(Collections, Used, Frame);
-            if (closePhases) phases.Close(frame, Ticks, Collections, modWorkMs, true, late, ticksToMs, true);
+            if (closePhases) phases.Close(frame, Ticks, Collections, modWorkMs, true, late, ticksToMs, true, modTicks);
         }
 
         public double WholeMs(long frameStartTicks, double ticksToMs) => (Ticks - frameStartTicks) * ticksToMs;
@@ -480,17 +483,22 @@ namespace PerfUnionProbe
 
     public sealed class LoopPhaseRecorder
     {
-        public const int Limit = 64, MaxPhases = 12, MaxSubPhases = 64;
+        public const int Limit = 64, MaxPhases = 12, MaxSubPhases = 128;
         private readonly int capacity;
         private readonly long[] start;
+        private readonly long[] modAt;
         private readonly int[] gcAt;
         private readonly bool[] stamped;
         private readonly double[] previous;
         private readonly double[] current;
+        private readonly double[] previousMod;
+        private readonly double[] currentMod;
         private readonly int[] phaseThrough;
         private readonly int[] rowPhaseThrough;
         private readonly double[] rowPhases;
         private readonly double[] rowPrevious;
+        private readonly double[] rowPhaseMod;
+        private readonly double[] rowPreviousMod;
         private readonly int[] rowFrame = new int[Limit], rowCollections = new int[Limit], rowGcPhase = new int[Limit], rowThrough = new int[Limit];
         private readonly double[] rowWhole = new double[Limit], rowPreviousWhole = new double[Limit], rowNextWhole = new double[Limit], rowMod = new double[Limit];
         private readonly bool[] rowDiagnostic = new bool[Limit], rowLate = new bool[Limit], rowPreviousCollected = new bool[Limit], rowPartial = new bool[Limit];
@@ -506,9 +514,10 @@ namespace PerfUnionProbe
         {
             if (capacity <= 0 || capacity > MaxSubPhases) throw new ArgumentOutOfRangeException(nameof(capacity));
             this.capacity = capacity;
-            start = new long[capacity]; gcAt = new int[capacity]; stamped = new bool[capacity];
-            previous = new double[capacity]; current = new double[capacity]; phaseThrough = new int[capacity];
+            start = new long[capacity]; modAt = new long[capacity]; gcAt = new int[capacity]; stamped = new bool[capacity];
+            previous = new double[capacity]; current = new double[capacity]; previousMod = new double[capacity]; currentMod = new double[capacity]; phaseThrough = new int[capacity];
             rowPhaseThrough = new int[Limit * capacity]; rowPhases = new double[Limit * capacity]; rowPrevious = new double[Limit * capacity];
+            rowPhaseMod = new double[Limit * capacity]; rowPreviousMod = new double[Limit * capacity];
             ranked = new int[capacity];
         }
 
@@ -529,39 +538,47 @@ namespace PerfUnionProbe
         public void Reset()
         {
             Collections = Retained = 0; open = previousCollected = rowAwaitsNext = false; previousWhole = -1;
-            Array.Clear(stamped, 0, capacity); Array.Clear(previous, 0, capacity);
+            Array.Clear(stamped, 0, capacity); Array.Clear(previous, 0, capacity); Array.Clear(previousMod, 0, capacity);
         }
 
-        public void Begin(long ticks, int collections)
+        public void Begin(long ticks, int collections) => Begin(ticks, collections, 0);
+
+        public void Begin(long ticks, int collections, long modTicks)
         {
             Array.Clear(stamped, 0, capacity);
             open = names.Length > 0;
             startCollections = collections;
-            if (open) Stamp(0, ticks, collections);
+            if (open) Stamp(0, ticks, collections, modTicks);
         }
 
-        public void Stamp(int phase, long ticks, int collections)
+        public void Stamp(int phase, long ticks, int collections) => Stamp(phase, ticks, collections, 0);
+
+        public void Stamp(int phase, long ticks, int collections, long modTicks)
         {
             if (!open || phase < 0 || phase >= names.Length || stamped[phase]) return;
-            stamped[phase] = true; start[phase] = ticks; gcAt[phase] = collections;
+            stamped[phase] = true; start[phase] = ticks; gcAt[phase] = collections; modAt[phase] = modTicks;
         }
 
         public void Close(int frame, long endTicks, int collections, double modWorkMs, bool diagnostic, bool late, double ticksToMs)
             => Close(frame, endTicks, collections, modWorkMs, diagnostic, late, ticksToMs, false);
 
         public void Close(int frame, long endTicks, int collections, double modWorkMs, bool diagnostic, bool late, double ticksToMs, bool partial)
+            => Close(frame, endTicks, collections, modWorkMs, diagnostic, late, ticksToMs, partial, -1);
+
+        public void Close(int frame, long endTicks, int collections, double modWorkMs, bool diagnostic, bool late, double ticksToMs, bool partial, long modTicks)
         {
             if (!open) return;
             open = false;
             int phases = names.Length;
-            long next = endTicks; int nextGc = collections, gcPhase = -1;
+            long next = endTicks, nextMod = modTicks; int nextGc = collections, gcPhase = -1;
             for (int p = phases - 1; p >= 0; p--)
             {
-                if (!stamped[p]) { start[p] = next; gcAt[p] = nextGc; }
+                if (!stamped[p]) { start[p] = next; gcAt[p] = nextGc; modAt[p] = nextMod; }
                 current[p] = Math.Max(0, next - start[p]) * ticksToMs;
+                currentMod[p] = modTicks < 0 ? 0 : Math.Max(0, nextMod - modAt[p]) * ticksToMs;
                 phaseThrough[p] = nextGc;
                 if (nextGc != gcAt[p]) gcPhase = p;
-                next = start[p]; nextGc = gcAt[p];
+                next = start[p]; nextGc = gcAt[p]; nextMod = modAt[p];
             }
             double whole = Math.Max(0, endTicks - start[0]) * ticksToMs;
             bool collected = collections != startCollections;
@@ -580,11 +597,13 @@ namespace PerfUnionProbe
                         rowPhases[r * capacity + p] = p < phases ? current[p] : 0;
                         rowPhaseThrough[r * capacity + p] = p < phases ? phaseThrough[p] : collections;
                         rowPrevious[r * capacity + p] = p < phases && previousWhole >= 0 ? previous[p] : -1;
+                        rowPhaseMod[r * capacity + p] = p < phases ? currentMod[p] : 0;
+                        rowPreviousMod[r * capacity + p] = p < phases && previousWhole >= 0 ? previousMod[p] : -1;
                     }
                     rowAwaitsNext = !partial;
                 }
             }
-            for (int p = 0; p < phases; p++) previous[p] = current[p];
+            for (int p = 0; p < phases; p++) { previous[p] = current[p]; previousMod[p] = currentMod[p]; }
             previousWhole = whole; previousCollected = collected;
         }
 
@@ -620,6 +639,32 @@ namespace PerfUnionProbe
         public int GcPhase(int row) => rowGcPhase[Row(row)];
         public double PhaseMs(int row, int phase) => rowPhases[Row(row) * capacity + Phase(phase)];
         public double PreviousPhaseMs(int row, int phase) => rowPrevious[Row(row) * capacity + Phase(phase)];
+        public double PhaseModMs(int row, int phase) => rowPhaseMod[Row(row) * capacity + Phase(phase)];
+        public double PreviousPhaseModMs(int row, int phase) => rowPreviousMod[Row(row) * capacity + Phase(phase)];
+        public double ExcessOutsideModMs(int row, int phase)
+        {
+            double before = PreviousPhaseMs(row, phase);
+            return before < 0 ? double.NaN : PhaseMs(row, phase) - PhaseModMs(row, phase) - (before - PreviousPhaseModMs(row, phase));
+        }
+
+        public int LargestExcessOutsideMod(int row)
+        {
+            int best = -1; double most = double.NegativeInfinity;
+            for (int p = 0; p < names.Length; p++)
+            {
+                double grew = ExcessOutsideModMs(row, p);
+                if (double.IsNaN(grew)) return -1;
+                if (grew > most) { most = grew; best = p; }
+            }
+            return best;
+        }
+
+        public double ModMs(int row)
+        {
+            double total = 0;
+            for (int p = 0; p < names.Length; p++) total += PhaseModMs(row, p);
+            return total;
+        }
 
         public double ExcessMs(int row) => PreviousWholeMs(row) < 0 ? -1 : WholeMs(row) - PreviousWholeMs(row);
 
@@ -675,6 +720,7 @@ namespace PerfUnionProbe
     public sealed class SubPhasePlan
     {
         public const string Tail = "loop-tail", Unstamped = ".unstamped";
+        public static readonly string[] DetailedParents = { "PreUpdate", "Update", "PreLateUpdate", "PostLateUpdate", "TimeUpdate" };
         private readonly int[][] before;
         private readonly int[] rootBefore;
 

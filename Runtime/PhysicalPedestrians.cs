@@ -139,7 +139,7 @@ namespace PersistentCity.Runtime
             {
                 int daysPerYear = DaysPerYear();
                 var dressing = new PersonDressing(identity, daysPerYear);
-                var choice = idle.Choose(dressing, all.Count, ceiling, immediate ? null : budget, Time.frameCount, Time.unscaledTimeAsDouble, out var pooled);
+                var choice = idle.Choose(dressing, all.Count, ceiling, immediate ? null : budget, Time.frameCount, Time.unscaledTimeAsDouble, immediate, out var pooled);
                 if (choice == BodyChoice.Full) return false;
                 if (choice == BodyChoice.Deferred) { LastDeferred = true; return false; }
                 bool dressed = choice == BodyChoice.Hit;
@@ -749,11 +749,7 @@ namespace PersistentCity.Runtime
 
         internal static void Detach(PhysicalPedestrians pool)
         {
-            if (!ReferenceEquals(owner, pool)) return;
-            owner = null;
-            if (!installed) return;
-            UnityEngine.LowLevel.PlayerLoop.SetPlayerLoop(Remove(UnityEngine.LowLevel.PlayerLoop.GetCurrentPlayerLoop()));
-            installed = false;
+            if (ReferenceEquals(owner, pool)) owner = null;
         }
 
         private static void Run()
@@ -781,16 +777,6 @@ namespace PersistentCity.Runtime
                 }
                 list.Add(Insert(child, ref inserted));
             }
-            system.subSystemList = list.ToArray();
-            return system;
-        }
-
-        private static UnityEngine.LowLevel.PlayerLoopSystem Remove(UnityEngine.LowLevel.PlayerLoopSystem system)
-        {
-            if (system.subSystemList == null) return system;
-            var list = new List<UnityEngine.LowLevel.PlayerLoopSystem>(system.subSystemList.Length);
-            foreach (var child in system.subSystemList)
-                if (child.type != typeof(PersistentCityWalkerBound)) list.Add(Remove(child));
             system.subSystemList = list.ToArray();
             return system;
         }

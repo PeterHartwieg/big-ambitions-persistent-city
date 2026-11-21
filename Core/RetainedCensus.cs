@@ -17,10 +17,15 @@ namespace PersistentCity.Core
             public long Objects { get; internal set; }
             public long Bytes { get; internal set; }
             public long ScannedBytes { get; internal set; }
+            public bool Cache { get; internal set; }
+            public int Bound { get; internal set; }
+            internal Dictionary<Type, long[]>? Tracked;
+            public long TrackedObjects(Type type) => Tracked != null && Tracked.TryGetValue(type, out var t) ? t[0] : 0;
+            public long TrackedBytes(Type type) => Tracked != null && Tracked.TryGetValue(type, out var t) ? t[1] : 0;
         }
 
         public const string PolicyId = "retained-census-v1";
-        public const int Header = 16, ArrayHeader = 32, Pointer = 8;
+        public const int Header = 16, ArrayHeader = 32, Pointer = 8, TrackedRootsPerType = 8;
         private readonly Dictionary<Type, Layout> layouts = new Dictionary<Type, Layout>();
         private readonly Dictionary<object, bool> seen = new Dictionary<object, bool>(Identity.Instance);
         private readonly Dictionary<Type, Row> byType = new Dictionary<Type, Row>();
@@ -29,6 +34,8 @@ namespace PersistentCity.Core
         private readonly Func<Type, bool> walkable;
         private readonly Dictionary<Type, bool> walkableTypes = new Dictionary<Type, bool>();
         private readonly Stack<object> stack = new Stack<object>();
+        private readonly HashSet<Type> perRoot = new HashSet<Type>();
+        private readonly List<(string Name, object Root, int Bound)> caches = new List<(string, object, int)>();
 
         public RetainedCensus(Func<Type, bool>? walkable = null) { this.walkable = walkable ?? (_ => true); }
 
@@ -56,6 +63,30 @@ namespace PersistentCity.Core
         public int Failures { get; private set; }
 
         public void Exclude(object? value) { if (value != null) seen[value] = true; }
+
+        public void TrackPerRoot(IEnumerable<Type> types) { foreach (var type in types) perRoot.Add(type); }
+
+        public void DeferCache(string name, object? root, int bound)
+        {
+            if (root == null || seen.ContainsKey(root)) return;
+            seen[root] = true;
+            caches.Add((name, root, bound));
+        }
+
+        public void AddDeferredCaches()
+        {
+            foreach (var cache in caches)
+            {
+                seen.Remove(cache.Root);
+                var row = Add(cache.Name, cache.Root);
+                row.Cache = true; row.Bound = cache.Bound;
+            }
+            caches.Clear();
+        }
+
+        public IEnumerable<Row> CacheRoots => byRoot.Where(r => r.Cache);
+        public long CachedObjectsOf(Type type) => byRoot.Where(r => r.Cache).Sum(r => r.TrackedObjects(type));
+        public long CachedBytesOf(Type type) => byRoot.Where(r => r.Cache).Sum(r => r.TrackedBytes(type));
 
         public Row Add(string name, object? root)
         {
@@ -175,6 +206,12 @@ namespace PersistentCity.Core
             row.Objects++; row.Bytes += bytes; if (scanned) row.ScannedBytes += bytes;
             if (!byType.TryGetValue(type, out var kind)) byType.Add(type, kind = new Row(Name(type)));
             kind.Objects++; kind.Bytes += bytes; if (scanned) kind.ScannedBytes += bytes;
+            if (perRoot.Contains(type))
+            {
+                row.Tracked ??= new Dictionary<Type, long[]>();
+                if (!row.Tracked.TryGetValue(type, out var counts)) row.Tracked.Add(type, counts = new long[2]);
+                counts[0]++; counts[1] += bytes;
+            }
         }
 
         private void Children(object value, Layout layout)
@@ -313,9 +350,54 @@ namespace PersistentCity.Core
                     .Append(",\"bytes\":").Append(BytesOf(type).ToString(CultureInfo.InvariantCulture)).Append('}');
             }
             text.Append(']');
+            if (perRoot.Count > 0)
+            {
+                text.Append(",\"tracked_types_outside_caches\":[");
+                first = true;
+                foreach (var type in tracked ?? Array.Empty<Type>())
+                {
+                    if (!perRoot.Contains(type)) continue;
+                    if (!first) text.Append(',');
+                    first = false;
+                    text.Append("{\"name\":\"").Append(Name(type).Replace("\\", "\\\\").Replace("\"", "\\\""))
+                        .Append("\",\"objects\":").Append((ObjectsOf(type) - CachedObjectsOf(type)).ToString(CultureInfo.InvariantCulture))
+                        .Append(",\"bytes\":").Append((BytesOf(type) - CachedBytesOf(type)).ToString(CultureInfo.InvariantCulture)).Append('}');
+                }
+                text.Append("],\"tracked_roots\":[");
+                first = true;
+                foreach (var type in perRoot.OrderBy(t => Name(t), StringComparer.Ordinal))
+                {
+                    if (!first) text.Append(',');
+                    first = false;
+                    text.Append("{\"name\":\"").Append(Name(type).Replace("\\", "\\\\").Replace("\"", "\\\"")).Append("\",\"roots\":[");
+                    bool firstRoot = true;
+                    foreach (var root in byRoot.Where(r => r.TrackedObjects(type) > 0).OrderByDescending(r => r.TrackedObjects(type)).ThenBy(r => r.Name, StringComparer.Ordinal).Take(TrackedRootsPerType))
+                    {
+                        if (!firstRoot) text.Append(',');
+                        firstRoot = false;
+                        text.Append("{\"name\":\"").Append(root.Name.Replace("\\", "\\\\").Replace("\"", "\\\"")).Append("\",\"cache\":").Append(root.Cache ? "true" : "false")
+                            .Append(",\"objects\":").Append(root.TrackedObjects(type).ToString(CultureInfo.InvariantCulture))
+                            .Append(",\"bytes\":").Append(root.TrackedBytes(type).ToString(CultureInfo.InvariantCulture)).Append('}');
+                    }
+                    text.Append("]}");
+                }
+                text.Append("],\"cache_roots\":[");
+                first = true;
+                foreach (var root in CacheRoots)
+                {
+                    if (!first) text.Append(',');
+                    first = false;
+                    text.Append("{\"name\":\"").Append(root.Name.Replace("\\", "\\\\").Replace("\"", "\\\"")).Append("\",\"bound\":").Append(root.Bound.ToString(CultureInfo.InvariantCulture))
+                        .Append(",\"objects\":").Append(root.Objects.ToString(CultureInfo.InvariantCulture)).Append(",\"bytes\":").Append(root.Bytes.ToString(CultureInfo.InvariantCulture))
+                        .Append(",\"routes\":").Append(root.TrackedObjects(typeof(Route)).ToString(CultureInfo.InvariantCulture))
+                        .Append(",\"route_legs\":").Append(root.TrackedObjects(typeof(RouteLeg)).ToString(CultureInfo.InvariantCulture)).Append('}');
+                }
+                text.Append(']');
+            }
             if (journeyLegs is JourneyLegLedger ledger)
             {
                 long retained = ObjectsOf(typeof(RouteLeg));
+                long cached = CachedObjectsOf(typeof(RouteLeg));
                 text.Append(",\"route_legs\":{\"retained\":").Append(retained.ToString(CultureInfo.InvariantCulture))
                     .Append(",\"in_current_journeys\":").Append(ledger.Legs.ToString(CultureInfo.InvariantCulture))
                     .Append(",\"outside_current_journeys\":").Append((retained - ledger.Legs).ToString(CultureInfo.InvariantCulture))
@@ -323,7 +405,9 @@ namespace PersistentCity.Core
                     .Append(",\"travelling\":").Append(ledger.Travelling.ToString(CultureInfo.InvariantCulture))
                     .Append(",\"split_prefix_legs\":").Append(ledger.SplitPrefixes.ToString(CultureInfo.InvariantCulture))
                     .Append(",\"most_legs_in_a_journey\":").Append(ledger.MostLegs.ToString(CultureInfo.InvariantCulture))
-                    .Append(",\"most_split_prefixes_in_a_journey\":").Append(ledger.MostSplitPrefixes.ToString(CultureInfo.InvariantCulture)).Append('}');
+                    .Append(",\"most_split_prefixes_in_a_journey\":").Append(ledger.MostSplitPrefixes.ToString(CultureInfo.InvariantCulture))
+                    .Append(",\"in_caches\":").Append(cached.ToString(CultureInfo.InvariantCulture))
+                    .Append(",\"outside_current_journeys_and_caches\":").Append((retained - ledger.Legs - cached).ToString(CultureInfo.InvariantCulture)).Append('}');
             }
             return text.Append('}').ToString();
         }

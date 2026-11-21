@@ -82,6 +82,14 @@ namespace PersistentCity.Runtime
             walking = new WalkingRoutes(walkingMetresPerMinute, (from, to) => access != null && access.ClearSegment(from, to));
             foreach (var place in places) this.places[place.Id] = place;
         }
+        internal void RetainedCaches(Action<string, object, int> add)
+        {
+            add("walking.cache", walking.RetainedPaths, WalkingRoutes.RetainedPathLimit);
+            add("trains", trains, -1);
+        }
+
+        internal void ReleaseRetainedPaths() { walking.Clear(); trains.Clear(); trainStations = null; }
+
         internal bool ReuseRoadSceneForRetiming(MultimodalRoutes previous)
         {
             var city = CityManager.Instance;

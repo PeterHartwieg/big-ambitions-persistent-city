@@ -154,6 +154,9 @@ namespace PersistentCity.Core
             budget != null && !HasDressed(wanted) && !(owned >= maximum && items.Count == 0) && !budget.CanTake(frame, seconds);
 
         public BodyChoice Choose(in PersonDressing wanted, int owned, int maximum, DressBuildBudget? budget, int frame, double seconds, out T item)
+            => Choose(wanted, owned, maximum, budget, frame, seconds, false, out item);
+
+        public BodyChoice Choose(in PersonDressing wanted, int owned, int maximum, DressBuildBudget? budget, int frame, double seconds, bool reuseBeforeGrow, out T item)
         {
             if (TryTakeDressed(wanted, out item)) return BodyChoice.Hit;
             if (owned >= maximum && items.Count == 0) return BodyChoice.Full;
@@ -161,7 +164,7 @@ namespace PersistentCity.Core
             if (TryTakeUndressed(out item)) return BodyChoice.Redress;
             int expendable = OldestExpendable();
             if (expendable >= 0) { item = TakeAt(expendable); return BodyChoice.Redress; }
-            if (owned < maximum && items.Count < spare) return BodyChoice.Grow;
+            if (owned < maximum && items.Count < spare && !(reuseBeforeGrow && items.Count > 0)) return BodyChoice.Grow;
             if (TryTakeVictim(out item)) return BodyChoice.Redress;
             return BodyChoice.Grow;
         }

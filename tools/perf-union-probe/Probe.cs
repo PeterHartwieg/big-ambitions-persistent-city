@@ -94,8 +94,6 @@ namespace PerfUnionProbe
         private static readonly int[] subRanking = new int[4];
         private static readonly int[] subCollected = new int[LoopPhaseRecorder.MaxSubPhases];
         private static bool subPhasesTruncated;
-        private static readonly Type[] SubPhaseParents = { typeof(UnityEngine.PlayerLoop.Update), typeof(UnityEngine.PlayerLoop.PreLateUpdate),
-            typeof(UnityEngine.PlayerLoop.PostLateUpdate), typeof(UnityEngine.PlayerLoop.TimeUpdate) };
         private static Action<string> markDiagnostic;
         private static string startScan = "none", stopScan = "none";
         private static readonly RingCursor frameRing = new RingCursor(FrameLimit);
@@ -500,7 +498,7 @@ namespace PerfUnionProbe
 
         private static void PhaseStamp(int phase)
         {
-            if (measuring) phases.Stamp(phase, Stopwatch.GetTimestamp(), GC.CollectionCount(0));
+            if (measuring) phases.Stamp(phase, Stopwatch.GetTimestamp(), GC.CollectionCount(0), union.FrameTicks);
         }
 
         private static PlayerLoopSystem[] WithRootStamps(PlayerLoopSystem[] systems, SubPhasePlan plan)
@@ -526,7 +524,7 @@ namespace PerfUnionProbe
                 children[i] = kept[i].Select(c => c.type == typeof(PerfUnionPhaseStamp) || c.type == typeof(PerfUnionFrameStart) ? null : c.type?.Name ?? "unnamed").ToArray();
             }
             var plan = SubPhasePlan.Build(systems.Select(s => s.type?.Name ?? "unnamed").ToArray(), children, early,
-                SubPhaseParents.Select(t => t.Name).ToArray(), LoopPhaseRecorder.MaxSubPhases);
+                SubPhasePlan.DetailedParents, LoopPhaseRecorder.MaxSubPhases);
             for (int i = 0; i < systems.Length; i++)
             {
                 if (kept[i] == null) continue;
@@ -546,7 +544,7 @@ namespace PerfUnionProbe
 
         private static void SubStamp(int phase)
         {
-            if (measuring) subPhases.Stamp(phase, Stopwatch.GetTimestamp(), GC.CollectionCount(0));
+            if (measuring) subPhases.Stamp(phase, Stopwatch.GetTimestamp(), GC.CollectionCount(0), union.FrameTicks);
         }
 
         private static void RemoveLoop()
@@ -599,8 +597,8 @@ namespace PerfUnionProbe
             if (measuring && currentFrame >= 0 && currentFrame > firstMeasureFrame)
             {
                 WriteFrame(nowFrame, new StopRead(collections, nowFrame, -1, -1, now), false);
-                phases.Close(currentFrame, now, collections, union.FrameTicks * ToMs, frameDiagnostic, frameLate, ToMs);
-                if (subPhases.Phases > 0) subPhases.Close(currentFrame, now, collections, union.FrameTicks * ToMs, frameDiagnostic, frameLate, ToMs);
+                phases.Close(currentFrame, now, collections, union.FrameTicks * ToMs, frameDiagnostic, frameLate, ToMs, false, union.FrameTicks);
+                if (subPhases.Phases > 0) subPhases.Close(currentFrame, now, collections, union.FrameTicks * ToMs, frameDiagnostic, frameLate, ToMs, false, union.FrameTicks);
             }
             if (measuring) NoteCollections(collections);
             if (union.Depth != 0)
@@ -727,8 +725,8 @@ namespace PerfUnionProbe
             if (!measuring) return;
             monoHeapStop = stop.Heap; monoUsedStop = stop.Used;
             bool closePhases = currentFrame >= 0 && currentFrame > firstMeasureFrame;
-            stop.Close(collectionSeries, phases, currentFrame, closePhases, union.FrameTicks * ToMs, frameLate, ToMs);
-            if (closePhases && subPhases.Phases > 0) subPhases.Close(currentFrame, stop.Ticks, stop.Collections, union.FrameTicks * ToMs, true, frameLate, ToMs, true);
+            stop.Close(collectionSeries, phases, currentFrame, closePhases, union.FrameTicks * ToMs, frameLate, ToMs, union.FrameTicks);
+            if (closePhases && subPhases.Phases > 0) subPhases.Close(currentFrame, stop.Ticks, stop.Collections, union.FrameTicks * ToMs, true, frameLate, ToMs, true, union.FrameTicks);
             if (reason == "explicit-stop") stopScan = Rescan(false);
             if (writeStopFrame && currentFrame > firstMeasureFrame) { frameDiagnostic = true; WriteFrame(currentFrame + 1, stop, true); }
             if (pendingWindowStart) pendingWindowStart = false;
@@ -828,12 +826,22 @@ namespace PerfUnionProbe
                 if (!phases.Diagnostic(r) && phases.PreviousWholeMs(r) >= 0 && phases.ExcessMs(r) > excess) { excess = phases.ExcessMs(r); worst = r; }
             var summary = new JObject { ["collections"] = phases.Collections, ["retained"] = phases.Retained, ["truncated"] = phases.Truncated,
                 ["phases"] = new JArray(Enumerable.Range(0, phases.Phases).Select(phases.PhaseName)), ["page_section"] = "collections",
-                ["sub_phase_count"] = subPhases.Phases, ["sub_phases_truncated"] = subPhasesTruncated };
+                ["sub_phase_count"] = subPhases.Phases, ["sub_phase_capacity"] = subPhases.Capacity, ["sub_phases_truncated"] = subPhasesTruncated, ["gc_mode"] = GcModeRow() };
             if (worst >= 0)
                 summary["worst"] = new JObject { ["frame"] = phases.Frame(worst), ["whole_frame_ms"] = phases.WholeMs(worst), ["previous_whole_ms"] = phases.PreviousWholeMs(worst),
                     ["excess_ms"] = excess, ["mod_work_ms"] = phases.ModWorkMs(worst), ["gc_phase"] = PhaseLabel(phases.GcPhase(worst)),
                     ["largest_excess_phase"] = PhaseLabel(phases.LargestExcessPhase(worst)) };
             return summary;
+        }
+
+        private static JObject GcModeRow()
+        {
+            try
+            {
+                return new JObject { ["mode"] = UnityEngine.Scripting.GarbageCollector.GCMode.ToString(), ["incremental"] = UnityEngine.Scripting.GarbageCollector.isIncremental,
+                    ["incremental_time_slice_ns"] = (long)UnityEngine.Scripting.GarbageCollector.incrementalTimeSliceNanoseconds };
+            }
+            catch (Exception failure) { return new JObject { ["unavailable"] = failure.GetType().Name }; }
         }
 
         private static string PhaseLabel(int phase) => phase >= 0 && phase < phases.Phases ? phases.PhaseName(phase) : "unknown";
@@ -842,12 +850,13 @@ namespace PerfUnionProbe
 
         private static JObject CollectionRow(int r)
         {
-            var now = new JObject(); var before = new JObject(); var grew = new JObject(); var collected = new JArray();
+            var now = new JObject(); var before = new JObject(); var grew = new JObject(); var collected = new JArray(); var mod = new JObject();
             for (int p = 0; p < phases.Phases; p++)
             {
                 string name = phases.PhaseName(p);
                 double at = phases.PhaseMs(r, p), was = phases.PreviousPhaseMs(r, p);
                 now[name] = at; before[name] = Ms(was); grew[name] = was < 0 ? JValue.CreateNull() : (JToken)(at - was);
+                if (phases.PhaseModMs(r, p) > 0) mod[name] = phases.PhaseModMs(r, p);
                 if (phases.PhaseCollections(r, p) > 0)
                     collected.Add(new JObject { ["phase"] = name, ["gen0_from"] = phases.PhaseGen0From(r, p), ["gen0_through"] = phases.PhaseGen0Through(r, p) });
             }
@@ -856,7 +865,8 @@ namespace PerfUnionProbe
                 ["mod_work_ms"] = phases.ModWorkMs(r), ["collections"] = phases.RowCollections(r), ["gen0_from"] = phases.Gen0From(r), ["gen0_through"] = phases.Gen0Through(r), ["collection_phases"] = collected, ["diagnostic"] = phases.Diagnostic(r), ["late_boundary"] = phases.Late(r),
                 ["partial"] = phases.Partial(r),
                 ["gc_phase"] = PhaseLabel(phases.GcPhase(r)), ["largest_excess_phase"] = PhaseLabel(phases.LargestExcessPhase(r)),
-                ["phase_ms"] = now, ["previous_phase_ms"] = before, ["phase_excess_ms"] = grew, ["sub_phases"] = SubPhaseRow(r) };
+                ["phase_ms"] = now, ["previous_phase_ms"] = before, ["phase_excess_ms"] = grew, ["phase_mod_ms"] = mod,
+                ["largest_excess_outside_mod_phase"] = PhaseLabel(phases.LargestExcessOutsideMod(r)), ["sub_phases"] = SubPhaseRow(r) };
         }
 
         private static JObject SubPhaseRow(int r)
@@ -869,17 +879,25 @@ namespace PerfUnionProbe
             {
                 int p = subRanking[k];
                 ranked.Add(new JObject { ["name"] = subPhases.PhaseName(p), ["ms"] = subPhases.PhaseMs(r, p), ["previous_ms"] = subPhases.PreviousPhaseMs(r, p),
-                    ["excess_ms"] = subPhases.PhaseMs(r, p) - subPhases.PreviousPhaseMs(r, p) });
+                    ["excess_ms"] = subPhases.PhaseMs(r, p) - subPhases.PreviousPhaseMs(r, p), ["mod_ms"] = subPhases.PhaseModMs(r, p),
+                    ["previous_mod_ms"] = subPhases.PreviousPhaseModMs(r, p), ["excess_outside_mod_ms"] = subPhases.ExcessOutsideModMs(r, p) });
             }
+            var modded = new JArray();
+            for (int p = 0; p < subPhases.Phases; p++)
+                if (subPhases.PhaseModMs(r, p) > 0) modded.Add(new JObject { ["name"] = subPhases.PhaseName(p), ["mod_ms"] = subPhases.PhaseModMs(r, p) });
+            int outside = subPhases.LargestExcessOutsideMod(r);
             var collected = new JArray();
             int phasesCollected = subPhases.CollectedPhases(r, subCollected);
             for (int k = 0; k < phasesCollected; k++)
             {
                 int p = subCollected[k];
-                collected.Add(new JObject { ["phase"] = subPhases.PhaseName(p), ["gen0_from"] = subPhases.PhaseGen0From(r, p), ["gen0_through"] = subPhases.PhaseGen0Through(r, p) });
+                collected.Add(new JObject { ["phase"] = subPhases.PhaseName(p), ["gen0_from"] = subPhases.PhaseGen0From(r, p), ["gen0_through"] = subPhases.PhaseGen0Through(r, p),
+                    ["mod_ms"] = subPhases.PhaseModMs(r, p) });
             }
             int gc = subPhases.GcPhase(r);
-            return new JObject { ["available"] = true, ["gc_sub_phase"] = gc >= 0 ? subPhases.PhaseName(gc) : "unknown", ["collection_sub_phases"] = collected, ["largest_excess"] = ranked };
+            return new JObject { ["available"] = true, ["gc_sub_phase"] = gc >= 0 ? subPhases.PhaseName(gc) : "unknown", ["collection_sub_phases"] = collected, ["largest_excess"] = ranked,
+                ["mod_ms"] = subPhases.ModMs(r), ["mod_sub_phases"] = modded,
+                ["largest_excess_outside_mod"] = outside < 0 ? (JToken)JValue.CreateNull() : new JObject { ["name"] = subPhases.PhaseName(outside), ["excess_outside_mod_ms"] = subPhases.ExcessOutsideModMs(r, outside) } };
         }
 
         private const int PageEnvelope = 512;

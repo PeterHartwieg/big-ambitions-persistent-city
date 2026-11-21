@@ -628,7 +628,7 @@ internal static class Program
     }
 
     private static readonly string[] UnityLoop = { "TimeUpdate", "Initialization", "EarlyUpdate", "FixedUpdate", "PreUpdate", "Update", "PreLateUpdate", "PostLateUpdate" };
-    private static readonly string[] Detailed = { "Update", "PreLateUpdate", "PostLateUpdate", "TimeUpdate" };
+    private static readonly string[] Detailed = SubPhasePlan.DetailedParents;
 
     private static void Walk(SubPhasePlan plan, string[] systems, string[][] children, int early, LoopPhaseRecorder rec, int frame, ref long t, ref int gc, string[] gcAt, string slow, long slowMs)
     {
@@ -674,7 +674,7 @@ internal static class Program
         var plan = SubPhasePlan.Build(UnityLoop, children, 2, Detailed, LoopPhaseRecorder.MaxSubPhases);
         var names = plan.Names.ToList();
         int At(string name) => names.IndexOf(name);
-        var expected = new[] { "EarlyUpdate", "FixedUpdate", "PreUpdate", "Update.ScriptRunBehaviourUpdate", "PreLateUpdate.ScriptRunBehaviourLateUpdate",
+        var expected = new[] { "EarlyUpdate", "FixedUpdate", "PreUpdate.PhysicsUpdate", "Update.ScriptRunBehaviourUpdate", "PreLateUpdate.ScriptRunBehaviourLateUpdate",
             "PostLateUpdate.PresentAfterDraw", SubPhasePlan.Tail, "TimeUpdate.WaitForLastPresentationAndUpdateTime", "Initialization" };
         bool ordered = expected.All(n => At(n) >= 0);
         for (int k = 1; ordered && k < expected.Length; k++) ordered = At(expected[k - 1]) < At(expected[k]);
@@ -720,6 +720,169 @@ internal static class Program
         Check(capped.Retained == 1 && capped.GcPhase(0) == smallNames.IndexOf("Update" + SubPhasePlan.Unstamped),
             "a collection in a child past the cap lands in its parent's unstamped bucket");
         RootCallbacks();
+        UnityLoopWithoutTruncation();
+        ModWorkBySubPhase();
+        WalkerStampAcrossRetime();
+    }
+
+    private const string Walker = "PersistentCityWalkerBound";
+
+    private static List<string> WalkerAttach(List<string> children)
+    {
+        var list = new List<string>();
+        foreach (var child in children)
+        {
+            if (child == "AIUpdate" || child == "AIUpdatePostScript") list.Add(Walker);
+            list.Add(child);
+        }
+        return list;
+    }
+
+    private static void WalkerStampAcrossRetime()
+    {
+        string[] systems = { "TimeUpdate", "EarlyUpdate", "PreUpdate", "Update", "PreLateUpdate", "PostLateUpdate" };
+        var native = new[]
+        {
+            new List<string> { "WaitForLastPresentationAndUpdateTime" }, new List<string> { "ProfilerStartFrame" },
+            new List<string> { "PhysicsUpdate", "SendMouseEvents", "AIUpdate", "WindUpdate" }, new List<string> { "ScriptRunBehaviourUpdate" },
+            new List<string> { "AIUpdatePostScript", "LegacyAnimationUpdate", "ScriptRunBehaviourLateUpdate" }, new List<string> { "PresentAfterDraw" }
+        };
+        var armed = native.Select(WalkerAttach).ToArray();
+        var children = armed.Select(c => c.ToArray()).ToArray();
+        const int early = 1;
+        var plan = SubPhasePlan.Build(systems, children, early, Detailed, LoopPhaseRecorder.MaxSubPhases);
+        var names = plan.Names.ToList();
+        int preWalker = names.IndexOf("PreUpdate." + Walker), ai = names.IndexOf("PreUpdate.AIUpdate");
+        int lateWalker = names.IndexOf("PreLateUpdate." + Walker), post = names.IndexOf("PreLateUpdate.AIUpdatePostScript");
+        Check(preWalker >= 0 && ai >= 0 && lateWalker >= 0 && post >= 0 && !plan.Truncated,
+            "the production detailed parents stamp both walker entries and the native AI updates after them (" + string.Join(",", names) + ")");
+        var stamped = new List<string>();
+        for (int o = 0; o < systems.Length; o++)
+        {
+            int i = (early + o) % systems.Length;
+            for (int c = 0; c <= children[i].Length; c++)
+            {
+                int phase = plan.Before(i, c);
+                if (phase >= 0) stamped.Add("#" + phase);
+                if (c < children[i].Length) stamped.Add(systems[i] + "." + children[i][c]);
+            }
+        }
+        string preEntry = "PreUpdate." + Walker, lateEntry = "PreLateUpdate." + Walker;
+        var reinserted = new List<string>();
+        foreach (var entry in stamped)
+            if (entry != preEntry && entry != lateEntry) reinserted.Add(entry);
+        for (int k = reinserted.Count - 1; k >= 0; k--)
+            if (reinserted[k] == "PreUpdate.AIUpdate") reinserted.Insert(k, preEntry);
+            else if (reinserted[k] == "PreLateUpdate.AIUpdatePostScript") reinserted.Insert(k, lateEntry);
+        (double PreMod, double AiMod, double LateMod, double PostMod, int[] Gc) Measure(List<string> layout)
+        {
+            var rec = new LoopPhaseRecorder(LoopPhaseRecorder.MaxSubPhases);
+            rec.Configure(plan.Names);
+            long t = 0, mod = 0; int gc = 0;
+            var collected = new List<int>();
+            string[] gcIn = { null, preEntry, null, null, null, "PreUpdate.AIUpdate", null, lateEntry };
+            bool[] attached = { true, true, false, false, true, true, true, true };
+            for (int frame = 0; frame < gcIn.Length; frame++)
+            {
+                rec.Begin(t, gc, mod);
+                foreach (var entry in layout)
+                {
+                    if (entry.StartsWith("#", StringComparison.Ordinal)) { rec.Stamp(int.Parse(entry.Substring(1)), t, gc, mod); continue; }
+                    t += 1;
+                    if (entry == preEntry && attached[frame]) { t += 2; mod += 2; }
+                    if (entry == lateEntry && attached[frame]) { t += 3; mod += 3; }
+                    if (entry == "PreUpdate.AIUpdate") t += 5;
+                    if (entry == gcIn[frame]) gc++;
+                }
+                t += 2;
+                rec.Close(frame, t, gc, mod, false, false, 1.0, false, mod);
+            }
+            for (int r = 0; r < rec.Retained; r++) collected.Add(rec.GcPhase(r));
+            int last = rec.Retained - 1;
+            return last < 0 ? (-1, -1, -1, -1, collected.ToArray())
+                : (rec.PhaseModMs(last, preWalker), rec.PhaseModMs(last, ai), rec.PhaseModMs(last, lateWalker), rec.PhaseModMs(last, post), collected.ToArray());
+        }
+        var kept = Measure(stamped);
+        var moved = Measure(reinserted);
+        Check(reinserted.IndexOf(preEntry) > reinserted.IndexOf("#" + ai) && reinserted.IndexOf(lateEntry) > reinserted.IndexOf("#" + post),
+            "removing and reinserting both walker entries after arming puts each behind its native AI stamp");
+        Check(moved.PreMod == 0 && moved.AiMod == 2 && moved.LateMod == 0 && moved.PostMod == 3 && moved.Gc.SequenceEqual(new[] { ai, ai, post }),
+            "with remove-and-reinsert, both walkers' mod time and collections are charged to the native AI updates (" + moved.PreMod + "," + moved.AiMod + "," + moved.LateMod + "," + moved.PostMod + "; " + string.Join(",", moved.Gc.Select(g => names[g])) + ")");
+        Check(kept.PreMod == 2 && kept.AiMod == 0 && kept.LateMod == 3 && kept.PostMod == 0 && kept.Gc.SequenceEqual(new[] { preWalker, ai, lateWalker }),
+            "with both walker entries kept across detach and reattach, PreUpdate and PreLateUpdate walker mod time and collections stay on their own stamps and native AIUpdate keeps its own collection ("
+            + kept.PreMod + "," + kept.AiMod + "," + kept.LateMod + "," + kept.PostMod + "; " + string.Join(",", kept.Gc.Select(g => g >= 0 ? names[g] : "unknown")) + ")");
+    }
+
+    private static readonly string[][] Unity2022Children =
+    {
+        new[] { "WaitForLastPresentationAndUpdateTime" },
+        new[] { "ProfilerStartFrame", "UpdateCameraMotionVectors", "DirectorSampleTime", "AsyncUploadTimeSlicedUpdate", "SynchronizeInputs", "SynchronizeState", "XREarlyUpdate" },
+        Enumerable.Range(0, 33).Select(k => "EarlySystem" + k).ToArray(),
+        new[] { "ClearLines", "DirectorFixedSampleTime", "AudioFixedUpdate", "ScriptRunBehaviourFixedUpdate", "DirectorFixedUpdate", "LegacyFixedAnimationUpdate", "XRFixedUpdate", "PhysicsFixedUpdate", "Physics2DFixedUpdate", "PhysicsClothFixedUpdate", "DirectorFixedUpdatePostPhysics", "ScriptRunDelayedFixedFrameRate" },
+        new[] { "PhysicsUpdate", "Physics2DUpdate", "PhysicsClothUpdate", "CheckTexFieldInput", "IMGUISendQueuedEvents", "SendMouseEvents", "PersistentCityWalkerBound", "AIUpdate", "WindUpdate", "UpdateVideo", "NewInputUpdate" },
+        new[] { "ScriptRunBehaviourUpdate", "ScriptRunDelayedDynamicFrameRate", "ScriptRunDelayedTasks", "DirectorUpdate", "RigInput" },
+        new[] { "PersistentCityWalkerBound", "AIUpdatePostScript", "DirectorUpdateAnimationBegin", "LegacyAnimationUpdate", "DirectorUpdateAnimationEnd", "DirectorDeferredEvaluate", "UIElementsUpdatePanels",
+            "EndGraphicsJobsAfterScriptUpdate", "ConstraintManagerUpdate", "ParticleSystemBeginUpdateAll", "Physics2DLateUpdate", "PhysicsLateUpdate", "ScriptRunBehaviourLateUpdate",
+            "RigMouseLate" },
+        Enumerable.Range(0, 44).Select(k => "PostSystem" + k).Concat(new[] { "PresentAfterDraw" }).ToArray()
+    };
+
+    private static void UnityLoopWithoutTruncation()
+    {
+        var plan = SubPhasePlan.Build(UnityLoop, Unity2022Children, 2, Detailed, LoopPhaseRecorder.MaxSubPhases);
+        var names = plan.Names.ToList();
+        Check(!plan.Truncated && names.Count <= LoopPhaseRecorder.MaxSubPhases && !names.Any(n => n.EndsWith(SubPhasePlan.Unstamped, StringComparison.Ordinal))
+            && names.Contains("TimeUpdate.WaitForLastPresentationAndUpdateTime") && names.Contains("PostLateUpdate.PresentAfterDraw")
+            && names.Contains("PreLateUpdate.PersistentCityWalkerBound") && names.Contains("PreUpdate.PersistentCityWalkerBound") && names.Contains("PreUpdate.AIUpdate"),
+            "a Unity 2022 loop with 45 PostLateUpdate children stamps every child, TimeUpdate's wait included, with no unstamped bucket (" + names.Count + " of "
+            + LoopPhaseRecorder.MaxSubPhases + ")");
+        var old = SubPhasePlan.Build(UnityLoop, Unity2022Children, 2, Detailed, 64);
+        Check(old.Truncated && old.Names.Contains("TimeUpdate" + SubPhasePlan.Unstamped),
+            "the same loop at the earlier 64-stamp cap put TimeUpdate's wait in TimeUpdate.unstamped, as rig 16x read");
+    }
+
+    private static void ModWorkBySubPhase()
+    {
+        string[] names = { "EarlyUpdate", "FixedUpdate", "Update.ScriptRunBehaviourUpdate", "PreLateUpdate.ScriptRunBehaviourLateUpdate", "PostLateUpdate.PresentAfterDraw",
+            SubPhasePlan.Tail, "TimeUpdate.WaitForLastPresentationAndUpdateTime" };
+        var rec = new LoopPhaseRecorder(LoopPhaseRecorder.MaxSubPhases);
+        rec.Configure(names);
+        int update = 2, late = 3, wait = 6;
+        void Frame(int frame, long at, int gc, long updateMs, long updateModMs, long lateModMs, long waitMs, int gcIn)
+        {
+            long mod = 0, t = at; int c = gc;
+            rec.Begin(t, c, mod);
+            for (int i = 1; i < names.Length; i++)
+            {
+                t += i == update + 1 ? updateMs : i == wait ? 2 : 1;
+                if (i == update + 1) mod += updateModMs;
+                if (i == late + 1) { t += lateModMs; mod += lateModMs; }
+                if (i - 1 == gcIn) c++;
+                rec.Stamp(i, t, c, mod);
+            }
+            t += waitMs;
+            if (gcIn == wait) c++;
+            rec.Close(frame, t, c, mod, false, false, 1.0, false, mod);
+        }
+        Frame(1, 0, 0, 6, 4, 1, 10, -1);
+        Frame(2, 100, 0, 90, 5, 1, 10, update);
+        Check(rec.Retained == 1 && rec.PhaseModMs(0, update) == 5 && rec.PreviousPhaseModMs(0, update) == 4 && rec.PhaseModMs(0, late) == 1
+            && Math.Abs(rec.ExcessOutsideModMs(0, update) - 83) < 1e-9 && rec.LargestExcessOutsideMod(0) == update && rec.ModMs(0) == 6,
+            "a 90 ms ScriptRunBehaviourUpdate with 5 ms of mod union is 83 ms of excess outside mod work, charged to that subsystem");
+        Frame(3, 300, 1, 6, 4, 1, 10, -1);
+        Frame(4, 400, 1, 6, 4, 1, 45, wait);
+        Check(rec.Retained == 2 && rec.GcPhase(1) == wait && rec.PhaseModMs(1, wait) == 0 && Math.Abs(rec.ExcessOutsideModMs(1, wait) - 35) < 1e-9
+            && rec.LargestExcessOutsideMod(1) == wait,
+            "a collection finishing in TimeUpdate's wait carries no mod union and its 35 ms excess is outside mod work");
+        long before = GC.GetAllocatedBytesForCurrentThread();
+        for (int i = 0; i < 500; i++) { Frame(10 + i, 1000 + 200 * i, 2 + i, 6, 4, 1, 10, i % 5 == 0 ? update : -1); rec.LargestExcessOutsideMod(0); rec.ExcessOutsideModMs(0, update); }
+        long allocated = GC.GetAllocatedBytesForCurrentThread() - before;
+        Check(allocated == 0, "per-subsystem mod stamps and the outside-mod ranking allocate nothing after configuration (" + allocated + " B, .NET)");
+        var legacy = new LoopPhaseRecorder(LoopPhaseRecorder.MaxSubPhases);
+        legacy.Configure(names);
+        legacy.Begin(0, 0); for (int i = 1; i < names.Length; i++) legacy.Stamp(i, i, 0); legacy.Close(1, 10, 0, 0, false, false, 1.0);
+        legacy.Begin(10, 0); for (int i = 1; i < names.Length; i++) legacy.Stamp(i, 10 + i, i == 3 ? 1 : 0); legacy.Close(2, 20, 1, 0, false, false, 1.0);
+        Check(legacy.Retained == 1 && legacy.ModMs(0) == 0, "callers without mod ticks read zero mod time per subsystem");
     }
 
     private static void RootCallbacks()

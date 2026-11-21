@@ -77,10 +77,10 @@ namespace Buildings
 {
     public sealed class CityManager
     {
-        public static CityManager? Instance => null;
-        public readonly List<Controller> cityBuildingControllers = new();
+        public static CityManager? Instance { get; set; }
+        public readonly List<CityBuildingController> cityBuildingControllers = new();
     }
-    public sealed class Controller { public readonly List<Door> entranceDoors = new(); }
+    public sealed class CityBuildingController { public readonly List<Door> entranceDoors = new(); }
     public sealed class Door { public readonly Transform doorTransform = new(); }
 }
 namespace GleyTrafficSystem

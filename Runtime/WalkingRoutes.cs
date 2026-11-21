@@ -34,6 +34,8 @@ namespace PersistentCity.Runtime
         }
 
         public void Clear() { DropGeometry(); observed = null; }
+        internal object RetainedPaths => cache;
+        internal const int RetainedPathLimit = CacheLimit;
         private void DropGeometry() { cache.Clear(); insertionOrder.Clear(); Metrics.WalkingCacheClears++; Generation++; }
         public long Generation { get; private set; }
 
