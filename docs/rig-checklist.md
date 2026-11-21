@@ -18653,7 +18653,8 @@ Comparison records [16t](https://github.com/PeterHartwieg/big-ambitions-persiste
 | Item | Readback |
 | --- | --- |
 | Tested commit | 2cea0a23c7263e2ea8bf03bca4afd0962b0fcb17 |
-| Official agent-rig checkout | f610b030d69fd37b6e47da338df0c3024148ce1b |
+| Official agent-rig checkout at launch | f610b030d69fd37b6e47da338df0c3024148ce1b |
+| Official agent-rig checkout from E +120 s through cleanup | 1df774c930eba5d51b60cc670b37459ba8950af7 |
 | AgentRigOps SHA-256 before / restored | a775ba0c17be67fa2f355a5e4240b31dd074955bafa833664d8e5884a246297c / a775ba0c17be67fa2f355a5e4240b31dd074955bafa833664d8e5884a246297c |
 | Lease acquired UTC | 2026-11-21T06:45:52.862041Z |
 | Lease purpose | Persistent City 21 Nov b / rig 16w Mac rig (#327 GC/night/street/separation/RSS/leak L/planning/collection attribution) |
@@ -18677,7 +18678,7 @@ Comparison records [16t](https://github.com/PeterHartwieg/big-ambitions-persiste
 | Autosave / RLO options matched | true / {'living_population': True, 'social_media': True, 'social_media_notices': True} |
 | Final player running / lease held | false / false |
 
-The rollback command is preserved verbatim in the local stage log.
+The rollback command is preserved verbatim in the local stage log. The shared rig checkout fast-forwarded at 08:13:26 CET while E was between its immediate and +120 s reads. The revision adds collision-safe receipt backups and missing-PID handling. The installed AgentRigOps DLL matched its original hash at restore.
 
 | Disposable save | Before staging exists / loaded | Cleanup before / after exists | Offline exists after |
 | --- | --- | --- | --- |
