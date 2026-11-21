@@ -531,6 +531,33 @@ internal static class Program
         int firstRow = p.RowForCollection(reverseThrough - reverseGen0 + 1), secondRow = p.RowForCollection(reverseThrough);
         Check(firstRow == 0 && secondRow == 1 && p.CollectionPhase(firstRow, reverseThrough - reverseGen0 + 1) == 3 && p.CollectionPhase(secondRow, reverseThrough) == 0,
             "one sampler row covering gen0 6 to 7 joins both probe rows, each collection through its own row and phase");
+        int PhaseRangesHolding(long ordinal)
+        {
+            int hits = 0;
+            for (int r = 0; r < p.Retained; r++)
+                for (int ph = 0; ph < p.Phases; ph++)
+                    if (p.PhaseCollections(r, ph) > 0 && ordinal >= p.PhaseGen0From(r, ph) && ordinal <= p.PhaseGen0Through(r, ph)) hits++;
+            return hits;
+        }
+        void BoundaryReplay(int closeRead, int openRead)
+        {
+            p.Reset(); series.Begin(5);
+            p.Begin(60000, 5);
+            for (int i = 1; i < plain.Length; i++) p.Stamp(i, 60000 + plain[i], 5);
+            p.Close(800, 60033, closeRead, 0, false, false, 1.0);
+            series.Note(closeRead, 100, 801);
+            p.Begin(60033, openRead);
+            for (int i = 1; i < plain.Length; i++) p.Stamp(i, 60033 + plain[i], i <= 3 ? 6 : 7);
+            p.Close(801, 60066, 7, 0, false, false, 1.0);
+            series.Note(7, 200, 802);
+        }
+        BoundaryReplay(5, 6);
+        Check(p.Retained == 1 && p.RowForCollection(6) == -1 && PhaseRangesHolding(6) == 0 && series.Collections == 2,
+            "reading gen0 again to open the frame after a collection during boundary bookkeeping leaves the sampler's ordinal 6 in no probe row");
+        BoundaryReplay(5, 5);
+        Check(p.Retained == 1 && p.RowForCollection(6) == 0 && p.CollectionPhase(0, 6) == 0 && PhaseRangesHolding(6) == 1
+            && p.RowForCollection(7) == 0 && p.CollectionPhase(0, 7) == 3 && PhaseRangesHolding(7) == 1 && series.Collections == 2,
+            "one gen0 read closes the old frame and opens the new one, so a collection during boundary bookkeeping is in exactly one probe phase range");
         p.Reset(); series.Begin(50);
         Frame(400, 20000, 50, plain, -1);
         p.Begin(20033, 50);

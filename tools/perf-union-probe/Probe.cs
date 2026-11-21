@@ -539,13 +539,13 @@ namespace PerfUnionProbe
         private static void CloseFrame(int nowFrame, long now, bool fromLoop)
         {
             if (nowFrame == currentFrame) return;
+            int collections = GC.CollectionCount(0);
             if (measuring && currentFrame >= 0 && currentFrame > firstMeasureFrame)
             {
-                int collections = GC.CollectionCount(0);
                 WriteFrame(nowFrame, new StopRead(collections, nowFrame, -1, -1, now), false);
                 phases.Close(currentFrame, now, collections, union.FrameTicks * ToMs, frameDiagnostic, frameLate, ToMs);
             }
-            if (measuring) NoteCollections();
+            if (measuring) NoteCollections(collections);
             if (union.Depth != 0)
             {
                 crossFrame++; union.Abandon();
@@ -554,7 +554,7 @@ namespace PerfUnionProbe
             if (measuring && pendingWindowStart) { pendingWindowStart = false; holds.BeginWindow(nowFrame, now); }
             currentFrame = nowFrame; frameStartQpc = now; union.ResetFrame(); observerTicks = boundaryTicks = 0;
             frameDiagnostic = false; frameScene = false; frameSaves = 0; frameLate = !fromLoop;
-            gcAtFrameStart = GC.CollectionCount(0); frameLoading = LoadScene.isLoading;
+            gcAtFrameStart = collections; frameLoading = LoadScene.isLoading;
             if (measuring) phases.Begin(now, gcAtFrameStart);
             frameNative = NativeMinute(); frameLogical = LogicalMinute();
         }
@@ -611,9 +611,8 @@ namespace PerfUnionProbe
         private static long monoHeapStart = -1, monoUsedStart = -1, monoHeapStop = -1, monoUsedStop = -1;
         private static readonly CollectionSeries collectionSeries = new CollectionSeries();
 
-        private static void NoteCollections()
+        private static void NoteCollections(int count)
         {
-            int count = GC.CollectionCount(0);
             if (!collectionSeries.Due(count)) return;
             ReadMonoHeap(out _, out long used);
             collectionSeries.Note(count, used, Time.frameCount);
