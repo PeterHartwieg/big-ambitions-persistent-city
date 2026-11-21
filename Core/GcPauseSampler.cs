@@ -44,7 +44,10 @@ namespace PersistentCity.Core
         public int OwnedBodies;
         public int BoundBodies;
         public string Diagnostic;
+        public GcAsyncGrow AsyncGrow;
     }
+
+    public enum GcAsyncGrow { None, Pending, Integrated }
 
     public enum GcAllocationSegment
     {
@@ -183,7 +186,7 @@ namespace PersistentCity.Core
             FrameRecorder.Reset();
             Array.Clear(segmentBytes, 0, Segments); Array.Clear(segmentSamples, 0, Segments); Array.Clear(segmentSkipped, 0, Segments);
             HeapStart = HeapEnd = HeapPeak = lastHeap = heapBytes;
-            baselined = false; pendingModMs = 0; ownedBodies = boundBodies = -1;
+            baselined = false; pendingModMs = 0; ownedBodies = boundBodies = -1; growBefore = growNow = false;
             Running = true;
         }
 
@@ -211,7 +214,7 @@ namespace PersistentCity.Core
                 frameNumber = -1;
             }
             else if (heapBytes >= 0) lastHeap = heapBytes;
-            lastMarks = marks;
+            lastMarks = marks; growBefore = growNow;
             lastFrameNumber = unityFrame;
             lastStampMs = stampMilliseconds; lastCounts[0] = gen0Total; lastCounts[1] = gen1Total; lastCounts[2] = gen2Total;
             pendingModMs = 0; baselined = true;
@@ -221,7 +224,13 @@ namespace PersistentCity.Core
 
         private int ownedBodies = -1, boundBodies = -1;
 
+        private bool growBefore, growNow;
+
         public void NoteBodies(int owned, int bound) { ownedBodies = owned; boundBodies = bound; }
+
+        public void NoteBodies(int owned, int bound, bool growIntegrating) { ownedBodies = owned; boundBodies = bound; growNow = growIntegrating; }
+
+        private static string GrowName(GcAsyncGrow grow) => grow == GcAsyncGrow.Integrated ? "integrated" : grow == GcAsyncGrow.Pending ? "pending" : "none";
 
         public void Allocated(GcAllocationSegment segment, long heapBefore, long heapAfter, bool collected)
         {
@@ -366,7 +375,8 @@ namespace PersistentCity.Core
                 {
                     collectionRows[collectionRowCount++] = new GcCollectionRow { Frame = frameNumber, FrameMs = frameMilliseconds, ModMs = modMilliseconds,
                         Gen0 = gen0, Gen1 = gen1, Gen2 = gen2, HeapBefore = lastHeap, HeapAfter = heapBytes, PreviousFrameMs = previousCollected ? -1 : previousFrameMs, NextFrameMs = -1,
-                        OwnedBodies = ownedBodies, BoundBodies = boundBodies, Diagnostic = diagnosticSource ?? "" };
+                        OwnedBodies = ownedBodies, BoundBodies = boundBodies, Diagnostic = diagnosticSource ?? "",
+                        AsyncGrow = !growBefore ? GcAsyncGrow.None : growNow ? GcAsyncGrow.Pending : GcAsyncGrow.Integrated };
                     rowAwaitsNext = true;
                 }
             }
@@ -485,7 +495,7 @@ namespace PersistentCity.Core
                     .Append(",\"heap_before_bytes\":").Append(N(r.HeapBefore)).Append(",\"heap_after_bytes\":").Append(N(r.HeapAfter))
                     .Append(",\"previous_frame_ms\":").Append(D(r.PreviousFrameMs)).Append(",\"next_frame_ms\":").Append(D(r.NextFrameMs))
                     .Append(",\"owned_bodies\":").Append(N(r.OwnedBodies)).Append(",\"bound_bodies\":").Append(N(r.BoundBodies))
-                    .Append(",\"diagnostic\":\"").Append(Label(r.Diagnostic)).Append("\"}");
+                    .Append(",\"diagnostic\":\"").Append(Label(r.Diagnostic)).Append("\",\"async_grow\":\"").Append(GrowName(r.AsyncGrow)).Append("\"}");
             }
             text.Append(']');
             S(text, "pause_ms_over_neighbours", PauseOverNeighboursSpread());

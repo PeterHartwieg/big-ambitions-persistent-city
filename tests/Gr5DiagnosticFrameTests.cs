@@ -120,4 +120,26 @@ public sealed class Gr5DiagnosticFrameTests
         Assert.True(DiagnosticFrames.Marks - start >= 64);
         Assert.False(string.IsNullOrEmpty(DiagnosticFrames.LastSource));
     }
+    [Fact]
+    public void ACollectionFrameNamesAnAsyncBodyGrowThatFinishedInsideIt()
+    {
+        var sampler = new GcPauseSampler(64);
+        sampler.Start(1);
+        double at = 0;
+        int gen0 = 0;
+        void Step(bool integrating, bool collect) { sampler.NoteBodies(10, 4, integrating); at += collect ? 60 : 34; if (collect) gen0++; sampler.Observe(at, gen0, 0, 0, 1, (long)at); }
+        Step(false, false);
+        Step(true, false);
+        Step(true, true);
+        Step(false, true);
+        Step(false, true);
+        Assert.Equal(GcAsyncGrow.Pending, sampler.CollectionRow(0).AsyncGrow);
+        Assert.Equal(GcAsyncGrow.Integrated, sampler.CollectionRow(1).AsyncGrow);
+        Assert.Equal(GcAsyncGrow.None, sampler.CollectionRow(2).AsyncGrow);
+        using var report = JsonDocument.Parse(sampler.ReportJson(new GcReportContext(1, 1, null, 0, true, 1, 1)));
+        Assert.Equal(new[] { "pending", "integrated", "none" }, report.RootElement.GetProperty("collection_rows").EnumerateArray().Select(r => r.GetProperty("async_grow").GetString()).ToArray());
+        long before = GC.GetAllocatedBytesForCurrentThread();
+        for (int i = 0; i < 2000; i++) Step(i % 3 == 0, i % 50 == 0);
+        Assert.Equal(before, GC.GetAllocatedBytesForCurrentThread());
+    }
 }

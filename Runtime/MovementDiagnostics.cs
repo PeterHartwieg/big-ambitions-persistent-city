@@ -24,7 +24,7 @@ namespace PersistentCity.Runtime
             if (sampler == null || !sampler.Running) return 0;
             long now = System.Diagnostics.Stopwatch.GetTimestamp();
             sampler.CounterFrame(GcAllocationCounter.Read(), GcAllocationCounter.Collections);
-            sampler.NoteBodies(BodyMerge.Owned, physical?.BoundBodies ?? 0);
+            sampler.NoteBodies(BodyMerge.Owned, physical?.BoundBodies ?? 0, physical?.GrowIntegrating ?? false);
             sampler.Observe(now * GcMillisecondsPerTimestamp, GcCount(0), GcCount(1), GcCount(2), GC.GetTotalMemory(false), Time.frameCount,
                 DiagnosticFrames.Marks, DiagnosticFrames.LastSource);
             return now;
@@ -119,8 +119,15 @@ namespace PersistentCity.Runtime
                 return new { monoHeapBytes = context.MonoHeapBytes, monoUsedBytes = context.MonoUsedBytes, totalMemoryBytes = GC.GetTotalMemory(false),
                     gen0 = GcCount(0), gen1 = GcCount(1), gen2 = GcCount(2), incremental = context.Incremental, measuring = gcSampler?.Running == true,
                     ownedBodyCombiners = BodyMerge.Owned, unmergedBodyCombiners = BodyMerge.Unmerged, reservedBodies = PhysicalPedestrians.ReserveCount, liveMergedMeshes = meshes, liveMergedVertices = vertices,
-                    releasedMergedMeshes = BodyMerge.ReleasedMeshes, releasedMergedVertices = BodyMerge.ReleasedVertices, bakeScratchBytes = BlendshapeBake.ScratchBytes };
+                    releasedMergedMeshes = BodyMerge.ReleasedMeshes, releasedMergedVertices = BodyMerge.ReleasedVertices, bakeScratchBytes = BlendshapeBake.ScratchBytes,
+                    asyncIntegrationTimeMs = AsyncIntegrationMilliseconds(), backgroundLoadingPriority = Application.backgroundLoadingPriority.ToString(),
+                    bodyGrowIntegrating = physical?.GrowIntegrating ?? false };
             }
+        }
+
+        private static double AsyncIntegrationMilliseconds()
+        {
+            try { return AsyncInstantiateOperation.GetIntegrationTimeMS(); } catch (Exception) { return -1; }
         }
 
         private GcReportContext GcContext()

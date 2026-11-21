@@ -123,7 +123,7 @@ public sealed class Gr5DiagnosticsProjectionTests
         Assert.Equal(3, root.GetProperty("collection_rows_retained").GetInt64());
         Assert.False(root.GetProperty("collection_rows_truncated").GetBoolean());
         var first = root.GetProperty("collection_rows")[0];
-        Assert.Equal(new[] { "frame", "frame_ms", "mod_ms", "gen0", "gen1", "gen2", "heap_before_bytes", "heap_after_bytes", "previous_frame_ms", "next_frame_ms", "owned_bodies", "bound_bodies", "diagnostic" }, first.EnumerateObject().Select(p => p.Name).ToArray());
+        Assert.Equal(new[] { "frame", "frame_ms", "mod_ms", "gen0", "gen1", "gen2", "heap_before_bytes", "heap_after_bytes", "previous_frame_ms", "next_frame_ms", "owned_bodies", "bound_bodies", "diagnostic", "async_grow" }, first.EnumerateObject().Select(p => p.Name).ToArray());
         Assert.Equal(16, first.GetProperty("previous_frame_ms").GetDouble(), 3);
         Assert.Equal(16, first.GetProperty("next_frame_ms").GetDouble(), 3);
         Assert.Equal(200, root.GetProperty("pause_ms_over_neighbours").GetProperty("p95").GetDouble(), 3);

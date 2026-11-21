@@ -227,6 +227,7 @@ namespace PersistentCity.Runtime
 
         private AsyncInstantiateOperation<GameObject>? growing;
         public long GrowsStarted { get; private set; }
+        public bool GrowIntegrating => growing != null && !growing.isDone;
         public double GrowStartMaximum { get; private set; }
         public double GrowFinishMaximum { get; private set; }
         private bool hierarchySized;
