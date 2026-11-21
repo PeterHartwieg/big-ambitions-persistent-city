@@ -4,9 +4,9 @@ import math
 import sys
 import time
 
-from rigcommon import (FIXTURE, LOG, archive, auto, call, census, console, footprint, game_pid, go, host, idle, loaded_identity, log_size,
-                       log_since, native_minute, native_reached, now, optional, probe_read, prop, rate, require_lock, rss_kib, run,
-                       start_and_load, stop, route_leg_read, track_cost, type_read, wait_native, wrap, write)
+from rigcommon import (FIXTURE, LOG, NATIVE_TOLERANCE, archive, auto, call, census, console, clock, footprint, game_pid, go, host, idle,
+                       loaded_identity, log_size, log_since, native_minute, native_reached, now, optional, probe_read, prop, rate,
+                       require_lock, rss_kib, run, start_and_load, stop, route_leg_read, track_cost, type_read, wait_native, wrap, write)
 from rigpaths import absolute
 
 LABEL = 'retention'
@@ -17,6 +17,8 @@ TYPES = ('Position[]', 'Double[]', 'Int64[]', 'RouteLeg', 'CitySimulator', 'Road
 ROUTE_LEGS = ('in_current_journeys', 'outside_current_journeys', 'split_prefix_legs', 'travelling')
 TARGETS = 'retention-targets'
 MISSING_TARGETS = 'Retimed process did not export matched native clock targets'
+MATCH_BOUND = .5
+DRAIN_MINUTES = 30
 
 
 def wait_until(deadline):
@@ -41,6 +43,7 @@ def snapshot(key):
     auto(mark + '-autosave-before')
     try:
         minute = native_minute(mark + '-native')
+        state = clock(mark)
         retained = census(mark + '-census')
         console(mark + '-movement', 'pc movement status')
         console(mark + '-population', 'pc population manifest')
@@ -51,7 +54,8 @@ def snapshot(key):
         gc = prop(mark + '-mesh', 'GcDiagnostics')
         food = prop(mark + '-rate', 'FoodDiagnostics')
         sample = {'utc': now(), 'start_monotonic': start, 'seconds': time.monotonic() - start,
-                  'pid': pid, 'native_minute': minute, 'native': food.get('native'), 'rate': food.get('value', {}).get('travelClockRate'),
+                  'pid': pid, 'native_minute': minute,
+                  'clock': {k: state.get(k) for k in ('paused', 'day', 'time')}, 'native': food.get('native'), 'rate': food.get('value', {}).get('travelClockRate'),
                   'census': retained, 'heap': heap, 'mono': mono, 'rss_kib': rss, 'footprint': footprint(mark, pid),
                   'mesh': {f: gc.get('value', {}).get(f) for f in FIELDS}}
     finally:
@@ -125,16 +129,24 @@ def still_climbing(series):
     return any(all(x is not None for x in v[1:]) and v[-1] > max(v[1:-1]) for key, v in series.items() if not key.startswith('RouteLeg'))
 
 
+def clock_text(minute):
+    whole = math.floor(minute + NATIVE_TOLERANCE) % 1440
+    return f'{whole // 60:02d}:{whole % 60:02d}'
+
+
 def checked_targets(checkpoints):
     minutes = [point.get('native_minute') if isinstance(point, dict) else None for point in checkpoints or []]
     valid = minutes and all(isinstance(m, (int, float)) and not isinstance(m, bool) and math.isfinite(m) for m in minutes)
+    valid = valid and all(not p.get('paused') or p.get('time') == clock_text(p['native_minute']) for p in checkpoints)
     if not valid or any(b <= a for a, b in zip(minutes, minutes[1:])) or len({p.get('key') for p in checkpoints}) != len(checkpoints):
         raise RuntimeError(MISSING_TARGETS + ': ' + json.dumps(checkpoints, default=str))
     return checkpoints
 
 
 def export_targets(args, keys, rows, complete):
-    checkpoints = checked_targets([{'key': key, 'native_minute': row.get('native_minute')} for key, row in zip(keys, rows)])
+    checkpoints = checked_targets([{'key': key, 'native_minute': row.get('native_minute'), 'paused': (row.get('clock') or {}).get('paused') is True,
+                                    'day': (row.get('clock') or {}).get('day'), 'time': (row.get('clock') or {}).get('time')}
+                                   for key, row in zip(keys, rows)])
     return write(TARGETS, {'format': 1, 'build_sha': args.build_sha, 'fixture': FIXTURE, 'start': args.start, 'complete': complete,
                            'checkpoints': checkpoints, 'series': readings_summary(rows)})
 
@@ -144,25 +156,51 @@ def difference(a, b):
     return a - b if numbers else None
 
 
-def matched_series(plan, rows):
+def matched_series(plan, rows, matches):
     control = readings_summary(rows)
     retimed = plan.get('series') or {}
-    return {'keys': [point['key'] for point in plan['checkpoints'][:len(rows)]],
+    keep = [m['matched'] for m in matches]
+    return {'keys': [point['key'] for point in plan['checkpoints'][:len(rows)]], 'bound': MATCH_BOUND, 'checkpoints': matches,
             'native_offsets': [difference(row.get('native_minute'), point['native_minute']) for row, point in zip(rows, plan['checkpoints'])],
-            'retimed_minus_control': {name: [difference(a, b) for a, b in zip(retimed.get(name, []), values)] for name, values in control.items()}}
+            'unmatched': [m['key'] for m in matches if not m['matched']],
+            'retimed_minus_control': {name: [difference(a, b) if ok else None for a, b, ok in zip(retimed.get(name, []), values, keep)]
+                                      for name, values in control.items()}}
+
+
+def paused_at(label, point):
+    go(label, point['time'], 1)
+    current = native_minute(label + '-native')
+    if not native_reached(current, point['native_minute'], paused=True) or math.floor(current) > math.floor(point['native_minute'] + NATIVE_TOLERANCE):
+        raise RuntimeError(f"{label}: paused control at {current}, retimed checkpoint was paused at {point['native_minute']}")
+    return write(label + '-reached', {'utc': now(), 'target': point['native_minute'], 'native_minute': current,
+                                      'offset': current - point['native_minute'], 'paused': True, 'tolerance': NATIVE_TOLERANCE})
 
 
 def follow_targets(plan):
-    rows, running = [], False
+    rows, matches, running = [], [], False
     for point in checked_targets(plan.get('checkpoints')):
         label = CONTROL + '-' + point['key'] + '-wait'
-        if not running and not native_reached(native_minute(label + '-start'), point['native_minute']):
-            rate(label + '-run', 1)
-            running = True
-        wait_native(label, point['native_minute'])
+        target, passed = point['native_minute'], False
+        if point.get('paused'):
+            paused_at(label, point)
+            running = False
+        else:
+            before = native_minute(label + '-start')
+            passed = before > target + NATIVE_TOLERANCE
+            if not running and not native_reached(before, target):
+                rate(label + '-run', 1)
+                running = True
+            wait_native(label, target)
         rows.append(snapshot('control-' + point['key']))
+        offset = rows[-1]['native_minute'] - target
+        if point.get('paused'):
+            matched = math.floor(rows[-1]['native_minute'] + NATIVE_TOLERANCE) == math.floor(target + NATIVE_TOLERANCE)
+        else:
+            matched = -NATIVE_TOLERANCE <= offset <= MATCH_BOUND
+        matches.append({'key': point['key'], 'paused': bool(point.get('paused')), 'passed_at_start': passed, 'offset': offset,
+                        'matched': matched})
         write('retention-control-series', readings_summary(rows))
-        write('retention-matched', matched_series(plan, rows))
+        write('retention-matched', matched_series(plan, rows, matches))
     return rows
 
 
@@ -201,6 +239,20 @@ def control(args):
     return rows
 
 
+def drain(rows):
+    target = rows[-1]['native_minute'] + DRAIN_MINUTES
+    current = native_minute('retention-drain-start')
+    if current > target + NATIVE_TOLERANCE:
+        raise RuntimeError(f'retention-drain: native clock {current} already passed the drain target {target}')
+    go(LABEL + '-drain', clock_text(target), 1)
+    current = native_minute('retention-drain-native')
+    if not native_reached(current, target, paused=True):
+        raise RuntimeError(f'retention-drain: paused at {current} short of {target}')
+    write('retention-drain-reached', {'utc': now(), 'target': target, 'native_minute': current, 'offset': current - target,
+                                      'paused': True, 'tolerance': NATIVE_TOLERANCE})
+    return snapshot('After30GameMinutes')
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description='Leak-check L: retained census across repeated clock retimes.')
     parser.add_argument('--build-sha', required=True)
@@ -226,11 +278,7 @@ def main(argv=None):
         print(f'R{n}', {k: v[-1] for k, v in series.items()}, flush=True)
         if n >= 3 and not still_climbing(series):
             break
-    clock = call('retention-arrival-clock', 'state')['result']['clock']
-    h, m = map(int, clock['time'].split(':'))
-    target = (h * 60 + m + 30) % 1440
-    go(LABEL, f'{target // 60:02d}:{target % 60:02d}', 1)
-    arrived = snapshot('After30GameMinutes')
+    arrived = drain(rows)
     write('retention-arrival-series', readings_summary([rows[0], rows[-1], arrived]))
     export_targets(args, keys + ['After30GameMinutes'], rows + [arrived], True)
     finish(LABEL)

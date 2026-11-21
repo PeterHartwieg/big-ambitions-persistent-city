@@ -2,6 +2,7 @@ import ast
 import builtins
 import importlib
 import json
+import math
 import os
 import subprocess
 import sys
@@ -106,6 +107,7 @@ class FakeBridge:
         self.autosave = {'enabled': True, 'autosave_disabled': True, 'suppressed': True}
         self.retained = {'bytes': 10, 'objects': 2, 'type_counts': {'RouteLeg': 4}}
         self.minute, self.step, self.paused = 3810.01, 0.0, True
+        self.arrival = .00999832153
 
     def __call__(self, args):
         self.commands.append(args)
@@ -115,9 +117,16 @@ class FakeBridge:
             output = ['[Persistent City] gc retained ' + json.dumps(self.retained)] if line == 'pc gc retained' else []
             body = {'result': {'output': output}}
         elif kind == 'call' and args[1] == 'state':
-            body = {'result': {'clock': {'paused': self.paused, 'time': '15:30', 'day': 3, 'run_until': None}}}
+            whole = math.floor(self.minute + .01)
+            body = {'result': {'clock': {'paused': self.paused, 'time': '%02d:%02d' % divmod(whole % 1440, 60), 'day': whole // 1440 + 1,
+                                         'run_until': None}}}
         elif kind == 'call' and args[1] == 'time':
-            self.paused = bool(json.loads(args[2]).get('pause'))
+            request = json.loads(args[2])
+            self.paused = bool(request.get('pause'))
+            if request.get('run_until'):
+                h, m = map(int, request['run_until']['time'].split(':'))
+                self.minute = (int(request['run_until']['day']) - 1) * 1440 + 60 * h + m + self.arrival
+                self.paused = True
             body = {'session': 's'}
         elif kind == 'autosave':
             body = self.autosave
@@ -328,23 +337,29 @@ class RetentionRunnerTests(unittest.TestCase):
         self.assertEqual(series['RouteLeg outside current journeys'], [30, 15, 14, 19, 114])
         self.assertEqual(series['RouteLeg travelling'], [174] * 5)
 
-    def targets(self, retention, minutes):
+    def targets(self, retention, minutes, paused=()):
         args = types.SimpleNamespace(build_sha='abc', start='15:30')
         keys = ['R%d' % i for i in range(len(minutes))]
         rows = [{'native_minute': m, 'census': {'tracked_types': [{'name': 'RouteLeg', 'objects': 100 + i}]}, 'heap': {}, 'mono': {},
+                 'clock': {'paused': i in paused, 'day': 3, 'time': retention.clock_text(m) if isinstance(m, float) and math.isfinite(m) else None},
                  'mesh': {f: 0 for f in retention.FIELDS}} for i, m in enumerate(minutes)]
         return retention.export_targets(args, keys, rows, True)
 
     def test_retimed_process_exports_its_checkpoint_native_minutes(self):
         retention = self.local(importlib.import_module('retention'))
-        plan = self.targets(retention, [3810.01, 3819.143536, 3901.011407])
+        plan = self.targets(retention, [3810.01, 3819.143536, 3901.011407], paused=(0, 2))
         saved = json.loads((self.stage / 'retention-targets.json').read_text())
         self.assertEqual(saved, plan)
         self.assertEqual([p['native_minute'] for p in saved['checkpoints']], [3810.01, 3819.143536, 3901.011407])
+        self.assertEqual([(p['paused'], p['time']) for p in saved['checkpoints']], [(True, '15:30'), (False, '15:39'), (True, '17:01')])
         self.assertEqual(saved['series']['RouteLeg'], [100, 101, 102])
         for broken in ([3810.01, None], [3810.01, 3810.01], [], [3810.01, float('nan')]):
             with self.assertRaisesRegex(RuntimeError, 'Retimed process did not export matched native clock targets'):
                 self.targets(retention, broken)
+
+    def test_snapshot_records_the_clock_state(self):
+        retention = self.local(importlib.import_module('retention'))
+        self.assertEqual(retention.snapshot('R0')['clock'], {'paused': True, 'day': 3, 'time': '15:30'})
 
     def test_control_reads_at_the_retimed_native_minutes(self):
         retention = self.local(importlib.import_module('retention'))
@@ -359,8 +374,54 @@ class RetentionRunnerTests(unittest.TestCase):
         self.assertEqual(rates, [{'speed': 1, 'pause': False, 'keep_needs': True}])
         matched = json.loads((self.stage / 'retention-matched.json').read_text())
         self.assertEqual(matched['keys'], ['R0', 'R1', 'R2', 'R3'])
+        self.assertEqual(matched['unmatched'], [])
         self.assertEqual(matched['retimed_minus_control']['RouteLeg'], [96, 97, 98, 99])
         self.assertTrue((self.stage / 'retention-control-R3-set.json').is_file())
+
+    def test_control_is_paused_where_the_retimed_checkpoint_was_paused(self):
+        retention = self.local(importlib.import_module('retention'))
+        plan = self.targets(retention, [3810.01, 3811.2, 3841.2], paused=(0, 2))
+        retention.wait_native = lambda label, target: self.common.wait_native(label, target, timeout=5, interval=0)
+        self.bridge.minute, self.bridge.paused, self.bridge.step, self.bridge.arrival = 3810.01, True, .05, .2
+        with mock.patch.object(self.common.time, 'sleep'):
+            rows = retention.follow_targets(plan)
+        self.assertEqual([row['clock']['paused'] for row in rows], [True, False, True])
+        self.assertEqual(rows[2]['native_minute'], 3841.2)
+        times = [json.loads(c[2]) for c in self.bridge.commands if c[:2] == ['call', 'time']]
+        self.assertEqual(times[-1]['run_until'], {'day': '3', 'time': '16:01'})
+        matched = json.loads((self.stage / 'retention-matched.json').read_text())
+        self.assertEqual([c['matched'] for c in matched['checkpoints']], [True, True, True])
+
+    def test_control_sample_past_the_bound_is_unmatched(self):
+        retention = self.local(importlib.import_module('retention'))
+        plan = self.targets(retention, [3810.5, 3811.0])
+        retention.wait_native = lambda label, target: self.common.wait_native(label, target, timeout=5, interval=0)
+        self.bridge.minute, self.bridge.paused, self.bridge.step = 3812.0, False, .05
+        retention.follow_targets(plan)
+        matched = json.loads((self.stage / 'retention-matched.json').read_text())
+        self.assertEqual(matched['unmatched'], ['R0', 'R1'])
+        self.assertEqual([c['passed_at_start'] for c in matched['checkpoints']], [True, True])
+        self.assertEqual(matched['retimed_minus_control']['RouteLeg'], [None, None])
+        self.assertGreater(matched['native_offsets'][0], retention.MATCH_BOUND)
+
+    def test_retimed_drain_targets_thirty_minutes_after_the_last_checkpoint(self):
+        retention = self.local(importlib.import_module('retention'))
+        last = {'native_minute': 3870.0111065}
+        self.bridge.minute, self.bridge.paused = 3872.3, False
+        with mock.patch.object(self.common.time, 'sleep'):
+            arrived = retention.drain([last])
+        times = [json.loads(c[2]) for c in self.bridge.commands if c[:2] == ['call', 'time']]
+        self.assertEqual(times[-1]['run_until'], {'day': '3', 'time': '17:00'})
+        self.assertEqual(arrived['native_minute'], 3900.00999832153)
+        reached = json.loads((self.stage / 'retention-drain-reached.json').read_text())
+        self.assertEqual(reached['target'], 3900.0111065)
+        self.assertLess(abs(reached['offset']), self.common.NATIVE_TOLERANCE)
+
+    def test_retimed_drain_refuses_a_clock_already_past_the_target(self):
+        retention = self.local(importlib.import_module('retention'))
+        self.bridge.minute, self.bridge.paused = 3901.0, False
+        with self.assertRaisesRegex(RuntimeError, 'already passed the drain target'):
+            retention.drain([{'native_minute': 3870.0111065}])
 
     def test_control_refuses_a_targets_file_without_native_minutes(self):
         retention = self.local(importlib.import_module('retention'))

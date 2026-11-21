@@ -19,6 +19,10 @@ def managed_folder(root):
     return managed
 
 
+def home(root):
+    return mock.patch.dict(os.environ, {'HOME': str(root), 'USERPROFILE': str(root)})
+
+
 class BuildProbeArgumentTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
@@ -34,7 +38,7 @@ class BuildProbeArgumentTests(unittest.TestCase):
         return stderr.getvalue()
 
     def test_mac_defaults_to_the_dll_import_shim_managed_folder(self):
-        with mock.patch.dict(os.environ, {'HOME': str(self.root)}):
+        with home(self.root):
             expected = self.root / 'Library/Application Support/BigAmbitionsMCP/dll-import-shim/Big Ambitions_Data/Managed'
             self.assertEqual(build_probe.host_managed('darwin', {}), expected)
             expected.mkdir(parents=True)
@@ -57,7 +61,7 @@ class BuildProbeArgumentTests(unittest.TestCase):
             self.assertEqual(build_probe.parse([flag, str(other)], platform='linux', environ={}).game_managed, other)
 
     def test_managed_flag_expands_home(self):
-        with mock.patch.dict(os.environ, {'HOME': str(self.root)}):
+        with home(self.root):
             args = build_probe.parse(['--managed', '~/Managed', '--harmony', '~/h.dll'], platform='linux', environ={})
         self.assertEqual(args.game_managed, self.root / 'Managed')
         self.assertEqual(args.harmony, self.root / 'h.dll')
@@ -66,7 +70,7 @@ class BuildProbeArgumentTests(unittest.TestCase):
         self.assertIn('--game-managed is required on this host', self.parse_error([], platform='linux', environ={}))
 
     def test_missing_default_folder_is_reported_before_the_build(self):
-        with mock.patch.dict(os.environ, {'HOME': str(self.root)}):
+        with home(self.root):
             message = self.parse_error([], platform='darwin', environ={})
         self.assertIn('no BigAmbitions.dll in the default Managed folder', message)
         self.assertIn('dll-import-shim', message)
