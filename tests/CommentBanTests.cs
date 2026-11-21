@@ -53,6 +53,16 @@ public sealed class CommentBanTests
     }
 
     [Fact]
+    public void OneExcuseAdmitsOneOccurrence()
+    {
+        var entry = new[] { "Core/A.cs\ttodo\t// TODO: x" };
+        Assert.Empty(CommentBanScanner.Check(new[] { ("Core/A.cs", "// TODO: x\nclass A { }\n") }, entry));
+        Assert.Equal(new[] { "Core/A.cs:3: " + CommentBanScanner.Message },
+            CommentBanScanner.Check(new[] { ("Core/A.cs", "// TODO: x\nclass A { }\n// TODO: x\n") }, entry));
+        Assert.Empty(CommentBanScanner.Check(new[] { ("Core/A.cs", "// TODO: x\nclass A { }\n// TODO: x\n") }, new[] { entry[0], entry[0] }));
+    }
+
+    [Fact]
     public void AStaleOrMalformedExcuseFails()
     {
         var files = new[] { ("Core/A.cs", "class A { }\n") };
@@ -68,6 +78,16 @@ public sealed class CommentBanTests
         Assert.Empty(CommentBanScanner.Scan("tools/a.py", "#!/usr/bin/env python3\n# -*- coding: utf-8 -*-\nx = 1  # noqa: E501\n"));
         Assert.Empty(CommentBanScanner.Scan("tools/a.sh", "#!/bin/sh\n# shellcheck disable=SC2086\necho $# ${#x}\n"));
         Assert.Single(CommentBanScanner.Scan("Core/A.cs", "#region Parts\nclass A { }\n"));
+    }
+
+    [Fact]
+    public void LicenseHeadersAndSuppressionsPass()
+    {
+        Assert.Empty(CommentBanScanner.Scan("Core/A.cs", "// SPDX-License-Identifier: MIT\n/* SPDX-License-Identifier: MIT */\n// ReSharper disable once UnusedMember.Local\n// ReSharper restore All\nclass A { }\n"));
+        Assert.Empty(CommentBanScanner.Scan("tools/a.py", "# SPDX-License-Identifier: MIT\nx = 1  # pylint: disable=invalid-name\ny = 2  # pyright: ignore\n"));
+        Assert.Empty(CommentBanScanner.Scan("a.csproj", "<!-- SPDX-License-Identifier: MIT -->\n<Project />\n"));
+        Assert.Equal(new[] { 1, 2, 3 }, CommentBanScanner.Scan("Core/A.cs", "// License: MIT, see LICENSE\n// ReSharper is wrong here\n// pylint: disable\nclass A { }\n").Select(c => c.Line));
+        Assert.Single(CommentBanScanner.Scan("tools/a.py", "x = 1  # the pylint: rule is noisy\n"));
     }
 
     [Fact]
