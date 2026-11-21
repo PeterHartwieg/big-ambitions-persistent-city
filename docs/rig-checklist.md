@@ -17913,13 +17913,13 @@ Raw receipts, JSON, Player.log and controller traces remain at ~/Coding_Projects
 
 | Check | Outcome | Readback |
 | --- | --- | --- |
-| A | FAIL | A steady 7 gen0, 49.591 ms pause p95 (gen0 above about five, pause above about 36 ms). A repeat 8 gen0, 609.242 ms pause p95 (gen0 above about five, pause above about 36 ms). |
+| A | FAIL | Both pause results exceed the target of about 36 ms: A steady 49.591 ms and A repeat 609.242 ms sampler pause p95. Both gen0 counts exceed the approximate target of five: A steady 7 and A repeat 8. Against matched references, A steady equals the refreshed 16v 1× no-mod day reference (7 gen0) and A repeat has no 2× comparator. The A repeat p95 comes from one collection frame, 20,530 at 642.998 ms: UpdateCity 2.4 ms, Unity GC marker 27.0319 ms and a 613.5661 ms remainder that is not attributed. Neither window recorded a union mod-work frame at or above 30 ms. |
 | B | FAIL | B 20× 6 gen0, 33.74 ms pause p95, 1479.868416 MB heap (sampler heap above 1.47 GB). B 60× 6 gen0, 34.058 ms pause p95, 1460.289536 MB heap. |
 | C | PASS | Union p95 3.9752 ms, 0 mod-work spikes, retime subphase bound 5.999 ms. |
 | D | REPORTED | 4/4 footprint arms exported collection-by-collection Mono used heap. |
 | E | REPORTED | 3/3 RSS reads in KiB 5,144,624 / 5,153,840 / 5,191,648. Mesh identity true / true / true. |
-| L | NOT ESTABLISHED | 7 matched retime cycles, max native offset 0.152741 min, diagnostic bytes 1,928 / 1,928 / 1,928 / 1,928 / 1,928 / 1,928 / 1,928 / 1,928, RouteLeg retimed − control [-1,540, 1,538] / [-1,541, 1,440] / [359, 1,916] / -369 / 1,776 / 2,235 / 2,831, drain excess -5,310. Evidence remains open for census bytes, census objects, city bytes, city objects, forced live B, Mono used B, RouteLeg. |
-| P | PASS | 0 A advance/planning frames over 30 ms and 0 C mod-work frames at least 30 ms. Per-unit rows missing —, summary associations missing —. |
+| L | Partial (NOT ESTABLISHED) | 7 matched retime cycles, max native offset 0.152741 min, diagnostic bytes 1,928 / 1,928 / 1,928 / 1,928 / 1,928 / 1,928 / 1,928 / 1,928, RouteLeg retimed − control [-1,540, 1,538] / [-1,541, 1,440] / [359, 1,916] / -369 / 1,776 / 2,235 / 2,831, drain excess -5,310. Evidence remains open for census bytes, census objects, city bytes, city objects, forced live B, Mono used B, RouteLeg. |
+| P | PASS | 0 A advance/planning frames over 30 ms and 0 C mod-work frames at least 30 ms. No frame qualified, so no per-unit rows or summary associations were produced. |
 
 
 ### Build, fixture and restore
@@ -18364,11 +18364,7 @@ Counts show total / retained / truncated. Unity frame IDs join union and PC phas
 The population logger emits 60 s maxima. Frame rows include their own phase and optional-stop measurements. A summary association uses frame proximity, native time or agreement with the measured phase duration where available. The raw population-clause export retains every observation.
 Mac 16u recorded 892.516 ms planning ending in direct-walk during A immediate, a 917.5 ms car-search slice during the L drain and a 17.77 ms food subphase during the C spike. Mac 16t planning stayed at or below 8.8 ms.
 
-| Window | Frame | Advance ms / GC delta / units | Phase / ms / sub / ms | Optional-stop total / unit max / unit p95 ms | Units over 5 ms | Slowest kind / unit ms / stops ms | Planning clause (verbatim) | Association |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- |
-
-| C frame | Subphase | Subphase ms | Food clause (verbatim) | Association |
-| --- | --- | --- | --- | --- |
+No A advance or planning frame crossed the 30 ms reporting threshold, and no C union spike reached 30 ms. With no qualifying frames there were no per-unit rows and no planning or food clauses to associate. The recorder rows show complete probe scope and zero threshold drops, so the export did not miss evidence.
 
 | Window | Population minute | Health frame after summary | Highest observed clause (verbatim) |
 | --- | --- | --- | --- |
@@ -18386,7 +18382,7 @@ Mac 16u recorded 892.516 ms planning ending in direct-walk during A immediate, a
 
 ### D — day and night heap separation
 
-The A steady process provides the day candidate. Its forced collections bracket the measurement. The night candidate loaded the fixture again in the B 60× process after its bracket closed. The candidate’s footprint includes that process lifetime. The no-mod night arm ran in its own fresh process with the current probe and retained the rig’s reference mod stack with Persistent City absent.
+The A steady process provides the day candidate. Its forced collections bracket the measurement. The night candidate loaded the fixture again in the B 60× process after its bracket closed. The candidate’s footprint includes that process lifetime. The 15:30 no-mod day reference is a fresh 16v capture in session 2eb3286f. The 01:00 no-mod night reference is the cached 16u arm in session e38601af, recorded in its own process with the d8067c51 probe and the rig’s reference mod stack with Persistent City absent. Both B no-mod GC comparisons (B 20× and B 60×) use this same cached 16u night arm.
 The cached day baseline cited by 16u came from 16t. Build 3682, sealed fixture and RLO all matched. The 16t probe hash began ec0e456b. The 16v probe hash begins d8067c51 and matches 16u. The 1× day arm was eligible for recapture. The new 1× day reference validated.
 
 | Boundary | Candidate / reference heap B | Heap gap MB / % | Candidate / reference forced live B | Live gap MB / % | Candidate Mono heap / used B | Reference Mono heap / used B |
