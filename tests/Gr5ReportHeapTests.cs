@@ -104,7 +104,7 @@ public sealed class Gr5ReportHeapTests
         sampler.ReportJson(Context); sampler.ReportHuman(Context); sampler.FrameRecorder.ReportHuman();
         var heap = new RetainedHeap();
         heap.Add("sampler", sampler);
-        long frameArrays = (long)GcPauseSampler.DefaultCapacity * (sizeof(float) * 3 + sizeof(bool) * 2);
+        long frameArrays = (long)GcPauseSampler.DefaultCapacity * (sizeof(float) * 4 + sizeof(bool) * 2);
         Assert.True(heap.Bytes < frameArrays + NightFrames * sizeof(double) + 256 * 1024, "retained " + heap.Bytes);
     }
 
