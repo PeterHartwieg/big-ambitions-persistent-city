@@ -55,8 +55,15 @@ namespace PersistentCity.Core
         public static bool Apply(CityState state, double nativeWalkMetresPerSecond, double clockRate, out int degraded)
         {
             degraded = 0;
+            if (state == null) throw new ArgumentNullException(nameof(state));
+            bool captured = state.Traffic == null && state.SnapshotSynchronizer != null;
+            if (captured) state.SnapshotSynchronizer!();
             var job = Begin(state, nativeWalkMetresPerSecond, clockRate);
-            if (job == null) return false;
+            if (job == null)
+            {
+                if (captured) { state.Traffic = null; state.TrafficSource = null; state.TrafficSourceState = null; }
+                return false;
+            }
             while (!job.Step(long.MaxValue)) { }
             if (!job.Commit()) throw new InvalidOperationException("Retime inputs changed during an unsliced retime.");
             degraded = job.Degraded;

@@ -305,6 +305,44 @@ public sealed class Gr5RetainedRouteLegTests
     }
 
     [Fact]
+    public void ADirectRetimeBetweenRebuildsKeepsEveryActiveCarMappedAndSavesLikeAPreparedRetime()
+    {
+        const int residents = 6, edges = 381;
+        var direct = RoadCity(residents, edges, 1440);
+        var prepared = RoadCity(residents, edges, 1440);
+        CitySimulator Run(CityState state, CitySimulator city, bool prepare)
+        {
+            city = city.RebuildRoutes(new TravelTimingMaximumRouteTests.LongRoad(1, edges));
+            Assert.Null(state.Traffic);
+            if (prepare) state.PrepareForSave();
+            Assert.True(TravelTiming.Apply(state, 1.4, 2, out int degraded));
+            Assert.Equal(0, degraded);
+            city = city.RebuildRoutes(new TravelTimingMaximumRouteTests.LongRoad(2, edges));
+            Assert.Null(state.Traffic);
+            Assert.Equal(residents, city.Traffic!.VehicleCount);
+            return city;
+        }
+        var directCity = Run(direct.State, direct.City, false);
+        var preparedCity = Run(prepared.State, prepared.City, true);
+        var live = new List<TrafficVehicleState>();
+        directCity.Traffic!.CopyVehiclesInOrder(live);
+        foreach (var vehicle in live)
+        {
+            var owner = direct.State.Citizens.Single(c => c.Identity.Id == vehicle.VehicleId);
+            Assert.Equal(CitizenPhase.Travelling, owner.Phase);
+            Assert.True(vehicle.Route.Count > 0 && vehicle.Route[vehicle.Route.Count - 1].EndNominalMinutes <= owner.Journey!.Minutes + 1e-9);
+        }
+        direct.State.PrepareForSave(); prepared.State.PrepareForSave();
+        Assert.Equal(PersistentCity.Persistence.SaveCodec.Write(prepared.State), PersistentCity.Persistence.SaveCodec.Write(direct.State));
+        Assert.False(TravelTiming.Apply(direct.State, 1.4, 2));
+        directCity.AdvanceTo(1440 + 240, int.MaxValue);
+        preparedCity.AdvanceTo(1440 + 240, int.MaxValue);
+        Assert.All(direct.State.Citizens, c => Assert.Equal(1, c.CompletedJourneys));
+        direct.State.PrepareForSave(); prepared.State.PrepareForSave();
+        Assert.Equal(PersistentCity.Persistence.SaveCodec.Write(prepared.State), PersistentCity.Persistence.SaveCodec.Write(direct.State));
+    }
+
+    [Fact]
     public void SubwayAndBusWaitsAndRidesHoldOneSplitPrefixAcrossRepeatedOneTwoOneRetimes()
     {
         const int residents = 6, cycles = 10;
