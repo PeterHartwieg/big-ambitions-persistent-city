@@ -720,6 +720,80 @@ internal static class Program
         Check(capped.Retained == 1 && capped.GcPhase(0) == smallNames.IndexOf("Update" + SubPhasePlan.Unstamped),
             "a collection in a child past the cap lands in its parent's unstamped bucket");
         RootCallbacks();
+        UnityLoopWithoutTruncation();
+        ModWorkBySubPhase();
+    }
+
+    private static readonly string[][] Unity2022Children =
+    {
+        new[] { "WaitForLastPresentationAndUpdateTime" },
+        new[] { "ProfilerStartFrame", "UpdateCameraMotionVectors", "DirectorSampleTime", "AsyncUploadTimeSlicedUpdate", "SynchronizeInputs", "SynchronizeState", "XREarlyUpdate" },
+        Enumerable.Range(0, 33).Select(k => "EarlySystem" + k).ToArray(),
+        new[] { "ClearLines", "DirectorFixedSampleTime", "AudioFixedUpdate", "ScriptRunBehaviourFixedUpdate", "DirectorFixedUpdate", "LegacyFixedAnimationUpdate", "XRFixedUpdate", "PhysicsFixedUpdate", "Physics2DFixedUpdate", "PhysicsClothFixedUpdate", "DirectorFixedUpdatePostPhysics", "ScriptRunDelayedFixedFrameRate" },
+        new[] { "PhysicsUpdate", "Physics2DUpdate", "PhysicsClothUpdate", "CheckTexFieldInput", "IMGUISendQueuedEvents", "SendMouseEvents", "AIUpdate", "WindUpdate", "UpdateVideo", "NewInputUpdate" },
+        new[] { "ScriptRunBehaviourUpdate", "ScriptRunDelayedDynamicFrameRate", "ScriptRunDelayedTasks", "DirectorUpdate", "RigInput" },
+        new[] { "AIUpdatePostScript", "DirectorUpdateAnimationBegin", "LegacyAnimationUpdate", "DirectorUpdateAnimationEnd", "DirectorDeferredEvaluate", "UIElementsUpdatePanels",
+            "EndGraphicsJobsAfterScriptUpdate", "ConstraintManagerUpdate", "ParticleSystemBeginUpdateAll", "Physics2DLateUpdate", "PhysicsLateUpdate", "ScriptRunBehaviourLateUpdate",
+            "PersistentCityWalkerBound", "RigMouseLate" },
+        Enumerable.Range(0, 44).Select(k => "PostSystem" + k).Concat(new[] { "PresentAfterDraw" }).ToArray()
+    };
+
+    private static void UnityLoopWithoutTruncation()
+    {
+        var plan = SubPhasePlan.Build(UnityLoop, Unity2022Children, 2, Detailed, LoopPhaseRecorder.MaxSubPhases);
+        var names = plan.Names.ToList();
+        Check(!plan.Truncated && names.Count <= LoopPhaseRecorder.MaxSubPhases && !names.Any(n => n.EndsWith(SubPhasePlan.Unstamped, StringComparison.Ordinal))
+            && names.Contains("TimeUpdate.WaitForLastPresentationAndUpdateTime") && names.Contains("PostLateUpdate.PresentAfterDraw")
+            && names.Contains("PreLateUpdate.PersistentCityWalkerBound"),
+            "a Unity 2022 loop with 45 PostLateUpdate children stamps every child, TimeUpdate's wait included, with no unstamped bucket (" + names.Count + " of "
+            + LoopPhaseRecorder.MaxSubPhases + ")");
+        var old = SubPhasePlan.Build(UnityLoop, Unity2022Children, 2, Detailed, 64);
+        Check(old.Truncated && old.Names.Contains("TimeUpdate" + SubPhasePlan.Unstamped),
+            "the same loop at the earlier 64-stamp cap put TimeUpdate's wait in TimeUpdate.unstamped, as rig 16x read");
+    }
+
+    private static void ModWorkBySubPhase()
+    {
+        string[] names = { "EarlyUpdate", "FixedUpdate", "Update.ScriptRunBehaviourUpdate", "PreLateUpdate.ScriptRunBehaviourLateUpdate", "PostLateUpdate.PresentAfterDraw",
+            SubPhasePlan.Tail, "TimeUpdate.WaitForLastPresentationAndUpdateTime" };
+        var rec = new LoopPhaseRecorder(LoopPhaseRecorder.MaxSubPhases);
+        rec.Configure(names);
+        int update = 2, late = 3, wait = 6;
+        void Frame(int frame, long at, int gc, long updateMs, long updateModMs, long lateModMs, long waitMs, int gcIn)
+        {
+            long mod = 0, t = at; int c = gc;
+            rec.Begin(t, c, mod);
+            for (int i = 1; i < names.Length; i++)
+            {
+                t += i == update + 1 ? updateMs : i == wait ? 2 : 1;
+                if (i == update + 1) mod += updateModMs;
+                if (i == late + 1) { t += lateModMs; mod += lateModMs; }
+                if (i - 1 == gcIn) c++;
+                rec.Stamp(i, t, c, mod);
+            }
+            t += waitMs;
+            if (gcIn == wait) c++;
+            rec.Close(frame, t, c, mod, false, false, 1.0, false, mod);
+        }
+        Frame(1, 0, 0, 6, 4, 1, 10, -1);
+        Frame(2, 100, 0, 90, 5, 1, 10, update);
+        Check(rec.Retained == 1 && rec.PhaseModMs(0, update) == 5 && rec.PreviousPhaseModMs(0, update) == 4 && rec.PhaseModMs(0, late) == 1
+            && Math.Abs(rec.ExcessOutsideModMs(0, update) - 83) < 1e-9 && rec.LargestExcessOutsideMod(0) == update && rec.ModMs(0) == 6,
+            "a 90 ms ScriptRunBehaviourUpdate with 5 ms of mod union is 83 ms of excess outside mod work, charged to that subsystem");
+        Frame(3, 300, 1, 6, 4, 1, 10, -1);
+        Frame(4, 400, 1, 6, 4, 1, 45, wait);
+        Check(rec.Retained == 2 && rec.GcPhase(1) == wait && rec.PhaseModMs(1, wait) == 0 && Math.Abs(rec.ExcessOutsideModMs(1, wait) - 35) < 1e-9
+            && rec.LargestExcessOutsideMod(1) == wait,
+            "a collection finishing in TimeUpdate's wait carries no mod union and its 35 ms excess is outside mod work");
+        long before = GC.GetAllocatedBytesForCurrentThread();
+        for (int i = 0; i < 500; i++) { Frame(10 + i, 1000 + 200 * i, 2 + i, 6, 4, 1, 10, i % 5 == 0 ? update : -1); rec.LargestExcessOutsideMod(0); rec.ExcessOutsideModMs(0, update); }
+        long allocated = GC.GetAllocatedBytesForCurrentThread() - before;
+        Check(allocated == 0, "per-subsystem mod stamps and the outside-mod ranking allocate nothing after configuration (" + allocated + " B, .NET)");
+        var legacy = new LoopPhaseRecorder(LoopPhaseRecorder.MaxSubPhases);
+        legacy.Configure(names);
+        legacy.Begin(0, 0); for (int i = 1; i < names.Length; i++) legacy.Stamp(i, i, 0); legacy.Close(1, 10, 0, 0, false, false, 1.0);
+        legacy.Begin(10, 0); for (int i = 1; i < names.Length; i++) legacy.Stamp(i, 10 + i, i == 3 ? 1 : 0); legacy.Close(2, 20, 1, 0, false, false, 1.0);
+        Check(legacy.Retained == 1 && legacy.ModMs(0) == 0, "callers without mod ticks read zero mod time per subsystem");
     }
 
     private static void RootCallbacks()
