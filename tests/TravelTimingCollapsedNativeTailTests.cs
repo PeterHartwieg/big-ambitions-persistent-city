@@ -402,12 +402,14 @@ public sealed class TravelTimingCollapsedNativeTailTests
         var simulation = new CitySimulator(state, new Planner(sectionBoundary: true));
         Assert.Equal(1.5, TrafficFloorFixture.Write(state, simulation, "car", 1.5, 1.5));
         Assert.Equal(1, state.Traffic!.Vehicles.Single().RouteIndex);
+        int spans = state.Traffic!.Vehicles.Single().Route.Count;
         Assert.True(TravelTiming.Apply(state, 2, 2));
-        var historical = state.Traffic!.Vehicles.Single().Route[0];
-        Assert.Equal(2, historical.FreeFlowMinutes); Assert.Equal(1, historical.EndNominalMinutes - historical.StartNominalMinutes);
+        var vehicle = state.Traffic!.Vehicles.Single();
+        Assert.Equal(spans - 1, vehicle.Route.Count); Assert.Equal(0, vehicle.RouteIndex);
+        Assert.True(vehicle.Route[0].StartNominalMinutes >= 1);
         var rebound = new CitySimulator(state, new Planner(2, sectionBoundary: true));
         Assert.Equal(1.5, rebound.Traffic!.GetPermission("car").NominalMinutes);
-        Assert.Equal(1, rebound.Traffic.GetPermission("car").RouteIndex);
+        Assert.Equal(0, rebound.Traffic.GetPermission("car").RouteIndex);
         Assert.Equal(P(235), citizen.Journey!.PositionAt(1.5));
     }
 

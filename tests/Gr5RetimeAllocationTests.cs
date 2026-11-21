@@ -13,7 +13,7 @@ public sealed class Gr5RetimeAllocationTests
     private readonly ITestOutputHelper output;
     public Gr5RetimeAllocationTests(ITestOutputHelper output) { this.output = output; }
 
-    private const string Retimed = "222E663F2FD8440FF74517903D8F0E151B9DEAB5270102C90E679DB4D0B0F03C";
+    private const string Retimed = "FBA96360F4D632B36389BD60220CACCF4E42D19DE903B12D7CB442574ED2D217";
 
     private static (string Hash, long[] Bytes) RetimeThroughRates(bool committed)
     {

@@ -495,10 +495,8 @@ internal static class Program
         p.Begin(20033, 50);
         for (int i = 1; i < 4; i++) p.Stamp(i, 20033 + plain[i], i == 3 ? 51 : 50);
         var stop = new StopRead(51, 401, 2000, 1500, 20033 + 9);
-        int liveCount = 52;
-        long liveTicks = 20033 + 40;
         stop.Close(series, p, 401, true, 0.5, false, 1.0);
-        Check(liveCount != stop.Collections && liveTicks != stop.Ticks && stop.CollectionsSince(50) == 1 && p.RowCollections(0) == 1 && series.Collections == 1
+        Check(stop.CollectionsSince(50) == 1 && p.RowCollections(0) == 1 && series.Collections == 1
             && stop.WholeMs(20033, 1.0) == p.WholeMs(0) && p.WholeMs(0) == 9,
             "a collection after the stop read, during the status and patch check, reaches none of the frames export, the collections page or the series");
         p.Reset();
@@ -506,6 +504,23 @@ internal static class Program
         Frame(501, 30033, 5, plain, 0);
         Check(p.Retained == 1 && p.Frame(0) == 501 && p.GcPhase(0) == 0 && p.Gen0Through(0) == 6 && p.RowCollections(0) == 1,
             "a collection in EarlyUpdate before the sampler's frame start sits under the new frame with the cumulative gen0 count the sampler row also carries");
+        p.Reset();
+        Frame(600, 40000, 5, plain, -1);
+        p.Begin(40033, 5);
+        p.Stamp(1, 40033 + plain[1], 6); p.Stamp(2, 40033 + plain[2], 6); p.Stamp(3, 40033 + plain[3], 6);
+        for (int i = 4; i < plain.Length; i++) p.Stamp(i, 40033 + plain[i], 7);
+        p.Close(601, 40033 + 33, 7, 0.5, false, false, 1.0);
+        long[] samplerGen0 = { 1, 1 }, samplerThrough = { 6, 7 };
+        Check(p.Retained == 1 && p.RowCollections(0) == 2 && p.Gen0From(0) == 6 && p.Gen0Through(0) == 7 && p.GcPhase(0) == 0,
+            "one probe row holds the EarlyUpdate collection and the collection after GcFrameBegin in the same Unity frame");
+        Check(p.PhaseCollections(0, 0) == 1 && p.PhaseGen0From(0, 0) == 6 && p.PhaseGen0Through(0, 0) == 6
+            && p.PhaseCollections(0, 3) == 1 && p.PhaseGen0From(0, 3) == 7 && p.PhaseGen0Through(0, 3) == 7
+            && p.PhaseCollections(0, 1) == 0 && p.PhaseCollections(0, 4) == 0,
+            "the probe row exports the ordinal range of each phase that ran a collection");
+        Check(samplerThrough[0] != p.Gen0Through(0) && p.MatchSamplerRow(samplerGen0[0], samplerThrough[0]) == 0 && p.MatchSamplerRow(samplerGen0[1], samplerThrough[1]) == 0,
+            "both sampler rows, ending at gen0 6 and 7, join the probe row by overlapping ordinal range where an equality join on gen0_through drops the first");
+        Check(p.CollectionPhase(0, samplerThrough[0]) == 0 && p.CollectionPhase(0, samplerThrough[1]) == 3 && p.CollectionPhase(0, 8) == -1 && p.MatchSamplerRow(1, 8) == -1,
+            "each sampler collection is attributed to its own phase, EarlyUpdate before GcFrameBegin and Update after it");
         p.Reset(); series.Begin(50);
         Frame(400, 20000, 50, plain, -1);
         p.Begin(20033, 50);

@@ -464,8 +464,11 @@ namespace PersistentCity.Core
             var parked = citizen.Car?.ParkedPosition;
             Position? old = CarAt(citizen.Journey!, oldElapsed, parked), join = CarAt(joined, joinedElapsed, parked), apart = CarAt(unjoined, unjoinedElapsed, parked);
             if (old == null || join == null || apart == null) return old == null && join == null && apart == null;
-            return Position.Distance(old.Value, join.Value) <= Position.Distance(old.Value, apart.Value);
+            return Position.Distance(old.Value, join.Value) <= Math.Max(Position.Distance(old.Value, apart.Value), UlpMetres(old.Value));
         }
+
+        private static double UlpMetres(Position point)
+            => 16 * 2.2204460492503131e-16 * Math.Max(60, Math.Max(Math.Abs(point.X), Math.Max(Math.Abs(point.Y), Math.Abs(point.Z))));
 
         private static Position? CarAt(Route route, double elapsed, Position? parked)
         {

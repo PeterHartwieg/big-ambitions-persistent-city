@@ -486,6 +486,8 @@ namespace PerfUnionProbe
         private readonly bool[] stamped = new bool[MaxPhases];
         private readonly double[] previous = new double[MaxPhases];
         private readonly double[] current = new double[MaxPhases];
+        private readonly int[] phaseThrough = new int[MaxPhases];
+        private readonly int[] rowPhaseThrough = new int[Limit * MaxPhases];
         private readonly double[] rowPhases = new double[Limit * MaxPhases];
         private readonly double[] rowPrevious = new double[Limit * MaxPhases];
         private readonly int[] rowFrame = new int[Limit], rowCollections = new int[Limit], rowGcPhase = new int[Limit], rowThrough = new int[Limit];
@@ -542,6 +544,7 @@ namespace PerfUnionProbe
             {
                 if (!stamped[p]) { start[p] = next; gcAt[p] = nextGc; }
                 current[p] = Math.Max(0, next - start[p]) * ticksToMs;
+                phaseThrough[p] = nextGc;
                 if (nextGc != gcAt[p]) gcPhase = p;
                 next = start[p]; nextGc = gcAt[p];
             }
@@ -560,6 +563,7 @@ namespace PerfUnionProbe
                     for (int p = 0; p < MaxPhases; p++)
                     {
                         rowPhases[r * MaxPhases + p] = p < phases ? current[p] : 0;
+                        rowPhaseThrough[r * MaxPhases + p] = p < phases ? phaseThrough[p] : collections;
                         rowPrevious[r * MaxPhases + p] = p < phases && previousWhole >= 0 ? previous[p] : -1;
                     }
                     rowAwaitsNext = !partial;
@@ -579,6 +583,28 @@ namespace PerfUnionProbe
         public bool Partial(int row) => rowPartial[Row(row)];
         public int RowCollections(int row) => rowCollections[Row(row)];
         public int Gen0Through(int row) => rowThrough[Row(row)];
+        public int Gen0From(int row) => rowThrough[Row(row)] - rowCollections[row] + 1;
+        public int PhaseGen0Through(int row, int phase) => rowPhaseThrough[Row(row) * MaxPhases + Phase(phase)];
+        public int PhaseGen0From(int row, int phase) => phase == 0 ? Gen0From(row) : PhaseGen0Through(row, phase - 1) + 1;
+        public int PhaseCollections(int row, int phase) => PhaseGen0Through(row, phase) - PhaseGen0From(row, phase) + 1;
+
+        public int CollectionPhase(int row, long ordinal)
+        {
+            for (int p = 0; p < names.Length; p++)
+                if (PhaseCollections(row, p) > 0 && ordinal >= PhaseGen0From(row, p) && ordinal <= PhaseGen0Through(row, p)) return p;
+            return -1;
+        }
+
+        public static bool Overlaps(long fromA, long throughA, long fromB, long throughB) => fromA <= throughB && fromB <= throughA;
+
+        public int MatchSamplerRow(long samplerGen0, long samplerGen0Through)
+        {
+            long from = samplerGen0Through - samplerGen0 + 1;
+            if (samplerGen0 <= 0) return -1;
+            for (int r = 0; r < Retained; r++)
+                if (Overlaps(from, samplerGen0Through, Gen0From(r), Gen0Through(r))) return r;
+            return -1;
+        }
         public int GcPhase(int row) => rowGcPhase[Row(row)];
         public double PhaseMs(int row, int phase) => rowPhases[Row(row) * MaxPhases + Phase(phase)];
         public double PreviousPhaseMs(int row, int phase) => rowPrevious[Row(row) * MaxPhases + Phase(phase)];

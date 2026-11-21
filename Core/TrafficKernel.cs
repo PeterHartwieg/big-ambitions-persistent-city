@@ -1232,6 +1232,11 @@ namespace PersistentCity.Core
             }
             foreach (TrafficVehicleState vehicle in state.Vehicles)
             {
+                if (vehicle.RouteIndex > 0)
+                {
+                    vehicle.Route.RemoveRange(0, vehicle.RouteIndex);
+                    vehicle.RouteIndex = 0;
+                }
                 int currentIndex = vehicle.RouteIndex;
                 bool active = currentIndex >= 0 && !vehicle.Completed;
                 double actual = Snapshot(vehicles[vehicle.VehicleId]).NominalMinutes;

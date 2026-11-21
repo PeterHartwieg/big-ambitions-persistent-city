@@ -783,16 +783,18 @@ namespace PerfUnionProbe
 
         private static JObject CollectionRow(int r)
         {
-            var now = new JObject(); var before = new JObject(); var grew = new JObject();
+            var now = new JObject(); var before = new JObject(); var grew = new JObject(); var collected = new JArray();
             for (int p = 0; p < phases.Phases; p++)
             {
                 string name = phases.PhaseName(p);
                 double at = phases.PhaseMs(r, p), was = phases.PreviousPhaseMs(r, p);
                 now[name] = at; before[name] = Ms(was); grew[name] = was < 0 ? JValue.CreateNull() : (JToken)(at - was);
+                if (phases.PhaseCollections(r, p) > 0)
+                    collected.Add(new JObject { ["phase"] = name, ["gen0_from"] = phases.PhaseGen0From(r, p), ["gen0_through"] = phases.PhaseGen0Through(r, p) });
             }
             return new JObject { ["frame"] = phases.Frame(r), ["whole_frame_ms"] = phases.WholeMs(r), ["previous_whole_ms"] = Ms(phases.PreviousWholeMs(r)),
                 ["next_whole_ms"] = Ms(phases.NextWholeMs(r)), ["excess_ms"] = phases.PreviousWholeMs(r) < 0 ? JValue.CreateNull() : (JToken)phases.ExcessMs(r),
-                ["mod_work_ms"] = phases.ModWorkMs(r), ["collections"] = phases.RowCollections(r), ["gen0_through"] = phases.Gen0Through(r), ["diagnostic"] = phases.Diagnostic(r), ["late_boundary"] = phases.Late(r),
+                ["mod_work_ms"] = phases.ModWorkMs(r), ["collections"] = phases.RowCollections(r), ["gen0_from"] = phases.Gen0From(r), ["gen0_through"] = phases.Gen0Through(r), ["collection_phases"] = collected, ["diagnostic"] = phases.Diagnostic(r), ["late_boundary"] = phases.Late(r),
                 ["partial"] = phases.Partial(r),
                 ["gc_phase"] = PhaseLabel(phases.GcPhase(r)), ["largest_excess_phase"] = PhaseLabel(phases.LargestExcessPhase(r)),
                 ["phase_ms"] = now, ["previous_phase_ms"] = before, ["phase_excess_ms"] = grew };

@@ -128,9 +128,10 @@ public sealed class Gr5DiagnosticFrameTests
         var sources = new string[writers * perWriter];
         for (int i = 0; i < sources.Length; i++) sources[i] = "pc writer " + i;
         var bySequence = new System.Collections.Concurrent.ConcurrentDictionary<int, string>();
-        int mismatches = 0, reads = 0;
+        int mismatches = 0, reads = 0, awaited = -1;
         using var done = new System.Threading.ManualResetEventSlim();
         using var reading = new System.Threading.ManualResetEventSlim();
+        using var observed = new System.Threading.ManualResetEventSlim();
         var reader = new System.Threading.Thread(() =>
         {
             var seen = new System.Collections.Generic.List<DiagnosticMark>(1 << 16);
@@ -138,7 +139,9 @@ public sealed class Gr5DiagnosticFrameTests
             while (!done.IsSet && seen.Count < seen.Capacity)
             {
                 var mark = DiagnosticFrames.Current;
-                if (mark.Source.StartsWith("pc writer ", StringComparison.Ordinal)) seen.Add(mark);
+                if (!mark.Source.StartsWith("pc writer ", StringComparison.Ordinal)) continue;
+                if (seen.Count == 0 || seen[seen.Count - 1].Sequence != mark.Sequence) seen.Add(mark);
+                if (mark.Sequence == System.Threading.Volatile.Read(ref awaited)) observed.Set();
             }
             foreach (var mark in seen)
             {
@@ -150,6 +153,19 @@ public sealed class Gr5DiagnosticFrameTests
         });
         reader.Start();
         Assert.True(reading.Wait(TimeSpan.FromSeconds(30)), "the reader started");
+        var deadline = DateTime.UtcNow.AddSeconds(30);
+        for (int attempt = 0; !observed.IsSet && DateTime.UtcNow < deadline; attempt++)
+        {
+            string source = "pc writer handshake " + attempt;
+            DiagnosticFrames.Mark(source);
+            var published = DiagnosticFrames.Current;
+            if (!ReferenceEquals(published.Source, source)) continue;
+            bySequence[published.Sequence] = source;
+            System.Threading.Volatile.Write(ref awaited, published.Sequence);
+            observed.Wait(TimeSpan.FromMilliseconds(50));
+        }
+        if (!observed.IsSet) { done.Set(); reader.Join(); }
+        Assert.True(observed.IsSet, "the reader recorded a published writer sequence before the writers ran");
         var hooks = System.Threading.Tasks.Parallel.For(0, writers, w =>
         {
             for (int i = 0; i < perWriter; i++)
@@ -240,6 +256,14 @@ public sealed class Gr5DiagnosticFrameTests
         direct.Start(1);
         direct.Frame(60, 0, 1, 0, 0, 1);
         Assert.Equal(-1, direct.CollectionRow(0).Gen0Through);
+        var split = new GcPauseSampler(64);
+        split.Start(1);
+        split.Observe(0, 5, 0, 0, 1, 600);
+        split.Observe(33, 6, 0, 0, 1, 601);
+        split.Observe(66, 7, 0, 0, 1, 602);
+        Assert.Equal(2, split.CollectionRowCount);
+        Assert.Equal((600L, 1, 6L), (split.CollectionRow(0).Frame, split.CollectionRow(0).Gen0, split.CollectionRow(0).Gen0Through));
+        Assert.Equal((601L, 1, 7L), (split.CollectionRow(1).Frame, split.CollectionRow(1).Gen0, split.CollectionRow(1).Gen0Through));
     }
 
     [Fact]
