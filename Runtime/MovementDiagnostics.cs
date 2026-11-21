@@ -18,11 +18,16 @@ namespace PersistentCity.Runtime
         private GcPauseSampler? gcSampler;
         private static readonly double GcMillisecondsPerTimestamp = 1000.0 / System.Diagnostics.Stopwatch.Frequency;
 
+        private long gcFrameCpu = -1, gcModCpu = -1;
+
         private long GcFrameBegin()
         {
             var sampler = gcSampler;
-            if (sampler == null || !sampler.Running) return 0;
+            if (sampler == null || !sampler.Running) { gcFrameCpu = gcModCpu = -1; return 0; }
             long now = System.Diagnostics.Stopwatch.GetTimestamp();
+            long cpu = ThreadCpuClock.Nanoseconds();
+            if (cpu >= 0 && gcFrameCpu >= 0 && cpu >= gcFrameCpu) sampler.FrameCpu((cpu - gcFrameCpu) / 1e6);
+            gcFrameCpu = gcModCpu = cpu;
             sampler.CounterFrame(GcAllocationCounter.Read(), GcAllocationCounter.Collections);
             sampler.NoteBodies(BodyMerge.Owned, physical?.BoundBodies ?? 0, physical?.GrowSample ?? PhysicalPedestrians.Grows.Sample(false));
             sampler.Observe(now * GcMillisecondsPerTimestamp, GcCount(0), GcCount(1), GcCount(2), GC.GetTotalMemory(false), Time.frameCount, DiagnosticFrames.Current);
@@ -31,7 +36,10 @@ namespace PersistentCity.Runtime
 
         private void GcFrameEnd(long started)
         {
-            if (started != 0) gcSampler?.ModWork((System.Diagnostics.Stopwatch.GetTimestamp() - started) * GcMillisecondsPerTimestamp);
+            if (started == 0) return;
+            gcSampler?.ModWork((System.Diagnostics.Stopwatch.GetTimestamp() - started) * GcMillisecondsPerTimestamp);
+            long cpu = gcModCpu >= 0 ? ThreadCpuClock.Nanoseconds() : -1;
+            if (cpu >= gcModCpu && gcModCpu >= 0) gcSampler?.ModWorkCpu((cpu - gcModCpu) / 1e6);
         }
 
         private readonly struct GcHeapMark

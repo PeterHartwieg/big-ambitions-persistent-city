@@ -129,10 +129,11 @@ public sealed class GcMeasurementTests
                 "physical_setup_places", "physical_setup_bodies", "physical_setup_vehicles", "physical_setup_ambient", "physical_setup_preflight",
                 "physical_unattributed_setup", "physical_unattributed_update", "physical_unattributed_waiting", "physical_unattributed_entry", "mod_routes_retime", "mod_optional_stops_refresh", "mod_optional_stops_physical" }.SelectMany(n => new[] { n + "_alloc_bytes", n + "_alloc_samples", n + "_alloc_skipped" }))
             .Concat(new[] { "phase_frames", "phase_spikes_30ms", "phase_spikes_retained", "phase_spikes_truncated", "phase_spike_cap", "top_frames", "spike_frames", "phase_ms",
-                "phase_near_spikes_15ms", "phase_near_spikes_retained", "phase_near_spikes_truncated", "near_spike_frames",
+                "phase_near_spikes_15ms", "phase_near_spikes_retained", "phase_near_spikes_truncated", "near_spike_frames", "phase_cpu_frames", "phase_cpu_spikes_30ms", "phase_descheduled_spikes_30ms",
                 "pause_ms_without_mod", "pause_ms_without_mod_work", "late_ms_gc", "late_ms_plain", "mod_work_ms_gc", "mod_work_ms_plain", "max_late_ms",
                 "collection_rows_retained", "collection_rows_truncated", "collection_rows", "pause_ms_over_neighbours",
-                "diagnostic_frames", "diagnostic_collection_frames", "pause_ms_including_diagnostic", "diagnostic_frame_ms" }).ToArray();
+                "diagnostic_frames", "diagnostic_collection_frames", "pause_ms_including_diagnostic", "diagnostic_frame_ms",
+                "cpu_frames", "descheduled_frames_30ms", "descheduled_collection_frames_30ms", "frame_cpu_ms_gc", "frame_cpu_ms_plain", "descheduled_ms_gc", "descheduled_ms_plain", "pause_cpu_ms" }).ToArray();
         foreach (string json in new[] { empty, full })
         {
             Assert.DoesNotContain('\n', json);

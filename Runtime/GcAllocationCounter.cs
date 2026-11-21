@@ -174,7 +174,7 @@ namespace PersistentCity.Runtime
             var candidate = sampler?.FrameRecorder;
             if (candidate == null || !candidate.Armed) return false;
             recorder = candidate; owner = sampler;
-            candidate.Begin(frame, System.Diagnostics.Stopwatch.GetTimestamp(), GcAllocationCounter.Read(), GC.CollectionCount(0), GcAllocationCounter.Collections);
+            candidate.Begin(frame, System.Diagnostics.Stopwatch.GetTimestamp(), GcAllocationCounter.Read(), GC.CollectionCount(0), GcAllocationCounter.Collections, ThreadCpuClock.Nanoseconds());
             return true;
         }
 
@@ -203,7 +203,9 @@ namespace PersistentCity.Runtime
             var current = recorder;
             var sampler = owner;
             recorder = null; owner = null;
-            current?.End(System.Diagnostics.Stopwatch.GetTimestamp(), GcAllocationCounter.Read(), GC.CollectionCount(0), GcAllocationCounter.Collections, sampler);
+            if (current == null) return;
+            long ended = System.Diagnostics.Stopwatch.GetTimestamp();
+            current.End(ended, GcAllocationCounter.Read(), GC.CollectionCount(0), GcAllocationCounter.Collections, sampler, ThreadCpuClock.Nanoseconds());
         }
     }
 }
