@@ -25,10 +25,16 @@ namespace PersistentCity.Core
             if (double.IsNaN(budgetMilliseconds) || budgetMilliseconds < 0) throw new ArgumentOutOfRangeException(nameof(budgetMilliseconds));
             long deadline = double.IsPositiveInfinity(budgetMilliseconds) ? long.MaxValue
                 : System.Diagnostics.Stopwatch.GetTimestamp() + (long)(budgetMilliseconds * System.Diagnostics.Stopwatch.Frequency / 1000);
+            int preparing = NetworkPreparationUpdates;
             if (!PrepareTrafficNetwork(deadline)) return false;
+            if (deadline != long.MaxValue && NetworkPreparationUpdates != preparing && SwapPending()) { NetworkSwapsDeferred++; return false; }
             RefreshTrafficClosures();
             return true;
         }
+
+        public long NetworkSwapsDeferred { get; private set; }
+
+        private bool SwapPending() => routes is ITrafficRoutePlanner planner && planner.TrafficNetwork != null && !ReferenceEquals(planner.TrafficNetwork, trafficNetwork);
 
         private void ForgetPreparedNetwork()
         {

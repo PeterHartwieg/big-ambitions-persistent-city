@@ -238,6 +238,41 @@ public sealed class Gr5NetworkRequeueTests
     }
 
     [Fact]
+    public void TheNetworkSwapRunsOnAnUpdateOfItsOwnAfterTheLastPreparationSlice()
+    {
+        var networks = new[] { Road(), Road() };
+        var wholePlanner = new SwappablePlanner { TrafficNetwork = networks[0] };
+        var slicedPlanner = new SwappablePlanner { TrafficNetwork = networks[0] };
+        var whole = RoadCity(750, 2250, wholePlanner);
+        var sliced = RoadCity(750, 2250, slicedPlanner);
+        whole.RefreshTrafficClosures();
+        while (!sliced.TryRefreshTrafficClosures(ClockRetimeStages.SliceMilliseconds)) { }
+        long deferredBefore = sliced.NetworkSwapsDeferred;
+        double slowestPreparation = 0, slowestSwap = 0;
+        for (int swap = 1; swap <= 6; swap++)
+        {
+            wholePlanner.TrafficNetwork = slicedPlanner.TrafficNetwork = networks[swap % 2];
+            whole.RefreshTrafficClosures();
+            while (true)
+            {
+                int preparing = sliced.NetworkPreparationUpdates;
+                long started = Stopwatch.GetTimestamp();
+                bool done = sliced.TryRefreshTrafficClosures(ClockRetimeStages.SliceMilliseconds);
+                double ms = (Stopwatch.GetTimestamp() - started) * 1000.0 / Stopwatch.Frequency;
+                if (done) { Assert.Equal(preparing, sliced.NetworkPreparationUpdates); slowestSwap = Math.Max(slowestSwap, ms); break; }
+                slowestPreparation = Math.Max(slowestPreparation, ms);
+            }
+            Assert.Equal(whole.QueuedPersonEvents, sliced.QueuedPersonEvents);
+            Assert.Equal(SaveCodec.Write(whole.State), SaveCodec.Write(sliced.State));
+        }
+        Assert.Equal(6, sliced.NetworkSwapsDeferred - deferredBefore);
+        output.WriteLine("network swap on its own update, 750 drivers x " + DriveLegs + " road legs, 2,250 resting, 14,000 links: slowest preparation update "
+            + slowestPreparation.ToString("0.00") + " ms, slowest swap update " + slowestSwap.ToString("0.00") + " ms (.NET)");
+        PerfGate.Under(slowestPreparation, 2 * ClockRetimeStages.SliceMilliseconds, "slowest network preparation update (.NET)");
+        PerfGate.Under(slowestSwap, 2 * ClockRetimeStages.SliceMilliseconds, "network swap update without a preparation slice (.NET)");
+    }
+
+    [Fact]
     public void NetworkPreparationGetsOnlyWhatIsLeftOfTheUpdateTargetAndStillMatchesAWholeSwap()
     {
         var budget = new UpdateCityBudget();
