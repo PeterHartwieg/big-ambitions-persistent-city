@@ -25,6 +25,21 @@ REFERENCES = ['mscorlib', 'System', 'System.Core', 'netstandard', 'BigAmbitions'
 SOURCES = ['HarmonyScan.cs', 'Probe.cs', 'ProbeLogic.cs', 'ScopeInventory.cs']
 ARTIFACT = 'PerfUnionProbe.dll'
 MOD = 'PerfUnionProbe'
+HARMONY = REPO / 'build/PersistentCity/Dependencies/0Harmony.dll'
+STEAM_MANAGED = Path(r'C:\Program Files (x86)\Steam\steamapps\common\Big Ambitions\Big Ambitions_Data\Managed')
+SHIM_MANAGED = 'Library/Application Support/BigAmbitionsMCP/dll-import-shim/Big Ambitions_Data/Managed'
+
+
+def host_managed(platform=None, environ=None):
+    environ = os.environ if environ is None else environ
+    if environ.get('PERF_UNION_GAME_MANAGED'):
+        return Path(environ['PERF_UNION_GAME_MANAGED'])
+    platform = platform or sys.platform
+    if platform == 'darwin':
+        return Path.home() / SHIM_MANAGED
+    if platform == 'win32':
+        return STEAM_MANAGED
+    return None
 
 
 def sha(path):
@@ -50,6 +65,10 @@ def build(managed, harmony, output):
         if parent.is_symlink() or (hasattr(parent, 'is_junction') and parent.is_junction()):
             raise SystemExit('Reparse point output refused')
     managed = managed.resolve()
+    if harmony.resolve().parent == managed:
+        raise SystemExit('0Harmony.dll must be the pinned copy from tools/build.py (' + str(HARMONY) + '), not the game Managed folder')
+    if not harmony.is_file():
+        raise SystemExit('Missing 0Harmony.dll at ' + str(harmony) + '; run tools/build.py, which places the pinned Lib.Harmony 2.4.2 there')
     references = [managed / (name + '.dll') for name in REFERENCES] + [harmony.resolve()]
     for path in references:
         if not path.is_file():
@@ -99,13 +118,28 @@ def package(artifact, harmony, output):
     return stage
 
 
-def main():
+def user_path(text):
+    return Path(os.path.expanduser(text))
+
+
+def parse(argv=None, platform=None, environ=None):
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--game-managed', type=Path, required=True)
-    parser.add_argument('--harmony', type=Path, default=REPO / 'build/PersistentCity/Dependencies/0Harmony.dll',
-                        help='Pinned Lib.Harmony 2.4.2 (tools/build.py places it here)')
-    parser.add_argument('--output', type=Path, default=REPO / 'build/perf-union-probe')
-    args = parser.parse_args()
+    parser.add_argument('--game-managed', '--managed', dest='game_managed', type=user_path,
+                        help='Game Managed folder; defaults to the dll-import-shim on the Mac and Steam on Windows')
+    parser.add_argument('--harmony', type=user_path, default=HARMONY, help='Pinned Lib.Harmony 2.4.2 (tools/build.py places it here)')
+    parser.add_argument('--output', type=user_path, default=REPO / 'build/perf-union-probe')
+    args = parser.parse_args(argv)
+    if args.game_managed is None:
+        args.game_managed = host_managed(platform, environ)
+        if args.game_managed is None:
+            parser.error('--game-managed is required on this host')
+        if not (args.game_managed / 'BigAmbitions.dll').is_file():
+            parser.error('no BigAmbitions.dll in the default Managed folder ' + str(args.game_managed) + '; pass --game-managed')
+    return args
+
+
+def main(argv=None):
+    args = parse(argv)
     _, text = build(args.game_managed, args.harmony, args.output)
     print(text, end='')
 

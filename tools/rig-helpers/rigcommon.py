@@ -1,7 +1,9 @@
 import datetime
 import json
+import math
 import os
 import subprocess
+import sys
 import time
 from pathlib import Path
 
@@ -13,8 +15,19 @@ STAGE = absolute(os.environ['PC_RIG_STAGE']) if os.environ.get('PC_RIG_STAGE') e
 RIG = absolute(os.environ.get('PC_RIG_CHECKOUT') or '~/Coding_Projects/big-ambitions/big-ambitions-agent-rig')
 SUPPORT = absolute(os.environ.get('PC_RIG_SUPPORT') or '~/Library/Application Support/BigAmbitionsAgentTestsMac')
 LOG = absolute(os.environ.get('PC_RIG_PLAYER_LOG') or (SUPPORT / 'Player-agent.log'))
-FIXTURE = os.environ.get('PC_RIG_FIXTURE', '')
+MAC_FIXTURE = 'FT GR5 13f Timing v1'
+NATIVE_TOLERANCE = .01
 CENSUS = '[Persistent City] gc retained '
+
+
+def default_fixture(platform=None):
+    explicit = os.environ.get('PC_RIG_FIXTURE', '')
+    if explicit:
+        return explicit
+    return MAC_FIXTURE if (platform or sys.platform) == 'darwin' else ''
+
+
+FIXTURE = default_fixture()
 
 
 def require_lock():
@@ -198,15 +211,17 @@ def finish_if_wrapped(label):
         raise RuntimeError('WRAP_UP_NOW')
 
 
-def go(label, target, speed):
+def clock_minutes(text):
+    h, m = map(int, text.split(':'))
+    return 60 * h + m
+
+
+def go(label, target, speed, day=None):
     current = clock(label)
     if current['paused'] and current['time'] == target and current['run_until'] is None:
         return
-
-    def minutes(text):
-        h, m = map(int, text.split(':'))
-        return 60 * h + m
-    day = current['day'] + (minutes(current['time']) >= minutes(target))
+    if day is None:
+        day = current['day'] + (clock_minutes(current['time']) >= clock_minutes(target))
     if not (current['run_until'] or '').endswith(' ' + target):
         call(label + '-go-' + target.replace(':', ''), 'time', {'speed': speed, 'run_until': {'day': str(day), 'time': target}, 'keep_needs': True})
     deadline = time.monotonic() + 1800
@@ -219,6 +234,58 @@ def go(label, target, speed):
                 raise RuntimeError(f'Clock target {target} reached {current}')
             return
     raise RuntimeError(f'Clock target {target} timed out: {current}')
+
+
+def native_minute(label):
+    value = (prop(label, 'AccountingDiagnostics').get('value') or {}).get('nativeMinute')
+    if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value):
+        raise RuntimeError(f'{label}: AccountingDiagnostics has no native minute: {value!r}')
+    return float(value)
+
+
+def native_reached(current, target, paused=False):
+    return current >= target - NATIVE_TOLERANCE or (paused and math.floor(current) >= math.floor(target))
+
+
+def clock_text(minute):
+    whole = math.floor(minute + NATIVE_TOLERANCE) % 1440
+    return f'{whole // 60:02d}:{whole % 60:02d}'
+
+
+def pause_at_native(label, target, speed=1):
+    current = native_minute(label + '-start')
+    here, goal = math.floor(current + NATIVE_TOLERANCE), math.floor(target + NATIVE_TOLERANCE)
+    if here > goal:
+        raise RuntimeError(f'{label}: native clock {current} already passed the minute of {target}')
+    state = clock(label)
+    if here == goal:
+        if not state['paused'] or state['run_until'] is not None:
+            rate(label + '-pause', speed, pause=True)
+    else:
+        shown = min(((math.floor(current) // 1440 + k) * 1440 + clock_minutes(state['time']) for k in (-1, 0, 1)), key=lambda m: abs(m - current))
+        go(label, clock_text(goal), speed, day=state['day'] + goal // 1440 - shown // 1440)
+    arrived = native_minute(label + '-native')
+    if math.floor(arrived + NATIVE_TOLERANCE) != goal or not native_reached(arrived, target, paused=True):
+        raise RuntimeError(f'{label}: paused at {arrived}, outside the native minute of {target}')
+    return arrived
+
+
+def wait_native(label, target, timeout=1800, interval=.25):
+    deadline = time.monotonic() + timeout
+    polls = 0
+    while True:
+        finish_if_wrapped(label)
+        polls += 1
+        current = native_minute(label + '-native')
+        paused = None if native_reached(current, target) else clock(label)['paused']
+        if paused is None or native_reached(current, target, paused):
+            return write(label + '-reached', {'utc': now(), 'target': target, 'native_minute': current, 'offset': current - target,
+                                              'paused': paused, 'polls': polls, 'tolerance': NATIVE_TOLERANCE})
+        if paused:
+            raise RuntimeError(f'{label}: native clock paused at {current} before {target}')
+        if time.monotonic() >= deadline:
+            raise RuntimeError(f'{label}: timed out at {current} on the way to {target}')
+        time.sleep(interval)
 
 
 def rate(label, speed, pause=False):
@@ -281,8 +348,18 @@ def route_leg_read(row, key):
     return row.get('route_legs', {}).get(key)
 
 
-def game_pid():
-    return json.loads((SUPPORT / 'run.json').read_text())['pid']
+def game_pid(timeout=10.0, interval=.25):
+    deadline = time.monotonic() + timeout
+    while True:
+        try:
+            pid = json.loads((SUPPORT / 'run.json').read_text()).get('pid')
+        except (OSError, ValueError, AttributeError):
+            pid = None
+        if isinstance(pid, int) and not isinstance(pid, bool) and pid > 0:
+            return pid
+        if time.monotonic() >= deadline:
+            return None
+        time.sleep(interval)
 
 
 def rss_kib(pid):
