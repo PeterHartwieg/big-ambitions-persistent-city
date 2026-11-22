@@ -69,7 +69,7 @@ namespace PersistentCity.Runtime
             this.objects = objects;
             if (!Position.Finite(clockRate) || clockRate <= 0) throw new ArgumentOutOfRangeException(nameof(clockRate));
             if (!Position.Finite(walkingMetresPerMinute) || walkingMetresPerMinute <= 0) throw new ArgumentOutOfRangeException(nameof(walkingMetresPerMinute));
-            this.clockRate = clockRate; subwayMetresPerMinute = 10 / clockRate;
+            this.clockRate = clockRate; subwayMetresPerMinute = TravelTiming.SubwayMetresPerMinute(clockRate);
             walkingSpeed = walkingMetresPerMinute;
             if (dependency == null) roadSpeeds = new NativeRoadSpeeds();
             else

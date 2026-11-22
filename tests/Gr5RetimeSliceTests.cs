@@ -222,7 +222,7 @@ public sealed class Gr5RetimeSliceTests
             var state = Noon();
             Clone(state);
             var job = TravelTiming.Begin(state, 1.4, 2)!;
-            for (int i = 0; i < 400; i++) job.Step(0);
+            while (job.Prepared < 400) Assert.False(job.Step(0));
             Assert.Equal(400, job.Prepared);
             change(state.Citizens.Take(job.Prepared));
             var journeys = state.Citizens.Select(c => c.Journey).ToList();

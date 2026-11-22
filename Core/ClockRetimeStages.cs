@@ -44,6 +44,7 @@ namespace PersistentCity.Core
         public int JoinsRefused { get; private set; }
         public TravelTiming.RetimedTraffic? RetimedTraffic { get; private set; }
         public int SharedLegs { get; private set; }
+        public int ReusedLegs { get; private set; }
         public string RetimedFrom { get; private set; } = "";
 
         public ClockRetimeOutcome Update(CityState state, double nativeRate, bool bodiesLive, double walkMetresPerSecond, double budgetMilliseconds)
@@ -96,7 +97,7 @@ namespace PersistentCity.Core
                 return ClockRetimeOutcome.Preparing;
             }
             if (!Pending.Commit()) { Pending = null; Restarts++; return ClockRetimeOutcome.Restarted; }
-            Degraded = Pending.Degraded; Split = Pending.Split; Joined = Pending.Joined; JoinsRefused = Pending.JoinsRefused; sharedLegHint = SharedLegs = Pending.SharedLegs;
+            Degraded = Pending.Degraded; Split = Pending.Split; Joined = Pending.Joined; JoinsRefused = Pending.JoinsRefused; SharedLegs = Pending.SharedLegs; ReusedLegs = Pending.ReusedLegs; sharedLegHint = Pending.SharedPool;
             RetimedTraffic = Pending.TakeRestoredTraffic(); Pending = null; finished = true;
             return ClockRetimeOutcome.Committed;
         }
@@ -118,7 +119,7 @@ namespace PersistentCity.Core
 
         private void Reset()
         {
-            finished = false; Restarts = 0; Slices = 0; SnapshotSlices = 0; SliceMilliseconds = SlowestSliceMilliseconds = 0; Degraded = 0; Split = Joined = JoinsRefused = 0; RetimedTraffic = null; SharedLegs = 0; RetimedFrom = "";
+            finished = false; Restarts = 0; Slices = 0; SnapshotSlices = 0; SliceMilliseconds = SlowestSliceMilliseconds = 0; Degraded = 0; Split = Joined = JoinsRefused = 0; RetimedTraffic = null; SharedLegs = ReusedLegs = 0; RetimedFrom = "";
         }
     }
 }

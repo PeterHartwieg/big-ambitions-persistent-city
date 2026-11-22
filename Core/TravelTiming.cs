@@ -145,17 +145,19 @@ namespace PersistentCity.Core
             private TrafficKernelState? traffic;
             private TrafficKernel? rescaledKernel;
             private Dictionary<string, CitizenState>? citizens;
-            private int next, checkedVehicles, stage;
+            private int next, seeded, checkedVehicles, stage;
             private bool trafficDone, committed;
             private readonly bool kernelMode;
             private readonly Func<int, IEnumerator<bool>>? retimeSnapshot;
             private readonly List<TrafficVehicleState>? sourceVehicles;
             private List<TrafficVehicleState>? checkVehicles;
-            private Dictionary<RouteLeg, RouteLeg>? sharedLegs;
+            private SharedLegPool? sharedLegs;
             private readonly int sharedLegHint;
             private readonly TrafficKernel? liveKernel;
             private readonly long liveRevision;
             public int SharedLegs { get; private set; }
+            public int ReusedLegs { get; private set; }
+            internal int SharedPool { get; private set; }
             private bool HasTraffic => kernelMode ? sourceVehicles != null : trafficState != null;
             private IReadOnlyList<TrafficVehicleState> OwnedVehicles => kernelMode ? sourceVehicles! : trafficState!.Vehicles;
 
@@ -221,6 +223,11 @@ namespace PersistentCity.Core
                 {
                     if (stage == 1)
                     {
+                        while (seeded < schedules.Count)
+                        {
+                            Seed(seeded++); worked = true;
+                            if ((seeded & SeedsPerDeadlineCheck - 1) == 0 && System.Diagnostics.Stopwatch.GetTimestamp() >= deadlineTimestamp) return false;
+                        }
                         while (next < schedules.Count)
                         {
                             Prepare(next++); worked = true;
@@ -345,7 +352,7 @@ namespace PersistentCity.Core
                     }
                 }
                 committed = true;
-                SharedLegs = sharedLegs?.Count ?? 0;
+                SharedLegs = sharedLegs?.Copies ?? 0; ReusedLegs = sharedLegs?.Reused ?? 0; SharedPool = sharedLegs?.Count ?? 0;
                 sharedLegs = null;
                 foreach (var change in changes)
                 {
@@ -406,6 +413,82 @@ namespace PersistentCity.Core
                 return true;
             }
 
+            private const int SeedsPerDeadlineCheck = 64;
+            private readonly List<RouteLeg> history = new List<RouteLeg>();
+
+            private int CompactHistory(CitizenState citizen, Route replacement, int completed, double resumed)
+            {
+                var legs = replacement.Legs;
+                if (!HasCompactableRun(legs, completed)) return 0;
+                var before = CitySimulator.SampleRoute(replacement, resumed, citizen.Car?.ParkedPosition);
+                history.Clear();
+                for (int i = 0; i < legs.Count; i++) history.Add(legs[i]);
+                legs.Clear();
+                int removed = 0;
+                double start = 0;
+                for (int i = 0; i < history.Count;)
+                {
+                    int end = i < completed ? RetimedSpanEnd(history, i, completed) : i + 1;
+                    double total = start;
+                    for (int k = i; k < end; k++) total += history[k].Minutes;
+                    double minutes = total - start;
+                    if (end - i > 1 && start + minutes == total && Position.Finite(minutes) && minutes > 0 && minutes <= MaxLegMinutes)
+                    {
+                        RouteLeg first = history[i], last = history[end - 1];
+                        legs.Add(first.CopyAs(first.From, last.To, minutes, first.ServiceId, last.SplitPrefix).MarkRetimed(first));
+                        removed += end - i - 1;
+                    }
+                    else for (int k = i; k < end; k++) legs.Add(history[k]);
+                    start = total; i = end;
+                }
+                var after = CitySimulator.SampleRoute(replacement, resumed, citizen.Car?.ParkedPosition);
+                if (removed == 0 || !before.Position.Equals(after.Position) || !Nullable.Equals(before.CarPosition, after.CarPosition) || before.Mode != after.Mode)
+                {
+                    legs.Clear();
+                    for (int i = 0; i < history.Count; i++) legs.Add(history[i]);
+                    removed = 0;
+                }
+                history.Clear();
+                return removed;
+            }
+
+            private static bool Compactable(RouteLeg leg) => leg.Mode == TravelMode.Walk || leg.Mode == TravelMode.Subway;
+
+            private static bool SameRun(RouteLeg a, RouteLeg b)
+                => a.Mode == b.Mode && string.Equals(a.ServiceId, b.ServiceId, StringComparison.Ordinal);
+
+            private static int RetimedSpanEnd(IReadOnlyList<RouteLeg> legs, int start, int completed)
+            {
+                if (!legs[start].Retimed || !Compactable(legs[start])) return start + 1;
+                int last = start, retimed = 1;
+                for (int k = start + 1; k < completed && SameRun(legs[k - 1], legs[k]); k++)
+                    if (legs[k].Retimed) { last = k; retimed++; }
+                return retimed > 1 ? last + 1 : start + 1;
+            }
+
+            private static bool HasCompactableRun(IReadOnlyList<RouteLeg> legs, int completed)
+            {
+                for (int i = 0; i < completed; i++)
+                    if (RetimedSpanEnd(legs, i, completed) - i > 1) return true;
+                return false;
+            }
+
+            private void Seed(int index)
+            {
+                var citizen = schedules[index];
+                if (citizen == null || citizen.Phase != CitizenPhase.Travelling || citizen.Journey == null) return;
+                var pool = sharedLegs ??= new SharedLegPool(sharedLegHint);
+                var legs = citizen.Journey.Legs;
+                double elapsed = State.Minute - citizen.DepartureMinute, end = 0;
+                for (int i = 0; i < legs.Count; i++)
+                {
+                    var leg = legs[i];
+                    end += leg.Minutes;
+                    if (!(end <= elapsed)) return;
+                    if (leg.Shared && !leg.SplitPrefix) pool.Seed(leg);
+                }
+            }
+
             private void Prepare(int index)
             {
                 var state = State;
@@ -451,7 +534,7 @@ namespace PersistentCity.Core
                 if (elapsed > route.Minutes || arrivalDifference > arrivalTolerance)
                     throw new ArgumentException("Journey clock does not match its route.", nameof(state));
                 bool mapped = trafficOwned;
-                var shared = sharedLegs ??= new Dictionary<RouteLeg, RouteLeg>(sharedLegHint, RouteLeg.SameContent);
+                var shared = sharedLegs ??= new SharedLegPool(sharedLegHint);
                 var replacement = RetimeJoiningSplits(route, elapsed, legacy, walk, rate, ratio, false, mapped, true, trafficOwned ? trafficRoutes[citizen.Identity.Id] : null,
                     out var map, out int completed, out int merges, shared);
                 if (merges > 0 && !SameJoinedPose(citizen, replacement, elapsed,
@@ -466,6 +549,8 @@ namespace PersistentCity.Core
                     }
                 }
                 else if (merges > 0) Joined++;
+                bool split = replacement.Legs.Count > route.Legs.Count;
+                if (!mapped) completed -= CompactHistory(citizen, replacement, completed, CitySimulator.NormalizeJourneyElapsed(rawElapsed, replacement.Minutes, state.Minute));
                 if (replacement.Legs.Count > MaxLegs
                     && !MergeCompletedLegs(replacement, completed, elapsed, trafficOwned ? trafficRoutes[citizen.Identity.Id] : null))
                 {
@@ -497,7 +582,7 @@ namespace PersistentCity.Core
                     arrival = state.Minute;
                 if (!Position.Finite(arrival) || arrival < state.Minute || arrival > MaxMinute)
                     throw new ArgumentException("Retimed arrival exceeds the supported clock.", nameof(state));
-                if (replacement.Legs.Count > route.Legs.Count) Split++;
+                if (split) Split++;
                 PresentationGrid.Precompute(replacement.Commit());
                 var change = new Change { Citizen = citizen, Route = replacement, EventMinute = arrival, Elapsed = elapsed,
                     DepartureMinute = departure == citizen.DepartureMinute ? (double?)null : departure };
@@ -666,22 +751,70 @@ namespace PersistentCity.Core
             => RetimeJoiningSplits(original, elapsed, legacy, walkSpeed, rate, ratio, keepCurrent, mapped, false, null, out map, out completed, out _);
 
         private static Route RetimeSharing(Route original, double elapsed, bool legacy, double walkSpeed, double rate, double ratio,
-            bool keepCurrent, bool mapped, out NominalMap? map, out int completed, Dictionary<RouteLeg, RouteLeg>? shared)
+            bool keepCurrent, bool mapped, out NominalMap? map, out int completed, SharedLegPool? shared)
             => RetimeJoiningSplits(original, elapsed, legacy, walkSpeed, rate, ratio, keepCurrent, mapped, false, null, out map, out completed, out _, shared);
 
-        private static RouteLeg ScaledFuture(RouteLeg leg, Dictionary<RouteLeg, RouteLeg>? shared, bool legacy, double walkSpeed, double rate, double ratio)
+        public const double SubwayMetresPerScaledSecond = 10;
+        private const double PlannedPaceTolerance = 0.001;
+
+        public static double LegClockRate(double clockRate)
         {
+            if (!Position.Finite(clockRate) || clockRate <= 0) return clockRate;
+            double scale = Math.Pow(10, 4 - Math.Floor(Math.Log10(clockRate)));
+            double stable = Math.Round(clockRate * scale) / scale;
+            return Position.Finite(stable) && stable > 0 ? stable : clockRate;
+        }
+
+        public static double WalkingMetresPerMinute(double walkMetresPerSecond, double clockRate) => walkMetresPerSecond / LegClockRate(clockRate);
+
+        public static double SubwayMetresPerMinute(double clockRate) => SubwayMetresPerScaledSecond / LegClockRate(clockRate);
+
+        private static double FutureDuration(RouteLeg leg, bool legacy, double walkSpeed, double rate, double ratio)
+        {
+            double scaled = Duration(leg, leg.From, leg.To, leg.Minutes, legacy, walkSpeed, rate, ratio);
+            if (legacy || leg.SplitPrefix) return scaled;
+            double metresPerMinute = leg.Mode == TravelMode.Walk && leg.ServiceId.Length == 0 ? WalkingMetresPerMinute(walkSpeed, rate)
+                : leg.Mode == TravelMode.Subway && string.Equals(leg.ServiceId, "native:subway", StringComparison.Ordinal) ? SubwayMetresPerMinute(rate)
+                : 0;
+            if (metresPerMinute <= 0) return scaled;
+            double length = Position.Distance(leg.From, leg.To);
+            if (!(length > 0.000001)) return scaled;
+            double planned = length / metresPerMinute;
+            return Position.Finite(planned) && planned > 0 && Math.Abs(planned - scaled) <= PlannedPaceTolerance * scaled ? planned : scaled;
+        }
+
+        private sealed class SharedLegPool
+        {
+            private readonly HashSet<RouteLeg> legs;
+            private readonly RouteLeg probe = new RouteLeg();
+            internal SharedLegPool(int capacity) { legs = new HashSet<RouteLeg>(Math.Max(0, capacity), RouteLeg.SameContent); }
+            internal int Count => legs.Count;
+            internal int Copies { get; private set; }
+            internal int Reused { get; private set; }
+            internal void Seed(RouteLeg leg) => legs.Add(leg);
+            internal bool TryGet(RouteLeg source, double minutes, out RouteLeg known)
+            {
+                probe.Aim(source, minutes);
+                if (!legs.TryGetValue(probe, out known!)) return false;
+                Reused++;
+                return true;
+            }
+            internal void Add(RouteLeg copy) { legs.Add(copy); Copies++; }
+        }
+
+        private static RouteLeg ScaledFuture(RouteLeg leg, SharedLegPool? shared, bool legacy, double walkSpeed, double rate, double ratio)
+        {
+            double duration = FutureDuration(leg, legacy, walkSpeed, rate, ratio);
             bool reuse = shared != null && leg.Shared;
-            if (reuse && shared!.TryGetValue(leg, out var known)) return known;
-            double duration = Duration(leg, leg.From, leg.To, leg.Minutes, legacy, walkSpeed, rate, ratio);
+            if (reuse && shared!.TryGet(leg, duration, out var known)) return known;
             var copy = Copy(leg, leg.From, leg.To, duration, leg.ServiceId);
-            if (reuse) { copy.Share(); shared!.Add(leg, copy); }
+            if (reuse) { copy.Share(); shared!.Add(copy); }
             return copy;
         }
 
         private static Route RetimeJoiningSplits(Route original, double elapsed, bool legacy, double walkSpeed, double rate, double ratio,
             bool keepCurrent, bool mapped, bool mergeFragments, TrafficVehicleState? traffic, out NominalMap? map, out int completed, out int merges,
-            Dictionary<RouteLeg, RouteLeg>? shared = null)
+            SharedLegPool? shared = null)
         {
             merges = 0;
             int mergeCount = 0;
@@ -692,7 +825,7 @@ namespace PersistentCity.Core
             completed = 0;
             double oldOffset = 0, newOffset = 0;
             void Add(RouteLeg leg, Position from, Position to, double minutes, string service, double oldMinutes, double? oldEnd = null, bool splitPrefix = false)
-                => AddLeg(Copy(leg, from, to, minutes, service, splitPrefix), oldMinutes, oldEnd);
+                => AddLeg(Copy(leg, from, to, minutes, service, splitPrefix).MarkRetimed(leg), oldMinutes, oldEnd);
             void AddLeg(RouteLeg copy, double oldMinutes, double? oldEnd = null)
             {
                 route.Legs.Add(copy);
@@ -727,7 +860,7 @@ namespace PersistentCity.Core
                         double segmentEnd = oldEnd ?? oldOffset + oldMinutes;
                         mapping?.Segments.Add((oldOffset, segmentEnd, newOffset, joinedEnd));
                         if (mapping != null && leg.Mode == TravelMode.Car && Position.Distance(from, to) > 0) mapping.UnscaledCarPrefixes.Add((newOffset, joinedEnd));
-                        route.Legs[fragment] = previous.CopyAs(previous.From, to, merged, service, splitPrefix);
+                        route.Legs[fragment] = previous.CopyAs(previous.From, to, merged, service, splitPrefix).MarkRetimed(previous);
                         oldOffset = segmentEnd; newOffset = joinedEnd;
                         mergeCount++;
                         return;

@@ -37,13 +37,13 @@ public sealed class Gr5SharedLegRetimeTests
         c.NextEventMinute = c.DepartureMinute + c.Journey.Minutes;
     }
 
-    private static (CityState State, CitySimulator City) WalkingCity(bool shared, int late = 0)
+    private static (CityState State, CitySimulator City) WalkingCity(bool shared, int late = 0, double workX = PathLegs + 2)
     {
         var state = Population.Create(Enumerable.Range(0, Walkers + late).Select(i => new CitizenIdentity
         { Id = "walker" + i.ToString("D4"), Name = "Walker " + i, Age = 30, Persona = Persona.Commuter }), new[]
         {
             new Place { Id = "home", Name = "Home", Kind = PlaceKind.Home, Capacity = Walkers + late, Position = new Position(0, 0, 0) },
-            new Place { Id = "work", Name = "Work", Kind = PlaceKind.Work, Capacity = Walkers + late, Position = new Position(PathLegs + 2, 0, 0) }
+            new Place { Id = "work", Name = "Work", Kind = PlaceKind.Work, Capacity = Walkers + late, Position = new Position(workX, 0, 0) }
         }, "shared-leg-retime", "0.40.4", 5, 1440);
         state.TravelTimingVersion = 1; state.TravelClockRate = 1;
         var path = Path(shared);
@@ -124,12 +124,13 @@ public sealed class Gr5SharedLegRetimeTests
         return copies.Count == 0 ? 0 : copies.Values.Max(v => v.Count);
     }
 
-    private (List<long> Unique, List<int> Copies, List<long> Drained) RunWithLateDepartures(int cycles, bool retime)
+    private (List<long> Unique, List<int> Copies, List<long> Drained, List<int> Travelling) RunWithLateDepartures(int cycles, bool retime)
     {
         var (state, city) = WalkingCity(shared: true, late: LateWalkersPerCycle * cycles);
         var cached = state.Citizens[0].Journey!.Legs.Take(PathLegs).ToList();
         var unique = new List<long> { RetainedCensus.JourneyLegs(state).Legs };
         var copies = new List<int> { FutureCopies(state) };
+        var travelling = new List<int> { Travelling(state) };
         for (int cycle = 0; cycle < cycles; cycle++)
         {
             var path = new Route();
@@ -146,6 +147,7 @@ public sealed class Gr5SharedLegRetimeTests
             city.AdvanceTo(state.Minute + 0.01, int.MaxValue);
             unique.Add(RetainedCensus.JourneyLegs(state).Legs);
             copies.Add(FutureCopies(state));
+            travelling.Add(Travelling(state));
         }
         Assert.True(Travelling(state) > Walkers / 2, Travelling(state).ToString());
         var drained = new List<long>();
@@ -155,7 +157,7 @@ public sealed class Gr5SharedLegRetimeTests
             drained.Add(RetainedCensus.JourneyLegs(state).Legs);
         }
         Assert.Equal(0, Travelling(state));
-        return (unique, copies, drained);
+        return (unique, copies, drained, travelling);
     }
 
     [Fact]
@@ -171,8 +173,122 @@ public sealed class Gr5SharedLegRetimeTests
             + $"drain control {string.Join(" / ", control.Drained)}, retimed {string.Join(" / ", retimed.Drained)}");
         Assert.All(control.Copies, c => Assert.Equal(1, c));
         Assert.All(retimed.Copies, c => Assert.Equal(1, c));
-        for (int r = 2; r <= cycles; r++) Assert.True(excess[r] - excess[r - 1] <= PathLegs + LateWalkersPerCycle, "R" + r + " excess " + excess[r] + " vs " + excess[r - 1]);
+        Assert.Equal(control.Travelling, retimed.Travelling);
+        var perJourney = excess.Select((e, r) => e - 2L * retimed.Travelling[r]).ToList();
+        output.WriteLine("excess beyond one split prefix and one tail per journey in flight " + string.Join(" / ", perJourney));
+        for (int r = 2; r <= cycles; r++) Assert.True(perJourney[r] <= perJourney.Take(r).Max(), "R" + r + " " + string.Join(" / ", perJourney));
         Assert.Equal(control.Drained[control.Drained.Count - 1], retimed.Drained[retimed.Drained.Count - 1]);
+    }
+
+    private const double Walk = 1.4;
+    private static readonly double[] UpRates = { 1.9999993, 2.0000011, 1.9999987, 2.0000004, 1.9999998 };
+    private static readonly double[] ReturnRates = { 1.0000003, 0.9999996, 1.0000008, 0.9999991, 1.0000002 };
+
+    private static Route PlannedPath(double rate)
+    {
+        var path = new Route();
+        double metresPerMinute = TravelTiming.WalkingMetresPerMinute(Walk, rate), x = 0;
+        for (int k = 0; k < PathLegs; k++)
+        {
+            double length = 0.7 + 0.013 * k;
+            path.Legs.Add(new RouteLeg { From = new Position(x, 0, 0), To = new Position(x + length, 0, 0), Minutes = length / metresPerMinute, Mode = TravelMode.Walk });
+            x += length;
+        }
+        return TransportComposition.Shared(path);
+    }
+
+    private static void DepartPlanned(CitizenState c, Route path, double departure)
+    {
+        c.PlaceId = c.HomeId = "home"; c.DayPlaceId = "work";
+        c.Phase = CitizenPhase.Travelling; c.DestinationId = "work"; c.DestinationActivity = Activity.Work;
+        c.ActivityUntilMinute = 5000; c.Preferences.OwnsCar = false; c.Car = null;
+        var journey = new Route(new RouteLegs(path.Legs.Count));
+        journey.Legs.AddRange(path.Legs);
+        c.Journey = journey.Commit();
+        c.DepartureMinute = departure;
+        c.NextEventMinute = c.DepartureMinute + c.Journey.Minutes;
+    }
+
+    private static int MostObjectsForOneSegment(CityState state)
+    {
+        var objects = new Dictionary<(Position, Position), HashSet<RouteLeg>>();
+        foreach (var c in state.Citizens)
+        {
+            if (c.Phase != CitizenPhase.Travelling || c.Journey == null) continue;
+            foreach (var leg in c.Journey.Legs)
+            {
+                if (leg.SplitPrefix) continue;
+                var key = (leg.From, leg.To);
+                if (!objects.TryGetValue(key, out var set)) objects.Add(key, set = new HashSet<RouteLeg>(ReferenceEqualityComparer.Instance));
+                set.Add(leg);
+            }
+        }
+        return objects.Count == 0 ? 0 : objects.Values.Max(v => v.Count);
+    }
+
+    private (List<long> Unique, List<int> Objects, long Drained) RunAtObservedRates(bool retime, int latePerCycle)
+    {
+        int cycles = UpRates.Length;
+        var original = PlannedPath(1);
+        var (state, city) = WalkingCity(shared: true, late: latePerCycle * cycles, workX: original.Legs[original.Legs.Count - 1].To.X);
+        for (int i = 0; i < Walkers; i++) DepartPlanned(state.Citizens[i], original, 1440 - 0.37 - 0.0213 * (i % 500));
+        city = new CitySimulator(state, new NoRoutes());
+        var unique = new List<long> { RetainedCensus.JourneyLegs(state).Legs };
+        var objects = new List<int> { MostObjectsForOneSegment(state) };
+        double current = 1;
+        for (int cycle = 0; cycle < cycles; cycle++)
+        {
+            var path = retime ? PlannedPath(current) : original;
+            for (int k = 0; k < latePerCycle; k++) DepartPlanned(state.Citizens[Walkers + cycle * latePerCycle + k], path, state.Minute);
+            city = new CitySimulator(state, new NoRoutes());
+            if (retime)
+            {
+                city = RetimeAt(state, city, UpRates[cycle]);
+                city.AdvanceTo(state.Minute + 0.3, int.MaxValue);
+                city = RetimeAt(state, city, ReturnRates[cycle]);
+                current = ReturnRates[cycle];
+            }
+            else city.AdvanceTo(state.Minute + 0.3, int.MaxValue);
+            city.AdvanceTo(state.Minute + 0.2, int.MaxValue);
+            unique.Add(RetainedCensus.JourneyLegs(state).Legs);
+            objects.Add(MostObjectsForOneSegment(state));
+        }
+        Assert.True(Travelling(state) > Walkers / 2, Travelling(state).ToString());
+        city.AdvanceTo(state.Minute + 60, int.MaxValue);
+        Assert.Equal(0, Travelling(state));
+        return (unique, objects, RetainedCensus.JourneyLegs(state).Legs);
+    }
+
+    private static CitySimulator RetimeAt(CityState state, CitySimulator city, double rate)
+    {
+        var driver = new ClockRetimeDriver();
+        while (true)
+        {
+            var outcome = driver.Update(state, rate, false, Walk, 0);
+            Assert.NotEqual(ClockRetimeOutcome.Restarted, outcome);
+            if (outcome == ClockRetimeOutcome.Committed) return city.RebuildRoutes(new NoRoutes(), driver.TakeRetimedTraffic());
+        }
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(LateWalkersPerCycle)]
+    public void ObservedClockRatesKeepOneObjectPerSegmentAndRateAndTheRawLegGapPlateaus(int latePerCycle)
+    {
+        var control = RunAtObservedRates(retime: false, latePerCycle);
+        var retimed = RunAtObservedRates(retime: true, latePerCycle);
+        var excess = control.Unique.Zip(retimed.Unique, (c, r) => r - c).ToList();
+        var perJourney = excess.Select((e, r) => e - 2L * latePerCycle * r).ToList();
+        output.WriteLine($"{Walkers} walkers plus {latePerCycle} late walkers per cycle on a planned {PathLegs}-leg path, up rates {string.Join(" / ", UpRates)}, return rates {string.Join(" / ", ReturnRates)}; "
+            + $"unique journey RouteLegs at R0..R{UpRates.Length}: control {string.Join(" / ", control.Unique)}; retimed {string.Join(" / ", retimed.Unique)}; excess {string.Join(" / ", excess)}; "
+            + $"excess beyond one split prefix and one tail per late walker {string.Join(" / ", perJourney)}; "
+            + $"most objects held for one path segment: control {string.Join(" / ", control.Objects)}, retimed {string.Join(" / ", retimed.Objects)}; "
+            + $"after the drain control {control.Drained}, retimed {retimed.Drained}");
+        Assert.All(control.Objects, c => Assert.Equal(1, c));
+        Assert.All(retimed.Objects, c => Assert.True(c <= 2, "objects per segment " + string.Join(" / ", retimed.Objects)));
+        for (int r = 2; r < excess.Count; r++) Assert.True(perJourney[r] <= perJourney.Take(r).Max(), "R" + r + " excess " + string.Join(" / ", perJourney));
+        if (latePerCycle == 0) for (int r = 2; r < excess.Count; r++) Assert.True(excess[r] <= excess.Take(r).Max(), "R" + r + " raw excess " + string.Join(" / ", excess));
+        Assert.Equal(control.Drained, retimed.Drained);
     }
 
     [Fact]

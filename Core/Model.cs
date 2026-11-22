@@ -111,8 +111,14 @@ namespace PersistentCity.Core
             return copy;
         }
         internal bool Shared { get; private set; }
+        internal bool Retimed { get; private set; }
+        internal RouteLeg MarkRetimed(RouteLeg source) { if (source.Retimed || !SameContent.Equals(this, source)) Retimed = true; return this; }
         internal void Freeze() => Frozen = true;
         internal void Share() { Frozen = true; Shared = true; }
+        internal void Aim(RouteLeg source, double minutes)
+        {
+            from = source.from; to = source.to; mode = source.mode; this.minutes = minutes; serviceId = source.serviceId; SplitPrefix = false;
+        }
         private void Mutable() { if (Frozen) throw new InvalidOperationException("A committed route leg is immutable."); }
         internal static readonly IEqualityComparer<RouteLeg> SameContent = new ContentComparer();
         private sealed class ContentComparer : IEqualityComparer<RouteLeg>
