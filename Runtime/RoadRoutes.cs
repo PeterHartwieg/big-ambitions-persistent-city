@@ -652,7 +652,7 @@ namespace PersistentCity.Runtime
                 if (!owner.Ready || owner.TrafficNetwork == null || !Position.Finite(departureMinute) || departureMinute < 0
                     || from.Node == to.Node || !owner.ConnectorClear(from.Position, nodes[from.Node].Position) || !owner.ConnectorClear(to.Position, nodes[to.Node].Position))
                 { Finish(null); return; }
-                completing = completeResumed = recheckWaiting = false; completeStage = completeIndex = recheckWaits = 0;
+                completing = completeResumed = recheckWaiting = RecheckDeferred = false; completeStage = completeIndex = recheckWaits = 0; recheckWaitFrame = long.MinValue;
                 if (owner.searchGeneration == int.MaxValue) { Array.Clear(owner.searchedAt, 0, owner.searchedAt.Length); owner.searchGeneration = 0; }
                 owner.searchGeneration++;
                 generation = owner.searchGeneration;
@@ -673,6 +673,7 @@ namespace PersistentCity.Runtime
             public bool Continue(long deadlineTimestamp)
             {
                 if (Finished) return true;
+                RecheckDeferred = false;
                 if (WaitingForSpeeds || owner.searchGeneration != generation)
                 {
                     if (!WaitingForSpeeds) { Restarts++; owner.SearchRestarts++; }
@@ -696,7 +697,7 @@ namespace PersistentCity.Runtime
                         try { done = CompleteStep(ExpansionStep, deadlineTimestamp); }
                         catch (RoadSpeedsWaitingException) { search?.Dispose(); search = null; WaitingForSpeeds = true; return false; }
                         if (done) return true;
-                        if (recheckWaiting) { recheckWaiting = false; return false; }
+                        if (recheckWaiting) { recheckWaiting = false; RecheckDeferred = true; return false; }
                     }
                     if (deadlineTimestamp == long.MaxValue) continue;
                     if (++steps >= StepsPerUnit || Stopwatch.GetTimestamp() >= deadlineTimestamp) { completeResumed |= completing; return false; }
@@ -705,6 +706,8 @@ namespace PersistentCity.Runtime
 
             private bool completing, completeResumed, recheckWaiting;
             private int completeStage, completeIndex, recheckWaits;
+            private long recheckWaitFrame = long.MinValue;
+            public bool RecheckDeferred { get; private set; }
             public int CompletionUnits { get; private set; }
 
             private bool CompleteStep(int units, long deadlineTimestamp)
@@ -740,7 +743,7 @@ namespace PersistentCity.Runtime
                             if (completeResumed)
                             {
                                 long checkStarted = Stopwatch.GetTimestamp();
-                                if (!owner.edgeRecheck.Admits(checkStarted, deadlineTimestamp, path.Length, ref recheckWaits)) { recheckWaiting = true; return false; }
+                                if (!owner.edgeRecheck.Admits(checkStarted, deadlineTimestamp, path.Length, Time.frameCount, ref recheckWaits, ref recheckWaitFrame)) { recheckWaiting = true; return false; }
                                 bool open = StillOpen(path);
                                 owner.edgeRecheck.Record(Stopwatch.GetTimestamp() - checkStarted, path.Length);
                                 if (!open) { Finish(null); return true; }

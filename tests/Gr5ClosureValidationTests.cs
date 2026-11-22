@@ -75,14 +75,25 @@ public sealed class Gr5ClosureValidationTests
     public void ASlicedRouteRechecksEveryNativeEdgeBeforePublishing()
     {
         string source = System.IO.File.ReadAllText(System.IO.Path.Combine(CapabilityReportTests.Root(), "Runtime", "RoadRoutes.cs"));
-        int admit = source.IndexOf("if (!owner.edgeRecheck.Admits(checkStarted, deadlineTimestamp, path.Length, ref recheckWaits)) { recheckWaiting = true; return false; }", StringComparison.Ordinal);
+        int admit = source.IndexOf("if (!owner.edgeRecheck.Admits(checkStarted, deadlineTimestamp, path.Length, Time.frameCount, ref recheckWaits, ref recheckWaitFrame)) { recheckWaiting = true; return false; }", StringComparison.Ordinal);
         int check = source.IndexOf("bool open = StillOpen(path);", StringComparison.Ordinal);
         int publish = source.IndexOf("Finish(TransportComposition.Join(", StringComparison.Ordinal);
         Assert.True(admit > 0 && check > admit && publish > check);
         Assert.Contains("if (!open) { Finish(null); return true; }", source);
-        Assert.Contains("if (recheckWaiting) { recheckWaiting = false; return false; }", source);
+        Assert.Contains("if (recheckWaiting) { recheckWaiting = false; RecheckDeferred = true; return false; }", source);
         Assert.Contains("if (owner.ClosedByFlags(path[i]) || i > 0 && !owner.EdgeStillLinked(path[i - 1], path[i])) return false;", source);
         Assert.Contains("|| native.neighbors == null || !native.neighbors.Contains(to)) return Invalid(\"path-neighbours\", from);", source);
+    }
+
+    [Fact]
+    public void ARecheckWaitEndsBothPlanningLoopsForTheUpdate()
+    {
+        string source = System.IO.File.ReadAllText(System.IO.Path.Combine(CapabilityReportTests.Root(), "Runtime", "MultimodalRoutes.cs"));
+        Assert.Contains("if (!drive!.Continue(deadline)) { if (drive.RecheckDeferred) owner.jobRecheckHeldFrame = Time.frameCount; return; }", source);
+        Assert.Contains("if (finite && owner.jobRecheckHeldFrame == Time.frameCount)", source);
+        Assert.Contains("jobAdmissionHeldFrame == Time.frameCount || jobRecheckHeldFrame == Time.frameCount", source);
+        string mod = System.IO.File.ReadAllText(System.IO.Path.Combine(CapabilityReportTests.Root(), "Runtime", "PersistentCityMod.cs"));
+        Assert.Contains("routes?.JobAdmissionExhaustedForFrame == true) { pendingAtEnd = active.PlanningPending; break; }", mod);
     }
 
     [Fact]

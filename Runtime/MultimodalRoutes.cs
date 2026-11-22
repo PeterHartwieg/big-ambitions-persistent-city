@@ -308,11 +308,11 @@ namespace PersistentCity.Runtime
         public long JobUnits { get; private set; }
         internal const int MaximumJobUnitsPerSlice = 8;
         internal const int MaximumJobPathsPerFrame = 16;
-        private int jobPathFrame = -1, jobFramePaths, jobAdmissionHeldFrame = -1;
+        private int jobPathFrame = -1, jobFramePaths, jobAdmissionHeldFrame = -1, jobRecheckHeldFrame = -1;
         private double jobPathReserveMilliseconds = .05;
         public long JobAdmissionDeferrals { get; private set; }
         public double JobPathReserveMilliseconds => jobPathReserveMilliseconds;
-        public bool JobAdmissionExhaustedForFrame => jobAdmissionHeldFrame == Time.frameCount
+        public bool JobAdmissionExhaustedForFrame => jobAdmissionHeldFrame == Time.frameCount || jobRecheckHeldFrame == Time.frameCount
             || jobPathFrame == Time.frameCount && jobFramePaths >= MaximumJobPathsPerFrame;
         public string LastJobUnit { get; private set; } = "";
         public double LastContinueMilliseconds { get; private set; }
@@ -433,6 +433,8 @@ namespace PersistentCity.Runtime
                     {
                         owner.jobAdmissionHeldFrame = Time.frameCount; owner.JobAdmissionDeferrals++; return false;
                     }
+                    if (finite && owner.jobRecheckHeldFrame == Time.frameCount)
+                    { owner.JobAdmissionDeferrals++; return false; }
                     first = false;
                     units++;
                     owner.JobUnits++; owner.LastJobUnit = StageNames[(int)stage];
@@ -586,7 +588,7 @@ namespace PersistentCity.Runtime
                         return;
                     case Stage.CarSearch:
                     {
-                        if (!drive!.Continue(deadline)) return;
+                        if (!drive!.Continue(deadline)) { if (drive.RecheckDeferred) owner.jobRecheckHeldFrame = Time.frameCount; return; }
                         var road = drive.Result; drive.Dispose(); drive = null;
                         if (road != null) Consider(TransportComposition.Join(accessWalk!,
                             Pause(person!.Car!.ParkedPosition, TransportComposition.CarPreparationMinutes), road,

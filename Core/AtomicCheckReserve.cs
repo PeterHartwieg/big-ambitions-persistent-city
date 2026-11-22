@@ -23,11 +23,12 @@ namespace PersistentCity.Core
 
         public long ReserveTicks(int items) => items <= 0 ? 0 : (long)Math.Ceiling(ticksPerItem * items);
 
-        public bool Admits(long now, long deadline, int items, ref int waits)
+        public bool Admits(long now, long deadline, int items, long frame, ref int waits, ref long waitedFrame)
         {
-            if (deadline == long.MaxValue || items <= 0 || deadline - now >= ReserveTicks(items)) { waits = 0; return true; }
-            if (waits >= maximumWaits) { waits = 0; Forced++; return true; }
-            waits++; Deferred++;
+            if (deadline == long.MaxValue || items <= 0 || deadline - now >= ReserveTicks(items)) { waits = 0; waitedFrame = long.MinValue; return true; }
+            if (frame == waitedFrame) { Deferred++; return false; }
+            if (waits >= maximumWaits) { waits = 0; waitedFrame = long.MinValue; Forced++; return true; }
+            waits++; Deferred++; waitedFrame = frame;
             return false;
         }
 

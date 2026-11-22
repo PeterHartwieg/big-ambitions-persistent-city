@@ -49,6 +49,8 @@ namespace PersistentCity.Core
         public long Gen0Through;
         public double FrameCpuMs;
         public double ModCpuMs;
+        public double BeginStampMs;
+        public double EndStampMs;
     }
 
     public enum GcAsyncGrow { None, Pending, Integrated, Cancelled, Unknown }
@@ -174,6 +176,7 @@ namespace PersistentCity.Core
         private readonly int[] lastCounts = new int[Generations];
         private double lastStampMs, pendingModMs, pendingLateMs;
         private double pendingFrameCpuMs = -1, pendingModCpuMs = -1, closingFrameCpuMs = -1, closingModCpuMs = -1;
+        private double closingBeginStampMs = -1, closingEndStampMs = -1;
         private long cpuFrames, offCpuFrames, offCpuCollectionFrames;
         private bool baselined;
         private int collectionSpikes, frameSpikes;
@@ -249,10 +252,10 @@ namespace PersistentCity.Core
             int marks = diagnosticMarks;
             if (baselined)
             {
-                frameNumber = lastFrameNumber; gen0Through = gen0Total; closingFrameCpuMs = pendingFrameCpuMs; closingModCpuMs = pendingModCpuMs;
+                frameNumber = lastFrameNumber; gen0Through = gen0Total; closingFrameCpuMs = pendingFrameCpuMs; closingModCpuMs = pendingModCpuMs; closingBeginStampMs = lastStampMs; closingEndStampMs = stampMilliseconds;
                 Frame(stampMilliseconds - lastStampMs, pendingModMs, pendingLateMs, gen0Total - lastCounts[0], gen1Total - lastCounts[1], gen2Total - lastCounts[2], heapBytes,
                     marks >= 0 && lastMarks >= 0 && marks != lastMarks ? (string.IsNullOrEmpty(diagnosticSource) ? "unnamed" : diagnosticSource) : null);
-                frameNumber = -1; gen0Through = -1; closingFrameCpuMs = closingModCpuMs = -1;
+                frameNumber = -1; gen0Through = -1; closingFrameCpuMs = closingModCpuMs = closingBeginStampMs = closingEndStampMs = -1;
             }
             else if (heapBytes >= 0) lastHeap = heapBytes;
             lastMarks = marks; growBefore = growNow; growBeforeSampled = growSampled;
@@ -436,7 +439,7 @@ namespace PersistentCity.Core
                         Gen0 = gen0, Gen1 = gen1, Gen2 = gen2, HeapBefore = lastHeap, HeapAfter = heapBytes, PreviousFrameMs = previousCollected ? -1 : previousFrameMs, NextFrameMs = -1,
                         OwnedBodies = ownedBodies, BoundBodies = boundBodies, Diagnostic = diagnosticSource ?? "",
                         AsyncGrow = growBeforeSampled && growSampled ? GcGrowSample.Outcome(growBefore, growNow) : GcAsyncGrow.Unknown, Gen0Through = gen0Through,
-                        FrameCpuMs = closingFrameCpuMs, ModCpuMs = closingModCpuMs };
+                        FrameCpuMs = closingFrameCpuMs, ModCpuMs = closingModCpuMs, BeginStampMs = closingBeginStampMs, EndStampMs = closingEndStampMs };
                     rowAwaitsNext = true;
                 }
             }
@@ -592,7 +595,8 @@ namespace PersistentCity.Core
                     .Append(",\"owned_bodies\":").Append(N(r.OwnedBodies)).Append(",\"bound_bodies\":").Append(N(r.BoundBodies))
                     .Append(",\"diagnostic\":\"").Append(Label(r.Diagnostic)).Append("\",\"async_grow\":\"").Append(GrowName(r.AsyncGrow)).Append("\",\"gen0_through\":").Append(N(r.Gen0Through))
                     .Append(",\"frame_cpu_ms\":").Append(r.FrameCpuMs < 0 ? "null" : D(r.FrameCpuMs)).Append(",\"mod_cpu_ms\":").Append(r.ModCpuMs < 0 ? "null" : D(r.ModCpuMs))
-                    .Append(",\"off_cpu_ms\":").Append(r.FrameCpuMs < 0 ? "null" : D(Math.Max(0, r.FrameMs - r.FrameCpuMs))).Append('}');
+                    .Append(",\"off_cpu_ms\":").Append(r.FrameCpuMs < 0 ? "null" : D(Math.Max(0, r.FrameMs - r.FrameCpuMs)))
+                    .Append(",\"begin_stamp_ms\":").Append(r.BeginStampMs < 0 ? "null" : D(r.BeginStampMs)).Append(",\"end_stamp_ms\":").Append(r.EndStampMs < 0 ? "null" : D(r.EndStampMs)).Append('}');
             }
             text.Append(']');
             S(text, "pause_ms_over_neighbours", PauseOverNeighboursSpread());
