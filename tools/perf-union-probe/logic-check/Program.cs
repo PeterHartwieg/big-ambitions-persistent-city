@@ -1192,6 +1192,56 @@ internal static class Program
         Same("the scan after a failed read");
         Check(cache.LastDeserialized == 1, "the target whose read failed is read again (" + cache.LastDeserialized + ")");
 
+        var watch = new PatchStateWatch(state);
+        watch.Capture();
+        var removing = foreignTargets[200];
+        string removingName = removing.DeclaringType?.Name + "." + removing.Name;
+        var unpatched = new[] { Foreign("realliveoverhaul", removingName) };
+        var unpatchedState = PatchState("realliveoverhaul", gameModule);
+        Set(removing, PatchState("realliveoverhaul", gameModule, "someone.else", pcModule),
+            new[] { unpatched[0], new ObservedPatch { Owner = "someone.else", Kind = "Postfix", Type = "PersistentCity.Runtime.Late", Method = "Postfix", Target = removingName, PcAssembly = true } });
+        watch.BeginScan();
+        var capturedPatched = watch.Scanning[removing];
+        bool removeBeforeRead = true;
+        void RemoveThenRead(MethodBase target, List<ObservedPatch> into)
+        {
+            if (removeBeforeRead && ReferenceEquals(target, removing)) { removeBeforeRead = false; Set(removing, unpatchedState, unpatched); }
+            Read(target, into);
+        }
+        int drifted = cache.ScanSettled(watch, RemoveThenRead, output, 4);
+        Check(drifted == 1 && cache.Rescans == 1 && cache.LastDrifted == 0 && !ReferenceEquals(watch.Scanning[removing], capturedPatched) && ReferenceEquals(watch.Scanning[removing], unpatchedState),
+            "a patch removed after the snapshot and before its read is caught and the scan is taken again from a fresh snapshot (" + drifted + " drifted, " + cache.Rescans + " rescans)");
+        var settled = new CoverageTracker(ScopeInventory.Patches, _ => true, probe);
+        settled.Observe(output);
+        Check(settled.Complete && !output.Any(o => o.Type == "PersistentCity.Runtime.Late"), "the settled scan matches the snapshot the watch commits");
+        watch.CommitScan();
+        Check(!watch.Changed(), "the committed snapshot is the state the settled scan read");
+        Set(removing, PatchState("realliveoverhaul", gameModule, "someone.else", pcModule),
+            new[] { unpatched[0], new ObservedPatch { Owner = "someone.else", Kind = "Postfix", Type = "PersistentCity.Runtime.Late", Method = "Postfix", Target = removingName, PcAssembly = true } });
+        watch.BeginScan();
+        var reAdded = watch.Scanning[removing];
+        output.Clear(); cache.Scan(watch.Scanning, reader, watch.HoldsState, output);
+        Check(cache.LastDrifted == 0 && output.Any(o => o.Type == "PersistentCity.Runtime.Late"), "a PC patch present at capture and at read is reported");
+        Set(removing, unpatchedState, unpatched);
+        watch.BeginScan();
+        output.Clear(); cache.Scan(watch.Scanning, reader, watch.HoldsState, output);
+        Check(!ReferenceEquals(reAdded, unpatchedState) && !output.Any(o => o.Type == "PersistentCity.Runtime.Late"), "the cache does not reuse observations across a state change");
+        int forever = 0;
+        void AlwaysChanging(MethodBase target, List<ObservedPatch> into)
+        {
+            if (ReferenceEquals(target, removing)) { forever++; Set(removing, PatchState("realliveoverhaul", gameModule, "someone.else", pcModule, "n" + forever), unpatched); }
+            Read(target, into);
+        }
+        Set(removing, PatchState("realliveoverhaul", gameModule, "someone.else", pcModule), unpatched);
+        watch.BeginScan();
+        bool exhausted = false;
+        try { cache.ScanSettled(watch, AlwaysChanging, output, 4); } catch (InvalidOperationException) { exhausted = true; }
+        Check(exhausted && watch.Pending && forever == 4, "a target that changes during every attempt fails the scan and leaves the watch pending (" + forever + " attempts)");
+        Set(removing, unpatchedState, unpatched);
+        watch.BeginScan();
+        cache.ScanSettled(watch, reader, output, 4);
+        watch.CommitScan();
+
         var unfiltered = new PatchScanCache();
         unfiltered.Configure(new[] { "", null });
         output.Clear(); unfiltered.Scan(state, reader, output);

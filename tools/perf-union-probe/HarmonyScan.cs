@@ -12,7 +12,18 @@ namespace PerfUnionProbe
         private readonly Dictionary<MethodBase, byte[]> seen = new Dictionary<MethodBase, byte[]>();
         private readonly Dictionary<MethodBase, byte[]> scanning = new Dictionary<MethodBase, byte[]>();
 
-        public PatchStateWatch(Dictionary<MethodBase, byte[]> state) { this.state = state ?? throw new ArgumentNullException(nameof(state)); }
+        public PatchStateWatch(Dictionary<MethodBase, byte[]> state)
+        {
+            this.state = state ?? throw new ArgumentNullException(nameof(state));
+            HoldsState = Holds;
+        }
+
+        public readonly Func<MethodBase, byte[], bool> HoldsState;
+
+        public bool Holds(MethodBase method, byte[] bytes)
+        {
+            lock (state) return state.TryGetValue(method, out var live) && ReferenceEquals(live, bytes);
+        }
 
         public static PatchStateWatch Shared()
         {
@@ -132,6 +143,9 @@ namespace PerfUnionProbe
         public int LastDeserialized { get; private set; }
         public int LastSkipped { get; private set; }
         public int LastReused { get; private set; }
+        public int LastDrifted { get; private set; }
+        public long Drifted { get; private set; }
+        public long Rescans { get; private set; }
 
         public void Configure(IEnumerable<string> mentions)
         {
@@ -170,10 +184,31 @@ namespace PerfUnionProbe
         }
 
         public void Scan(Dictionary<MethodBase, byte[]> state, Action<MethodBase, List<ObservedPatch>> observe, List<ObservedPatch> into)
+            => Scan(state, observe, null, into);
+
+        public int ScanSettled(PatchStateWatch watch, Action<MethodBase, List<ObservedPatch>> observe, List<ObservedPatch> into, int attempts)
+        {
+            if (watch == null) throw new ArgumentNullException(nameof(watch));
+            int drifted = 0;
+            for (int attempt = 1; ; attempt++)
+            {
+                var snapshot = watch.Scanning;
+                if (snapshot == null) throw new InvalidOperationException("the patch watch has no scan in progress");
+                into.Clear();
+                Scan(snapshot, observe, watch.HoldsState, into);
+                if (LastDrifted == 0) return drifted;
+                drifted += LastDrifted;
+                if (attempt >= attempts) throw new InvalidOperationException("Harmony patch state changed during every scan attempt");
+                Rescans++;
+                watch.BeginScan();
+            }
+        }
+
+        public void Scan(Dictionary<MethodBase, byte[]> state, Action<MethodBase, List<ObservedPatch>> observe, Func<MethodBase, byte[], bool> holds, List<ObservedPatch> into)
         {
             if (state == null) throw new ArgumentNullException(nameof(state));
             pass++; Scans++;
-            int targets = 0, deserialized = 0, skipped = 0, reused = 0;
+            int targets = 0, deserialized = 0, skipped = 0, reused = 0, drifted = 0;
             foreach (var pair in state)
             {
                 var method = pair.Key;
@@ -191,6 +226,12 @@ namespace PerfUnionProbe
                 read.Clear();
                 observe(method, read);
                 deserialized++;
+                if (holds != null && !holds(method, pair.Value))
+                {
+                    drifted++;
+                    for (int i = 0; i < read.Count; i++) into.Add(read[i]);
+                    continue;
+                }
                 if (read.Count > 0) entry.Observed = read.ToArray();
                 entry.State = pair.Value;
                 Append(entry.Observed, into);
@@ -202,8 +243,8 @@ namespace PerfUnionProbe
                 for (int i = 0; i < gone.Count; i++) entries.Remove(gone[i]);
                 gone.Clear();
             }
-            LastTargets = targets; LastDeserialized = deserialized; LastSkipped = skipped; LastReused = reused;
-            Deserialized += deserialized; Skipped += skipped; Reused += reused;
+            LastTargets = targets; LastDeserialized = deserialized; LastSkipped = skipped; LastReused = reused; LastDrifted = drifted;
+            Deserialized += deserialized; Skipped += skipped; Reused += reused; Drifted += drifted;
         }
 
         private static void Append(ObservedPatch[] observed, List<ObservedPatch> into)

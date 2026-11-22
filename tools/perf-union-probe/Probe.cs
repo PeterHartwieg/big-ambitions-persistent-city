@@ -381,6 +381,7 @@ namespace PerfUnionProbe
         }
 
         private static readonly PatchScanCache scanCache = new PatchScanCache();
+        private const int ScanAttempts = 4;
         private static readonly List<ObservedPatch> scanned = new List<ObservedPatch>();
         private static readonly Action<MethodBase, List<ObservedPatch>> ObserveTarget = (target, into) => HarmonyScan.Observe(target, Harmony.GetPatchInfo(target), pc, into);
 
@@ -394,8 +395,10 @@ namespace PerfUnionProbe
         private static List<ObservedPatch> ObservePatches()
         {
             scanned.Clear();
-            var snapshot = patchWatch?.Scanning;
-            if (snapshot != null) scanCache.Scan(snapshot, ObserveTarget, scanned);
+            if (patchWatch?.Scanning != null)
+            {
+                if (scanCache.ScanSettled(patchWatch, ObserveTarget, scanned, ScanAttempts) > 0 && measuring) patchSetChanged = true;
+            }
             else foreach (var target in Harmony.GetAllPatchedMethods().ToArray()) HarmonyScan.Observe(target, Harmony.GetPatchInfo(target), pc, scanned);
             return scanned;
         }
@@ -403,9 +406,9 @@ namespace PerfUnionProbe
         private static JObject ScanCacheRow() => new JObject
         {
             ["entries"] = scanCache.Entries, ["mentions"] = scanCache.Needles, ["scans"] = scanCache.Scans,
-            ["last_targets"] = scanCache.LastTargets, ["last_deserialized"] = scanCache.LastDeserialized, ["last_skipped"] = scanCache.LastSkipped, ["last_reused"] = scanCache.LastReused,
+            ["last_targets"] = scanCache.LastTargets, ["last_deserialized"] = scanCache.LastDeserialized, ["last_skipped"] = scanCache.LastSkipped, ["last_reused"] = scanCache.LastReused, ["last_drifted"] = scanCache.LastDrifted, ["drifted"] = scanCache.Drifted, ["rescans"] = scanCache.Rescans,
             ["deserialized"] = scanCache.Deserialized, ["skipped"] = scanCache.Skipped, ["reused"] = scanCache.Reused,
-            ["qualification"] = "Harmony patch-info reads per scan. A target is read again only when Harmony replaced its serialized patch state; a target whose state names no inventory owner and no Persistent City module is skipped unread, because coverage ignores its patches.",
+            ["qualification"] = "Harmony patch-info reads per scan. A target is read again only when Harmony replaced its serialized patch state; a target whose state names no inventory owner and no Persistent City module is skipped unread, because coverage ignores its patches. A target whose Harmony state changed between the snapshot and its read is drifted: the scan is taken again from a fresh snapshot, nothing is cached under the old state, and a drift inside a measured window sets patch_set_changed_in_window.",
         };
 
         private static bool CoverageComplete() => coverage != null && coverage.Complete && bindings.All(b => b.Status != "unbindable");
