@@ -52,7 +52,7 @@ namespace PersistentCity.Core
         public long NearSpikes { get; private set; }
         public long CpuFrames { get; private set; }
         public long CpuSpikes { get; private set; }
-        public long DescheduledSpikes { get; private set; }
+        public long OffCpuSpikes { get; private set; }
         public int TopCount => topCount;
         public int SpikeCount => spikeCount;
         public int NearSpikeCount => stored - spikeCount;
@@ -87,7 +87,7 @@ namespace PersistentCity.Core
         public void Reset()
         {
             Array.Clear(ticks, 0, Segments); Array.Clear(bytes, 0, Segments); Array.Clear(totalTicks, 0, Segments);
-            topCount = stored = spikeCount = 0; Frames = Spikes = NearSpikes = CpuFrames = CpuSpikes = DescheduledSpikes = 0; open = false;
+            topCount = stored = spikeCount = 0; Frames = Spikes = NearSpikes = CpuFrames = CpuSpikes = OffCpuSpikes = 0; open = false;
         }
 
         public void Begin(long frameNumber, long timestamp, long counter, int collections) => Begin(frameNumber, timestamp, counter, collections, 0);
@@ -183,7 +183,7 @@ namespace PersistentCity.Core
             {
                 CpuFrames++;
                 if (cpuMilliseconds >= SpikeMilliseconds) CpuSpikes++;
-                if (modMilliseconds >= SpikeMilliseconds && cpuMilliseconds < SpikeMilliseconds) DescheduledSpikes++;
+                if (modMilliseconds - cpuMilliseconds >= SpikeMilliseconds) OffCpuSpikes++;
             }
             if (modMilliseconds >= SpikeMilliseconds) { Spikes++; Retain(row, true); }
             else if (modMilliseconds >= NearSpikeMilliseconds) { NearSpikes++; Retain(row, false); }
@@ -240,7 +240,7 @@ namespace PersistentCity.Core
                         .Append(",\"grow_checks_ms\":").Append(D(r.Grow.Checks)).Append(",\"grow_parent_ms\":").Append(D(r.Grow.Parent))
                         .Append(",\"grow_own_ms\":").Append(D(r.Grow.Own))
                         .Append(",\"cpu_ms\":").Append(r.CpuMs < 0 ? "null" : D(r.CpuMs))
-                        .Append(",\"descheduled_ms\":").Append(r.CpuMs < 0 ? "null" : D(Math.Max(0, r.ModMs - r.CpuMs))).Append('}');
+                        .Append(",\"off_cpu_ms\":").Append(r.CpuMs < 0 ? "null" : D(Math.Max(0, r.ModMs - r.CpuMs))).Append('}');
                 }
                 text.Append(']');
             }
@@ -261,7 +261,7 @@ namespace PersistentCity.Core
                 .Append(",\"phase_near_spikes_truncated\":").Append(NearSpikesTruncated ? "true" : "false").Append(',');
             Rows("near_spike_frames", spikes, stored, -1);
             text.Append(",\"phase_cpu_frames\":").Append(N(CpuFrames)).Append(",\"phase_cpu_spikes_30ms\":").Append(N(CpuSpikes))
-                .Append(",\"phase_descheduled_spikes_30ms\":").Append(N(DescheduledSpikes));
+                .Append(",\"phase_off_cpu_spikes_30ms\":").Append(N(OffCpuSpikes));
         }
 
         public string ReportJson()
@@ -279,7 +279,7 @@ namespace PersistentCity.Core
                 .Append(" near>=15ms=").Append(NearSpikes.ToString(CultureInfo.InvariantCulture))
                 .Append(" retained=").Append(NearSpikeCount.ToString(CultureInfo.InvariantCulture)).Append(NearSpikesTruncated ? " truncated" : "")
                 .Append(CpuFrames == 0 ? " thread cpu unavailable" : " thread-cpu>=30ms=" + CpuSpikes.ToString(CultureInfo.InvariantCulture)
-                    + " descheduled>=30ms=" + DescheduledSpikes.ToString(CultureInfo.InvariantCulture));
+                    + " off-cpu>=30ms=" + OffCpuSpikes.ToString(CultureInfo.InvariantCulture));
             for (int i = 0; i < topCount && i < 5; i++)
             {
                 var r = top[i];

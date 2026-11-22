@@ -49,7 +49,7 @@ public sealed class Gr5ThreadCpuTests
     }
 
     [Fact]
-    public void AModSpikeWithLittleThreadCpuIsCountedAsDescheduled()
+    public void AModSpikeWithLittleThreadCpuIsCountedAsOffCpu()
     {
         var recorder = new ModFrameRecorder();
         recorder.Arm(10000);
@@ -59,18 +59,45 @@ public sealed class Gr5ThreadCpuTests
         Assert.Equal(3, recorder.Spikes);
         Assert.Equal(2, recorder.CpuFrames);
         Assert.Equal(1, recorder.CpuSpikes);
-        Assert.Equal(1, recorder.DescheduledSpikes);
+        Assert.Equal(1, recorder.OffCpuSpikes);
         using var report = JsonDocument.Parse(recorder.ReportJson());
         var root = report.RootElement;
         Assert.Equal(1, root.GetProperty("phase_cpu_spikes_30ms").GetInt64());
-        Assert.Equal(1, root.GetProperty("phase_descheduled_spikes_30ms").GetInt64());
+        Assert.Equal(1, root.GetProperty("phase_off_cpu_spikes_30ms").GetInt64());
         var spikes = root.GetProperty("spike_frames");
         Assert.Equal(2.0, spikes[0].GetProperty("cpu_ms").GetDouble(), 3);
-        Assert.Equal(38.0, spikes[0].GetProperty("descheduled_ms").GetDouble(), 3);
+        Assert.Equal(38.0, spikes[0].GetProperty("off_cpu_ms").GetDouble(), 3);
         Assert.Equal(36.0, spikes[1].GetProperty("cpu_ms").GetDouble(), 3);
-        Assert.Equal(0.0, spikes[1].GetProperty("descheduled_ms").GetDouble(), 3);
+        Assert.Equal(0.0, spikes[1].GetProperty("off_cpu_ms").GetDouble(), 3);
         Assert.Equal(JsonValueKind.Null, spikes[2].GetProperty("cpu_ms").ValueKind);
-        Assert.Contains("descheduled>=30ms=1", recorder.ReportHuman());
+        Assert.Contains("off-cpu>=30ms=1", recorder.ReportHuman());
+    }
+
+    [Fact]
+    public void AThirtyMillisecondSpikeWithTwentyNineMillisecondsOfCpuIsAWallSpikeButNotAnOffCpuSpike()
+    {
+        var recorder = new ModFrameRecorder();
+        recorder.Arm(10000);
+        Frame(recorder, 0, 30, 1_000_000, 30_000_000);
+        Assert.Equal(1, recorder.Spikes);
+        Assert.Equal(0, recorder.CpuSpikes);
+        Assert.Equal(0, recorder.OffCpuSpikes);
+        using var report = JsonDocument.Parse(recorder.ReportJson());
+        var spike = report.RootElement.GetProperty("spike_frames")[0];
+        Assert.Equal(29.0, spike.GetProperty("cpu_ms").GetDouble(), 3);
+        Assert.Equal(1.0, spike.GetProperty("off_cpu_ms").GetDouble(), 3);
+
+        var sampler = new GcPauseSampler();
+        sampler.Start(100);
+        double at = 0;
+        sampler.Observe(at, 0, 0, 0, 100);
+        at += 30; sampler.FrameCpu(29);
+        sampler.Observe(at, 1, 0, 0, 50);
+        at += 62; sampler.FrameCpu(31);
+        sampler.Observe(at, 1, 0, 0, 50);
+        Assert.Equal(1, sampler.OffCpuFrames);
+        Assert.Equal(0, sampler.OffCpuCollectionFrames);
+        Assert.Equal(1, sampler.CollectionRow(0).FrameMs - sampler.CollectionRow(0).FrameCpuMs, 3);
     }
 
     [Fact]
@@ -105,23 +132,23 @@ public sealed class Gr5ThreadCpuTests
         sampler.Observe(at, 2, 0, 0, 40);
         Assert.Equal(2, sampler.CollectionFrames);
         Assert.Equal(42, sampler.CpuFrames);
-        Assert.Equal(1, sampler.DescheduledFrames);
-        Assert.Equal(1, sampler.DescheduledCollectionFrames);
+        Assert.Equal(1, sampler.OffCpuFrames);
+        Assert.Equal(1, sampler.OffCpuCollectionFrames);
         var first = sampler.CollectionRow(0);
         Assert.Equal(40, first.FrameCpuMs, 3);
         Assert.Equal(0.9, first.ModCpuMs, 3);
         Assert.Equal(304, sampler.PauseSpread().Max, 3);
         Assert.Equal(43, sampler.PauseCpuSpread().Max, 3);
         Assert.Equal(25, sampler.PauseCpuSpread().P50, 3);
-        Assert.Equal(280, sampler.DescheduledSpread(true).Max, 3);
+        Assert.Equal(280, sampler.OffCpuSpread(true).Max, 3);
         using var report = JsonDocument.Parse(sampler.ReportJson(new GcReportContext(1000, 2000, null, 2, true, -1, -1)));
         var root = report.RootElement;
-        Assert.Equal(1, root.GetProperty("descheduled_collection_frames_30ms").GetInt64());
+        Assert.Equal(1, root.GetProperty("off_cpu_collection_frames_30ms").GetInt64());
         Assert.Equal(43, root.GetProperty("pause_cpu_ms").GetProperty("max").GetDouble(), 3);
         var rows = root.GetProperty("collection_rows");
         Assert.Equal(40, rows[0].GetProperty("frame_cpu_ms").GetDouble(), 3);
-        Assert.Equal(280, rows[0].GetProperty("descheduled_ms").GetDouble(), 3);
-        Assert.Equal(2, rows[1].GetProperty("descheduled_ms").GetDouble(), 3);
+        Assert.Equal(280, rows[0].GetProperty("off_cpu_ms").GetDouble(), 3);
+        Assert.Equal(2, rows[1].GetProperty("off_cpu_ms").GetDouble(), 3);
     }
 
     [Fact]

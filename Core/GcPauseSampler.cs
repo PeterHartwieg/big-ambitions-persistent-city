@@ -174,7 +174,7 @@ namespace PersistentCity.Core
         private readonly int[] lastCounts = new int[Generations];
         private double lastStampMs, pendingModMs, pendingLateMs;
         private double pendingFrameCpuMs = -1, pendingModCpuMs = -1, closingFrameCpuMs = -1, closingModCpuMs = -1;
-        private long cpuFrames, descheduledFrames, descheduledCollectionFrames;
+        private long cpuFrames, offCpuFrames, offCpuCollectionFrames;
         private bool baselined;
         private int collectionSpikes, frameSpikes;
         private long frameAllocatedBytes, allocationFrames;
@@ -220,7 +220,7 @@ namespace PersistentCity.Core
             stored = 0; collectionRowCount = 0; previousFrameMs = -1; rowAwaitsNext = previousCollected = false; lastFrameNumber = -1; Frames = 0; CollectionFrames = 0; heapBeforeSum = heapAfterSum = heapPairs = 0;
             MaxFrameMs = MaxModMs = MaxLateMs = 0; collectionSpikes = frameSpikes = 0; DiagnosticFrameCount = DiagnosticCollectionFrames = 0; lastMarks = -1;
             frameAllocatedBytes = allocationFrames = 0;
-            cpuFrames = descheduledFrames = descheduledCollectionFrames = 0; pendingFrameCpuMs = pendingModCpuMs = closingFrameCpuMs = closingModCpuMs = -1;
+            cpuFrames = offCpuFrames = offCpuCollectionFrames = 0; pendingFrameCpuMs = pendingModCpuMs = closingFrameCpuMs = closingModCpuMs = -1;
             FrameRecorder.Reset();
             Array.Clear(segmentBytes, 0, Segments); Array.Clear(segmentSamples, 0, Segments); Array.Clear(segmentSkipped, 0, Segments);
             HeapStart = HeapEnd = HeapPeak = lastHeap = heapBytes;
@@ -268,8 +268,8 @@ namespace PersistentCity.Core
         public void ModWorkCpu(double milliseconds) { if (Running && baselined && milliseconds >= 0) pendingModCpuMs = milliseconds; }
 
         public long CpuFrames => cpuFrames;
-        public long DescheduledFrames => descheduledFrames;
-        public long DescheduledCollectionFrames => descheduledCollectionFrames;
+        public long OffCpuFrames => offCpuFrames;
+        public long OffCpuCollectionFrames => offCpuCollectionFrames;
 
         public void LateModWork(double milliseconds) { if (Running && baselined && milliseconds > 0) pendingLateMs += milliseconds; }
 
@@ -448,7 +448,7 @@ namespace PersistentCity.Core
             if (closingFrameCpuMs >= 0)
             {
                 cpuFrames++;
-                if (frameMilliseconds - closingFrameCpuMs >= SpikeMilliseconds) { descheduledFrames++; if (gc) descheduledCollectionFrames++; }
+                if (frameMilliseconds - closingFrameCpuMs >= SpikeMilliseconds) { offCpuFrames++; if (gc) offCpuCollectionFrames++; }
             }
             if (stored == frameMs.Length) return;
             frameMs[stored] = (float)frameMilliseconds; modMs[stored] = (float)modMilliseconds; lateMs[stored] = (float)lateMilliseconds;
@@ -467,10 +467,10 @@ namespace PersistentCity.Core
         public GcSpread PauseIncludingDiagnosticSpread() => Spread(frameMs, true, FrameSpread(false).P50, null, true);
         public GcSpread DiagnosticFrameSpread() => Spread(frameMs, null, 0, null, true, true);
         public GcSpread FrameCpuSpread(bool withCollection) => CpuSpread(withCollection, false, 0);
-        public GcSpread DescheduledSpread(bool withCollection) => CpuSpread(withCollection, true, 0);
+        public GcSpread OffCpuSpread(bool withCollection) => CpuSpread(withCollection, true, 0);
         public GcSpread PauseCpuSpread() => CpuSpread(true, false, FrameCpuSpread(false).P50);
 
-        private GcSpread CpuSpread(bool withCollection, bool descheduled, double baseline)
+        private GcSpread CpuSpread(bool withCollection, bool offCpu, double baseline)
         {
             int count = 0;
             for (int i = 0; i < stored; i++) if (frameCpuMs[i] >= 0 && Counted(i, withCollection, false, false)) count++;
@@ -480,7 +480,7 @@ namespace PersistentCity.Core
             int at = 0;
             for (int i = 0; i < stored; i++)
                 if (frameCpuMs[i] >= 0 && Counted(i, withCollection, false, false))
-                    values[at++] = Math.Max(0, (descheduled ? frameMs[i] - frameCpuMs[i] : frameCpuMs[i]) - baseline);
+                    values[at++] = Math.Max(0, (offCpu ? frameMs[i] - frameCpuMs[i] : frameCpuMs[i]) - baseline);
             Array.Sort(values, 0, count);
             return new GcSpread(count, Rank(values, count, .50), Rank(values, count, .95), values[count - 1]);
         }
@@ -592,19 +592,19 @@ namespace PersistentCity.Core
                     .Append(",\"owned_bodies\":").Append(N(r.OwnedBodies)).Append(",\"bound_bodies\":").Append(N(r.BoundBodies))
                     .Append(",\"diagnostic\":\"").Append(Label(r.Diagnostic)).Append("\",\"async_grow\":\"").Append(GrowName(r.AsyncGrow)).Append("\",\"gen0_through\":").Append(N(r.Gen0Through))
                     .Append(",\"frame_cpu_ms\":").Append(r.FrameCpuMs < 0 ? "null" : D(r.FrameCpuMs)).Append(",\"mod_cpu_ms\":").Append(r.ModCpuMs < 0 ? "null" : D(r.ModCpuMs))
-                    .Append(",\"descheduled_ms\":").Append(r.FrameCpuMs < 0 ? "null" : D(Math.Max(0, r.FrameMs - r.FrameCpuMs))).Append('}');
+                    .Append(",\"off_cpu_ms\":").Append(r.FrameCpuMs < 0 ? "null" : D(Math.Max(0, r.FrameMs - r.FrameCpuMs))).Append('}');
             }
             text.Append(']');
             S(text, "pause_ms_over_neighbours", PauseOverNeighboursSpread());
             text.Append(",\"diagnostic_frames\":").Append(N(DiagnosticFrameCount)).Append(",\"diagnostic_collection_frames\":").Append(N(DiagnosticCollectionFrames));
             S(text, "pause_ms_including_diagnostic", PauseIncludingDiagnosticSpread());
             S(text, "diagnostic_frame_ms", DiagnosticFrameSpread());
-            text.Append(",\"cpu_frames\":").Append(N(cpuFrames)).Append(",\"descheduled_frames_30ms\":").Append(N(descheduledFrames))
-                .Append(",\"descheduled_collection_frames_30ms\":").Append(N(descheduledCollectionFrames));
+            text.Append(",\"cpu_frames\":").Append(N(cpuFrames)).Append(",\"off_cpu_frames_30ms\":").Append(N(offCpuFrames))
+                .Append(",\"off_cpu_collection_frames_30ms\":").Append(N(offCpuCollectionFrames));
             S(text, "frame_cpu_ms_gc", FrameCpuSpread(true));
             S(text, "frame_cpu_ms_plain", FrameCpuSpread(false));
-            S(text, "descheduled_ms_gc", DescheduledSpread(true));
-            S(text, "descheduled_ms_plain", DescheduledSpread(false));
+            S(text, "off_cpu_ms_gc", OffCpuSpread(true));
+            S(text, "off_cpu_ms_plain", OffCpuSpread(false));
             S(text, "pause_cpu_ms", PauseCpuSpread());
             text.Append('}');
             return text.ToString();
@@ -633,8 +633,8 @@ namespace PersistentCity.Core
                 + ", heap " + M(HeapStart) + " -> " + M(HeapEnd) + " (peak " + M(HeapPeak) + ")"
                 + ", diagnostic frames " + DiagnosticFrameCount.ToString(CultureInfo.InvariantCulture) + " (" + DiagnosticCollectionFrames.ToString(CultureInfo.InvariantCulture)
                 + " with a collection, left out of the pause; pause p95/max with them " + D(PauseIncludingDiagnosticSpread().P95) + "/" + D(PauseIncludingDiagnosticSpread().Max) + " ms)"
-                + (cpuFrames == 0 ? ", main-thread cpu unavailable" : ", main thread descheduled >= 30 ms in " + descheduledFrames.ToString(CultureInfo.InvariantCulture) + " frames ("
-                    + descheduledCollectionFrames.ToString(CultureInfo.InvariantCulture) + " with a collection), pause by main-thread cpu p95/max=" + D(PauseCpuSpread().P95) + "/" + D(PauseCpuSpread().Max) + " ms");
+                + (cpuFrames == 0 ? ", main-thread cpu unavailable" : ", main thread off cpu >= 30 ms in " + offCpuFrames.ToString(CultureInfo.InvariantCulture) + " frames ("
+                    + offCpuCollectionFrames.ToString(CultureInfo.InvariantCulture) + " with a collection), pause by main-thread cpu p95/max=" + D(PauseCpuSpread().P95) + "/" + D(PauseCpuSpread().Max) + " ms");
         }
     }
 }
