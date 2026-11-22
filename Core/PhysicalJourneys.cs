@@ -85,28 +85,30 @@ namespace PersistentCity.Core
         }
 
         internal static PhysicalJourneySample SampleRoute(Route route, double routeElapsedMinutes, Position? parkedCar)
+            => SampleLegs(route.Legs, route.Minutes, routeElapsedMinutes, parkedCar);
+
+        internal static PhysicalJourneySample SampleLegs(IReadOnlyList<RouteLeg> legs, double totalMinutes, double routeElapsedMinutes, Position? parkedCar)
         {
-            double totalMinutes = route.Minutes;
             if (!Position.Finite(routeElapsedMinutes) || routeElapsedMinutes < 0 || routeElapsedMinutes > totalMinutes)
                 throw new ArgumentOutOfRangeException(nameof(routeElapsedMinutes));
             double remaining = routeElapsedMinutes;
             double sampledElapsed = routeElapsedMinutes;
             Position? car = parkedCar;
-            for (int i = 0; i < route.Legs.Count; i++)
+            for (int i = 0; i < legs.Count; i++)
             {
-                var leg = route.Legs[i];
+                var leg = legs[i];
                 double boundaryTolerance = Math.Min(leg.Minutes * 1e-9, Math.Max(1e-12, Math.Abs(routeElapsedMinutes) * 1e-14));
                 if (Math.Abs(remaining - leg.Minutes) <= boundaryTolerance)
                 {
                     sampledElapsed = Math.Max(routeElapsedMinutes, sampledElapsed + leg.Minutes - remaining);
                     remaining = leg.Minutes;
                 }
-                if (remaining < leg.Minutes || i == route.Legs.Count - 1)
+                if (remaining < leg.Minutes || i == legs.Count - 1)
                 {
                     double fraction = Math.Min(1, remaining / leg.Minutes);
                     var position = Position.Lerp(leg.From, leg.To, fraction);
                     if (leg.Mode == TravelMode.Car) car = position;
-                    return new PhysicalJourneySample(i == route.Legs.Count - 1 && fraction == 1 ? totalMinutes : Math.Min(totalMinutes, Math.Max(routeElapsedMinutes, sampledElapsed)), totalMinutes, i, fraction, leg, position, car, i + 1 < route.Legs.Count ? route.Legs[i + 1].Mode : (TravelMode?)null);
+                    return new PhysicalJourneySample(i == legs.Count - 1 && fraction == 1 ? totalMinutes : Math.Min(totalMinutes, Math.Max(routeElapsedMinutes, sampledElapsed)), totalMinutes, i, fraction, leg, position, car, i + 1 < legs.Count ? legs[i + 1].Mode : (TravelMode?)null);
                 }
                 if (leg.Mode == TravelMode.Car) car = leg.To;
                 remaining -= leg.Minutes;

@@ -145,6 +145,7 @@ namespace PersistentCity.Core
         public int LinkCount => links.Count;
         public long Reconsiders { get; private set; }
         public long ProcessedEvents { get; private set; }
+        internal long Revision { get; private set; }
         public event Action<string, double>? VehicleCompleted;
         public IEnumerable<int> RelevantLinkIds
         {
@@ -189,6 +190,7 @@ namespace PersistentCity.Core
             RequireTime(minute, nameof(minute));
             if (minute < Clock || NextEventMinute < minute) throw new InvalidOperationException("Unfinished traffic epoch.");
             Clock = minute; RequestedTime = Math.Max(RequestedTime, minute);
+            Revision++;
         }
 
         private TrafficKernel() : this(0, 0) { }
@@ -242,6 +244,7 @@ namespace PersistentCity.Core
                 NominalMinutes = saved[0].StartNominalMinutes
             };
             vehicles.Add(vehicleId, vehicle);
+            Revision++;
             for (int i = 1; i < saved.Count; i++) links[saved[i].LinkId].Incoming.Add(saved[i - 1].LinkId);
             Link first = links[saved[0].LinkId];
             first.OwnSources.Enqueue(vehicleId);
@@ -253,6 +256,7 @@ namespace PersistentCity.Core
             RequireTime(targetMinute, nameof(targetMinute));
             if (targetMinute < Clock || targetMinute < RequestedTime) throw new ArgumentOutOfRangeException(nameof(targetMinute));
             if (maximumEvents < 0) throw new ArgumentOutOfRangeException(nameof(maximumEvents));
+            double clock = Clock, requested = RequestedTime;
             RequestedTime = targetMinute;
             int processed = 0;
             while (events.Count != 0 && events.Min.Event.At <= targetMinute && processed < maximumEvents)
@@ -266,6 +270,7 @@ namespace PersistentCity.Core
             }
             bool reached = events.Count == 0 || events.Min.Event.At > targetMinute;
             if (reached) Clock = targetMinute;
+            if (processed > 0 || Clock != clock || RequestedTime != requested) Revision++;
             return new TrafficAdvanceResult(Clock, RequestedTime, processed, reached);
         }
 
@@ -467,6 +472,7 @@ namespace PersistentCity.Core
                 vehicle.MotionStartFraction = start; vehicle.MotionStartedAt = at; vehicle.ReadyAt = ready;
                 return default;
             }
+            Revision++;
             Reconsider(link);
             return new TrafficHoldResult(true, charge, vehicle.MotionStartFraction, vehicle.MotionStartedAt, vehicle.ReadyAt);
         }
@@ -500,6 +506,7 @@ namespace PersistentCity.Core
             Link link = FindLink(linkId);
             if (link.Closed == closed) return;
             link.Closed = closed;
+            Revision++;
             if (closed) closedLinks.Add(linkId); else closedLinks.Remove(linkId);
             Reconsider(link);
         }
@@ -516,6 +523,7 @@ namespace PersistentCity.Core
         public bool RemoveCompleted(string vehicleId)
         {
             if (!vehicles.TryGetValue(vehicleId, out TrafficVehicleState? vehicle) || !vehicle.Completed) return false;
+            Revision++;
             return vehicles.Remove(vehicleId);
         }
 
@@ -987,9 +995,49 @@ namespace PersistentCity.Core
 
         private IEnumerator<TrafficKernelState?> CaptureExcludingSteps(Func<string, bool> exclude, int linksPerStep)
         {
+            object? result = null;
+            var excluding = ExcludingSteps(exclude, linksPerStep, false);
+            while (excluding.MoveNext())
+            {
+                if (excluding.Current != null) { result = excluding.Current; break; }
+                yield return null;
+            }
+            if (result is TrafficKernelState unchanged) { yield return unchanged; yield break; }
+            var recapture = ((TrafficKernel)result!).CaptureInSteps(linksPerStep);
+            while (recapture.MoveNext())
+            {
+                if (recapture.Current != null) { yield return recapture.Current; yield break; }
+                yield return null;
+            }
+        }
+
+        internal IEnumerator<TrafficKernel?> WithoutVehiclesInSteps(Func<string, bool> exclude, int linksPerStep)
+        {
+            if (exclude == null) throw new ArgumentNullException(nameof(exclude));
+            if (linksPerStep < 1) throw new ArgumentOutOfRangeException(nameof(linksPerStep));
+            return KernelWithoutSteps(exclude, linksPerStep);
+        }
+
+        private IEnumerator<TrafficKernel?> KernelWithoutSteps(Func<string, bool> exclude, int linksPerStep)
+        {
+            bool any = false;
+            foreach (var id in vehicles.Keys) if (exclude(id)) { any = true; break; }
+            if (!any) { yield return this; yield break; }
+            var excluding = ExcludingSteps(exclude, linksPerStep, true);
+            while (excluding.MoveNext())
+            {
+                if (excluding.Current is TrafficKernel kernel) { yield return kernel; yield break; }
+                if (excluding.Current != null) throw new InvalidOperationException("Traffic exclusion removed no vehicle.");
+                yield return null;
+            }
+            throw new InvalidOperationException("Traffic exclusion ended without a result.");
+        }
+
+        private IEnumerator<object?> ExcludingSteps(Func<string, bool> exclude, int linksPerStep, bool kernelResult)
+        {
             int work = 0;
             TrafficKernelState? state = null;
-            var capture = CaptureInSteps(linksPerStep);
+            var capture = CaptureSteps(linksPerStep, !kernelResult, kernelResult);
             while (capture.MoveNext())
             {
                 if (capture.Current != null) { state = capture.Current; break; }
@@ -1031,17 +1079,12 @@ namespace PersistentCity.Core
                 link.WaitingSources.RemoveAll(id => exclude(id));
                 if (++work % linksPerStep == 0) yield return null;
             }
-            TrafficKernel? rebuilt = null;
-            var restore = RestoreSteps(state, true, linksPerStep, adoptDefinitions: true);
+            var restore = kernelResult
+                ? RestoreSteps(state, true, linksPerStep, adoptDefinitions: true, linkSource: this, excludeFromSource: exclude)
+                : RestoreSteps(state, true, linksPerStep, adoptDefinitions: true);
             while (restore.MoveNext())
             {
-                if (restore.Current != null) { rebuilt = restore.Current; break; }
-                yield return null;
-            }
-            var recapture = rebuilt!.CaptureInSteps(linksPerStep);
-            while (recapture.MoveNext())
-            {
-                if (recapture.Current != null) { yield return recapture.Current; yield break; }
+                if (restore.Current != null) { yield return restore.Current; yield break; }
                 yield return null;
             }
         }
@@ -1053,7 +1096,7 @@ namespace PersistentCity.Core
         private static TrafficKernel Restore(TrafficKernelState state, bool rebuildWakeups) => RunToEnd(RestoreSteps(state, rebuildWakeups, int.MaxValue));
 
         private static IEnumerator<TrafficKernel?> RestoreSteps(TrafficKernelState state, bool rebuildWakeups, int linksPerStep, bool adoptDefinitions = false,
-            TrafficKernel? linkSource = null, double dischargeFactor = 1)
+            TrafficKernel? linkSource = null, double dischargeFactor = 1, Func<string, bool>? excludeFromSource = null)
         {
             if (linksPerStep < 1) throw new ArgumentOutOfRangeException(nameof(linksPerStep));
             int work = 0;
@@ -1121,7 +1164,8 @@ namespace PersistentCity.Core
                         (original.MergeCursor >= 0 && !kernel.links.ContainsKey(original.MergeCursor)))
                         throw new ArgumentException("Invalid traffic link state.", nameof(state));
                     link.Seen = true; seenCount++;
-                    double discharge = linkSource.Clock + Math.Max(0, original.NextDischargeAt - linkSource.Clock) * dischargeFactor;
+                    double discharge = excludeFromSource != null ? original.NextDischargeAt
+                        : linkSource.Clock + Math.Max(0, original.NextDischargeAt - linkSource.Clock) * dischargeFactor;
                     RequireTime(discharge, nameof(state));
                     link.Closed = original.Closed;
                     if (original.Closed) kernel.closedLinks.Add(linkId);
@@ -1132,6 +1176,7 @@ namespace PersistentCity.Core
                             throw new ArgumentException("Invalid traffic predecessor.", nameof(state));
                     foreach (TrafficVehicleState queued in original.Queue)
                     {
+                        if (excludeFromSource != null && excludeFromSource(queued.VehicleId)) continue;
                         TrafficVehicleState vehicle = kernel.FindRestoredVehicle(queued.VehicleId, occupied);
                         if (vehicle.Completed || vehicle.RouteIndex < 0 || vehicle.Route[vehicle.RouteIndex].LinkId != linkId)
                             throw new ArgumentException("Traffic queue and vehicle cursor disagree.", nameof(state));
@@ -1139,6 +1184,7 @@ namespace PersistentCity.Core
                     }
                     foreach (string id in original.Sources)
                     {
+                        if (excludeFromSource != null && excludeFromSource(id)) continue;
                         TrafficVehicleState vehicle = kernel.FindRestoredVehicle(id, occupied);
                         if (vehicle.Completed || vehicle.RouteIndex != -1 || vehicle.Route[0].LinkId != linkId)
                             throw new ArgumentException("Traffic source queue and vehicle cursor disagree.", nameof(state));
@@ -1214,6 +1260,7 @@ namespace PersistentCity.Core
         public bool Cancel(string vehicleId)
         {
             if (!vehicles.TryGetValue(vehicleId, out TrafficVehicleState? vehicle)) return false;
+            Revision++;
             if (!vehicle.Completed)
             {
                 Link link = links[vehicle.Route[Math.Max(0, vehicle.RouteIndex)].LinkId];

@@ -327,7 +327,7 @@ namespace PersistentCity.Runtime
                     && ClockRetimeStages.Next(clockRate, simulation.State.TravelClockRate, false) != ClockRetimeStage.None)
                 {
                     var routesMark = RetimeMark();
-                    retimedRoutes = new MultimodalRoutes(simulation.State.Places, NativeTravelPace.WalkingMetresPerSecond / clockRate, clockRate, dependency, routeObjects);
+                    retimedRoutes = new MultimodalRoutes(simulation.State.Places, TravelTiming.WalkingMetresPerMinute(NativeTravelPace.WalkingMetresPerSecond, clockRate), clockRate, dependency, routeObjects);
                     retimedRoutesRate = clockRate;
                     retimeAllocation.Add(RetimeAllocationStage.Routes, routesMark, GcAllocationCounter.Mark());
                     WaitForRetime(); return;
@@ -371,7 +371,7 @@ namespace PersistentCity.Runtime
                             log?.Info("Clock retime degraded " + retimeDriver.Degraded.ToString(System.Globalization.CultureInfo.InvariantCulture)
                                 + " journeys: each keeps its old pace on its current road edge or drives outside traffic until its next road section.");
                         var swapped = retimedRoutes != null && retimedRoutesRate == clockRate ? retimedRoutes
-                            : new MultimodalRoutes(simulation.State.Places, NativeTravelPace.WalkingMetresPerSecond / clockRate, clockRate, dependency, routeObjects);
+                            : new MultimodalRoutes(simulation.State.Places, TravelTiming.WalkingMetresPerMinute(NativeTravelPace.WalkingMetresPerSecond, clockRate), clockRate, dependency, routeObjects);
                         retimedRoutes = null;
                         if (foodMarket != null) log?.Info(FoodClockReach.RetimeLine(clockRate, swapped.WalkingMetresPerMinute));
                         if (routes != null) { swapped.ReuseRoadSceneForRetiming(routes); routes.ReleaseRetainedPaths(); }
@@ -783,7 +783,9 @@ namespace PersistentCity.Runtime
                 + rebuild.Updates.ToString(System.Globalization.CultureInfo.InvariantCulture) + " updates (slowest " + Milliseconds(rebuild.SlowestUpdateMilliseconds) + " ms); journeys with a split leg "
                 + retimeDriver.Split.ToString(System.Globalization.CultureInfo.InvariantCulture) + ", earlier splits joined "
                 + retimeDriver.Joined.ToString(System.Globalization.CultureInfo.InvariantCulture) + ", joins refused for an inexact pose "
-                + retimeDriver.JoinsRefused.ToString(System.Globalization.CultureInfo.InvariantCulture) + ".");
+                + retimeDriver.JoinsRefused.ToString(System.Globalization.CultureInfo.InvariantCulture) + ", shared leg copies "
+                + retimeDriver.SharedLegs.ToString(System.Globalization.CultureInfo.InvariantCulture) + ", earlier shared legs reused "
+                + retimeDriver.ReusedLegs.ToString(System.Globalization.CultureInfo.InvariantCulture) + ", traffic retimed from " + retimeDriver.RetimedFrom + ".");
             string allocation = RetimeAllocationLine(mark);
             log?.Info("Clock retime allocation: " + allocation + ".");
             retimeReleaseMilliseconds = 0; retimeReleaseUpdates = 0;
@@ -982,7 +984,7 @@ namespace PersistentCity.Runtime
             businessTypeHour = long.MinValue;
             RefreshBusinessTypes(state.Places, state.Minute, "load");
             routeObjects = new RouteObjectDiscovery();
-            routes = new MultimodalRoutes(state.Places, NativeTravelPace.WalkingMetresPerSecond / state.TravelClockRate, state.TravelClockRate, dependency, routeObjects);
+            routes = new MultimodalRoutes(state.Places, TravelTiming.WalkingMetresPerMinute(NativeTravelPace.WalkingMetresPerSecond, state.TravelClockRate), state.TravelClockRate, dependency, routeObjects);
             simulation = new CitySimulator(state, routes);
             simulation.AttachWorkplaceAvailability(new NativeWorkplaceAvailability(state.Places));
             ordinaryOwnershipIndex = NativeOrdinaryOwnership.Create(state.Places, state.Minute);

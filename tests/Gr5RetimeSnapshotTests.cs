@@ -22,6 +22,17 @@ public sealed class Gr5RetimeSnapshotTests
         return (state, simulator);
     }
 
+    private static (CityState State, CitySimulator Simulator) ThroughCity()
+    {
+        var (state, simulator) = City();
+        Gr5RetimeKernelSourceTests.AddThroughCars(state, simulator, 40, 0);
+        Assert.Equal(40, simulator.ThroughCarCount);
+        return (state, simulator);
+    }
+
+    private static readonly System.Reflection.FieldInfo SavedTraffic = typeof(TravelTiming.TravelRetime)
+        .GetField("savedTraffic", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!;
+
     private static double Milliseconds(long started) => (Stopwatch.GetTimestamp() - started) * 1000.0 / Stopwatch.Frequency;
 
     [Fact]
@@ -48,7 +59,7 @@ public sealed class Gr5RetimeSnapshotTests
     [Fact]
     public void AnAccountingBoundaryDuringTheSnapshotRestartsItAtTheNewClock()
     {
-        var (state, simulator) = City();
+        var (state, simulator) = ThroughCity();
         var driver = new ClockRetimeDriver();
         double rate = state.TravelClockRate * 2;
         Assert.Equal(ClockRetimeOutcome.Preparing, driver.Update(state, rate, false, 2, 0));
@@ -60,13 +71,30 @@ public sealed class Gr5RetimeSnapshotTests
         while (outcome == ClockRetimeOutcome.Preparing && driver.Pending == null);
         Assert.Equal(ClockRetimeOutcome.Restarted, outcome);
         Assert.Equal(1, driver.Restarts);
-        Assert.Equal(state.Minute, state.Traffic!.Clock);
+        Assert.False(driver.Pending!.Stale);
+        Assert.Equal(state.Minute, ((TrafficKernel)SavedTraffic.GetValue(driver.Pending)!).Clock);
+    }
+
+    [Fact]
+    public void AWholeKernelRetimeBeginsAtOnceFromTheLiveKernelAndLeavesTheSavedTrafficUntouched()
+    {
+        var (state, simulator) = City();
+        state.PrepareForSave();
+        var saved = state.Traffic;
+        var driver = new ClockRetimeDriver();
+        Assert.Equal(ClockRetimeOutcome.Began, driver.Update(state, state.TravelClockRate * 2, false, 2, 0));
+        Assert.Equal(0, driver.SnapshotSlices);
+        Assert.Same(simulator.Traffic, SavedTraffic.GetValue(driver.Pending!));
+        Assert.Same(saved, state.Traffic);
+        Assert.Equal(ClockRetimeOutcome.None, driver.Update(state, state.TravelClockRate, false, 2, 0));
+        Assert.Same(saved, state.Traffic);
+        Assert.False(driver.Holding);
     }
 
     [Fact]
     public void AnUnfinishedSnapshotLeavesTheSavedTrafficUntouched()
     {
-        var (state, _) = City();
+        var (state, _) = ThroughCity();
         state.PrepareForSave();
         var saved = state.Traffic;
         var driver = new ClockRetimeDriver();
@@ -98,7 +126,7 @@ public sealed class Gr5RetimeSnapshotTests
     [Fact]
     public void TheRetimeSnapshotRunsInSlicesUnderTheFrameBudget()
     {
-        var (state, _) = City();
+        var (state, _) = ThroughCity();
         long started = Stopwatch.GetTimestamp();
         state.PrepareForSave();
         double whole = Milliseconds(started);
@@ -129,6 +157,7 @@ public sealed class Gr5RetimeSnapshotTests
             var driver = new ClockRetimeDriver();
             if (!live)
             {
+                state.RetimeSnapshotSteps = null;
                 var original = state.SnapshotSteps!;
                 state.SnapshotSteps = links => Forgetting(original(links), state);
             }

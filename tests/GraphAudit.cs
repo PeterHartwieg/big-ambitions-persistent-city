@@ -12,7 +12,7 @@ namespace PersistentCity.Tests;
 internal sealed class GraphAudit
 {
     private static readonly HashSet<string> Transient = new(StringComparer.Ordinal)
-    { "counters", "visitorEndowment", "OpeningCache", "cachedView", "cachedDay", "activeCampaign", "SnapshotSynchronizer", "SnapshotSteps", "TrafficSource", "TrafficSourceState", "estimatedMinutes", "HourCounts", "HoursHash" };
+    { "counters", "visitorEndowment", "OpeningCache", "cachedView", "cachedDay", "activeCampaign", "SnapshotSynchronizer", "SnapshotSteps", "TrafficSource", "TrafficSourceState", "RetimeSnapshotSteps", "RetimeSource", "PendingRetimedTraffic", "LiveTraffic", "estimatedMinutes", "HourCounts", "HoursHash" };
 
     private readonly HashSet<(object, object)> visited = new(PairComparer.Instance);
     public readonly List<object> Shared = new();

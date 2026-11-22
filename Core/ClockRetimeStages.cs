@@ -24,9 +24,12 @@ namespace PersistentCity.Core
     {
         public const int SnapshotLinksPerStep = 256;
         private bool finished, restartPending;
+        private int sharedLegHint;
         private IEnumerator<bool>? snapshot;
         private CityState? snapshotState;
         private double snapshotMinute;
+        private TrafficKernel? snapshotTraffic;
+        private long snapshotRevision;
 
         public TravelTiming.TravelRetime? Pending { get; private set; }
         public bool Holding => Pending != null || snapshot != null;
@@ -40,6 +43,11 @@ namespace PersistentCity.Core
         public int Joined { get; private set; }
         public int JoinsRefused { get; private set; }
         public TravelTiming.RetimedTraffic? RetimedTraffic { get; private set; }
+        public int SharedLegs { get; private set; }
+        public int ReusedLegs { get; private set; }
+        public long SourceLegsExamined { get; private set; }
+        public string RetimedFrom { get; private set; } = "";
+        internal bool CoalesceReversals { get; set; } = true;
 
         public ClockRetimeOutcome Update(CityState state, double nativeRate, bool bodiesLive, double walkMetresPerSecond, double budgetMilliseconds)
         {
@@ -51,12 +59,13 @@ namespace PersistentCity.Core
             if (Pending != null && Pending.Stale) { Pending = null; Restarts++; restartPending = true; }
             if (Pending == null)
             {
-                if (snapshot != null && (!ReferenceEquals(snapshotState, state) || snapshotMinute != state.Minute))
-                { snapshot = null; snapshotState = null; Restarts++; restartPending = true; }
+                if (snapshot != null && (!ReferenceEquals(snapshotState, state) || snapshotMinute != state.Minute
+                    || !state.LiveTrafficUnchanged(snapshotTraffic, snapshotRevision)))
+                { snapshot = null; snapshotState = null; snapshotTraffic = null; Restarts++; restartPending = true; }
                 if (snapshot == null)
                 {
                     if (finished) Reset();
-                    snapshot = state.PrepareForSaveInSteps(SnapshotLinksPerStep);
+                    snapshot = state.PrepareForRetimeInSteps(SnapshotLinksPerStep);
                     snapshotState = state; snapshotMinute = state.Minute;
                 }
                 long started = Stopwatch.GetTimestamp();
@@ -68,13 +77,16 @@ namespace PersistentCity.Core
                     if (Stopwatch.GetTimestamp() >= deadline)
                     {
                         CountSlice(started); SnapshotSlices++;
+                        snapshotTraffic = state.CurrentLiveTraffic(out snapshotRevision);
                         return ClockRetimeOutcome.Preparing;
                     }
                 }
-                snapshot = null; snapshotState = null;
+                snapshot = null; snapshotState = null; snapshotTraffic = null;
                 bool restarted = restartPending;
                 restartPending = false;
-                Pending = TravelTiming.Begin(state, walkMetresPerSecond, nativeRate);
+                var source = state.TakeRetimeSource();
+                RetimedFrom = source == null ? "a save snapshot" : source.Kernel == null ? "no traffic" : source.WithoutThroughCars ? "a copy without through cars" : "the live kernel";
+                Pending = TravelTiming.Begin(state, walkMetresPerSecond, nativeRate, source, sharedLegHint, CoalesceReversals);
                 CountSlice(started);
                 if (Pending == null) { Degraded = 0; finished = true; return ClockRetimeOutcome.Committed; }
                 return restarted ? ClockRetimeOutcome.Restarted : ClockRetimeOutcome.Began;
@@ -87,7 +99,7 @@ namespace PersistentCity.Core
                 return ClockRetimeOutcome.Preparing;
             }
             if (!Pending.Commit()) { Pending = null; Restarts++; return ClockRetimeOutcome.Restarted; }
-            Degraded = Pending.Degraded; Split = Pending.Split; Joined = Pending.Joined; JoinsRefused = Pending.JoinsRefused;
+            Degraded = Pending.Degraded; Split = Pending.Split; Joined = Pending.Joined; JoinsRefused = Pending.JoinsRefused; SharedLegs = Pending.SharedLegs; ReusedLegs = Pending.ReusedLegs; SourceLegsExamined = Pending.SourceLegsExamined; sharedLegHint = Pending.SharedPool;
             RetimedTraffic = Pending.TakeRestoredTraffic(); Pending = null; finished = true;
             return ClockRetimeOutcome.Committed;
         }
@@ -98,7 +110,7 @@ namespace PersistentCity.Core
             Slices++; SliceMilliseconds += slice; SlowestSliceMilliseconds = Math.Max(SlowestSliceMilliseconds, slice);
         }
 
-        public void Cancel() { Pending = null; snapshot = null; snapshotState = null; restartPending = false; Reset(); }
+        public void Cancel() { Pending = null; snapshot = null; snapshotState = null; snapshotTraffic = null; restartPending = false; Reset(); }
 
         public TravelTiming.RetimedTraffic? TakeRetimedTraffic()
         {
@@ -109,7 +121,7 @@ namespace PersistentCity.Core
 
         private void Reset()
         {
-            finished = false; Restarts = 0; Slices = 0; SnapshotSlices = 0; SliceMilliseconds = SlowestSliceMilliseconds = 0; Degraded = 0; Split = Joined = JoinsRefused = 0; RetimedTraffic = null;
+            finished = false; Restarts = 0; Slices = 0; SnapshotSlices = 0; SliceMilliseconds = SlowestSliceMilliseconds = 0; Degraded = 0; Split = Joined = JoinsRefused = 0; RetimedTraffic = null; SharedLegs = ReusedLegs = 0; SourceLegsExamined = 0; RetimedFrom = "";
         }
     }
 }

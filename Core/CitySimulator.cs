@@ -155,7 +155,11 @@ namespace PersistentCity.Core
         public RouteRebuild BeginRebuildRoutes(IRoutePlanner replacementRoutes, TravelTiming.RetimedTraffic? retimedTraffic)
         {
             AbortPending();
-            if (retimedTraffic == null && State.Traffic == null && traffic != null) CaptureTraffic();
+            if (retimedTraffic == null && State.Traffic == null)
+            {
+                if (State.PendingRetimedTraffic != null) State.CaptureRetimedTraffic();
+                else if (traffic != null) CaptureTraffic();
+            }
             var replacement = new CitySimulator(State, replacementRoutes, shell: true);
             return new RouteRebuild(this, replacement, replacement.BuildSteps(retimedTraffic, this));
         }

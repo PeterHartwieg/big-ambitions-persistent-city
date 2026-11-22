@@ -33,13 +33,17 @@ namespace PersistentCity.Core
             return result.WithEstimate(result.Minutes + extraMinutes);
         }
 
-        public static Route Shared(Route route)
+        public static Route Shared(Route route) => Freeze(route, true);
+
+        public static Route Frozen(Route route) => Freeze(route, false);
+
+        private static Route Freeze(Route route, bool shared)
         {
             if (route == null) throw new ArgumentNullException(nameof(route));
             foreach (var leg in route.Legs)
             {
                 if (leg == null) throw new InvalidOperationException("A shared route has a null leg.");
-                leg.Freeze();
+                if (shared) leg.Share(); else leg.Freeze();
             }
             return route;
         }

@@ -672,12 +672,25 @@ public sealed class TravelTimingCollapsedNativeTailTests
         Assert.Equal(0, residue); Assert.Equal(SaveReadStatus.Loaded, SaveWire.Read(SaveCodec.Write(state)).Status);
         var before = new CitySimulator(state, new UnmappedPlanner()).SampleJourney(citizen);
         Assert.Equal(2, before.LegIndex); Assert.Equal(0, before.LegFraction); Assert.Equal(P(x[2]), before.Position);
-        foreach (double rate in new[] { 1d, 2, 1, 2 })
+        var rates = new[] { 1d, 2, 1, 2 };
+        for (int step = 0; step < rates.Length; step++)
         {
+            double rate = rates[step];
             Assert.True(TravelTiming.Apply(state, 2, rate));
-            Assert.Equal(3, citizen.Journey!.Legs.Count); Assert.All(citizen.Journey.Legs, leg => Assert.True(leg.Minutes > 0));
-            Assert.Equal(2.6, citizen.Journey.Legs[0].Minutes); Assert.Equal(5.200000000000001, citizen.Journey.Legs[1].Minutes);
-            Assert.Equal(1.5 * rate / 2, citizen.Journey.Legs[2].Minutes);
+            Assert.All(citizen.Journey!.Legs, leg => Assert.True(leg.Minutes > 0));
+            Assert.Equal(2.6, citizen.Journey.Legs[0].Minutes);
+            if (step % 2 == 1)
+            {
+                Assert.Equal(2, citizen.Journey.Legs.Count);
+                Assert.Equal(P(x[1]), citizen.Journey.Legs[1].From); Assert.Equal(P(x[3]), citizen.Journey.Legs[1].To);
+                Assert.Equal(6.7, citizen.Journey.Legs[1].Minutes, 12);
+            }
+            else
+            {
+                Assert.Equal(3, citizen.Journey.Legs.Count);
+                Assert.Equal(5.200000000000001, citizen.Journey.Legs[1].Minutes);
+                Assert.Equal(1.5 * rate / 2, citizen.Journey.Legs[2].Minutes);
+            }
             Assert.Equal(0, citizen.DepartureMinute); Assert.Equal(elapsed, state.Minute);
             Assert.Equal(citizen.Journey.Minutes, citizen.NextEventMinute);
             var decoded = SaveWire.Read(SaveCodec.Write(state)); Assert.Equal(SaveReadStatus.Loaded, decoded.Status);
@@ -743,10 +756,13 @@ public sealed class TravelTimingCollapsedNativeTailTests
             for (int i = 0; i < Math.Abs(ulps); i++) elapsed = ulps < 0 ? Math.BitDecrement(elapsed) : Math.BitIncrement(elapsed);
             var state = UnownedCanonicalWalkingRoute(x, elapsed); var citizen = state.Citizens[0];
             var measured = new CitySimulator(state, new UnmappedPlanner()).SampleJourney(citizen);
-            foreach (double rate in new[] { 1d, 2, 1, 2 })
+            var rates = new[] { 1d, 2, 1, 2 };
+            for (int step = 0; step < rates.Length; step++)
             {
+                double rate = rates[step];
                 Assert.True(TravelTiming.Apply(state, 2, rate));
-                Assert.Equal(x.Length - 1, citizen.Journey!.Legs.Count);
+                int legs = citizen.Journey!.Legs.Count;
+                Assert.True(legs == x.Length - 1 || step % 2 == 1 && legs == x.Length - 2, "step " + step + ": " + legs + " legs");
                 Assert.All(citizen.Journey.Legs, leg => Assert.True(leg.Minutes > 0));
                 Assert.Equal(0, citizen.DepartureMinute); Assert.Equal(elapsed, state.Minute);
                 Assert.Equal(citizen.Journey.Minutes, citizen.NextEventMinute);
