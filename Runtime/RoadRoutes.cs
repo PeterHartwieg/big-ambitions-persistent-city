@@ -5,6 +5,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
+using Buildings;
 using Extensions;
 using GleyTrafficSystem;
 using GleyUrbanAssets;
@@ -26,6 +27,7 @@ namespace PersistentCity.Runtime
         private readonly struct GateBox
         {
             public GateBox(Bounds bounds, string door) : this(Point(bounds.min), Point(bounds.max), door) { }
+            public GateBox(GateExtent extent, string door) : this(extent.Min, extent.Max, door) { }
             private GateBox(Position min, Position max, string door) { Min = min; Max = max; Door = door; }
             public Position Min { get; }
             public Position Max { get; }
@@ -49,18 +51,25 @@ namespace PersistentCity.Runtime
                 var colliders = door.GetComponentsInChildren<Collider>(true);
                 GateBox? fixedParts = Combine(colliders.Where(collider => !Leaf(door, collider.transform))) is Bounds still
                     ? new GateBox(still, door.name) : (GateBox?)null;
-                GateBox gate;
-                if (Combine(colliders) is Bounds geometry)
-                {
-                    geometry.Expand(new Vector3(1, 2, 1)); gate = new GateBox(geometry, door.name);
-                    if (previous != null && fixedParts.HasValue && previous.doorBoxes.TryGetValue(door, out var known)
-                        && known.Fixed.HasValue && known.Fixed.Value.Same(fixedParts.Value))
-                        gate = known.Gate.Covers(gate) ? known.Gate : known.Gate.Union(gate);
-                }
-                else gate = new GateBox(new Bounds(door.transform.position, new Vector3(40, 20, 40)), door.name);
+                var source = GateShape.Choose(Point(door.transform.position), Extent(Combine(colliders)),
+                    () => Extent(Combine(door.GetComponentsInChildren<Renderer>(true))), () => BuildingExtent(door), out var extent);
+                var gate = new GateBox(extent, door.name);
+                if (source == GateShapeSource.Colliders && previous != null && fixedParts.HasValue
+                    && previous.doorBoxes.TryGetValue(door, out var known) && known.Fixed.HasValue && known.Fixed.Value.Same(fixedParts.Value))
+                    gate = known.Gate.Covers(gate) ? known.Gate : known.Gate.Union(gate);
+                shapes.Add(source, door.name);
                 doorBoxes[door] = (fixedParts, gate);
                 gates.Add(gate);
             }
+            if (shapes.Report(previous?.shapes) is string report) UnityEngine.Debug.LogWarning(report);
+        }
+        public GateShapeTally Shapes => shapes;
+        private GateShapeTally shapes = new GateShapeTally();
+        private static GateExtent? Extent(Bounds? bounds) => bounds is Bounds b ? new GateExtent(Point(b.min), Point(b.max)) : (GateExtent?)null;
+        private static GateExtent? BuildingExtent(FenceDoor door)
+        {
+            var building = door.GetComponentInParent<CityBuildingController>();
+            return building == null ? null : Extent(GamePlaces.BuildingBounds(building));
         }
         private void BuildIndex()
         {
@@ -109,6 +118,7 @@ namespace PersistentCity.Runtime
             change = remaining.Count == 0 ? "" : "gate '" + remaining[0].Door + "' is gone or moved";
             if (change.Length > 0) { next.BuildIndex(); return next; }
             doorBoxes = next.doorBoxes;
+            shapes = next.shapes;
             return null;
         }
         public bool SameGates(PublicRoadAccess other)
@@ -135,12 +145,15 @@ namespace PersistentCity.Runtime
             foreach (var leaf in door.doors) if (leaf != null && part.IsChildOf(leaf)) return true;
             return false;
         }
+        private static Bounds? Combine(IEnumerable<Renderer> renderers)
+            => Combine(renderers.Where(renderer => renderer != null).Select(renderer => renderer.bounds));
         private static Bounds? Combine(IEnumerable<Collider> colliders)
+            => Combine(colliders.Select(collider => collider is BoxCollider box ? BoxBounds(box) : collider.bounds));
+        private static Bounds? Combine(IEnumerable<Bounds> parts)
         {
             Bounds? combined = null;
-            foreach (var collider in colliders)
+            foreach (var world in parts)
             {
-                Bounds world = collider is BoxCollider box ? BoxBounds(box) : collider.bounds;
                 if (!Point(world.min).IsFinite || !Point(world.max).IsFinite || world.size.sqrMagnitude < 0.0001f) continue;
                 if (combined is Bounds have) { have.Encapsulate(world); combined = have; }
                 else combined = world;
