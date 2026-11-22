@@ -133,7 +133,7 @@ public sealed class Gr5RetiredSimulatorTests
         Assert.False(retired.IsAlive);
         Assert.True(live.ActiveJourneyIndexMatchesState());
         next.TrafficNetwork = Line();
-        live.TryRefreshTrafficClosures(1000);
+        while (!live.TryRefreshTrafficClosures(1000)) { }
         Assert.Same(live, Closure(next.Forecast!));
         live.AdvanceTo(101.5, 64);
         GC.KeepAlive(donor);
@@ -285,7 +285,7 @@ public sealed class Gr5RetiredSimulatorTests
         Assert.Equal(0, donor.Forecast!(0, 101).DelayMinutes);
         Assert.Equal(0, donor.EntryForecast!(0, 101, 0, 1));
         next.TrafficNetwork = Line();
-        live.TryRefreshTrafficClosures(1000);
+        while (!live.TryRefreshTrafficClosures(1000)) { }
         Assert.Same(live, Closure(next.Forecast!));
         Assert.Same(live, Closure(next.EntryForecast!));
         GC.KeepAlive(donor);
@@ -314,7 +314,7 @@ public sealed class Gr5RetiredSimulatorTests
         GC.Collect(); GC.WaitForPendingFinalizers(); GC.Collect();
         Assert.False(retired.IsAlive);
         planner.TrafficNetwork = network;
-        live.TryRefreshTrafficClosures(1000);
+        while (!live.TryRefreshTrafficClosures(1000)) { }
         Assert.Same(live, Closure(planner.Forecast!));
         Assert.Same(live, Closure(planner.EntryForecast!));
         var expected = live.Traffic!.Forecast(0, 101);

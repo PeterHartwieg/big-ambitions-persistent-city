@@ -503,36 +503,80 @@ namespace PersistentCity.Runtime
 
         public List<Curb> Near(Position position, double radius, int limit, List<Curb> result)
         {
-            result.Clear();
-            trafficBuilder?.BeginQuery();
-            if (!Ready || !position.IsFinite || Math.Abs(position.X) > 1000000 || Math.Abs(position.Z) > 1000000
-                || !Position.Finite(radius) || radius < 0 || radius > 100 || limit < 1 || limit > 2) return result;
-            var nearby = nearbyNodes;
-            nearby.Clear();
-            var cell = Cell(position); int reach = (int)Math.Ceiling(radius / 50);
-            for (int x = cell.X - reach; x <= cell.X + reach; x++)
-                for (int z = cell.Z - reach; z <= cell.Z + reach; z++)
-                    if (cells.TryGetValue((x, z), out var indices))
-                        foreach (int index in indices) if (!Disabled(index) && Position.Distance(position, nodes[index].Position) <= radius) nearby.Add(index);
-            var order = nearbyOrder ??= new NearbyOrder(nodes);
-            order.Origin = position;
-            nearby.Sort(nearbyCompare ??= order.Compare);
-            int attempts = 0;
-            foreach (int index in nearby)
-            {
-                if (++attempts > 12 || result.Count >= limit) break;
-                var road = nodes[index].Position;
-                if (!NavMesh.SamplePosition(Vector(road), out NavMeshHit hit, (float)ConnectorMetres, WalkingRoutes.DryFilter)) continue;
-                Position curb = Point(hit.position);
-                bool duplicate = false;
-                foreach (var old in result) if (old.Node == index || Position.Distance(old.Position, curb) < 5) { duplicate = true; break; }
-                if (duplicate || !ConnectorClear(curb, road)) continue;
-                result.Add(new Curb { Node = index, Position = curb });
-            }
+            var query = syncQuery ??= new NearQuery();
+            BeginNear(query, position, radius, limit, result);
+            ContinueNear(query, long.MaxValue);
             return result;
         }
 
-        private readonly List<int> nearbyNodes = new List<int>();
+        internal sealed class NearQuery : ICurbSource
+        {
+            internal readonly CurbSearch Search = new CurbSearch();
+            internal RoadRoutes? Owner;
+            internal Position Origin;
+            internal double Radius;
+            internal int Limit;
+            internal List<Curb>? Result;
+            public long Now() => Stopwatch.GetTimestamp();
+            public void CollectCell(int x, int z, List<int> into) => Owner!.CollectCell(this, x, z, into);
+            public void Order(List<int> nearby) => Owner!.OrderNearby(Origin, nearby);
+            public bool Full => Result!.Count >= Limit;
+            public bool Usable(int candidate) => !Owner!.Disabled(candidate);
+            public void Attempt(int candidate) => Owner!.AttemptCurb(this, candidate);
+            public bool DropUnusable()
+            {
+                var result = Result!;
+                for (int i = 0; i < result.Count; i++)
+                    if (Owner!.Disabled(result[i].Node)) { result.RemoveAt(i); return true; }
+                return false;
+            }
+        }
+
+        private NearQuery? syncQuery;
+
+        internal void BeginNear(NearQuery query, Position position, double radius, int limit, List<Curb> result)
+        {
+            result.Clear();
+            trafficBuilder?.BeginQuery();
+            query.Owner = this; query.Origin = position; query.Radius = radius; query.Limit = limit; query.Result = result;
+            if (!Ready || !position.IsFinite || Math.Abs(position.X) > 1000000 || Math.Abs(position.Z) > 1000000
+                || !Position.Finite(radius) || radius < 0 || radius > 100 || limit < 1 || limit > 2) { query.Search.Cancel(); return; }
+            var cell = Cell(position);
+            query.Search.Begin(cell.X, cell.Z, (int)Math.Ceiling(radius / 50));
+        }
+
+        internal bool ContinueNear(NearQuery query, long deadline)
+        {
+            if (query.Search.Done) return true;
+            if (!ReferenceEquals(query.Owner, this) || !Ready || query.Search.Calls > 0 && !IsCurrent) { query.Search.Cancel(); query.Result?.Clear(); return true; }
+            trafficBuilder?.BeginQuery();
+            return query.Search.Continue(query, deadline);
+        }
+
+        private void CollectCell(NearQuery query, int x, int z, List<int> into)
+        {
+            if (!cells.TryGetValue((x, z), out var indices)) return;
+            foreach (int index in indices) if (!Disabled(index) && Position.Distance(query.Origin, nodes[index].Position) <= query.Radius) into.Add(index);
+        }
+
+        private void OrderNearby(Position origin, List<int> nearby)
+        {
+            var order = nearbyOrder ??= new NearbyOrder(nodes);
+            order.Origin = origin;
+            nearby.Sort(nearbyCompare ??= order.Compare);
+        }
+
+        private void AttemptCurb(NearQuery query, int index)
+        {
+            var result = query.Result!;
+            var road = nodes[index].Position;
+            if (!NavMesh.SamplePosition(Vector(road), out NavMeshHit hit, (float)ConnectorMetres, WalkingRoutes.DryFilter)) return;
+            Position curb = Point(hit.position);
+            foreach (var old in result) if (old.Node == index || Position.Distance(old.Position, curb) < 5) return;
+            if (!ConnectorClear(curb, road)) return;
+            result.Add(new Curb { Node = index, Position = curb });
+        }
+
         private NearbyOrder? nearbyOrder;
         private Comparison<int>? nearbyCompare;
         private sealed class NearbyOrder : IComparer<int>
@@ -574,7 +618,7 @@ namespace PersistentCity.Runtime
 
         internal sealed class RoadPlan : IDisposable
         {
-            private const int ExpansionSlice = 64;
+            internal const int ExpansionStep = 16, StepsPerUnit = 4;
             private readonly RoadRoutes owner;
             private readonly Curb from, to;
             private readonly double departureMinute, maximumEstimatedMinutes;
@@ -608,6 +652,7 @@ namespace PersistentCity.Runtime
                 if (!owner.Ready || owner.TrafficNetwork == null || !Position.Finite(departureMinute) || departureMinute < 0
                     || from.Node == to.Node || !owner.ConnectorClear(from.Position, nodes[from.Node].Position) || !owner.ConnectorClear(to.Position, nodes[to.Node].Position))
                 { Finish(null); return; }
+                completing = completeResumed = recheckWaiting = RecheckDeferred = false; completeStage = completeIndex = recheckWaits = 0; recheckWaitFrame = long.MinValue;
                 if (owner.searchGeneration == int.MaxValue) { Array.Clear(owner.searchedAt, 0, owner.searchedAt.Length); owner.searchGeneration = 0; }
                 owner.searchGeneration++;
                 generation = owner.searchGeneration;
@@ -628,6 +673,7 @@ namespace PersistentCity.Runtime
             public bool Continue(long deadlineTimestamp)
             {
                 if (Finished) return true;
+                RecheckDeferred = false;
                 if (WaitingForSpeeds || owner.searchGeneration != generation)
                 {
                     if (!WaitingForSpeeds) { Restarts++; owner.SearchRestarts++; }
@@ -636,31 +682,84 @@ namespace PersistentCity.Runtime
                     if (Finished) return true;
                     if (WaitingForSpeeds) return false;
                 }
+                int steps = 0;
                 while (true)
                 {
                     bool done;
-                    try { done = search!.Advance(ExpansionSlice); }
-                    catch (RoadSpeedsWaitingException) { search?.Dispose(); search = null; WaitingForSpeeds = true; return false; }
-                    if (!done) { if (deadlineTimestamp != long.MaxValue) return false; continue; }
-                    try { Complete(); }
-                    catch (RoadSpeedsWaitingException) { search?.Dispose(); search = null; WaitingForSpeeds = true; return false; }
-                    return true;
+                    if (!completing)
+                    {
+                        try { done = search!.Advance(ExpansionStep); }
+                        catch (RoadSpeedsWaitingException) { search?.Dispose(); search = null; WaitingForSpeeds = true; return false; }
+                        if (done) { completing = true; completeStage = completeIndex = 0; completeResumed = false; }
+                    }
+                    else
+                    {
+                        try { done = CompleteStep(ExpansionStep, deadlineTimestamp); }
+                        catch (RoadSpeedsWaitingException) { search?.Dispose(); search = null; WaitingForSpeeds = true; return false; }
+                        if (done) return true;
+                        if (recheckWaiting) { recheckWaiting = false; RecheckDeferred = true; return false; }
+                    }
+                    if (deadlineTimestamp == long.MaxValue) continue;
+                    if (++steps >= StepsPerUnit || Stopwatch.GetTimestamp() >= deadlineTimestamp) { completeResumed |= completing; return false; }
                 }
             }
 
-            private void Complete()
+            private bool completing, completeResumed, recheckWaiting;
+            private int completeStage, completeIndex, recheckWaits;
+            private long recheckWaitFrame = long.MinValue;
+            public bool RecheckDeferred { get; private set; }
+            public int CompletionUnits { get; private set; }
+
+            private bool CompleteStep(int units, long deadlineTimestamp)
             {
                 var owner = this.owner; var road = search!.Result; var path = scratch?.Path; var network = this.network!;
-                if (road == null || path == null || !owner.NativePathValid(path)) { Finish(null); return; }
-                if (owner.TopologyId.Length != 64 || road.Legs.Count != path.Length - 1) { Finish(null); return; }
-                for (int i = 0; i < road.Legs.Count; i++)
+                CompletionUnits++;
+                if (road == null || path == null) { Finish(null); return true; }
+                while (true)
                 {
-                    if (!network.TryGetEdge(path[i], path[i + 1], out var edge)
-                        || captured!.TryGetValue(edge.LinkId, out var value) && (value.Closed || !Position.Finite(value.DelayMinutes))
-                        || i == 0 && entryDelays!.TryGetValue(edge.LinkId, out var entryDelay) && (!Position.Finite(entryDelay) || entryDelay < 0)) { Finish(null); return; }
-                    road.Legs[i].ServiceId = owner.EdgeTag(path[i], path[i + 1]);
+                    switch (completeStage)
+                    {
+                        case 0:
+                            if (completeIndex >= path.Length) { completeStage = 1; continue; }
+                            if (units-- <= 0) return false;
+                            if (!owner.NativePathNodeValid(path, completeIndex++)) { Finish(null); return true; }
+                            continue;
+                        case 1:
+                            if (owner.TopologyId.Length != 64 || road.Legs.Count != path.Length - 1) { Finish(null); return true; }
+                            completeStage = 2; completeIndex = 0;
+                            continue;
+                        case 2:
+                        {
+                            if (completeIndex >= road.Legs.Count) { completeStage = 3; continue; }
+                            if (units-- <= 0) return false;
+                            int i = completeIndex++;
+                            if (!network.TryGetEdge(path[i], path[i + 1], out var edge)
+                                || captured!.TryGetValue(edge.LinkId, out var value) && (value.Closed || !Position.Finite(value.DelayMinutes))
+                                || i == 0 && entryDelays!.TryGetValue(edge.LinkId, out var entryDelay) && (!Position.Finite(entryDelay) || entryDelay < 0)) { Finish(null); return true; }
+                            road.Legs[i].ServiceId = owner.EdgeTag(path[i], path[i + 1]);
+                            continue;
+                        }
+                        default:
+                            if (completeResumed)
+                            {
+                                long checkStarted = Stopwatch.GetTimestamp();
+                                if (!owner.edgeRecheck.Admits(checkStarted, deadlineTimestamp, path.Length, Time.frameCount, ref recheckWaits, ref recheckWaitFrame)) { recheckWaiting = true; return false; }
+                                bool open = StillOpen(path);
+                                owner.edgeRecheck.Record(Stopwatch.GetTimestamp() - checkStarted, path.Length);
+                                if (!open) { Finish(null); return true; }
+                            }
+                            Finish(TransportComposition.Join(TransportComposition.Shared(begin!), TransportComposition.Shared(road), TransportComposition.Shared(end!)));
+                            return true;
+                    }
                 }
-                Finish(TransportComposition.Join(TransportComposition.Shared(begin!), TransportComposition.Shared(road), TransportComposition.Shared(end!)));
+            }
+
+            private bool StillOpen(int[] path)
+            {
+                if (!owner.Ready || !owner.IsCurrent || !ReferenceEquals(owner.TrafficNetwork, network)) return false;
+                for (int i = 0; i < path.Length; i++)
+                    if (owner.ClosedByFlags(path[i]) || i > 0 && !owner.EdgeStillLinked(path[i - 1], path[i])) return false;
+                return true;
             }
 
             private void Finish(Route? result)
@@ -787,6 +886,9 @@ namespace PersistentCity.Runtime
             }
         }
         private readonly Stack<PlanScratch> planScratch = new Stack<PlanScratch>();
+        private readonly AtomicCheckReserve edgeRecheck = new AtomicCheckReserve(Stopwatch.Frequency * 2e-6);
+        public long EdgeRechecksDeferred => edgeRecheck.Deferred;
+        public long EdgeRechecksForced => edgeRecheck.Forced;
 
         private bool ConnectorClear(Position curb, Position road) => curb.IsFinite && road.IsFinite
             && Position.Distance(curb, road) <= ConnectorMetres && Math.Abs(curb.Y - road.Y) <= 1.5
@@ -817,19 +919,15 @@ namespace PersistentCity.Runtime
             if (length > 0.000001) route.Legs.Add(new RouteLeg { From = from, To = to, Mode = TravelMode.Car, Minutes = length / walkingSpeed });
             return route;
         }
-        private bool NativePathValid(int[] path)
+        private bool NativePathNodeValid(int[] path, int i)
         {
-            for (int i = 0; i < path.Length; i++)
-            {
-                int index = path[i];
-                if (Disabled(index)) return false;
-                if (i == 0) continue;
-                int previous = path[i - 1];
-                var native = waypoints[previous];
-                if (native.neighbors == null || !native.neighbors.Contains(index)) return Invalid("path-neighbours", previous);
-                if (!access.ClearSegment(nodes[previous].Position, nodes[index].Position)) return false;
-            }
-            return true;
+            int index = path[i];
+            if (Disabled(index)) return false;
+            if (i == 0) return true;
+            int previous = path[i - 1];
+            var native = waypoints[previous];
+            if (native.neighbors == null || !native.neighbors.Contains(index)) return Invalid("path-neighbours", previous);
+            return access.ClearSegment(nodes[previous].Position, nodes[index].Position);
         }
         private bool Disabled(int index)
         {
@@ -837,6 +935,13 @@ namespace PersistentCity.Runtime
             if (!SnapshotNodeCurrent(index)) return true;
             if (trafficBuilder != null && !trafficBuilder.NodeCurrent(index)) { TrafficInvalid(); return true; }
             return ClosedByFlags(index);
+        }
+        private bool EdgeStillLinked(int from, int to)
+        {
+            var native = waypoints[from];
+            if (!ReferenceEquals(native, nativeContracts[from]) || !ReferenceEquals(waypoints[to], nativeContracts[to])
+                || native.neighbors == null || !native.neighbors.Contains(to)) return Invalid("path-neighbours", from);
+            return true;
         }
         private bool ClosedByFlags(int index)
         {

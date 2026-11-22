@@ -262,17 +262,75 @@ namespace PersistentCity.Core
                 if (maximumExpansions < 1) throw new ArgumentOutOfRangeException(nameof(maximumExpansions));
                 if (Finished) return true;
                 int remaining = maximumExpansions;
+                if (finishing != 0) return Finalize(remaining);
                 while (search!.Count != 0 && expanded++ < expansionLimit)
                 {
                     if (ExpandOne()) return true;
                     if (--remaining == 0) return false;
+                    if (finishing != 0) return Finalize(remaining);
                 }
                 return Finish(null);
             }
 
+            public const int FinalNodesPerExpansion = 4;
+            private int finishing, finalCursor, finalIndex;
+            private double goalCost;
+            private Route? building;
+            public bool Finalizing => finishing != 0;
+            public int FinalSteps { get; private set; }
+
+            private bool Finalize(int expansions)
+            {
+                var nodes = graph.nodes; var search = this.search!; var path = search.Path;
+                long units = (long)expansions * FinalNodesPerExpansion;
+                FinalSteps++;
+                while (true)
+                {
+                    if (finishing == 1)
+                    {
+                        if (finalCursor == start)
+                        {
+                            path.Reverse();
+                            building = new Route(new RouteLegs(path.Count - 1));
+                            finalIndex = 1; finishing = 2;
+                            continue;
+                        }
+                        if (units-- <= 0) return false;
+                        if (!search.TryGetPredecessor(finalCursor, out finalCursor) || path.Count >= TransportComposition.MaximumLegs) return Finish(null);
+                        path.Add(finalCursor);
+                        continue;
+                    }
+                    if (finalIndex >= path.Count)
+                    {
+                        var route = building!; building = null;
+                        if (extraMinutes != null) route.WithEstimate(goalCost);
+                        pathFound?.Invoke(path.ToArray());
+                        estimateFound?.Invoke(route.EstimatedMinutes);
+                        return Finish(route);
+                    }
+                    if (units-- <= 0) return false;
+                    int k = finalIndex++;
+                    var a = nodes[path[k - 1]]; var b = nodes[path[k]];
+                    if (disabled(path[k - 1]) || disabled(path[k]) || !clear(a.Position, b.Position)) return Finish(null);
+                    double baseline = Position.Distance(a.Position, b.Position) / (Math.Min(40, a.KilometresPerHour) / 3.6 / graph.clockRate);
+                    double nominal = baseline;
+                    if (traversalMinutes != null && (!Position.Finite(baseline) || baseline <= 0)) return Finish(null);
+                    if (costs != null)
+                    {
+                        if (!costs.TryGetValue((path[k - 1], path[k]), out var captured) || baseline != captured.Baseline) return Finish(null);
+                        nominal = traversalMinutes == null ? baseline : traversalMinutes(path[k - 1], path[k], baseline);
+                        double currentExtra = extraMinutes == null ? 0 : extraMinutes(path[k - 1], path[k]);
+                        if ((traversalMinutes != null && (!Position.Finite(nominal) || nominal < baseline || nominal <= 0))
+                            || nominal != captured.Nominal || !Position.Finite(currentExtra) || currentExtra < 0
+                            || currentExtra != captured.Extra) return Finish(null);
+                    }
+                    building!.Legs.Add(new RouteLeg { From = a.Position, To = b.Position, Mode = TravelMode.Car, Minutes = nominal });
+                }
+            }
+
             private bool Finish(Route? route)
             {
-                Finished = true; Result = route;
+                Finished = true; Result = route; finishing = 0; building = null;
                 Release();
                 return true;
             }
@@ -286,37 +344,8 @@ namespace PersistentCity.Core
                 {
                     var path = search.Path;
                     path.Clear(); path.Add(goal);
-                    int cursor = goal;
-                    while (cursor != start)
-                    {
-                        if (!search.TryGetPredecessor(cursor, out cursor) || path.Count >= TransportComposition.MaximumLegs) return Finish(null);
-                        path.Add(cursor);
-                    }
-                    path.Reverse();
-                    var route = new Route(new RouteLegs(path.Count - 1));
-                    for (int k = 1; k < path.Count; k++)
-                    {
-                        var a = nodes[path[k - 1]]; var b = nodes[path[k]];
-                        if (disabled(path[k - 1]) || disabled(path[k]) || !clear(a.Position, b.Position)) return Finish(null);
-                        double baseline = Position.Distance(a.Position, b.Position) / (Math.Min(40, a.KilometresPerHour) / 3.6 / graph.clockRate);
-                        double nominal = baseline;
-                        if (traversalMinutes != null && (!Position.Finite(baseline) || baseline <= 0)) return Finish(null);
-                        if (costs != null)
-                        {
-                            if (!costs.TryGetValue((path[k - 1], path[k]), out var captured) || baseline != captured.Baseline) return Finish(null);
-                            nominal = traversalMinutes == null ? baseline : traversalMinutes(path[k - 1], path[k], baseline);
-                            double currentExtra = extraMinutes == null ? 0 : extraMinutes(path[k - 1], path[k]);
-                            if ((traversalMinutes != null && (!Position.Finite(nominal) || nominal < baseline || nominal <= 0))
-                                || nominal != captured.Nominal || !Position.Finite(currentExtra) || currentExtra < 0
-                                || currentExtra != captured.Extra) return Finish(null);
-                        }
-                        route.Legs.Add(new RouteLeg { From = a.Position, To = b.Position, Mode = TravelMode.Car,
-                            Minutes = nominal });
-                    }
-                    if (extraMinutes != null) route.WithEstimate(current.Cost);
-                    pathFound?.Invoke(path.ToArray());
-                    estimateFound?.Invoke(route.EstimatedMinutes);
-                    return Finish(route);
+                    finalCursor = goal; goalCost = current.Cost; finishing = 1;
+                    return false;
                 }
                 if (disabled(current.Node)) return false;
                 var node = nodes[current.Node];

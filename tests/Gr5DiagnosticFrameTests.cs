@@ -317,6 +317,25 @@ public sealed class Gr5DiagnosticFrameTests
     }
 
     [Fact]
+    public void ACollectionRowCarriesTheTwoSamplerBoundaryStampsThatBoundItsInterval()
+    {
+        var sampler = new GcPauseSampler(64);
+        sampler.Start(1);
+        sampler.Observe(1000.25, 0, 0, 0, 1, 40);
+        sampler.Observe(1016.5, 0, 0, 0, 1, 41);
+        sampler.Observe(1071.125, 1, 0, 0, 1, 42);
+        var row = sampler.CollectionRow(0);
+        Assert.Equal(41, row.Frame);
+        Assert.Equal(1016.5, row.BeginStampMs, 6);
+        Assert.Equal(1071.125, row.EndStampMs, 6);
+        Assert.Equal(row.EndStampMs - row.BeginStampMs, row.FrameMs, 6);
+        using var report = JsonDocument.Parse(sampler.ReportJson(new GcReportContext(1, 1, null, 0, true, 1, 1)));
+        var json = report.RootElement.GetProperty("collection_rows")[0];
+        Assert.Equal(1016.5, json.GetProperty("begin_stamp_ms").GetDouble(), 3);
+        Assert.Equal(1071.125, json.GetProperty("end_stamp_ms").GetDouble(), 3);
+    }
+
+    [Fact]
     public void LateUpdateIsKeptApartFromUpdateCityAndBothPausesAreReported()
     {
         var sampler = new GcPauseSampler(64);

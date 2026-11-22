@@ -90,7 +90,9 @@ namespace PerfUnionProbe
         private static readonly FrameRow[] frames = new FrameRow[FrameLimit];
         private static float[] frameComponents = new float[FrameLimit * ScopeInventory.Components.Count];
         internal static readonly LoopPhaseRecorder phases = new LoopPhaseRecorder();
-        internal static readonly LoopPhaseRecorder subPhases = new LoopPhaseRecorder(LoopPhaseRecorder.MaxSubPhases);
+        internal static LoopPhaseRecorder subPhases = new LoopPhaseRecorder(1);
+        private static readonly int[] rowScope = new int[LoopPhaseRecorder.Limit];
+        private static readonly double[] rowScopeMs = new double[LoopPhaseRecorder.Limit];
         private static readonly int[] subRanking = new int[4];
         private static readonly int[] subCollected = new int[LoopPhaseRecorder.MaxSubPhases];
         private static bool subPhasesTruncated;
@@ -538,6 +540,7 @@ namespace PerfUnionProbe
                 systems[i].subSystemList = stamped.ToArray();
             }
             subPhasesTruncated = plan.Truncated;
+            if (subPhases.Capacity < plan.Names.Length) subPhases = new LoopPhaseRecorder(plan.Names.Length);
             subPhases.Configure(plan.Names);
             return plan;
         }
@@ -597,7 +600,9 @@ namespace PerfUnionProbe
             if (measuring && currentFrame >= 0 && currentFrame > firstMeasureFrame)
             {
                 WriteFrame(nowFrame, new StopRead(collections, nowFrame, -1, -1, now), false);
+                int retainedBefore = phases.Retained;
                 phases.Close(currentFrame, now, collections, union.FrameTicks * ToMs, frameDiagnostic, frameLate, ToMs, false, union.FrameTicks);
+                NoteRowScope(retainedBefore);
                 if (subPhases.Phases > 0) subPhases.Close(currentFrame, now, collections, union.FrameTicks * ToMs, frameDiagnostic, frameLate, ToMs, false, union.FrameTicks);
             }
             if (measuring) NoteCollections(collections);
@@ -725,7 +730,9 @@ namespace PerfUnionProbe
             if (!measuring) return;
             monoHeapStop = stop.Heap; monoUsedStop = stop.Used;
             bool closePhases = currentFrame >= 0 && currentFrame > firstMeasureFrame;
+            int stopRetained = phases.Retained;
             stop.Close(collectionSeries, phases, currentFrame, closePhases, union.FrameTicks * ToMs, frameLate, ToMs, union.FrameTicks);
+            NoteRowScope(stopRetained);
             if (closePhases && subPhases.Phases > 0) subPhases.Close(currentFrame, stop.Ticks, stop.Collections, union.FrameTicks * ToMs, true, frameLate, ToMs, true, union.FrameTicks);
             if (reason == "explicit-stop") stopScan = Rescan(false);
             if (writeStopFrame && currentFrame > firstMeasureFrame) { frameDiagnostic = true; WriteFrame(currentFrame + 1, stop, true); }
@@ -826,7 +833,7 @@ namespace PerfUnionProbe
                 if (!phases.Diagnostic(r) && phases.PreviousWholeMs(r) >= 0 && phases.ExcessMs(r) > excess) { excess = phases.ExcessMs(r); worst = r; }
             var summary = new JObject { ["collections"] = phases.Collections, ["retained"] = phases.Retained, ["truncated"] = phases.Truncated,
                 ["phases"] = new JArray(Enumerable.Range(0, phases.Phases).Select(phases.PhaseName)), ["page_section"] = "collections",
-                ["sub_phase_count"] = subPhases.Phases, ["sub_phase_capacity"] = subPhases.Capacity, ["sub_phases_truncated"] = subPhasesTruncated, ["gc_mode"] = GcModeRow() };
+                ["sub_phase_count"] = subPhases.Phases, ["sub_phase_capacity"] = LoopPhaseRecorder.MaxSubPhases, ["sub_phase_allocated"] = subPhases.Capacity, ["sub_phases_truncated"] = subPhasesTruncated, ["gc_mode"] = GcModeRow() };
             if (worst >= 0)
                 summary["worst"] = new JObject { ["frame"] = phases.Frame(worst), ["whole_frame_ms"] = phases.WholeMs(worst), ["previous_whole_ms"] = phases.PreviousWholeMs(worst),
                     ["excess_ms"] = excess, ["mod_work_ms"] = phases.ModWorkMs(worst), ["gc_phase"] = PhaseLabel(phases.GcPhase(worst)),
@@ -843,6 +850,21 @@ namespace PerfUnionProbe
             }
             catch (Exception failure) { return new JObject { ["unavailable"] = failure.GetType().Name }; }
         }
+
+        private static void NoteRowScope(int retainedBefore)
+        {
+            if (phases.Retained == retainedBefore || retainedBefore >= LoopPhaseRecorder.Limit) return;
+            rowScope[retainedBefore] = union.FrameLargestScope; rowScopeMs[retainedBefore] = union.FrameLargestScopeTicks * ToMs;
+        }
+
+        private static string ScopeLabel(int scope)
+        {
+            foreach (var b in bindings) if (b.Scope == scope && b.Kind != "Component") return b.Label;
+            return "unknown";
+        }
+
+        private static JToken LargestScope(int r) => r < 0 || r >= LoopPhaseRecorder.Limit || rowScope[r] < 0 ? JValue.CreateNull()
+            : new JObject { ["name"] = ScopeLabel(rowScope[r]), ["ms"] = rowScopeMs[r] };
 
         private static string PhaseLabel(int phase) => phase >= 0 && phase < phases.Phases ? phases.PhaseName(phase) : "unknown";
 
@@ -866,7 +888,7 @@ namespace PerfUnionProbe
                 ["partial"] = phases.Partial(r),
                 ["gc_phase"] = PhaseLabel(phases.GcPhase(r)), ["largest_excess_phase"] = PhaseLabel(phases.LargestExcessPhase(r)),
                 ["phase_ms"] = now, ["previous_phase_ms"] = before, ["phase_excess_ms"] = grew, ["phase_mod_ms"] = mod,
-                ["largest_excess_outside_mod_phase"] = PhaseLabel(phases.LargestExcessOutsideMod(r)), ["sub_phases"] = SubPhaseRow(r) };
+                ["largest_excess_outside_mod_phase"] = PhaseLabel(phases.LargestExcessOutsideMod(r)), ["largest_mod_scope"] = LargestScope(r), ["sub_phases"] = SubPhaseRow(r) };
         }
 
         private static JObject SubPhaseRow(int r)

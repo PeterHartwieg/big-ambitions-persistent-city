@@ -17,7 +17,8 @@ namespace PersistentCity.Core
         private double preparedMinute = double.NaN;
         private long preparedHolds;
         private bool PreparedFor(TrafficNetwork network) => ReferenceEquals(preparedNetwork, network) && preparedMinute == State.Minute && preparedHolds == State.PlayerHoldSequence;
-        private bool NetworkPrepared(TrafficNetwork network) => preparedStage == 2 && PreparedFor(network);
+        private bool NetworkPrepared(TrafficNetwork network) => preparedStage == 3 && PreparedFor(network);
+        private readonly TrafficKernel.DefinitionAdoption adoption = new TrafficKernel.DefinitionAdoption();
         public int NetworkPreparationUpdates { get; private set; }
 
         public bool TryRefreshTrafficClosures(double budgetMilliseconds)
@@ -25,16 +26,34 @@ namespace PersistentCity.Core
             if (double.IsNaN(budgetMilliseconds) || budgetMilliseconds < 0) throw new ArgumentOutOfRangeException(nameof(budgetMilliseconds));
             long deadline = double.IsPositiveInfinity(budgetMilliseconds) ? long.MaxValue
                 : System.Diagnostics.Stopwatch.GetTimestamp() + (long)(budgetMilliseconds * System.Diagnostics.Stopwatch.Frequency / 1000);
+            NetworkPublished = false;
+            int preparing = NetworkPreparationUpdates;
             if (!PrepareTrafficNetwork(deadline)) return false;
+            if (deadline != long.MaxValue && SwapPending())
+            {
+                bool sharedUpdate = NetworkPreparationUpdates != preparing;
+                bool exhausted = budgetMilliseconds <= UpdateCityBudget.MinimumSliceMilliseconds && swapWaits < MaximumSwapWaits;
+                if (sharedUpdate || exhausted) { NetworkSwapsDeferred++; if (!sharedUpdate) swapWaits++; return false; }
+            }
+            var before = trafficNetwork;
             RefreshTrafficClosures();
+            if (!ReferenceEquals(before, trafficNetwork)) { NetworkPublished = true; NetworkPublications++; swapWaits = 0; }
             return true;
         }
+
+        public const int MaximumSwapWaits = 4;
+        private int swapWaits;
+        public long NetworkSwapsDeferred { get; private set; }
+        public long NetworkPublications { get; private set; }
+        public bool NetworkPublished { get; private set; }
+
+        private bool SwapPending() => routes is ITrafficRoutePlanner planner && planner.TrafficNetwork != null && !ReferenceEquals(planner.TrafficNetwork, trafficNetwork);
 
         private void ForgetPreparedNetwork()
         {
             if (preparedNetwork == null) return;
             preparedNetwork = null; preparedStage = preparedIndex = 0; preparedMinute = double.NaN;
-            liveVehicles.Clear();
+            liveVehicles.Clear(); adoption.Clear();
         }
 
         private bool PrepareTrafficNetwork(long deadline)
@@ -48,10 +67,10 @@ namespace PersistentCity.Core
                 preparedNetwork = network; preparedMinute = State.Minute; preparedHolds = State.PlayerHoldSequence;
                 networkMinutes.Clear();
             }
-            if (preparedStage == 2) return true;
+            if (preparedStage == 3) return true;
             NetworkPreparationUpdates++;
             bool first = true;
-            while (preparedStage < 2)
+            while (preparedStage < 3)
             {
                 if (!first && System.Diagnostics.Stopwatch.GetTimestamp() >= deadline) return false;
                 first = false;
@@ -62,6 +81,12 @@ namespace PersistentCity.Core
                     if (traffic != null && traffic.VehicleCount != 0 && State.TrafficTopologyId == network.TopologyId) traffic.CopyVehiclesInOrder(liveVehicles);
                     continue;
                 }
+                if (preparedStage == 2)
+                {
+                    if (!adoption.Done) { traffic!.StepAdoption(adoption); continue; }
+                    preparedStage = 3;
+                    continue;
+                }
                 if (preparedIndex < liveVehicles.Count)
                 {
                     var vehicle = liveVehicles[preparedIndex++];
@@ -70,6 +95,7 @@ namespace PersistentCity.Core
                 }
                 liveVehicles.Clear();
                 preparedStage = 2;
+                if (traffic != null && State.TrafficTopologyId == network.TopologyId) traffic.BeginAdoption(adoption, network.Links);
             }
             return true;
         }
@@ -167,7 +193,8 @@ namespace PersistentCity.Core
                 networkMinutes.Clear();
                 foreach (var citizen in State.Citizens) MapForNetwork(network, citizen);
             }
-            ForgetPreparedNetwork();
+            var preparedKernel = adoption.Kernel;
+            preparedNetwork = null; preparedStage = preparedIndex = 0; preparedMinute = double.NaN; liveVehicles.Clear();
             if (throughTraffic != null && traffic != null) DropThroughCars(throughTraffic);
             if (traffic != null && State.TrafficTopologyId != network.TopologyId && traffic.VehicleCount != 0)
                 throw new InvalidOperationException("The road topology changed during committed traffic; preserve the saved state.");
@@ -187,8 +214,9 @@ namespace PersistentCity.Core
                 traffic.VehicleCompleted += TrafficCompleted;
                 State.TrafficTopologyId = network.TopologyId;
             }
-            else if (!traffic.AdoptCompatibleDefinitions(network.Links))
+            else if (!(prepared && ReferenceEquals(preparedKernel, traffic) ? traffic.FinishAdoption(adoption, network.Links) : traffic.AdoptCompatibleDefinitions(network.Links)))
                 throw new InvalidOperationException("Saved road section policy disagrees with its topology/timing.");
+            adoption.Clear();
             trafficNetwork = network;
             var hook = forecastHook ??= new ForecastHook { City = this };
             planner.SetTrafficForecast(linkForecast ??= hook.Link);

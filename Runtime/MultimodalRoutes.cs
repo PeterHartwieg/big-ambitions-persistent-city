@@ -308,11 +308,11 @@ namespace PersistentCity.Runtime
         public long JobUnits { get; private set; }
         internal const int MaximumJobUnitsPerSlice = 8;
         internal const int MaximumJobPathsPerFrame = 16;
-        private int jobPathFrame = -1, jobFramePaths, jobAdmissionHeldFrame = -1;
+        private int jobPathFrame = -1, jobFramePaths, jobAdmissionHeldFrame = -1, jobRecheckHeldFrame = -1;
         private double jobPathReserveMilliseconds = .05;
         public long JobAdmissionDeferrals { get; private set; }
         public double JobPathReserveMilliseconds => jobPathReserveMilliseconds;
-        public bool JobAdmissionExhaustedForFrame => jobAdmissionHeldFrame == Time.frameCount
+        public bool JobAdmissionExhaustedForFrame => jobAdmissionHeldFrame == Time.frameCount || jobRecheckHeldFrame == Time.frameCount
             || jobPathFrame == Time.frameCount && jobFramePaths >= MaximumJobPathsPerFrame;
         public string LastJobUnit { get; private set; } = "";
         public double LastContinueMilliseconds { get; private set; }
@@ -355,6 +355,8 @@ namespace PersistentCity.Runtime
             private readonly Dictionary<string, Route?> originWalkMap = new Dictionary<string, Route?>(StringComparer.Ordinal),
                 destinationWalkMap = new Dictionary<string, Route?>(StringComparer.Ordinal);
             private readonly Place point = new Place();
+            private readonly RoadRoutes.NearQuery curbQuery = new RoadRoutes.NearQuery();
+            private bool curbsBegun, sliced;
             private Route? best;
             private double bestScore = double.PositiveInfinity;
             private Place? home;
@@ -384,7 +386,7 @@ namespace PersistentCity.Runtime
                 best = null; bestScore = double.PositiveInfinity; home = null;
                 homeCurbs = null; homeCurbIndex = 0; origins = destinations = null; originWalks = destinationWalks = null; connectorIndex = 0;
                 accessWalk = egress = null; accessMetres = driveCeiling = 0; starts = ends = null;
-                endIndex = startIndex = searches = 0; drive = null;
+                endIndex = startIndex = searches = 0; drive = null; curbsBegun = false; curbQuery.Search.Cancel();
                 homeCurbList.Clear(); startList.Clear(); endList.Clear(); originList.Clear(); destinationList.Clear();
                 originWalkMap.Clear(); destinationWalkMap.Clear(); point.Position = default;
                 if (!preferenceOnly)
@@ -415,6 +417,7 @@ namespace PersistentCity.Runtime
                     throw new RoutePlanningRestartRequired("The road snapshot, public access or station list changed while a route plan was suspended.");
                 bool first = true;
                 bool finite = !double.IsPositiveInfinity(budgetMilliseconds);
+                sliced = finite;
                 int units = 0;
                 if (finite && owner.jobPathFrame != Time.frameCount)
                 { owner.jobPathFrame = Time.frameCount; owner.jobFramePaths = 0; }
@@ -430,6 +433,8 @@ namespace PersistentCity.Runtime
                     {
                         owner.jobAdmissionHeldFrame = Time.frameCount; owner.JobAdmissionDeferrals++; return false;
                     }
+                    if (finite && owner.jobRecheckHeldFrame == Time.frameCount)
+                    { owner.JobAdmissionDeferrals++; return false; }
                     first = false;
                     units++;
                     owner.JobUnits++; owner.LastJobUnit = StageNames[(int)stage];
@@ -495,7 +500,10 @@ namespace PersistentCity.Runtime
                         else stage = Stage.DirectWalk;
                         return;
                     case Stage.HomeCurbs:
-                        homeCurbs = roads!.Near(home!.Position, 90, 2, homeCurbList); homeCurbIndex = 0;
+                        if (!curbsBegun) { roads!.BeginNear(curbQuery, home!.Position, 90, 2, homeCurbList); curbsBegun = true; }
+                        if (!roads!.ContinueNear(curbQuery, deadline)) return;
+                        curbsBegun = false;
+                        homeCurbs = homeCurbList; homeCurbIndex = 0;
                         stage = homeCurbs.Count == 0 ? Stage.DirectWalk : Stage.HomeCurbWalk;
                         return;
                     case Stage.HomeCurbWalk:
@@ -557,7 +565,10 @@ namespace PersistentCity.Runtime
                         stage = Stage.CarEnds;
                         return;
                     case Stage.CarEnds:
-                        ends = roads!.Near(to!.Position, 90, 2, endList);
+                        if (!curbsBegun) { roads!.BeginNear(curbQuery, to!.Position, 90, 2, endList); curbsBegun = true; }
+                        if (!roads!.ContinueNear(curbQuery, deadline)) return;
+                        curbsBegun = false;
+                        ends = endList;
                         endIndex = 0; searches = 0;
                         NextEnd();
                         return;
@@ -577,7 +588,7 @@ namespace PersistentCity.Runtime
                         return;
                     case Stage.CarSearch:
                     {
-                        if (!drive!.Continue(deadline)) return;
+                        if (!drive!.Continue(deadline)) { if (drive.RecheckDeferred) owner.jobRecheckHeldFrame = Time.frameCount; return; }
                         var road = drive.Result; drive.Dispose(); drive = null;
                         if (road != null) Consider(TransportComposition.Join(accessWalk!,
                             Pause(person!.Car!.ParkedPosition, TransportComposition.CarPreparationMinutes), road,
@@ -587,6 +598,11 @@ namespace PersistentCity.Runtime
                         return;
                     }
                     case Stage.Finish:
+                        if (RevisionChanged())
+                        {
+                            if (sliced) throw new RoutePlanningRestartRequired("The road snapshot, public access or station list changed before a route plan published.");
+                            Result = null; stage = Stage.Done; return;
+                        }
                         if (best == null) owner.Metrics.NoFeasibleRoute++;
                         else if (Uses(best, TravelMode.Car)) owner.Metrics.SelectedCar++;
                         else if (Uses(best, TravelMode.Subway)) owner.Metrics.SelectedSubway++;
@@ -647,7 +663,7 @@ namespace PersistentCity.Runtime
 
             public void Dispose()
             {
-                drive?.Dispose(); drive = null;
+                drive?.Dispose(); drive = null; curbsBegun = false; curbQuery.Search.Cancel(); curbQuery.Owner = null; curbQuery.Result = null;
                 if (!Completed) { Result = null; stage = Stage.Done; }
                 if (pooled) return;
                 pooled = true;

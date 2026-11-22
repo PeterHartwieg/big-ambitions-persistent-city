@@ -21,6 +21,7 @@ namespace PersistentCity.Core
         public long Bytes;
         public int GrowCount;
         public GrowTiming Grow;
+        public double CpuMs;
     }
 
     public sealed class ModFrameRecorder
@@ -39,6 +40,7 @@ namespace PersistentCity.Core
         private int topCount, stored, spikeCount;
         private long frame, began, mark, detailMark, counterMark, detailCounterMark;
         private int collectionsMark, detailCollectionsMark, epochMark;
+        private long cpuBegan = -1;
         private bool open, countersValid;
         private int growCount;
         private GrowTiming grow;
@@ -48,6 +50,9 @@ namespace PersistentCity.Core
         public long Frames { get; private set; }
         public long Spikes { get; private set; }
         public long NearSpikes { get; private set; }
+        public long CpuFrames { get; private set; }
+        public long CpuSpikes { get; private set; }
+        public long OffCpuSpikes { get; private set; }
         public int TopCount => topCount;
         public int SpikeCount => spikeCount;
         public int NearSpikeCount => stored - spikeCount;
@@ -82,15 +87,17 @@ namespace PersistentCity.Core
         public void Reset()
         {
             Array.Clear(ticks, 0, Segments); Array.Clear(bytes, 0, Segments); Array.Clear(totalTicks, 0, Segments);
-            topCount = stored = spikeCount = 0; Frames = Spikes = NearSpikes = 0; open = false;
+            topCount = stored = spikeCount = 0; Frames = Spikes = NearSpikes = CpuFrames = CpuSpikes = OffCpuSpikes = 0; open = false;
         }
 
         public void Begin(long frameNumber, long timestamp, long counter, int collections) => Begin(frameNumber, timestamp, counter, collections, 0);
 
-        public void Begin(long frameNumber, long timestamp, long counter, int collections, int counterEpoch)
+        public void Begin(long frameNumber, long timestamp, long counter, int collections, int counterEpoch) => Begin(frameNumber, timestamp, counter, collections, counterEpoch, -1);
+
+        public void Begin(long frameNumber, long timestamp, long counter, int collections, int counterEpoch, long cpuNanoseconds)
         {
             if (!Armed) return;
-            frame = frameNumber; open = true;
+            frame = frameNumber; open = true; cpuBegan = cpuNanoseconds;
             began = mark = detailMark = timestamp;
             counterMark = detailCounterMark = counter; countersValid = counter >= 0; epochMark = counterEpoch;
             collectionsMark = detailCollectionsMark = collections;
@@ -139,13 +146,16 @@ namespace PersistentCity.Core
 
         public void End(long timestamp, long counter, int collections, GcPauseSampler? sampler) => End(timestamp, counter, collections, 0, sampler);
 
-        public void End(long timestamp, long counter, int collections, int counterEpoch, GcPauseSampler? sampler)
+        public void End(long timestamp, long counter, int collections, int counterEpoch, GcPauseSampler? sampler) => End(timestamp, counter, collections, counterEpoch, sampler, -1);
+
+        public void End(long timestamp, long counter, int collections, int counterEpoch, GcPauseSampler? sampler, long cpuNanoseconds)
         {
             if (!open) return;
             double modMilliseconds = (timestamp - began) / ticksPerMillisecond;
+            double cpuMilliseconds = cpuBegan >= 0 && cpuNanoseconds >= cpuBegan ? (cpuNanoseconds - cpuBegan) / 1e6 : -1;
             Charge(GcAllocationSegment.ModOther, timestamp, counter, collections, counterEpoch);
             open = false;
-            var row = new ModFrameRow { Frame = frame, ModMs = modMilliseconds, Phase = -1, Detail = -1, Sub = -1, GcPhase = -1, AllocPhase = -1, GrowCount = growCount, Grow = grow };
+            var row = new ModFrameRow { Frame = frame, ModMs = modMilliseconds, Phase = -1, Detail = -1, Sub = -1, GcPhase = -1, AllocPhase = -1, GrowCount = growCount, Grow = grow, CpuMs = cpuMilliseconds };
             long phaseTicks = 0, detailTicks = 0, subTicks = 0;
             for (int i = 0; i < Segments; i++)
             {
@@ -169,6 +179,12 @@ namespace PersistentCity.Core
             row.DetailMs = detailTicks / ticksPerMillisecond;
             row.SubMs = subTicks / ticksPerMillisecond;
             Frames++;
+            if (cpuMilliseconds >= 0)
+            {
+                CpuFrames++;
+                if (cpuMilliseconds >= SpikeMilliseconds) CpuSpikes++;
+                if (modMilliseconds - cpuMilliseconds >= SpikeMilliseconds) OffCpuSpikes++;
+            }
             if (modMilliseconds >= SpikeMilliseconds) { Spikes++; Retain(row, true); }
             else if (modMilliseconds >= NearSpikeMilliseconds) { NearSpikes++; Retain(row, false); }
             Insert(row);
@@ -222,7 +238,9 @@ namespace PersistentCity.Core
                         .Append("\",\"grow_failed\":").Append(r.GrowCount > 0 && r.Grow.Failed ? "true" : "false")
                         .Append(",\"grow_ms\":").Append(D(r.Grow.Total)).Append(",\"grow_staging_ms\":").Append(D(r.Grow.Staging)).Append(",\"grow_result_ms\":").Append(D(r.Grow.Result))
                         .Append(",\"grow_checks_ms\":").Append(D(r.Grow.Checks)).Append(",\"grow_parent_ms\":").Append(D(r.Grow.Parent))
-                        .Append(",\"grow_own_ms\":").Append(D(r.Grow.Own)).Append('}');
+                        .Append(",\"grow_own_ms\":").Append(D(r.Grow.Own))
+                        .Append(",\"cpu_ms\":").Append(r.CpuMs < 0 ? "null" : D(r.CpuMs))
+                        .Append(",\"off_cpu_ms\":").Append(r.CpuMs < 0 ? "null" : D(Math.Max(0, r.ModMs - r.CpuMs))).Append('}');
                 }
                 text.Append(']');
             }
@@ -242,6 +260,8 @@ namespace PersistentCity.Core
             text.Append(",\"phase_near_spikes_15ms\":").Append(N(NearSpikes)).Append(",\"phase_near_spikes_retained\":").Append(N(stored - spikeCount))
                 .Append(",\"phase_near_spikes_truncated\":").Append(NearSpikesTruncated ? "true" : "false").Append(',');
             Rows("near_spike_frames", spikes, stored, -1);
+            text.Append(",\"phase_cpu_frames\":").Append(N(CpuFrames)).Append(",\"phase_cpu_spikes_30ms\":").Append(N(CpuSpikes))
+                .Append(",\"phase_off_cpu_spikes_30ms\":").Append(N(OffCpuSpikes));
         }
 
         public string ReportJson()
@@ -257,7 +277,9 @@ namespace PersistentCity.Core
                 .Append(" spikes>=30ms=").Append(Spikes.ToString(CultureInfo.InvariantCulture))
                 .Append(" retained=").Append(spikeCount.ToString(CultureInfo.InvariantCulture)).Append(SpikesTruncated ? " truncated" : "")
                 .Append(" near>=15ms=").Append(NearSpikes.ToString(CultureInfo.InvariantCulture))
-                .Append(" retained=").Append(NearSpikeCount.ToString(CultureInfo.InvariantCulture)).Append(NearSpikesTruncated ? " truncated" : "");
+                .Append(" retained=").Append(NearSpikeCount.ToString(CultureInfo.InvariantCulture)).Append(NearSpikesTruncated ? " truncated" : "")
+                .Append(CpuFrames == 0 ? " thread cpu unavailable" : " thread-cpu>=30ms=" + CpuSpikes.ToString(CultureInfo.InvariantCulture)
+                    + " off-cpu>=30ms=" + OffCpuSpikes.ToString(CultureInfo.InvariantCulture));
             for (int i = 0; i < topCount && i < 5; i++)
             {
                 var r = top[i];

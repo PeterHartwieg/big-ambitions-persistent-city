@@ -43,12 +43,15 @@ namespace PersistentCity.Runtime
             try
             {
                 ObserveScenes();
+                long scanStarted = System.Diagnostics.Stopwatch.GetTimestamp();
                 if (rebindDue || unresolved.Count > 0)
                 {
                     MaintainScans++;
+                    bool full = rebindDue;
                     if (rebindDue) { rebindDue = false; PublishFrontages(places.Values, rebind: true); }
                     else PublishFrontages(unresolved);
                     unresolved.Clear();
+                    NoteScan(full ? "frontage-rebind" : "frontage-unresolved", scanStarted);
                     return;
                 }
                 switch (scans.Next)
@@ -57,10 +60,12 @@ namespace PersistentCity.Runtime
                         MaintainScans++; ParkTriggerScans++;
                         parkTriggers = UnityEngine.Object.FindObjectsOfType<LocationHappinessTrigger>(true);
                         scans.Completed(SceneScan.Parks); parkWarmup.Reset();
+                        NoteScan("parks", scanStarted);
                         return;
                     case SceneScan.Performers:
                         MaintainScans++; ScanPerformers(); scans.Completed(SceneScan.Performers);
                         audienceCandidates = null; audienceWarmup.Reset();
+                        NoteScan("performers", scanStarted);
                         return;
                 }
                 int frame = Time.frameCount;
@@ -69,6 +74,14 @@ namespace PersistentCity.Runtime
                 audienceWarmup.Run(geometryBudget, frame, audienceTargets ??= new AudienceWarmTargets(this));
             }
             catch (Exception) { }
+        }
+        public double MaximumScanMilliseconds { get; private set; }
+        public string SlowestScan { get; private set; } = "none";
+        private void NoteScan(string kind, long started)
+        {
+            double elapsed = MillisecondsSince(started);
+            if (elapsed <= MaximumScanMilliseconds) return;
+            MaximumScanMilliseconds = elapsed; SlowestScan = kind;
         }
         private bool doorIndexWarm;
         private void WarmDoorIndex(int frame)
@@ -96,7 +109,7 @@ namespace PersistentCity.Runtime
         public OptionalStopUnitSeams UnitSeams { get; } = new OptionalStopUnitSeams();
         public void ResetSeamDiagnostics()
         {
-            SeamCalls = ParkTriggerScans = 0; SeamMilliseconds = MaximumSeamMilliseconds = 0;
+            SeamCalls = ParkTriggerScans = 0; SeamMilliseconds = MaximumSeamMilliseconds = 0; MaximumScanMilliseconds = 0; SlowestScan = "none";
             DoorSamples = ParkBuilds = AudienceBuilds = 0; MaximumDoorMilliseconds = MaximumParkMilliseconds = MaximumAudienceMilliseconds = 0;
             parkWarmup.ResetDiagnostics(); audienceWarmup.ResetDiagnostics(); doors.ResetDiagnostics();
             deferralsSeen = geometryBudget.Deferrals;
