@@ -352,6 +352,20 @@ namespace PerfUnionProbe
         }
     }
 
+    public sealed class PatchSetWindow
+    {
+        public const string ChangedError = "f4b_patch_set_changed_in_window";
+        public bool Changed { get; private set; }
+        public void Begin() => Changed = false;
+
+        public string Note(bool measuring, bool changed, string error)
+        {
+            if (!measuring || !changed) return error;
+            Changed = true;
+            return string.IsNullOrEmpty(error) ? ChangedError : error;
+        }
+    }
+
     public sealed class AdvanceCallBuffer
     {
         public AdvanceCallBuffer(int slowCapacity, int unitCapacity)

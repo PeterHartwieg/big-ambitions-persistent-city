@@ -1214,6 +1214,17 @@ internal static class Program
         var settled = new CoverageTracker(ScopeInventory.Patches, _ => true, probe);
         settled.Observe(output);
         Check(settled.Complete && !output.Any(o => o.Type == "PersistentCity.Runtime.Late"), "the settled scan matches the snapshot the watch commits");
+        var patchWindow = new PatchSetWindow();
+        patchWindow.Begin();
+        string windowError = patchWindow.Note(true, drifted > 0, "");
+        windowError = patchWindow.Note(true, settled.Unexpected.Count > 0, windowError);
+        windowError = patchWindow.Note(true, false, windowError);
+        Check(settled.Complete && patchWindow.Changed && windowError == PatchSetWindow.ChangedError,
+            "a PC patch observed and removed before the state check rejects the window through the probe error, even though the settled scan's coverage is complete (" + windowError + ")");
+        Check(patchWindow.Note(true, true, "f4b_cross_frame_scope") == "f4b_cross_frame_scope" && patchWindow.Note(false, true, "") == "",
+            "a drift keeps an earlier error and does not set one outside a measured window");
+        patchWindow.Begin();
+        Check(!patchWindow.Changed, "the next window starts unchanged");
         watch.CommitScan();
         Check(!watch.Changed(), "the committed snapshot is the state the settled scan read");
         Set(removing, PatchState("realliveoverhaul", gameModule, "someone.else", pcModule),

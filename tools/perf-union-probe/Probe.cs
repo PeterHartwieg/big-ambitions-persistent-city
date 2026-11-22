@@ -82,7 +82,8 @@ namespace PerfUnionProbe
         private static string[] componentNames = Array.Empty<string>();
         internal static UnionClock union = new UnionClock(0, 0, Stopwatch.Frequency);
         internal static readonly HoldTracker holds = new HoldTracker();
-        private static bool loopInstalled, eventsSubscribed, holdsBound, advanceBound, patchSetChanged;
+        private static bool loopInstalled, eventsSubscribed, holdsBound, advanceBound;
+        private static readonly PatchSetWindow patchWindow = new PatchSetWindow();
         private static CoverageTracker coverage;
         private static PatchStateWatch patchWatch;
         private static int unexpectedAtWindowStart;
@@ -397,7 +398,7 @@ namespace PerfUnionProbe
             scanned.Clear();
             if (patchWatch?.Scanning != null)
             {
-                if (scanCache.ScanSettled(patchWatch, ObserveTarget, scanned, ScanAttempts) > 0 && measuring) patchSetChanged = true;
+                error = patchWindow.Note(measuring, scanCache.ScanSettled(patchWatch, ObserveTarget, scanned, ScanAttempts) > 0, error);
             }
             else foreach (var target in Harmony.GetAllPatchedMethods().ToArray()) HarmonyScan.Observe(target, Harmony.GetPatchInfo(target), pc, scanned);
             return scanned;
@@ -408,7 +409,7 @@ namespace PerfUnionProbe
             ["entries"] = scanCache.Entries, ["mentions"] = scanCache.Needles, ["scans"] = scanCache.Scans,
             ["last_targets"] = scanCache.LastTargets, ["last_deserialized"] = scanCache.LastDeserialized, ["last_skipped"] = scanCache.LastSkipped, ["last_reused"] = scanCache.LastReused, ["last_drifted"] = scanCache.LastDrifted, ["drifted"] = scanCache.Drifted, ["rescans"] = scanCache.Rescans,
             ["deserialized"] = scanCache.Deserialized, ["skipped"] = scanCache.Skipped, ["reused"] = scanCache.Reused,
-            ["qualification"] = "Harmony patch-info reads per scan. A target is read again only when Harmony replaced its serialized patch state; a target whose state names no inventory owner and no Persistent City module is skipped unread, because coverage ignores its patches. A target whose Harmony state changed between the snapshot and its read is drifted: the scan is taken again from a fresh snapshot, nothing is cached under the old state, and a drift inside a measured window sets patch_set_changed_in_window.",
+            ["qualification"] = "Harmony patch-info reads per scan. A target is read again only when Harmony replaced its serialized patch state; a target whose state names no inventory owner and no Persistent City module is skipped unread, because coverage ignores its patches. A target whose Harmony state changed between the snapshot and its read is drifted: the scan is taken again from a fresh snapshot, nothing is cached under the old state, and a drift inside a measured window sets patch_set_changed_in_window and the error f4b_patch_set_changed_in_window, which stays for the rest of the window.",
         };
 
         private static bool CoverageComplete() => coverage != null && coverage.Complete && bindings.All(b => b.Status != "unbindable");
@@ -693,7 +694,7 @@ namespace PerfUnionProbe
                 return scanned ? "full" : "watch-unchanged";
             }
             try { scanned = PatchStateWatch.Run(patchWatch, full, Scan); } catch { error = "f4b_patch_scan_failed"; }
-            if (measuring && coverage.Unexpected.Count > unexpectedAtWindowStart) patchSetChanged = true;
+            error = patchWindow.Note(measuring, coverage.Unexpected.Count > unexpectedAtWindowStart, error);
             return scanned ? "full" : "watch-unchanged";
         }
 
@@ -732,7 +733,7 @@ namespace PerfUnionProbe
             window = label; error = ""; stopReason = "measuring";
             frameRing.Reset(); tickRing.Reset(); sampleRing.Reset(); calls.Reset(); sampleFailures = advanceCalls = 0;
             ReadMonoHeap(out startScanHeap, out startScanUsed); monoHeapStop = monoUsedStop = -1;
-            startScan = Rescan(false); stopScan = "none"; unexpectedAtWindowStart = coverage?.Unexpected.Count ?? 0; patchSetChanged = false;
+            startScan = Rescan(false); stopScan = "none"; unexpectedAtWindowStart = coverage?.Unexpected.Count ?? 0; patchWindow.Begin();
             phases.Reset(); if (subPhases.Phases > 0) subPhases.Reset();
             ReadMonoHeap(out monoHeapStart, out monoUsedStart);
             collectionSeries.Begin(GC.CollectionCount(0));
@@ -813,7 +814,7 @@ namespace PerfUnionProbe
                 ["scope_inventory_version"] = ScopeInventory.Version, ["expected_scope_hash"] = ScopeInventory.Hash(),
                 ["coverage_complete"] = NotApplicable(() => CoverageComplete()),
                 ["patch_scans"] = NotApplicable(() => coverage?.Scans ?? 0), ["patch_scan_cache"] = ScanCacheRow(), ["patch_state_checks"] = NotApplicable(() => patchWatch?.Checks ?? 0),
-                ["patch_state_changes"] = NotApplicable(() => patchWatch?.Changes ?? 0), ["patch_state_watch"] = NotApplicable(() => patchWatch != null), ["patch_scan_pending"] = NotApplicable(() => patchWatch?.Pending ?? false), ["matched_reference_scans"] = mode == "reference" ? (JToken)matchedScans : "n/a", ["patch_set_changed_in_window"] = NotApplicable(() => patchSetChanged),
+                ["patch_state_changes"] = NotApplicable(() => patchWatch?.Changes ?? 0), ["patch_state_watch"] = NotApplicable(() => patchWatch != null), ["patch_scan_pending"] = NotApplicable(() => patchWatch?.Pending ?? false), ["matched_reference_scans"] = mode == "reference" ? (JToken)matchedScans : "n/a", ["patch_set_changed_in_window"] = NotApplicable(() => patchWindow.Changed),
                 ["start_scan"] = startScan, ["stop_scan"] = stopScan, ["diagnostic_mark_bound"] = NotApplicable(() => markDiagnostic != null),
                 ["collection_frames"] = CollectionFrameSummary(),
                 ["scopes"] = NotApplicable(() => new JObject { ["timed_methods"] = scopeIndex.Count, ["timed"] = Count("timed"),
