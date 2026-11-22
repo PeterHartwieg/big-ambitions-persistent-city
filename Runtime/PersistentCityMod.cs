@@ -431,8 +431,9 @@ namespace PersistentCity.Runtime
                 RecordRoutingFrame(prepareElapsed, closureElapsed, true);
                 if (!NativeCityClock.CheckInputEpoch(target, simulation.State.Minute)) { StopAccounting(); return; }
                 ModFrames.Charge(GcAllocationSegment.ModClosures);
-                bool setupWanted = settings.PhysicalEnabled && !physicalFailed && physical == null && !BuildingManager.IsInsideBuilding && !NativeTravelPace.HiddenTravel;
-                if (!physicalSetupGate.Reserve(setupWanted))
+                bool publishedNetwork = simulation.NetworkPublished;
+                bool setupWanted = !publishedNetwork && settings.PhysicalEnabled && !physicalFailed && physical == null && !BuildingManager.IsInsideBuilding && !NativeTravelPace.HiddenTravel;
+                if (!publishedNetwork && !physicalSetupGate.Reserve(setupWanted))
                 {
                     var advanceHeap = GcAllocationBegin();
                     AdvanceAllocation.Begin(gcSampler);

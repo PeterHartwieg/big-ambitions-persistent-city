@@ -6,7 +6,7 @@ namespace PersistentCity.Core
 {
     public sealed class TrafficKernel
     {
-        private sealed class Link
+        internal sealed class Link
         {
             internal TrafficLinkDefinition Definition;
             internal bool Closed;
@@ -311,6 +311,52 @@ namespace PersistentCity.Core
                         || !SameDuration(saved.Signal.GreenDurationMinutes, current.Signal.GreenDurationMinutes)
                         || !SameDuration(saved.Signal.GreenStartMinutes, current.Signal.GreenStartMinutes))) compatible = false;
             }
+            return compatible;
+        }
+
+        internal sealed class DefinitionAdoption
+        {
+            internal TrafficKernel? Kernel;
+            internal IReadOnlyList<TrafficLinkDefinition>? Network;
+            internal int Index;
+            internal bool Compatible;
+            internal readonly List<Link> Links = new List<Link>();
+            internal readonly List<TrafficLinkDefinition> Definitions = new List<TrafficLinkDefinition>();
+            internal bool Done => Network == null || Index >= Network.Count;
+            internal void Clear() { Kernel = null; Network = null; Index = 0; Compatible = false; Links.Clear(); Definitions.Clear(); }
+        }
+
+        internal void BeginAdoption(DefinitionAdoption adoption, IReadOnlyList<TrafficLinkDefinition> network)
+        {
+            adoption.Clear();
+            adoption.Kernel = this; adoption.Network = network;
+            adoption.Compatible = network != null && network.Count == links.Count;
+            if (!adoption.Compatible) adoption.Network = null;
+        }
+
+        internal void StepAdoption(DefinitionAdoption adoption)
+        {
+            var network = adoption.Network!;
+            var current = network[adoption.Index++];
+            if (current == null || !links.TryGetValue(current.Id, out var link)) { adoption.Compatible = false; adoption.Index = network.Count; return; }
+            var saved = link.Definition;
+            if (ReferenceEquals(saved, current)) return;
+            if (current.IsFrozen() && Identical(saved, current)) { adoption.Links.Add(link); adoption.Definitions.Add(current); return; }
+            if (saved.Capacity != current.Capacity || !SameDuration(saved.FreeFlowMinutes, current.FreeFlowMinutes)
+                || !SameDuration(saved.HeadwayMinutes, current.HeadwayMinutes) || (saved.Signal == null) != (current.Signal == null)) adoption.Compatible = false;
+            else if (saved.Signal != null && current.Signal != null
+                && (!SameDuration(saved.Signal.CycleMinutes, current.Signal.CycleMinutes)
+                    || !SameDuration(saved.Signal.GreenDurationMinutes, current.Signal.GreenDurationMinutes)
+                    || !SameDuration(saved.Signal.GreenStartMinutes, current.Signal.GreenStartMinutes))) adoption.Compatible = false;
+        }
+
+        internal bool FinishAdoption(DefinitionAdoption adoption, IReadOnlyList<TrafficLinkDefinition> network)
+        {
+            if (!ReferenceEquals(adoption.Kernel, this) || !ReferenceEquals(adoption.Network, network) || !adoption.Done)
+            { adoption.Clear(); return AdoptCompatibleDefinitions(network); }
+            bool compatible = adoption.Compatible;
+            for (int i = 0; i < adoption.Links.Count; i++) Rebind(adoption.Links[i], adoption.Definitions[i]);
+            adoption.Clear();
             return compatible;
         }
 

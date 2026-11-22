@@ -273,6 +273,49 @@ public sealed class Gr5NetworkRequeueTests
     }
 
     [Fact]
+    public void WithTheUpdateBudgetSpentTheSwapWaitsAFewUpdatesThenPublishesAloneWithItsDefinitionsAlreadyChecked()
+    {
+        var networks = new[] { Road(), Road() };
+        var wholePlanner = new SwappablePlanner { TrafficNetwork = networks[0] };
+        var slicedPlanner = new SwappablePlanner { TrafficNetwork = networks[0] };
+        var whole = RoadCity(750, 2250, wholePlanner);
+        var sliced = RoadCity(750, 2250, slicedPlanner);
+        whole.RefreshTrafficClosures();
+        while (!sliced.TryRefreshTrafficClosures(ClockRetimeStages.SliceMilliseconds)) { }
+        double slowestPreparation = 0, slowestSwap = 0, slowestWait = 0;
+        for (int swap = 1; swap <= 6; swap++)
+        {
+            wholePlanner.TrafficNetwork = slicedPlanner.TrafficNetwork = networks[swap % 2];
+            whole.RefreshTrafficClosures();
+            int waits = 0;
+            long published = sliced.NetworkPublications;
+            while (true)
+            {
+                int preparing = sliced.NetworkPreparationUpdates;
+                long started = Stopwatch.GetTimestamp();
+                bool done = sliced.TryRefreshTrafficClosures(UpdateCityBudget.MinimumSliceMilliseconds);
+                double ms = (Stopwatch.GetTimestamp() - started) * 1000.0 / Stopwatch.Frequency;
+                if (done) { Assert.True(sliced.NetworkPublished); Assert.Equal(preparing, sliced.NetworkPreparationUpdates); slowestSwap = Math.Max(slowestSwap, ms); break; }
+                Assert.False(sliced.NetworkPublished);
+                if (preparing == sliced.NetworkPreparationUpdates) { waits++; slowestWait = Math.Max(slowestWait, ms); }
+                else slowestPreparation = Math.Max(slowestPreparation, ms);
+            }
+            Assert.Equal(CitySimulator.MaximumSwapWaits, waits);
+            Assert.Equal(published + 1, sliced.NetworkPublications);
+            Assert.Equal(whole.QueuedPersonEvents, sliced.QueuedPersonEvents);
+            Assert.Equal(SaveCodec.Write(whole.State), SaveCodec.Write(sliced.State));
+            Assert.Equal(whole.Traffic!.DefinitionsSharedWith(networks[swap % 2].Links), sliced.Traffic!.DefinitionsSharedWith(networks[swap % 2].Links));
+        }
+        Assert.True(sliced.TryRefreshTrafficClosures(UpdateCityBudget.MinimumSliceMilliseconds));
+        Assert.False(sliced.NetworkPublished);
+        output.WriteLine("network swap with a spent update budget, 750 drivers x " + DriveLegs + " road legs, 2,250 resting, 14,000 links: slowest preparation update "
+            + slowestPreparation.ToString("0.00") + " ms, slowest waiting update " + slowestWait.ToString("0.000") + " ms, slowest publication update "
+            + slowestSwap.ToString("0.00") + " ms (.NET)");
+        PerfGate.Under(slowestPreparation, 2 * UpdateCityBudget.MinimumSliceMilliseconds + 1, "slowest network preparation update on a spent budget (.NET)");
+        PerfGate.Under(slowestSwap, 2 * ClockRetimeStages.SliceMilliseconds, "network publication update (.NET)");
+    }
+
+    [Fact]
     public void NetworkPreparationGetsOnlyWhatIsLeftOfTheUpdateTargetAndStillMatchesAWholeSwap()
     {
         var budget = new UpdateCityBudget();
