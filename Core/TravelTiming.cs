@@ -453,7 +453,7 @@ namespace PersistentCity.Core
                 if (merges > 0 && !SameJoinedPose(citizen, replacement, elapsed,
                     map != null ? map.Map(elapsed) : CitySimulator.NormalizeJourneyElapsed(rawElapsed, replacement.Minutes, state.Minute)))
                 {
-                    var unjoined = Retime(route, elapsed, legacy, walk, rate, ratio, false, mapped, out var unjoinedMap, out int unjoinedCompleted, shared);
+                    var unjoined = RetimeSharing(route, elapsed, legacy, walk, rate, ratio, false, mapped, out var unjoinedMap, out int unjoinedCompleted, shared);
                     if (map != null && unjoinedMap != null && JoinKeepsMappedPose(citizen, replacement, map.Map(elapsed), unjoined, unjoinedMap.Map(elapsed), elapsed)) Joined++;
                     else
                     {
@@ -465,7 +465,7 @@ namespace PersistentCity.Core
                 if (replacement.Legs.Count > MaxLegs
                     && !MergeCompletedLegs(replacement, completed, elapsed, trafficOwned ? trafficRoutes[citizen.Identity.Id] : null))
                 {
-                    replacement = Retime(route, elapsed, legacy, walk, rate, ratio, true, mapped, out map, out _, shared);
+                    replacement = RetimeSharing(route, elapsed, legacy, walk, rate, ratio, true, mapped, out map, out _, shared);
                     Degraded++;
                     if (trafficOwned) { evicted.Add(citizen.Identity.Id); trafficOwned = false; }
                 }
@@ -658,7 +658,11 @@ namespace PersistentCity.Core
         }
 
         private static Route Retime(Route original, double elapsed, bool legacy, double walkSpeed, double rate, double ratio,
-            bool keepCurrent, bool mapped, out NominalMap? map, out int completed, Dictionary<RouteLeg, RouteLeg>? shared = null)
+            bool keepCurrent, bool mapped, out NominalMap? map, out int completed)
+            => RetimeJoiningSplits(original, elapsed, legacy, walkSpeed, rate, ratio, keepCurrent, mapped, false, null, out map, out completed, out _);
+
+        private static Route RetimeSharing(Route original, double elapsed, bool legacy, double walkSpeed, double rate, double ratio,
+            bool keepCurrent, bool mapped, out NominalMap? map, out int completed, Dictionary<RouteLeg, RouteLeg>? shared)
             => RetimeJoiningSplits(original, elapsed, legacy, walkSpeed, rate, ratio, keepCurrent, mapped, false, null, out map, out completed, out _, shared);
 
         private static RouteLeg ScaledFuture(RouteLeg leg, Dictionary<RouteLeg, RouteLeg>? shared, bool legacy, double walkSpeed, double rate, double ratio)
