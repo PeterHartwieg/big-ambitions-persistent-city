@@ -498,7 +498,8 @@ namespace PersistentCity.Persistence
                 if (bounded25) fieldStart25 = text.End((IJsonLineInfo)reader);
             }
             Require(reader.TokenType == JsonToken.EndObject && names.Count == properties.Count - (type == typeof(FoodDecisionState) && !names.Contains("Tuning") ? 1 : 0)
-                - (type == typeof(FoodDecisionShop) && !names.Contains("MemoryContribution") ? 1 : 0), "Missing object fields.");
+                - (type == typeof(FoodDecisionShop) && !names.Contains("MemoryContribution") ? 1 : 0)
+                - (type == typeof(RouteLeg) && !names.Contains("Origin") ? 1 : 0), "Missing object fields.");
         }
 
         internal static int CollectionLimit(Type item) => item == typeof(OutsideSpendingDay) ? EconomicLedger.Days : item == typeof(ShopObservation) ? EconomicLedger.MaximumShops : item == typeof(ShopChange) ? EconomicLedger.ChangesPerShop : item == typeof(FoodCampaignImage) ? 1024 : item == typeof(FoodAwarenessCandidate) ? 32 : item == typeof(BusinessReference) ? MaxPlaces : item == typeof(MealOutcomeRecord) ? MaxMealOutcomes : item == typeof(FoodDecisionShop) ? FoodChoicePolicy.MaximumShortlist
@@ -798,7 +799,7 @@ namespace PersistentCity.Persistence
                     Position previous = current.Position;
                     foreach (var leg in route.Legs)
                     {
-                        Require(leg != null, "Null route leg."); Point(leg.From); Point(leg.To); Known(leg.Mode, "Travel mode");
+                        Require(leg != null, "Null route leg."); Point(leg.From); Point(leg.To); Known(leg.Mode, "Travel mode"); Known(leg.Origin, "Leg origin");
                         Bounded(leg.Minutes, double.Epsilon, 1000000, "Leg duration"); Text(leg.ServiceId, "Service ID", 256, true);
                         Require(Same(previous, leg.From), "Route legs are disconnected or start at the wrong place."); previous = leg.To;
                     }
@@ -1487,6 +1488,8 @@ namespace PersistentCity.Persistence
                     if (type == typeof(FoodDecisionState) && property.PropertyName == "Tuning"
                         || type == typeof(FoodDecisionShop) && property.PropertyName == "MemoryContribution")
                     { property.Required = Required.Default; return property; }
+                    if (type == typeof(RouteLeg) && property.PropertyName == "Origin")
+                    { property.Required = Required.Default; property.DefaultValueHandling = DefaultValueHandling.Ignore; return property; }
                     property.Required = NullableRecord(property.PropertyType!) || Nullable.GetUnderlyingType(property.PropertyType!) != null ? Required.AllowNull : Required.Always;
                     return property;
                 }).ToList();

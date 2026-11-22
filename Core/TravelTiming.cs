@@ -415,14 +415,11 @@ namespace PersistentCity.Core
 
             private const int SeedsPerDeadlineCheck = 64;
             private readonly List<RouteLeg> history = new List<RouteLeg>();
-            private readonly List<bool> fresh = new List<bool>();
 
-            private int CompactHistory(CitizenState citizen, Route source, Route replacement, int completed, double resumed)
+            private int CompactHistory(CitizenState citizen, Route replacement, int completed, double resumed)
             {
                 var legs = replacement.Legs;
-                fresh.Clear();
-                for (int i = 0; i < completed; i++) fresh.Add(Fresh(source.Legs, legs[i]));
-                if (!HasCompactableRun(legs, completed)) { fresh.Clear(); return 0; }
+                if (!HasCompactableRun(legs, completed)) return 0;
                 var before = CitySimulator.SampleRoute(replacement, resumed, citizen.Car?.ParkedPosition);
                 history.Clear();
                 for (int i = 0; i < legs.Count; i++) history.Add(legs[i]);
@@ -451,30 +448,30 @@ namespace PersistentCity.Core
                     for (int i = 0; i < history.Count; i++) legs.Add(history[i]);
                     removed = 0;
                 }
-                history.Clear(); fresh.Clear();
+                history.Clear();
                 return removed;
             }
 
-            private static bool Fresh(IReadOnlyList<RouteLeg> source, RouteLeg leg)
+            private static int FreshSpanEnd(IReadOnlyList<RouteLeg> legs, int start, int completed)
             {
-                for (int i = 0; i < source.Count; i++)
-                    if (RouteLeg.SameContent.Equals(source[i], leg)) return source[i].SplitPrefix || (i > 0 && source[i - 1].SplitPrefix);
-                return true;
-            }
-
-            private int FreshSpanEnd(IReadOnlyList<RouteLeg> legs, int start, int completed)
-            {
-                if (!fresh[start] || !Compactable(legs[start])) return start + 1;
-                int last = start, count = 1;
+                if (!legs[start].Retimed || !Compactable(legs[start])) return start + 1;
+                int last = start;
                 for (int k = start + 1; k < completed && SameRun(legs[k - 1], legs[k]); k++)
-                    if (fresh[k]) { last = k; count++; }
-                return count > 1 ? last + 1 : start + 1;
+                    if (legs[k].Retimed) last = k;
+                return last + 1;
             }
 
-            private bool HasCompactableRun(IReadOnlyList<RouteLeg> legs, int completed)
+            private static bool HasCompactableRun(IReadOnlyList<RouteLeg> legs, int completed)
             {
+                bool open = false;
                 for (int i = 0; i < completed; i++)
-                    if (FreshSpanEnd(legs, i, completed) - i > 1) return true;
+                {
+                    var leg = legs[i];
+                    if (open && !SameRun(legs[i - 1], leg)) open = false;
+                    if (!leg.Retimed || !Compactable(leg)) continue;
+                    if (open) return true;
+                    open = true;
+                }
                 return false;
             }
 
@@ -560,7 +557,7 @@ namespace PersistentCity.Core
                 }
                 else if (merges > 0) Joined++;
                 bool split = replacement.Legs.Count > route.Legs.Count;
-                if (!mapped) completed -= CompactHistory(citizen, route, replacement, completed, CitySimulator.NormalizeJourneyElapsed(rawElapsed, replacement.Minutes, state.Minute));
+                if (!mapped) completed -= CompactHistory(citizen, replacement, completed, CitySimulator.NormalizeJourneyElapsed(rawElapsed, replacement.Minutes, state.Minute));
                 if (replacement.Legs.Count > MaxLegs
                     && !MergeCompletedLegs(replacement, completed, elapsed, trafficOwned ? trafficRoutes[citizen.Identity.Id] : null))
                 {
@@ -821,7 +818,7 @@ namespace PersistentCity.Core
             double duration = FutureDuration(leg, legacy, walkSpeed, rate, ratio);
             bool reuse = shared != null && leg.Shared;
             if (reuse && shared!.TryGet(leg, duration, out var known)) return known;
-            var copy = Copy(leg, leg.From, leg.To, duration, leg.ServiceId);
+            var copy = leg.CopyAs(leg.From, leg.To, duration, leg.ServiceId, keepOrigin: true);
             if (reuse) { copy.Share(); shared!.Add(copy); }
             return copy;
         }

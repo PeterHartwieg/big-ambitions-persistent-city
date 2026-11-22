@@ -169,7 +169,7 @@ namespace PersistentCity.Persistence
                 CopiedRoutes++;
                 var copy = new Route();
                 foreach (var leg in route.Legs)
-                    copy.Legs.Add(leg == null ? null! : new RouteLeg { From = leg.From, To = leg.To, Mode = leg.Mode, Minutes = leg.Minutes, ServiceId = leg.ServiceId });
+                    copy.Legs.Add(leg == null ? null! : new RouteLeg { From = leg.From, To = leg.To, Mode = leg.Mode, Minutes = leg.Minutes, ServiceId = leg.ServiceId, Origin = leg.Origin });
                 return copy;
             }
 
