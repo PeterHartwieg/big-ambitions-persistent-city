@@ -28,7 +28,7 @@ public sealed class Gr5RetimeAllocationTests
             vehicle.Route.RemoveRange(0, vehicle.RouteIndex);
             vehicle.RouteIndex = 0;
         }
-        return RushSpikeReplay.ShaWithoutLegOrigins(SaveCodec.Write(state));
+        return RushSpikeReplay.Sha(SaveCodec.Write(state));
     }
 
     private static (string Hash, string Trimmed, long[] Bytes) RetimeThroughRates(bool committed)
@@ -54,7 +54,7 @@ public sealed class Gr5RetimeAllocationTests
         }
         simulator.AdvanceTo(state.Minute + 0.5, int.MaxValue);
         state.PrepareForSave();
-        string hash = RushSpikeReplay.ShaWithoutLegOrigins(SaveCodec.Write(state));
+        string hash = RushSpikeReplay.Sha(SaveCodec.Write(state));
         return (hash, WithoutCompletedTrafficSpans(state), bytes);
     }
 

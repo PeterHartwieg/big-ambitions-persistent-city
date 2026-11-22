@@ -7,7 +7,6 @@ namespace PersistentCity.Core
     public enum PlaceKind { Home, Work, Shop, Leisure, Study }
     public enum Activity { Home, Work, Shop, Leisure, Study }
     public enum TravelMode { Walk, Bus, Subway, Car }
-    public enum RouteLegOrigin { Planned, Retimed, SplitPrefix }
     public enum CitizenPhase { AtPlace, Travelling, WaitingForRoute, WaitingForOpening }
 
     public readonly struct Position : IEquatable<Position>
@@ -100,19 +99,13 @@ namespace PersistentCity.Core
         }
         internal RoadTag RoadTag { get; private set; }
         internal bool Frozen { get; private set; }
-        private RouteLegOrigin origin;
-        public RouteLegOrigin Origin { get => origin; set { Mutable(); origin = value; } }
-        internal bool SplitPrefix => origin == RouteLegOrigin.SplitPrefix;
-        internal bool Retimed => origin != RouteLegOrigin.Planned;
-        internal RouteLeg CopyAs(Position from, Position to, double minutes, string service, bool splitPrefix = false, bool keepOrigin = false)
+        internal bool SplitPrefix { get; private set; }
+        internal RouteLeg CopyAs(Position from, Position to, double minutes, string service, bool splitPrefix = false)
         {
-            bool same = from.X == this.from.X && from.Y == this.from.Y && from.Z == this.from.Z
+            if (Frozen && splitPrefix == SplitPrefix && from.X == this.from.X && from.Y == this.from.Y && from.Z == this.from.Z
                 && to.X == this.to.X && to.Y == this.to.Y && to.Z == this.to.Z && minutes == this.minutes
-                && string.Equals(service, serviceId, StringComparison.Ordinal);
-            var kept = splitPrefix ? RouteLegOrigin.SplitPrefix : keepOrigin ? (origin == RouteLegOrigin.SplitPrefix ? RouteLegOrigin.Retimed : origin)
-                : same && origin == RouteLegOrigin.Planned ? RouteLegOrigin.Planned : RouteLegOrigin.Retimed;
-            if (Frozen && same && kept == origin) return this;
-            var copy = new RouteLeg { from = from, to = to, mode = mode, minutes = minutes, origin = kept };
+                && string.Equals(service, serviceId, StringComparison.Ordinal)) return this;
+            var copy = new RouteLeg { from = from, to = to, mode = mode, minutes = minutes, SplitPrefix = splitPrefix };
             if (string.Equals(service, serviceId, StringComparison.Ordinal)) { copy.serviceId = serviceId; copy.RoadTag = RoadTag; }
             else copy.ServiceId = service;
             return copy;
@@ -122,8 +115,7 @@ namespace PersistentCity.Core
         internal void Share() { Frozen = true; Shared = true; }
         internal void Aim(RouteLeg source, double minutes)
         {
-            from = source.from; to = source.to; mode = source.mode; this.minutes = minutes; serviceId = source.serviceId;
-            origin = source.origin == RouteLegOrigin.SplitPrefix ? RouteLegOrigin.Retimed : source.origin;
+            from = source.from; to = source.to; mode = source.mode; this.minutes = minutes; serviceId = source.serviceId; SplitPrefix = false;
         }
         private void Mutable() { if (Frozen) throw new InvalidOperationException("A committed route leg is immutable."); }
         internal static readonly IEqualityComparer<RouteLeg> SameContent = new ContentComparer();
@@ -133,11 +125,11 @@ namespace PersistentCity.Core
             {
                 if (ReferenceEquals(a, b)) return true;
                 if (a == null || b == null) return false;
-                return a.mode == b.mode && a.origin == b.origin && a.minutes == b.minutes
+                return a.mode == b.mode && a.SplitPrefix == b.SplitPrefix && a.minutes == b.minutes
                     && a.from.Equals(b.from) && a.to.Equals(b.to) && string.Equals(a.serviceId, b.serviceId, StringComparison.Ordinal);
             }
             public int GetHashCode(RouteLeg leg)
-                => HashCode.Combine(leg.from, leg.to, leg.minutes, (int)leg.mode, (int)leg.origin, StringComparer.Ordinal.GetHashCode(leg.serviceId));
+                => HashCode.Combine(leg.from, leg.to, leg.minutes, (int)leg.mode, leg.SplitPrefix, StringComparer.Ordinal.GetHashCode(leg.serviceId));
         }
     }
 

@@ -244,6 +244,4 @@ public static class RushSpikeReplay
     }
 
     public static string Sha(string text) => Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(text)));
-
-    public static string ShaWithoutLegOrigins(string save) => Sha(System.Text.RegularExpressions.Regex.Replace(save, "\"Origin\":[12],", ""));
 }
