@@ -22014,7 +22014,7 @@ Probe mod time by subsystem in ms.
 | B 20× | -158.192768 | 8.088448 | -166.281216 |
 | B 60× | 59.370368 | 6.466432 | 52.903936 |
 
-Both candidate windows measured at 1× from 01:00. The GC sampler supplied the gated heap read. The bracket used passive Mono reads. Collection scopes below identify timed work contemporaneous with the heap readings.
+Both candidate windows measured at 1× from 01:00. The GC sampler supplied the gated heap read. The bracket used passive Mono reads. The scheduled sampler report at the end of each window supplied the gated heap figures. The collection-scope rows below are the first collection frame in each window and are not contemporaneous with those report readings.
 
 | Night arm | Probe arm heap / used delta MB | 16y probe arm heap / used delta MB | Probe frame component backing B | Sampler top allocation segments / B |
 | --- | --- | --- | --- | --- |
@@ -22033,7 +22033,7 @@ The heap brackets locate growth in time. The probe names the largest timed scope
 | B 20× | 158.192768 | 16.777216 | -187.10528 | 0 / 600 |
 | B 60× | -59.370368 | 0 | 33.554432 | 0 / 603 |
 
-| Night window | Sampler frame | Frame / UpdateCity / mod CPU / off-CPU ms | largest_mod_scope / ms | Largest outside-mod subsystem / excess ms |
+| Night window | First collection frame | Frame / UpdateCity / mod CPU / off-CPU ms | largest_mod_scope / ms | Largest outside-mod subsystem / excess ms |
 | --- | --- | --- | --- | --- |
 | B 20× | 12,386 | 71.231 / 1.271 / 1.27 / 15.266 | PopulationRuntime.Update / 1.2736 | TimeUpdate.WaitForLastPresentationAndUpdateTime / 35.4873 |
 | B 60× | 10,544 | 52.821 / 2.229 / 2.228 / 3.586 | PopulationRuntime.Update / 2.2307 | TimeUpdate.WaitForLastPresentationAndUpdateTime / 25.8698 |
@@ -22542,9 +22542,9 @@ The run used the shipped probe-build and retention helpers. Local controller rec
 
 - GR-5 locked-PC and 60 fps arms. This run used agentmac. PC 19c is a historical cross-check.
 - Pointer, hover and visual feel — for Peter.
-- #246 check 4 and the unrentable fixture. Earlier evidence remains in 16d.
-- #293 save checks. 16h passed. This run wrote no save and has no save hash.
-- #295 donor checks and inspector timing. Prior evidence is in 16i, 16k-donor and 16l.
+- #246 check 4 and the unrentable fixture. Outside the #342 run scope. Earlier evidence remains in 16d.
+- #293 save checks. Outside the #342 run scope. 16h passed. This run wrote no save and has no save hash.
+- #295 donor checks and inspector timing. Outside the #342 run scope. Prior evidence is in 16i, 16k-donor and 16l.
 - Standalone F, night census and the optional extended full-drain read. L supplies the matched 30-native-minute census. B preserves the ordered heap bracket.
 - Full Unity sample interval capture and frame-aligned Instruments System Trace for G. The live trace probe returned development_player_required and xcode_required.
 - Fresh no-mod windows. Matching cached day steady, immediate retime and night references supplied the comparisons.
