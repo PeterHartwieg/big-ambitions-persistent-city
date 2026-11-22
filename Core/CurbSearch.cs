@@ -8,7 +8,9 @@ namespace PersistentCity.Core
         void CollectCell(int x, int z, List<int> into);
         void Order(List<int> nearby);
         bool Full { get; }
+        bool Usable(int candidate);
         void Attempt(int candidate);
+        bool DropUnusable();
     }
 
     public sealed class CurbSearch
@@ -18,17 +20,20 @@ namespace PersistentCity.Core
         private readonly List<int> nearby = new List<int>();
         private Stage stage;
         private int fromX, toX, fromZ, toZ, x, z, cursor, attempts;
+        private bool resumed;
 
         public bool Done => stage == Stage.Done;
         public int Candidates => nearby.Count;
         public int Attempts => attempts;
         public int Calls { get; private set; }
+        public int Skipped { get; private set; }
+        public int Dropped { get; private set; }
 
         public void Begin(int cellX, int cellZ, int reach)
         {
             nearby.Clear();
             fromX = cellX - reach; toX = cellX + reach; fromZ = cellZ - reach; toZ = cellZ + reach;
-            x = fromX; z = fromZ; cursor = attempts = 0; Calls = 0;
+            x = fromX; z = fromZ; cursor = attempts = 0; Calls = Skipped = Dropped = 0; resumed = false;
             stage = Stage.Collect;
         }
 
@@ -37,7 +42,7 @@ namespace PersistentCity.Core
         public bool Continue(ICurbSource source, long deadline)
         {
             if (stage == Stage.Done) return true;
-            Calls++;
+            if (Calls++ > 0) resumed = true;
             bool worked = false;
             while (stage == Stage.Collect)
             {
@@ -49,10 +54,16 @@ namespace PersistentCity.Core
             }
             while (stage == Stage.Attempt)
             {
-                if (cursor >= nearby.Count || attempts + 1 > MaximumAttempts || source.Full) { stage = Stage.Done; return true; }
+                if (cursor >= nearby.Count || attempts + 1 > MaximumAttempts || source.Full)
+                {
+                    if (resumed && source.DropUnusable()) { Dropped++; continue; }
+                    stage = Stage.Done; return true;
+                }
                 if (worked && source.Now() >= deadline) return false;
+                int candidate = nearby[cursor++];
+                if (resumed && !source.Usable(candidate)) { Skipped++; continue; }
                 attempts++;
-                source.Attempt(nearby[cursor++]);
+                source.Attempt(candidate);
                 worked = true;
             }
             return true;

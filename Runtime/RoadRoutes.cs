@@ -521,7 +521,15 @@ namespace PersistentCity.Runtime
             public void CollectCell(int x, int z, List<int> into) => Owner!.CollectCell(this, x, z, into);
             public void Order(List<int> nearby) => Owner!.OrderNearby(Origin, nearby);
             public bool Full => Result!.Count >= Limit;
+            public bool Usable(int candidate) => !Owner!.Disabled(candidate);
             public void Attempt(int candidate) => Owner!.AttemptCurb(this, candidate);
+            public bool DropUnusable()
+            {
+                var result = Result!;
+                for (int i = 0; i < result.Count; i++)
+                    if (Owner!.Disabled(result[i].Node)) { result.RemoveAt(i); return true; }
+                return false;
+            }
         }
 
         private NearQuery? syncQuery;
@@ -540,7 +548,7 @@ namespace PersistentCity.Runtime
         internal bool ContinueNear(NearQuery query, long deadline)
         {
             if (query.Search.Done) return true;
-            if (!ReferenceEquals(query.Owner, this) || !Ready) { query.Search.Cancel(); return true; }
+            if (!ReferenceEquals(query.Owner, this) || !Ready || query.Search.Calls > 0 && !IsCurrent) { query.Search.Cancel(); query.Result?.Clear(); return true; }
             trafficBuilder?.BeginQuery();
             return query.Search.Continue(query, deadline);
         }

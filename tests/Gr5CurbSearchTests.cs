@@ -28,7 +28,16 @@ public sealed class Gr5CurbSearchTests
             if (cells.TryGetValue((x, z), out var found)) foreach (int c in found) into.Add(c);
         }
         public void Order(List<int> nearby) => nearby.Sort();
+        public readonly HashSet<int> Closed = new HashSet<int>();
+        public int UsableChecks;
         public bool Full => Result.Count >= Limit;
+        public bool Usable(int candidate) { UsableChecks++; return !Closed.Contains(candidate); }
+        public bool DropUnusable()
+        {
+            for (int i = 0; i < Result.Count; i++)
+                if (Closed.Contains(Result[i])) { Result.RemoveAt(i); return true; }
+            return false;
+        }
         public void Attempt(int candidate)
         {
             Clock += attemptTicks;
@@ -132,6 +141,66 @@ public sealed class Gr5CurbSearchTests
         long before = GC.GetAllocatedBytesForCurrentThread();
         for (int i = 0; i < 500; i++) { source.Result.Clear(); search.Begin(0, 0, 2); while (!search.Continue(source, source.Clock + 2)) { } }
         Assert.Equal(before, GC.GetAllocatedBytesForCurrentThread());
+    }
+
+    private static Dictionary<(int, int), int[]> Row(params int[] candidates)
+        => new Dictionary<(int, int), int[]> { [(0, 0)] = candidates };
+
+    [Fact]
+    public void ACandidateClosedBetweenSlicesIsSkippedWithoutSpendingAnAttemptAndTheNextOpenCurbIsChosen()
+    {
+        var source = new Source(Row(1, 2, 3, 4), _ => true, 1, 1) { Limit = 1, Log = true };
+        var search = new CurbSearch();
+        search.Begin(0, 0, 0);
+        Assert.False(search.Continue(source, source.Clock));
+        source.Closed.Add(1); source.Closed.Add(2);
+        while (!search.Continue(source, source.Clock + 1)) { }
+        Assert.Equal(new[] { 3 }, source.Result);
+        Assert.Equal(1, search.Attempts);
+        Assert.Equal(2, search.Skipped);
+        Assert.DoesNotContain("try 1", source.Calls);
+        Assert.DoesNotContain("try 2", source.Calls);
+    }
+
+    [Fact]
+    public void ACurbClosedAfterItWasAcceptedIsDroppedBeforeTheResultIsPublishedAndReplaced()
+    {
+        var source = new Source(Row(1, 2, 3, 4, 5), _ => true, 1, 1) { Limit = 2 };
+        var search = new CurbSearch();
+        search.Begin(0, 0, 0);
+        Assert.False(search.Continue(source, source.Clock));
+        Assert.False(search.Continue(source, source.Clock + 1));
+        Assert.Equal(new[] { 1 }, source.Result);
+        source.Closed.Add(1);
+        while (!search.Continue(source, source.Clock + 1)) { }
+        Assert.Equal(new[] { 2, 3 }, source.Result);
+        Assert.Equal(1, search.Dropped);
+        Assert.Equal(3, search.Attempts);
+    }
+
+    [Fact]
+    public void AClosureThatLeavesNoOpenCandidatePublishesNoCurb()
+    {
+        var source = new Source(Row(1, 2), _ => true, 1, 1) { Limit = 2 };
+        var search = new CurbSearch();
+        search.Begin(0, 0, 0);
+        Assert.False(search.Continue(source, source.Clock));
+        Assert.False(search.Continue(source, source.Clock + 1));
+        source.Closed.Add(1); source.Closed.Add(2);
+        while (!search.Continue(source, source.Clock + 1)) { }
+        Assert.Empty(source.Result);
+        Assert.True(search.Done);
+    }
+
+    [Fact]
+    public void AWholeSearchInOneCallDoesNotRevalidate()
+    {
+        var source = new Source(Row(1, 2, 3), _ => true, 1, 1) { Limit = 2 };
+        var search = new CurbSearch();
+        search.Begin(0, 0, 0);
+        Assert.True(search.Continue(source, long.MaxValue));
+        Assert.Equal(0, source.UsableChecks);
+        Assert.Equal(new[] { 1, 2 }, source.Result);
     }
 
     [Fact]
