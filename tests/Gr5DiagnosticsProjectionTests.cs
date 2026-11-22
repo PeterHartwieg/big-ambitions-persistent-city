@@ -199,7 +199,7 @@ public sealed class Gr5DiagnosticsProjectionTests
         int armedGate = probe.IndexOf("Require(armed, \"f4b_not_armed\");", StringComparison.Ordinal);
         Assert.True(heap > 0 && armedGate > heap, "the forced-collection heap read is available before arm");
         int scanBefore = probe.IndexOf("ReadMonoHeap(out startScanHeap, out startScanUsed);", StringComparison.Ordinal);
-        int startScan = probe.IndexOf("startScan = Rescan(false); stopScan = \"none\"; patchWindow.Begin(coverage);", StringComparison.Ordinal);
+        int startScan = probe.IndexOf("startScan = Rescan(false); stopScan = \"none\"; scanner.Window.Begin(coverage);", StringComparison.Ordinal);
         int start = probe.IndexOf("ReadMonoHeap(out monoHeapStart, out monoUsedStart);", StringComparison.Ordinal);
         Assert.True(scanBefore > 0 && startScan > scanBefore && start > startScan, "the window baseline is read after the start patch check, which is bracketed");
         int stop = probe.IndexOf("monoHeapStop = stop.Heap; monoUsedStop = stop.Used;", StringComparison.Ordinal);
@@ -222,8 +222,8 @@ public sealed class Gr5DiagnosticsProjectionTests
         int count = probe.IndexOf("int collections = GC.CollectionCount(0);", read, StringComparison.Ordinal);
         int heapRead = probe.IndexOf("ReadMonoHeap(out long heap, out long used);", read, StringComparison.Ordinal);
         Assert.True(read > 0 && count > read && heapRead > count, "the explicit stop reads the collection count and heap before the status response is built");
-        Assert.Contains("try { scanned = PatchStateWatch.Run(patchWatch, full, Matched); }", probe);
-        Assert.Contains("coverage = null; matchedScans = 0;\n                    try { patchWatch = PatchStateWatch.Shared(); } catch { patchWatch = null; }\n                    PatchStateWatch.Run(patchWatch, true, Matched);", probe);
+        Assert.Contains("private static string Rescan(bool full) => scanner.Rescan(patchWatch, coverage, mode == \"reference\", full, measuring, ref error);", probe);
+        Assert.Contains("coverage = null; scanner.ResetMatched();\n                    try { patchWatch = PatchStateWatch.Shared(); } catch { patchWatch = null; }\n                    scanner.Run(patchWatch, null, true, measuring, ref error);", probe);
         string pedestrians = System.IO.File.ReadAllText(System.IO.Path.Combine(root, "Runtime", "PhysicalPedestrians.cs"));
         Assert.Contains("\" ms grow start max/\"", pedestrians);
         Assert.Contains("\" ms grow finish max/\" + growLog.Report();", pedestrians);
