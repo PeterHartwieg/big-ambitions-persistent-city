@@ -220,6 +220,7 @@ namespace PerfUnionProbe
             armThread = Thread.CurrentThread.ManagedThreadId; offMainCallbacks = 0; error = "";
             save = SaveGameManager.Current;
             pc = AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault(a => a.GetName().Name == "PersistentCity");
+            ConfigureScanCache();
             var foreignOwners = ScopeInventory.Owners.Where(Harmony.HasAnyPatches).ToArray();
             try
             {
@@ -376,10 +377,36 @@ namespace PerfUnionProbe
         private static void ScanPatches()
         {
             if (coverage == null) return;
-            var observed = new List<ObservedPatch>();
-            foreach (var target in Harmony.GetAllPatchedMethods().ToArray()) HarmonyScan.Observe(target, Harmony.GetPatchInfo(target), pc, observed);
-            coverage.Observe(observed);
+            coverage.Observe(ObservePatches());
         }
+
+        private static readonly PatchScanCache scanCache = new PatchScanCache();
+        private static readonly List<ObservedPatch> scanned = new List<ObservedPatch>();
+        private static readonly Action<MethodBase, List<ObservedPatch>> ObserveTarget = (target, into) => HarmonyScan.Observe(target, Harmony.GetPatchInfo(target), pc, into);
+
+        private static void ConfigureScanCache()
+        {
+            var mentions = new List<string>(ScopeInventory.Owners);
+            if (pc != null) foreach (var module in pc.GetModules()) mentions.Add(module.ModuleVersionId.ToString());
+            scanCache.Configure(mentions);
+        }
+
+        private static List<ObservedPatch> ObservePatches()
+        {
+            scanned.Clear();
+            var snapshot = patchWatch?.Scanning;
+            if (snapshot != null) scanCache.Scan(snapshot, ObserveTarget, scanned);
+            else foreach (var target in Harmony.GetAllPatchedMethods().ToArray()) HarmonyScan.Observe(target, Harmony.GetPatchInfo(target), pc, scanned);
+            return scanned;
+        }
+
+        private static JObject ScanCacheRow() => new JObject
+        {
+            ["entries"] = scanCache.Entries, ["mentions"] = scanCache.Needles, ["scans"] = scanCache.Scans,
+            ["last_targets"] = scanCache.LastTargets, ["last_deserialized"] = scanCache.LastDeserialized, ["last_skipped"] = scanCache.LastSkipped, ["last_reused"] = scanCache.LastReused,
+            ["deserialized"] = scanCache.Deserialized, ["skipped"] = scanCache.Skipped, ["reused"] = scanCache.Reused,
+            ["qualification"] = "Harmony patch-info reads per scan. A target is read again only when Harmony replaced its serialized patch state; a target whose state names no inventory owner and no Persistent City module is skipped unread, because coverage ignores its patches.",
+        };
 
         private static bool CoverageComplete() => coverage != null && coverage.Complete && bindings.All(b => b.Status != "unbindable");
 
@@ -647,8 +674,7 @@ namespace PerfUnionProbe
         private static long matchedScans;
         private static void MatchedScan()
         {
-            var observed = new List<ObservedPatch>();
-            foreach (var target in Harmony.GetAllPatchedMethods().ToArray()) HarmonyScan.Observe(target, Harmony.GetPatchInfo(target), pc, observed);
+            ObservePatches();
             matchedScans++;
         }
 
@@ -783,7 +809,7 @@ namespace PerfUnionProbe
                 ["window"] = window, ["error"] = error, ["stop_reason"] = stopReason,
                 ["scope_inventory_version"] = ScopeInventory.Version, ["expected_scope_hash"] = ScopeInventory.Hash(),
                 ["coverage_complete"] = NotApplicable(() => CoverageComplete()),
-                ["patch_scans"] = NotApplicable(() => coverage?.Scans ?? 0), ["patch_state_checks"] = NotApplicable(() => patchWatch?.Checks ?? 0),
+                ["patch_scans"] = NotApplicable(() => coverage?.Scans ?? 0), ["patch_scan_cache"] = ScanCacheRow(), ["patch_state_checks"] = NotApplicable(() => patchWatch?.Checks ?? 0),
                 ["patch_state_changes"] = NotApplicable(() => patchWatch?.Changes ?? 0), ["patch_state_watch"] = NotApplicable(() => patchWatch != null), ["patch_scan_pending"] = NotApplicable(() => patchWatch?.Pending ?? false), ["matched_reference_scans"] = mode == "reference" ? (JToken)matchedScans : "n/a", ["patch_set_changed_in_window"] = NotApplicable(() => patchSetChanged),
                 ["start_scan"] = startScan, ["stop_scan"] = stopScan, ["diagnostic_mark_bound"] = NotApplicable(() => markDiagnostic != null),
                 ["collection_frames"] = CollectionFrameSummary(),
