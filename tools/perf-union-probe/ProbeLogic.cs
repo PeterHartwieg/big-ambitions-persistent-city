@@ -419,6 +419,14 @@ namespace PerfUnionProbe
             return ran ? "full" : "watch-unchanged";
         }
 
+        public KeyValuePair<string, object>[] StatusFields(bool candidate, bool measuring, string error, Func<bool> coverageComplete, string stopScan) => new[]
+        {
+            new KeyValuePair<string, object>("measuring", measuring), new KeyValuePair<string, object>("error", error ?? ""),
+            new KeyValuePair<string, object>("coverage_complete", candidate ? (object)coverageComplete() : "n/a"),
+            new KeyValuePair<string, object>("patch_set_changed_in_window", candidate ? (object)Window.Changed : "n/a"),
+            new KeyValuePair<string, object>("stop_scan", stopScan),
+        };
+
         private List<ObservedPatch> Observe()
         {
             scanned.Clear();

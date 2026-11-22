@@ -766,15 +766,14 @@ namespace PerfUnionProbe
             JToken NotApplicable(Func<JToken> value) => candidate ? value() : (JToken)"n/a";
             int Count(string status) => bindings.Count(b => b.Status == status);
             JArray Names(string status) => new JArray(bindings.Where(b => b.Status == status).Select(b => b.Label).Distinct().Take(64));
-            return new JObject
+            var row = new JObject
             {
-                ["prototype"] = true, ["native_validated"] = false, ["packaged"] = false, ["mode"] = mode, ["armed"] = armed, ["measuring"] = measuring,
-                ["window"] = window, ["error"] = error, ["stop_reason"] = stopReason,
+                ["prototype"] = true, ["native_validated"] = false, ["packaged"] = false, ["mode"] = mode, ["armed"] = armed,
+                ["window"] = window, ["stop_reason"] = stopReason,
                 ["scope_inventory_version"] = ScopeInventory.Version, ["expected_scope_hash"] = ScopeInventory.Hash(),
-                ["coverage_complete"] = NotApplicable(() => CoverageComplete()),
                 ["patch_scans"] = NotApplicable(() => coverage?.Scans ?? 0), ["patch_scan_cache"] = ScanCacheRow(), ["patch_state_checks"] = NotApplicable(() => patchWatch?.Checks ?? 0),
-                ["patch_state_changes"] = NotApplicable(() => patchWatch?.Changes ?? 0), ["patch_state_watch"] = NotApplicable(() => patchWatch != null), ["patch_scan_pending"] = NotApplicable(() => patchWatch?.Pending ?? false), ["matched_reference_scans"] = mode == "reference" ? (JToken)scanner.MatchedScans : "n/a", ["patch_set_changed_in_window"] = NotApplicable(() => scanner.Window.Changed),
-                ["start_scan"] = startScan, ["stop_scan"] = stopScan, ["diagnostic_mark_bound"] = NotApplicable(() => markDiagnostic != null),
+                ["patch_state_changes"] = NotApplicable(() => patchWatch?.Changes ?? 0), ["patch_state_watch"] = NotApplicable(() => patchWatch != null), ["patch_scan_pending"] = NotApplicable(() => patchWatch?.Pending ?? false), ["matched_reference_scans"] = mode == "reference" ? (JToken)scanner.MatchedScans : "n/a",
+                ["start_scan"] = startScan, ["diagnostic_mark_bound"] = NotApplicable(() => markDiagnostic != null),
                 ["collection_frames"] = CollectionFrameSummary(),
                 ["scopes"] = NotApplicable(() => new JObject { ["timed_methods"] = scopeIndex.Count, ["timed"] = Count("timed"),
                     ["untimed_transpiled"] = Names("untimed-transpiled"),
@@ -813,6 +812,8 @@ namespace PerfUnionProbe
                     + "component-unbound and the union stays authoritative. Components are attribution only and are never summed. wholeFrameMs is wall time between "
                     + "player-loop frame starts, not CPU or GPU time. Unexpected, unbindable, off-main, cross-frame, overflow or error flags invalidate a window.",
             };
+            foreach (var field in scanner.StatusFields(candidate, measuring, error, CoverageComplete, stopScan)) row[field.Key] = JToken.FromObject(field.Value);
+            return row;
         }
 
         private static JObject CollectionFrameSummary()

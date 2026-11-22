@@ -19,6 +19,8 @@ internal static class Program
         Console.WriteLine("FAIL " + name);
     }
 
+    private static string stopStatusPath;
+
     private static int Main(string[] args)
     {
         System.Globalization.CultureInfo.DefaultThreadCurrentCulture = System.Globalization.CultureInfo.InvariantCulture;
@@ -29,7 +31,8 @@ internal static class Program
         {
             if (args[i] == "--expect-hash" && i + 1 < args.Length) expectHash = args[++i];
             else if (args[i] == "--perf") perf = true;
-            else { Console.WriteLine("usage: LogicCheck [--expect-hash HEX] [--perf]"); return 2; }
+            else if (args[i] == "--stop-status" && i + 1 < args.Length) stopStatusPath = args[++i];
+            else { Console.WriteLine("usage: LogicCheck [--expect-hash HEX] [--perf] [--stop-status PATH]"); return 2; }
         }
         Profiles();
         Shim();
@@ -1265,8 +1268,11 @@ internal static class Program
         Check(startScan == "watch-unchanged" && frameScan == "full" && readLate && cache.Rescans == rescansBefore + 1 && !watch.Pending && windowCoverage.Complete,
             "a PC postfix read and then removed before the state check is retried through the probe's rescan, and the settled scan reports complete coverage (" + (cache.Rescans - rescansBefore) + " rescans)");
         string stopScan = scanner.Rescan(watch, windowCoverage, false, false, true, ref probeError);
-        Check(stopScan == "watch-unchanged" && windowCoverage.Complete && scanner.Window.Changed && probeError == PatchSetWindow.ChangedError,
-            "the probe's measure-stop rescan reports complete coverage and keeps the error " + PatchSetWindow.ChangedError + ", so the gate rejects the window (" + probeError + ")");
+        var stopStatus = scanner.StatusFields(true, false, probeError, () => windowCoverage.Complete, stopScan).ToDictionary(f => f.Key, f => f.Value);
+        Check(stopScan == "watch-unchanged" && Equals(stopStatus["coverage_complete"], true) && Equals(stopStatus["patch_set_changed_in_window"], true)
+            && Equals(stopStatus["error"], PatchSetWindow.ChangedError) && Equals(stopStatus["stop_scan"], stopScan) && Equals(stopStatus["measuring"], false),
+            "the probe's measure-stop status reports complete coverage and the error " + PatchSetWindow.ChangedError + " (" + stopStatus["error"] + ")");
+        if (stopStatusPath != null) System.IO.File.WriteAllText(stopStatusPath, System.Text.Json.JsonSerializer.Serialize(stopStatus));
         Check(scanner.Window.Note(true, true, "f4b_cross_frame_scope") == "f4b_cross_frame_scope" && scanner.Window.Note(false, true, "") == "",
             "a drift keeps an earlier error and does not set one outside a measured window");
         scanner.Window.Begin(windowCoverage);
