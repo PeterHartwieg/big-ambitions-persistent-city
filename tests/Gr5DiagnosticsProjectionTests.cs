@@ -137,15 +137,22 @@ public sealed class Gr5DiagnosticsProjectionTests
     public void CollectionRowsAreBoundedAndAllocateNothingPerFrame()
     {
         var sampler = new GcPauseSampler(4096);
-        sampler.Start(1000);
-        sampler.Observe(0, 0, 0, 0, 1000, 0);
-        long before = GC.GetAllocatedBytesForCurrentThread();
-        for (int frame = 1; frame <= 3000; frame++) { sampler.ModWork(1); sampler.Observe(frame * 16.0, frame / 10, 0, 0, 1000, frame); }
-        Assert.Equal(0, GC.GetAllocatedBytesForCurrentThread() - before);
+        ObserveCollectionFrames(sampler);
+        long allocated = ObserveCollectionFrames(sampler);
+        Assert.Equal(0, allocated);
         Assert.Equal(GcPauseSampler.CollectionRowCapacity, sampler.CollectionRowCount);
         Assert.True(sampler.CollectionRowsTruncated);
         sampler.Start(1000);
         Assert.Equal(0, sampler.CollectionRowCount);
+    }
+
+    private static long ObserveCollectionFrames(GcPauseSampler sampler)
+    {
+        sampler.Start(1000);
+        sampler.Observe(0, 0, 0, 0, 1000, 0);
+        long before = GC.GetAllocatedBytesForCurrentThread();
+        for (int frame = 1; frame <= 3000; frame++) { sampler.ModWork(1); sampler.Observe(frame * 16.0, frame / 10, 0, 0, 1000, frame); }
+        return GC.GetAllocatedBytesForCurrentThread() - before;
     }
 
     [Fact]
