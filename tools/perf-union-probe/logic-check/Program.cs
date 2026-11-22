@@ -1214,17 +1214,6 @@ internal static class Program
         var settled = new CoverageTracker(ScopeInventory.Patches, _ => true, probe);
         settled.Observe(output);
         Check(settled.Complete && !output.Any(o => o.Type == "PersistentCity.Runtime.Late"), "the settled scan matches the snapshot the watch commits");
-        var patchWindow = new PatchSetWindow();
-        patchWindow.Begin();
-        string windowError = patchWindow.Note(true, drifted > 0, "");
-        windowError = patchWindow.Note(true, settled.Unexpected.Count > 0, windowError);
-        windowError = patchWindow.Note(true, false, windowError);
-        Check(settled.Complete && patchWindow.Changed && windowError == PatchSetWindow.ChangedError,
-            "a PC patch observed and removed before the state check rejects the window through the probe error, even though the settled scan's coverage is complete (" + windowError + ")");
-        Check(patchWindow.Note(true, true, "f4b_cross_frame_scope") == "f4b_cross_frame_scope" && patchWindow.Note(false, true, "") == "",
-            "a drift keeps an earlier error and does not set one outside a measured window");
-        patchWindow.Begin();
-        Check(!patchWindow.Changed, "the next window starts unchanged");
         watch.CommitScan();
         Check(!watch.Changed(), "the committed snapshot is the state the settled scan read");
         Set(removing, PatchState("realliveoverhaul", gameModule, "someone.else", pcModule),
@@ -1252,6 +1241,41 @@ internal static class Program
         watch.BeginScan();
         cache.ScanSettled(watch, reader, output, 4);
         watch.CommitScan();
+
+        var windowCoverage = new CoverageTracker(ScopeInventory.Patches, _ => true, probe);
+        output.Clear(); cache.Scan(state, reader, output); windowCoverage.Observe(output);
+        var patchWindow = new PatchSetWindow();
+        patchWindow.Begin(windowCoverage);
+        string windowError = "";
+        Set(removing, PatchState("realliveoverhaul", gameModule, "someone.else", pcModule),
+            new[] { unpatched[0], new ObservedPatch { Owner = "someone.else", Kind = "Postfix", Type = "PersistentCity.Runtime.Late", Method = "Postfix", Target = removingName, PcAssembly = true } });
+        bool removeAfterRead = true, readLate = false;
+        void ReadThenRemove(MethodBase target, List<ObservedPatch> into)
+        {
+            Read(target, into);
+            if (!removeAfterRead || !ReferenceEquals(target, removing)) return;
+            removeAfterRead = false;
+            readLate = into.Any(o => o.Type == "PersistentCity.Runtime.Late");
+            Set(removing, unpatchedState, unpatched);
+        }
+        void WindowScan()
+        {
+            windowError = patchWindow.Scanned(cache, watch, ReadThenRemove, output, 4, true, windowError);
+            windowCoverage.Observe(output);
+        }
+        long rescansBefore = cache.Rescans;
+        bool windowScanned = PatchStateWatch.Run(watch, false, WindowScan);
+        windowError = patchWindow.Rescanned(windowCoverage, true, windowError);
+        Check(windowScanned && readLate && cache.Rescans == rescansBefore + 1 && !watch.Pending && windowCoverage.Complete && !output.Any(o => o.Type == "PersistentCity.Runtime.Late"),
+            "a PC postfix read and then removed before the state check is retried, and the settled scan reports complete coverage (" + (cache.Rescans - rescansBefore) + " rescans)");
+        bool stopScanned = PatchStateWatch.Run(watch, false, WindowScan);
+        windowError = patchWindow.Rescanned(windowCoverage, true, windowError);
+        Check(!stopScanned && windowCoverage.Complete && patchWindow.Changed && windowError == PatchSetWindow.ChangedError,
+            "the measure-stop rescan keeps the probe error, so the gate rejects the window although coverage is complete (" + windowError + ")");
+        Check(patchWindow.Note(true, true, "f4b_cross_frame_scope") == "f4b_cross_frame_scope" && patchWindow.Note(false, true, "") == "",
+            "a drift keeps an earlier error and does not set one outside a measured window");
+        patchWindow.Begin(windowCoverage);
+        Check(!patchWindow.Changed && patchWindow.Rescanned(windowCoverage, true, "") == "", "the next window starts unchanged");
 
         var unfiltered = new PatchScanCache();
         unfiltered.Configure(new[] { "", null });

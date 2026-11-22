@@ -201,6 +201,10 @@ class InvalidationTests(unittest.TestCase):
         self.assertIn('receipt failed: probe_flags', win(run(w), 'c')['invalid_reasons'])
         w['probe']['status'] = dict(status, timing_coverage_complete=False)
         self.assertIn('receipt failed: probe_coverage', win(run(w), 'c')['invalid_reasons'])
+        w['probe']['status'] = dict(status, error='f4b_patch_set_changed_in_window')
+        entry = win(run(w), 'c')
+        self.assertIn('probe flag: probe_error', entry['invalid_reasons'])
+        self.assertIn('receipt failed: probe_flags', entry['invalid_reasons'])
 
     def test_missing_probe_status_fields_fail_closed(self):
         w = synthetic.window('c')

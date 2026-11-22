@@ -86,7 +86,6 @@ namespace PerfUnionProbe
         private static readonly PatchSetWindow patchWindow = new PatchSetWindow();
         private static CoverageTracker coverage;
         private static PatchStateWatch patchWatch;
-        private static int unexpectedAtWindowStart;
 
         private static readonly FrameRow[] frames = new FrameRow[FrameLimit];
         private static float[] frameComponents = new float[FrameLimit * ScopeInventory.Components.Count];
@@ -398,7 +397,7 @@ namespace PerfUnionProbe
             scanned.Clear();
             if (patchWatch?.Scanning != null)
             {
-                error = patchWindow.Note(measuring, scanCache.ScanSettled(patchWatch, ObserveTarget, scanned, ScanAttempts) > 0, error);
+                error = patchWindow.Scanned(scanCache, patchWatch, ObserveTarget, scanned, ScanAttempts, measuring, error);
             }
             else foreach (var target in Harmony.GetAllPatchedMethods().ToArray()) HarmonyScan.Observe(target, Harmony.GetPatchInfo(target), pc, scanned);
             return scanned;
@@ -694,7 +693,7 @@ namespace PerfUnionProbe
                 return scanned ? "full" : "watch-unchanged";
             }
             try { scanned = PatchStateWatch.Run(patchWatch, full, Scan); } catch { error = "f4b_patch_scan_failed"; }
-            error = patchWindow.Note(measuring, coverage.Unexpected.Count > unexpectedAtWindowStart, error);
+            error = patchWindow.Rescanned(coverage, measuring, error);
             return scanned ? "full" : "watch-unchanged";
         }
 
@@ -733,7 +732,7 @@ namespace PerfUnionProbe
             window = label; error = ""; stopReason = "measuring";
             frameRing.Reset(); tickRing.Reset(); sampleRing.Reset(); calls.Reset(); sampleFailures = advanceCalls = 0;
             ReadMonoHeap(out startScanHeap, out startScanUsed); monoHeapStop = monoUsedStop = -1;
-            startScan = Rescan(false); stopScan = "none"; unexpectedAtWindowStart = coverage?.Unexpected.Count ?? 0; patchWindow.Begin();
+            startScan = Rescan(false); stopScan = "none"; patchWindow.Begin(coverage);
             phases.Reset(); if (subPhases.Phases > 0) subPhases.Reset();
             ReadMonoHeap(out monoHeapStart, out monoUsedStart);
             collectionSeries.Begin(GC.CollectionCount(0));

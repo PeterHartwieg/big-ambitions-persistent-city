@@ -355,8 +355,20 @@ namespace PerfUnionProbe
     public sealed class PatchSetWindow
     {
         public const string ChangedError = "f4b_patch_set_changed_in_window";
+        private int unexpectedAtStart;
         public bool Changed { get; private set; }
-        public void Begin() => Changed = false;
+
+        public void Begin(CoverageTracker coverage)
+        {
+            Changed = false;
+            unexpectedAtStart = coverage?.Unexpected.Count ?? 0;
+        }
+
+        public string Scanned(PatchScanCache cache, PatchStateWatch watch, Action<MethodBase, List<ObservedPatch>> observe, List<ObservedPatch> into, int attempts, bool measuring, string error)
+            => Note(measuring, cache.ScanSettled(watch, observe, into, attempts) > 0, error);
+
+        public string Rescanned(CoverageTracker coverage, bool measuring, string error)
+            => Note(measuring, coverage.Unexpected.Count > unexpectedAtStart, error);
 
         public string Note(bool measuring, bool changed, string error)
         {
