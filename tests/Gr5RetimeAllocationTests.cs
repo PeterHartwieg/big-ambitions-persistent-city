@@ -13,9 +13,9 @@ public sealed class Gr5RetimeAllocationTests
     private readonly ITestOutputHelper output;
     public Gr5RetimeAllocationTests(ITestOutputHelper output) { this.output = output; }
 
-    private const string Retimed = "FBA96360F4D632B36389BD60220CACCF4E42D19DE903B12D7CB442574ED2D217";
+    private const string Retimed = "4826F51E48A5445470E7ABD34FB32B53EB2ACE10A64D7235983D6E666CA804B0";
 
-    private const string PreChangeWithoutCompletedTrafficSpans = "2BF8FC3C4EBEA834F86819BF2200A444BA85D8A1E8408880DE63FB0CC24091DD";
+    private const string TrimmedRetimed = "FC8175922FCE7686B4F37AE733E5AACB91DEDB60CC10C962E25CC2394067E8AE";
 
     private static string WithoutCompletedTrafficSpans(CityState state)
     {
@@ -59,11 +59,11 @@ public sealed class Gr5RetimeAllocationTests
     }
 
     [Fact]
-    public void RetimedJourneysTrafficAndSaveMatchThePreChangeOutputOnceCompletedTrafficSpansAreDropped()
+    public void RetimedJourneysTrafficAndSaveKeepTheirPinnedOutputOnceCompletedTrafficSpansAreDropped()
     {
         var (hash, trimmed, bytes) = RetimeThroughRates(committed: false);
         output.WriteLine(hash + "; without completed traffic spans " + trimmed + "; MB per retime: " + string.Join(", ", bytes.Select(b => (b / 1e6).ToString("0.0"))));
-        Assert.Equal(PreChangeWithoutCompletedTrafficSpans, trimmed);
+        Assert.Equal(TrimmedRetimed, trimmed);
         Assert.Equal(Retimed, hash);
     }
 

@@ -98,7 +98,7 @@ public sealed class Gr5RouteRebuildStepTests
         }
         simulator.AdvanceTo(state.Minute + 0.5, int.MaxValue);
         state.PrepareForSave();
-        Assert.Equal("FBA96360F4D632B36389BD60220CACCF4E42D19DE903B12D7CB442574ED2D217", RushSpikeReplay.Sha(SaveCodec.Write(state)));
+        Assert.Equal("4826F51E48A5445470E7ABD34FB32B53EB2ACE10A64D7235983D6E666CA804B0", RushSpikeReplay.Sha(SaveCodec.Write(state)));
     }
 
     [Fact]
