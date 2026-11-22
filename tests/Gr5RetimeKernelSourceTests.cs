@@ -230,8 +230,91 @@ public sealed class Gr5RetimeKernelSourceTests
         var (state, city) = Gr5RetimeRepeatAllocationTests.TrafficCity();
         AddThroughCars(state, city, throughCars, 0);
         string? named = null;
-        Retime(state, city, 3, legacy, (s, c, driver) => { named = driver.TrafficSource; return null; });
+        Retime(state, city, 3, legacy, (s, c, driver) => { named = driver.RetimedFrom; return null; });
         Assert.Equal(expected, named);
+    }
+
+    private static CitySimulator Finish(CityState state, CitySimulator city, ClockRetimeDriver driver, double rate, List<ClockRetimeOutcome> outcomes)
+    {
+        while (true)
+        {
+            var outcome = driver.Update(state, rate, false, 2, 0);
+            outcomes.Add(outcome);
+            if (outcome != ClockRetimeOutcome.Committed) continue;
+            var rebuild = city.BeginRebuildRoutes(new NoRoutes(), driver.TakeRetimedTraffic());
+            while (!rebuild.Step(0)) { }
+            return rebuild.Result!;
+        }
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void AClosureAfterTheRetimeIsReadyRestartsItAndSurvivesTheCommit(bool legacy)
+    {
+        var (state, city) = Gr5RetimeRepeatAllocationTests.TrafficCity();
+        if (legacy) state.RetimeSnapshotSteps = null;
+        double rate = state.TravelClockRate * 3;
+        var driver = new ClockRetimeDriver();
+        while (driver.Pending == null || !driver.Pending.Ready) driver.Update(state, rate, false, 2, 0);
+        Assert.False(driver.Pending.Stale);
+        city.Traffic!.SetLinkClosed(3, true);
+        Assert.True(driver.Pending.Stale);
+        var outcomes = new List<ClockRetimeOutcome>();
+        city = Finish(state, city, driver, rate, outcomes);
+        Assert.Contains(ClockRetimeOutcome.Restarted, outcomes);
+        Assert.Equal(1, driver.Restarts);
+        Assert.Equal(rate, state.TravelClockRate);
+        state.PrepareForSave();
+        Assert.True(state.Traffic!.Links.Single(l => l.LinkId == 3).Closed);
+    }
+
+    private static ClockRetimeDriver IntoThroughCarExclusion(CityState state, bool legacy, double rate)
+    {
+        if (legacy) state.RetimeSnapshotSteps = null;
+        var driver = new ClockRetimeDriver();
+        for (int i = 0; i < 65; i++) Assert.Equal(ClockRetimeOutcome.Preparing, driver.Update(state, rate, false, 2, 0));
+        Assert.Null(driver.Pending);
+        Assert.True(driver.Holding);
+        return driver;
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void AClosureDuringThroughCarExclusionRestartsTheRetimeAndSurvivesTheCommit(bool legacy)
+    {
+        var (state, city) = Gr5RetimeRepeatAllocationTests.TrafficCity();
+        AddThroughCars(state, city, 40, 0);
+        double rate = state.TravelClockRate * 3;
+        var driver = IntoThroughCarExclusion(state, legacy, rate);
+        city.Traffic!.SetLinkClosed(3, true);
+        var outcomes = new List<ClockRetimeOutcome>();
+        city = Finish(state, city, driver, rate, outcomes);
+        Assert.Contains(ClockRetimeOutcome.Restarted, outcomes);
+        Assert.Equal(1, driver.Restarts);
+        Assert.Equal(rate, state.TravelClockRate);
+        state.PrepareForSave();
+        Assert.True(state.Traffic!.Links.Single(l => l.LinkId == 3).Closed);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void CancellingAResidentVehicleDuringThroughCarExclusionDropsTheHalfReadSnapshot(bool legacy)
+    {
+        var (state, city) = Gr5RetimeRepeatAllocationTests.TrafficCity();
+        AddThroughCars(state, city, 40, 0);
+        double rate = state.TravelClockRate * 3;
+        var driver = IntoThroughCarExclusion(state, legacy, rate);
+        var vehicles = new List<TrafficVehicleState>();
+        city.Traffic!.CopyVehiclesInOrder(vehicles);
+        string resident = vehicles.First(v => !ThroughTraffic.IsThroughVehicle(v.VehicleId) && !v.Completed).VehicleId;
+        Assert.True(city.Traffic.Cancel(resident));
+        var thrown = Assert.Throws<KeyNotFoundException>(() => driver.Update(state, rate, false, 2, 0));
+        Assert.Contains(resident, thrown.Message);
+        Assert.Equal(1, driver.Restarts);
+        Assert.Null(driver.Pending);
     }
 
     private static readonly FieldInfo SavedTraffic = typeof(TravelTiming.TravelRetime).GetField("savedTraffic", BindingFlags.NonPublic | BindingFlags.Instance)!;

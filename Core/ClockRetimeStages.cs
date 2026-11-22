@@ -28,6 +28,8 @@ namespace PersistentCity.Core
         private IEnumerator<bool>? snapshot;
         private CityState? snapshotState;
         private double snapshotMinute;
+        private TrafficKernel? snapshotTraffic;
+        private long snapshotRevision;
 
         public TravelTiming.TravelRetime? Pending { get; private set; }
         public bool Holding => Pending != null || snapshot != null;
@@ -42,7 +44,7 @@ namespace PersistentCity.Core
         public int JoinsRefused { get; private set; }
         public TravelTiming.RetimedTraffic? RetimedTraffic { get; private set; }
         public int SharedLegs { get; private set; }
-        public string TrafficSource { get; private set; } = "";
+        public string RetimedFrom { get; private set; } = "";
 
         public ClockRetimeOutcome Update(CityState state, double nativeRate, bool bodiesLive, double walkMetresPerSecond, double budgetMilliseconds)
         {
@@ -54,8 +56,9 @@ namespace PersistentCity.Core
             if (Pending != null && Pending.Stale) { Pending = null; Restarts++; restartPending = true; }
             if (Pending == null)
             {
-                if (snapshot != null && (!ReferenceEquals(snapshotState, state) || snapshotMinute != state.Minute))
-                { snapshot = null; snapshotState = null; Restarts++; restartPending = true; }
+                if (snapshot != null && (!ReferenceEquals(snapshotState, state) || snapshotMinute != state.Minute
+                    || !state.LiveTrafficUnchanged(snapshotTraffic, snapshotRevision)))
+                { snapshot = null; snapshotState = null; snapshotTraffic = null; Restarts++; restartPending = true; }
                 if (snapshot == null)
                 {
                     if (finished) Reset();
@@ -71,14 +74,15 @@ namespace PersistentCity.Core
                     if (Stopwatch.GetTimestamp() >= deadline)
                     {
                         CountSlice(started); SnapshotSlices++;
+                        snapshotTraffic = state.CurrentLiveTraffic(out snapshotRevision);
                         return ClockRetimeOutcome.Preparing;
                     }
                 }
-                snapshot = null; snapshotState = null;
+                snapshot = null; snapshotState = null; snapshotTraffic = null;
                 bool restarted = restartPending;
                 restartPending = false;
                 var source = state.TakeRetimeSource();
-                TrafficSource = source == null ? "a save snapshot" : source.Kernel == null ? "no traffic" : source.WithoutThroughCars ? "a copy without through cars" : "the live kernel";
+                RetimedFrom = source == null ? "a save snapshot" : source.Kernel == null ? "no traffic" : source.WithoutThroughCars ? "a copy without through cars" : "the live kernel";
                 Pending = TravelTiming.Begin(state, walkMetresPerSecond, nativeRate, source, sharedLegHint);
                 CountSlice(started);
                 if (Pending == null) { Degraded = 0; finished = true; return ClockRetimeOutcome.Committed; }
@@ -103,7 +107,7 @@ namespace PersistentCity.Core
             Slices++; SliceMilliseconds += slice; SlowestSliceMilliseconds = Math.Max(SlowestSliceMilliseconds, slice);
         }
 
-        public void Cancel() { Pending = null; snapshot = null; snapshotState = null; restartPending = false; Reset(); }
+        public void Cancel() { Pending = null; snapshot = null; snapshotState = null; snapshotTraffic = null; restartPending = false; Reset(); }
 
         public TravelTiming.RetimedTraffic? TakeRetimedTraffic()
         {
@@ -114,7 +118,7 @@ namespace PersistentCity.Core
 
         private void Reset()
         {
-            finished = false; Restarts = 0; Slices = 0; SnapshotSlices = 0; SliceMilliseconds = SlowestSliceMilliseconds = 0; Degraded = 0; Split = Joined = JoinsRefused = 0; RetimedTraffic = null; SharedLegs = 0; TrafficSource = "";
+            finished = false; Restarts = 0; Slices = 0; SnapshotSlices = 0; SliceMilliseconds = SlowestSliceMilliseconds = 0; Degraded = 0; Split = Joined = JoinsRefused = 0; RetimedTraffic = null; SharedLegs = 0; RetimedFrom = "";
         }
     }
 }

@@ -153,6 +153,8 @@ namespace PersistentCity.Core
             private List<TrafficVehicleState>? checkVehicles;
             private Dictionary<RouteLeg, RouteLeg>? sharedLegs;
             private readonly int sharedLegHint;
+            private readonly TrafficKernel? liveKernel;
+            private readonly long liveRevision;
             public int SharedLegs { get; private set; }
             private bool HasTraffic => kernelMode ? sourceVehicles != null : trafficState != null;
             private IReadOnlyList<TrafficVehicleState> OwnedVehicles => kernelMode ? sourceVehicles! : trafficState!.Vehicles;
@@ -191,6 +193,7 @@ namespace PersistentCity.Core
                 inputs = new Input[schedules.Count];
                 stage = kernelMode || trafficState == null ? 1 : 0;
                 if (liveTraffic != null) { savedTraffic = liveTraffic; stage = 1; }
+                liveKernel = state.CurrentLiveTraffic(out liveRevision);
             }
 
             public CityState State { get; }
@@ -206,6 +209,7 @@ namespace PersistentCity.Core
             public bool Stale => committed || State.Minute != minute || State.TravelClockRate != stateRate
                 || State.TravelTimingVersion != version || !ReferenceEquals(State.Traffic, trafficState)
                 || (kernelMode && !ReferenceEquals(State.RetimeSnapshotSteps, retimeSnapshot))
+                || !State.LiveTrafficUnchanged(liveKernel, liveRevision)
                 || State.Places.Count != places || State.Citizens.Count + State.VisitorRoutines.Count != schedules.Count;
 
             public bool Step(long deadlineTimestamp)
@@ -354,7 +358,7 @@ namespace PersistentCity.Core
                 foreach (var meal in meals) { meal.Meal.ReturnMinutes = meal.ReturnMinutes; meal.Meal.DueAt = meal.DueAt; }
                 state.TravelTimingVersion = 1;
                 state.TravelClockRate = rate;
-                state.RetimeSnapshotSteps = null; state.RetimeSource = null;
+                state.RetimeSnapshotSteps = null; state.RetimeSource = null; state.LiveTraffic = null;
                 if (kernelMode)
                 {
                     state.Traffic = null;
@@ -447,7 +451,7 @@ namespace PersistentCity.Core
                 if (elapsed > route.Minutes || arrivalDifference > arrivalTolerance)
                     throw new ArgumentException("Journey clock does not match its route.", nameof(state));
                 bool mapped = trafficOwned;
-                var shared = sharedLegs ??= new Dictionary<RouteLeg, RouteLeg>(sharedLegHint);
+                var shared = sharedLegs ??= new Dictionary<RouteLeg, RouteLeg>(sharedLegHint, RouteLeg.SameContent);
                 var replacement = RetimeJoiningSplits(route, elapsed, legacy, walk, rate, ratio, false, mapped, true, trafficOwned ? trafficRoutes[citizen.Identity.Id] : null,
                     out var map, out int completed, out int merges, shared);
                 if (merges > 0 && !SameJoinedPose(citizen, replacement, elapsed,

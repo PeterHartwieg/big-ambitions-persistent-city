@@ -160,6 +160,7 @@ namespace PersistentCity.Core
             State.SnapshotSynchronizer = CaptureTraffic;
             State.SnapshotSteps = CaptureTrafficInSteps;
             State.RetimeSnapshotSteps = CaptureForRetimeInSteps;
+            State.LiveTraffic = LiveKernel;
             State.RetimeSource = null; State.PendingRetimedTraffic = null;
             State.TrafficSource = null; State.TrafficSourceState = null;
         }
@@ -423,6 +424,8 @@ namespace PersistentCity.Core
             }
             finally { liveVehicles.Clear(); }
         }
+
+        private TrafficKernel? LiveKernel() => traffic;
 
         private IEnumerator<bool> CaptureForRetimeInSteps(int linksPerStep)
         {

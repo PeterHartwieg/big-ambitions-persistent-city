@@ -114,6 +114,19 @@ namespace PersistentCity.Core
         internal void Freeze() => Frozen = true;
         internal void Share() { Frozen = true; Shared = true; }
         private void Mutable() { if (Frozen) throw new InvalidOperationException("A committed route leg is immutable."); }
+        internal static readonly IEqualityComparer<RouteLeg> SameContent = new ContentComparer();
+        private sealed class ContentComparer : IEqualityComparer<RouteLeg>
+        {
+            public bool Equals(RouteLeg? a, RouteLeg? b)
+            {
+                if (ReferenceEquals(a, b)) return true;
+                if (a == null || b == null) return false;
+                return a.mode == b.mode && a.SplitPrefix == b.SplitPrefix && a.minutes == b.minutes
+                    && a.from.Equals(b.from) && a.to.Equals(b.to) && string.Equals(a.serviceId, b.serviceId, StringComparison.Ordinal);
+            }
+            public int GetHashCode(RouteLeg leg)
+                => HashCode.Combine(leg.from, leg.to, leg.minutes, (int)leg.mode, leg.SplitPrefix, StringComparer.Ordinal.GetHashCode(leg.serviceId));
+        }
     }
 
     internal enum RoadTagKind : byte { None, V1, Fragment1 }
@@ -362,6 +375,15 @@ namespace PersistentCity.Core
         internal Func<int, IEnumerator<bool>>? RetimeSnapshotSteps;
         internal TravelTiming.RetimeSource? RetimeSource;
         internal TrafficKernel? PendingRetimedTraffic;
+        internal Func<TrafficKernel?>? LiveTraffic;
+        internal TrafficKernel? CurrentLiveTraffic(out long revision)
+        {
+            var kernel = LiveTraffic?.Invoke();
+            revision = kernel?.Revision ?? 0;
+            return kernel;
+        }
+        internal bool LiveTrafficUnchanged(TrafficKernel? kernel, long revision)
+            => ReferenceEquals(CurrentLiveTraffic(out long now), kernel) && now == revision;
         internal TravelTiming.RetimeSource? TakeRetimeSource()
         {
             var source = RetimeSource;

@@ -145,6 +145,7 @@ namespace PersistentCity.Core
         public int LinkCount => links.Count;
         public long Reconsiders { get; private set; }
         public long ProcessedEvents { get; private set; }
+        internal long Revision { get; private set; }
         public event Action<string, double>? VehicleCompleted;
         public IEnumerable<int> RelevantLinkIds
         {
@@ -189,6 +190,7 @@ namespace PersistentCity.Core
             RequireTime(minute, nameof(minute));
             if (minute < Clock || NextEventMinute < minute) throw new InvalidOperationException("Unfinished traffic epoch.");
             Clock = minute; RequestedTime = Math.Max(RequestedTime, minute);
+            Revision++;
         }
 
         private TrafficKernel() : this(0, 0) { }
@@ -242,6 +244,7 @@ namespace PersistentCity.Core
                 NominalMinutes = saved[0].StartNominalMinutes
             };
             vehicles.Add(vehicleId, vehicle);
+            Revision++;
             for (int i = 1; i < saved.Count; i++) links[saved[i].LinkId].Incoming.Add(saved[i - 1].LinkId);
             Link first = links[saved[0].LinkId];
             first.OwnSources.Enqueue(vehicleId);
@@ -253,6 +256,7 @@ namespace PersistentCity.Core
             RequireTime(targetMinute, nameof(targetMinute));
             if (targetMinute < Clock || targetMinute < RequestedTime) throw new ArgumentOutOfRangeException(nameof(targetMinute));
             if (maximumEvents < 0) throw new ArgumentOutOfRangeException(nameof(maximumEvents));
+            double clock = Clock, requested = RequestedTime;
             RequestedTime = targetMinute;
             int processed = 0;
             while (events.Count != 0 && events.Min.Event.At <= targetMinute && processed < maximumEvents)
@@ -266,6 +270,7 @@ namespace PersistentCity.Core
             }
             bool reached = events.Count == 0 || events.Min.Event.At > targetMinute;
             if (reached) Clock = targetMinute;
+            if (processed > 0 || Clock != clock || RequestedTime != requested) Revision++;
             return new TrafficAdvanceResult(Clock, RequestedTime, processed, reached);
         }
 
@@ -467,6 +472,7 @@ namespace PersistentCity.Core
                 vehicle.MotionStartFraction = start; vehicle.MotionStartedAt = at; vehicle.ReadyAt = ready;
                 return default;
             }
+            Revision++;
             Reconsider(link);
             return new TrafficHoldResult(true, charge, vehicle.MotionStartFraction, vehicle.MotionStartedAt, vehicle.ReadyAt);
         }
@@ -500,6 +506,7 @@ namespace PersistentCity.Core
             Link link = FindLink(linkId);
             if (link.Closed == closed) return;
             link.Closed = closed;
+            Revision++;
             if (closed) closedLinks.Add(linkId); else closedLinks.Remove(linkId);
             Reconsider(link);
         }
@@ -516,6 +523,7 @@ namespace PersistentCity.Core
         public bool RemoveCompleted(string vehicleId)
         {
             if (!vehicles.TryGetValue(vehicleId, out TrafficVehicleState? vehicle) || !vehicle.Completed) return false;
+            Revision++;
             return vehicles.Remove(vehicleId);
         }
 
@@ -1252,6 +1260,7 @@ namespace PersistentCity.Core
         public bool Cancel(string vehicleId)
         {
             if (!vehicles.TryGetValue(vehicleId, out TrafficVehicleState? vehicle)) return false;
+            Revision++;
             if (!vehicle.Completed)
             {
                 Link link = links[vehicle.Route[Math.Max(0, vehicle.RouteIndex)].LinkId];

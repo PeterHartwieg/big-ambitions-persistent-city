@@ -784,7 +784,7 @@ namespace PersistentCity.Runtime
                 + retimeDriver.Split.ToString(System.Globalization.CultureInfo.InvariantCulture) + ", earlier splits joined "
                 + retimeDriver.Joined.ToString(System.Globalization.CultureInfo.InvariantCulture) + ", joins refused for an inexact pose "
                 + retimeDriver.JoinsRefused.ToString(System.Globalization.CultureInfo.InvariantCulture) + ", shared leg copies "
-                + retimeDriver.SharedLegs.ToString(System.Globalization.CultureInfo.InvariantCulture) + ", traffic retimed from " + retimeDriver.TrafficSource + ".");
+                + retimeDriver.SharedLegs.ToString(System.Globalization.CultureInfo.InvariantCulture) + ", traffic retimed from " + retimeDriver.RetimedFrom + ".");
             string allocation = RetimeAllocationLine(mark);
             log?.Info("Clock retime allocation: " + allocation + ".");
             retimeReleaseMilliseconds = 0; retimeReleaseUpdates = 0;
