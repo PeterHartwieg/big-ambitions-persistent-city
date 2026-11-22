@@ -415,11 +415,14 @@ namespace PersistentCity.Core
 
             private const int SeedsPerDeadlineCheck = 64;
             private readonly List<RouteLeg> history = new List<RouteLeg>();
+            private readonly List<bool> fresh = new List<bool>();
 
-            private int CompactHistory(CitizenState citizen, Route replacement, int completed, double resumed)
+            private int CompactHistory(CitizenState citizen, Route source, Route replacement, int completed, double resumed)
             {
                 var legs = replacement.Legs;
-                if (!HasCompactableRun(legs, completed)) return 0;
+                fresh.Clear();
+                for (int i = 0; i < completed; i++) fresh.Add(Fresh(source.Legs, legs[i]));
+                if (!HasCompactableRun(legs, completed)) { fresh.Clear(); return 0; }
                 var before = CitySimulator.SampleRoute(replacement, resumed, citizen.Car?.ParkedPosition);
                 history.Clear();
                 for (int i = 0; i < legs.Count; i++) history.Add(legs[i]);
@@ -428,14 +431,14 @@ namespace PersistentCity.Core
                 double start = 0;
                 for (int i = 0; i < history.Count;)
                 {
-                    int end = i < completed ? RetimedSpanEnd(history, i, completed) : i + 1;
+                    int end = i < completed ? FreshSpanEnd(history, i, completed) : i + 1;
                     double total = start;
                     for (int k = i; k < end; k++) total += history[k].Minutes;
                     double minutes = total - start;
                     if (end - i > 1 && start + minutes == total && Position.Finite(minutes) && minutes > 0 && minutes <= MaxLegMinutes)
                     {
                         RouteLeg first = history[i], last = history[end - 1];
-                        legs.Add(first.CopyAs(first.From, last.To, minutes, first.ServiceId, last.SplitPrefix).MarkRetimed(first));
+                        legs.Add(first.CopyAs(first.From, last.To, minutes, first.ServiceId, last.SplitPrefix));
                         removed += end - i - 1;
                     }
                     else for (int k = i; k < end; k++) legs.Add(history[k]);
@@ -448,30 +451,37 @@ namespace PersistentCity.Core
                     for (int i = 0; i < history.Count; i++) legs.Add(history[i]);
                     removed = 0;
                 }
-                history.Clear();
+                history.Clear(); fresh.Clear();
                 return removed;
+            }
+
+            private static bool Fresh(IReadOnlyList<RouteLeg> source, RouteLeg leg)
+            {
+                for (int i = 0; i < source.Count; i++)
+                    if (RouteLeg.SameContent.Equals(source[i], leg)) return source[i].SplitPrefix || (i > 0 && source[i - 1].SplitPrefix);
+                return true;
+            }
+
+            private int FreshSpanEnd(IReadOnlyList<RouteLeg> legs, int start, int completed)
+            {
+                if (!fresh[start] || !Compactable(legs[start])) return start + 1;
+                int last = start, count = 1;
+                for (int k = start + 1; k < completed && SameRun(legs[k - 1], legs[k]); k++)
+                    if (fresh[k]) { last = k; count++; }
+                return count > 1 ? last + 1 : start + 1;
+            }
+
+            private bool HasCompactableRun(IReadOnlyList<RouteLeg> legs, int completed)
+            {
+                for (int i = 0; i < completed; i++)
+                    if (FreshSpanEnd(legs, i, completed) - i > 1) return true;
+                return false;
             }
 
             private static bool Compactable(RouteLeg leg) => leg.Mode == TravelMode.Walk || leg.Mode == TravelMode.Subway;
 
             private static bool SameRun(RouteLeg a, RouteLeg b)
                 => a.Mode == b.Mode && string.Equals(a.ServiceId, b.ServiceId, StringComparison.Ordinal);
-
-            private static int RetimedSpanEnd(IReadOnlyList<RouteLeg> legs, int start, int completed)
-            {
-                if (!legs[start].Retimed || !Compactable(legs[start])) return start + 1;
-                int last = start, retimed = 1;
-                for (int k = start + 1; k < completed && SameRun(legs[k - 1], legs[k]); k++)
-                    if (legs[k].Retimed) { last = k; retimed++; }
-                return retimed > 1 ? last + 1 : start + 1;
-            }
-
-            private static bool HasCompactableRun(IReadOnlyList<RouteLeg> legs, int completed)
-            {
-                for (int i = 0; i < completed; i++)
-                    if (RetimedSpanEnd(legs, i, completed) - i > 1) return true;
-                return false;
-            }
 
             private void Seed(int index)
             {
@@ -550,7 +560,7 @@ namespace PersistentCity.Core
                 }
                 else if (merges > 0) Joined++;
                 bool split = replacement.Legs.Count > route.Legs.Count;
-                if (!mapped) completed -= CompactHistory(citizen, replacement, completed, CitySimulator.NormalizeJourneyElapsed(rawElapsed, replacement.Minutes, state.Minute));
+                if (!mapped) completed -= CompactHistory(citizen, route, replacement, completed, CitySimulator.NormalizeJourneyElapsed(rawElapsed, replacement.Minutes, state.Minute));
                 if (replacement.Legs.Count > MaxLegs
                     && !MergeCompletedLegs(replacement, completed, elapsed, trafficOwned ? trafficRoutes[citizen.Identity.Id] : null))
                 {
@@ -800,7 +810,11 @@ namespace PersistentCity.Core
                 return true;
             }
             internal void Add(RouteLeg copy) { legs.Add(copy); Copies++; }
+            internal bool TryFind(RouteLeg leg, out RouteLeg known) => legs.TryGetValue(leg, out known!);
         }
+
+        private static RouteLeg Representative(RouteLeg source, RouteLeg copy, SharedLegPool? shared)
+            => shared != null && ReferenceEquals(copy, source) && source.Shared && !source.SplitPrefix && shared.TryFind(source, out var known) ? known : copy;
 
         private static RouteLeg ScaledFuture(RouteLeg leg, SharedLegPool? shared, bool legacy, double walkSpeed, double rate, double ratio)
         {
@@ -825,7 +839,7 @@ namespace PersistentCity.Core
             completed = 0;
             double oldOffset = 0, newOffset = 0;
             void Add(RouteLeg leg, Position from, Position to, double minutes, string service, double oldMinutes, double? oldEnd = null, bool splitPrefix = false)
-                => AddLeg(Copy(leg, from, to, minutes, service, splitPrefix).MarkRetimed(leg), oldMinutes, oldEnd);
+                => AddLeg(Representative(leg, Copy(leg, from, to, minutes, service, splitPrefix), shared), oldMinutes, oldEnd);
             void AddLeg(RouteLeg copy, double oldMinutes, double? oldEnd = null)
             {
                 route.Legs.Add(copy);
@@ -860,7 +874,7 @@ namespace PersistentCity.Core
                         double segmentEnd = oldEnd ?? oldOffset + oldMinutes;
                         mapping?.Segments.Add((oldOffset, segmentEnd, newOffset, joinedEnd));
                         if (mapping != null && leg.Mode == TravelMode.Car && Position.Distance(from, to) > 0) mapping.UnscaledCarPrefixes.Add((newOffset, joinedEnd));
-                        route.Legs[fragment] = previous.CopyAs(previous.From, to, merged, service, splitPrefix).MarkRetimed(previous);
+                        route.Legs[fragment] = previous.CopyAs(previous.From, to, merged, service, splitPrefix);
                         oldOffset = segmentEnd; newOffset = joinedEnd;
                         mergeCount++;
                         return;

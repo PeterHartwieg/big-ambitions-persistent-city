@@ -211,14 +211,14 @@ public sealed class Gr5SharedLegRetimeTests
 
     private static int MostObjectsForOneSegment(CityState state)
     {
-        var objects = new Dictionary<(Position, Position), HashSet<RouteLeg>>();
+        var objects = new Dictionary<(Position, Position, double), HashSet<RouteLeg>>();
         foreach (var c in state.Citizens)
         {
             if (c.Phase != CitizenPhase.Travelling || c.Journey == null) continue;
             foreach (var leg in c.Journey.Legs)
             {
                 if (leg.SplitPrefix) continue;
-                var key = (leg.From, leg.To);
+                var key = (leg.From, leg.To, leg.Minutes);
                 if (!objects.TryGetValue(key, out var set)) objects.Add(key, set = new HashSet<RouteLeg>(ReferenceEqualityComparer.Instance));
                 set.Add(leg);
             }
@@ -226,7 +226,7 @@ public sealed class Gr5SharedLegRetimeTests
         return objects.Count == 0 ? 0 : objects.Values.Max(v => v.Count);
     }
 
-    private (List<long> Unique, List<int> Objects, long Drained) RunAtObservedRates(bool retime, int latePerCycle)
+    private (List<long> Unique, List<int> Objects, long Drained) RunAtObservedRates(bool retime, int latePerCycle, double headStart = 0)
     {
         int cycles = UpRates.Length;
         var original = PlannedPath(1);
@@ -241,6 +241,7 @@ public sealed class Gr5SharedLegRetimeTests
             var path = retime ? PlannedPath(current) : original;
             for (int k = 0; k < latePerCycle; k++) DepartPlanned(state.Citizens[Walkers + cycle * latePerCycle + k], path, state.Minute);
             city = new CitySimulator(state, new NoRoutes());
+            if (headStart > 0) city.AdvanceTo(state.Minute + headStart, int.MaxValue);
             if (retime)
             {
                 city = RetimeAt(state, city, UpRates[cycle]);
@@ -271,21 +272,22 @@ public sealed class Gr5SharedLegRetimeTests
     }
 
     [Theory]
-    [InlineData(0)]
-    [InlineData(LateWalkersPerCycle)]
-    public void ObservedClockRatesKeepOneObjectPerSegmentAndRateAndTheRawLegGapPlateaus(int latePerCycle)
+    [InlineData(0, 0)]
+    [InlineData(LateWalkersPerCycle, 0)]
+    [InlineData(LateWalkersPerCycle, 0.6)]
+    public void ObservedClockRatesKeepOneObjectPerSegmentAndRateAndTheRawLegGapPlateaus(int latePerCycle, double headStart)
     {
-        var control = RunAtObservedRates(retime: false, latePerCycle);
-        var retimed = RunAtObservedRates(retime: true, latePerCycle);
+        var control = RunAtObservedRates(retime: false, latePerCycle, headStart);
+        var retimed = RunAtObservedRates(retime: true, latePerCycle, headStart);
         var excess = control.Unique.Zip(retimed.Unique, (c, r) => r - c).ToList();
         var perJourney = excess.Select((e, r) => e - 2L * latePerCycle * r).ToList();
-        output.WriteLine($"{Walkers} walkers plus {latePerCycle} late walkers per cycle on a planned {PathLegs}-leg path, up rates {string.Join(" / ", UpRates)}, return rates {string.Join(" / ", ReturnRates)}; "
+        output.WriteLine($"{Walkers} walkers plus {latePerCycle} late walkers per cycle walking {headStart} minutes before the up retime on a planned {PathLegs}-leg path, up rates {string.Join(" / ", UpRates)}, return rates {string.Join(" / ", ReturnRates)}; "
             + $"unique journey RouteLegs at R0..R{UpRates.Length}: control {string.Join(" / ", control.Unique)}; retimed {string.Join(" / ", retimed.Unique)}; excess {string.Join(" / ", excess)}; "
             + $"excess beyond one split prefix and one tail per late walker {string.Join(" / ", perJourney)}; "
-            + $"most objects held for one path segment: control {string.Join(" / ", control.Objects)}, retimed {string.Join(" / ", retimed.Objects)}; "
+            + $"most objects held for one segment at one duration: control {string.Join(" / ", control.Objects)}, retimed {string.Join(" / ", retimed.Objects)}; "
             + $"after the drain control {control.Drained}, retimed {retimed.Drained}");
         Assert.All(control.Objects, c => Assert.Equal(1, c));
-        Assert.All(retimed.Objects, c => Assert.True(c <= 2, "objects per segment " + string.Join(" / ", retimed.Objects)));
+        Assert.All(retimed.Objects, c => Assert.True(c <= 2, "objects per segment and duration " + string.Join(" / ", retimed.Objects)));
         for (int r = 2; r < excess.Count; r++) Assert.True(perJourney[r] <= perJourney.Take(r).Max(), "R" + r + " excess " + string.Join(" / ", perJourney));
         if (latePerCycle == 0) for (int r = 2; r < excess.Count; r++) Assert.True(excess[r] <= excess.Take(r).Max(), "R" + r + " raw excess " + string.Join(" / ", excess));
         Assert.Equal(control.Drained, retimed.Drained);
@@ -312,5 +314,60 @@ public sealed class Gr5SharedLegRetimeTests
             Assert.True(separate.Unique[r] - control.Unique[r] > 10 * PathLegs, "R" + r);
         }
         for (int i = 0; i < sharedRun.Bytes.Count; i++) Assert.True(sharedRun.Bytes[i] < separate.Bytes[i], "retime " + i);
+    }
+
+    private static (CityState State, CitySimulator City) ThreeLegWalker(double walked)
+    {
+        var path = new Route();
+        double metresPerMinute = TravelTiming.WalkingMetresPerMinute(Walk, 1), x = 0;
+        foreach (double length in new[] { 0.7, 0.9, 1.1 })
+        {
+            path.Legs.Add(new RouteLeg { From = new Position(x, 0, 0), To = new Position(x + length, 0, 0), Minutes = length / metresPerMinute, Mode = TravelMode.Walk });
+            x += length;
+        }
+        TransportComposition.Shared(path);
+        var state = Population.Create(new[] { new CitizenIdentity { Id = "walker0000", Name = "Walker", Age = 30, Persona = Persona.Commuter } }, new[]
+        {
+            new Place { Id = "home", Name = "Home", Kind = PlaceKind.Home, Capacity = 1, Position = new Position(0, 0, 0) },
+            new Place { Id = "work", Name = "Work", Kind = PlaceKind.Work, Capacity = 1, Position = new Position(x, 0, 0) }
+        }, "shared-leg-reload", "0.40.4", 5, 1440);
+        state.TravelTimingVersion = 1; state.TravelClockRate = 1;
+        DepartPlanned(state.Citizens[0], path, 1440 - walked);
+        return (state, new CitySimulator(state, new NoRoutes()));
+    }
+
+    private static string Saved(CityState state) { state.PrepareForSave(); return SaveCodec.Write(state); }
+
+    [Fact]
+    public void AReloadBetweenRetimesLeavesTheNextRetimeSavingTheSameCityWhileTheJourneyIsActive()
+    {
+        int compared = 0;
+        foreach (double later in new[] { 0.3, 0.5, 0.7 })
+        for (int start = 0; start < 12; start++)
+        {
+            var (state, city) = ThreeLegWalker(0.04 * start);
+            city = RetimeAt(state, city, 2);
+            var walker = state.Citizens[0];
+            var legs = walker.Journey!.Legs;
+            if (legs.Count < 2 || !legs[0].SplitPrefix) continue;
+            city.AdvanceTo(walker.DepartureMinute + legs[0].Minutes + legs[1].Minutes, int.MaxValue);
+            city = RetimeAt(state, city, 1);
+            if (walker.Phase != CitizenPhase.Travelling || walker.Journey!.Legs.Any(l => l.SplitPrefix)) continue;
+            string saved = Saved(state);
+            var reloaded = SaveCodec.Read(saved).State!;
+            Assert.Equal(saved, Saved(reloaded));
+            var reloadedCity = new CitySimulator(reloaded, new NoRoutes());
+            city.AdvanceTo(state.Minute + later, int.MaxValue);
+            reloadedCity.AdvanceTo(reloaded.Minute + later, int.MaxValue);
+            Assert.Equal(Saved(state), Saved(reloaded));
+            if (walker.Phase != CitizenPhase.Travelling) continue;
+            city = RetimeAt(state, city, 2);
+            reloadedCity = RetimeAt(reloaded, reloadedCity, 2);
+            Assert.Equal(CitizenPhase.Travelling, walker.Phase);
+            Assert.Equal(RushSpikeReplay.Sha(Saved(state)), RushSpikeReplay.Sha(Saved(reloaded)));
+            compared++;
+        }
+        output.WriteLine($"{compared} active three-leg walks compared after a 1x-2x-1x cycle that rejoined the first leg and a reload with no split prefix, saved again after the next retime to 2x");
+        Assert.True(compared >= 10, compared.ToString());
     }
 }

@@ -111,8 +111,6 @@ namespace PersistentCity.Core
             return copy;
         }
         internal bool Shared { get; private set; }
-        internal bool Retimed { get; private set; }
-        internal RouteLeg MarkRetimed(RouteLeg source) { if (source.Retimed || !SameContent.Equals(this, source)) Retimed = true; return this; }
         internal void Freeze() => Frozen = true;
         internal void Share() { Frozen = true; Shared = true; }
         internal void Aim(RouteLeg source, double minutes)
