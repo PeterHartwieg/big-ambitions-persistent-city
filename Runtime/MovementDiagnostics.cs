@@ -17,6 +17,7 @@ namespace PersistentCity.Runtime
         private const int MaxHoldReplayCharacters = 8 * 1024 * 1024;
         private GcPauseSampler? gcSampler;
         private static readonly double GcMillisecondsPerTimestamp = 1000.0 / System.Diagnostics.Stopwatch.Frequency;
+        private static readonly Unity.Profiling.ProfilerMarker GcStampMarker = new Unity.Profiling.ProfilerMarker("PersistentCity.GcFrameStamp");
 
         private long gcFrameCpu = -1, gcModCpu = -1;
 
@@ -24,7 +25,9 @@ namespace PersistentCity.Runtime
         {
             var sampler = gcSampler;
             if (sampler == null || !sampler.Running) { gcFrameCpu = gcModCpu = -1; return 0; }
+            GcStampMarker.Begin();
             long now = System.Diagnostics.Stopwatch.GetTimestamp();
+            GcStampMarker.End();
             long cpu = ThreadCpuClock.Nanoseconds();
             if (cpu >= 0 && gcFrameCpu >= 0 && cpu >= gcFrameCpu) sampler.FrameCpu((cpu - gcFrameCpu) / 1e6);
             gcFrameCpu = gcModCpu = cpu;
