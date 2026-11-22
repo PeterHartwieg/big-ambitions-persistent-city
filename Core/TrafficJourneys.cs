@@ -159,12 +159,16 @@ namespace PersistentCity.Core
         {
             State.SnapshotSynchronizer = CaptureTraffic;
             State.SnapshotSteps = CaptureTrafficInSteps;
+            State.RetimeSnapshotSteps = CaptureForRetimeInSteps;
+            State.RetimeSource = null; State.PendingRetimedTraffic = null;
             State.TrafficSource = null; State.TrafficSourceState = null;
         }
 
         private void RestoreTraffic(TravelTiming.RetimedTraffic? retimed, bool publishSnapshot)
         {
+            if (retimed == null && State.Traffic == null) State.CaptureRetimedTraffic();
             if (publishSnapshot) PublishTrafficSnapshot();
+            if (retimed != null && retimed.Source == null) { RestoreRetimedKernel(retimed.Kernel); return; }
             if (State.Traffic == null) return;
             if (State.Traffic.Clock != State.Minute || string.IsNullOrEmpty(State.TrafficTopologyId))
                 throw new ArgumentException("Traffic and city clocks/topology do not match.");
@@ -396,6 +400,47 @@ namespace PersistentCity.Core
         {
             State.TrafficSource = whole && State.Traffic != null ? traffic : null;
             State.TrafficSourceState = State.TrafficSource != null ? State.Traffic : null;
+        }
+
+        private void RestoreRetimedKernel(TrafficKernel kernel)
+        {
+            if (kernel.Clock != State.Minute || string.IsNullOrEmpty(State.TrafficTopologyId))
+                throw new ArgumentException("Traffic and city clocks/topology do not match.");
+            traffic = kernel;
+            traffic.VehicleCompleted += TrafficCompleted;
+            kernel.CopyVehiclesInOrder(liveVehicles);
+            try
+            {
+                foreach (var vehicle in liveVehicles)
+                {
+                    if (!citizenEvents.TryGetValue(vehicle.VehicleId, out var item) || item.Citizen.Phase != CitizenPhase.Travelling)
+                        throw new ArgumentException("Traffic vehicle has no travelling resident.");
+                    trafficCitizens.Add(vehicle.VehicleId, item.Citizen);
+                    due.Remove(item);
+                }
+                foreach (var vehicle in liveVehicles)
+                    if (vehicle.Completed) TrafficCompleted(vehicle.VehicleId, vehicle.CompletedAt!.Value);
+            }
+            finally { liveVehicles.Clear(); }
+        }
+
+        private IEnumerator<bool> CaptureForRetimeInSteps(int linksPerStep)
+        {
+            SynchronizeSnapshot();
+            if (traffic == null)
+            {
+                State.Traffic = null; NoteTrafficSource(false);
+                State.RetimeSource = new TravelTiming.RetimeSource(null);
+                yield return true; yield break;
+            }
+            if (ThroughCarCount == 0) { State.RetimeSource = new TravelTiming.RetimeSource(traffic); yield return true; yield break; }
+            var steps = traffic.WithoutVehiclesInSteps(ThroughTraffic.IsThroughVehicle, linksPerStep);
+            while (steps.MoveNext())
+            {
+                if (steps.Current != null) { State.RetimeSource = new TravelTiming.RetimeSource(steps.Current); yield return true; yield break; }
+                yield return false;
+            }
+            throw new InvalidOperationException("Traffic exclusion ended without a result.");
         }
 
         private IEnumerator<bool> CaptureTrafficInSteps(int linksPerStep)

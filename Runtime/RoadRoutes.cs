@@ -748,7 +748,7 @@ namespace PersistentCity.Runtime
                                 owner.edgeRecheck.Record(Stopwatch.GetTimestamp() - checkStarted, path.Length);
                                 if (!open) { Finish(null); return true; }
                             }
-                            Finish(TransportComposition.Join(TransportComposition.Shared(begin!), TransportComposition.Shared(road), TransportComposition.Shared(end!)));
+                            Finish(TransportComposition.Join(TransportComposition.Shared(begin!), TransportComposition.Frozen(road), TransportComposition.Shared(end!)));
                             return true;
                     }
                 }

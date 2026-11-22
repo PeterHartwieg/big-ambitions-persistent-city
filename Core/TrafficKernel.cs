@@ -987,9 +987,49 @@ namespace PersistentCity.Core
 
         private IEnumerator<TrafficKernelState?> CaptureExcludingSteps(Func<string, bool> exclude, int linksPerStep)
         {
+            object? result = null;
+            var excluding = ExcludingSteps(exclude, linksPerStep, false);
+            while (excluding.MoveNext())
+            {
+                if (excluding.Current != null) { result = excluding.Current; break; }
+                yield return null;
+            }
+            if (result is TrafficKernelState unchanged) { yield return unchanged; yield break; }
+            var recapture = ((TrafficKernel)result!).CaptureInSteps(linksPerStep);
+            while (recapture.MoveNext())
+            {
+                if (recapture.Current != null) { yield return recapture.Current; yield break; }
+                yield return null;
+            }
+        }
+
+        internal IEnumerator<TrafficKernel?> WithoutVehiclesInSteps(Func<string, bool> exclude, int linksPerStep)
+        {
+            if (exclude == null) throw new ArgumentNullException(nameof(exclude));
+            if (linksPerStep < 1) throw new ArgumentOutOfRangeException(nameof(linksPerStep));
+            return KernelWithoutSteps(exclude, linksPerStep);
+        }
+
+        private IEnumerator<TrafficKernel?> KernelWithoutSteps(Func<string, bool> exclude, int linksPerStep)
+        {
+            bool any = false;
+            foreach (var id in vehicles.Keys) if (exclude(id)) { any = true; break; }
+            if (!any) { yield return this; yield break; }
+            var excluding = ExcludingSteps(exclude, linksPerStep, true);
+            while (excluding.MoveNext())
+            {
+                if (excluding.Current is TrafficKernel kernel) { yield return kernel; yield break; }
+                if (excluding.Current != null) throw new InvalidOperationException("Traffic exclusion removed no vehicle.");
+                yield return null;
+            }
+            throw new InvalidOperationException("Traffic exclusion ended without a result.");
+        }
+
+        private IEnumerator<object?> ExcludingSteps(Func<string, bool> exclude, int linksPerStep, bool shareDefinitions)
+        {
             int work = 0;
             TrafficKernelState? state = null;
-            var capture = CaptureInSteps(linksPerStep);
+            var capture = CaptureSteps(linksPerStep, true, shareDefinitions);
             while (capture.MoveNext())
             {
                 if (capture.Current != null) { state = capture.Current; break; }
@@ -1031,17 +1071,10 @@ namespace PersistentCity.Core
                 link.WaitingSources.RemoveAll(id => exclude(id));
                 if (++work % linksPerStep == 0) yield return null;
             }
-            TrafficKernel? rebuilt = null;
             var restore = RestoreSteps(state, true, linksPerStep, adoptDefinitions: true);
             while (restore.MoveNext())
             {
-                if (restore.Current != null) { rebuilt = restore.Current; break; }
-                yield return null;
-            }
-            var recapture = rebuilt!.CaptureInSteps(linksPerStep);
-            while (recapture.MoveNext())
-            {
-                if (recapture.Current != null) { yield return recapture.Current; yield break; }
+                if (restore.Current != null) { yield return restore.Current; yield break; }
                 yield return null;
             }
         }

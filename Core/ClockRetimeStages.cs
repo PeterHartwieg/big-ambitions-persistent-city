@@ -24,6 +24,7 @@ namespace PersistentCity.Core
     {
         public const int SnapshotLinksPerStep = 256;
         private bool finished, restartPending;
+        private int sharedLegHint;
         private IEnumerator<bool>? snapshot;
         private CityState? snapshotState;
         private double snapshotMinute;
@@ -56,7 +57,7 @@ namespace PersistentCity.Core
                 if (snapshot == null)
                 {
                     if (finished) Reset();
-                    snapshot = state.PrepareForSaveInSteps(SnapshotLinksPerStep);
+                    snapshot = state.PrepareForRetimeInSteps(SnapshotLinksPerStep);
                     snapshotState = state; snapshotMinute = state.Minute;
                 }
                 long started = Stopwatch.GetTimestamp();
@@ -74,7 +75,7 @@ namespace PersistentCity.Core
                 snapshot = null; snapshotState = null;
                 bool restarted = restartPending;
                 restartPending = false;
-                Pending = TravelTiming.Begin(state, walkMetresPerSecond, nativeRate);
+                Pending = TravelTiming.Begin(state, walkMetresPerSecond, nativeRate, state.TakeRetimeSource(), sharedLegHint);
                 CountSlice(started);
                 if (Pending == null) { Degraded = 0; finished = true; return ClockRetimeOutcome.Committed; }
                 return restarted ? ClockRetimeOutcome.Restarted : ClockRetimeOutcome.Began;
@@ -87,7 +88,7 @@ namespace PersistentCity.Core
                 return ClockRetimeOutcome.Preparing;
             }
             if (!Pending.Commit()) { Pending = null; Restarts++; return ClockRetimeOutcome.Restarted; }
-            Degraded = Pending.Degraded; Split = Pending.Split; Joined = Pending.Joined; JoinsRefused = Pending.JoinsRefused;
+            Degraded = Pending.Degraded; Split = Pending.Split; Joined = Pending.Joined; JoinsRefused = Pending.JoinsRefused; sharedLegHint = Pending.SharedLegs;
             RetimedTraffic = Pending.TakeRestoredTraffic(); Pending = null; finished = true;
             return ClockRetimeOutcome.Committed;
         }

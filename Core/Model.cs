@@ -110,7 +110,9 @@ namespace PersistentCity.Core
             else copy.ServiceId = service;
             return copy;
         }
+        internal bool Shared { get; private set; }
         internal void Freeze() => Frozen = true;
+        internal void Share() { Frozen = true; Shared = true; }
         private void Mutable() { if (Frozen) throw new InvalidOperationException("A committed route leg is immutable."); }
     }
 
@@ -357,6 +359,55 @@ namespace PersistentCity.Core
         internal Func<int, IEnumerator<bool>>? SnapshotSteps;
         internal TrafficKernel? TrafficSource;
         internal TrafficKernelState? TrafficSourceState;
+        internal Func<int, IEnumerator<bool>>? RetimeSnapshotSteps;
+        internal TravelTiming.RetimeSource? RetimeSource;
+        internal TrafficKernel? PendingRetimedTraffic;
+        internal TravelTiming.RetimeSource? TakeRetimeSource()
+        {
+            var source = RetimeSource;
+            RetimeSource = null;
+            return source;
+        }
+        internal IEnumerator<bool> PrepareForRetimeInSteps(int linksPerStep)
+        {
+            if (linksPerStep < 1) throw new ArgumentOutOfRangeException(nameof(linksPerStep));
+            RetimeSource = null;
+            return RetimeSnapshotSteps == null ? PrepareForSaveInSteps(linksPerStep) : RetimeSnapshot(RetimeSnapshotSteps, linksPerStep);
+        }
+        private IEnumerator<bool> RetimeSnapshot(Func<int, IEnumerator<bool>> snapshot, int linksPerStep)
+        {
+            var steps = snapshot(linksPerStep);
+            while (true)
+            {
+                if (!steps.MoveNext()) throw new InvalidOperationException("The retime snapshot steps ended without a result.");
+                if (steps.Current) break;
+                yield return false;
+            }
+            FinishPrepareForSave();
+            yield return true;
+        }
+        internal void CaptureRetimedTraffic()
+        {
+            var kernel = PendingRetimedTraffic;
+            if (kernel == null) return;
+            Traffic = kernel.CaptureShared();
+            TrafficSource = kernel; TrafficSourceState = Traffic;
+        }
+        internal IEnumerator<bool> CaptureRetimedTrafficInSteps(int linksPerStep)
+        {
+            var kernel = PendingRetimedTraffic;
+            if (kernel == null) { yield return true; yield break; }
+            var capture = kernel.CaptureSharedInSteps(linksPerStep);
+            while (capture.MoveNext())
+            {
+                if (capture.Current == null) { yield return false; continue; }
+                Traffic = capture.Current;
+                TrafficSource = kernel; TrafficSourceState = Traffic;
+                yield return true;
+                yield break;
+            }
+            throw new InvalidOperationException("Traffic capture ended without a result.");
+        }
         public void PrepareForSave()
         {
             SnapshotSynchronizer?.Invoke();

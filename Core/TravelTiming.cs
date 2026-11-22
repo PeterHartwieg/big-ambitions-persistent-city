@@ -77,9 +77,18 @@ namespace PersistentCity.Core
         }
 
         public static TravelRetime? Begin(CityState state, double nativeWalkMetresPerSecond, double clockRate)
+            => Begin(state, nativeWalkMetresPerSecond, clockRate, null);
+
+        internal static TravelRetime? Begin(CityState state, double nativeWalkMetresPerSecond, double clockRate, RetimeSource? source, int sharedLegHint = 0)
         {
             if (!Needed(state, nativeWalkMetresPerSecond, clockRate)) return null;
-            return new TravelRetime(state, nativeWalkMetresPerSecond, clockRate, state.TravelTimingVersion == 0);
+            return new TravelRetime(state, nativeWalkMetresPerSecond, clockRate, state.TravelTimingVersion == 0, source, sharedLegHint);
+        }
+
+        internal sealed class RetimeSource
+        {
+            internal RetimeSource(TrafficKernel? kernel) { Kernel = kernel; }
+            internal TrafficKernel? Kernel { get; }
         }
 
         private static bool Needed(CityState state, double nativeWalkMetresPerSecond, double clockRate)
@@ -96,8 +105,8 @@ namespace PersistentCity.Core
 
         public sealed class RetimedTraffic
         {
-            internal RetimedTraffic(TrafficKernelState source, TrafficKernel kernel) { Source = source; Kernel = kernel; }
-            internal TrafficKernelState Source { get; }
+            internal RetimedTraffic(TrafficKernelState? source, TrafficKernel kernel) { Source = source; Kernel = kernel; }
+            internal TrafficKernelState? Source { get; }
             internal TrafficKernel Kernel { get; }
         }
 
@@ -137,13 +146,37 @@ namespace PersistentCity.Core
             private Dictionary<string, CitizenState>? citizens;
             private int next, checkedVehicles, stage;
             private bool trafficDone, committed;
+            private readonly bool kernelMode;
+            private readonly Func<int, IEnumerator<bool>>? retimeSnapshot;
+            private readonly List<TrafficVehicleState>? sourceVehicles;
+            private List<TrafficVehicleState>? checkVehicles;
+            private Dictionary<RouteLeg, RouteLeg>? sharedLegs;
+            private readonly int sharedLegHint;
+            public int SharedLegs { get; private set; }
+            private bool HasTraffic => kernelMode ? sourceVehicles != null : trafficState != null;
+            private IReadOnlyList<TrafficVehicleState> OwnedVehicles => kernelMode ? sourceVehicles! : trafficState!.Vehicles;
 
-            internal TravelRetime(CityState state, double walk, double rate, bool legacy)
+            internal TravelRetime(CityState state, double walk, double rate, bool legacy, RetimeSource? source = null, int sharedLegHint = 0)
             {
-                State = state; this.walk = walk; this.rate = rate; this.legacy = legacy;
+                State = state; this.walk = walk; this.rate = rate; this.legacy = legacy; this.sharedLegHint = Math.Max(0, sharedLegHint);
                 ratio = rate / state.TravelClockRate; minute = state.Minute; stateRate = state.TravelClockRate;
                 version = state.TravelTimingVersion; places = state.Places.Count; trafficState = state.Traffic;
-                if (state.Traffic != null)
+                kernelMode = source != null;
+                if (kernelMode)
+                {
+                    retimeSnapshot = state.RetimeSnapshotSteps;
+                    var kernel = source!.Kernel;
+                    if (kernel != null)
+                    {
+                        if (legacy || kernel.Clock != state.Minute)
+                            throw new ArgumentException("Traffic needs native timing at the city clock.");
+                        sourceVehicles = new List<TrafficVehicleState>(kernel.VehicleCount);
+                        kernel.CopyVehiclesInOrder(sourceVehicles);
+                        foreach (var vehicle in sourceVehicles) trafficRoutes[vehicle.VehicleId] = vehicle;
+                        savedTraffic = kernel;
+                    }
+                }
+                else if (state.Traffic != null)
                 {
                     if (legacy || state.Traffic.Clock != state.Minute)
                         throw new ArgumentException("Traffic needs native timing at the city clock.");
@@ -155,7 +188,7 @@ namespace PersistentCity.Core
                 foreach (var place in state.Places) placeIndex.Add(place.Id, place);
                 foreach (var citizen in PersonTable.Schedules(state)) schedules.Add(citizen);
                 inputs = new Input[schedules.Count];
-                stage = trafficState == null ? 1 : 0;
+                stage = kernelMode || trafficState == null ? 1 : 0;
                 if (liveTraffic != null) { savedTraffic = liveTraffic; stage = 1; }
             }
 
@@ -171,6 +204,7 @@ namespace PersistentCity.Core
 
             public bool Stale => committed || State.Minute != minute || State.TravelClockRate != stateRate
                 || State.TravelTimingVersion != version || !ReferenceEquals(State.Traffic, trafficState)
+                || (kernelMode && !ReferenceEquals(State.RetimeSnapshotSteps, retimeSnapshot))
                 || State.Places.Count != places || State.Citizens.Count + State.VisitorRoutines.Count != schedules.Count;
 
             public bool Step(long deadlineTimestamp)
@@ -187,7 +221,7 @@ namespace PersistentCity.Core
                             Prepare(next++); worked = true;
                             if (System.Diagnostics.Stopwatch.GetTimestamp() >= deadlineTimestamp) return false;
                         }
-                        stage = trafficState == null ? 9 : evicted.Count > 0 ? 2 : 4;
+                        stage = !HasTraffic ? 9 : evicted.Count > 0 ? 2 : 4;
                         if (stage == 4) kernel = savedTraffic;
                         continue;
                     }
@@ -197,12 +231,21 @@ namespace PersistentCity.Core
                         CheckTrafficOwners(); worked = true; stage = 5;
                         continue;
                     }
+                    if (stage == 6 && kernelMode)
+                    {
+                        restoredTraffic = new RetimedTraffic(null, rescaledKernel!);
+                        checkVehicles = new List<TrafficVehicleState>(rescaledKernel!.VehicleCount);
+                        rescaledKernel.CopyVehiclesInOrder(checkVehicles);
+                        stage = 8;
+                        continue;
+                    }
                     if (stage == 8)
                     {
-                        while (checkedVehicles < traffic!.Vehicles.Count)
+                        var checking = kernelMode ? checkVehicles! : traffic!.Vehicles;
+                        while (checkedVehicles < checking.Count)
                         {
                             if (worked && System.Diagnostics.Stopwatch.GetTimestamp() >= deadlineTimestamp) return false;
-                            CheckVehicle(traffic.Vehicles[checkedVehicles++]); worked = true;
+                            CheckVehicle(checking[checkedVehicles++]); worked = true;
                         }
                         stage = 9; rescaledKernel = null;
                         continue;
@@ -254,7 +297,7 @@ namespace PersistentCity.Core
                 var state = State;
                 citizens = new Dictionary<string, CitizenState>(StringComparer.Ordinal);
                 foreach (var citizen in state.Citizens) citizens.Add(citizen.Identity.Id, citizen);
-                foreach (var vehicle in trafficState!.Vehicles)
+                foreach (var vehicle in OwnedVehicles)
                 {
                     if (evicted.Contains(vehicle.VehicleId)) continue;
                     if (!citizens.TryGetValue(vehicle.VehicleId, out var citizen) || citizen.Journey == null
@@ -297,6 +340,8 @@ namespace PersistentCity.Core
                     }
                 }
                 committed = true;
+                SharedLegs = sharedLegs?.Count ?? 0;
+                sharedLegs = null;
                 foreach (var change in changes)
                 {
                     if (change.Route != null) change.Citizen.Journey = change.Route.Commit();
@@ -308,9 +353,21 @@ namespace PersistentCity.Core
                 foreach (var meal in meals) { meal.Meal.ReturnMinutes = meal.ReturnMinutes; meal.Meal.DueAt = meal.DueAt; }
                 state.TravelTimingVersion = 1;
                 state.TravelClockRate = rate;
-                if (traffic != null) state.Traffic = traffic;
-                state.SnapshotSynchronizer = null;
-                state.SnapshotSteps = null;
+                state.RetimeSnapshotSteps = null; state.RetimeSource = null;
+                if (kernelMode)
+                {
+                    state.Traffic = null;
+                    state.PendingRetimedTraffic = restoredTraffic?.Kernel;
+                    state.SnapshotSynchronizer = restoredTraffic != null ? state.CaptureRetimedTraffic : (Action?)null;
+                    state.SnapshotSteps = restoredTraffic != null ? state.CaptureRetimedTrafficInSteps : (Func<int, IEnumerator<bool>>?)null;
+                }
+                else
+                {
+                    if (traffic != null) state.Traffic = traffic;
+                    state.SnapshotSynchronizer = null;
+                    state.SnapshotSteps = null;
+                    state.PendingRetimedTraffic = null;
+                }
                 state.TrafficSource = null; state.TrafficSourceState = null;
                 return true;
             }
@@ -389,12 +446,13 @@ namespace PersistentCity.Core
                 if (elapsed > route.Minutes || arrivalDifference > arrivalTolerance)
                     throw new ArgumentException("Journey clock does not match its route.", nameof(state));
                 bool mapped = trafficOwned;
+                var shared = sharedLegs ??= new Dictionary<RouteLeg, RouteLeg>(sharedLegHint);
                 var replacement = RetimeJoiningSplits(route, elapsed, legacy, walk, rate, ratio, false, mapped, true, trafficOwned ? trafficRoutes[citizen.Identity.Id] : null,
-                    out var map, out int completed, out int merges);
+                    out var map, out int completed, out int merges, shared);
                 if (merges > 0 && !SameJoinedPose(citizen, replacement, elapsed,
                     map != null ? map.Map(elapsed) : CitySimulator.NormalizeJourneyElapsed(rawElapsed, replacement.Minutes, state.Minute)))
                 {
-                    var unjoined = Retime(route, elapsed, legacy, walk, rate, ratio, false, mapped, out var unjoinedMap, out int unjoinedCompleted);
+                    var unjoined = Retime(route, elapsed, legacy, walk, rate, ratio, false, mapped, out var unjoinedMap, out int unjoinedCompleted, shared);
                     if (map != null && unjoinedMap != null && JoinKeepsMappedPose(citizen, replacement, map.Map(elapsed), unjoined, unjoinedMap.Map(elapsed), elapsed)) Joined++;
                     else
                     {
@@ -406,7 +464,7 @@ namespace PersistentCity.Core
                 if (replacement.Legs.Count > MaxLegs
                     && !MergeCompletedLegs(replacement, completed, elapsed, trafficOwned ? trafficRoutes[citizen.Identity.Id] : null))
                 {
-                    replacement = Retime(route, elapsed, legacy, walk, rate, ratio, true, mapped, out map, out _);
+                    replacement = Retime(route, elapsed, legacy, walk, rate, ratio, true, mapped, out map, out _, shared);
                     Degraded++;
                     if (trafficOwned) { evicted.Add(citizen.Identity.Id); trafficOwned = false; }
                 }
@@ -599,11 +657,22 @@ namespace PersistentCity.Core
         }
 
         private static Route Retime(Route original, double elapsed, bool legacy, double walkSpeed, double rate, double ratio,
-            bool keepCurrent, bool mapped, out NominalMap? map, out int completed)
-            => RetimeJoiningSplits(original, elapsed, legacy, walkSpeed, rate, ratio, keepCurrent, mapped, false, null, out map, out completed, out _);
+            bool keepCurrent, bool mapped, out NominalMap? map, out int completed, Dictionary<RouteLeg, RouteLeg>? shared = null)
+            => RetimeJoiningSplits(original, elapsed, legacy, walkSpeed, rate, ratio, keepCurrent, mapped, false, null, out map, out completed, out _, shared);
+
+        private static RouteLeg ScaledFuture(RouteLeg leg, Dictionary<RouteLeg, RouteLeg>? shared, bool legacy, double walkSpeed, double rate, double ratio)
+        {
+            bool reuse = shared != null && leg.Shared;
+            if (reuse && shared!.TryGetValue(leg, out var known)) return known;
+            double duration = Duration(leg, leg.From, leg.To, leg.Minutes, legacy, walkSpeed, rate, ratio);
+            var copy = Copy(leg, leg.From, leg.To, duration, leg.ServiceId);
+            if (reuse) { copy.Share(); shared!.Add(leg, copy); }
+            return copy;
+        }
 
         private static Route RetimeJoiningSplits(Route original, double elapsed, bool legacy, double walkSpeed, double rate, double ratio,
-            bool keepCurrent, bool mapped, bool mergeFragments, TrafficVehicleState? traffic, out NominalMap? map, out int completed, out int merges)
+            bool keepCurrent, bool mapped, bool mergeFragments, TrafficVehicleState? traffic, out NominalMap? map, out int completed, out int merges,
+            Dictionary<RouteLeg, RouteLeg>? shared = null)
         {
             merges = 0;
             int mergeCount = 0;
@@ -614,8 +683,11 @@ namespace PersistentCity.Core
             completed = 0;
             double oldOffset = 0, newOffset = 0;
             void Add(RouteLeg leg, Position from, Position to, double minutes, string service, double oldMinutes, double? oldEnd = null, bool splitPrefix = false)
+                => AddLeg(Copy(leg, from, to, minutes, service, splitPrefix), oldMinutes, oldEnd);
+            void AddLeg(RouteLeg copy, double oldMinutes, double? oldEnd = null)
             {
-                route.Legs.Add(Copy(leg, from, to, minutes, service, splitPrefix));
+                route.Legs.Add(copy);
+                double minutes = copy.Minutes;
                 double end = oldEnd ?? oldOffset + oldMinutes;
                 mapping?.Segments.Add((oldOffset, end, newOffset, newOffset + minutes));
                 oldOffset = end; newOffset += minutes;
@@ -691,8 +763,7 @@ namespace PersistentCity.Core
                     {
                         mapping?.Segments.Add((oldOffset, elapsed, newOffset, newOffset));
                         oldOffset = elapsed;
-                        double duration = Duration(leg, leg.From, leg.To, leg.Minutes, legacy, walkSpeed, rate, ratio);
-                        Add(leg, leg.From, leg.To, duration, leg.ServiceId, oldLegEnd - elapsed, oldLegEnd);
+                        AddLeg(ScaledFuture(leg, shared, legacy, walkSpeed, rate, ratio), oldLegEnd - elapsed, oldLegEnd);
                         reachedPresent = true;
                         continue;
                     }
@@ -729,11 +800,7 @@ namespace PersistentCity.Core
                         }
                     }
                 }
-                else
-                {
-                    double duration = Duration(leg, leg.From, leg.To, leg.Minutes, legacy, walkSpeed, rate, ratio);
-                    Add(leg, leg.From, leg.To, duration, leg.ServiceId, leg.Minutes);
-                }
+                else AddLeg(ScaledFuture(leg, shared, legacy, walkSpeed, rate, ratio), leg.Minutes);
                 reachedPresent = true;
             }
             merges = mergeCount;

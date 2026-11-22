@@ -83,9 +83,11 @@ public sealed class Gr5RetimeRepeatAllocationTests
     {
         var (state, city) = TrafficCity();
         var bytes = RepeatRetime(state, city, new[] { 3.0, 20, 1, 20 }, 2, () => new NoRoutes(), "13,965 links, 250 vehicles");
-        long kernel = bytes["snapshot"] + bytes["rescale"] + bytes["capture"] + bytes["vehicles"];
+        long Bytes(string phase) => bytes.TryGetValue(phase, out long value) ? value : 0;
+        long kernel = Bytes("snapshot") + Bytes("rescale") + Bytes("capture") + Bytes("vehicles");
         output.WriteLine("kernel snapshot + rescale + capture + vehicle check " + (kernel / 1e6).ToString("0.000") + " MB (.NET)");
-        Assert.True(kernel < 8_600_000, "kernel " + kernel);
+        Assert.Equal(0, Bytes("snapshot") + Bytes("capture"));
+        Assert.True(kernel < 3_400_000, "kernel " + kernel);
     }
 
     [Fact]
