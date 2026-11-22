@@ -8,6 +8,7 @@ using Xunit;
 
 namespace PersistentCity.Tests;
 
+[Collection(StreetFoodHooks.Collection)]
 public sealed class PhysicalAllocationAttributionTests
 {
     [Fact]
