@@ -652,7 +652,7 @@ namespace PersistentCity.Runtime
                 if (!owner.Ready || owner.TrafficNetwork == null || !Position.Finite(departureMinute) || departureMinute < 0
                     || from.Node == to.Node || !owner.ConnectorClear(from.Position, nodes[from.Node].Position) || !owner.ConnectorClear(to.Position, nodes[to.Node].Position))
                 { Finish(null); return; }
-                completing = completeResumed = false; completeStage = completeIndex = 0;
+                completing = completeResumed = recheckWaiting = false; completeStage = completeIndex = recheckWaits = 0;
                 if (owner.searchGeneration == int.MaxValue) { Array.Clear(owner.searchedAt, 0, owner.searchedAt.Length); owner.searchGeneration = 0; }
                 owner.searchGeneration++;
                 generation = owner.searchGeneration;
@@ -693,20 +693,21 @@ namespace PersistentCity.Runtime
                     }
                     else
                     {
-                        try { done = CompleteStep(ExpansionStep); }
+                        try { done = CompleteStep(ExpansionStep, deadlineTimestamp); }
                         catch (RoadSpeedsWaitingException) { search?.Dispose(); search = null; WaitingForSpeeds = true; return false; }
                         if (done) return true;
+                        if (recheckWaiting) { recheckWaiting = false; return false; }
                     }
                     if (deadlineTimestamp == long.MaxValue) continue;
                     if (++steps >= StepsPerUnit || Stopwatch.GetTimestamp() >= deadlineTimestamp) { completeResumed |= completing; return false; }
                 }
             }
 
-            private bool completing, completeResumed;
-            private int completeStage, completeIndex;
+            private bool completing, completeResumed, recheckWaiting;
+            private int completeStage, completeIndex, recheckWaits;
             public int CompletionUnits { get; private set; }
 
-            private bool CompleteStep(int units)
+            private bool CompleteStep(int units, long deadlineTimestamp)
             {
                 var owner = this.owner; var road = search!.Result; var path = scratch?.Path; var network = this.network!;
                 CompletionUnits++;
@@ -736,7 +737,14 @@ namespace PersistentCity.Runtime
                             continue;
                         }
                         default:
-                            if (completeResumed && !StillOpen(path)) { Finish(null); return true; }
+                            if (completeResumed)
+                            {
+                                long checkStarted = Stopwatch.GetTimestamp();
+                                if (!owner.edgeRecheck.Admits(checkStarted, deadlineTimestamp, path.Length, ref recheckWaits)) { recheckWaiting = true; return false; }
+                                bool open = StillOpen(path);
+                                owner.edgeRecheck.Record(Stopwatch.GetTimestamp() - checkStarted, path.Length);
+                                if (!open) { Finish(null); return true; }
+                            }
                             Finish(TransportComposition.Join(TransportComposition.Shared(begin!), TransportComposition.Shared(road), TransportComposition.Shared(end!)));
                             return true;
                     }
@@ -875,6 +883,9 @@ namespace PersistentCity.Runtime
             }
         }
         private readonly Stack<PlanScratch> planScratch = new Stack<PlanScratch>();
+        private readonly AtomicCheckReserve edgeRecheck = new AtomicCheckReserve(Stopwatch.Frequency * 2e-6);
+        public long EdgeRechecksDeferred => edgeRecheck.Deferred;
+        public long EdgeRechecksForced => edgeRecheck.Forced;
 
         private bool ConnectorClear(Position curb, Position road) => curb.IsFinite && road.IsFinite
             && Position.Distance(curb, road) <= ConnectorMetres && Math.Abs(curb.Y - road.Y) <= 1.5

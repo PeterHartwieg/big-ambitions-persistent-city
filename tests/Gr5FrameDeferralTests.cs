@@ -45,7 +45,7 @@ public sealed class Gr5FrameDeferralTests
     }
 
     [Fact]
-    public void AReservedUpdateKeepsExistingBodiesMovingButStartsNoSelectionOrParkedScanEvenWhenTheFrameIsLight()
+    public void AReservedUpdateKeepsBoundWalkersFollowingButStartsNoSelectionParkedScanOrIdleTrim()
     {
         StreetFoodHooks.Reset(); NavMesh.Reset(); AmbientPedestrians.Reserved.Clear(); PhysicalPedestrians.VisiblePoint = null;
         const double now = 1440 + 600;
@@ -56,25 +56,30 @@ public sealed class Gr5FrameDeferralTests
             using var bodies = new PhysicalPopulation(new Transform { Component = new PopulationRuntime() }, city, new MultimodalRoutes(),
                 typeof(Gr5FrameDeferralTests).Assembly, new VendorBodyTests.Log(), 96, 8, 120, new DwellSpots());
             var pool = PhysicalPedestrians.Last!;
+            int preflight = pool.AcquireCalls;
             double minute = now;
-            for (int i = 0; i < 4 && pool.AcquireCalls == 0; i++)
+            for (int i = 0; i < 8 && bodies.Followers == 0; i++)
             {
                 minute += 0.3 / 60; city.AdvanceTo(minute); Time.Next(0.3f);
                 Frame(0);
                 bodies.Update();
             }
-            Assert.True(pool.AcquireCalls > 0, "light frames select " + bodies.Diagnostics);
-            int calls = pool.AcquireCalls, parked = bodies.ParkedScans;
+            Assert.True(pool.AcquireCalls > preflight && bodies.Followers > 0, "light frames bind a walker " + bodies.Diagnostics);
+            int calls = pool.AcquireCalls, parked = bodies.ParkedScans, bound = bodies.BoundBodies;
             for (int i = 0; i < 12; i++)
             {
                 minute += 0.3 / 60; city.AdvanceTo(minute); Time.Next(0.3f);
-                Frame(0);
+                Frame(i % 2 == 0 ? 0 : FrameDeferral.DefaultFrameMilliseconds + 1);
                 UpdateCityClock.Reserve();
-                Assert.True(UpdateCityClock.Elapsed() < FrameDeferral.DefaultFrameMilliseconds);
+                int trims = pool.TrimCalls;
                 bodies.Update();
+                Assert.Equal(trims, pool.TrimCalls);
+                Assert.Equal(city.View.Minute, pool.Minute);
             }
             Assert.Equal(calls, pool.AcquireCalls);
             Assert.Equal(parked, bodies.ParkedScans);
+            Assert.Equal(bound, bodies.BoundBodies);
+            Assert.True(bodies.Followers > 0, "reserved updates keep following " + bodies.Diagnostics);
             Frame(0);
             Assert.False(UpdateCityClock.Reserved);
             for (int i = 0; i < 4 && pool.AcquireCalls == calls; i++)

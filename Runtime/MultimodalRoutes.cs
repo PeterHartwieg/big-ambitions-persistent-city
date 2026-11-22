@@ -356,7 +356,7 @@ namespace PersistentCity.Runtime
                 destinationWalkMap = new Dictionary<string, Route?>(StringComparer.Ordinal);
             private readonly Place point = new Place();
             private readonly RoadRoutes.NearQuery curbQuery = new RoadRoutes.NearQuery();
-            private bool curbsBegun;
+            private bool curbsBegun, sliced;
             private Route? best;
             private double bestScore = double.PositiveInfinity;
             private Place? home;
@@ -417,6 +417,7 @@ namespace PersistentCity.Runtime
                     throw new RoutePlanningRestartRequired("The road snapshot, public access or station list changed while a route plan was suspended.");
                 bool first = true;
                 bool finite = !double.IsPositiveInfinity(budgetMilliseconds);
+                sliced = finite;
                 int units = 0;
                 if (finite && owner.jobPathFrame != Time.frameCount)
                 { owner.jobPathFrame = Time.frameCount; owner.jobFramePaths = 0; }
@@ -595,6 +596,11 @@ namespace PersistentCity.Runtime
                         return;
                     }
                     case Stage.Finish:
+                        if (RevisionChanged())
+                        {
+                            if (sliced) throw new RoutePlanningRestartRequired("The road snapshot, public access or station list changed before a route plan published.");
+                            Result = null; stage = Stage.Done; return;
+                        }
                         if (best == null) owner.Metrics.NoFeasibleRoute++;
                         else if (Uses(best, TravelMode.Car)) owner.Metrics.SelectedCar++;
                         else if (Uses(best, TravelMode.Subway)) owner.Metrics.SelectedSubway++;

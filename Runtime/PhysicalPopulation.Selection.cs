@@ -175,7 +175,7 @@ namespace PersistentCity.Runtime
             }
             if (Time.unscaledTime < nextSelection || !routes.ReadyForPopulation || !selectionGate.Allows(UpdateCityClock.OptionalElapsed(), Time.unscaledTime))
             {
-                if (pedestrians.TrimIdle(Time.unscaledTime)) PhysicalAllocation.Charge(GcAllocationSegment.PhysicalRelease);
+                if (!UpdateCityClock.Reserved && pedestrians.TrimIdle(Time.unscaledTime)) PhysicalAllocation.Charge(GcAllocationSegment.PhysicalRelease);
                 return;
             }
             nextSelection = Time.unscaledTime + .25f;

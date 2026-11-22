@@ -75,8 +75,28 @@ public sealed class Gr5ClosureValidationTests
     public void ASlicedRouteRechecksEveryNativeEdgeBeforePublishing()
     {
         string source = System.IO.File.ReadAllText(System.IO.Path.Combine(CapabilityReportTests.Root(), "Runtime", "RoadRoutes.cs"));
-        Assert.Contains("if (completeResumed && !StillOpen(path)) { Finish(null); return true; }", source);
+        int admit = source.IndexOf("if (!owner.edgeRecheck.Admits(checkStarted, deadlineTimestamp, path.Length, ref recheckWaits)) { recheckWaiting = true; return false; }", StringComparison.Ordinal);
+        int check = source.IndexOf("bool open = StillOpen(path);", StringComparison.Ordinal);
+        int publish = source.IndexOf("Finish(TransportComposition.Join(", StringComparison.Ordinal);
+        Assert.True(admit > 0 && check > admit && publish > check);
+        Assert.Contains("if (!open) { Finish(null); return true; }", source);
+        Assert.Contains("if (recheckWaiting) { recheckWaiting = false; return false; }", source);
         Assert.Contains("if (owner.ClosedByFlags(path[i]) || i > 0 && !owner.EdgeStillLinked(path[i - 1], path[i])) return false;", source);
         Assert.Contains("|| native.neighbors == null || !native.neighbors.Contains(to)) return Invalid(\"path-neighbours\", from);", source);
+    }
+
+    [Fact]
+    public void APlanningJobWhoseRoadsWereInvalidatedDuringASliceRestartsInsteadOfPublishingAnEarlierCandidate()
+    {
+        string source = System.IO.File.ReadAllText(System.IO.Path.Combine(CapabilityReportTests.Root(), "Runtime", "MultimodalRoutes.cs"));
+        int finish = source.IndexOf("case Stage.Finish:", StringComparison.Ordinal);
+        int check = source.IndexOf("if (RevisionChanged())", finish, StringComparison.Ordinal);
+        int restart = source.IndexOf("if (sliced) throw new RoutePlanningRestartRequired(", finish, StringComparison.Ordinal);
+        int publish = source.IndexOf("Result = best;", finish, StringComparison.Ordinal);
+        Assert.True(finish > 0 && check > finish && restart > check && publish > restart);
+        Assert.Contains("|| (roadsCurrentAtBegin && (roads == null || !roads.IsCurrent))", source);
+        string roads = System.IO.File.ReadAllText(System.IO.Path.Combine(CapabilityReportTests.Root(), "Runtime", "RoadRoutes.cs"));
+        Assert.Contains("unsafeTopology = true; donor = null;", roads);
+        Assert.Contains("if (unsafeTopology) return false;", roads);
     }
 }
