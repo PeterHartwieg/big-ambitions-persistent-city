@@ -1025,11 +1025,11 @@ namespace PersistentCity.Core
             throw new InvalidOperationException("Traffic exclusion ended without a result.");
         }
 
-        private IEnumerator<object?> ExcludingSteps(Func<string, bool> exclude, int linksPerStep, bool shareDefinitions)
+        private IEnumerator<object?> ExcludingSteps(Func<string, bool> exclude, int linksPerStep, bool kernelResult)
         {
             int work = 0;
             TrafficKernelState? state = null;
-            var capture = CaptureSteps(linksPerStep, true, shareDefinitions);
+            var capture = CaptureSteps(linksPerStep, !kernelResult, kernelResult);
             while (capture.MoveNext())
             {
                 if (capture.Current != null) { state = capture.Current; break; }
@@ -1071,7 +1071,9 @@ namespace PersistentCity.Core
                 link.WaitingSources.RemoveAll(id => exclude(id));
                 if (++work % linksPerStep == 0) yield return null;
             }
-            var restore = RestoreSteps(state, true, linksPerStep, adoptDefinitions: true);
+            var restore = kernelResult
+                ? RestoreSteps(state, true, linksPerStep, adoptDefinitions: true, linkSource: this, excludeFromSource: exclude)
+                : RestoreSteps(state, true, linksPerStep, adoptDefinitions: true);
             while (restore.MoveNext())
             {
                 if (restore.Current != null) { yield return restore.Current; yield break; }
@@ -1086,7 +1088,7 @@ namespace PersistentCity.Core
         private static TrafficKernel Restore(TrafficKernelState state, bool rebuildWakeups) => RunToEnd(RestoreSteps(state, rebuildWakeups, int.MaxValue));
 
         private static IEnumerator<TrafficKernel?> RestoreSteps(TrafficKernelState state, bool rebuildWakeups, int linksPerStep, bool adoptDefinitions = false,
-            TrafficKernel? linkSource = null, double dischargeFactor = 1)
+            TrafficKernel? linkSource = null, double dischargeFactor = 1, Func<string, bool>? excludeFromSource = null)
         {
             if (linksPerStep < 1) throw new ArgumentOutOfRangeException(nameof(linksPerStep));
             int work = 0;
@@ -1154,7 +1156,8 @@ namespace PersistentCity.Core
                         (original.MergeCursor >= 0 && !kernel.links.ContainsKey(original.MergeCursor)))
                         throw new ArgumentException("Invalid traffic link state.", nameof(state));
                     link.Seen = true; seenCount++;
-                    double discharge = linkSource.Clock + Math.Max(0, original.NextDischargeAt - linkSource.Clock) * dischargeFactor;
+                    double discharge = excludeFromSource != null ? original.NextDischargeAt
+                        : linkSource.Clock + Math.Max(0, original.NextDischargeAt - linkSource.Clock) * dischargeFactor;
                     RequireTime(discharge, nameof(state));
                     link.Closed = original.Closed;
                     if (original.Closed) kernel.closedLinks.Add(linkId);
@@ -1165,6 +1168,7 @@ namespace PersistentCity.Core
                             throw new ArgumentException("Invalid traffic predecessor.", nameof(state));
                     foreach (TrafficVehicleState queued in original.Queue)
                     {
+                        if (excludeFromSource != null && excludeFromSource(queued.VehicleId)) continue;
                         TrafficVehicleState vehicle = kernel.FindRestoredVehicle(queued.VehicleId, occupied);
                         if (vehicle.Completed || vehicle.RouteIndex < 0 || vehicle.Route[vehicle.RouteIndex].LinkId != linkId)
                             throw new ArgumentException("Traffic queue and vehicle cursor disagree.", nameof(state));
@@ -1172,6 +1176,7 @@ namespace PersistentCity.Core
                     }
                     foreach (string id in original.Sources)
                     {
+                        if (excludeFromSource != null && excludeFromSource(id)) continue;
                         TrafficVehicleState vehicle = kernel.FindRestoredVehicle(id, occupied);
                         if (vehicle.Completed || vehicle.RouteIndex != -1 || vehicle.Route[0].LinkId != linkId)
                             throw new ArgumentException("Traffic source queue and vehicle cursor disagree.", nameof(state));

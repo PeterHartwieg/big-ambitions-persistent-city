@@ -87,8 +87,9 @@ namespace PersistentCity.Core
 
         internal sealed class RetimeSource
         {
-            internal RetimeSource(TrafficKernel? kernel) { Kernel = kernel; }
+            internal RetimeSource(TrafficKernel? kernel, bool withoutThroughCars = false) { Kernel = kernel; WithoutThroughCars = withoutThroughCars; }
             internal TrafficKernel? Kernel { get; }
+            internal bool WithoutThroughCars { get; }
         }
 
         private static bool Needed(CityState state, double nativeWalkMetresPerSecond, double clockRate)

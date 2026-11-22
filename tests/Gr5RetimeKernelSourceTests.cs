@@ -117,7 +117,7 @@ public sealed class Gr5RetimeKernelSourceTests
             Assert.True(saved > 4_500_000, "retime " + i + " saved " + saved);
         }
         for (int i = 0; i < Rates.Length; i++)
-            Assert.True(Of(afterBytes[i], "snapshot") < (throughCars == 0 ? 1 : 5_500_000), "snapshot " + i + " " + Of(afterBytes[i], "snapshot"));
+            Assert.True(Of(afterBytes[i], "snapshot") < (throughCars == 0 ? 1 : 3_000_000), "snapshot " + i + " " + Of(afterBytes[i], "snapshot"));
     }
 
     [Fact]
@@ -192,7 +192,7 @@ public sealed class Gr5RetimeKernelSourceTests
         Assert.Equal(Json(restored.Capture()), Json(excluded!.Capture()));
         Assert.Equal(Json(snapshot), Json(excluded.Capture()));
         Assert.DoesNotContain(excluded.Capture().Vehicles, v => ThroughTraffic.IsThroughVehicle(v.VehicleId));
-        Assert.True(after * 2 < before, after + " vs " + before);
+        Assert.True(after * 4 < before, after + " vs " + before);
         var none = live.WithoutVehiclesInSteps(id => false, 256);
         Assert.True(none.MoveNext());
         Assert.Same(live, none.Current);
@@ -219,6 +219,19 @@ public sealed class Gr5RetimeKernelSourceTests
         (_, city) = Retime(state, city, one * 3, legacy: false);
         Assert.Null(state.PendingRetimedTraffic);
         Assert.Null(state.Traffic);
+    }
+
+    [Theory]
+    [InlineData(0, false, "the live kernel")]
+    [InlineData(40, false, "a copy without through cars")]
+    [InlineData(40, true, "a save snapshot")]
+    public void TheDriverNamesTheTrafficItRetimedFrom(int throughCars, bool legacy, string expected)
+    {
+        var (state, city) = Gr5RetimeRepeatAllocationTests.TrafficCity();
+        AddThroughCars(state, city, throughCars, 0);
+        string? named = null;
+        Retime(state, city, 3, legacy, (s, c, driver) => { named = driver.TrafficSource; return null; });
+        Assert.Equal(expected, named);
     }
 
     private static readonly FieldInfo SavedTraffic = typeof(TravelTiming.TravelRetime).GetField("savedTraffic", BindingFlags.NonPublic | BindingFlags.Instance)!;

@@ -437,7 +437,7 @@ namespace PersistentCity.Core
             var steps = traffic.WithoutVehiclesInSteps(ThroughTraffic.IsThroughVehicle, linksPerStep);
             while (steps.MoveNext())
             {
-                if (steps.Current != null) { State.RetimeSource = new TravelTiming.RetimeSource(steps.Current); yield return true; yield break; }
+                if (steps.Current != null) { State.RetimeSource = new TravelTiming.RetimeSource(steps.Current, !ReferenceEquals(steps.Current, traffic)); yield return true; yield break; }
                 yield return false;
             }
             throw new InvalidOperationException("Traffic exclusion ended without a result.");
