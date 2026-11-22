@@ -378,6 +378,56 @@ namespace PerfUnionProbe
         }
     }
 
+    public sealed class PatchWindowScan
+    {
+        public const string FailedError = "f4b_patch_scan_failed";
+        private readonly List<ObservedPatch> scanned = new List<ObservedPatch>();
+        private readonly Action<MethodBase, List<ObservedPatch>> observe;
+        private readonly Func<IEnumerable<MethodBase>> allPatched;
+        private readonly int attempts;
+        private readonly Action scan, matched;
+        private PatchStateWatch watch;
+        private CoverageTracker coverage;
+        private bool measuring;
+        private string error;
+
+        public PatchWindowScan(PatchScanCache cache, Action<MethodBase, List<ObservedPatch>> observe, Func<IEnumerable<MethodBase>> allPatched, int attempts)
+        {
+            Cache = cache; this.observe = observe; this.allPatched = allPatched; this.attempts = attempts;
+            scan = () => coverage.Observe(Observe());
+            matched = () => { Observe(); MatchedScans++; };
+        }
+
+        public PatchScanCache Cache { get; }
+        public PatchSetWindow Window { get; } = new PatchSetWindow();
+        public long MatchedScans { get; private set; }
+        public void ResetMatched() => MatchedScans = 0;
+
+        public bool Run(PatchStateWatch watch, CoverageTracker coverage, bool full, bool measuring, ref string error)
+        {
+            this.watch = watch; this.coverage = coverage; this.measuring = measuring; this.error = error;
+            try { return PatchStateWatch.Run(watch, full, coverage == null ? matched : scan); }
+            finally { error = this.error; this.watch = null; this.coverage = null; this.error = null; }
+        }
+
+        public string Rescan(PatchStateWatch watch, CoverageTracker coverage, bool reference, bool full, bool measuring, ref string error)
+        {
+            if (coverage == null && (!reference || !full && watch == null)) return "none";
+            bool ran = false;
+            try { ran = Run(watch, coverage, full, measuring, ref error); } catch { error = FailedError; }
+            if (coverage != null) error = Window.Rescanned(coverage, measuring, error);
+            return ran ? "full" : "watch-unchanged";
+        }
+
+        private List<ObservedPatch> Observe()
+        {
+            scanned.Clear();
+            if (watch?.Scanning != null) error = Window.Scanned(Cache, watch, observe, scanned, attempts, measuring, error);
+            else foreach (var target in allPatched()) observe(target, scanned);
+            return scanned;
+        }
+    }
+
     public sealed class AdvanceCallBuffer
     {
         public AdvanceCallBuffer(int slowCapacity, int unitCapacity)

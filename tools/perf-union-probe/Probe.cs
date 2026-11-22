@@ -83,7 +83,6 @@ namespace PerfUnionProbe
         internal static UnionClock union = new UnionClock(0, 0, Stopwatch.Frequency);
         internal static readonly HoldTracker holds = new HoldTracker();
         private static bool loopInstalled, eventsSubscribed, holdsBound, advanceBound;
-        private static readonly PatchSetWindow patchWindow = new PatchSetWindow();
         private static CoverageTracker coverage;
         private static PatchStateWatch patchWatch;
 
@@ -235,9 +234,9 @@ namespace PerfUnionProbe
                     patches.Patch(tick, prefix: new HarmonyMethod(typeof(ShimPatch), nameof(ShimPatch.Prefix)) { priority = Priority.First + 1 });
                     shimInstalled = true;
                     union = new UnionClock(0, 0, Stopwatch.Frequency); componentNames = Array.Empty<string>();
-                    coverage = null; matchedScans = 0;
+                    coverage = null; scanner.ResetMatched();
                     try { patchWatch = PatchStateWatch.Shared(); } catch { patchWatch = null; }
-                    PatchStateWatch.Run(patchWatch, true, Matched);
+                    scanner.Run(patchWatch, null, true, measuring, ref error);
                 }
                 else
                 {
@@ -332,7 +331,7 @@ namespace PerfUnionProbe
             }
             coverage = new CoverageTracker(ScopeInventory.Patches, exp => bindings.Any(b => ReferenceEquals(b.Expected, exp) && b.Status == "timed"), PatchId);
             try { patchWatch = PatchStateWatch.Shared(); } catch { patchWatch = null; }
-            PatchStateWatch.Run(patchWatch, true, Scan);
+            scanner.Run(patchWatch, coverage, true, measuring, ref error);
             for (int i = 0; i < components.Length; i++)
             {
                 var method = Find(components[i], components[i].Target);
@@ -373,34 +372,16 @@ namespace PerfUnionProbe
             }
         }
 
-        private static readonly Action Scan = ScanPatches;
-        private static void ScanPatches()
-        {
-            if (coverage == null) return;
-            coverage.Observe(ObservePatches());
-        }
-
-        private static readonly PatchScanCache scanCache = new PatchScanCache();
         private const int ScanAttempts = 4;
-        private static readonly List<ObservedPatch> scanned = new List<ObservedPatch>();
         private static readonly Action<MethodBase, List<ObservedPatch>> ObserveTarget = (target, into) => HarmonyScan.Observe(target, Harmony.GetPatchInfo(target), pc, into);
+        private static readonly PatchWindowScan scanner = new PatchWindowScan(new PatchScanCache(), ObserveTarget, () => Harmony.GetAllPatchedMethods().ToArray(), ScanAttempts);
+        private static PatchScanCache scanCache => scanner.Cache;
 
         private static void ConfigureScanCache()
         {
             var mentions = new List<string>(ScopeInventory.Owners);
             if (pc != null) foreach (var module in pc.GetModules()) mentions.Add(module.ModuleVersionId.ToString());
             scanCache.Configure(mentions);
-        }
-
-        private static List<ObservedPatch> ObservePatches()
-        {
-            scanned.Clear();
-            if (patchWatch?.Scanning != null)
-            {
-                error = patchWindow.Scanned(scanCache, patchWatch, ObserveTarget, scanned, ScanAttempts, measuring, error);
-            }
-            else foreach (var target in Harmony.GetAllPatchedMethods().ToArray()) HarmonyScan.Observe(target, Harmony.GetPatchInfo(target), pc, scanned);
-            return scanned;
         }
 
         private static JObject ScanCacheRow() => new JObject
@@ -674,28 +655,7 @@ namespace PerfUnionProbe
             catch { sampleFailures++; }
         }
 
-        private static long matchedScans;
-        private static void MatchedScan()
-        {
-            ObservePatches();
-            matchedScans++;
-        }
-
-        private static readonly Action Matched = MatchedScan;
-
-        private static string Rescan(bool full)
-        {
-            bool scanned = false;
-            if (coverage == null)
-            {
-                if (mode != "reference" || !full && patchWatch == null) return "none";
-                try { scanned = PatchStateWatch.Run(patchWatch, full, Matched); } catch { error = "f4b_patch_scan_failed"; }
-                return scanned ? "full" : "watch-unchanged";
-            }
-            try { scanned = PatchStateWatch.Run(patchWatch, full, Scan); } catch { error = "f4b_patch_scan_failed"; }
-            error = patchWindow.Rescanned(coverage, measuring, error);
-            return scanned ? "full" : "watch-unchanged";
-        }
+        private static string Rescan(bool full) => scanner.Rescan(patchWatch, coverage, mode == "reference", full, measuring, ref error);
 
         private static long monoHeapStart = -1, monoUsedStart = -1, monoHeapStop = -1, monoUsedStop = -1;
         private static readonly CollectionSeries collectionSeries = new CollectionSeries();
@@ -732,7 +692,7 @@ namespace PerfUnionProbe
             window = label; error = ""; stopReason = "measuring";
             frameRing.Reset(); tickRing.Reset(); sampleRing.Reset(); calls.Reset(); sampleFailures = advanceCalls = 0;
             ReadMonoHeap(out startScanHeap, out startScanUsed); monoHeapStop = monoUsedStop = -1;
-            startScan = Rescan(false); stopScan = "none"; patchWindow.Begin(coverage);
+            startScan = Rescan(false); stopScan = "none"; scanner.Window.Begin(coverage);
             phases.Reset(); if (subPhases.Phases > 0) subPhases.Reset();
             ReadMonoHeap(out monoHeapStart, out monoUsedStart);
             collectionSeries.Begin(GC.CollectionCount(0));
@@ -813,7 +773,7 @@ namespace PerfUnionProbe
                 ["scope_inventory_version"] = ScopeInventory.Version, ["expected_scope_hash"] = ScopeInventory.Hash(),
                 ["coverage_complete"] = NotApplicable(() => CoverageComplete()),
                 ["patch_scans"] = NotApplicable(() => coverage?.Scans ?? 0), ["patch_scan_cache"] = ScanCacheRow(), ["patch_state_checks"] = NotApplicable(() => patchWatch?.Checks ?? 0),
-                ["patch_state_changes"] = NotApplicable(() => patchWatch?.Changes ?? 0), ["patch_state_watch"] = NotApplicable(() => patchWatch != null), ["patch_scan_pending"] = NotApplicable(() => patchWatch?.Pending ?? false), ["matched_reference_scans"] = mode == "reference" ? (JToken)matchedScans : "n/a", ["patch_set_changed_in_window"] = NotApplicable(() => patchWindow.Changed),
+                ["patch_state_changes"] = NotApplicable(() => patchWatch?.Changes ?? 0), ["patch_state_watch"] = NotApplicable(() => patchWatch != null), ["patch_scan_pending"] = NotApplicable(() => patchWatch?.Pending ?? false), ["matched_reference_scans"] = mode == "reference" ? (JToken)scanner.MatchedScans : "n/a", ["patch_set_changed_in_window"] = NotApplicable(() => scanner.Window.Changed),
                 ["start_scan"] = startScan, ["stop_scan"] = stopScan, ["diagnostic_mark_bound"] = NotApplicable(() => markDiagnostic != null),
                 ["collection_frames"] = CollectionFrameSummary(),
                 ["scopes"] = NotApplicable(() => new JObject { ["timed_methods"] = scopeIndex.Count, ["timed"] = Count("timed"),
