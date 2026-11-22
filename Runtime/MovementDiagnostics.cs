@@ -162,7 +162,7 @@ namespace PersistentCity.Runtime
             var census = RetainedCensusOf(this, save!.modData);
             double elapsed = (System.Diagnostics.Stopwatch.GetTimestamp() - started) * GcMillisecondsPerTimestamp;
             Debug.Log(RetainedPrefix + census.ReportJson(48, elapsed, RetainedCountedTypes, RetainedCensus.InstrumentRoot, RetainedTrackedTypes,
-                RetainedCensus.JourneyLegs(simulation?.State)));
+                RetainedCensus.JourneyLegs(simulation?.State), RetainedCensus.TrafficVehicles(simulation?.LiveTrafficKernel)));
         }
 
         internal static readonly Type[] RetainedCountedTypes = { typeof(CitySimulator), typeof(MultimodalRoutes), typeof(RoadRoutes), typeof(WalkingRoutes), typeof(TrafficRoadNetwork), typeof(TrafficKernel) };
@@ -172,13 +172,14 @@ namespace PersistentCity.Runtime
             typeof(TrafficRouteLeg[]), typeof(List<TrafficRouteLeg>), typeof(TrafficKernelState), typeof(CitySimulator), typeof(MultimodalRoutes), typeof(RoadRoutes) };
 
         internal static readonly Type[] RetainedPerRootTypes = { typeof(RouteLeg), typeof(RouteLeg[]), typeof(List<RouteLeg>), typeof(RouteLegs), typeof(Route),
-            typeof(TrafficRouteLeg), typeof(TrafficVehicleState) };
+            typeof(TrafficRouteLeg), typeof(TrafficVehicleState), typeof(List<TrafficRouteLeg>), typeof(TrafficRouteLeg[]), typeof(string), typeof(double[]) };
 
         internal static RetainedCensus RetainedCensusOf(object runtime, IDictionary<string, string>? modData)
         {
             var census = new RetainedCensus(RetainedWalkable);
             census.TrackPerRoot(RetainedPerRootTypes);
             (runtime as PopulationRuntime)?.routes?.RetainedCaches((name, cache, bound) => census.DeferCache("cache.routes." + name, cache, bound));
+            (runtime as PopulationRuntime)?.simulation?.LiveTrafficKernel?.RetainedCaches((name, cache, bound) => census.DeferCache("cache.traffic." + name, cache, bound));
             census.AddOwnedEntries(modData, "persistentcity:", "save.modData.");
             census.AddFields("runtime.", runtime, typeof(MonoBehaviour));
             var assemblies = new List<System.Reflection.Assembly>();

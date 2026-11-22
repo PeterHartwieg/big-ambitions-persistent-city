@@ -306,6 +306,16 @@ namespace PersistentCity.Core
             public long MostSplitPrefixes { get; }
         }
 
+        private void AppendLive(StringBuilder text, string name, Type type, long live)
+        {
+            long retained = ObjectsOf(type);
+            long cached = CachedObjectsOf(type);
+            text.Append('"').Append(name).Append("\":{\"retained\":").Append(retained.ToString(CultureInfo.InvariantCulture))
+                .Append(",\"live\":").Append(live.ToString(CultureInfo.InvariantCulture))
+                .Append(",\"in_caches\":").Append(cached.ToString(CultureInfo.InvariantCulture))
+                .Append(",\"outside_live_and_caches\":").Append((retained - live - cached).ToString(CultureInfo.InvariantCulture)).Append('}');
+        }
+
         public static JourneyLegLedger JourneyLegs(CityState? state)
         {
             if (state == null) return default;
@@ -329,6 +339,30 @@ namespace PersistentCity.Core
             return new JourneyLegLedger(journeys, travelling, legs.Count, splits, most, mostSplits);
         }
 
+        public readonly struct TrafficVehicleLedger
+        {
+            public TrafficVehicleLedger(long vehicles, long routes, long legs) { Vehicles = vehicles; Routes = routes; Legs = legs; }
+            public long Vehicles { get; }
+            public long Routes { get; }
+            public long Legs { get; }
+        }
+
+        public static TrafficVehicleLedger TrafficVehicles(TrafficKernel? kernel)
+        {
+            if (kernel == null) return default;
+            var vehicles = new List<TrafficVehicleState>();
+            kernel.CopyVehiclesInOrder(vehicles);
+            var routes = new HashSet<object>(Identity.Instance);
+            var legs = new HashSet<object>(Identity.Instance);
+            foreach (var vehicle in vehicles)
+            {
+                if (vehicle.Route == null) continue;
+                routes.Add(vehicle.Route);
+                foreach (var leg in vehicle.Route) if (leg != null) legs.Add(leg);
+            }
+            return new TrafficVehicleLedger(vehicles.Count, routes.Count, legs.Count);
+        }
+
         private sealed class LegIdentity : IEqualityComparer<RouteLeg>
         {
             public static readonly LegIdentity Instance = new LegIdentity();
@@ -337,6 +371,9 @@ namespace PersistentCity.Core
         }
 
         public string ReportJson(int top, double elapsedMilliseconds, IEnumerable<Type>? counted, Func<string, bool>? diagnostic, IEnumerable<Type>? tracked, JourneyLegLedger? journeyLegs)
+            => ReportJson(top, elapsedMilliseconds, counted, diagnostic, tracked, journeyLegs, null);
+
+        public string ReportJson(int top, double elapsedMilliseconds, IEnumerable<Type>? counted, Func<string, bool>? diagnostic, IEnumerable<Type>? tracked, JourneyLegLedger? journeyLegs, TrafficVehicleLedger? trafficVehicles)
         {
             string report = ReportJson(top, elapsedMilliseconds, counted, diagnostic);
             var text = new StringBuilder(report, 0, report.Length - 1, report.Length + 2048).Append(",\"tracked_types\":[");
@@ -408,6 +445,16 @@ namespace PersistentCity.Core
                     .Append(",\"most_split_prefixes_in_a_journey\":").Append(ledger.MostSplitPrefixes.ToString(CultureInfo.InvariantCulture))
                     .Append(",\"in_caches\":").Append(cached.ToString(CultureInfo.InvariantCulture))
                     .Append(",\"outside_current_journeys_and_caches\":").Append((retained - ledger.Legs - cached).ToString(CultureInfo.InvariantCulture)).Append('}');
+            }
+            if (trafficVehicles is TrafficVehicleLedger traffic)
+            {
+                text.Append(",\"traffic_vehicles\":{");
+                AppendLive(text, "vehicles", typeof(TrafficVehicleState), traffic.Vehicles);
+                text.Append(',');
+                AppendLive(text, "routes", typeof(List<TrafficRouteLeg>), traffic.Routes);
+                text.Append(',');
+                AppendLive(text, "legs", typeof(TrafficRouteLeg), traffic.Legs);
+                text.Append('}');
             }
             return text.Append('}').ToString();
         }
