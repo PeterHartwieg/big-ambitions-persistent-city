@@ -746,7 +746,8 @@ namespace PersistentCity.Runtime
             private bool StillOpen(int[] path)
             {
                 if (!owner.Ready || !owner.IsCurrent || !ReferenceEquals(owner.TrafficNetwork, network)) return false;
-                foreach (int index in path) if (owner.ClosedByFlags(index)) return false;
+                for (int i = 0; i < path.Length; i++)
+                    if (owner.ClosedByFlags(path[i]) || i > 0 && !owner.EdgeStillLinked(path[i - 1], path[i])) return false;
                 return true;
             }
 
@@ -920,6 +921,13 @@ namespace PersistentCity.Runtime
             if (!SnapshotNodeCurrent(index)) return true;
             if (trafficBuilder != null && !trafficBuilder.NodeCurrent(index)) { TrafficInvalid(); return true; }
             return ClosedByFlags(index);
+        }
+        private bool EdgeStillLinked(int from, int to)
+        {
+            var native = waypoints[from];
+            if (!ReferenceEquals(native, nativeContracts[from]) || !ReferenceEquals(waypoints[to], nativeContracts[to])
+                || native.neighbors == null || !native.neighbors.Contains(to)) return Invalid("path-neighbours", from);
+            return true;
         }
         private bool ClosedByFlags(int index)
         {

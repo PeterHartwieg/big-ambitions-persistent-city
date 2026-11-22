@@ -38,10 +38,12 @@ public sealed class Gr5CurbSearchTests
                 if (Closed.Contains(Result[i])) { Result.RemoveAt(i); return true; }
             return false;
         }
+        public int Spacing;
         public void Attempt(int candidate)
         {
             Clock += attemptTicks;
             if (Log) Calls.Add("try " + candidate);
+            foreach (int old in Result) if (Math.Abs(old - candidate) <= Spacing) return;
             if (accepts(candidate)) Result.Add(candidate);
         }
     }
@@ -176,6 +178,22 @@ public sealed class Gr5CurbSearchTests
         Assert.Equal(new[] { 2, 3 }, source.Result);
         Assert.Equal(1, search.Dropped);
         Assert.Equal(3, search.Attempts);
+    }
+
+    [Fact]
+    public void AnAcceptedCurbThatClosesDuringAYieldDoesNotBlockAnOpenReplacementNextToIt()
+    {
+        var source = new Source(Row(1, 2), _ => true, 1, 1) { Limit = 2, Spacing = 1, Log = true };
+        var search = new CurbSearch();
+        search.Begin(0, 0, 0);
+        Assert.False(search.Continue(source, source.Clock));
+        Assert.False(search.Continue(source, source.Clock + 1));
+        Assert.Equal(new[] { 1 }, source.Result);
+        source.Closed.Add(1);
+        while (!search.Continue(source, source.Clock + 1)) { }
+        Assert.Equal(new[] { 2 }, source.Result);
+        Assert.Equal(1, search.Dropped);
+        Assert.Contains("try 2", source.Calls);
     }
 
     [Fact]

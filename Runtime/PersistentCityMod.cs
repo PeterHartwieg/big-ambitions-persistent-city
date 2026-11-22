@@ -432,6 +432,7 @@ namespace PersistentCity.Runtime
                 if (!NativeCityClock.CheckInputEpoch(target, simulation.State.Minute)) { StopAccounting(); return; }
                 ModFrames.Charge(GcAllocationSegment.ModClosures);
                 bool publishedNetwork = simulation.NetworkPublished;
+                if (publishedNetwork) UpdateCityClock.Reserve();
                 bool setupWanted = !publishedNetwork && settings.PhysicalEnabled && !physicalFailed && physical == null && !BuildingManager.IsInsideBuilding && !NativeTravelPace.HiddenTravel;
                 if (!publishedNetwork && !physicalSetupGate.Reserve(setupWanted))
                 {

@@ -70,4 +70,13 @@ public sealed class Gr5ClosureValidationTests
         Assert.Contains("return ClosedByFlags(index);", source);
         Assert.Contains("closureBatch ? unsafeTopology || !closureBatchCurrent : !IsCurrent", source);
     }
+
+    [Fact]
+    public void ASlicedRouteRechecksEveryNativeEdgeBeforePublishing()
+    {
+        string source = System.IO.File.ReadAllText(System.IO.Path.Combine(CapabilityReportTests.Root(), "Runtime", "RoadRoutes.cs"));
+        Assert.Contains("if (completeResumed && !StillOpen(path)) { Finish(null); return true; }", source);
+        Assert.Contains("if (owner.ClosedByFlags(path[i]) || i > 0 && !owner.EdgeStillLinked(path[i - 1], path[i])) return false;", source);
+        Assert.Contains("|| native.neighbors == null || !native.neighbors.Contains(to)) return Invalid(\"path-neighbours\", from);", source);
+    }
 }

@@ -43,6 +43,7 @@ namespace PersistentCity.Core
         {
             if (stage == Stage.Done) return true;
             if (Calls++ > 0) resumed = true;
+            if (resumed && stage == Stage.Attempt) while (source.DropUnusable()) Dropped++;
             bool worked = false;
             while (stage == Stage.Collect)
             {

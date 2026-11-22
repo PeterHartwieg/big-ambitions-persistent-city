@@ -24,6 +24,80 @@ public sealed class Gr5FrameDeferralTests
         while (UpdateCityClock.Elapsed() < spentMilliseconds) { }
     }
 
+    private static CitySimulator Walkers(double now)
+    {
+        const int walkers = 24;
+        var ids = Enumerable.Range(0, walkers).Select(i => new CitizenIdentity { Id = "g" + i.ToString("D2"), Name = "G" + i, Age = 30, AppearanceSeed = i + 1 }).ToList();
+        var places = new List<Place> { new Place { Id = "work", Name = "Work", Kind = PlaceKind.Work, Capacity = walkers, Position = new Position(100, 0, 0) } };
+        for (int i = 0; i < walkers; i++)
+            places.Add(new Place { Id = "home" + i, Name = "Home", Kind = PlaceKind.Home, Capacity = 1,
+                Position = new Position(100 + 60 * Math.Cos(i * 0.2), 0, 60 * Math.Sin(i * 0.2)) });
+        var state = Population.Create(ids, places, "frame-deferral", "0.40.4", 3, now);
+        for (int i = 0; i < walkers; i++)
+        {
+            var c = state.Citizens[i];
+            c.HomeId = c.PlaceId = "home" + i; c.DayPlaceId = "work"; c.MealOuting = null;
+            c.Phase = CitizenPhase.Travelling; c.DestinationId = "work"; c.DestinationActivity = Activity.Work;
+            c.Journey = new Walk().Plan(places[i + 1], places[0], now, c.Preferences);
+            c.DepartureMinute = now; c.NextEventMinute = now + c.Journey.Minutes; c.ActivityUntilMinute = now + 600;
+        }
+        return new CitySimulator(state, new Walk());
+    }
+
+    [Fact]
+    public void AReservedUpdateKeepsExistingBodiesMovingButStartsNoSelectionOrParkedScanEvenWhenTheFrameIsLight()
+    {
+        StreetFoodHooks.Reset(); NavMesh.Reset(); AmbientPedestrians.Reserved.Clear(); PhysicalPedestrians.VisiblePoint = null;
+        const double now = 1440 + 600;
+        var city = Walkers(now);
+        NativeTravelPace.Focus = new Position(100, 0, 0); Time.Next(3);
+        try
+        {
+            using var bodies = new PhysicalPopulation(new Transform { Component = new PopulationRuntime() }, city, new MultimodalRoutes(),
+                typeof(Gr5FrameDeferralTests).Assembly, new VendorBodyTests.Log(), 96, 8, 120, new DwellSpots());
+            var pool = PhysicalPedestrians.Last!;
+            double minute = now;
+            for (int i = 0; i < 4 && pool.AcquireCalls == 0; i++)
+            {
+                minute += 0.3 / 60; city.AdvanceTo(minute); Time.Next(0.3f);
+                Frame(0);
+                bodies.Update();
+            }
+            Assert.True(pool.AcquireCalls > 0, "light frames select " + bodies.Diagnostics);
+            int calls = pool.AcquireCalls, parked = bodies.ParkedScans;
+            for (int i = 0; i < 12; i++)
+            {
+                minute += 0.3 / 60; city.AdvanceTo(minute); Time.Next(0.3f);
+                Frame(0);
+                UpdateCityClock.Reserve();
+                Assert.True(UpdateCityClock.Elapsed() < FrameDeferral.DefaultFrameMilliseconds);
+                bodies.Update();
+            }
+            Assert.Equal(calls, pool.AcquireCalls);
+            Assert.Equal(parked, bodies.ParkedScans);
+            Frame(0);
+            Assert.False(UpdateCityClock.Reserved);
+            for (int i = 0; i < 4 && pool.AcquireCalls == calls; i++)
+            {
+                minute += 0.3 / 60; city.AdvanceTo(minute); Time.Next(0.3f);
+                Frame(0);
+                bodies.Update();
+            }
+            Assert.True(pool.AcquireCalls > calls, "the next unreserved light frame selects again " + bodies.Diagnostics);
+        }
+        finally { UpdateCityClock.Reset(); }
+    }
+
+    [Fact]
+    public void ThePublicationUpdateReservesItselfBeforePhysicalWork()
+    {
+        string source = System.IO.File.ReadAllText(System.IO.Path.Combine(CapabilityReportTests.Root(), "Runtime", "PersistentCityMod.cs"));
+        int reserve = source.IndexOf("if (publishedNetwork) UpdateCityClock.Reserve();", StringComparison.Ordinal);
+        int published = source.IndexOf("bool publishedNetwork = simulation.NetworkPublished;", StringComparison.Ordinal);
+        int physicalRun = source.IndexOf("double physicalStarted = UpdateCityClock.Elapsed();", StringComparison.Ordinal);
+        Assert.True(published >= 0 && reserve > published && physicalRun > reserve);
+    }
+
     [Fact]
     public void PhysicalSelectionAndParkedScansNeverRunOnAHeavyUpdateEvenAfterSecondsOfHeavyUpdates()
     {

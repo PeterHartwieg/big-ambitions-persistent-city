@@ -165,7 +165,7 @@ namespace PersistentCity.Runtime
             }
             finally { snapshot.Clear(); bindingSnapshot = snapshot; }
             PhysicalAllocation.Charge(GcAllocationSegment.PhysicalBindings);
-            if (!interior && Time.unscaledTime >= nextParked && parkedGate.Allows(UpdateCityClock.Elapsed(), Time.unscaledTime))
+            if (!interior && Time.unscaledTime >= nextParked && parkedGate.Allows(UpdateCityClock.OptionalElapsed(), Time.unscaledTime))
             {
                 bool scan = Time.unscaledTime >= nextParkedScan;
                 if (scan) nextParkedScan = Time.unscaledTime + ParkedRefreshSeconds;
@@ -173,7 +173,7 @@ namespace PersistentCity.Runtime
                 nextParked = complete ? nextParkedScan : Time.unscaledTime + ParkedRetrySeconds;
                 PhysicalAllocation.Charge(GcAllocationSegment.PhysicalParked);
             }
-            if (Time.unscaledTime < nextSelection || !routes.ReadyForPopulation || !selectionGate.Allows(UpdateCityClock.Elapsed(), Time.unscaledTime))
+            if (Time.unscaledTime < nextSelection || !routes.ReadyForPopulation || !selectionGate.Allows(UpdateCityClock.OptionalElapsed(), Time.unscaledTime))
             {
                 if (pedestrians.TrimIdle(Time.unscaledTime)) PhysicalAllocation.Charge(GcAllocationSegment.PhysicalRelease);
                 return;
@@ -187,7 +187,7 @@ namespace PersistentCity.Runtime
                 CheckJourneyIndex();
                 PruneFadeRestrictions();
                 PhysicalAllocation.Charge(GcAllocationSegment.PhysicalIndex);
-                if (selectionGate.Spent(UpdateCityClock.Elapsed())) { nextSelection = Time.unscaledTime; return; }
+                if (selectionGate.Spent(UpdateCityClock.OptionalElapsed())) { nextSelection = Time.unscaledTime; return; }
             }
             PhysicalAllocation.Charge(GcAllocationSegment.PhysicalIndex);
             PlanQueues(focus, radius);
@@ -238,7 +238,7 @@ namespace PersistentCity.Runtime
                     if (dressScans < DressScanLimit) { dressScans++; pedestrians.NoteDeferred(); }
                     continue;
                 }
-                if (selectionGate.Spent(UpdateCityClock.Elapsed())
+                if (selectionGate.Spent(UpdateCityClock.OptionalElapsed())
                     || attempts > 0 && (System.Diagnostics.Stopwatch.GetTimestamp() - updateStarted) * 1000.0 / System.Diagnostics.Stopwatch.Frequency >= AcquireStopMilliseconds)
                 { acquireStops++; break; }
                 if (++attempts > 4) break;
