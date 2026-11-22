@@ -192,7 +192,7 @@ public sealed class Gr5DiagnosticsProjectionTests
         int armedGate = probe.IndexOf("Require(armed, \"f4b_not_armed\");", StringComparison.Ordinal);
         Assert.True(heap > 0 && armedGate > heap, "the forced-collection heap read is available before arm");
         int scanBefore = probe.IndexOf("ReadMonoHeap(out startScanHeap, out startScanUsed);", StringComparison.Ordinal);
-        int startScan = probe.IndexOf("startScan = Rescan(false); stopScan = \"none\"; unexpectedAtWindowStart", StringComparison.Ordinal);
+        int startScan = probe.IndexOf("startScan = Rescan(false); stopScan = \"none\"; patchWindow.Begin(coverage);", StringComparison.Ordinal);
         int start = probe.IndexOf("ReadMonoHeap(out monoHeapStart, out monoUsedStart);", StringComparison.Ordinal);
         Assert.True(scanBefore > 0 && startScan > scanBefore && start > startScan, "the window baseline is read after the start patch check, which is bracketed");
         int stop = probe.IndexOf("monoHeapStop = stop.Heap; monoUsedStop = stop.Used;", StringComparison.Ordinal);
