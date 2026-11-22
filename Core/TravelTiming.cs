@@ -35,7 +35,7 @@ namespace PersistentCity.Core
             private RouteLegs legs = new RouteLegs();
             internal long Reads;
             internal double Minutes { get; private set; }
-            internal SourceLegs Over(Route route) { legs = route.Legs; Minutes = route.Minutes; return this; }
+            internal SourceLegs Over(RouteLegs over, double minutes = 0) { legs = over; Minutes = minutes; return this; }
             public int Count => legs.Count;
             public RouteLeg this[int index] { get { Reads++; return legs[index]; } }
             public IEnumerator<RouteLeg> GetEnumerator() { for (int i = 0; i < legs.Count; i++) yield return this[i]; }
@@ -164,7 +164,7 @@ namespace PersistentCity.Core
             private readonly HashSet<string> evicted = new HashSet<string>(StringComparer.Ordinal);
             private readonly List<Change> changes = new List<Change>();
             private readonly Dictionary<string, NominalMap> maps = new Dictionary<string, NominalMap>(StringComparer.Ordinal);
-            private readonly Dictionary<string, TrafficCheck> trafficChanges = new Dictionary<string, TrafficCheck>(StringComparer.Ordinal);
+            private readonly Dictionary<string, TrafficCheck> trafficChanges;
             private readonly SourceLegs sourceLegs = new SourceLegs();
             private readonly Dictionary<string, Place> placeIndex = new Dictionary<string, Place>(StringComparer.Ordinal);
             private TrafficKernelState? traffic;
@@ -218,6 +218,7 @@ namespace PersistentCity.Core
                         && state.TrafficSource != null && state.TrafficSource.Clock == state.Minute)
                         liveTraffic = state.TrafficSource;
                 }
+                trafficChanges = new Dictionary<string, TrafficCheck>(trafficRoutes.Count, StringComparer.Ordinal);
                 foreach (var place in state.Places) placeIndex.Add(place.Id, place);
                 foreach (var citizen in PersonTable.Schedules(state)) schedules.Add(citizen);
                 inputs = new Input[schedules.Count];
@@ -448,7 +449,7 @@ namespace PersistentCity.Core
                 var citizen = schedules[index];
                 if (citizen == null || citizen.Phase != CitizenPhase.Travelling || citizen.Journey == null) return;
                 var pool = sharedLegs ??= new SharedLegPool(sharedLegHint);
-                var legs = sourceLegs.Over(citizen.Journey);
+                var legs = sourceLegs.Over(citizen.Journey.Legs);
                 double elapsed = State.Minute - citizen.DepartureMinute, end = 0;
                 for (int i = 0; i < legs.Count; i++)
                 {
@@ -485,10 +486,11 @@ namespace PersistentCity.Core
                 input.Origin = origin; input.Destination = destination;
                 input.OriginPosition = origin.Position; input.DestinationPosition = destination.Position;
                 ValidateCommittedRoute(route, origin.Position, destination.Position, citizen);
+                double routeMinutes = route.Minutes;
                 if (!Position.Finite(citizen.DepartureMinute) || citizen.DepartureMinute < 0 || citizen.DepartureMinute > state.Minute)
                     throw new ArgumentException("Invalid journey departure.", nameof(state));
                 double rawElapsed = state.Minute - citizen.DepartureMinute;
-                double clockElapsed = CitySimulator.NormalizeJourneyElapsed(rawElapsed, route.Minutes, state.Minute);
+                double clockElapsed = CitySimulator.NormalizeJourneyElapsed(rawElapsed, routeMinutes, state.Minute);
                 double elapsed = clockElapsed;
                 bool trafficOwned = false;
                 if (savedTraffic != null && savedTraffic.TryGetVehicle(citizen.Identity.Id, out var ownedTraffic))
@@ -498,15 +500,15 @@ namespace PersistentCity.Core
                     elapsed = ownedTraffic.NominalMinutes;
                     trafficOwned = true;
                 }
-                double arrivalDifference = Math.Abs(citizen.NextEventMinute - (citizen.DepartureMinute + route.Minutes));
-                double arrivalTolerance = citizen.NextEventMinute == state.Minute && clockElapsed == route.Minutes
-                    ? Math.Max(1e-7, CitySimulator.JourneyClockTolerance(state.Minute, route.Minutes)) : 1e-7;
-                if (elapsed > route.Minutes || arrivalDifference > arrivalTolerance)
+                double arrivalDifference = Math.Abs(citizen.NextEventMinute - (citizen.DepartureMinute + routeMinutes));
+                double arrivalTolerance = citizen.NextEventMinute == state.Minute && clockElapsed == routeMinutes
+                    ? Math.Max(1e-7, CitySimulator.JourneyClockTolerance(state.Minute, routeMinutes)) : 1e-7;
+                if (elapsed > routeMinutes || arrivalDifference > arrivalTolerance)
                     throw new ArgumentException("Journey clock does not match its route.", nameof(state));
                 bool mapped = trafficOwned;
                 var shared = sharedLegs ??= new SharedLegPool(sharedLegHint);
                 var parked = citizen.Car?.ParkedPosition;
-                var source = sourceLegs.Over(route);
+                var source = sourceLegs.Over(route.Legs, routeMinutes);
                 var measured = CitySimulator.SampleLegs(source, source.Minutes, elapsed, parked);
                 var before = new Pose(measured);
                 var replacement = RetimeJoiningSplits(source, elapsed, legacy, walk, rate, ratio, false, mapped, true, trafficOwned ? trafficRoutes[citizen.Identity.Id] : null,
@@ -779,7 +781,7 @@ namespace PersistentCity.Core
         private static Route Retime(Route original, double elapsed, bool legacy, double walkSpeed, double rate, double ratio,
             bool keepCurrent, bool mapped, out NominalMap? map, out int completed)
         {
-            var source = new SourceLegs().Over(original);
+            var source = new SourceLegs().Over(original.Legs, original.Minutes);
             return RetimeJoiningSplits(source, elapsed, legacy, walkSpeed, rate, ratio, keepCurrent, mapped, false, null, out map, out completed, out _,
                 null, CitySimulator.SampleLegs(source, source.Minutes, elapsed, null));
         }
