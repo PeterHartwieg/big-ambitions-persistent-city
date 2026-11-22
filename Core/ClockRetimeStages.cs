@@ -47,6 +47,7 @@ namespace PersistentCity.Core
         public int ReusedLegs { get; private set; }
         public long SourceLegsExamined { get; private set; }
         public string RetimedFrom { get; private set; } = "";
+        internal bool CoalesceReversals { get; set; } = true;
 
         public ClockRetimeOutcome Update(CityState state, double nativeRate, bool bodiesLive, double walkMetresPerSecond, double budgetMilliseconds)
         {
@@ -85,7 +86,7 @@ namespace PersistentCity.Core
                 restartPending = false;
                 var source = state.TakeRetimeSource();
                 RetimedFrom = source == null ? "a save snapshot" : source.Kernel == null ? "no traffic" : source.WithoutThroughCars ? "a copy without through cars" : "the live kernel";
-                Pending = TravelTiming.Begin(state, walkMetresPerSecond, nativeRate, source, sharedLegHint);
+                Pending = TravelTiming.Begin(state, walkMetresPerSecond, nativeRate, source, sharedLegHint, CoalesceReversals);
                 CountSlice(started);
                 if (Pending == null) { Degraded = 0; finished = true; return ClockRetimeOutcome.Committed; }
                 return restarted ? ClockRetimeOutcome.Restarted : ClockRetimeOutcome.Began;

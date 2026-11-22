@@ -15,7 +15,9 @@ public sealed class Gr5RetimeAllocationTests
 
     private const string Retimed = "4826F51E48A5445470E7ABD34FB32B53EB2ACE10A64D7235983D6E666CA804B0";
 
-    private const string TrimmedRetimed = "FC8175922FCE7686B4F37AE733E5AACB91DEDB60CC10C962E25CC2394067E8AE";
+    private const string UncoalescedRetimed = "FBA96360F4D632B36389BD60220CACCF4E42D19DE903B12D7CB442574ED2D217";
+
+    private const string PreChangeWithoutCompletedTrafficSpans = "2BF8FC3C4EBEA834F86819BF2200A444BA85D8A1E8408880DE63FB0CC24091DD";
 
     private static string WithoutCompletedTrafficSpans(CityState state)
     {
@@ -31,12 +33,12 @@ public sealed class Gr5RetimeAllocationTests
         return RushSpikeReplay.Sha(SaveCodec.Write(state));
     }
 
-    private static (string Hash, string Trimmed, long[] Bytes) RetimeThroughRates(bool committed)
+    private static (CityState State, CitySimulator Simulator, long[] Bytes) RetimeArm(bool committed, bool coalesce)
     {
         var (state, _) = TravelTimingMaximumRouteTests.RigScaleCity(TravelTimingMaximumRouteTests.FixtureLinks);
         if (committed) foreach (var c in state.Citizens) c.Journey = c.Journey!.Commit();
         var simulator = new CitySimulator(state, new NoRoutes());
-        var driver = new ClockRetimeDriver();
+        var driver = new ClockRetimeDriver { CoalesceReversals = coalesce };
         var rates = new[] { 3.0, 20, 1, 20 };
         var bytes = new long[rates.Length];
         for (int r = 0; r < rates.Length; r++)
@@ -52,25 +54,89 @@ public sealed class Gr5RetimeAllocationTests
             }
             bytes[r] = GC.GetAllocatedBytesForCurrentThread() - before;
         }
+        return (state, simulator, bytes);
+    }
+
+    private static string Advance(CityState state, CitySimulator simulator)
+    {
         simulator.AdvanceTo(state.Minute + 0.5, int.MaxValue);
         state.PrepareForSave();
-        string hash = RushSpikeReplay.Sha(SaveCodec.Write(state));
-        return (hash, WithoutCompletedTrafficSpans(state), bytes);
+        return RushSpikeReplay.Sha(SaveCodec.Write(state));
+    }
+
+    private static bool SameLegs(Route a, Route b)
+        => a.Legs.Count == b.Legs.Count && a.Legs.Zip(b.Legs, RouteLeg.SameContent.Equals).All(same => same);
+
+    private static void AssertOneMovingPairJoined(Route apart, Route joined)
+    {
+        Assert.Equal(apart.Legs.Count - 1, joined.Legs.Count);
+        int k = 0;
+        while (k < joined.Legs.Count && RouteLeg.SameContent.Equals(apart.Legs[k], joined.Legs[k])) k++;
+        Assert.True(k < joined.Legs.Count);
+        RouteLeg first = apart.Legs[k], second = apart.Legs[k + 1], merged = joined.Legs[k];
+        Assert.True(first.Mode == TravelMode.Walk || first.Mode == TravelMode.Subway, first.Mode.ToString());
+        Assert.Equal(first.Mode, second.Mode);
+        Assert.Equal(first.Mode, merged.Mode);
+        Assert.Equal(first.ServiceId, merged.ServiceId);
+        Assert.Equal(first.From, merged.From);
+        Assert.Equal(second.To, merged.To);
+        Assert.Equal(first.To, second.From);
+        Assert.True(Position.Distance(first.From, first.To) > 0 && Position.Distance(second.From, second.To) > 0);
+        double sum = first.Minutes + second.Minutes;
+        Assert.True(Math.Abs(merged.Minutes - sum) <= 0.001 * sum, merged.Minutes + " vs " + sum);
+        for (int i = k + 1; i < joined.Legs.Count; i++) Assert.True(RouteLeg.SameContent.Equals(apart.Legs[i + 1], joined.Legs[i]), "leg " + i);
     }
 
     [Fact]
-    public void RetimedJourneysTrafficAndSaveKeepTheirPinnedOutputOnceCompletedTrafficSpansAreDropped()
+    public void ReversalCoalescingOnlyJoinsMovingLegPairsAndTheRetimeOtherwiseMatchesThePreChangeOutput()
     {
-        var (hash, trimmed, bytes) = RetimeThroughRates(committed: false);
-        output.WriteLine(hash + "; without completed traffic spans " + trimmed + "; MB per retime: " + string.Join(", ", bytes.Select(b => (b / 1e6).ToString("0.0"))));
-        Assert.Equal(TrimmedRetimed, trimmed);
-        Assert.Equal(Retimed, hash);
+        var joined = RetimeArm(committed: false, coalesce: true);
+        var apart = RetimeArm(committed: false, coalesce: false);
+        int coalesced = 0;
+        var changed = new List<int>();
+        for (int i = 0; i < joined.State.Citizens.Count; i++)
+        {
+            CitizenState j = joined.State.Citizens[i], a = apart.State.Citizens[i];
+            Assert.Equal(a.Identity.Id, j.Identity.Id);
+            Assert.Equal(a.Phase, j.Phase);
+            Assert.Equal(a.DepartureMinute, j.DepartureMinute);
+            if (a.Journey == null || SameLegs(a.Journey, j.Journey!)) { Assert.Equal(a.NextEventMinute, j.NextEventMinute); continue; }
+            AssertOneMovingPairJoined(a.Journey, j.Journey!);
+            var poseJoined = joined.Simulator.SampleJourney(j);
+            var poseApart = apart.Simulator.SampleJourney(a);
+            Assert.Equal(poseApart.Position, poseJoined.Position);
+            Assert.Equal(poseApart.CarPosition, poseJoined.CarPosition);
+            Assert.Equal(poseApart.Mode, poseJoined.Mode);
+            Assert.True(Math.Abs(a.NextEventMinute - j.NextEventMinute) <= 1e-9, a.NextEventMinute + " vs " + j.NextEventMinute);
+            changed.Add(i);
+            coalesced++;
+        }
+        Assert.True(coalesced > 0);
+        string joinedHash = Advance(joined.State, joined.Simulator);
+        string apartHash = Advance(apart.State, apart.Simulator);
+        foreach (int i in changed)
+        {
+            CitizenState j = joined.State.Citizens[i], a = apart.State.Citizens[i];
+            j.Journey = a.Journey; j.NextEventMinute = a.NextEventMinute; j.ActivityUntilMinute = a.ActivityUntilMinute;
+        }
+        joined.State.PrepareForSave();
+        string substituted = RushSpikeReplay.Sha(SaveCodec.Write(joined.State));
+        string apartTrimmed = WithoutCompletedTrafficSpans(apart.State);
+        string joinedTrimmed = WithoutCompletedTrafficSpans(joined.State);
+        output.WriteLine($"{coalesced} journeys coalesced by the reversal joins; coalescing on {joinedHash}, off {apartHash}; "
+            + $"on with the {coalesced} uncoalesced journeys restored {substituted}; trimmed off {apartTrimmed}; MB per retime on: "
+            + string.Join(", ", joined.Bytes.Select(b => (b / 1e6).ToString("0.0"))) + "; off: " + string.Join(", ", apart.Bytes.Select(b => (b / 1e6).ToString("0.0"))));
+        Assert.Equal(Retimed, joinedHash);
+        Assert.Equal(UncoalescedRetimed, apartHash);
+        Assert.Equal(apartHash, substituted);
+        Assert.Equal(PreChangeWithoutCompletedTrafficSpans, apartTrimmed);
+        Assert.Equal(apartTrimmed, joinedTrimmed);
     }
 
     [Fact]
     public void ARetimeOfCommittedJourneysStaysUnderItsAllocationCeiling()
     {
-        var (_, _, bytes) = RetimeThroughRates(committed: true);
+        var (_, _, bytes) = RetimeArm(committed: true, coalesce: true);
         output.WriteLine("committed journeys, MB per retime: " + string.Join(", ", bytes.Select(b => (b / 1e6).ToString("0.0"))));
         PerfGate.Under(bytes.Skip(1).Max() / 1e6, 60, "MB allocated by one retime at 13,965 links (.NET)");
     }

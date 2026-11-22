@@ -396,12 +396,14 @@ public sealed class Gr5SharedLegRetimeTests
         throw new InvalidOperationException("The journey has ended.");
     }
 
-    private static CitySimulator RetimeJoining(CityState state, CitySimulator city, double rate, out int joined)
+    private static CitySimulator RetimeJoining(CityState state, CitySimulator city, double rate, out int joined) => RetimeJoining(state, city, rate, Walk, out joined);
+
+    private static CitySimulator RetimeJoining(CityState state, CitySimulator city, double rate, double walk, out int joined)
     {
         var driver = new ClockRetimeDriver();
         while (true)
         {
-            var outcome = driver.Update(state, rate, false, Walk, 0);
+            var outcome = driver.Update(state, rate, false, walk, 0);
             Assert.NotEqual(ClockRetimeOutcome.Restarted, outcome);
             if (outcome != ClockRetimeOutcome.Committed) continue;
             joined = driver.Joined;
@@ -449,22 +451,21 @@ public sealed class Gr5SharedLegRetimeTests
         for (int r = 2; r < gap.Count; r++) Assert.True(gap[r] <= gap.Take(r).Max(), "R" + r + " gap " + string.Join(" / ", gap));
     }
 
-    [Fact]
-    public void SameMinuteClockReversalsOnOneSharedLegKeepTheLegGapToTheMatchedControlLevel()
+    private (List<long> Retimed, List<long> Matched) SameMinuteReversals(string name, Route path, double walk, Func<int, double> departedAgo)
     {
         const int cycles = 6;
-        double metresPerMinute = TravelTiming.WalkingMetresPerMinute(Walk, 1), length = 20 * metresPerMinute;
+        var from = path.Legs[0].From;
+        var to = path.Legs[path.Legs.Count - 1].To;
         (CityState State, CitySimulator City) Start()
         {
-            var path = TransportComposition.Shared(new Route { Legs = { new RouteLeg { From = new Position(0, 0, 0), To = new Position(length, 0, 0), Minutes = length / metresPerMinute, Mode = TravelMode.Walk } } });
             var state = Population.Create(Enumerable.Range(0, Walkers).Select(i => new CitizenIdentity
             { Id = "walker" + i.ToString("D4"), Name = "Walker " + i, Age = 30, Persona = Persona.Commuter }), new[]
             {
-                new Place { Id = "home", Name = "Home", Kind = PlaceKind.Home, Capacity = Walkers, Position = new Position(0, 0, 0) },
-                new Place { Id = "work", Name = "Work", Kind = PlaceKind.Work, Capacity = Walkers, Position = new Position(length, 0, 0) }
-            }, "same-minute-reversal", "0.40.4", 5, 1440);
+                new Place { Id = "home", Name = "Home", Kind = PlaceKind.Home, Capacity = Walkers, Position = from },
+                new Place { Id = "work", Name = "Work", Kind = PlaceKind.Work, Capacity = Walkers, Position = to }
+            }, name, "0.40.4", 5, 1440);
             state.TravelTimingVersion = 1; state.TravelClockRate = 1;
-            for (int i = 0; i < Walkers; i++) DepartPlanned(state.Citizens[i], path, state.Minute - 1 - 0.0137 * i);
+            for (int i = 0; i < Walkers; i++) DepartPlanned(state.Citizens[i], path, state.Minute - departedAgo(i));
             return (state, new CitySimulator(state, new NoRoutes()));
         }
         var (state, city) = Start();
@@ -473,8 +474,15 @@ public sealed class Gr5SharedLegRetimeTests
         var matched = new List<long> { RetainedCensus.JourneyLegs(control).Legs };
         for (int cycle = 0; cycle < cycles; cycle++)
         {
-            city = RetimeJoining(state, city, 2, out _);
-            city = RetimeJoining(state, city, 1, out _);
+            var poses = state.Citizens.Select(c => city.SampleJourney(c).Position).ToList();
+            city = RetimeJoining(state, city, 2, walk, out _);
+            city = RetimeJoining(state, city, 1, walk, out _);
+            for (int i = 0; i < Walkers; i++)
+            {
+                var pose = city.SampleJourney(state.Citizens[i]).Position;
+                Assert.Equal(poses[i], pose);
+                Assert.Equal(controlCity.SampleJourney(control.Citizens[i]).Position, pose);
+            }
             retimed.Add(RetainedCensus.JourneyLegs(state).Legs);
             matched.Add(RetainedCensus.JourneyLegs(control).Legs);
             double next = state.Minute + 1;
@@ -483,11 +491,49 @@ public sealed class Gr5SharedLegRetimeTests
             Assert.Equal(Walkers, Travelling(state));
             Assert.Equal(Walkers, Travelling(control));
         }
+        output.WriteLine($"{name}: {Walkers} staggered residents, 2x then 1x at the same city minute and one minute advanced in each of {cycles} cycles; "
+            + $"unique journey RouteLegs at R0..R{cycles}: retimed {string.Join(" / ", retimed)}, 1x control {string.Join(" / ", matched)}; poses equal to the control after every reversal");
+        return (retimed, matched);
+    }
+
+    private static void AssertGapHolds(List<long> retimed, List<long> matched, long firstGap)
+    {
         var gap = retimed.Zip(matched, (r, c) => r - c).ToList();
-        output.WriteLine($"{Walkers} staggered walkers on one shared straight leg, 2x then 1x at the same city minute and one minute advanced in each of {cycles} cycles; "
-            + $"unique journey RouteLegs at R0..R{cycles}: retimed {string.Join(" / ", retimed)}, 1x control {string.Join(" / ", matched)}");
         for (int r = 2; r < gap.Count; r++) Assert.True(gap[r] <= gap[1], "R" + r + " gap " + string.Join(" / ", gap));
-        Assert.True(gap[1] <= 2 * Walkers, "gap " + string.Join(" / ", gap));
+        Assert.True(gap[1] <= firstGap, "gap " + string.Join(" / ", gap));
+    }
+
+    private static Route OneWalk(Position from, Position to, double walk)
+        => TransportComposition.Shared(new Route { Legs = { new RouteLeg { From = from, To = to, Minutes = Position.Distance(from, to) / TravelTiming.WalkingMetresPerMinute(walk, 1), Mode = TravelMode.Walk } } });
+
+    [Fact]
+    public void SameMinuteClockReversalsOnOneSharedLegKeepTheLegGapToTheMatchedControlLevel()
+    {
+        double length = 20 * TravelTiming.WalkingMetresPerMinute(Walk, 1);
+        var (retimed, matched) = SameMinuteReversals("same-minute-reversal", OneWalk(new Position(0, 0, 0), new Position(length, 0, 0), Walk), Walk, i => 1 + 0.0137 * i);
+        AssertGapHolds(retimed, matched, 0);
+    }
+
+    [Fact]
+    public void SameMinuteClockReversalsOnATranslatedWalkAtTheProductionPaceKeepTheLegGapToTheMatchedControlLevel()
+    {
+        const double walk = 2;
+        var (retimed, matched) = SameMinuteReversals("translated-reversal", OneWalk(new Position(25, 2, 1234), new Position(6, 2, 1250), walk), walk, i => 1 + 0.009 * i);
+        AssertGapHolds(retimed, matched, 0);
+    }
+
+    [Fact]
+    public void SameMinuteClockReversalsOnASubwayWaitAndRideKeepTheLegGapToTheMatchedControlLevel()
+    {
+        var station = new Position(25, 2, 1234);
+        var platform = new Position(225, 2, 1234);
+        var path = TransportComposition.Shared(new Route { Legs =
+        {
+            new RouteLeg { From = station, To = station, Minutes = 3, Mode = TravelMode.Subway, ServiceId = "native:subway" },
+            new RouteLeg { From = station, To = platform, Minutes = 200 / TravelTiming.SubwayMetresPerMinute(1), Mode = TravelMode.Subway, ServiceId = "native:subway" }
+        } });
+        var (retimed, matched) = SameMinuteReversals("subway-reversal", path, Walk, i => 0.5 + 0.027 * i);
+        AssertGapHolds(retimed, matched, 2 * Walkers);
     }
 
     private const int CapResidents = 1000, LongLegs = 267;
