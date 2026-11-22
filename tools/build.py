@@ -93,6 +93,7 @@ command = [dotnet, str(csc), "-nologo", "-noconfig", "-nostdlib+", "-target:libr
 command += ["-reference:" + str(managed / (name + ".dll")) for name in references]
 command += ["-reference:" + str(json_reference)]
 command += ["-reference:" + str(harmony)]
+command += ["-define:ENABLE_PROFILER"]
 if args.fault_points:
     command += ["-define:PC_FAULT_POINTS"]
 arguments = command[4:] + sources
