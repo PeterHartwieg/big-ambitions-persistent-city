@@ -252,15 +252,22 @@ namespace PersistentCity.Core
     {
         private readonly IReadOnlyList<TransportRoadNode> nodes;
         private readonly double clockRate;
-        private readonly RoadSearchWorkspace workspace = new RoadSearchWorkspace();
-        private int workspaceInUse;
-        public TransportRoadGraph(IReadOnlyList<TransportRoadNode> nodes, double gameMinutesPerScaledSecond = 1)
+        private sealed class WorkspaceSlot
+        {
+            internal readonly RoadSearchWorkspace Workspace = new RoadSearchWorkspace();
+            internal int InUse;
+        }
+        private readonly WorkspaceSlot slot;
+        public TransportRoadGraph(IReadOnlyList<TransportRoadNode> nodes, double gameMinutesPerScaledSecond = 1) : this(nodes, gameMinutesPerScaledSecond, null) { }
+        public TransportRoadGraph(IReadOnlyList<TransportRoadNode> nodes, double gameMinutesPerScaledSecond, TransportRoadGraph? previous)
         {
             this.nodes = nodes ?? throw new ArgumentNullException(nameof(nodes));
             if (!Position.Finite(gameMinutesPerScaledSecond) || gameMinutesPerScaledSecond <= 0)
                 throw new ArgumentOutOfRangeException(nameof(gameMinutesPerScaledSecond));
             clockRate = gameMinutesPerScaledSecond;
+            slot = previous != null && ReferenceEquals(previous.nodes, nodes) ? previous.slot : new WorkspaceSlot();
         }
+        internal bool SharesWorkspaceWith(TransportRoadGraph other) => ReferenceEquals(slot, other.slot);
         public Route? Plan(int start, int goal, Func<int, bool> disabled, Func<Position, Position, bool> clear,
             int expansionLimit, Action<int[]>? pathFound) =>
             Plan(start, goal, disabled, clear, expansionLimit, pathFound, null, null);
@@ -307,9 +314,9 @@ namespace PersistentCity.Core
             if (disabled == null) throw new ArgumentNullException(nameof(disabled));
             if (clear == null) throw new ArgumentNullException(nameof(clear));
             if (!Usable(start) || !Usable(goal) || start == goal || disabled(start) || disabled(goal)) return new RoadSearch(this);
-            bool borrowed = Interlocked.CompareExchange(ref workspaceInUse, 1, 0) == 0;
+            bool borrowed = Interlocked.CompareExchange(ref slot.InUse, 1, 0) == 0;
             return new RoadSearch(this, start, goal, disabled, clear, traversalMinutes, expansionLimit, pathFound, extraMinutes, estimateFound,
-                TransportComposition.RemainingSearchMinutes(maximumEstimatedMinutes, 0), borrowed ? workspace : new RoadSearchWorkspace(), borrowed);
+                TransportComposition.RemainingSearchMinutes(maximumEstimatedMinutes, 0), borrowed ? slot.Workspace : new RoadSearchWorkspace(), borrowed);
         }
         private bool Usable(int index) => index >= 0 && index < nodes.Count && nodes[index] != null && nodes[index].AllowsCar
             && nodes[index].Position.IsFinite && Position.Finite(nodes[index].KilometresPerHour) && nodes[index].KilometresPerHour > 0;
@@ -488,7 +495,7 @@ namespace PersistentCity.Core
             {
                 if (released) return;
                 released = true;
-                if (borrowed) Volatile.Write(ref graph.workspaceInUse, 0);
+                if (borrowed) Volatile.Write(ref graph.slot.InUse, 0);
             }
 
             public void Dispose()

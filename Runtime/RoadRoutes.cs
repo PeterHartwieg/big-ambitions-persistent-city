@@ -193,17 +193,18 @@ namespace PersistentCity.Runtime
             this.scene = scene; hadScene = scene != null;
             waypoints = scene != null && scene.allWaypoints != null ? scene.allWaypoints : Array.Empty<Waypoint>();
             var previous = donor;
+            TransportRoadGraph? previousGraph = null;
             if (Adoptable(previous))
             {
                 nodes = previous!.nodes; cells = previous.cells; agentContracts = previous.agentContracts; carContracts = previous.carContracts;
                 nativeContracts = previous.nativeContracts; nullNeighbours = previous.nullNeighbours; edgeTags = previous.edgeTags;
                 edgeTagTopology = previous.edgeTagTopology; copiedNodes = previous.copiedNodes; TopologyId = previous.TopologyId;
-                trafficDonor = previous.trafficBuilder; AdoptedSnapshot = true;
+                trafficDonor = previous.trafficBuilder; AdoptedSnapshot = true; previousGraph = previous.graph;
                 if (previous.TrafficNetwork != null)
                 { donorGateClear = (bool[])previous.closureGateClear.Clone(); donorGateTopology = previous.TrafficNetwork.TopologyId; donorGateAccess = previous.access; }
                 topologyHash.Dispose();
             }
-            graph = new TransportRoadGraph(nodes, clockRate);
+            graph = new TransportRoadGraph(nodes, clockRate, previousGraph);
             topologyWriter = new BinaryWriter(topologyBuffer);
             searchedAt = new int[waypoints.Length];
             searchDisabled = new bool[waypoints.Length];
