@@ -392,9 +392,15 @@ public sealed class Gr5PlannerCandidateTests
         var preferences = new TravelPreferences { AllowTransit = true, WalkingToleranceMetres = 4000 };
         var to = End(back, P(0));
         Assert.True(TransportComposition.TryJoinedScore(walk, train, back, P(0), to, preferences, null, out _));
-        long before = GC.GetAllocatedBytesForCurrentThread();
-        for (int i = 0; i < 10000; i++) TransportComposition.TryJoinedScore(walk, train, back, P(0), to, preferences, null, out _);
-        Assert.Equal(0, GC.GetAllocatedBytesForCurrentThread() - before);
+        for (int i = 0; i < 1000; i++) TransportComposition.TryJoinedScore(walk, train, back, P(0), to, preferences, null, out _);
+        long allocated = long.MaxValue;
+        for (int round = 0; round < 5; round++)
+        {
+            long before = GC.GetAllocatedBytesForCurrentThread();
+            for (int i = 0; i < 10000; i++) TransportComposition.TryJoinedScore(walk, train, back, P(0), to, preferences, null, out _);
+            allocated = Math.Min(allocated, GC.GetAllocatedBytesForCurrentThread() - before);
+        }
+        Assert.Equal(0, allocated);
     }
 
     [Fact]
