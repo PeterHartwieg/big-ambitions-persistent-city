@@ -159,6 +159,46 @@ public sealed class Gr5OwnedMemoryTests
     }
 
     [Fact]
+    public void AKeptOrphanMeshIsReleasedByLaterBodyReleasesOnceItsRendererStopsShowingIt()
+    {
+        var destroyed = new List<NativeHandle>();
+        var shown = new HashSet<NativeHandle>();
+        var ledger = new MergedBodyLedger<NativeHandle, NativeHandle>(body => body.Alive, mesh => mesh.Alive, _ => 37,
+            mesh => { destroyed.Add(mesh); mesh.Alive = false; }, (_, mesh) => shown.Contains(mesh));
+        var kept = new NativeHandle(); var keptMesh = new NativeHandle();
+        var second = new NativeHandle(); var secondMesh = new NativeHandle();
+        var live = new NativeHandle(); var liveMesh = new NativeHandle();
+        foreach (var (body, mesh) in new[] { (kept, keptMesh), (second, secondMesh), (live, liveMesh) }) { ledger.Own(body); ledger.Merged(body, mesh); }
+        kept.Alive = false; second.Alive = false;
+        shown.Add(keptMesh); shown.Add(secondMesh);
+        ledger.ReleaseOrphan(kept);
+        ledger.ReleaseOrphan(second);
+        ledger.ReleaseOrphan(kept);
+        Assert.Empty(destroyed);
+        Assert.Equal(2, ledger.Deferred);
+        ledger.RetryDeferred(2);
+        Assert.Empty(destroyed);
+        Assert.Equal(2, ledger.Deferred);
+        shown.Remove(keptMesh);
+        ledger.RetryDeferred(1);
+        Assert.Equal(new[] { keptMesh }, destroyed);
+        Assert.Equal(1, ledger.Deferred);
+        Assert.True(secondMesh.Alive);
+        Assert.True(liveMesh.Alive);
+        Assert.Equal(2, ledger.LiveMeshes(out _));
+        ledger.RetryDeferred(2);
+        Assert.Equal(1, ledger.Deferred);
+        shown.Remove(secondMesh);
+        ledger.ReleaseOrphans();
+        Assert.Equal(new[] { keptMesh, secondMesh }, destroyed);
+        Assert.Equal(0, ledger.Deferred);
+        Assert.Equal(2, ledger.ReleasedMeshes);
+        Assert.True(liveMesh.Alive);
+        string merge = Source("Runtime", "BodyMerge.cs").Replace("\r", "");
+        Assert.Contains("if (ReferenceEquals(combiner, null)) return;\n            ledger.RetryDeferred(DeferredRetries);\n            if (combiner == null)", merge);
+    }
+
+    [Fact]
     public void ASaveDuringTheStagedRebuildFinishesTheRebuildBeforeAnyMarketCompletion()
     {
         string mod = Source("Runtime", "PersistentCityMod.cs");

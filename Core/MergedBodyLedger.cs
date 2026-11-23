@@ -8,6 +8,8 @@ namespace PersistentCity.Core
         private readonly HashSet<TBody> owned = new HashSet<TBody>();
         private readonly Dictionary<TBody, TMesh> merged = new Dictionary<TBody, TMesh>();
         private readonly List<TBody> stale = new List<TBody>();
+        private readonly Queue<TBody> deferred = new Queue<TBody>();
+        private readonly HashSet<TBody> deferredSet = new HashSet<TBody>();
         private readonly Func<TBody, bool> bodyAlive;
         private readonly Func<TMesh, bool> meshAlive;
         private readonly Func<TMesh, int> vertexCount;
@@ -56,10 +58,23 @@ namespace PersistentCity.Core
             owned.Remove(body);
             if (!merged.TryGetValue(body, out var mesh)) return;
             if (!meshAlive(mesh)) { merged.Remove(body); return; }
-            if (destroyOrphan == null || stillShown != null && stillShown(body, mesh)) return;
+            if (destroyOrphan == null) return;
+            if (stillShown != null && stillShown(body, mesh)) { if (deferredSet.Add(body)) deferred.Enqueue(body); return; }
             merged.Remove(body);
             CountReleased(mesh);
             destroyOrphan(mesh);
+        }
+
+        public int Deferred => deferred.Count;
+
+        public void RetryDeferred(int limit)
+        {
+            for (int i = Math.Min(limit, deferred.Count); i > 0; i--)
+            {
+                var body = deferred.Dequeue();
+                deferredSet.Remove(body);
+                if (merged.ContainsKey(body)) ReleaseOrphan(body);
+            }
         }
 
         public void ReleaseOrphans() => Sweep(true);
@@ -85,6 +100,11 @@ namespace PersistentCity.Core
                 }
             }
             finally { stale.Clear(); }
+            for (int i = deferred.Count; i > 0; i--)
+            {
+                var body = deferred.Dequeue();
+                if (merged.ContainsKey(body)) deferred.Enqueue(body); else deferredSet.Remove(body);
+            }
         }
 
         public int Unmerged

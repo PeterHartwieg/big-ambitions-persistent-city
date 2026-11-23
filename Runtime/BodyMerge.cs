@@ -14,6 +14,7 @@ namespace PersistentCity.Runtime
     {
         private const string Owner = "hart.persistentcity.bodymerge.v1";
         private const int MaximumCachedLengths = 64;
+        private const int DeferredRetries = 2;
         private static readonly Harmony harmony = new Harmony(Owner);
         private static readonly MethodInfo? Target = AccessTools.Method(typeof(SkinnedMeshCombiner), "DoCombineMeshs_OneMeshPerMaterial");
         private static readonly MethodInfo? ValidateMethod = AccessTools.Method(typeof(SkinnedMeshCombiner), "ValidateAllVariables");
@@ -94,6 +95,7 @@ namespace PersistentCity.Runtime
         public static void Release(SkinnedMeshCombiner? combiner)
         {
             if (ReferenceEquals(combiner, null)) return;
+            ledger.RetryDeferred(DeferredRetries);
             if (combiner == null) { ledger.ReleaseOrphan(combiner); return; }
             var tracked = ledger.Forget(combiner);
             var result = combiner.resultMergeGameObject;
