@@ -195,14 +195,14 @@ public sealed class Gr5PlannerCandidateTests
             var from = From(origin); var to = To(origin); var parked = Parked(origin); var preferences = Preferences;
             Route? best = null; double bestScore = double.PositiveInfinity;
             if (after) candidates.Reset();
-            void Consider(Route? route, bool shared = false)
+            void Consider(Route? route)
             {
-                if (after) { candidates.Consider(route, from, to, preferences, parked, shared); return; }
+                if (after) { candidates.Consider(route, from, to, preferences, parked); return; }
                 if (route == null || !TransportComposition.Valid(route, from, to, preferences, parked)) return;
                 if (!TransportComposition.IsFaster(route.EstimatedMinutes, bestScore)) return;
                 best = route; bestScore = route.EstimatedMinutes;
             }
-            Consider(Walk(origin, from, to, 60), shared: true);
+            Consider(Walk(origin, from, to, 60));
             for (int a = 0; a < 2; a++)
             {
                 var originWalk = Walk(origin, from, Station(origin, true, a), 12 + a);
@@ -308,30 +308,50 @@ public sealed class Gr5PlannerCandidateTests
     {
         var preferences = Job.Preferences;
         var from = P(0); var to = P(10);
-        Route Straight(double minutes) => TransportComposition.Shared(new Route { Legs = new List<RouteLeg> { new RouteLeg { From = from, To = to, Minutes = minutes, Mode = TravelMode.Walk } } });
+        Route Fresh(double minutes) => new Route { Legs = new List<RouteLeg> { new RouteLeg { From = from, To = to, Minutes = minutes, Mode = TravelMode.Walk } } };
+        Route Straight(double minutes) => TransportComposition.Shared(Fresh(minutes));
         var choice = new RouteCandidates();
-        var slow = Straight(5); var fast = Straight(3);
-        choice.Consider(slow, from, to, preferences, null, shared: true);
+        var slow = Straight(5); var fast = Fresh(3);
+        choice.Consider(slow, from, to, preferences, null);
         choice.Consider(fast, from, to, preferences, null);
         Assert.Same(fast, choice.Publish());
         choice.Reset();
         Assert.False(choice.HasBest);
         Assert.Null(choice.Publish());
         choice.Consider(fast, from, to, preferences, null);
-        choice.Consider(slow, from, to, preferences, null, shared: true);
+        choice.Consider(slow, from, to, preferences, null);
         Assert.Same(fast, choice.Publish());
         choice.Reset();
-        choice.Consider(fast, from, to, preferences, null, shared: true);
-        choice.Consider(slow, from, to, preferences, null);
+        var shared = Straight(3);
+        choice.Consider(shared, from, to, preferences, null);
+        choice.Consider(Fresh(5), from, to, preferences, null);
         var copy = choice.Publish()!;
-        Assert.NotSame(fast, copy);
-        Assert.NotSame(fast.Legs, copy.Legs);
-        Assert.Same(fast.Legs[0], copy.Legs[0]);
+        Assert.NotSame(shared, copy);
+        Assert.NotSame(shared.Legs, copy.Legs);
+        Assert.Same(shared.Legs[0], copy.Legs[0]);
+        Assert.False(copy.IsShared);
         Assert.Same(copy, choice.Publish());
+        copy.Legs.Clear();
+        Assert.Single(shared.Legs);
         choice.Reset();
-        choice.Consider(Straight(1), from, P(11), preferences, null, shared: true);
+        choice.Consider(Straight(1), from, P(11), preferences, null);
         Assert.False(choice.HasBest);
         Assert.Equal(double.PositiveInfinity, choice.BestScore);
+    }
+
+    [Fact]
+    public void EveryCachedWalkingRouteIsMarkedSharedAndTheDirectWalkPublishesThroughTheCandidateChoice()
+    {
+        string walking = System.IO.File.ReadAllText(System.IO.Path.Combine(CapabilityReportTests.Root(), "Runtime", "WalkingRoutes.cs"));
+        string planner = System.IO.File.ReadAllText(System.IO.Path.Combine(CapabilityReportTests.Root(), "Runtime", "MultimodalRoutes.cs"));
+        var cached = System.Text.RegularExpressions.Regex.Matches(walking, @"new CachedPath\(([^,]+),").Select(m => m.Groups[1].Value.Trim()).ToArray();
+        Assert.NotEmpty(cached);
+        Assert.All(cached, route => Assert.True(route == "null" || route.StartsWith("TransportComposition.Shared(", StringComparison.Ordinal), route));
+        Assert.Contains("return path.Route;", walking);
+        Assert.Contains("Consider(owner.walking.PlanShared(from!, to!, departureMinute, Preferences));", planner);
+        Assert.Contains("var best = candidates.Publish();", planner);
+        Assert.Contains("candidates.Consider(route,", planner);
+        Assert.DoesNotContain("best = route", planner);
     }
 
     [Fact]
@@ -355,8 +375,7 @@ public sealed class Gr5PlannerCandidateTests
         var seams = new OptionalStopUnitSeams();
         var field = typeof(OptionalStopUnitSeams).GetField("seams", BindingFlags.NonPublic | BindingFlags.Instance)!;
         int initial = ((double[])field.GetValue(seams)!).Length;
-        Assert.Equal(PopulationFrameBudget.MaximumUnits + 1, OptionalStopUnitSeams.PresizedUnits);
-        Assert.Equal(OptionalStopUnitSeams.PresizedUnits, initial);
+                Assert.Equal(OptionalStopUnitSeams.PresizedUnits, initial);
         for (int warm = 0; warm < 2; warm++) { seams.BeginCall(); for (int i = 0; i < 4; i++) seams.EndUnit("warm", .1); seams.EndCall(true); seams.P95UnitSeamMilliseconds(); }
         var calls = new[] { 128, 461, 753, PopulationFrameBudget.MaximumUnits + 1 };
         var recorded = new int[calls.Length];

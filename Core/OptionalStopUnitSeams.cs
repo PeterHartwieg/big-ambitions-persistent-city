@@ -16,7 +16,7 @@ namespace PersistentCity.Core
     {
         public const double ThresholdMilliseconds = 5;
         public const int ListedOverThreshold = 8;
-        public const int PresizedUnits = 1025;
+        public const int PresizedUnits = PopulationFrameBudget.MaximumUnits + 1;
         private double[] seams = new double[PresizedUnits], sorted = new double[PresizedUnits];
         private string[] kinds = new string[PresizedUnits];
         private double open, boundaryWall;

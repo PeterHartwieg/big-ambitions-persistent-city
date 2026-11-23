@@ -78,6 +78,7 @@ namespace PersistentCity.Core
                 if (leg == null) throw new InvalidOperationException("A shared route has a null leg.");
                 if (shared) leg.Share(); else leg.Freeze();
             }
+            if (shared) route.MarkShared();
             return route;
         }
 

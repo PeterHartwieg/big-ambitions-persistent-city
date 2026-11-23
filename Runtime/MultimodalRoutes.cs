@@ -514,7 +514,7 @@ namespace PersistentCity.Runtime
                         return;
                     }
                     case Stage.DirectWalk:
-                        Consider(owner.walking.PlanShared(from!, to!, departureMinute, Preferences), shared: true);
+                        Consider(owner.walking.PlanShared(from!, to!, departureMinute, Preferences));
                         if (Preferences.AllowTransit && candidates.BestScore > TransportComposition.ModeLowerBound(TravelMode.Subway,
                             from!.Position, to!.Position, Preferences, person!.Identity.Id, owner.walkingSpeed, gameMinutesPerScaledSecond: owner.clockRate))
                             stage = Stage.SubwayStations;
@@ -654,8 +654,8 @@ namespace PersistentCity.Runtime
                 NextEnd();
             }
 
-            private void Consider(Route? route, bool shared = false)
-                => candidates.Consider(route, from!.Position, to!.Position, Preferences, person!.Car?.ParkedPosition, shared);
+            private void Consider(Route? route)
+                => candidates.Consider(route, from!.Position, to!.Position, Preferences, person!.Car?.ParkedPosition);
 
             public void Dispose()
             {
