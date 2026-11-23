@@ -33,13 +33,14 @@ namespace PersistentCity.Core
 
     public sealed class DayPlan
     {
-        private readonly PlanItem[] items;
+        private PlanItem[] items;
         private readonly byte[] marks;
+        internal readonly bool IsScratch;
 
         public DayPlan(int day, uint seed, ShiftType shift, int daysOff, string workplaceId, IReadOnlyList<PlanItem> items, PlanItem? nextWork = null)
-            : this(day, seed, shift, daysOff, workplaceId, Copy(items), null, nextWork) { }
+            : this(day, seed, shift, daysOff, workplaceId, Copy(items), null, nextWork, false) { }
 
-        private DayPlan(int day, uint seed, ShiftType shift, int daysOff, string workplaceId, PlanItem[] items, byte[]? marks, PlanItem? nextWork)
+        private DayPlan(int day, uint seed, ShiftType shift, int daysOff, string workplaceId, PlanItem[] items, byte[]? marks, PlanItem? nextWork, bool scratch = false)
         {
             if (day < 0) throw new ArgumentOutOfRangeException(nameof(day));
             if (daysOff < 0 || daysOff > 127) throw new ArgumentOutOfRangeException(nameof(daysOff));
@@ -47,19 +48,40 @@ namespace PersistentCity.Core
             if (nextWork != null && (nextWork.Kind != PlanItemKind.Work || DayOf(nextWork) <= day))
                 throw new ArgumentException("The next shift is a work item after the plan's day.", nameof(nextWork));
             Day = day; Seed = seed; Shift = shift; DaysOff = daysOff; WorkplaceId = workplaceId ?? "";
-            this.items = items; this.marks = marks ?? new byte[items.Length]; NextWork = nextWork;
+            this.items = items; this.marks = marks ?? new byte[items.Length]; NextWork = nextWork; IsScratch = scratch;
+        }
+
+        internal static DayPlan CreateScratch() => new DayPlan(0, 0, ShiftType.Day, 0, "", Array.Empty<PlanItem>(), new byte[MaximumItems], null, true);
+
+        internal void CopyFrom(DayPlan source)
+        {
+            Day = source.Day; Seed = source.Seed; Shift = source.Shift; DaysOff = source.DaysOff;
+            WorkplaceId = source.WorkplaceId; items = source.items; NextWork = source.NextWork;
+            Buffer.BlockCopy(source.marks, 0, marks, 0, source.items.Length);
+        }
+
+        internal bool SameStructure(DayPlan other) => other.Day == Day && other.Seed == Seed && other.Shift == Shift && other.DaysOff == DaysOff
+            && other.WorkplaceId == WorkplaceId && ReferenceEquals(other.items, items) && ReferenceEquals(other.NextWork, NextWork);
+
+        internal void CopyMarksFrom(DayPlan source) => Buffer.BlockCopy(source.marks, 0, marks, 0, items.Length);
+
+        internal DayPlan DetachCopy()
+        {
+            var copyMarks = new byte[items.Length];
+            Buffer.BlockCopy(marks, 0, copyMarks, 0, items.Length);
+            return new DayPlan(Day, Seed, Shift, DaysOff, WorkplaceId, items, copyMarks, NextWork);
         }
 
         internal static int DayOf(PlanItem item) => (int)Math.Floor(item.EarliestStart / 1440);
 
         public const int MaximumItems = 8;
-        public int Day { get; }
-        public uint Seed { get; }
-        public ShiftType Shift { get; }
-        public int DaysOff { get; }
-        public string WorkplaceId { get; }
+        public int Day { get; private set; }
+        public uint Seed { get; private set; }
+        public ShiftType Shift { get; private set; }
+        public int DaysOff { get; private set; }
+        public string WorkplaceId { get; private set; }
         public IReadOnlyList<PlanItem> Items => items;
-        public PlanItem? NextWork { get; }
+        public PlanItem? NextWork { get; private set; }
         public PlanItemState StateOf(int index) => (PlanItemState)(marks[index] & 15);
         public PlanMissCause CauseOf(int index) => (PlanMissCause)(marks[index] >> 4);
 

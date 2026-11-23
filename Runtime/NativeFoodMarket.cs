@@ -307,8 +307,78 @@ namespace PersistentCity.Runtime
         public IReadOnlyList<FoodBusiness> Read(double minute) => ReadSelected(minute, state.Shops.Select(s => s.PlaceId).ToArray());
         public FoodBusiness? ReadBusiness(string businessId, double minute)
         {
-            scopesByBusiness.TryGetValue(businessId,out var scope);
-            return scope == null ? null : ReadSelected(minute, new[] { scope.PlaceId }).SingleOrDefault(b => b.Id == businessId);
+            return scopesByBusiness.TryGetValue(businessId, out var scope) ? ReadSingleBusiness(businessId, scope, minute, capture: false) : null;
+        }
+        private string[] ScopeProducts(FoodScope scope)
+        {
+            if (scopeProductsCache.TryGetValue(scope, out var cached) && cached.Length == 1 + scope.AdditionalProductIds.Count
+                && string.Equals(cached[0], scope.ProductId, StringComparison.Ordinal))
+            {
+                bool same = true;
+                for (int i = 0; i < scope.AdditionalProductIds.Count; i++)
+                    if (!string.Equals(cached[i + 1], scope.AdditionalProductIds[i], StringComparison.Ordinal)) { same = false; break; }
+                if (same) return cached;
+            }
+            var products = new string[1 + scope.AdditionalProductIds.Count];
+            products[0] = scope.ProductId;
+            for (int i = 0; i < scope.AdditionalProductIds.Count; i++) products[i + 1] = scope.AdditionalProductIds[i];
+            scopeProductsCache[scope] = products;
+            return products;
+        }
+        private readonly Dictionary<FoodScope, string[]> scopeProductsCache = new Dictionary<FoodScope, string[]>();
+        private FoodBusiness? ReadSingleBusiness(string businessId, FoodScope scope, double minute, bool capture)
+        {
+            RefreshReadMetadata(minute);
+            var currentSave = SaveGameManager.Current;
+            long observationMinute = (long)(currentSave.Day * 1440.0 + currentSave.Hour * 60.0 + currentSave.Minute);
+            string placeId = scope.PlaceId;
+            if (!shopControllers.TryGetValue(placeId, out var controller) || controller == null || controller.building == null
+                || !GamePlaces.BuildingAccessible(controller)) return null;
+            var reg = controller.buildingRegistration;
+            if (reg == null || string.IsNullOrWhiteSpace(reg.StreetName)
+                || !registrations.TryGetValue(placeId, out var registered) || !ReferenceEquals(reg, registered)) return null;
+            if (!reg.HasEstablishedBusiness || reg.AvailableForRent || BusinessTypes.Normalize(reg.businessTypeName).Length == 0) return null;
+            if (!SupportedMenu(reg)) { NativeFoodOwnership.Observe(reg, false); return null; }
+            if (MenuStatus(placeId).Length > 0 || !scopesByPlace.TryGetValue(placeId, out var currentScope)
+                || !ReferenceEquals(currentScope, scope) || currentScope.BusinessId != businessId
+                || NativeFoodOwnership.Find(reg)?.BusinessId != businessId) return null;
+            var products = ScopeProducts(scope);
+            var b = FoodBusinessCatalogue.ReadSingleCompleteMenu(placeId, controller, reg, products, businessId,
+                (failedReg, _) => { RefuseContract(failedReg); NativeFoodOwnership.Observe(failedReg, false); decisionSupply.Remove(placeId); });
+            if (b == null || b.Id != businessId) return null;
+            if (!CurrentAuthoredBagPolicy(reg))
+            {
+                supplyExclusions[placeId] = "Excluded: authored bag policy changed or is unverified";
+                RefuseContract(reg); NativeFoodOwnership.Observe(reg, false); decisionSupply.Remove(placeId);
+                return null;
+            }
+            if (capture && !ContractRecheck(reg, false))
+            {
+                supplyExclusions[placeId] = ContractCatalogueWaiting ? "Waiting: food catalogue rebuilding"
+                    : "Excluded: complete food contract changed since its published image";
+                return null;
+            }
+            for (int i = b.Offers.Count - 1; i >= 0; i--)
+                if (!scope.ContainsProduct(b.Offers[i].ProductId)) b.Offers.RemoveAt(i);
+            var supply = capture ? FoodSupplyReader.ReadMenu(reg, products, ContractImage(reg))
+                : DecisionMenu(observationMinute, placeId, reg, b.Id, products);
+            if (capture && decisionSupply.TryGetValue(placeId, out var cachedImage))
+                cachedImage.Image.ObserveLive(supply);
+            ObserveJournalSupply(b, scope, supply, checked((int)observationMinute));
+            bool missingUnits = false;
+            foreach (var s in supply.Values) if (!s.Units.HasValue) { missingUnits = true; break; }
+            if (missingUnits)
+            {
+                supplyExclusions[placeId] = "Excluded: menu stock contract is unverified";
+                RefuseContract(reg); NativeFoodOwnership.Observe(reg, false); decisionSupply.Remove(placeId);
+                return null;
+            }
+            supplyExclusions.Remove(placeId);
+            var mainSupply = supply[scope.ProductId];
+            b.MealsPerHour = mainSupply.MealsPerHour; b.ServiceEvidence = mainSupply.Evidence;
+            b.ServiceUnavailableReason = mainSupply.AvailabilityReason;
+            for (int i = 0; i < b.Offers.Count; i++) b.Offers[i].Units = supply[b.Offers[i].ProductId].Units;
+            return b;
         }
         public FoodBusiness? ReadFailureBusiness(string businessId, string placeId, double minute)
             => ReadSelected(minute, new[] { placeId }, capture: true).SingleOrDefault(b => b.Id == businessId && b.PlaceId == placeId);

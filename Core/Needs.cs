@@ -30,11 +30,12 @@ namespace PersistentCity.Core
             if (deferrals < 0 || deferrals > NeedModel.MaximumDeferrals) throw new ArgumentOutOfRangeException(nameof(deferrals));
             Category = category; NextDueDay = nextDueDay; LastVenue = lastVenue ?? ""; Deferrals = deferrals;
         }
-        public string Category { get; }
+        public string Category { get; private set; }
         public int NextDueDay { get; internal set; }
         public string LastVenue { get; internal set; }
         public int Deferrals { get; internal set; }
         public NeedState Copy() => new NeedState(Category, NextDueDay, LastVenue, Deferrals);
+        internal void CopyFrom(NeedState source) { Category = source.Category; NextDueDay = source.NextDueDay; LastVenue = source.LastVenue; Deferrals = source.Deferrals; }
     }
 
     public sealed class PersonNeeds
@@ -67,8 +68,23 @@ namespace PersistentCity.Core
         public PersonNeeds Copy()
         {
             var copy = new PersonNeeds(LastImpulseDay, ImpulseVenue);
-            foreach (var need in needs) copy.needs.Add(need.Copy());
+            if (copy.needs.Capacity < needs.Count) copy.needs.Capacity = needs.Count;
+            for (int i = 0; i < needs.Count; i++) copy.needs.Add(needs[i].Copy());
             return copy;
+        }
+        internal void CopyFrom(PersonNeeds source)
+        {
+            LastImpulseDay = source.LastImpulseDay;
+            ImpulseVenue = source.ImpulseVenue;
+            var incoming = source.needs;
+            int keep = Math.Min(needs.Count, incoming.Count);
+            for (int i = 0; i < keep; i++) needs[i].CopyFrom(incoming[i]);
+            if (incoming.Count < needs.Count) needs.RemoveRange(incoming.Count, needs.Count - incoming.Count);
+            else
+            {
+                if (needs.Capacity < incoming.Count) needs.Capacity = incoming.Count;
+                for (int i = keep; i < incoming.Count; i++) needs.Add(incoming[i].Copy());
+            }
         }
         public bool SameAs(PersonNeeds? other)
         {

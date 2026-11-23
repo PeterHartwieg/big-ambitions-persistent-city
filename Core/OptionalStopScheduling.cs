@@ -25,6 +25,14 @@ namespace PersistentCity.Core
             SpotId = SpotId, TargetId = TargetId, Position = Position, Facing = Facing, ReturnPosition = ReturnPosition,
             StartMinute = StartMinute, EndMinute = EndMinute, VisitMinute = VisitMinute,
             ResumeEventMinute = ResumeEventMinute, Cancelled = Cancelled, Members = new List<string>(Members) };
+        internal void CopyFrom(OptionalStopState source)
+        {
+            Kind = source.Kind; PlaceId = source.PlaceId; SpotId = source.SpotId; TargetId = source.TargetId;
+            Position = source.Position; Facing = source.Facing; ReturnPosition = source.ReturnPosition;
+            StartMinute = source.StartMinute; EndMinute = source.EndMinute; VisitMinute = source.VisitMinute;
+            ResumeEventMinute = source.ResumeEventMinute; Cancelled = source.Cancelled;
+            Members.Clear(); Members.AddRange(source.Members);
+        }
     }
 
     public sealed class OptionalStopSpot
@@ -213,7 +221,11 @@ namespace PersistentCity.Core
                 || person.RecentVisits[person.RecentVisits.Count - 1].PlaceId != person.PlaceId) return;
             var place = places[person.PlaceId];
             if (!DailyRoutine.Open(place, now) || person.Activity == Activity.Home || person.Activity == Activity.Study) return;
-            if (State.Food != null && State.Food.Shops.Any(s => s.PlaceId == person.PlaceId)) return;
+            if (State.Food != null)
+            {
+                var shops = State.Food.Shops;
+                for (int i = 0; i < shops.Count; i++) if (shops[i].PlaceId == person.PlaceId) return;
+            }
             string key = OptionalStopPolicy.VisitKey(person, now);
             bool drawn = OptionalStopPolicy.Choose(key, State.Seed, stopPercentage.Value);
             chanceTally.Eligible++;
@@ -261,7 +273,7 @@ namespace PersistentCity.Core
             DwellKind kind = person.Activity == Activity.Work ? DwellKind.Break
                 : person.Activity == Activity.Shop ? DwellKind.WindowShopping : DwellKind.Resting;
             if ((person.Activity == Activity.Shop || person.Activity == Activity.Leisure) && arrivalRoute != null
-                && arrivalRoute.Legs.Count > 0 && arrivalRoute.Legs.Last().Mode == TravelMode.Walk
+                && arrivalRoute.Legs.Count > 0 && arrivalRoute.Legs[arrivalRoute.Legs.Count - 1].Mode == TravelMode.Walk
                 && TryStop(person, DwellKind.Audience, key, now, now, out var audience))
             { Publish(person, audience!); return true; }
             if (person.Activity == Activity.Leisure && TryConversation(person, now, taker)) return true;

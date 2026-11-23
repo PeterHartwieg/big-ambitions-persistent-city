@@ -105,6 +105,22 @@ namespace PersistentCity.Core
             return true;
         }
 
+        public static bool TryJoinedScore(Route? first, Route? second, Route? third, Route? fourth, Route? fifth, Position from, Position to,
+            TravelPreferences preferences, Position? parked, out double estimatedMinutes)
+        {
+            estimatedMinutes = 0;
+            if (first == null || second == null || third == null || fourth == null || fifth == null || !ValidEnds(from, to, preferences)) return false;
+            var rules = new LegRules(from, preferences, parked);
+            var joined = new JoinedScan();
+            if (!joined.Part(first, ref rules) || !joined.Part(second, ref rules) || !joined.Part(third, ref rules)
+                || !joined.Part(fourth, ref rules) || !joined.Part(fifth, ref rules)) return false;
+            if (joined.Count == 0) return false;
+            double total = joined.Nominal + joined.Extra;
+            if (!Position.Finite(total) || !rules.Finish(total, to)) return false;
+            estimatedMinutes = total;
+            return true;
+        }
+
         private static bool ValidEnds(Position from, Position to, TravelPreferences preferences)
             => from.IsFinite && to.IsFinite && preferences != null
                 && Position.Finite(preferences.WalkingToleranceMetres) && preferences.WalkingToleranceMetres >= 0;

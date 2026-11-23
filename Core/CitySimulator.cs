@@ -28,21 +28,99 @@ namespace PersistentCity.Core
             public Due(int listIndex) { ListIndex = listIndex; }
             public CitizenState Citizen = null!;
             public double Minute;
+            public int HeapIndex = -1;
         }
-        private sealed class DueOrder : IComparer<Due>
+        private sealed class DueHeap
         {
-            public int Compare(Due? a, Due? b)
+            private Due[] items;
+            public DueHeap(int capacity) { items = new Due[Math.Max(16, capacity)]; }
+            public int Count { get; private set; }
+            public Due? Min => Count == 0 ? null : items[0];
+            public bool Contains(Due item) => item.HeapIndex >= 0 && item.HeapIndex < Count && ReferenceEquals(items[item.HeapIndex], item);
+
+            public bool Add(Due item)
             {
-                if (ReferenceEquals(a, b)) return 0;
-                if (a == null) return -1;
-                if (b == null) return 1;
+                if (Contains(item)) return false;
+                if (Count == items.Length) Array.Resize(ref items, Count * 2);
+                int pos = Count++;
+                items[pos] = item;
+                item.HeapIndex = pos;
+                Up(pos);
+                return true;
+            }
+
+            public bool Remove(Due item)
+            {
+                if (!Contains(item)) return false;
+                int pos = item.HeapIndex;
+                item.HeapIndex = -1;
+                Count--;
+                if (pos < Count)
+                {
+                    var last = items[Count];
+                    items[pos] = last;
+                    last.HeapIndex = pos;
+                    if (pos > 0 && Less(last, items[(pos - 1) / 2])) Up(pos);
+                    else Down(pos);
+                }
+                items[Count] = null!;
+                return true;
+            }
+
+            public void Clear()
+            {
+                for (int i = 0; i < Count; i++) { items[i].HeapIndex = -1; items[i] = null!; }
+                Count = 0;
+            }
+
+            public int CountAtOrBefore(double minute)
+            {
+                int count = 0;
+                for (int i = 0; i < Count; i++) if (items[i].Minute <= minute) count++;
+                return count;
+            }
+
+            private static bool Less(Due a, Due b)
+            {
                 int time = a.Minute.CompareTo(b.Minute);
-                return time != 0 ? time : StringComparer.Ordinal.Compare(a.Citizen.Identity.Id, b.Citizen.Identity.Id);
+                return (time != 0 ? time : StringComparer.Ordinal.Compare(a.Citizen.Identity.Id, b.Citizen.Identity.Id)) < 0;
+            }
+
+            private void Up(int index)
+            {
+                var item = items[index];
+                while (index > 0)
+                {
+                    int parent = (index - 1) / 2;
+                    if (!Less(item, items[parent])) break;
+                    items[index] = items[parent];
+                    items[index].HeapIndex = index;
+                    index = parent;
+                }
+                items[index] = item;
+                item.HeapIndex = index;
+            }
+
+            private void Down(int index)
+            {
+                var item = items[index];
+                while (true)
+                {
+                    int child = index * 2 + 1;
+                    if (child >= Count) break;
+                    if (child + 1 < Count && Less(items[child + 1], items[child])) child++;
+                    if (!Less(items[child], item)) break;
+                    items[index] = items[child];
+                    items[index].HeapIndex = index;
+                    index = child;
+                }
+                items[index] = item;
+                item.HeapIndex = index;
             }
         }
-        private readonly SortedSet<Due> due = new SortedSet<Due>(new DueOrder());
-        private readonly Dictionary<string, Due> citizenEvents = new Dictionary<string, Due>(StringComparer.Ordinal);
-        private readonly Dictionary<string, Place> places = new Dictionary<string, Place>(StringComparer.Ordinal);
+        private readonly DueHeap due;
+        private readonly Dictionary<string, Due> citizenEvents;
+        private readonly Dictionary<string, Place> places;
         private readonly IRoutePlanner routes;
         public CityState State { get; }
         private CityView? view;
@@ -53,11 +131,7 @@ namespace PersistentCity.Core
         internal int QueuedPersonEvents => due.Count;
         internal int QueuedMealEvents => food?.QueuedMeals ?? 0;
         internal int DuePersonEventsAtOrBefore(double minute)
-        {
-            int count = pending != null && pending.Item.Minute <= minute && !due.Contains(pending.Item) ? 1 : 0;
-            foreach (var entry in due) { if (entry.Minute > minute) break; count++; }
-            return count;
-        }
+            => (pending != null && pending.Item.Minute <= minute && !due.Contains(pending.Item) ? 1 : 0) + due.CountAtOrBefore(minute);
         internal int DueMealEventsAtOrBefore(double minute) => food?.DueMealsAtOrBefore(minute) ?? 0;
         internal CitizenState? FindCitizen(string id) => citizenEvents.TryGetValue(id, out var entry) ? entry.Citizen : null;
         internal Place FindPlace(string id) => places[id];
@@ -189,13 +263,17 @@ namespace PersistentCity.Core
 
         private CitySimulator(CityState state, IRoutePlanner routes, bool shell)
         {
-            activeJourneys = new ActiveJourneyIndex(FindPosition);
             State = state ?? throw new ArgumentNullException(nameof(state));
             if (state.Capabilities == null) throw new InvalidOperationException("Missing population capabilities.");
             state.Capabilities.RequireExecutable();
             if (state.Schema != CityState.CurrentSchema || state.MenuPolicy != FoodNameIdentity.DynamicWire)
                 throw new InvalidOperationException("Unsupported menu product policy; preserve the payload.");
             this.routes = routes ?? throw new ArgumentNullException(nameof(routes));
+            int totalPeople = state.Citizens.Count + state.VisitorRoutines.Count;
+            due = new DueHeap(totalPeople);
+            citizenEvents = new Dictionary<string, Due>(totalPeople, StringComparer.Ordinal);
+            places = new Dictionary<string, Place>(state.Places.Count, StringComparer.Ordinal);
+            activeJourneys = new ActiveJourneyIndex(FindPosition);
         }
 
         internal const int RebuildPeoplePerStep = 64;
@@ -217,7 +295,7 @@ namespace PersistentCity.Core
                 if (!Position.Finite(person.NextEventMinute) || person.NextEventMinute < state.Minute)
                     throw new ArgumentException("A citizen has an overdue or nonfinite event.");
                 var item = new Due(citizenIndex) { Citizen = person, Minute = person.NextEventMinute };
-                if (!due.Add(item)) throw new ArgumentException("Duplicate citizen event.");
+                if (citizenEvents.ContainsKey(person.Identity.Id) || !due.Add(item)) throw new ArgumentException("Duplicate citizen event.");
                 citizenEvents.Add(person.Identity.Id, item);
                 if (citizenIndex % RebuildPeoplePerStep == RebuildPeoplePerStep - 1) yield return false;
             }
@@ -232,7 +310,7 @@ namespace PersistentCity.Core
                         throw new ArgumentException("A visitor has an overdue or nonfinite event.");
                     if (!places.ContainsKey(routine.HomeId)) throw new ArgumentException("A visitor's portal is not a saved place.");
                     var item = new Due(~visitorIndex) { Citizen = routine, Minute = routine.NextEventMinute };
-                    if (!due.Add(item)) throw new ArgumentException("Duplicate citizen event.");
+                    if (citizenEvents.ContainsKey(routine.Identity.Id) || !due.Add(item)) throw new ArgumentException("Duplicate citizen event.");
                     citizenEvents.Add(routine.Identity.Id, item);
                     if (visitorIndex % RebuildPeoplePerStep == RebuildPeoplePerStep - 1) yield return false;
                 }
@@ -550,8 +628,11 @@ namespace PersistentCity.Core
             {
                 ReleaseEventInputs(evt);
                 evt.Steps.Dispose();
-                spareShell = evt.Working;
-                if (!due.Add(evt.Item)) throw new InvalidOperationException("An interrupted event lost its queue slot.");
+                var item = evt.Item;
+                RecycleEventShell(evt.Working);
+                evt.Item = null!; evt.Working = null!; evt.Steps = null!; evt.Request = null; evt.Job = null;
+                spareEvent = evt;
+                if (!due.Add(item)) throw new InvalidOperationException("An interrupted event lost its queue slot.");
             }
         }
 
@@ -574,7 +655,7 @@ namespace PersistentCity.Core
             if (sameVisit)
             {
                 working.OptionalStopChoice = live.OptionalStopChoice;
-                working.OptionalStop = live.OptionalStop?.Copy();
+                working.OptionalStop = live.OptionalStop;
             }
             else if (live.OptionalStopChoice == true && live.OptionalStop == null) working.OptionalStopChoice = true;
             occupancy.Move(live.DayPlaceId, working.DayPlaceId);
@@ -597,17 +678,32 @@ namespace PersistentCity.Core
             ScheduleOptionalStop(live, arrivalRoute);
             FileOptionalStop(live);
             activityObservers.Handlers?.Invoke(live.Identity.Id, live, State.Minute);
-            spareShell = working;
+            RecycleEventShell(working);
             evt.Item = null!; evt.Working = null!; evt.Steps = null!; evt.Request = null; evt.Job = null;
             spareEvent = evt;
         }
 
         internal bool PoolEventShells { get; set; } = true;
         private CitizenState? spareShell;
+        private readonly EventShellScratch eventScratch = new EventShellScratch();
+        private sealed class EventShellScratch
+        {
+            internal MealOuting? Outing;
+            internal OptionalStopState? OptionalStop;
+            internal CarState? Car;
+            internal PersonNeeds? Needs;
+            internal DayPlan? Plan;
+        }
+        private void RecycleEventShell(CitizenState working)
+        {
+            working.MealOuting = null; working.OptionalStop = null; working.Car = null; working.Needs = null; working.Plan = null;
+            working.Journey = null; working.Identity = null!; working.Wallet = null; working.Visitor = null; working.RecentVisits.Clear();
+            spareShell = working;
+        }
         private CitizenState EventCopy(CitizenState live)
         {
             var shell = spareShell; spareShell = null;
-            return shell == null || !PoolEventShells ? CloneForEvent(live) : CopyForEvent(live, shell);
+            return shell == null || !PoolEventShells ? CloneForEvent(live) : CopyForEvent(live, shell, eventScratch);
         }
 
         private void ReleaseEventInputs(PendingEvent evt)
@@ -640,7 +736,8 @@ namespace PersistentCity.Core
             RoutineKeys = live.RoutineKeys,
             Visitor = live.Visitor, VisitorCarried = live.VisitorCarried
         };
-        internal static CitizenState CopyForEvent(CitizenState live, CitizenState into)
+        internal static CitizenState CopyForEvent(CitizenState live, CitizenState into) => CopyForEvent(live, into, null);
+        private static CitizenState CopyForEvent(CitizenState live, CitizenState into, EventShellScratch? scratch)
         {
             into.Identity = live.Identity; into.HomeId = live.HomeId; into.DayPlaceId = live.DayPlaceId; into.ShopId = live.ShopId; into.LeisureId = live.LeisureId;
             var preferences = into.Preferences ??= new TravelPreferences();
@@ -650,13 +747,54 @@ namespace PersistentCity.Core
             var source = live.CommutePreparation;
             preparation.PlaceId = source.PlaceId; preparation.WorkStartsAt = source.WorkStartsAt; preparation.WorkEndsAt = source.WorkEndsAt;
             preparation.PreparedAt = source.PreparedAt; preparation.TravelMinutes = source.TravelMinutes;
-            into.MealOuting = live.MealOuting == null ? null : CopyOuting(live.MealOuting);
-            into.OptionalStop = live.OptionalStop?.Copy();
+            if (live.MealOuting == null) into.MealOuting = null;
+            else
+            {
+                var outing = into.MealOuting ?? scratch?.Outing ?? new MealOuting();
+                if (scratch != null) scratch.Outing = outing;
+                CopyOutingInto(live.MealOuting, outing);
+                into.MealOuting = outing;
+            }
+            if (live.OptionalStop == null) into.OptionalStop = null;
+            else
+            {
+                var stop = into.OptionalStop ?? scratch?.OptionalStop ?? new OptionalStopState();
+                if (scratch != null) scratch.OptionalStop = stop;
+                stop.CopyFrom(live.OptionalStop);
+                into.OptionalStop = stop;
+            }
             into.W = live.W;
             into.OptionalStopChoice = live.OptionalStopChoice;
-            into.Car = live.Car == null ? null : CopyCar(live.Car);
+            if (live.Car == null) into.Car = null;
+            else
+            {
+                var car = into.Car ?? scratch?.Car ?? new CarState();
+                if (scratch != null) scratch.Car = car;
+                CopyCarInto(live.Car, car);
+                into.Car = car;
+            }
             into.JoinedMinute = live.JoinedMinute; into.LastEmploymentCheckDay = live.LastEmploymentCheckDay; into.JobChanges = live.JobChanges;
-            into.EmploymentStartDay = live.EmploymentStartDay; into.Accrual = live.Accrual; into.Wallet = live.Wallet; into.Plan = live.Plan?.Copy(); into.Needs = live.Needs?.Copy();
+            into.EmploymentStartDay = live.EmploymentStartDay; into.Accrual = live.Accrual; into.Wallet = live.Wallet;
+            if (live.Plan == null) into.Plan = null;
+            else if (scratch != null)
+            {
+                var plan = scratch.Plan ??= DayPlan.CreateScratch();
+                plan.CopyFrom(live.Plan);
+                into.Plan = plan;
+            }
+            else if (into.Plan != null && into.Plan.IsScratch)
+            {
+                into.Plan.CopyFrom(live.Plan);
+            }
+            else into.Plan = live.Plan.Copy();
+            if (live.Needs == null) into.Needs = null;
+            else
+            {
+                var needs = into.Needs ?? scratch?.Needs ?? new PersonNeeds();
+                if (scratch != null) scratch.Needs = needs;
+                needs.CopyFrom(live.Needs);
+                into.Needs = needs;
+            }
             into.Phase = live.Phase; into.Activity = live.Activity; into.PlaceId = live.PlaceId; into.DestinationId = live.DestinationId;
             into.DestinationActivity = live.DestinationActivity; into.Journey = live.Journey; into.DepartureMinute = live.DepartureMinute;
             into.NextEventMinute = live.NextEventMinute; into.ActivityUntilMinute = live.ActivityUntilMinute;
@@ -679,12 +817,24 @@ namespace PersistentCity.Core
             OriginId = source.OriginId, OriginActivity = source.OriginActivity, ResumeUntil = source.ResumeUntil,
             ResumeEvent = source.ResumeEvent, Returning = source.Returning
         };
+        private static void CopyOutingInto(MealOuting source, MealOuting target)
+        {
+            target.OriginId = source.OriginId; target.OriginActivity = source.OriginActivity; target.ResumeUntil = source.ResumeUntil;
+            target.ResumeEvent = source.ResumeEvent; target.Returning = source.Returning;
+        }
         private static CarState CopyCar(CarState source) => new CarState
         { Id = source.Id, ModelId = source.ModelId, PaintSeed = source.PaintSeed, ParkedPosition = source.ParkedPosition };
+        private static void CopyCarInto(CarState source, CarState target)
+        { target.Id = source.Id; target.ModelId = source.ModelId; target.PaintSeed = source.PaintSeed; target.ParkedPosition = source.ParkedPosition; }
 
         internal static void CommitEvent(CitizenState live, CitizenState working)
         {
-            live.OptionalStop = working.OptionalStop;
+            if (working.OptionalStop == null) live.OptionalStop = null;
+            else if (!ReferenceEquals(live.OptionalStop, working.OptionalStop))
+            {
+                if (live.OptionalStop == null) live.OptionalStop = working.OptionalStop.Copy();
+                else live.OptionalStop.CopyFrom(working.OptionalStop);
+            }
             live.W = working.W;
             live.OptionalStopChoice = working.OptionalStopChoice;
             live.Traits = working.Traits;
@@ -697,24 +847,25 @@ namespace PersistentCity.Core
             preparation.PreparedAt = prepared.PreparedAt; preparation.TravelMinutes = prepared.TravelMinutes;
             if (working.MealOuting == null) live.MealOuting = null;
             else if (live.MealOuting == null) live.MealOuting = CopyOuting(working.MealOuting);
-            else
-            {
-                var outing = live.MealOuting; var changed = working.MealOuting;
-                outing.OriginId = changed.OriginId; outing.OriginActivity = changed.OriginActivity; outing.ResumeUntil = changed.ResumeUntil;
-                outing.ResumeEvent = changed.ResumeEvent; outing.Returning = changed.Returning;
-            }
+            else CopyOutingInto(working.MealOuting, live.MealOuting);
             if (working.Car == null) live.Car = null;
             else if (live.Car == null) live.Car = CopyCar(working.Car);
-            else
-            {
-                var car = live.Car; var changed = working.Car;
-                car.Id = changed.Id; car.ModelId = changed.ModelId; car.PaintSeed = changed.PaintSeed; car.ParkedPosition = changed.ParkedPosition;
-            }
+            else CopyCarInto(working.Car, live.Car);
             live.JoinedMinute = working.JoinedMinute; live.LastEmploymentCheckDay = working.LastEmploymentCheckDay; live.JobChanges = working.JobChanges;
             live.EmploymentStartDay = working.EmploymentStartDay; live.Accrual = working.Accrual;
             live.Wallet = working.Wallet;
-            live.Plan = working.Plan;
-            live.Needs = working.Needs;
+            if (working.Plan == null) live.Plan = null;
+            else if (!ReferenceEquals(live.Plan, working.Plan))
+            {
+                if (live.Plan != null && live.Plan.SameStructure(working.Plan)) live.Plan.CopyMarksFrom(working.Plan);
+                else live.Plan = working.Plan.IsScratch ? working.Plan.DetachCopy() : working.Plan;
+            }
+            if (working.Needs == null) live.Needs = null;
+            else if (!ReferenceEquals(live.Needs, working.Needs))
+            {
+                if (live.Needs == null) live.Needs = working.Needs.Copy();
+                else live.Needs.CopyFrom(working.Needs);
+            }
             live.Phase = working.Phase; live.Activity = working.Activity; live.PlaceId = working.PlaceId; live.DestinationId = working.DestinationId;
             live.PlayerHoldMinutes = working.Phase == CitizenPhase.Travelling && ReferenceEquals(working.Journey, live.Journey) ? working.PlayerHoldMinutes : 0;
             live.DestinationActivity = working.DestinationActivity; live.Journey = working.Journey; live.DepartureMinute = working.DepartureMinute;

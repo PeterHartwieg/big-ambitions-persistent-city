@@ -191,14 +191,89 @@ namespace PersistentCity.Core
 
     public sealed partial class FoodCommerce
     {
-        private sealed class Order : IComparer<ResidentMeal>
+        private sealed class MealHeap
         {
-            public int Compare(ResidentMeal? a, ResidentMeal? b)
+            private ResidentMeal[] items;
+            private readonly Dictionary<string, int> index;
+            public MealHeap(int capacity)
             {
-                if (ReferenceEquals(a, b)) return 0;
-                if (a == null) return -1; if (b == null) return 1;
+                items = new ResidentMeal[Math.Max(16, capacity)];
+                index = new Dictionary<string, int>(capacity, StringComparer.Ordinal);
+            }
+            public int Count { get; private set; }
+            public ResidentMeal? Min => Count == 0 ? null : items[0];
+
+            public bool Add(ResidentMeal meal)
+            {
+                if (index.ContainsKey(meal.ResidentId)) return false;
+                if (Count == items.Length) Array.Resize(ref items, Count * 2);
+                int pos = Count++;
+                items[pos] = meal;
+                index.Add(meal.ResidentId, pos);
+                Up(pos);
+                return true;
+            }
+
+            public bool Remove(ResidentMeal meal)
+            {
+                if (!index.TryGetValue(meal.ResidentId, out int pos) || !ReferenceEquals(items[pos], meal)) return false;
+                index.Remove(meal.ResidentId);
+                Count--;
+                if (pos < Count)
+                {
+                    var last = items[Count];
+                    items[pos] = last;
+                    index[last.ResidentId] = pos;
+                    if (pos > 0 && Less(last, items[(pos - 1) / 2])) Up(pos);
+                    else Down(pos);
+                }
+                items[Count] = null!;
+                return true;
+            }
+
+            public int CountAtOrBefore(double minute)
+            {
+                int count = 0;
+                for (int i = 0; i < Count; i++) if (items[i].DueAt <= minute) count++;
+                return count;
+            }
+
+            private static bool Less(ResidentMeal a, ResidentMeal b)
+            {
                 int time = a.DueAt.CompareTo(b.DueAt);
-                return time != 0 ? time : StringComparer.Ordinal.Compare(a.ResidentId, b.ResidentId);
+                return (time != 0 ? time : StringComparer.Ordinal.Compare(a.ResidentId, b.ResidentId)) < 0;
+            }
+
+            private void Up(int pos)
+            {
+                var item = items[pos];
+                while (pos > 0)
+                {
+                    int parent = (pos - 1) / 2;
+                    if (!Less(item, items[parent])) break;
+                    items[pos] = items[parent];
+                    index[items[pos].ResidentId] = pos;
+                    pos = parent;
+                }
+                items[pos] = item;
+                index[item.ResidentId] = pos;
+            }
+
+            private void Down(int pos)
+            {
+                var item = items[pos];
+                while (true)
+                {
+                    int child = pos * 2 + 1;
+                    if (child >= Count) break;
+                    if (child + 1 < Count && Less(items[child + 1], items[child])) child++;
+                    if (!Less(items[child], item)) break;
+                    items[pos] = items[child];
+                    index[items[pos].ResidentId] = pos;
+                    pos = child;
+                }
+                items[pos] = item;
+                index[item.ResidentId] = pos;
             }
         }
         private readonly CitySimulator city;
@@ -206,8 +281,18 @@ namespace PersistentCity.Core
         private readonly IRoutePlanner routes;
         private readonly FoodCommerceState state;
         private readonly Dictionary<string, ResidentMeal> records;
-        private readonly SortedSet<ResidentMeal> due = new SortedSet<ResidentMeal>(new Order());
-        private readonly Dictionary<string, int> reservations = new Dictionary<string, int>(StringComparer.Ordinal);
+        private readonly MealHeap due;
+        private readonly struct ReservationSlot : IEquatable<ReservationSlot>
+        {
+            internal ReservationSlot(string placeId, string productId) { PlaceId = placeId; ProductId = productId; }
+            internal readonly string PlaceId;
+            internal readonly string ProductId;
+            public bool Equals(ReservationSlot other) => string.Equals(PlaceId, other.PlaceId, StringComparison.Ordinal)
+                && string.Equals(ProductId, other.ProductId, StringComparison.Ordinal);
+            public override bool Equals(object? obj) => obj is ReservationSlot other && Equals(other);
+            public override int GetHashCode() => HashCode.Combine(StringComparer.Ordinal.GetHashCode(PlaceId ?? ""), StringComparer.Ordinal.GetHashCode(ProductId ?? ""));
+        }
+        private readonly Dictionary<ReservationSlot, int> reservations = new Dictionary<ReservationSlot, int>();
         public double NextMinute => pendingDecision?.Decision?.OriginAt
             ?? Math.Min(NextBudgetMinute, due.Count == 0 ? double.PositiveInfinity : due.Min!.DueAt);
         internal IFoodMarket Market => market;
@@ -215,12 +300,7 @@ namespace PersistentCity.Core
         internal ResidentMeal? FindMeal(string consumerId) => records.TryGetValue(consumerId, out var meal) ? meal : null;
         public long AnchorReads { get; private set; }
         internal int QueuedMeals => due.Count;
-        internal int DueMealsAtOrBefore(double minute)
-        {
-            int count = 0;
-            foreach (var meal in due) { if (meal.DueAt > minute) break; count++; }
-            return count;
-        }
+        internal int DueMealsAtOrBefore(double minute) => due.CountAtOrBefore(minute);
         private CitizenState? Owner(ResidentMeal meal)
         {
             if (!string.Equals(meal.HostId, meal.ResidentId, StringComparison.Ordinal)) AnchorReads++;
@@ -241,6 +321,7 @@ namespace PersistentCity.Core
             memoryStore = (campaign as FoodCampaignSource)?.ReferencesFor(state) ?? new FoodMemoryStore(state);
             if(state.Residents.Count==0) { state.ChoiceStartsDay=(int)Math.Floor(city.State.Minute/1440)+1; state.AwarenessStartsDay=state.ChoiceStartsDay; state.RivalStartsDay=state.ChoiceStartsDay; }
             records = new Dictionary<string, ResidentMeal>(state.Residents.Count, StringComparer.Ordinal);
+            due = new MealHeap(state.Residents.Count);
             storedMemoryProvider = new StoredMemoryAwareness(this);
             attachSteps = AttachSteps();
             if (staged) return;
@@ -299,18 +380,17 @@ namespace PersistentCity.Core
             yield return true;
         }
         private static bool Active(ResidentMeal m) => m.Status == MealStatus.Travelling || m.Status == MealStatus.Serving;
-        private static string ReservationKey(string shop, string product) => shop + "\n" + product;
         private void Reserve(ResidentMeal meal, int delta)
         {
             if (meal.TargetKind == FoodAlternativeKind.Rival) return;
-            string key = ReservationKey(meal.PlaceId, meal.ProductId);
+            var key = new ReservationSlot(meal.PlaceId, meal.ProductId);
             reservations.TryGetValue(key, out int count); reservations[key] = count + delta;
         }
         private void ApplyReservations(FoodBusiness business)
         {
             foreach (var offer in business.Offers)
             {
-                reservations.TryGetValue(ReservationKey(business.PlaceId, offer.ProductId), out int count);
+                reservations.TryGetValue(new ReservationSlot(business.PlaceId, offer.ProductId), out int count);
                 if (offer.Units.HasValue) offer.Units = Math.Max(0, offer.Units.Value - count);
             }
         }
@@ -565,7 +645,7 @@ namespace PersistentCity.Core
             var candidates = new List<(FoodOffer Offer, int Taste)>(business.Offers.Count);
             foreach (var offer in business.Offers)
             {
-                reservations.TryGetValue(ReservationKey(meal.PlaceId, offer.ProductId), out int reserved);
+                reservations.TryGetValue(new ReservationSlot(meal.PlaceId, offer.ProductId), out int reserved);
                 if (!(offer.Units - reserved > 0) || offer.Price > limit || !scope.ContainsProduct(offer.ProductId)
                     || !policy.Executable(offer.ProductId)) continue;
                 int taste = offer.ProductId == chosen ? int.MaxValue

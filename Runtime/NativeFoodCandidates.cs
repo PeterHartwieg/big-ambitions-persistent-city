@@ -32,9 +32,10 @@ namespace PersistentCity.Runtime
         private sealed class CaptureBatch : IDisposable
         {
             private NativeFoodMarket? owner;
-            internal CaptureBatch(NativeFoodMarket owner) {this.owner=owner;}
+            internal void Arm(NativeFoodMarket owner) {this.owner=owner;}
             public void Dispose() {if(owner!=null) {owner.captureBatch=false;owner=null;}}
         }
+        private readonly CaptureBatch captureBatchHandle = new CaptureBatch();
         public IDisposable BeginCapture(double minute)
         {
             if(captureBatch) throw new InvalidOperationException("Food capture batches cannot nest.");
@@ -42,7 +43,8 @@ namespace PersistentCity.Runtime
             CaptureBatches++;
             contractEpoch.Begin();
             captureMinute=minute;captureBatch=true;
-            return new CaptureBatch(this);
+            captureBatchHandle.Arm(this);
+            return captureBatchHandle;
         }
         public bool IsCandidate(FoodScope scope)
         {
@@ -68,8 +70,7 @@ namespace PersistentCity.Runtime
                 using(BeginCapture(minute)) return CaptureBusiness(businessId,minute);
             }
             if(minute!=captureMinute) throw new InvalidOperationException("Food capture minute changed inside its batch.");
-            scopesByBusiness.TryGetValue(businessId,out var scope);
-            return scope==null ? null : ReadSelected(minute,new[] {scope.PlaceId},capture:true).SingleOrDefault(b=>b.Id==businessId);
+            return scopesByBusiness.TryGetValue(businessId,out var scope) ? ReadSingleBusiness(businessId,scope,minute,capture:true) : null;
         }
         public void RefreshDiscovery() { if (!checkoutSettled) SettleCheckout(); DiscoverShops(64); ContinueContractShadow(); }
         internal long DiscoveryPlaceIdBuilds { get; private set; }

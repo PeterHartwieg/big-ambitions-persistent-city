@@ -304,17 +304,38 @@ namespace PersistentCity.Core
         public FoodAwarenessImage Sample(int seed,string consumer,int day,Position? home,Position? routine,Position? origin,
             FoodAwarenessSettings settings,Func<Entry,bool> eligible,IFoodAwarenessProvider? memory=null,
             IFoodAwarenessProvider? campaign=null,FoodAwarenessDump? diagnostic=null,string? presentPlace=null)
+            => Sample(seed,consumer,day,home,routine,origin,settings,eligible,memory,campaign,diagnostic,presentPlace,null,null);
+
+        internal FoodAwarenessImage Sample(int seed,string consumer,int day,Position? home,Position? routine,Position? origin,
+            FoodAwarenessSettings settings,Func<Entry,bool> eligible,IFoodAwarenessProvider? memory,
+            IFoodAwarenessProvider? campaign,FoodAwarenessDump? diagnostic,string? presentPlace,
+            FoodAwarenessImage? reuse,List<FoodAwarenessCandidate>? spareCandidates)
         {
-            var image=new FoodAwarenessImage {CatalogueRevision=Revision};
+            var image=reuse ?? new FoodAwarenessImage();
+            image.CatalogueRevision=Revision;
+            image.Union.Clear();
             image.ClearCampaignModifier();
             void Add(Entry? entry,FoodAwarenessSource source,int slot,bool exposed,string reason)
             {
                 bool admitted=entry!=null && exposed && eligible(entry);
                 if(diagnostic!=null) diagnostic.Samples.Add(new FoodAwarenessSample {Source=source,Slot=slot,BusinessId=entry?.BusinessId ?? "",Result=admitted ? "eligible" : reason});
                 if(entry==null) return;
-                foreach(var old in image.Union)
+                for(int u=0;u<image.Union.Count;u++)
+                {
+                    var old=image.Union[u];
                     if(old.BusinessId==entry.BusinessId) {old.Sources|=source;old.Eligible|=admitted;return;}
-                image.Union.Add(new FoodAwarenessCandidate {AlternativeKind=entry.Kind==FoodAwarenessAlternativeKind.External ? FoodAlternativeKind.Rival : FoodAlternativeKind.Player,BusinessId=entry.BusinessId,Sources=source,Eligible=admitted});
+                }
+                FoodAwarenessCandidate candidate;
+                if(spareCandidates!=null && spareCandidates.Count>0)
+                {
+                    int last=spareCandidates.Count-1;
+                    candidate=spareCandidates[last];
+                    spareCandidates.RemoveAt(last);
+                }
+                else candidate=new FoodAwarenessCandidate();
+                candidate.AlternativeKind=entry.Kind==FoodAwarenessAlternativeKind.External ? FoodAlternativeKind.Rival : FoodAlternativeKind.Player;
+                candidate.BusinessId=entry.BusinessId;candidate.Sources=source;candidate.Eligible=admitted;
+                image.Union.Add(candidate);
             }
             for(int i=0;i<4;i++)
             {
@@ -368,20 +389,33 @@ namespace PersistentCity.Core
                 }
             else if(diagnostic!=null) for(int i=0;i<8;i++) diagnostic.Samples.Add(new FoodAwarenessSample {Source=FoodAwarenessSource.Campaign,Slot=i,Result="unknown"});
             if(campaign is IFoodCampaignAwarenessProvider active && active.HasEvidence)
-                foreach(var candidate in image.Union)
+                for(int u=0;u<image.Union.Count;u++)
+                {
+                    var candidate=image.Union[u];
                     if(active.Active(candidate.BusinessId))
                     {candidate.Sources|=FoodAwarenessSource.ActiveCampaign;image.MarkCampaignModifier();}
-            image.Union.Sort((a,b)=>StringComparer.Ordinal.Compare(a.BusinessId,b.BusinessId));
+                }
+            image.Union.Sort(CompareCandidateId);
             if(diagnostic!=null) diagnostic.Image=image;
             return image;
         }
+        private static readonly Comparison<FoodAwarenessCandidate> CompareCandidateId=(a,b)=>StringComparer.Ordinal.Compare(a.BusinessId,b.BusinessId);
         public Entry[] Rank(FoodAwarenessImage image,Position origin,ResidentTraits traits,FoodChoiceSettings settings,FoodDrawContext draw,double pace,Func<string,double>? memoryContribution=null,double rivalWeight=1,double weatherTravelMultiplier=1)
         {
+            var selected=new Entry[8];
+            int count=RankInto(image,origin,traits,settings,draw,pace,selected,null,memoryContribution,rivalWeight,weatherTravelMultiplier);
+            if(count!=8) Array.Resize(ref selected,count);
+            return selected;
+        }
+        internal int RankInto(FoodAwarenessImage image,Position origin,ResidentTraits traits,FoodChoiceSettings settings,FoodDrawContext draw,double pace,Entry[] selected,double[]? rankScratch=null,Func<string,double>? memoryContribution=null,double rivalWeight=1,double weatherTravelMultiplier=1)
+        {
             if(image.CatalogueRevision!=Revision || image.Union.Count>MaximumSourceSlots) throw new ArgumentException("Invalid awareness image.");
-            var selected=new Entry[8];var ranks=new double[8];int count=0;
+            var ranks=rankScratch ?? new double[8];int count=0;
             var preference=new FoodChoicePolicy.DistancePreference(traits,settings,weatherTravelMultiplier);
-            foreach(var candidate in image.Union)
+            var union=image.Union;
+            for(int i=0;i<union.Count;i++)
             {
+                var candidate=union[i];
                 if(!candidate.Eligible) continue;
                 var entry=Find(candidate.BusinessId);if(entry==null || entry.Kind==FoodAwarenessAlternativeKind.External && rivalWeight==0) continue;
                 double rank=FoodDrawContext.Rank(draw.ShopHash(entry.BusinessId),FoodChoicePolicy.ApplyMemory(preference.Weight(Position.Distance(origin,entry.Position)/pace,true,(candidate.Sources & FoodAwarenessSource.ActiveCampaign)!=0),memoryContribution?.Invoke(entry.BusinessId) ?? 0,settings.FoodChoiceWeightFloor)*(entry.Kind==FoodAwarenessAlternativeKind.External ? rivalWeight : 1));
@@ -390,8 +424,7 @@ namespace PersistentCity.Core
                 for(int j=Math.Min(count,7);j>at;j--) {selected[j]=selected[j-1];ranks[j]=ranks[j-1];}
                 selected[at]=entry;ranks[at]=rank;count=Math.Min(count+1,8);
             }
-            if(count!=8) Array.Resize(ref selected,count);
-            return selected;
+            return count;
         }
     }
 }

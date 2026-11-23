@@ -273,7 +273,7 @@ namespace PersistentCity.Runtime
                 {
                     long checkStarted = Stopwatch.GetTimestamp();
                     nextDependencyCheck = Time.unscaledTime + 30;
-                    var source = ReadRlo("periodic");
+                    var source = ReadRlo("periodic", simulation.State);
                     var continuity = source.Continuity(simulation.State);
                     rloDiffers = continuity == DonorContinuity.Different;
                     maxRloCheckMilliseconds = Math.Max(maxRloCheckMilliseconds, (Stopwatch.GetTimestamp() - checkStarted) * MillisecondsPerTimestamp);
@@ -492,86 +492,7 @@ namespace PersistentCity.Runtime
                 if (Time.unscaledTime >= nextSummary)
                 {
                     nextSummary = Time.unscaledTime + 60;
-                    var state = simulation.State;
-                    log?.Info("Population: " + state.Citizens.Count + " citizens; " + state.Citizens.Count(c => c.Phase == CitizenPhase.Travelling)
-                        + " travelling, " + state.Citizens.Count(c => c.Phase == CitizenPhase.WaitingForRoute) + " awaiting a route, "
-                        + state.Citizens.Count(c => c.Phase == CitizenPhase.WaitingForOpening) + " awaiting opening; clock "
-                        + state.Minute.ToString("F1", System.Globalization.CultureInfo.InvariantCulture) + ", lag "
-                        + Math.Max(0, target - state.Minute).ToString("F1", System.Globalization.CultureInfo.InvariantCulture)
-                        + " game minutes. Advancement this observation: " + advanceFrames + " frames, " + advanceEvents + " events, "
-                        + advanceMilliseconds.ToString("F3", System.Globalization.CultureInfo.InvariantCulture) + " ms total, "
-                        + maxAdvanceMilliseconds.ToString("F3", System.Globalization.CultureInfo.InvariantCulture) + " ms maximum advance, "
-                        + maxAdvanceEvents + " maximum events in one frame; these figures cover advancement calls only. Slowest advance: unit "
-                        + slowestAdvanceUnitMilliseconds.ToString("F3", System.Globalization.CultureInfo.InvariantCulture) + " ms ("
-                        + (slowestAdvanceUnit.Length == 0 ? "none" : slowestAdvanceUnit) + "), optional-stop reads "
-                        + slowestAdvanceStopMilliseconds.ToString("F3", System.Globalization.CultureInfo.InvariantCulture) + " ms, "
-                        + slowestAdvanceCollections + " garbage collections completed during it. Optional-stop reads per unit in the slowest advance: "
-                        + slowestAdvanceStopUnits + " units, call total "
-                        + slowestAdvanceCallStopMilliseconds.ToString("F3", System.Globalization.CultureInfo.InvariantCulture) + " ms, maximum "
-                        + slowestAdvanceMaximumUnitStopMilliseconds.ToString("F3", System.Globalization.CultureInfo.InvariantCulture) + " ms, p95 "
-                        + slowestAdvanceP95UnitStopMilliseconds.ToString("F3", System.Globalization.CultureInfo.InvariantCulture) + " ms, "
-                        + slowestAdvanceUnitsOverStopThreshold + " units over 5 ms [" + slowestAdvanceUnitsOverStopText
-                        + "]. Optional-stop units over 5 ms this observation: " + observedStopCrossingUnits + " units in "
-                        + observedStopCrossingAdvances + " advances, maximum "
-                        + observedStopCrossingMaximumMilliseconds.ToString("F3", System.Globalization.CultureInfo.InvariantCulture) + " ms ("
-                        + (observedStopCrossingMaximumKind.Length == 0 ? "none" : observedStopCrossingMaximumKind) + ") ["
-                        + observedStopCrossingText + (observedStopCrossingAdvances > ListedStopCrossingAdvances ? " | +" + (observedStopCrossingAdvances - ListedStopCrossingAdvances) + " more advances" : "")
-                        + "]. Optional-stop reads this observation (refresh and advancement): "
-                        + (stopEnvironment?.SeamCalls ?? 0) + " calls, "
-                        + (stopEnvironment?.SeamMilliseconds ?? 0).ToString("F3", System.Globalization.CultureInfo.InvariantCulture) + " ms total, "
-                        + (stopEnvironment?.MaximumSeamMilliseconds ?? 0).ToString("F3", System.Globalization.CultureInfo.InvariantCulture) + " ms maximum, "
-                        + (stopEnvironment?.ParkTriggerScans ?? 0) + " park trigger scans; geometry door samples "
-                        + (stopEnvironment?.DoorSamples ?? 0) + " (maximum " + (stopEnvironment?.MaximumDoorMilliseconds ?? 0).ToString("F3", System.Globalization.CultureInfo.InvariantCulture)
-                        + " ms; door search maximum " + (stopEnvironment?.Doors.MaximumSearchMilliseconds ?? 0).ToString("F3", System.Globalization.CultureInfo.InvariantCulture)
-                        + " ms over " + (stopEnvironment?.Doors.DoorSearches ?? 0) + " searches, " + (stopEnvironment?.Doors.IndexedSearches ?? 0) + " indexed, NavMesh queue maximum "
-                        + (stopEnvironment?.Doors.MaximumNavigationMilliseconds ?? 0).ToString("F3", System.Globalization.CultureInfo.InvariantCulture) + " ms, door index builds "
-                        + (stopEnvironment?.Doors.IndexBuilds ?? 0) + " (" + (stopEnvironment?.Doors.IndexedDoors ?? 0) + " doors, " + (stopEnvironment?.Doors.PendingRequests ?? 0) + " requests waited for the index, slice maximum "
-                        + (stopEnvironment?.Doors.MaximumIndexSliceMilliseconds ?? 0).ToString("F3", System.Globalization.CultureInfo.InvariantCulture) + " ms)), park builds on demand " + (stopEnvironment?.ParkBuilds ?? 0) + " (maximum " + (stopEnvironment?.MaximumParkMilliseconds ?? 0).ToString("F3", System.Globalization.CultureInfo.InvariantCulture)
-                        + " ms with setup), audience builds on demand " + (stopEnvironment?.AudienceBuilds ?? 0) + " (maximum " + (stopEnvironment?.MaximumAudienceMilliseconds ?? 0).ToString("F3", System.Globalization.CultureInfo.InvariantCulture)
-                        + " ms), warm-up park/audience slices " + (stopEnvironment?.ParkWarmup.Slices ?? 0) + "/" + (stopEnvironment?.AudienceWarmup.Slices ?? 0)
-                        + " (setups " + (stopEnvironment?.ParkWarmup.Setups ?? 0) + ", maximum " + Math.Max(stopEnvironment?.ParkWarmup.MaximumMilliseconds ?? 0, stopEnvironment?.AudienceWarmup.MaximumMilliseconds ?? 0).ToString("F3", System.Globalization.CultureInfo.InvariantCulture)
-                        + " ms, failures " + ((stopEnvironment?.ParkWarmup.Failures ?? 0) + (stopEnvironment?.AudienceWarmup.Failures ?? 0)) + "), frame-budget deferrals " + (stopEnvironment?.GeometryDeferrals ?? 0) + ". Slowest scene scan for optional stops: "
-                        + (stopEnvironment?.MaximumScanMilliseconds ?? 0).ToString("F3", System.Globalization.CultureInfo.InvariantCulture) + " ms (" + (stopEnvironment?.SlowestScan ?? "none") + "). Routes: "
-                        + roadSnapshots + " road snapshots started (" + gateChanges + " for gate changes), "
-                        + waitingFrames + " frames waiting for routes; rebuild reasons ["
-                        + string.Join(", ", roadRebuildReasons.OrderBy(pair => pair.Key, StringComparer.Ordinal).Select(pair => pair.Key + "=" + pair.Value))
-                        + "]; slow routing frames " + slowRoutingFrames + " (first " + routingFrameLogs + " logged); last rebuild " + lastRoadRebuild
-                        + "; this planner scene searches " + (routes?.RoadSceneSearches ?? 0) + ", maximum "
-                        + (routes?.MaximumRoadSceneSearchMilliseconds ?? 0).ToString("F3", System.Globalization.CultureInfo.InvariantCulture)
-                        + " ms, station captures " + (routes?.StationSearches ?? 0)
-                        + "; discovery sweeps " + (routeObjects?.Sweeps ?? 0) + ", last branch captures " + (routeObjects?.LastSweepBranchCaptures ?? 0)
-                        + ", split hints " + (routeObjects?.SplitBranches ?? 0)
-                        + ", maximum slice " + (routeObjects?.MaximumSliceMilliseconds ?? 0).ToString("F3", System.Globalization.CultureInfo.InvariantCulture)
-                        + " ms, last sweep " + (routeObjects?.LastSweepSeconds ?? 0).ToString("F3", System.Globalization.CultureInfo.InvariantCulture)
-                        + " s / " + (routeObjects?.LastSweepMilliseconds ?? 0).ToString("F3", System.Globalization.CultureInfo.InvariantCulture)
-                        + " ms work; slowest RLO check "
-                        + maxRloCheckMilliseconds.ToString("F3", System.Globalization.CultureInfo.InvariantCulture) + " ms (RLO contract bindings this session "
-                        + rlo.Bindings + ", " + rlo.BindingMilliseconds.ToString("F3", System.Globalization.CultureInfo.InvariantCulture) + " ms), door search "
-                        + maxGateCheckMilliseconds.ToString("F3", System.Globalization.CultureInfo.InvariantCulture) + " ms, station search "
-                        + maxStationSearchMilliseconds.ToString("F3", System.Globalization.CultureInfo.InvariantCulture) + " ms, preparation frame "
-                        + maxPrepareMilliseconds.ToString("F3", System.Globalization.CultureInfo.InvariantCulture) + " ms. Closure refresh: "
-                        + closureFrames + " calls, " + closureMilliseconds.ToString("F3", System.Globalization.CultureInfo.InvariantCulture)
-                        + " ms total, " + maxClosureMilliseconds.ToString("F3", System.Globalization.CultureInfo.InvariantCulture) + " ms maximum, gate clearance reused "
-                        + (routes?.LastRoadGateClearanceReused == true) + ", node validations deferred " + (routes?.ClosureValidationsDeferred ?? 0) + ". Route planning across frames: "
-                        + planningRequests + " requests, " + planningSlices + " slices, " + planningEvents + " events completed, "
-                        + planningPendingFrames + " frames ended with a plan pending, "
-                        + planningMilliseconds.ToString("F3", System.Globalization.CultureInfo.InvariantCulture) + " ms total, slowest slice "
-                        + maxPlanningSliceMilliseconds.ToString("F3", System.Globalization.CultureInfo.InvariantCulture) + " ms ending in "
-                        + (slowestPlanningUnit.Length == 0 ? "none" : slowestPlanningUnit) + " with " + slowestPlanningUnitNavMeshQueries
-                        + " NavMesh path queries; event restarts " + eventRestarts + " (inline escapes removed in F3; compatibility count "
-                        + inlineRestarts + "), road search restarts " + (routes?.RoadSearchRestarts ?? 0)
-                        + ", units " + (routes?.JobUnits ?? 0) + ", reused plan jobs " + (routes?.JobsReused ?? 0) + ", query/unit admission deferrals " + (routes?.JobAdmissionDeferrals ?? 0)
-                        + ", path reserve ms " + (routes?.JobPathReserveMilliseconds ?? 0) + ". "
-                        + PlanningSliceAnatomy.Text(maxPlanningSliceMilliseconds, slowestSliceJobMilliseconds, slowestSliceUnitStage, slowestSliceUnitMilliseconds,
-                            slowestSliceUnitNavMeshMilliseconds, slowestSliceUnitNavMeshQueries, slowestSliceUnitNavMeshSamples)
-                        + " Slowest food continuation: " + slowestFoodContinuation.Milliseconds.ToString("F3", System.Globalization.CultureInfo.InvariantCulture)
-                        + " ms (" + (slowestFoodContinuation.Step.Length == 0 ? "none" : slowestFoodContinuation.Step) + "). "
-                        + (physical?.Diagnostics ?? "Physical population inactive."));
-                    if (simulation.Traffic != null)
-                        log?.Info("Citywide traffic: " + (simulation.Traffic.VehicleCount - simulation.ThroughCarCount) + " persistent cars, "
-                            + simulation.ThroughCarCount + " through cars (share " + simulation.ThroughTrafficShare.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture)
-                            + ", " + simulation.ThroughCarsGenerated + " generated), "
-                            + simulation.Traffic.PendingEventCount + " scheduled road events, " + simulation.Traffic.LinkCount + " road sections.");
+                    LogPeriodicSummary(simulation.State, target);
                     ResetAdvanceDiagnostics();
                 }
                 ModFrames.Charge(GcAllocationSegment.ModSummary);
@@ -1083,16 +1004,136 @@ namespace PersistentCity.Runtime
             return save.Day * 1440.0 + save.Hour * 60.0 + save.Minute;
         }
 
-        private RloReadResult ReadRlo(string context)
+        private readonly System.Text.StringBuilder summaryBuilder = new System.Text.StringBuilder(2048);
+        private readonly List<string> summaryReasonKeys = new List<string>(8);
+        private void LogPeriodicSummary(CityState state, double target)
         {
-            var result = rlo.Read(dependency);
+            if (log == null) return;
+            var culture = System.Globalization.CultureInfo.InvariantCulture;
+            int travelling = 0, awaitingRoute = 0, awaitingOpening = 0;
+            for (int i = 0; i < state.Citizens.Count; i++)
+            {
+                var phase = state.Citizens[i].Phase;
+                if (phase == CitizenPhase.Travelling) travelling++;
+                else if (phase == CitizenPhase.WaitingForRoute) awaitingRoute++;
+                else if (phase == CitizenPhase.WaitingForOpening) awaitingOpening++;
+            }
+            var sb = summaryBuilder;
+            sb.Clear();
+            sb.Append("Population: ").Append(state.Citizens.Count).Append(" citizens; ").Append(travelling)
+                .Append(" travelling, ").Append(awaitingRoute).Append(" awaiting a route, ").Append(awaitingOpening)
+                .Append(" awaiting opening; clock ").Append(state.Minute.ToString("F1", culture)).Append(", lag ")
+                .Append(Math.Max(0, target - state.Minute).ToString("F1", culture))
+                .Append(" game minutes. Advancement this observation: ").Append(advanceFrames).Append(" frames, ").Append(advanceEvents).Append(" events, ")
+                .Append(advanceMilliseconds.ToString("F3", culture)).Append(" ms total, ").Append(maxAdvanceMilliseconds.ToString("F3", culture))
+                .Append(" ms maximum advance, ").Append(maxAdvanceEvents)
+                .Append(" maximum events in one frame; these figures cover advancement calls only. Slowest advance: unit ")
+                .Append(slowestAdvanceUnitMilliseconds.ToString("F3", culture)).Append(" ms (")
+                .Append(slowestAdvanceUnit.Length == 0 ? "none" : slowestAdvanceUnit).Append("), optional-stop reads ")
+                .Append(slowestAdvanceStopMilliseconds.ToString("F3", culture)).Append(" ms, ").Append(slowestAdvanceCollections)
+                .Append(" garbage collections completed during it. Optional-stop reads per unit in the slowest advance: ")
+                .Append(slowestAdvanceStopUnits).Append(" units, call total ").Append(slowestAdvanceCallStopMilliseconds.ToString("F3", culture))
+                .Append(" ms, maximum ").Append(slowestAdvanceMaximumUnitStopMilliseconds.ToString("F3", culture))
+                .Append(" ms, p95 ").Append(slowestAdvanceP95UnitStopMilliseconds.ToString("F3", culture))
+                .Append(" ms, ").Append(slowestAdvanceUnitsOverStopThreshold).Append(" units over 5 ms [").Append(slowestAdvanceUnitsOverStopText)
+                .Append("]. Optional-stop units over 5 ms this observation: ").Append(observedStopCrossingUnits).Append(" units in ")
+                .Append(observedStopCrossingAdvances).Append(" advances, maximum ").Append(observedStopCrossingMaximumMilliseconds.ToString("F3", culture))
+                .Append(" ms (").Append(observedStopCrossingMaximumKind.Length == 0 ? "none" : observedStopCrossingMaximumKind).Append(") [")
+                .Append(observedStopCrossingText);
+            if (observedStopCrossingAdvances > ListedStopCrossingAdvances)
+                sb.Append(" | +").Append(observedStopCrossingAdvances - ListedStopCrossingAdvances).Append(" more advances");
+            sb.Append("]. Optional-stop reads this observation (refresh and advancement): ").Append(stopEnvironment?.SeamCalls ?? 0).Append(" calls, ")
+                .Append((stopEnvironment?.SeamMilliseconds ?? 0).ToString("F3", culture)).Append(" ms total, ")
+                .Append((stopEnvironment?.MaximumSeamMilliseconds ?? 0).ToString("F3", culture)).Append(" ms maximum, ")
+                .Append(stopEnvironment?.ParkTriggerScans ?? 0).Append(" park trigger scans; geometry door samples ")
+                .Append(stopEnvironment?.DoorSamples ?? 0).Append(" (maximum ").Append((stopEnvironment?.MaximumDoorMilliseconds ?? 0).ToString("F3", culture))
+                .Append(" ms; door search maximum ").Append((stopEnvironment?.Doors.MaximumSearchMilliseconds ?? 0).ToString("F3", culture))
+                .Append(" ms over ").Append(stopEnvironment?.Doors.DoorSearches ?? 0).Append(" searches, ").Append(stopEnvironment?.Doors.IndexedSearches ?? 0)
+                .Append(" indexed, NavMesh queue maximum ").Append((stopEnvironment?.Doors.MaximumNavigationMilliseconds ?? 0).ToString("F3", culture))
+                .Append(" ms, door index builds ").Append(stopEnvironment?.Doors.IndexBuilds ?? 0).Append(" (").Append(stopEnvironment?.Doors.IndexedDoors ?? 0)
+                .Append(" doors, ").Append(stopEnvironment?.Doors.PendingRequests ?? 0).Append(" requests waited for the index, slice maximum ")
+                .Append((stopEnvironment?.Doors.MaximumIndexSliceMilliseconds ?? 0).ToString("F3", culture)).Append(" ms)), park builds on demand ")
+                .Append(stopEnvironment?.ParkBuilds ?? 0).Append(" (maximum ").Append((stopEnvironment?.MaximumParkMilliseconds ?? 0).ToString("F3", culture))
+                .Append(" ms with setup), audience builds on demand ").Append(stopEnvironment?.AudienceBuilds ?? 0).Append(" (maximum ")
+                .Append((stopEnvironment?.MaximumAudienceMilliseconds ?? 0).ToString("F3", culture)).Append(" ms), warm-up park/audience slices ")
+                .Append(stopEnvironment?.ParkWarmup.Slices ?? 0).Append('/').Append(stopEnvironment?.AudienceWarmup.Slices ?? 0)
+                .Append(" (setups ").Append(stopEnvironment?.ParkWarmup.Setups ?? 0).Append(", maximum ")
+                .Append(Math.Max(stopEnvironment?.ParkWarmup.MaximumMilliseconds ?? 0, stopEnvironment?.AudienceWarmup.MaximumMilliseconds ?? 0).ToString("F3", culture))
+                .Append(" ms, failures ").Append((stopEnvironment?.ParkWarmup.Failures ?? 0) + (stopEnvironment?.AudienceWarmup.Failures ?? 0))
+                .Append("), frame-budget deferrals ").Append(stopEnvironment?.GeometryDeferrals ?? 0).Append(". Slowest scene scan for optional stops: ")
+                .Append((stopEnvironment?.MaximumScanMilliseconds ?? 0).ToString("F3", culture)).Append(" ms (")
+                .Append(stopEnvironment?.SlowestScan ?? "none").Append("). Routes: ").Append(roadSnapshots).Append(" road snapshots started (")
+                .Append(gateChanges).Append(" for gate changes), ").Append(waitingFrames).Append(" frames waiting for routes; rebuild reasons [");
+            summaryReasonKeys.Clear();
+            foreach (var key in roadRebuildReasons.Keys) summaryReasonKeys.Add(key);
+            summaryReasonKeys.Sort(StringComparer.Ordinal);
+            for (int i = 0; i < summaryReasonKeys.Count; i++)
+            {
+                if (i > 0) sb.Append(", ");
+                sb.Append(summaryReasonKeys[i]).Append('=').Append(roadRebuildReasons[summaryReasonKeys[i]]);
+            }
+            summaryReasonKeys.Clear();
+            sb.Append("]; slow routing frames ").Append(slowRoutingFrames).Append(" (first ").Append(routingFrameLogs)
+                .Append(" logged); last rebuild ").Append(lastRoadRebuild).Append("; this planner scene searches ")
+                .Append(routes?.RoadSceneSearches ?? 0).Append(", maximum ").Append((routes?.MaximumRoadSceneSearchMilliseconds ?? 0).ToString("F3", culture))
+                .Append(" ms, station captures ").Append(routes?.StationSearches ?? 0).Append("; discovery sweeps ")
+                .Append(routeObjects?.Sweeps ?? 0).Append(", last branch captures ").Append(routeObjects?.LastSweepBranchCaptures ?? 0)
+                .Append(", split hints ").Append(routeObjects?.SplitBranches ?? 0).Append(", maximum slice ")
+                .Append((routeObjects?.MaximumSliceMilliseconds ?? 0).ToString("F3", culture)).Append(" ms, last sweep ")
+                .Append((routeObjects?.LastSweepSeconds ?? 0).ToString("F3", culture)).Append(" s / ")
+                .Append((routeObjects?.LastSweepMilliseconds ?? 0).ToString("F3", culture)).Append(" ms work; slowest RLO check ")
+                .Append(maxRloCheckMilliseconds.ToString("F3", culture)).Append(" ms (RLO contract bindings this session ")
+                .Append(rlo.Bindings).Append(", ").Append(rlo.BindingMilliseconds.ToString("F3", culture)).Append(" ms), door search ")
+                .Append(maxGateCheckMilliseconds.ToString("F3", culture)).Append(" ms, station search ")
+                .Append(maxStationSearchMilliseconds.ToString("F3", culture)).Append(" ms, preparation frame ")
+                .Append(maxPrepareMilliseconds.ToString("F3", culture)).Append(" ms. Closure refresh: ").Append(closureFrames)
+                .Append(" calls, ").Append(closureMilliseconds.ToString("F3", culture)).Append(" ms total, ")
+                .Append(maxClosureMilliseconds.ToString("F3", culture)).Append(" ms maximum, gate clearance reused ")
+                .Append(routes?.LastRoadGateClearanceReused == true).Append(", node validations deferred ")
+                .Append(routes?.ClosureValidationsDeferred ?? 0).Append(". Route planning across frames: ").Append(planningRequests)
+                .Append(" requests, ").Append(planningSlices).Append(" slices, ").Append(planningEvents).Append(" events completed, ")
+                .Append(planningPendingFrames).Append(" frames ended with a plan pending, ").Append(planningMilliseconds.ToString("F3", culture))
+                .Append(" ms total, slowest slice ").Append(maxPlanningSliceMilliseconds.ToString("F3", culture)).Append(" ms ending in ")
+                .Append(slowestPlanningUnit.Length == 0 ? "none" : slowestPlanningUnit).Append(" with ").Append(slowestPlanningUnitNavMeshQueries)
+                .Append(" NavMesh path queries; event restarts ").Append(eventRestarts)
+                .Append(" (inline escapes removed in F3; compatibility count ").Append(inlineRestarts).Append("), road search restarts ")
+                .Append(routes?.RoadSearchRestarts ?? 0).Append(", units ").Append(routes?.JobUnits ?? 0).Append(", reused plan jobs ")
+                .Append(routes?.JobsReused ?? 0).Append(", query/unit admission deferrals ").Append(routes?.JobAdmissionDeferrals ?? 0)
+                .Append(", path reserve ms ").Append(routes?.JobPathReserveMilliseconds ?? 0).Append(". ")
+                .Append(PlanningSliceAnatomy.Text(maxPlanningSliceMilliseconds, slowestSliceJobMilliseconds, slowestSliceUnitStage, slowestSliceUnitMilliseconds,
+                    slowestSliceUnitNavMeshMilliseconds, slowestSliceUnitNavMeshQueries, slowestSliceUnitNavMeshSamples))
+                .Append(" Slowest food continuation: ").Append(slowestFoodContinuation.Milliseconds.ToString("F3", culture))
+                .Append(" ms (").Append(slowestFoodContinuation.Step.Length == 0 ? "none" : slowestFoodContinuation.Step).Append("). ")
+                .Append(physical?.Diagnostics ?? "Physical population inactive.");
+            log.Info(sb.ToString());
+            if (simulation!.Traffic != null)
+            {
+                sb.Clear();
+                sb.Append("Citywide traffic: ").Append(simulation.Traffic.VehicleCount - simulation.ThroughCarCount).Append(" persistent cars, ")
+                    .Append(simulation.ThroughCarCount).Append(" through cars (share ").Append(simulation.ThroughTrafficShare.ToString("0.00", culture))
+                    .Append(", ").Append(simulation.ThroughCarsGenerated).Append(" generated), ")
+                    .Append(simulation.Traffic.PendingEventCount).Append(" scheduled road events, ")
+                    .Append(simulation.Traffic.LinkCount).Append(" road sections.");
+                log.Info(sb.ToString());
+            }
+        }
+
+        private RloReadResult ReadRlo(string context, CityState? expected = null)
+        {
+            var result = expected != null ? rlo.ReadMatching(dependency, expected) : rlo.Read(dependency);
             lastRloRead = result;
-            log?.Info("RLO single-pass read context=" + context + " status=" + result.Status
-                + " identities=" + result.Identities.Count + " elapsedMs="
-                + rlo.LastReadMilliseconds.ToString("F3", System.Globalization.CultureInfo.InvariantCulture)
-                + " reads=" + rlo.Reads + " totalMs="
-                + rlo.TotalReadMilliseconds.ToString("F3", System.Globalization.CultureInfo.InvariantCulture)
-                + " maxMs=" + rlo.MaximumReadMilliseconds.ToString("F3", System.Globalization.CultureInfo.InvariantCulture));
+            if (log != null)
+            {
+                var culture = System.Globalization.CultureInfo.InvariantCulture;
+                var sb = summaryBuilder;
+                sb.Clear();
+                sb.Append("RLO single-pass read context=").Append(context).Append(" status=").Append(result.Status)
+                    .Append(" identities=").Append(result.Identities.Count).Append(" elapsedMs=")
+                    .Append(rlo.LastReadMilliseconds.ToString("F3", culture)).Append(" reads=").Append(rlo.Reads)
+                    .Append(" totalMs=").Append(rlo.TotalReadMilliseconds.ToString("F3", culture))
+                    .Append(" maxMs=").Append(rlo.MaximumReadMilliseconds.ToString("F3", culture));
+                log.Info(sb.ToString());
+            }
             return result;
         }
 

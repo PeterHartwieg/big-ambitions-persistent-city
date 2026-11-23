@@ -17,6 +17,8 @@ namespace PersistentCity.Runtime
         internal const double AcquireStopMilliseconds = 8;
         private long acquireStops;
         private readonly FrameDeferral selectionGate = new FrameDeferral(), parkedGate = new FrameDeferral();
+        private readonly HashSet<string> pruneIds = new HashSet<string>(StringComparer.Ordinal);
+        private readonly List<string> pruneRemoved = new List<string>();
         internal long AcquireStops => acquireStops;
 
         public void BeforeAdvance()
@@ -258,26 +260,26 @@ namespace PersistentCity.Runtime
                     || !admission.LinkId.HasValue || admission.IsCompleted)) continue;
                 if (car && !routes.TryPhysicalRoadSample(citizen, sample, out road))
                     continue;
-                var binding = new Binding { Citizen = citizen };
                 Position at = candidate.Position;
-                if (queuer) { binding.Queue = queue!.Dwell; binding.VendorOpening = queue.VendorOpening; binding.Line = queue.Line; binding.Slot = queue.Slot; at = queue.Line.Entrance; }
-                if (moving) { binding.Journey = citizen.Journey; binding.BodyMinutes = sample.ElapsedMinutes; }
+                if (queuer) at = queue!.Line.Entrance;
+                Binding? binding = null;
                 bool bound = false;
                 try
                 {
                     if (faultAcquirePercent > 0 && faultDice.Next(100) < faultAcquirePercent)
                     { failedAcquisitions++; Telemetry.FaultedAcquisitions++; continue; }
                     PhysicalAllocation.Charge(GcAllocationSegment.PhysicalSelection);
+                    PhysicalVehicleBody? acquiredCar = null;
+                    PhysicalPedestrianBody? acquiredPerson = null;
                     if (car)
                     {
-                        bool taken = vehicles.TryAcquire(citizen, road, out var body);
+                        bool taken = vehicles.TryAcquire(citizen, road, out acquiredCar);
                         PhysicalAllocation.Charge(GcAllocationSegment.PhysicalSpawnVehicle);
                         if (!taken) { failedAcquisitions++; continue; }
-                        binding.Car = body;
                     }
                     else
                     {
-                        bool taken = pedestrians.TryAcquire(citizen.Identity, at, out var body, donor: donors.Of(citizen));
+                        bool taken = pedestrians.TryAcquire(citizen.Identity, at, out acquiredPerson, donor: donors.Of(citizen));
                         PhysicalAllocation.Charge(GcAllocationSegment.PhysicalSpawnPedestrian);
                         if (!taken && pedestrians.LastDeferred)
                         {
@@ -286,15 +288,17 @@ namespace PersistentCity.Runtime
                             continue;
                         }
                         if (!taken) { failedAcquisitions++; continue; }
-                        binding.Person = body;
                     }
+                    binding = new Binding { Citizen = citizen, Car = acquiredCar, Person = acquiredPerson };
+                    if (queuer) { binding.Queue = queue!.Dwell; binding.VendorOpening = queue.VendorOpening; binding.Line = queue.Line; binding.Slot = queue.Slot; }
+                    if (moving) { binding.Journey = citizen.Journey; binding.BodyMinutes = sample.ElapsedMinutes; }
                     Bind(binding); bound = true; acquired++;
                 }
-                finally { if (!bound) ReleaseBodies(binding); }
-                if (queuer && !binding.Person!.SetPathTarget(binding.Line!.Spots[binding.Slot], NativeTravelPace.WalkingMetresPerSecond))
+                finally { if (!bound && binding != null) ReleaseBodies(binding); }
+                if (queuer && !binding!.Person!.SetPathTarget(binding.Line!.Spots[binding.Slot], NativeTravelPace.WalkingMetresPerSecond))
                 { GiveUp(binding); Release(binding); continue; }
-                if (!Observe(binding)) { Release(binding); continue; }
-                BeginFadeIn(binding);
+                if (!Observe(binding!)) { Release(binding!); continue; }
+                BeginFadeIn(binding!);
                 if (car) cars++; else people++;
                 if (queuer) queued++;
             }
@@ -302,8 +306,16 @@ namespace PersistentCity.Runtime
             var view = simulation.View;
             if (attempted.Count > view.ResidentList.Count + view.VisitorCount + 128)
             {
-                var ids = new HashSet<string>(view.ResidentList.Concat(view.VisitorRoutineList).Select(c => c.Id), StringComparer.Ordinal);
-                foreach (var id in attempted.Keys.Where(id => !ids.Contains(id)).ToArray()) attempted.Remove(id);
+                pruneIds.Clear();
+                var residentList = view.ResidentList;
+                for (int i = 0; i < residentList.Count; i++) pruneIds.Add(residentList[i].Id);
+                var visitorList = view.VisitorRoutineList;
+                for (int i = 0; i < visitorList.Count; i++) pruneIds.Add(visitorList[i].Id);
+                pruneRemoved.Clear();
+                foreach (var id in attempted.Keys) if (!pruneIds.Contains(id)) pruneRemoved.Add(id);
+                for (int i = 0; i < pruneRemoved.Count; i++) attempted.Remove(pruneRemoved[i]);
+                pruneIds.Clear();
+                pruneRemoved.Clear();
             }
             PhysicalAllocation.Charge(GcAllocationSegment.PhysicalSelection);
             if (pedestrians.TrimIdle(Time.unscaledTime)) PhysicalAllocation.Charge(GcAllocationSegment.PhysicalRelease);

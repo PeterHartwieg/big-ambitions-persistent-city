@@ -22,7 +22,7 @@ namespace PersistentCity.Core
             internal Queue<string> Sources => sources ?? NoSources;
             internal Queue<string> OwnSources => sources ??= new Queue<string>();
             internal void ClearSources() => sources?.Clear();
-            internal readonly SortedIds Incoming = new SortedIds();
+            internal SortedIds Incoming;
             internal TrafficEventState Event => linkEvent ??= new TrafficEventState { LinkId = Definition.Id };
             internal int HeapIndex = -1;
             internal bool Seen;
@@ -125,8 +125,8 @@ namespace PersistentCity.Core
         }
         private readonly Dictionary<int, Link> links;
         private readonly List<Link> orderedLinks;
-        private readonly SortedIds activeLinks = new SortedIds();
-        private readonly SortedIds closedLinks = new SortedIds();
+        private SortedIds activeLinks;
+        private SortedIds closedLinks;
         private readonly Dictionary<string, TrafficVehicleState> vehicles;
         private readonly EventHeap events = new EventHeap();
         private readonly Stack<LinkedListNode<TrafficVehicleState>> spareNodes = new Stack<LinkedListNode<TrafficVehicleState>>();
@@ -202,7 +202,12 @@ namespace PersistentCity.Core
             if (network == null) throw new ArgumentNullException(nameof(network));
             Clock = RequestedTime = initialClock;
             bool ascending = true;
-            foreach (TrafficLinkDefinition definition in network) ascending &= AddDefinition(definition);
+            Dictionary<TrafficSignalSchedule, TrafficSignalSchedule>? copiedSignals = null;
+            foreach (TrafficLinkDefinition definition in network)
+            {
+                if (definition != null && definition.Signal != null) copiedSignals ??= new Dictionary<TrafficSignalSchedule, TrafficSignalSchedule>(SignalReferenceComparer.Instance);
+                ascending &= AddDefinition(definition!, false, copiedSignals);
+            }
             if (!ascending) SortLinks();
         }
 
@@ -214,11 +219,11 @@ namespace PersistentCity.Core
             Clock = RequestedTime = initialClock;
         }
 
-        private bool AddDefinition(TrafficLinkDefinition definition, bool adopt = false)
+        private bool AddDefinition(TrafficLinkDefinition definition, bool adopt = false, Dictionary<TrafficSignalSchedule, TrafficSignalSchedule>? copiedSignals = null)
         {
             ValidateDefinition(definition);
             if (links.ContainsKey(definition.Id)) throw new ArgumentException("Duplicate traffic link ID.", "network");
-            var link = new Link(adopt ? definition : CopyDefinition(definition));
+            var link = new Link(adopt ? definition : CopyDefinition(definition, copiedSignals));
             links.Add(definition.Id, link);
             bool ascending = orderedLinks.Count == 0 || orderedLinks[orderedLinks.Count - 1].Definition.Id <= definition.Id;
             orderedLinks.Add(link);
@@ -1339,7 +1344,7 @@ namespace PersistentCity.Core
         {
             int work = 0;
             TrafficKernelState? state = null;
-            var capture = CaptureSteps(linksPerStep, false);
+            var capture = CaptureSteps(linksPerStep, false, shareDefinitions: true);
             while (capture.MoveNext())
             {
                 if (capture.Current != null) { state = capture.Current; break; }
@@ -1347,17 +1352,34 @@ namespace PersistentCity.Core
             }
             if (state == null) throw new InvalidOperationException("Traffic capture ended without a result.");
             state.RequestedTime = Clock + (RequestedTime - Clock) * factor;
-            foreach (TrafficLinkDefinition definition in state.Definitions)
+            Dictionary<TrafficSignalSchedule, TrafficSignalSchedule>? scaledSignals = null;
+            var definitions = state.Definitions;
+            for (int i = 0; i < definitions.Count; i++)
             {
-                definition.FreeFlowMinutes *= factor;
-                definition.HeadwayMinutes *= factor;
-                if (definition.Signal != null)
+                TrafficLinkDefinition source = definitions[i];
+                TrafficSignalSchedule? scaledSignal = null;
+                if (source.Signal != null)
                 {
-                    definition.Signal.CycleMinutes *= factor;
-                    definition.Signal.GreenStartMinutes *= factor;
-                    definition.Signal.GreenDurationMinutes *= factor;
-                    definition.Signal.PhaseOffsetMinutes = Clock + (definition.Signal.PhaseOffsetMinutes - Clock) * factor;
+                    scaledSignals ??= new Dictionary<TrafficSignalSchedule, TrafficSignalSchedule>(SignalReferenceComparer.Instance);
+                    if (!scaledSignals.TryGetValue(source.Signal, out scaledSignal))
+                    {
+                        scaledSignal = new TrafficSignalSchedule
+                        {
+                            CycleMinutes = source.Signal.CycleMinutes * factor,
+                            GreenStartMinutes = source.Signal.GreenStartMinutes * factor,
+                            GreenDurationMinutes = source.Signal.GreenDurationMinutes * factor,
+                            PhaseOffsetMinutes = Clock + (source.Signal.PhaseOffsetMinutes - Clock) * factor
+                        };
+                        scaledSignals.Add(source.Signal, scaledSignal);
+                    }
                 }
+                definitions[i] = new TrafficLinkDefinition
+                {
+                    Id = source.Id, Capacity = source.Capacity,
+                    FreeFlowMinutes = source.FreeFlowMinutes * factor,
+                    HeadwayMinutes = source.HeadwayMinutes * factor,
+                    Signal = scaledSignal
+                };
                 if (++work % linksPerStep == 0) yield return null;
             }
             foreach (TrafficVehicleState vehicle in state.Vehicles)
@@ -1503,15 +1525,33 @@ namespace PersistentCity.Core
                 signal.GreenDurationMinutes < 0 || signal.GreenDurationMinutes > signal.CycleMinutes || !Finite(signal.PhaseOffsetMinutes)))
                 throw new ArgumentException("Invalid traffic signal schedule.");
         }
-        private static TrafficLinkDefinition CopyDefinition(TrafficLinkDefinition value) => new TrafficLinkDefinition
+        private sealed class SignalReferenceComparer : IEqualityComparer<TrafficSignalSchedule>
         {
-            Id = value.Id, Capacity = value.Capacity, FreeFlowMinutes = value.FreeFlowMinutes, HeadwayMinutes = value.HeadwayMinutes,
-            Signal = value.Signal == null ? null : new TrafficSignalSchedule
+            internal static readonly SignalReferenceComparer Instance = new SignalReferenceComparer();
+            public bool Equals(TrafficSignalSchedule? a, TrafficSignalSchedule? b) => ReferenceEquals(a, b);
+            public int GetHashCode(TrafficSignalSchedule value) => System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(value);
+        }
+        private static TrafficLinkDefinition CopyDefinition(TrafficLinkDefinition value, Dictionary<TrafficSignalSchedule, TrafficSignalSchedule>? copiedSignals = null)
+        {
+            TrafficSignalSchedule? signal = null;
+            if (value.Signal != null)
             {
-                CycleMinutes = value.Signal.CycleMinutes, GreenStartMinutes = value.Signal.GreenStartMinutes,
-                GreenDurationMinutes = value.Signal.GreenDurationMinutes, PhaseOffsetMinutes = value.Signal.PhaseOffsetMinutes
+                if (copiedSignals == null || !copiedSignals.TryGetValue(value.Signal, out signal))
+                {
+                    signal = new TrafficSignalSchedule
+                    {
+                        CycleMinutes = value.Signal.CycleMinutes, GreenStartMinutes = value.Signal.GreenStartMinutes,
+                        GreenDurationMinutes = value.Signal.GreenDurationMinutes, PhaseOffsetMinutes = value.Signal.PhaseOffsetMinutes
+                    };
+                    copiedSignals?.Add(value.Signal, signal);
+                }
             }
-        };
+            return new TrafficLinkDefinition
+            {
+                Id = value.Id, Capacity = value.Capacity, FreeFlowMinutes = value.FreeFlowMinutes, HeadwayMinutes = value.HeadwayMinutes,
+                Signal = signal
+            };
+        }
         private static List<TrafficRouteLeg> CopyRoute(List<TrafficRouteLeg> route)
         {
             var copy = new List<TrafficRouteLeg>(route.Count);

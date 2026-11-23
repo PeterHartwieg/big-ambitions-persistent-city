@@ -10,8 +10,8 @@
     <Compile Include="../ProbeLogic.cs" />
     <Compile Include="../ScopeInventory.cs" />
     <Compile Include="../HarmonyScan.cs" />
-    <Compile Include="../../../Core/OptionalStopUnitSeams.cs" />
     <Compile Include="Program.cs" />
+    <ProjectReference Include="../../../Core/PersistentCity.Core.csproj" />
     <Reference Include="0Harmony"><HintPath>$(PinnedHarmony)</HintPath><Private>true</Private></Reference>
   </ItemGroup>
 </Project>

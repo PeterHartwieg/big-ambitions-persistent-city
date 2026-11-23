@@ -115,8 +115,7 @@ namespace PersistentCity.Runtime
                 return new CachedPath(null, 0);
             if (Position.Distance(from, to) < 0.000001)
             {
-                var stationary = new Route();
-                stationary.Legs.Add(new RouteLeg { From = from, To = to, Minutes = 0.01, Mode = TravelMode.Walk });
+                var stationary = TransportComposition.Single(new RouteLeg { From = from, To = to, Minutes = 0.01, Mode = TravelMode.Walk });
                 return new CachedPath(TransportComposition.Shared(stationary), 0);
             }
             Metrics.NavMeshPathQueries++;
@@ -140,7 +139,7 @@ namespace PersistentCity.Runtime
                 || !Point(corners[0]).IsFinite || !Point(corners[count - 1]).IsFinite
                 || Position.Distance(from, Point(corners[0])) > EndpointTolerance || Position.Distance(to, Point(corners[count - 1])) > EndpointTolerance)
                 return new CachedPath(null, 0);
-            var route = new Route();
+            var route = new Route(new RouteLegs(count - 1));
             Position previous = from;
             double metres = 0;
             for (int i = 1; i < count; i++)

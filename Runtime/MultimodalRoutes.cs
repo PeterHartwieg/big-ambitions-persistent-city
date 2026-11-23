@@ -20,7 +20,7 @@ namespace PersistentCity.Runtime
         SubwayStation[] Stations { get; }
         void RequestSweep();
     }
-    internal sealed class MultimodalRoutes : ICitizenRoutePlanner, ICommuteTimingPlanner, ITrafficRoutePlanner, ITrafficEntryRoutePlanner, ITrafficClosureBatchPlanner, IWalkingTimeBound, IFoodWalkingPace, IWalkingQuoteValidity, IWalkingQuoteRevision, IWalkingQuoteOperation, IResumableRoutePlanner, IRouteEventInputs
+    internal sealed class MultimodalRoutes : ICitizenRoutePlanner, ICommuteTimingPlanner, ITrafficRoutePlanner, ITrafficEntryRoutePlanner, ITrafficClosureBatchPlanner, IWalkingTimeBound, IFoodWalkingPace, ISharedWalkingPlanner, IWalkingQuoteValidity, IWalkingQuoteRevision, IWalkingQuoteOperation, IResumableRoutePlanner, IRouteEventInputs
     {
         private readonly double subwayMetresPerMinute;
         private readonly double clockRate;
@@ -55,6 +55,8 @@ namespace PersistentCity.Runtime
         {
             public string Id = "";
             public string District = "";
+            public SubwayStation? Native;
+            public int NativeName;
             public Position Platform;
             public Place Entrance = new Place();
         }
@@ -274,6 +276,12 @@ namespace PersistentCity.Runtime
         {
             EnsureAccess();
             return walking.Plan(from, to, departureMinute, preferences);
+        }
+
+        Route? ISharedWalkingPlanner.PlanShared(Place from, Place to, double departureMinute, TravelPreferences preferences)
+        {
+            EnsureAccess();
+            return walking.PlanShared(from, to, departureMinute, preferences);
         }
 
         public bool IsWalkingQuoteValid(Place from, Place to, Route route, TravelPreferences preferences)
@@ -593,9 +601,10 @@ namespace PersistentCity.Runtime
                     {
                         if (!drive!.Continue(deadline)) { if (drive.RecheckDeferred) owner.jobRecheckHeldFrame = Time.frameCount; return; }
                         var road = drive.Result; drive.Dispose(); drive = null;
-                        if (road != null) Consider(TransportComposition.Join(accessWalk!,
+                        if (road != null) candidates.ConsiderJoined(accessWalk!,
                             Pause(person!.Car!.ParkedPosition, TransportComposition.CarPreparationMinutes), road,
-                            Pause(ends![endIndex].Position, TransportComposition.CarParkingMinutes), egress!));
+                            Pause(ends![endIndex].Position, TransportComposition.CarParkingMinutes), egress!,
+                            from!.Position, to!.Position, Preferences, person!.Car?.ParkedPosition);
                         startIndex++;
                         NextStart();
                         return;
@@ -691,31 +700,96 @@ namespace PersistentCity.Runtime
         }
         private readonly StaticSceneMemory stationActivity = new StaticSceneMemory();
         public int ValidatedStations => stationActivity.Count;
+        private readonly List<SubwayStation> stationScanScratch = new List<SubwayStation>();
+        private readonly List<ToggleObjectDLC> stationDlcScratch = new List<ToggleObjectDLC>();
+        private readonly List<Station> stationMatchedScratch = new List<Station>();
+        private readonly Dictionary<SubwayStation, string> stationSceneKeys = new Dictionary<SubwayStation, string>();
+        private List<Station>? previousStations;
+        private readonly List<Position> trainPoints = new List<Position>(6);
+        private static readonly Comparison<SubwayStation> CompareStationId = (a, b) => a.GetInstanceID().CompareTo(b.GetInstanceID());
+        private static readonly Comparison<Station> CompareStationName = (a, b) => StringComparer.Ordinal.Compare(a.Id, b.Id);
         private void EnsureStations()
         {
             if (stations != null) return;
-            stations = new List<Station>();
             var city = CityManager.Instance;
-            if (city == null) return;
+            if (city == null) { stations = new List<Station>(); previousStations = null; return; }
             subway = city.subwaySystem;
             StationSearches++;
-            foreach (var station in (objects?.Stations ?? Object.FindObjectsByType<SubwayStation>(FindObjectsInactive.Include, FindObjectsSortMode.None))
-                .OrderBy(station => station.GetInstanceID()))
+            stationScanScratch.Clear();
+            var raw = objects?.Stations ?? Object.FindObjectsByType<SubwayStation>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            for (int i = 0; i < raw.Length; i++) if (raw[i] != null) stationScanScratch.Add(raw[i]);
+            stationScanScratch.Sort(CompareStationId);
+            var prior = previousStations;
+            stationMatchedScratch.Clear();
+            bool unchanged = prior != null;
+            List<Station>? fresh = null;
+            for (int i = 0; i < stationScanScratch.Count; i++)
             {
-                if (station == null) continue;
-                bool hidden = station.GetComponentsInParent<ToggleObjectDLC>(true).Any(t => t.showWhenOwned != t.dlc.DlcIsOwned());
+                var station = stationScanScratch[i];
+                stationDlcScratch.Clear();
+                station.GetComponentsInParent(true, stationDlcScratch);
+                bool hidden = false;
+                for (int d = 0; d < stationDlcScratch.Count; d++)
+                    if (stationDlcScratch[d].showWhenOwned != stationDlcScratch[d].dlc.DlcIsOwned()) { hidden = true; break; }
                 bool active = station.gameObject.activeInHierarchy;
-                if (OutdoorPlaces.StaticSceneKey(station.transform, out string sceneKey)
-                    ? !stationActivity.Admit(sceneKey, active, hidden) : hidden || !active) continue;
+                bool admitted;
+                if (stationSceneKeys.TryGetValue(station, out string? sceneKey))
+                    admitted = sceneKey.Length != 0 ? stationActivity.Admit(sceneKey, active, hidden) : !hidden && active;
+                else if (OutdoorPlaces.StaticSceneKey(station.transform, out string computed))
+                {
+                    stationSceneKeys[station] = computed;
+                    admitted = stationActivity.Admit(computed, active, hidden);
+                }
+                else
+                {
+                    stationSceneKeys[station] = "";
+                    admitted = !hidden && active;
+                }
+                if (!admitted) continue;
                 Position position;
                 try { position = Point(station.GetNavMeshTargetPosition()); }
                 catch (Exception) { continue; }
                 var platform = Point(station.transform.position);
                 if (!position.IsFinite || !platform.IsFinite || access!.NearGate(position, 12)) continue;
+                string district = station.neighbourhood ?? "";
+                int nativeName = (int)station.stationName;
+                if (unchanged)
+                {
+                    Station? existing = null;
+                    for (int p = 0; p < prior!.Count; p++)
+                    {
+                        var candidate = prior[p];
+                        if (ReferenceEquals(candidate.Native, station) && candidate.NativeName == nativeName
+                            && string.Equals(candidate.District, district, StringComparison.Ordinal)
+                            && candidate.Platform.Equals(platform) && candidate.Entrance.Position.Equals(position))
+                        { existing = candidate; break; }
+                    }
+                    if (existing != null) { stationMatchedScratch.Add(existing); continue; }
+                    unchanged = false;
+                    fresh = new List<Station>(stationScanScratch.Count);
+                    fresh.AddRange(stationMatchedScratch);
+                }
+                fresh ??= new List<Station>(stationScanScratch.Count);
                 string id = "subway:" + station.stationName;
-                stations.Add(new Station { Id = id, District = station.neighbourhood ?? "", Platform = platform, Entrance = new Place { Id = id, Position = position } });
+                fresh.Add(new Station { Id = id, District = district, Native = station, NativeName = nativeName, Platform = platform, Entrance = new Place { Id = id, Position = position } });
             }
-            stations.Sort((a, b) => StringComparer.Ordinal.Compare(a.Id, b.Id));
+            stationScanScratch.Clear();
+            stationDlcScratch.Clear();
+            if (unchanged && stationMatchedScratch.Count == prior!.Count)
+            {
+                stationMatchedScratch.Clear();
+                stations = prior;
+                return;
+            }
+            if (fresh == null && stationMatchedScratch.Count > 0)
+            {
+                fresh = new List<Station>(stationMatchedScratch.Count);
+                fresh.AddRange(stationMatchedScratch);
+            }
+            stationMatchedScratch.Clear();
+            stations = fresh ?? new List<Station>();
+            stations.Sort(CompareStationName);
+            previousStations = stations;
         }
         private List<Station> Nearby(Position position, List<Station> nearest)
         {
@@ -751,7 +825,9 @@ namespace PersistentCity.Runtime
         }
         private Route? BuildTrain(Station from, Station to)
         {
-            var points = new List<Position> { from.Entrance.Position, from.Platform };
+            var points = trainPoints;
+            points.Clear();
+            points.Add(from.Entrance.Position); points.Add(from.Platform);
             if (IndustrySide(from.District) != IndustrySide(to.District))
             {
                 var bridge = IndustrySide(from.District) ? subway!.manhattanBridgeIcToLm : subway!.manhattanBridgeLmToIc;
@@ -759,7 +835,7 @@ namespace PersistentCity.Runtime
                 points.Add(Point(bridge[0])); points.Add(Point(bridge[1]));
             }
             points.Add(to.Platform); points.Add(to.Entrance.Position);
-            var route = new Route();
+            var route = new Route(new RouteLegs(points.Count));
             route.Legs.Add(new RouteLeg { From = points[0], To = points[0], Mode = TravelMode.Subway, Minutes = SubwayWaitMinutes, ServiceId = "native:subway" });
             Position previous = points[0];
             for (int i = 1; i < points.Count; i++)

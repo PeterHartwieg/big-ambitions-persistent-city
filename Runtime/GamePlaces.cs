@@ -146,20 +146,43 @@ namespace PersistentCity.Runtime
             return type.Length <= BusinessTypes.MaximumNameLength ? type : BusinessTypes.None;
         }
 
+        private sealed class CachedAddress
+        {
+            public string Street = "";
+            public int Number;
+            public string Key = "";
+        }
+
+        private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<BuildingRegistration, CachedAddress> AddressKeys =
+            new System.Runtime.CompilerServices.ConditionalWeakTable<BuildingRegistration, CachedAddress>();
+
+        private static string AddressKey(BuildingRegistration registration)
+        {
+            if (AddressKeys.TryGetValue(registration, out var cached)
+                && string.Equals(cached.Street, registration.StreetName, StringComparison.Ordinal)
+                && cached.Number == registration.StreetNumber) return cached.Key;
+            string key = "address:" + Uri.EscapeDataString(registration.StreetName) + ":" + registration.StreetNumber.ToString(CultureInfo.InvariantCulture);
+            if (cached == null) AddressKeys.Add(registration, new CachedAddress { Street = registration.StreetName, Number = registration.StreetNumber, Key = key });
+            else { cached.Street = registration.StreetName; cached.Number = registration.StreetNumber; cached.Key = key; }
+            return key;
+        }
+
         public static Dictionary<string, string> ReadBusinessTypes(Dictionary<string, string>? reuse = null)
         {
             var types = reuse ?? new Dictionary<string, string>(StringComparer.Ordinal);
             types.Clear();
             var manager = CityManager.Instance;
             if (manager == null || manager.cityBuildingControllers == null) return types;
-            foreach (var controller in manager.cityBuildingControllers)
+            var controllers = manager.cityBuildingControllers;
+            for (int i = 0; i < controllers.Length; i++)
             {
+                var controller = controllers[i];
                 if (controller == null || controller.building == null || controller.blockPedestrianSpawn || !BuildingAccessible(controller)) continue;
                 var registration = controller.buildingRegistration;
                 if (registration == null || controller.building.BuildingType == "ba:buildingtype_residential") continue;
                 string type = EstablishedType(registration);
                 if (type.Length == 0 || string.IsNullOrWhiteSpace(registration.StreetName)) continue;
-                types["address:" + Uri.EscapeDataString(registration.StreetName) + ":" + registration.StreetNumber.ToString(CultureInfo.InvariantCulture)] = type;
+                types[AddressKey(registration)] = type;
             }
             return types;
         }

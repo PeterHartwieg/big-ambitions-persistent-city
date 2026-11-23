@@ -39,6 +39,7 @@ namespace PersistentCity.Compatibility
         {
             if (Status != RloReadStatus.Ready || state.PopulationKey != PopulationKey || state.Seed != CitySeed || state.SourceIdentities.Count != Identities.Count)
                 return false;
+            if (ReferenceEquals(Identities, state.SourceIdentities)) return true;
             var expected = new Dictionary<string, CitizenIdentity>(Identities.Count, StringComparer.Ordinal);
             foreach (var identity in Identities) expected.Add(identity.Id, identity);
             foreach (var actual in state.SourceIdentities)
@@ -76,17 +77,18 @@ namespace PersistentCity.Compatibility
         internal long Bindings { get; private set; }
         internal double BindingMilliseconds { get; private set; }
 
-        public RloReadResult Read(Assembly? rloAssembly) => TimedRead(rloAssembly, null, false);
-        public RloReadResult ReadSnapshot(Assembly? rloAssembly, object? director) => TimedRead(rloAssembly, director, true);
+        public RloReadResult Read(Assembly? rloAssembly) => TimedRead(rloAssembly, null, false, null);
+        public RloReadResult ReadMatching(Assembly? rloAssembly, CityState? expected) => TimedRead(rloAssembly, null, false, expected);
+        public RloReadResult ReadSnapshot(Assembly? rloAssembly, object? director) => TimedRead(rloAssembly, director, true, null);
 
         public long Reads { get; private set; }
         public double LastReadMilliseconds { get; private set; }
         public double TotalReadMilliseconds { get; private set; }
         public double MaximumReadMilliseconds { get; private set; }
-        private RloReadResult TimedRead(Assembly? assembly, object? director, bool supplied)
+        private RloReadResult TimedRead(Assembly? assembly, object? director, bool supplied, CityState? expected)
         {
             long started = Stopwatch.GetTimestamp();
-            try { return ReadCore(assembly, director, supplied); }
+            try { return ReadCore(assembly, director, supplied, expected); }
             finally
             {
                 LastReadMilliseconds = (Stopwatch.GetTimestamp() - started) * 1000.0 / Stopwatch.Frequency;
@@ -96,7 +98,7 @@ namespace PersistentCity.Compatibility
             }
         }
 
-        private RloReadResult ReadCore(Assembly? assembly, object? director, bool supplied)
+        private RloReadResult ReadCore(Assembly? assembly, object? director, bool supplied, CityState? expected)
         {
             if (assembly == null) return new RloReadResult(RloReadStatus.MissingDependency, "RealLifeOverhaul is required and is not loaded.");
             string version = "";
@@ -111,7 +113,7 @@ namespace PersistentCity.Compatibility
                     bool outer = !bridgeReading && ReferenceEquals(api, bridge);
                     if (outer) bridgeReading = true;
                     RloReadResult read;
-                    try { read = ReadBridge(api, version); }
+                    try { read = expected != null ? ReadBridgeMatching(api, version, expected) : ReadBridge(api, version); }
                     finally { if (outer) bridgeReading = false; }
                     if (read.Status == RloReadStatus.Incompatible) Forget();
                     return read;
@@ -153,7 +155,7 @@ namespace PersistentCity.Compatibility
             BindingMilliseconds += (Stopwatch.GetTimestamp() - started) * 1000.0 / Stopwatch.Frequency;
         }
 
-        private void Forget() { bridgeAssembly = contractAssembly = null; bridge = null; contract = null; }
+        private void Forget() { bridgeAssembly = contractAssembly = null; bridge = null; contract = null; matchedResult = null; matchedSource = null; matchedByIndex = null; }
 
         internal static bool IsReviewedVersion(string version) =>
             VersionForm(version, ReviewedVersion, ReviewedCommit) || VersionForm(version, LegacyVersion, LegacyCommit)
@@ -262,6 +264,103 @@ namespace PersistentCity.Compatibility
             }
             catch (Exception e) { Forget(); return Failure(e, version); }
         }
+
+        internal RloReadResult ReadBridgeMatching(RloBridge bridge, string version, CityState expected)
+        {
+            if (expected == null || expected.SourceIdentities.Count != ReviewedPopulation) return ReadBridge(bridge, version);
+            bool shared = false;
+            try
+            {
+                shared = !bridgeBuffersBusy;
+                bridgeBuffersBusy = true;
+                var read = shared ? bridgeRead : new List<RloBridgeCitizen>(ReviewedPopulation);
+                RloBridge.Status status = bridge.ReadCitizens(read, out int seed);
+                if (status == RloBridge.Status.Failed) return Failure(new ContractException(RloBridge.Describe(status)), version, DonorReadReason.Failed);
+                if (status != RloBridge.Status.Ready) return NotReady(Reason(status), RloBridge.Describe(status), version);
+                if (read.Count == 0) return NotReady(DonorReadReason.NotYet, "Flare's actual citizen population is not initialized yet.", version);
+                if (seed == 0) return NotReady(DonorReadReason.NotYet, "Flare has no initialized city seed yet.", version);
+                if (read.Count != ReviewedPopulation) throw new ContractException("Citizens must contain the reviewed 400 identities; found " + read.Count + ".");
+                var ids = shared ? bridgeSeen : new bool[ReviewedPopulation];
+                Array.Clear(ids, 0, ids.Length);
+                var expectedByIndex = EnsureMatchedIndex(expected, bridge, version);
+                bool matches = expectedByIndex != null && seed == expected.Seed;
+                for (int i = 0; i < read.Count; i++)
+                {
+                    var c = read[i];
+                    if (c.Index < 0 || c.Index >= ReviewedPopulation || ids[c.Index]) throw new ContractException("Citizens has a duplicate or out-of-range Index.");
+                    if (string.IsNullOrWhiteSpace(c.First) || string.IsNullOrWhiteSpace(c.Last)) throw new ContractException("A citizen has no complete RLO name.");
+                    if (c.Age < 1 || c.Age > 130 || !RloBridge.TryPersona(c.Persona, out Persona character)) throw new ContractException("A citizen has an invalid age or persona.");
+                    if (c.AppearanceSeed == 0) throw new ContractException("A citizen has no appearance seed.");
+                    ids[c.Index] = true;
+                    if (matches)
+                    {
+                        var actual = expectedByIndex![c.Index];
+                        if (actual == null || !NameEquals(actual.Name, c.First!, c.Last!)
+                            || !string.Equals(actual.District, c.District ?? "", StringComparison.Ordinal)
+                            || actual.Age != c.Age || actual.Female != c.Female
+                            || actual.Persona != character || actual.AppearanceSeed != c.AppearanceSeed)
+                            matches = false;
+                    }
+                }
+                if (matches && matchedResult != null) return matchedResult;
+                var identities = new List<CitizenIdentity>(ReviewedPopulation);
+                for (int i = 0; i < read.Count; i++)
+                {
+                    var c = read[i];
+                    RloBridge.TryPersona(c.Persona, out Persona character);
+                    identities.Add(new CitizenIdentity { Id = BridgeIds[c.Index], Name = c.First + " " + c.Last,
+                        District = c.District ?? "", Age = c.Age, Female = c.Female, Persona = character, AppearanceSeed = c.AppearanceSeed });
+                }
+                identities.Sort((a, b) => StringComparer.Ordinal.Compare(a.Id, b.Id));
+                return new RloReadResult(RloReadStatus.Ready, "Read 400 actual RLO citizens through RLO's CityApi contract " + bridge.ContractVersion + ".", version,
+                    PopulationHash(seed, identities), seed, identities.AsReadOnly());
+            }
+            catch (Exception e) { return Failure(e, version); }
+            finally { if (shared) { bridgeRead.Clear(); bridgeBuffersBusy = false; } }
+        }
+
+        private static bool NameEquals(string full, string first, string last)
+            => full.Length == first.Length + 1 + last.Length && full[first.Length] == ' '
+                && string.CompareOrdinal(full, 0, first, 0, first.Length) == 0
+                && string.CompareOrdinal(full, first.Length + 1, last, 0, last.Length) == 0;
+
+        private CitizenIdentity?[]? EnsureMatchedIndex(CityState expected, RloBridge bridge, string version)
+        {
+            if (ReferenceEquals(matchedSource, expected.SourceIdentities) && matchedSeed == expected.Seed
+                && string.Equals(matchedKey, expected.PopulationKey, StringComparison.Ordinal)
+                && string.Equals(matchedVersion, version, StringComparison.Ordinal)
+                && matchedContract == bridge.ContractVersion && matchedResult != null)
+                return matchedByIndex;
+            matchedResult = null; matchedSource = null; matchedByIndex = null;
+            var source = expected.SourceIdentities;
+            if (source.Count != ReviewedPopulation) return null;
+            var byIndex = new CitizenIdentity?[ReviewedPopulation];
+            var sorted = new List<CitizenIdentity>(ReviewedPopulation);
+            for (int i = 0; i < source.Count; i++)
+            {
+                var identity = source[i];
+                if (identity == null || identity.Id.Length < 2 || identity.Id[0] != 'c'
+                    || !int.TryParse(identity.Id.AsSpan(1), NumberStyles.None, CultureInfo.InvariantCulture, out int idx)
+                    || idx < 0 || idx >= ReviewedPopulation || !string.Equals(identity.Id, BridgeIds[idx], StringComparison.Ordinal)
+                    || byIndex[idx] != null) return null;
+                byIndex[idx] = identity;
+                sorted.Add(identity);
+            }
+            sorted.Sort((a, b) => StringComparer.Ordinal.Compare(a.Id, b.Id));
+            string hash = PopulationHash(expected.Seed, sorted);
+            if (!string.Equals(hash, expected.PopulationKey, StringComparison.Ordinal)) return null;
+            matchedSource = source; matchedSeed = expected.Seed; matchedKey = expected.PopulationKey;
+            matchedVersion = version; matchedContract = bridge.ContractVersion; matchedByIndex = byIndex;
+            matchedResult = new RloReadResult(RloReadStatus.Ready, "Read 400 actual RLO citizens through RLO's CityApi contract " + bridge.ContractVersion + ".",
+                version, expected.PopulationKey, expected.Seed, source);
+            return byIndex;
+        }
+
+        private List<CitizenIdentity>? matchedSource;
+        private int matchedSeed, matchedContract;
+        private string matchedKey = "", matchedVersion = "";
+        private CitizenIdentity?[]? matchedByIndex;
+        private RloReadResult? matchedResult;
 
         internal RloReadResult ReadBridge(RloBridge bridge, string version)
         {

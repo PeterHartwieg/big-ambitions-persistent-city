@@ -354,6 +354,7 @@ namespace PersistentCity.Runtime
         public void Disable()
         {
             active = false;
+            parkedYaws.Clear(); parkedBlocked.Clear();
             Exception? failure = null;
             foreach (var body in bodies.Values.ToArray())
                 try { Release(body); } catch (Exception error) { failure = failure ?? error; }
@@ -539,29 +540,59 @@ namespace PersistentCity.Runtime
             finally { UnityEngine.Object.Destroy(staging); }
         }
 
+        private static readonly List<MonoBehaviour> stripScripts = new List<MonoBehaviour>();
+        private static readonly List<Rigidbody> stripRigidbodies = new List<Rigidbody>();
+        private static readonly List<Collider> stripColliders = new List<Collider>();
+        private static readonly List<UnityEngine.AI.NavMeshObstacle> stripObstacles = new List<UnityEngine.AI.NavMeshObstacle>();
+        private static readonly List<Behaviour> stripBehaviours = new List<Behaviour>();
+
         private static bool Strip(GameObject root)
         {
-            for (int pass = 0; pass < 4; pass++)
+            try
             {
-                var scripts = root.GetComponentsInChildren<MonoBehaviour>(true);
-                bool left = false;
-                for (int i = scripts.Length - 1; i >= 0; i--)
+                for (int pass = 0; pass < 4; pass++)
                 {
-                    if (scripts[i] == null || scripts[i] is CarFeatures) continue;
-                    UnityEngine.Object.DestroyImmediate(scripts[i]);
-                    left = true;
+                    stripScripts.Clear();
+                    root.GetComponentsInChildren(true, stripScripts);
+                    bool left = false;
+                    for (int i = stripScripts.Count - 1; i >= 0; i--)
+                    {
+                        var script = stripScripts[i];
+                        if (script == null || script is CarFeatures) continue;
+                        UnityEngine.Object.DestroyImmediate(script);
+                        left = true;
+                    }
+                    if (!left) break;
                 }
-                if (!left) break;
+                stripScripts.Clear();
+                root.GetComponentsInChildren(true, stripScripts);
+                for (int i = 0; i < stripScripts.Count; i++)
+                    if (stripScripts[i] != null && !(stripScripts[i] is CarFeatures)) return false;
+                stripRigidbodies.Clear();
+                root.GetComponentsInChildren(true, stripRigidbodies);
+                for (int i = 0; i < stripRigidbodies.Count; i++) { var body = stripRigidbodies[i]; body.isKinematic = true; body.useGravity = false; body.detectCollisions = true; }
+                stripColliders.Clear();
+                root.GetComponentsInChildren(true, stripColliders);
+                int layer = LayerMask.NameToLayer("Obstacles");
+                for (int i = 0; i < stripColliders.Count; i++)
+                {
+                    var collider = stripColliders[i];
+                    if (collider.isTrigger) collider.enabled = false;
+                    if (layer >= 0) collider.gameObject.layer = layer;
+                }
+                stripObstacles.Clear();
+                root.GetComponentsInChildren(true, stripObstacles);
+                for (int i = 0; i < stripObstacles.Count; i++) stripObstacles[i].enabled = false;
+                stripBehaviours.Clear();
+                root.GetComponentsInChildren(true, stripBehaviours);
+                for (int i = 0; i < stripBehaviours.Count; i++)
+                    if (stripBehaviours[i] != null && stripBehaviours[i].GetType().Name == "AudioSource") stripBehaviours[i].enabled = false;
+                return true;
             }
-            foreach (var script in root.GetComponentsInChildren<MonoBehaviour>(true)) if (script != null && !(script is CarFeatures)) return false;
-            foreach (var body in root.GetComponentsInChildren<Rigidbody>(true)) { body.isKinematic = true; body.useGravity = false; body.detectCollisions = true; }
-            foreach (var collider in root.GetComponentsInChildren<Collider>(true)) if (collider.isTrigger) collider.enabled = false;
-            foreach (var obstacle in root.GetComponentsInChildren<UnityEngine.AI.NavMeshObstacle>(true)) obstacle.enabled = false;
-            foreach (var behaviour in root.GetComponentsInChildren<Behaviour>(true))
-                if (behaviour != null && behaviour.GetType().Name == "AudioSource") behaviour.enabled = false;
-            int layer = LayerMask.NameToLayer("Obstacles");
-            if (layer >= 0) foreach (var collider in root.GetComponentsInChildren<Collider>(true)) collider.gameObject.layer = layer;
-            return true;
+            finally
+            {
+                stripScripts.Clear(); stripRigidbodies.Clear(); stripColliders.Clear(); stripObstacles.Clear(); stripBehaviours.Clear();
+            }
         }
 
         internal void AssertHealthy()
@@ -755,9 +786,12 @@ namespace PersistentCity.Runtime
         }
 
         internal const int ParkedPlacementsPerRefresh = 2, ParkedAttemptsPerRefresh = 4, ParkedCreatesPerRefresh = 1;
-        internal const double ParkedRefreshMilliseconds = 2;
+        internal const double ParkedRefreshMilliseconds = 2, ParkedCreateBudgetMilliseconds = 1.5;
+        private const float ParkedBlockedBackoffSeconds = 8f;
         private enum ParkedPlacement { Placed, Failed, Later }
         private readonly List<ParkedCar> parkedPending = new List<ParkedCar>();
+        private readonly Dictionary<string, (Position At, float Yaw)> parkedYaws = new Dictionary<string, (Position, float)>(StringComparer.Ordinal);
+        private readonly Dictionary<string, (Position At, float RetryAfter)> parkedBlocked = new Dictionary<string, (Position, float)>(StringComparer.Ordinal);
         private int parkedCursor, parkedCreates;
         internal bool ShowParked(IReadOnlyList<ParkedCar> wanted, Func<string, CarState?> car)
         {
@@ -765,6 +799,7 @@ namespace PersistentCity.Runtime
             if (!Active || models == null) return true;
             var keep = parkedKeep;
             keep.Clear();
+            float now = Time.unscaledTime;
             int count = 0;
             for (int index = 0; index < wanted.Count; index++)
             {
@@ -773,6 +808,7 @@ namespace PersistentCity.Runtime
                 if (bodies.ContainsKey(entry.CarId)) continue;
                 keep.Add(entry.CarId); count++;
                 if (parked.TryGetValue(entry.CarId, out var shown) && Position.Distance(shown.At, entry.At) <= .01) { shown.FadeOut = double.NaN; continue; }
+                if (parkedBlocked.TryGetValue(entry.CarId, out var blocked) && Position.Distance(blocked.At, entry.At) <= .01 && now < blocked.RetryAfter) continue;
                 parkedPending.Add(entry);
             }
             parkedScratch.Clear();
@@ -817,7 +853,13 @@ namespace PersistentCity.Runtime
             if (state == null || !CarAppearance.TryModel(state, modelNameList ??= () => modelNames, out string modelId)
                 || !models!.TryGetValue(modelId, out var model) || model.Refused) return ParkedPlacement.Failed;
             var rotation = Quaternion.Euler(0, ParkedYaw(entry), 0);
-            if (!ParkedClear(model, entry.At, rotation)) return ParkedPlacement.Failed;
+            if (!ParkedClear(model, entry.At, rotation))
+            {
+                if (parkedBlocked.Count > maximum * 4 && !parkedBlocked.ContainsKey(entry.CarId)) parkedBlocked.Clear();
+                parkedBlocked[entry.CarId] = (entry.At, Time.unscaledTime + ParkedBlockedBackoffSeconds);
+                return ParkedPlacement.Failed;
+            }
+            parkedBlocked.Remove(entry.CarId);
             OwnCarInstance? instance;
             if (parkedCreates >= ParkedCreatesPerRefresh)
             {
@@ -827,9 +869,15 @@ namespace PersistentCity.Runtime
             }
             else
             {
-                long creations = pool.Creations;
-                instance = Take(model, CarAppearance.Paint(state));
-                if (pool.Creations != creations) parkedCreates++;
+                instance = holder == null ? null : pool.TakeIdle(model.Name);
+                if (instance != null) Paint(instance, CarAppearance.Paint(state));
+                else
+                {
+                    if (UpdateCityClock.Elapsed() >= ParkedCreateBudgetMilliseconds) return ParkedPlacement.Later;
+                    long creations = pool.Creations;
+                    instance = Take(model, CarAppearance.Paint(state));
+                    if (pool.Creations != creations) parkedCreates++;
+                }
             }
             if (instance == null) return ParkedPlacement.Failed;
             instance.Root.transform.SetPositionAndRotation(Vector(entry.At), rotation);
@@ -853,16 +901,27 @@ namespace PersistentCity.Runtime
             else ReleaseParked(car);
         }
 
-        private static float ParkedYaw(ParkedCar car)
+        private float ParkedYaw(ParkedCar car)
         {
+            if (parkedYaws.TryGetValue(car.CarId, out var cached) && Position.Distance(cached.At, car.At) <= .01) return cached.Yaw;
+            float resolved;
             try
             {
                 if (TrafficManager.IsInitialized && TrafficManager.HasInstance
                     && TrafficManager.Instance.TryGetClosestRoadYaw(Vector(car.At), Vector3.forward, 12f, out float yaw)
-                    && !float.IsNaN(yaw) && !float.IsInfinity(yaw)) return yaw;
+                    && !float.IsNaN(yaw) && !float.IsInfinity(yaw))
+                { resolved = yaw; CacheYaw(car, resolved); return resolved; }
             }
             catch (Exception) { }
-            return CarAppearance.Hash(car.CarId + ":parked") % 360u;
+            resolved = CarAppearance.Hash(car.CarId, ":parked") % 360u;
+            CacheYaw(car, resolved);
+            return resolved;
+        }
+
+        private void CacheYaw(ParkedCar car, float yaw)
+        {
+            if (parkedYaws.Count > maximum * 4 && !parkedYaws.ContainsKey(car.CarId)) parkedYaws.Clear();
+            parkedYaws[car.CarId] = (car.At, yaw);
         }
 
         private void FadeParked(float seconds)

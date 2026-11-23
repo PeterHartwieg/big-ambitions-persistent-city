@@ -426,15 +426,20 @@ namespace PersistentCity.Runtime
         }
 
         public RoadPlan BeginPlan(Curb from, Curb to, double departureMinute = 0, double maximumEstimatedMinutes = double.PositiveInfinity)
-            => new RoadPlan(this, from, to, departureMinute, maximumEstimatedMinutes);
+        {
+            var plan = roadPlans.Count > 0 ? roadPlans.Pop() : new RoadPlan(this);
+            plan.Reset(from, to, departureMinute, maximumEstimatedMinutes);
+            return plan;
+        }
+        private readonly Stack<RoadPlan> roadPlans = new Stack<RoadPlan>();
         public int SearchRestarts { get; private set; }
 
         internal sealed class RoadPlan : IDisposable
         {
             internal const int ExpansionStep = 16, StepsPerUnit = 4;
             private readonly RoadRoutes owner;
-            private readonly Curb from, to;
-            private readonly double departureMinute, maximumEstimatedMinutes;
+            private Curb from = null!, to = null!;
+            private double departureMinute, maximumEstimatedMinutes;
             private TransportRoadGraph.RoadSearch? search;
             private int generation;
             private Route? begin, end;
@@ -442,16 +447,21 @@ namespace PersistentCity.Runtime
             private Dictionary<int, double>? entryDelays;
             private PlanScratch? scratch;
             private TrafficNetwork? network;
+            private bool pooled;
             public bool Finished { get; private set; }
             public Route? Result { get; private set; }
             public int Restarts { get; private set; }
             public bool WaitingForSpeeds { get; private set; }
             public int Expanded => search?.Expanded ?? 0;
 
-            internal RoadPlan(RoadRoutes owner, Curb from, Curb to, double departureMinute, double maximumEstimatedMinutes)
+            internal RoadPlan(RoadRoutes owner) { this.owner = owner; }
+
+            internal void Reset(Curb from, Curb to, double departureMinute, double maximumEstimatedMinutes)
             {
-                this.owner = owner; this.from = from; this.to = to;
+                this.from = from; this.to = to;
                 this.departureMinute = departureMinute; this.maximumEstimatedMinutes = maximumEstimatedMinutes;
+                pooled = false; Finished = false; Result = null; Restarts = 0; WaitingForSpeeds = false;
+                CompletionUnits = 0; RecheckDeferred = false; begin = null; end = null; network = null;
                 Start();
             }
 
@@ -561,7 +571,10 @@ namespace PersistentCity.Runtime
                                 owner.edgeRecheck.Record(Stopwatch.GetTimestamp() - checkStarted, path.Length);
                                 if (!open) { Finish(null); return true; }
                             }
-                            Finish(TransportComposition.Join(TransportComposition.Shared(begin!), TransportComposition.Frozen(road), TransportComposition.Shared(end!)));
+                            var frozenRoad = TransportComposition.Frozen(road);
+                            Finish(begin!.Legs.Count == 0 && end!.Legs.Count == 0
+                                ? frozenRoad
+                                : TransportComposition.Join(TransportComposition.Shared(begin!), frozenRoad, TransportComposition.Shared(end!)));
                             return true;
                     }
                 }
@@ -587,6 +600,10 @@ namespace PersistentCity.Runtime
                 if (!Finished) { Finished = true; Result = null; }
                 search?.Dispose(); search = null;
                 ReturnScratch();
+                if (pooled) return;
+                pooled = true;
+                Result = null; begin = null; end = null; network = null; from = null!; to = null!;
+                owner.roadPlans.Push(this);
             }
 
             private void ReturnScratch()
@@ -727,11 +744,12 @@ namespace PersistentCity.Runtime
         }
         private Route Connector(Position from, Position to)
         {
-            var route = new Route();
             double length = Position.Distance(from, to);
-            if (length > 0.000001) route.Legs.Add(new RouteLeg { From = from, To = to, Mode = TravelMode.Car, Minutes = length / walkingSpeed });
-            return route;
+            return length > 0.000001
+                ? TransportComposition.Single(new RouteLeg { From = from, To = to, Mode = TravelMode.Car, Minutes = length / walkingSpeed })
+                : EmptyConnector;
         }
+        private static readonly Route EmptyConnector = TransportComposition.Shared(new Route(new RouteLegs(0)));
         private bool NativePathNodeValid(int[] path, int i)
         {
             int index = path[i];

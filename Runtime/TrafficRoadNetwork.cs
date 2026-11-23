@@ -114,11 +114,11 @@ namespace PersistentCity.Runtime
             if (!Position.Finite(green) || green <= 0 || !Position.Finite(yellow) || yellow < 0 || !Position.Finite(cycle) || cycle <= 0)
                 throw new InvalidOperationException("Native light timing cannot define a periodic logical schedule.");
             for (int group = 0; group < captured.Groups.Length; group++)
-                foreach (int index in captured.Groups[group]!) AddSignal(index, group, cycle, slot, green);
+            {
+                var schedule = new TrafficSignalSchedule { CycleMinutes = cycle, GreenStartMinutes = group * slot, GreenDurationMinutes = green, PhaseOffsetMinutes = 0 };
+                foreach (int index in captured.Groups[group]!) signals.Add(index, schedule);
+            }
         }
-
-        private void AddSignal(int index, int group, double cycle, double slot, double green) =>
-            signals.Add(index, new TrafficSignalSchedule { CycleMinutes = cycle, GreenStartMinutes = group * slot, GreenDurationMinutes = green, PhaseOffsetMinutes = 0 });
 
         public bool ReferencesCurrent
         {
@@ -232,12 +232,13 @@ namespace PersistentCity.Runtime
                 for (int group = 0; group < captured.Groups.Length; group++)
                 {
                     var indices = captured.Groups[group] ?? throw new InvalidOperationException("Native light group is absent.");
+                    var schedule = new TrafficSignalSchedule { CycleMinutes = cycle, GreenStartMinutes = group * slot, GreenDurationMinutes = green, PhaseOffsetMinutes = 0 };
                     foreach (int index in indices)
                     {
                         if (index < 0 || index >= waypoints.Length || waypoints[index] == null
                             || !ReferenceEquals(Associated!.GetValue(waypoints[index]), native) || !waypoints[index].enter || signals.ContainsKey(index))
                             throw new InvalidOperationException("Native light group association is ambiguous.");
-                        AddSignal(index, group, cycle, slot, green);
+                        signals.Add(index, schedule);
                     }
                 }
             }

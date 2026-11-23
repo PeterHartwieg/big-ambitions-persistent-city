@@ -181,7 +181,7 @@ namespace PersistentCity.Core
         public static implicit operator RouteLegs(List<RouteLeg> legs) => new RouteLegs(legs ?? throw new ArgumentNullException(nameof(legs)));
 
         public bool IsReadOnly { get; private set; }
-        internal void Freeze() => IsReadOnly = true;
+        internal void Freeze() { if (items.Capacity != items.Count) items.TrimExcess(); IsReadOnly = true; }
         private void Mutable() { if (IsReadOnly) throw new InvalidOperationException("A committed route is immutable."); }
 
         public int Count => items.Count;
@@ -258,6 +258,11 @@ namespace PersistentCity.Core
         Route? Plan(Place from, Place to, double departureMinute, TravelPreferences preferences);
     }
 
+    internal interface ISharedWalkingPlanner
+    {
+        Route? PlanShared(Place from, Place to, double departureMinute, TravelPreferences preferences);
+    }
+
     public interface IWalkingTimeBound
     {
         double MinimumWalkingMinutes(Place from, Place to);
@@ -288,6 +293,7 @@ namespace PersistentCity.Core
         public double WorkEndsAt { get; set; }
         public double PreparedAt { get; set; }
         public double TravelMinutes { get; set; }
+        internal void Reset() { PlaceId = ""; WorkStartsAt = WorkEndsAt = PreparedAt = TravelMinutes = 0; }
     }
 
     public class CitizenState : IPersonView

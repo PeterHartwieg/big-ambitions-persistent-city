@@ -52,14 +52,20 @@ namespace PersistentCity.Runtime
             FoodContractImage? contract)
         {
             var ids = products as string[] ?? products.Take(FoodMenuPolicy.MaximumOffers+1).ToArray();
-            if (registration == null || ids.Length == 0 || ids.Length > FoodMenuPolicy.MaximumOffers || ids.Any(string.IsNullOrWhiteSpace))
+            if (registration == null || ids.Length == 0 || ids.Length > FoodMenuPolicy.MaximumOffers)
                 throw new ArgumentException("A shop and one to eight products are required.");
-            for(int i=0;i<ids.Length;i++) for(int j=0;j<i;j++)
-                if(string.Equals(ids[i],ids[j],StringComparison.Ordinal)) throw new ArgumentException("Duplicate menu product.");
+            for(int i=0;i<ids.Length;i++)
+            {
+                if(string.IsNullOrWhiteSpace(ids[i])) throw new ArgumentException("A shop and one to eight products are required.");
+                for(int j=0;j<i;j++)
+                    if(string.Equals(ids[i],ids[j],StringComparison.Ordinal)) throw new ArgumentException("Duplicate menu product.");
+            }
             var save = SaveGameManager.Current ?? throw new InvalidOperationException("No current city.");
-            var result = ids.ToDictionary(id => id, id => new FoodSupplySnapshot {
-                AtMinute = save.Day * 1440.0 + save.Hour * 60.0 + save.Minute, ProductId = id }, StringComparer.Ordinal);
-            void Evidence(string message) { foreach (var r in result.Values) r.Evidence = message; }
+            double atMinute = save.Day * 1440.0 + save.Hour * 60.0 + save.Minute;
+            var result = new Dictionary<string, FoodSupplySnapshot>(ids.Length, StringComparer.Ordinal);
+            for (int i = 0; i < ids.Length; i++)
+                result.Add(ids[i], new FoodSupplySnapshot { AtMinute = atMinute, ProductId = ids[i] });
+            void Evidence(string message) { for (int i = 0; i < ids.Length; i++) result[ids[i]].Evidence = message; }
             if (!registration.RentedByPlayer)
             { Evidence("Rival business: native player-stock and staff accounting does not establish its supply"); return result; }
             var type = BusinessTypeHelper.GetData(registration.businessTypeName);

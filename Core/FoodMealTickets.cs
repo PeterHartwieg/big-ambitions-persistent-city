@@ -29,7 +29,7 @@ namespace PersistentCity.Core
             foreach (var offer in business.Offers)
             {
                 if (!offer.Units.HasValue || !policy.Executable(offer.ProductId) || !scope.ContainsProduct(offer.ProductId)) continue;
-                reservations.TryGetValue(ReservationKey(meal.PlaceId, offer.ProductId), out int held);
+                reservations.TryGetValue(new ReservationSlot(meal.PlaceId, offer.ProductId), out int held);
                 int taste = FoodProducts.Known(offer.ProductId) ? ExtraTaste(meal, person!, offer.ProductId)
                     : policy.TasteBand(offer.ProductId, Traits(meal, person!), city.State.Seed, meal.ResidentId);
                 menu.Add(new FoodExtraOffer(offer.ProductId, offer.Price, Math.Max(0, offer.Units.Value - held), taste));
