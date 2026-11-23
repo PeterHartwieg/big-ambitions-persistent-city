@@ -141,7 +141,7 @@ public sealed class PhysicalRoadAdmissionTests
         var access = new PublicRoadAccess(new[] { gate }, logs.Add);
 
         Assert.Equal(0, access.FallbackGateCount);
-        Assert.Empty(logs);
+        Assert.Contains("bounds: 0 using", Assert.Single(logs), StringComparison.Ordinal);
         Assert.False(ClearAcrossGate(access, 98.75, 3));
         Assert.True(ClearAcrossGate(access, 98.25, 3));
         Assert.False(ClearAcrossGate(access, 106.25, 4.75));
@@ -171,7 +171,7 @@ public sealed class PhysicalRoadAdmissionTests
         var access = new PublicRoadAccess(new[] { gate }, logs.Add);
 
         Assert.Equal(0, access.FallbackGateCount);
-        Assert.Empty(logs);
+        Assert.Contains("bounds: 0 using", Assert.Single(logs), StringComparison.Ordinal);
         Assert.True(ClearAcrossGate(access, 99.25, 3));
         Assert.False(ClearAcrossGate(access, 99.75, 3));
         Assert.False(ClearAcrossGate(access, 105.25, 4.75));
@@ -205,7 +205,7 @@ public sealed class PhysicalRoadAdmissionTests
         Assert.NotNull(refreshed);
         Assert.Contains("renderer leaf gate", change, StringComparison.Ordinal);
         Assert.Equal(0, refreshed!.FallbackGateCount);
-        Assert.Empty(logs);
+        Assert.Single(logs);
         Assert.False(refreshed.ClearSegment(new Position(103.25, 2, -1), new Position(103.25, 2, 1)));
         Assert.False(refreshed.ClearSegment(new Position(95, 2, 5.25), new Position(105, 2, 5.25)));
         Assert.True(refreshed.ClearSegment(new Position(103.75, 2, -10), new Position(103.75, 2, 10)));
@@ -358,7 +358,7 @@ public sealed class PhysicalRoadAdmissionTests
         var access = new PublicRoadAccess(new[] { gate }, logs.Add);
 
         Assert.Equal(0, access.FallbackGateCount);
-        Assert.Empty(logs);
+        Assert.Contains("bounds: 0 using", Assert.Single(logs), StringComparison.Ordinal);
         Assert.True(ClearAcrossGate(access, 93.25, 3));
         Assert.False(ClearAcrossGate(access, 93.75, 3));
         Assert.False(ClearAcrossGate(access, 106.25, 6.75));
@@ -435,6 +435,7 @@ public sealed class PhysicalRoadAdmissionTests
     public void DefaultFallbackLogGoesToTheUnityWarningLog()
     {
         var gate = VehicleGate(nameof(DefaultFallbackLogGoesToTheUnityWarningLog));
+        PublicRoadAccess.ForgetTally();
 
         var access = new PublicRoadAccess(new[] { gate });
 

@@ -906,6 +906,7 @@ namespace PersistentCity.Runtime
             var saved = new Dictionary<string, string>(StringComparer.Ordinal);
             if (initializingHadPayload) saved.Add(SaveStore.StateKey, initializingPayload!);
             var workplaces = new List<CensusWorkplace>();
+            PublicRoadAccess.ForgetTally();
             var places = GamePlaces.Read(workplaces);
             CaptureCensusCatalogue(places, workplaces);
             log?.Info(OutdoorPlaces.LastDiscoverySummary);

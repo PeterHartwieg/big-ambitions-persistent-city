@@ -138,6 +138,8 @@ namespace PersistentCity.Runtime
             return true;
         }
         public int RoadSnapshots { get; private set; }
+        internal PublicRoadAccess? Access => access;
+        internal RoadRoutes? Roads => roads;
         public bool LastRoadSnapshotReused => roads?.AdoptedSnapshot == true;
         public bool LastRoadGateClearanceReused => roads?.AdoptedGateClearance == true;
         public long ClosureValidationsDeferred => roads?.ClosureValidationsDeferred ?? 0;
