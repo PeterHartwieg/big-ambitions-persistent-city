@@ -84,38 +84,42 @@ namespace PersistentCity.Core
 
     public sealed class RouteLeg
     {
-        private Position from, to;
-        private TravelMode mode;
-        private double minutes;
         private string serviceId = "";
+        private Position from, to;
+        private double minutes;
+        private int mode, roadFrom, roadTo;
+        private RoadTagKind roadKind;
+        private byte flags;
+        private const byte FrozenFlag = 1, SplitPrefixFlag = 2, SharedFlag = 4;
         public Position From { get => from; set { Mutable(); from = value; } }
         public Position To { get => to; set { Mutable(); to = value; } }
-        public TravelMode Mode { get => mode; set { Mutable(); mode = value; } }
+        public TravelMode Mode { get => (TravelMode)mode; set { Mutable(); mode = (int)value; } }
         public double Minutes { get => minutes; set { Mutable(); minutes = value; } }
         public string ServiceId
         {
             get => serviceId;
-            set { Mutable(); serviceId = value; RoadTag = RoadTag.Decode(value); }
+            set { Mutable(); serviceId = value; Tag(RoadTag.Decode(value)); }
         }
-        internal RoadTag RoadTag { get; private set; }
-        internal bool Frozen { get; private set; }
-        internal bool SplitPrefix { get; private set; }
+        private void Tag(RoadTag tag) { roadKind = tag.Kind; roadFrom = tag.From; roadTo = tag.To; }
+        internal RoadTag RoadTag => roadKind == RoadTagKind.None ? default : RoadTag.Of(roadKind, serviceId, roadFrom, roadTo);
+        internal bool Frozen => (flags & FrozenFlag) != 0;
+        internal bool SplitPrefix => (flags & SplitPrefixFlag) != 0;
         internal RouteLeg CopyAs(Position from, Position to, double minutes, string service, bool splitPrefix = false)
         {
             if (Frozen && splitPrefix == SplitPrefix && from.X == this.from.X && from.Y == this.from.Y && from.Z == this.from.Z
                 && to.X == this.to.X && to.Y == this.to.Y && to.Z == this.to.Z && minutes == this.minutes
                 && string.Equals(service, serviceId, StringComparison.Ordinal)) return this;
-            var copy = new RouteLeg { from = from, to = to, mode = mode, minutes = minutes, SplitPrefix = splitPrefix };
-            if (string.Equals(service, serviceId, StringComparison.Ordinal)) { copy.serviceId = serviceId; copy.RoadTag = RoadTag; }
+            var copy = new RouteLeg { from = from, to = to, mode = mode, minutes = minutes, flags = splitPrefix ? SplitPrefixFlag : (byte)0 };
+            if (string.Equals(service, serviceId, StringComparison.Ordinal)) { copy.serviceId = serviceId; copy.roadKind = roadKind; copy.roadFrom = roadFrom; copy.roadTo = roadTo; }
             else copy.ServiceId = service;
             return copy;
         }
-        internal bool Shared { get; private set; }
-        internal void Freeze() => Frozen = true;
-        internal void Share() { Frozen = true; Shared = true; }
+        internal bool Shared => (flags & SharedFlag) != 0;
+        internal void Freeze() => flags |= FrozenFlag;
+        internal void Share() => flags |= FrozenFlag | SharedFlag;
         internal void Aim(RouteLeg source, double minutes)
         {
-            from = source.from; to = source.to; mode = source.mode; this.minutes = minutes; serviceId = source.serviceId; SplitPrefix = false;
+            from = source.from; to = source.to; mode = source.mode; this.minutes = minutes; serviceId = source.serviceId; flags &= unchecked((byte)~SplitPrefixFlag);
         }
         private void Mutable() { if (Frozen) throw new InvalidOperationException("A committed route leg is immutable."); }
         internal static readonly IEqualityComparer<RouteLeg> SameContent = new ContentComparer();
@@ -146,6 +150,12 @@ namespace PersistentCity.Core
         public int To { get; }
 
         private const string Prefix = "native:road:";
+
+        internal static RoadTag Of(RoadTagKind kind, string service, int from, int to)
+        {
+            int start = kind == RoadTagKind.V1 ? Prefix.Length + 3 : Prefix.Length + 10;
+            return new RoadTag(kind, service.IndexOf(':', start) - start, from, to);
+        }
 
         internal static RoadTag Decode(string? service)
         {
