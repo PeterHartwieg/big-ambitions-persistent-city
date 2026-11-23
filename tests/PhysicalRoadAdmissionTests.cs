@@ -1,4 +1,10 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using Buildings;
 using PersistentCity.Core;
+using PersistentCity.Runtime;
+using UnityEngine;
 using Xunit;
 
 namespace PersistentCity.Tests;
@@ -117,5 +123,186 @@ public sealed class PhysicalRoadAdmissionTests
             Assert.False(PhysicalRoadAdmission.Allows(boundaries, pair.Item2 + length, length));
             Assert.True(PhysicalRoadAdmission.Allows(boundaries, pair.Item2 + length + 1, length));
         }
+    }
+
+    private static FenceDoor VehicleGate(string name, Vector3 position)
+    {
+        var door = new FenceDoor { name = name, acceptsVehicles = true };
+        door.transform.position = position;
+        return door;
+    }
+
+    [Fact]
+    public void VehicleGateWithColliderGeometryUsesExpandedColliderBoundsNotFallbackBox()
+    {
+        var building = new CityBuildingController { name = "WarehouseBuilding" };
+        var buildingBox = new BoxCollider { center = Vector3.zero, size = new Vector3(30, 12, 30) };
+        buildingBox.transform.position = new Vector3(100, 6, 0);
+        buildingBox.transform.SetParent(building.transform);
+
+        var door = VehicleGate("WarehouseGateCollider", new Vector3(100, 1.5f, 0));
+        door.transform.SetParent(building.transform);
+        var collider = new BoxCollider { center = Vector3.zero, size = new Vector3(6, 3, 2) };
+        collider.transform.position = new Vector3(100, 1.5f, 0);
+        collider.transform.SetParent(door.transform);
+        var largerRenderer = new Renderer { bounds = new Bounds(new Vector3(100, 2, 0), new Vector3(24, 10, 24)) };
+        largerRenderer.transform.SetParent(door.transform);
+
+        var logs = new List<string>();
+        var access = new PublicRoadAccess(new[] { door }, logs.Add);
+
+        Assert.Equal(0, access.FallbackGateCount);
+        Assert.Empty(access.FallbackGateDoors);
+        Assert.Empty(logs);
+        Assert.False(access.ClearSegment(new Position(90, 1.5, 0), new Position(110, 1.5, 0)));
+        Assert.False(access.ClearSegment(new Position(96.5, 1.5, -5), new Position(96.5, 1.5, 5)));
+        Assert.False(access.ClearSegment(new Position(103.5, 1.5, -5), new Position(103.5, 1.5, 5)));
+        Assert.True(access.ClearSegment(new Position(104, 1.5, -5), new Position(104, 1.5, 5)));
+        Assert.True(access.ClearSegment(new Position(110, 1.5, -10), new Position(110, 1.5, 10)));
+        Assert.True(access.NearGate(new Position(104.4, 1.5, 0), 1));
+        Assert.False(access.NearGate(new Position(105, 1.5, 0), 1));
+    }
+
+    [Fact]
+    public void VehicleGateWithoutCollidersUsesRendererBoundsAndUnionsSwingingLeafOnRefresh()
+    {
+        var door = VehicleGate("RendererOnlyGate", new Vector3(100, 2, 0));
+        var degenerate = new Collider { bounds = new Bounds(new Vector3(100, 2, 0), Vector3.zero) };
+        degenerate.transform.SetParent(door.transform);
+        var invalid = new Collider { bounds = new Bounds(new Vector3(float.NaN, 0, 0), new Vector3(4, 4, 4)) };
+        invalid.transform.SetParent(door.transform);
+
+        var frame = new Renderer { bounds = new Bounds(new Vector3(100, 2, 0), new Vector3(2, 4, 2)) };
+        frame.transform.SetParent(door.transform);
+        var leafTransform = new Transform { position = new Vector3(102, 2, 0) };
+        leafTransform.SetParent(door.transform);
+        var leafRenderer = new Renderer { bounds = new Bounds(new Vector3(102, 2, 0), new Vector3(2, 4, 2)) };
+        leafRenderer.transform = leafTransform;
+        door.doors = new[] { leafTransform };
+
+        var logs = new List<string>();
+        var access = new PublicRoadAccess(new[] { door }, logs.Add);
+
+        Assert.Equal(0, access.FallbackGateCount);
+        Assert.Empty(access.FallbackGateDoors);
+        Assert.Empty(logs);
+        Assert.False(access.ClearSegment(new Position(98.5, 2, -5), new Position(98.5, 2, 5)));
+        Assert.False(access.ClearSegment(new Position(103.5, 2, -5), new Position(103.5, 2, 5)));
+        Assert.True(access.ClearSegment(new Position(104.5, 2, -5), new Position(104.5, 2, 5)));
+        Assert.True(access.ClearSegment(new Position(112, 2, -10), new Position(112, 2, 10)));
+
+        leafRenderer.bounds = new Bounds(new Vector3(100, 2, 4), new Vector3(2, 4, 2));
+        var refreshed = access.Refreshed(new[] { door }, out string change);
+
+        Assert.NotNull(refreshed);
+        Assert.Contains("RendererOnlyGate", change, StringComparison.Ordinal);
+        Assert.Equal(0, refreshed!.FallbackGateCount);
+        Assert.Empty(logs);
+        Assert.False(refreshed.ClearSegment(new Position(103.5, 2, -5), new Position(103.5, 2, 5)));
+        Assert.False(refreshed.ClearSegment(new Position(95, 2, 5.5), new Position(105, 2, 5.5)));
+        Assert.True(refreshed.ClearSegment(new Position(112, 2, -10), new Position(112, 2, 10)));
+    }
+
+    [Fact]
+    public void VehicleGateWithoutCollidersOrRenderersUsesParentBuildingFootprintNotFallbackBox()
+    {
+        var building = new CityBuildingController { name = "DepotBuilding" };
+        var solidFootprint = new BoxCollider { center = Vector3.zero, size = new Vector3(10, 8, 6), enabled = true, isTrigger = false };
+        solidFootprint.transform.position = new Vector3(100, 4, 0);
+        solidFootprint.transform.SetParent(building.transform);
+        var ignoredTrigger = new BoxCollider { center = Vector3.zero, size = new Vector3(60, 20, 60), enabled = true, isTrigger = true };
+        ignoredTrigger.transform.position = new Vector3(100, 4, 0);
+        ignoredTrigger.transform.SetParent(building.transform);
+        var ignoredDisabled = new BoxCollider { center = Vector3.zero, size = new Vector3(60, 20, 60), enabled = false, isTrigger = false };
+        ignoredDisabled.transform.position = new Vector3(100, 4, 0);
+        ignoredDisabled.transform.SetParent(building.transform);
+
+        var door = VehicleGate("DepotGateFootprint", new Vector3(100, 1, 3));
+        door.transform.SetParent(building.transform);
+
+        var logs = new List<string>();
+        var access = new PublicRoadAccess(new[] { door }, logs.Add);
+
+        Assert.Equal(0, access.FallbackGateCount);
+        Assert.Empty(access.FallbackGateDoors);
+        Assert.Empty(logs);
+        Assert.False(access.ClearSegment(new Position(94.5, 1, -10), new Position(94.5, 1, 10)));
+        Assert.False(access.ClearSegment(new Position(105.5, 1, -10), new Position(105.5, 1, 10)));
+        Assert.True(access.ClearSegment(new Position(106.5, 1, -10), new Position(106.5, 1, 10)));
+        Assert.True(access.ClearSegment(new Position(112, 1, -10), new Position(112, 1, 10)));
+
+        var visualBuilding = new CityBuildingController { name = "VisualOnlyBuilding" };
+        var buildingRenderer = new Renderer { enabled = true, bounds = new Bounds(new Vector3(200, 3, 0), new Vector3(8, 6, 4)) };
+        buildingRenderer.transform.SetParent(visualBuilding.transform);
+        var visualDoor = VehicleGate("VisualDepotGate", new Vector3(200, 1, 2));
+        visualDoor.transform.SetParent(visualBuilding.transform);
+
+        var visualAccess = new PublicRoadAccess(new[] { visualDoor }, logs.Add);
+        Assert.Equal(0, visualAccess.FallbackGateCount);
+        Assert.Empty(logs);
+        Assert.False(visualAccess.ClearSegment(new Position(195.5, 1, -5), new Position(195.5, 1, 5)));
+        Assert.False(visualAccess.ClearSegment(new Position(204.5, 1, -5), new Position(204.5, 1, 5)));
+        Assert.True(visualAccess.ClearSegment(new Position(210, 1, -5), new Position(210, 1, 5)));
+    }
+
+    [Fact]
+    public void VehicleGateWithoutShapeIsCountedLoggedOncePerBuildOrRefreshAndKeepsConservativeBox()
+    {
+        var orphanGate = VehicleGate("OrphanVehicleGate", new Vector3(100, 0, 0));
+        var emptyBuilding = new CityBuildingController { name = "EmptyBuilding" };
+        var triggerOnly = new BoxCollider { center = Vector3.zero, size = new Vector3(12, 6, 12), enabled = true, isTrigger = true };
+        triggerOnly.transform.position = new Vector3(300, 3, 0);
+        triggerOnly.transform.SetParent(emptyBuilding.transform);
+        var hamptonsGate = new HamptonsPrivateFenceDoor { name = "HamptonsNoShapeGate", acceptsVehicles = false, ForSale = true };
+        hamptonsGate.transform.position = new Vector3(300, 0, 0);
+        hamptonsGate.transform.SetParent(emptyBuilding.transform);
+
+        var pedestrianOnly = new FenceDoor { name = "PedestrianGate", acceptsVehicles = false };
+        pedestrianOnly.transform.position = new Vector3(500, 0, 0);
+        var forSaleGate = new FenceDoor { name = "ForSaleGate", acceptsVehicles = true, ForSale = true };
+        forSaleGate.transform.position = new Vector3(600, 0, 0);
+
+        var doors = new FenceDoor[] { null!, orphanGate, hamptonsGate, pedestrianOnly, forSaleGate };
+        var logs = new List<string>();
+        var access = new PublicRoadAccess(doors, logs.Add);
+
+        Assert.Equal(2, access.FallbackGateCount);
+        Assert.Equal(new[] { "OrphanVehicleGate", "HamptonsNoShapeGate" }, access.FallbackGateDoors);
+        Assert.Equal(2, logs.Count);
+        Assert.Contains(logs, line => line.Contains("OrphanVehicleGate", StringComparison.Ordinal));
+        Assert.Contains(logs, line => line.Contains("HamptonsNoShapeGate", StringComparison.Ordinal));
+        Assert.DoesNotContain(logs, line => line.Contains("PedestrianGate", StringComparison.Ordinal) || line.Contains("ForSaleGate", StringComparison.Ordinal));
+
+        Assert.False(access.ClearSegment(new Position(70, 0, 0), new Position(130, 0, 0)));
+        Assert.False(access.ClearSegment(new Position(115, 0, -5), new Position(115, 0, 5)));
+        Assert.False(access.ClearSegment(new Position(290, 0, -5), new Position(290, 0, 5)));
+        Assert.True(access.ClearSegment(new Position(150, 0, 0), new Position(250, 0, 0)));
+        Assert.True(access.ClearSegment(new Position(495, 0, 0), new Position(505, 0, 0)));
+        Assert.True(access.ClearSegment(new Position(595, 0, 0), new Position(605, 0, 0)));
+        Assert.Equal(2, logs.Count);
+
+        var unchanged = access.Refreshed(doors, out string unchangedReason);
+        Assert.Null(unchanged);
+        Assert.Equal("", unchangedReason);
+        Assert.Equal(2, access.FallbackGateCount);
+        Assert.Equal(4, logs.Count);
+
+        var addedCollider = new BoxCollider { center = Vector3.zero, size = new Vector3(4, 3, 2) };
+        addedCollider.transform.position = new Vector3(100, 1.5f, 0);
+        addedCollider.transform.SetParent(orphanGate.transform);
+        var updated = access.Refreshed(doors, out string updatedReason);
+
+        Assert.NotNull(updated);
+        Assert.Contains("OrphanVehicleGate", updatedReason, StringComparison.Ordinal);
+        Assert.Equal(1, updated!.FallbackGateCount);
+        Assert.Equal(new[] { "HamptonsNoShapeGate" }, updated.FallbackGateDoors);
+        Assert.Equal(5, logs.Count);
+        Assert.Contains("HamptonsNoShapeGate", logs[4], StringComparison.Ordinal);
+        Assert.True(updated.ClearSegment(new Position(115, 0, -5), new Position(115, 0, 5)));
+
+        var defaultLogGate = VehicleGate("GateDefaultLogCheck_331", new Vector3(800, 0, 0));
+        var defaultAccess = new PublicRoadAccess(new[] { defaultLogGate });
+        Assert.Equal(1, defaultAccess.FallbackGateCount);
+        Assert.Contains(Debug.Warnings(), line => line.Contains("GateDefaultLogCheck_331", StringComparison.Ordinal));
     }
 }

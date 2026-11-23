@@ -33,7 +33,7 @@ namespace UnityEngine
         public static float unscaledTime, unscaledDeltaTime = 0.1f, deltaTime = 0.1f;
         public static void Next(float seconds = 0.3f) { frameCount++; unscaledTime += seconds; unscaledDeltaTime = deltaTime = seconds; }
     }
-    public sealed class Transform
+    public sealed partial class Transform
     {
         public Vector3 position, forward = new(0, 0, 1), lossyScale = new(1, 1, 1);
         public object? Component;
@@ -80,7 +80,7 @@ namespace Buildings
         public static CityManager? Instance { get; set; }
         public readonly List<CityBuildingController> cityBuildingControllers = new();
     }
-    public sealed class CityBuildingController { public readonly List<Door> entranceDoors = new(); }
+    public sealed class CityBuildingController : UnityEngine.Component { public readonly List<Door> entranceDoors = new(); }
     public sealed class Door { public readonly Transform doorTransform = new(); }
 }
 namespace GleyTrafficSystem
