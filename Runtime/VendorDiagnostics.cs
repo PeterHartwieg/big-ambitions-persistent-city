@@ -19,9 +19,9 @@ namespace PersistentCity.Runtime
         {
             try
             {
-                CommandHelper.AddCommand<string, string>("pc", "pc population census | pc gc start|report|stop|frames | pc vendor status | pc vendor sales | pc food decisions | pc food contract | pc probe status | pc probe businesses | pc gc retained", RoutePcCommand);
-                CommandHelper.AddCommand<string, string, string>("pc", "pc population person <id> | pc gc population <persons|off> (FT cities only, measurement) | pc gc frames <start|report|stop> | pc food decisions <start|stop> | pc vendor withdraw <vehicle> | pc food contract <status|capabilities|hints|stamps|catalogue> (FT cities only)", RoutePcDetail);
-                CommandHelper.AddCommand<string, string, string, string>("pc", "pc movement corrections since <seq> | pc probe <resident> <place> <ceiling cents> (FT cities only)", RoutePcMovement);
+                CommandHelper.AddCommand<string, string>("pc", "pc population census | pc gate status | pc gc start|report|stop|frames | pc vendor status | pc vendor sales | pc food decisions | pc food contract | pc probe status | pc probe businesses | pc gc retained", RoutePcCommand);
+                CommandHelper.AddCommand<string, string, string>("pc", "pc population person <id> | pc gate status <collider|renderer|footprint|fallback|all> | pc gc population <persons|off> (FT cities only, measurement) | pc gc frames <start|report|stop> | pc food decisions <start|stop> | pc vendor withdraw <vehicle> | pc food contract <status|capabilities|hints|stamps|catalogue> (FT cities only)", RoutePcDetail);
+                CommandHelper.AddCommand<string, string, string, string>("pc", "pc movement corrections since <seq> | pc gate status near <x>,<z>,<radius> | pc probe <resident> <place> <ceiling cents> (FT cities only)", RoutePcMovement);
                 vendorCommands = true;
             }
             catch (Exception e) { log?.Warn("Vendor diagnostics registration failed: " + e.Message); }
@@ -63,6 +63,7 @@ namespace PersistentCity.Runtime
             DiagnosticFrames.Mark("pc " + area + " " + action);
             if (area == "movement") MovementCommand(action, detail, value);
             else if (area == "probe") SaleProbeCommand(action, detail, value);
+            else if (area == "gate") GateCommand(action, detail, value);
             else Debug.LogWarning("[Persistent City] Unknown command. Use: pc movement corrections since <seq>");
         }
         private void RoutePcDetail(string area, string action, string detail)
@@ -72,6 +73,7 @@ namespace PersistentCity.Runtime
             if (area == "gc") { GcCommand(action, detail); return; }
             if (area == "workplace") { WorkplaceCommand(action, detail); return; }
             if (area == "probe") { SaleProbeCommand(action, detail, ""); return; }
+            if (area == "gate") { GateCommand(action, detail, ""); return; }
             if (area == "food" && action == "contract") { FoodContractCommand(detail); return; }
             if (area != "vendor" && !(area == "food" && action == "decisions"))
             { if (detail.Length == 0) CensusCommand(area, action); else CensusDetailCommand(area, action, detail); return; }

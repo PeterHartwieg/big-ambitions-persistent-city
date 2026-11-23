@@ -56,6 +56,7 @@ namespace PersistentCity.Runtime
             public int Flags;
             public int[]? Lanes;
             public int RoadId;
+            public bool Imported;
         }
         private sealed class Junction
         {
@@ -96,6 +97,8 @@ namespace PersistentCity.Runtime
             junctionIds = new Dictionary<GenericIntersection, int>(); junctions = new List<Junction>();
             nativeNodes = new NativeNode?[waypoints.Length]; snapshot = new TrafficNetworkNode[waypoints.Length];
         }
+
+        internal bool ImportsNode(int index) => index >= 0 && index < nativeNodes.Length && nativeNodes[index]?.Imported == true;
 
         private bool Adoptable(TrafficRoadNetwork donor) => donor.stage == Stage.Complete && !donor.Stale && scene != null
             && ReferenceEquals(donor.scene, scene) && ReferenceEquals(donor.waypoints, waypoints) && ReferenceEquals(donor.roads, roads)
@@ -251,7 +254,7 @@ namespace PersistentCity.Runtime
             bool valid = known && (!(native.enter || native.exit || native.giveWay) || association != null || native.neighbors?.Count == 0);
             int roadId = roadIds == null ? -1 : roadIds[index];
             nativeNodes[index] = new NativeNode { Native = native, Association = association, JunctionId = junctionId,
-                Flags = Flags(native), Lanes = native.otherLanes?.ToArray(), RoadId = roadId };
+                Flags = Flags(native), Lanes = native.otherLanes?.ToArray(), RoadId = roadId, Imported = road.AllowsCar && native.listIndex == index && valid };
             string contract = Values(native.allowedAgents) + "/" + Values(native.allowedCars?.Select(c => (int)c))
                 + ";road=" + roadId.ToString(CultureInfo.InvariantCulture) + ";enter=" + native.enter + ";exit=" + native.exit
                 + ";giveWay=" + native.giveWay + ";junction=" + (junctionId >= 0 ? junctions[junctionId].Contract : association == null ? "none" : "unknown")

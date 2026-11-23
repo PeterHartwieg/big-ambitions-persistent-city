@@ -19,11 +19,46 @@ namespace PersistentCity.Runtime
         private static readonly Vector3 GeometryMargin = new Vector3(1, 2, 1);
         private static readonly Vector3 FallbackSize = new Vector3(40, 20, 40);
         private static readonly Action<string> DefaultLog = message => Debug.LogWarning(message);
-        private readonly Action<string> log;
+        private static readonly FallbackTally SharedTally = new FallbackTally(DefaultLog);
+        internal static void ForgetTally() => SharedTally.Forget();
+        private readonly FallbackTally tally;
+        internal sealed class FallbackTally
+        {
+            private readonly Action<string> log;
+            private string[]? reported;
+            public FallbackTally(Action<string> log) { this.log = log; }
+            public void Forget() => reported = null;
+            public void Report(string[] doors)
+            {
+                if (reported != null && SameDoors(doors, reported)) return;
+                reported = doors;
+                log("[Persistent City] Vehicle gates with no collider, renderer or building bounds: " + doors.Length
+                    + " using the " + FallbackSize.x + "x" + FallbackSize.y + "x" + FallbackSize.z + " m fallback"
+                    + (doors.Length == 0 ? "." : ": " + string.Join(", ", doors)));
+            }
+        }
+        internal enum GateShape { Collider, Renderer, Footprint, Fallback }
+        internal readonly struct GateReading
+        {
+            public GateReading(FenceDoor door, string name, GateShape source, Position min, Position max)
+            { Door = door; Name = name; Source = source; Min = min; Max = max; }
+            public FenceDoor Door { get; }
+            public string Name { get; }
+            public GateShape Source { get; }
+            public Position Min { get; }
+            public Position Max { get; }
+        }
+        public List<GateReading> Readings()
+        {
+            var readings = new List<GateReading>(doorBoxes.Count);
+            foreach (var entry in doorBoxes)
+                readings.Add(new GateReading(entry.Key, entry.Value.Gate.Door, entry.Value.Source, entry.Value.Gate.Min, entry.Value.Gate.Max));
+            readings.Sort((a, b) => string.CompareOrdinal(a.Name, b.Name));
+            return readings;
+        }
         private string[] fallbackDoors = Array.Empty<string>();
         public int FallbackGateCount => fallbackDoors.Length;
         public IReadOnlyList<string> FallbackGateDoors => fallbackDoors;
-        private enum GateSource { Colliders, Renderers, Footprint, Fallback }
         private readonly struct GateBox
         {
             public GateBox(Bounds bounds, string door) : this(Point(bounds.min), Point(bounds.max), door) { }
@@ -39,14 +74,15 @@ namespace PersistentCity.Runtime
                 new Position(Math.Min(Min.X, other.Min.X), Math.Min(Min.Y, other.Min.Y), Math.Min(Min.Z, other.Min.Z)),
                 new Position(Math.Max(Max.X, other.Max.X), Math.Max(Max.Y, other.Max.Y), Math.Max(Max.Z, other.Max.Z)), Door);
         }
-        private Dictionary<FenceDoor, (GateSource Source, GateBox? Fixed, GateBox Gate)> doorBoxes
-            = new Dictionary<FenceDoor, (GateSource, GateBox?, GateBox)>();
-        public PublicRoadAccess() : this(Doors(), null, DefaultLog) { BuildIndex(); }
-        public PublicRoadAccess(FenceDoor[] doors) : this(doors, null, DefaultLog) { BuildIndex(); }
-        public PublicRoadAccess(FenceDoor[] doors, Action<string> log) : this(doors, null, log) { BuildIndex(); }
-        private PublicRoadAccess(FenceDoor[] doors, PublicRoadAccess? previous, Action<string> log)
+        private Dictionary<FenceDoor, (GateShape Source, GateBox? Fixed, GateBox Gate)> doorBoxes
+            = new Dictionary<FenceDoor, (GateShape, GateBox?, GateBox)>();
+        public PublicRoadAccess() : this(Doors(), null, SharedTally) { BuildIndex(); }
+        public PublicRoadAccess(FenceDoor[] doors) : this(doors, null, SharedTally) { BuildIndex(); }
+        public PublicRoadAccess(FenceDoor[] doors, Action<string> log) : this(doors, null, new FallbackTally(log)) { BuildIndex(); }
+        internal PublicRoadAccess(FenceDoor[] doors, FallbackTally tally) : this(doors, null, tally) { BuildIndex(); }
+        private PublicRoadAccess(FenceDoor[] doors, PublicRoadAccess? previous, FallbackTally tally)
         {
-            this.log = log;
+            this.tally = tally;
             List<string>? fallback = null;
             Func<Transform, bool>? movingLeaf = null;
             foreach (var door in doors)
@@ -55,20 +91,20 @@ namespace PersistentCity.Runtime
                 var colliders = door.GetComponentsInChildren<Collider>(true);
                 GateBox? fixedParts = Combine(colliders.Where(collider => !Leaf(door, collider.transform))) is Bounds still
                     ? new GateBox(still, door.name) : (GateBox?)null;
-                var source = GateSource.Colliders;
+                var source = GateShape.Collider;
                 Bounds? shape = Combine(colliders);
                 if (!shape.HasValue)
                 {
                     var renderers = door.GetComponentsInChildren<Renderer>(true);
                     if ((shape = Combine(renderers)).HasValue)
                     {
-                        source = GateSource.Renderers;
+                        source = GateShape.Renderer;
                         fixedParts = new GateBox(Combine(renderers.Where(renderer => !Leaf(door, renderer.transform)))
                             ?? Anchor(door.transform), door.name);
                     }
                     else if ((shape = FootprintBounds(door, doors, ref movingLeaf, out var stillFootprint)).HasValue)
                     {
-                        source = GateSource.Footprint;
+                        source = GateShape.Footprint;
                         fixedParts = new GateBox(stillFootprint ?? Anchor(door.transform), door.name);
                     }
                 }
@@ -82,7 +118,7 @@ namespace PersistentCity.Runtime
                 }
                 else
                 {
-                    source = GateSource.Fallback;
+                    source = GateShape.Fallback;
                     gate = new GateBox(new Bounds(door.transform.position, FallbackSize), door.name);
                     (fallback ??= new List<string>()).Add(door.name);
                 }
@@ -90,10 +126,7 @@ namespace PersistentCity.Runtime
                 gates.Add(gate);
             }
             if (fallback != null) { fallback.Sort(StringComparer.Ordinal); fallbackDoors = fallback.ToArray(); }
-            if (!SameDoors(fallbackDoors, previous?.fallbackDoors ?? Array.Empty<string>()))
-                log("[Persistent City] Vehicle gates with no collider, renderer or building bounds: " + fallbackDoors.Length
-                    + " using the " + FallbackSize.x + "x" + FallbackSize.y + "x" + FallbackSize.z + " m fallback"
-                    + (fallbackDoors.Length == 0 ? "." : ": " + string.Join(", ", fallbackDoors)));
+            tally.Report(fallbackDoors);
         }
         private static bool SameDoors(string[] left, string[] right)
         {
@@ -167,7 +200,7 @@ namespace PersistentCity.Runtime
             => Refreshed(Doors(), out change);
         public PublicRoadAccess? Refreshed(FenceDoor[] doors, out string change)
         {
-            var next = new PublicRoadAccess(doors, this, log);
+            var next = new PublicRoadAccess(doors, this, tally);
             var remaining = new List<GateBox>(gates);
             foreach (var gate in next.gates)
             {

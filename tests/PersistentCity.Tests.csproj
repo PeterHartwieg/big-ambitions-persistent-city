@@ -18,6 +18,7 @@
     <Compile Include="../Runtime/DwellSpots.cs" Link="DwellSpots.cs" />
     <Compile Include="../Runtime/NativeRoadSpeeds.cs" Link="NativeRoadSpeeds.cs" />
     <Compile Include="../Runtime/PublicRoadAccess.cs" Link="PublicRoadAccess.cs" />
+    <Compile Include="../Runtime/GateStatusReport.cs" Link="GateStatusReport.cs" />
     <Compile Include="../Runtime/BuildingFootprint.cs" Link="BuildingFootprint.cs" />
     <Compile Include="../Runtime/PhysicalPopulation.cs" Link="PhysicalPopulation.cs" />
     <Compile Include="../Runtime/PhysicalPopulation.Following.cs" Link="PhysicalPopulation.Following.cs" />
