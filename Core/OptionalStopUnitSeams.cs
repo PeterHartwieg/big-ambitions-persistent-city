@@ -18,8 +18,14 @@ namespace PersistentCity.Core
         public const int ListedOverThreshold = 8;
         private double[] seams = new double[64], sorted = new double[64];
         private string[] kinds = new string[64];
-        private double open;
+        private double open, boundaryWall;
+        private long boundaryCpu = -1;
         private bool callOpen;
+
+        public bool RecordsCpu { get; set; }
+        public double MaintenanceMilliseconds { get; private set; }
+        public double MaintenanceCpuMilliseconds { get; private set; } = -1;
+        public static double CpuBetween(long from, long to) => from >= 0 && to >= from ? (to - from) / 1e6 : -1;
 
         public bool CallOpen => callOpen;
         public int Units { get; private set; }
@@ -39,6 +45,25 @@ namespace PersistentCity.Core
         {
             Units = 0; open = 0; CallSeamMilliseconds = 0; SlowestUnit = -1; SlowestUnitKind = ""; SlowestUnitMilliseconds = 0; SlowestUnitCpuMilliseconds = -1;
             MaximumUnitSeamMilliseconds = 0; MaximumUnitSeamKind = ""; Completed = false; callOpen = true;
+            MaintenanceMilliseconds = 0; MaintenanceCpuMilliseconds = -1; boundaryWall = 0; boundaryCpu = -1;
+        }
+
+        public void BeginCall(long cpuNanoseconds) { BeginCall(); boundaryCpu = cpuNanoseconds; }
+
+        public void Maintained(double wallMilliseconds, long cpuNanoseconds)
+        {
+            if (!callOpen) return;
+            MaintenanceMilliseconds = Math.Max(0, wallMilliseconds - boundaryWall);
+            MaintenanceCpuMilliseconds = CpuBetween(boundaryCpu, cpuNanoseconds);
+            boundaryWall = wallMilliseconds; boundaryCpu = cpuNanoseconds;
+        }
+
+        public void EndUnitAt(string kind, double wallMilliseconds, long cpuNanoseconds)
+        {
+            if (!callOpen) return;
+            double wall = wallMilliseconds - boundaryWall, cpu = CpuBetween(boundaryCpu, cpuNanoseconds);
+            boundaryWall = wallMilliseconds; boundaryCpu = cpuNanoseconds;
+            EndUnit(kind, wall, cpu);
         }
 
         public void Seam(double milliseconds)

@@ -466,6 +466,22 @@ namespace PerfUnionProbe
             finally { unitSeamSource.Target = null; }
         }
         internal static long unitSeamFailures;
+        private static object unitCpuEnabledFor;
+        internal static void EnableUnitCpu()
+        {
+            if (readUnitSeams == null || unitSeamSource == null || runtime == null) return;
+            try
+            {
+                var stops = readStopEnvironment(runtime);
+                var units = stops == null ? null : readUnitSeams(stops);
+                if (units == null || ReferenceEquals(units, unitCpuEnabledFor)) return;
+                unitSeamSource.Target = units;
+                unitSeamSource.RecordCpu();
+                unitCpuEnabledFor = units;
+            }
+            catch (Exception) { unitSeamFailures++; }
+            finally { unitSeamSource.Target = null; }
+        }
         internal static double UnitMaximum()
         {
             if (readUnitMaximum == null || readUnitSeams == null || runtime == null) return double.NaN;
@@ -1081,6 +1097,7 @@ namespace PerfUnionProbe
             __state = default;
             if (!Session.measuring || !Session.MainThread()) return;
             long probe = Stopwatch.GetTimestamp();
+            Session.EnableUnitCpu();
             __state.Seam = Session.SeamMilliseconds(); __state.Collections = GC.CollectionCount(0); __state.Frame = Time.frameCount; __state.Timed = true;
             __state.Start = Stopwatch.GetTimestamp();
             Session.observerTicks += __state.Start - probe;

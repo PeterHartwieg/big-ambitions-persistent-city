@@ -145,7 +145,7 @@ namespace PerfUnionProbe
         public int Units;
         public string SlowestUnitKind;
         public double SlowestUnitMilliseconds, SlowestUnitOptionalStopMilliseconds, MaximumUnitOptionalStopMilliseconds, P95UnitOptionalStopMilliseconds;
-        public double SlowestUnitCpuMilliseconds;
+        public double SlowestUnitCpuMilliseconds, MaintenanceMilliseconds, MaintenanceCpuMilliseconds;
         public UnitOptionalStop[] UnitsOverThreshold;
     }
 
@@ -164,6 +164,8 @@ namespace PerfUnionProbe
         double SlowestUnitMilliseconds { get; }
         double SlowestUnitSeamMilliseconds { get; }
         double SlowestUnitCpuMilliseconds { get; }
+        double MaintenanceMilliseconds { get; }
+        double MaintenanceCpuMilliseconds { get; }
         double MaximumUnitSeamMilliseconds { get; }
         double P95UnitSeamMilliseconds();
         double UnitSeamMilliseconds(int unit);
@@ -173,7 +175,7 @@ namespace PerfUnionProbe
 
     public sealed class ReflectedUnitSeams : IUnitSeamSource
     {
-        private PropertyInfo units, completed, slowestKind, slowestMs, slowestSeam, maximumSeam, slowestCpu;
+        private PropertyInfo units, completed, slowestKind, slowestMs, slowestSeam, maximumSeam, slowestCpu, maintenance, maintenanceCpu, recordsCpu;
         private MethodInfo p95, unitSeam, unitKind, nextOver;
         public object Target;
         public static ReflectedUnitSeams Bind(Type type)
@@ -185,7 +187,8 @@ namespace PerfUnionProbe
             {
                 units = P("Units", typeof(int)), completed = P("Completed", typeof(bool)), slowestKind = P("SlowestUnitKind", typeof(string)), slowestMs = P("SlowestUnitMilliseconds", typeof(double)),
                 slowestSeam = P("SlowestUnitSeamMilliseconds", typeof(double)), maximumSeam = P("MaximumUnitSeamMilliseconds", typeof(double)),
-                slowestCpu = P("SlowestUnitCpuMilliseconds", typeof(double)),
+                slowestCpu = P("SlowestUnitCpuMilliseconds", typeof(double)), maintenance = P("MaintenanceMilliseconds", typeof(double)),
+                maintenanceCpu = P("MaintenanceCpuMilliseconds", typeof(double)), recordsCpu = P("RecordsCpu", typeof(bool)),
                 p95 = M("P95UnitSeamMilliseconds", typeof(double)), unitSeam = M("UnitSeamMilliseconds", typeof(double), typeof(int)),
                 unitKind = M("UnitKind", typeof(string), typeof(int)), nextOver = M("NextUnitOverThreshold", typeof(int), typeof(int)),
             };
@@ -197,6 +200,9 @@ namespace PerfUnionProbe
         public double SlowestUnitMilliseconds => (double)slowestMs.GetValue(Target);
         public double SlowestUnitSeamMilliseconds => (double)slowestSeam.GetValue(Target);
         public double SlowestUnitCpuMilliseconds => slowestCpu == null ? -1 : (double)slowestCpu.GetValue(Target);
+        public double MaintenanceMilliseconds => maintenance == null ? double.NaN : (double)maintenance.GetValue(Target);
+        public double MaintenanceCpuMilliseconds => maintenanceCpu == null ? -1 : (double)maintenanceCpu.GetValue(Target);
+        public void RecordCpu() { if (recordsCpu != null && recordsCpu.CanWrite && !(bool)recordsCpu.GetValue(Target)) recordsCpu.SetValue(Target, true); }
         public double MaximumUnitSeamMilliseconds => (double)maximumSeam.GetValue(Target);
         public double P95UnitSeamMilliseconds() => (double)p95.Invoke(Target, null);
         public double UnitSeamMilliseconds(int unit) => (double)unitSeam.Invoke(Target, new object[] { unit });
@@ -224,6 +230,9 @@ namespace PerfUnionProbe
             record.SlowestUnitOptionalStopMilliseconds = source.SlowestUnitSeamMilliseconds;
             double cpu = source.SlowestUnitCpuMilliseconds;
             record.SlowestUnitCpuMilliseconds = double.IsNaN(cpu) || cpu < 0 ? double.NaN : cpu;
+            record.MaintenanceMilliseconds = source.MaintenanceMilliseconds;
+            double maintenanceCpu = source.MaintenanceCpuMilliseconds;
+            record.MaintenanceCpuMilliseconds = double.IsNaN(maintenanceCpu) || maintenanceCpu < 0 ? double.NaN : maintenanceCpu;
             record.MaximumUnitOptionalStopMilliseconds = source.MaximumUnitSeamMilliseconds;
             record.P95UnitOptionalStopMilliseconds = source.P95UnitSeamMilliseconds();
             record.UnitsOverThreshold = over.ToArray();
@@ -250,6 +259,8 @@ namespace PerfUnionProbe
                 new KeyValuePair<string, object>("slowest_unit_optional_stop_ms", read ? Number(c.SlowestUnitOptionalStopMilliseconds) : null),
                 new KeyValuePair<string, object>("slowest_unit_cpu_ms", read ? Number(c.SlowestUnitCpuMilliseconds) : null),
                 new KeyValuePair<string, object>("slowest_unit_off_cpu_ms", read && !double.IsNaN(c.SlowestUnitCpuMilliseconds) ? (object)Math.Max(0, c.SlowestUnitMilliseconds - c.SlowestUnitCpuMilliseconds) : null),
+                new KeyValuePair<string, object>("maintenance_ms", read ? Number(c.MaintenanceMilliseconds) : null),
+                new KeyValuePair<string, object>("maintenance_cpu_ms", read ? Number(c.MaintenanceCpuMilliseconds) : null),
                 new KeyValuePair<string, object>("unit_optional_stop_max_ms", read ? Number(c.MaximumUnitOptionalStopMilliseconds) : null),
                 new KeyValuePair<string, object>("unit_optional_stop_p95_ms", read ? Number(c.P95UnitOptionalStopMilliseconds) : null),
                 new KeyValuePair<string, object>(UnitsOverThresholdField, read ? (object)(c.UnitsOverThreshold ?? new UnitOptionalStop[0]) : null),

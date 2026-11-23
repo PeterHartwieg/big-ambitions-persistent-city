@@ -13,12 +13,22 @@ namespace PersistentCity.Core
     public sealed class RetimeFrameLedger
     {
         private const int Stages = 6;
+        public const double BoundMilliseconds = 11.3;
+        public const int ListedOverBound = 8;
+        private readonly int[] overFrames = new int[ListedOverBound];
+        private readonly RetimeFrameStage[] overStages = new RetimeFrameStage[ListedOverBound];
+        private readonly double[] overMilliseconds = new double[ListedOverBound];
+        private readonly string[] overDetails = new string[ListedOverBound];
         private static readonly string[] Names = { "routes", "body release", "journey retime", "commit", "rebuild", "hand-over" };
         private readonly double[] slowest = new double[Stages];
         private readonly int[] updates = new int[Stages];
         private readonly string[] details = new string[Stages];
 
         public bool Observed { get; private set; }
+        public int OverBound { get; private set; }
+        public int OverBoundFrame(int index) => index >= 0 && index < Math.Min(OverBound, ListedOverBound) ? overFrames[index] : throw new ArgumentOutOfRangeException(nameof(index));
+        public RetimeFrameStage OverBoundStage(int index) => index >= 0 && index < Math.Min(OverBound, ListedOverBound) ? overStages[index] : throw new ArgumentOutOfRangeException(nameof(index));
+        public double OverBoundMilliseconds(int index) => index >= 0 && index < Math.Min(OverBound, ListedOverBound) ? overMilliseconds[index] : throw new ArgumentOutOfRangeException(nameof(index));
         public int Updates(RetimeFrameStage stage) => updates[(int)stage];
         public double SlowestMilliseconds(RetimeFrameStage stage) => slowest[(int)stage];
         public string SlowestDetail(RetimeFrameStage stage) => details[(int)stage] ?? "";
@@ -33,19 +43,26 @@ namespace PersistentCity.Core
             }
         }
 
-        public void Observe(RetimeFrameStage stage, double milliseconds, string detail = "")
+        public void Observe(RetimeFrameStage stage, double milliseconds, string detail = "", int frame = -1)
         {
             if (double.IsNaN(milliseconds) || milliseconds < 0) milliseconds = 0;
             int index = (int)stage;
             updates[index]++; Observed = true;
             if (updates[index] == 1 || milliseconds > slowest[index]) { slowest[index] = milliseconds; details[index] = detail; }
+            if (milliseconds <= BoundMilliseconds) return;
+            if (OverBound < ListedOverBound)
+            {
+                overFrames[OverBound] = frame; overStages[OverBound] = stage; overMilliseconds[OverBound] = milliseconds; overDetails[OverBound] = detail;
+            }
+            OverBound++;
         }
 
         public void Reset()
         {
             if (!Observed) return;
             Array.Clear(slowest, 0, Stages); Array.Clear(updates, 0, Stages); Array.Clear(details, 0, Stages);
-            Observed = false;
+            Array.Clear(overDetails, 0, ListedOverBound);
+            Observed = false; OverBound = 0;
         }
 
         public string Describe()
@@ -62,6 +79,16 @@ namespace PersistentCity.Core
                 text.Append(" slowest ").Append(slowest[i].ToString("0.0", culture)).Append(" ms");
                 if (!string.IsNullOrEmpty(details[i])) text.Append(" (").Append(details[i]).Append(')');
             }
+            if (OverBound == 0) return text.Append("; no update over ").Append(BoundMilliseconds.ToString("0.0", culture)).Append(" ms.").ToString();
+            text.Append("; updates over ").Append(BoundMilliseconds.ToString("0.0", culture)).Append(" ms:");
+            int listed = Math.Min(OverBound, ListedOverBound);
+            for (int i = 0; i < listed; i++)
+            {
+                text.Append(i == 0 ? " " : ", ").Append("frame ").Append(overFrames[i].ToString(culture)).Append(' ').Append(Names[(int)overStages[i]])
+                    .Append(' ').Append(overMilliseconds[i].ToString("0.0", culture)).Append(" ms");
+                if (!string.IsNullOrEmpty(overDetails[i])) text.Append(" (").Append(overDetails[i]).Append(')');
+            }
+            if (OverBound > listed) text.Append(" and ").Append((OverBound - listed).ToString(culture)).Append(" more");
             return text.Append('.').ToString();
         }
     }

@@ -233,6 +233,17 @@ internal static class Program
         var timedFields = AdvanceCallRows.Fields(timedRecord, 1e-4).ToDictionary(f => f.Key, f => f.Value);
         Check(Equals(timedFields["slowest_unit_cpu_ms"], 5.25) && Equals(timedFields["slowest_unit_off_cpu_ms"], 25.25),
             "the slowest unit's thread CPU and off-CPU time come from that unit");
+        var maintained = new PersistentCity.Core.OptionalStopUnitSeams();
+        source.Target = maintained;
+        source.RecordCpu();
+        Check(maintained.RecordsCpu, "the probe switches on per-unit thread CPU for the recorder it reads");
+        maintained.BeginCall(1_000_000); maintained.Maintained(25.0, 25_000_000); maintained.EndUnitAt("citizen", 25.5, 25_400_000); maintained.EndCall();
+        var maintainedRecord = new AdvanceCallRecord { Frame = 9, DurationTicks = 255_000 };
+        AdvanceCallRows.ReadUnits(ref maintainedRecord, source);
+        var maintainedFields = AdvanceCallRows.Fields(maintainedRecord, 1e-4).ToDictionary(f => f.Key, f => f.Value);
+        Check(Equals(maintainedFields["maintenance_ms"], 25.0) && Equals(maintainedFields["maintenance_cpu_ms"], 24.0)
+            && Equals(maintainedFields["slowest_unit_ms"], 0.5) && Math.Abs((double)maintainedFields["slowest_unit_off_cpu_ms"] - 0.1) < 1e-9,
+            "stop maintenance is reported apart and not charged to the first unit");
         source.Target = units;
         var over = (UnitOptionalStop[])fields[AdvanceCallRows.UnitsOverThresholdField];
         Check(over.Length == 2 && over[0].Unit == 1 && over[0].Kind == "traffic" && over[0].OptionalStopMilliseconds == 7.0
