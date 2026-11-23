@@ -17,7 +17,7 @@ Every GR-5 rig run from now on must:
 
 ## Latest evidence
 
-- **23 November b, Mac (rig 17c), build 6f92187b**. 2 PASS / 1 PARTIAL / 3 FAIL / 0 NOT RUN / 2 REPORTED. UpdateCity p95 3.8726 ms, union p95 3.9357 ms, 0 union spikes, retime subphase bound 7.529 ms. Both retimes stayed within the bound. Door search maximum 0.057 ms and index slice maximum 0 ms. The index was already warm in C. Retime restarts 0 (0 up, 0 return). Slowest food continuation: 1.786 ms (decision-evaluate). **PROVISIONAL (shared Mac / Mono)**. [23b results](#rig-results--23-november-2026-b-mac-rig-17c-gr-5-346-at-6f92187b).
+- **23 November b, Mac (rig 17c), build 6f92187b**. 2 PASS / 2 PARTIAL / 2 FAIL / 0 NOT RUN / 2 REPORTED. UpdateCity p95 3.8726 ms, union p95 3.9357 ms, 0 union spikes, retime subphase bound 7.529 ms. Both retimes stayed within the bound. Door search maximum 0.057 ms and index slice maximum 0 ms. The index was already warm in C. Retime restarts 0 (0 up, 0 return). Slowest food continuation: 1.786 ms (decision-evaluate). **PROVISIONAL (shared Mac / Mono)**. [23b results](#rig-results--23-november-2026-b-mac-rig-17c-gr-5-346-at-6f92187b).
 
 - **23 November a, Mac (rig 17b), build d0918a03**. 0 PASS / 2 PARTIAL / 4 FAIL / 0 NOT RUN / 2 REPORTED. UpdateCity p95 3.9613 ms, union p95 4.0396 ms, retime subphase bound 15.839 ms. The rig union export counted 0 spikes. The probe collection export recorded a 37.6313 ms mod-work spike on frame 41,421, which has no union row: 35.3278 ms in ResidentInspector.UiRaycastPrefix, gen0 collection 251 in Update.ScriptRunBehaviourUpdate and a 25.9409 ms GC marker pause. Door search maximum 0.08 ms and index slice maximum 0 ms. The index was already warm in C. Retime restarts 0 (0 up, 0 return). Frame 42,134 recorded 15.838 ms in mod_routes_retime. Slowest food continuation: 0.739 ms (decision-quote). C fails on the missed retime subphase bound. **PROVISIONAL (shared Mac / Mono)**. [23a results](#rig-results--23-november-2026-a-mac-rig-17b-gr-5-344-at-d0918a03).
 
@@ -23440,7 +23440,7 @@ The raw command-order and save audit is in capture-integrity.json. The marker ex
 
 ## Rig results — 23 November 2026 b, Mac (rig 17c, GR-5 #346 at 6f92187b)
 
-**2 PASS / 1 PARTIAL / 3 FAIL / 0 NOT RUN / 2 REPORTED.** Shared Mac / Mono timings are **PROVISIONAL**. The isolated rig used FT GR5 13f Timing v1 with 1,000 residents and 2,000 visitors. Raw evidence is under ~/Coding_Projects/.agent-logs/persistent-city-rig-2026-11-23b-mac/.
+**2 PASS / 2 PARTIAL / 2 FAIL / 0 NOT RUN / 2 REPORTED.** Shared Mac / Mono timings are **PROVISIONAL**. The isolated rig used FT GR5 13f Timing v1 with 1,000 residents and 2,000 visitors. Raw evidence is under ~/Coding_Projects/.agent-logs/persistent-city-rig-2026-11-23b-mac/.
 
 | Check | Outcome | Readback |
 | --- | --- | --- |
@@ -23449,7 +23449,7 @@ The raw command-order and save audit is in capture-integrity.json. The marker ex
 | C | PASS | UpdateCity p95 3.8726 ms, union p95 3.9357 ms, 0 union spikes, retime subphase bound 7.529 ms. Both retimes stayed within the bound. Door search maximum 0.057 ms and index slice maximum 0 ms. The index was already warm in C. Retime restarts 0 (0 up, 0 return). Slowest food continuation: 1.786 ms (decision-evaluate). |
 | D | REPORTED | Matched day heap and forced-live reads captured. Cached night comparison verified. Scope check check_scopes: PASS. Zero drift/rescans and no in-window patch-set changes. |
 | E | REPORTED | RSS before / immediately after return / +60 s 3,028,608 / 2,639,584 / 2,694,624 KiB. Owned mesh identity true / true / true. |
-| L | FAIL | 5 complete retime cycles and 7/7 matched reads. Outside-current-journeys-and-caches RouteLeg gaps 0 / 0 / 0 / 0 / 200 / 0 / 0. Raw RouteLeg gaps -726 / 420 / -558 / -258 / -264 / 582 / -1,884. Sustained growth at the final three retime checkpoints in Double[] bytes / Double[] outside caches bytes / RouteLeg[] outside caches bytes. Drain above earlier maximum in Int32[] objects / List&lt;TrafficRouteLeg&gt; objects / List&lt;TrafficRouteLeg&gt; bytes / TrafficRouteLeg objects / TrafficRouteLeg bytes / TrafficRouteLeg[] objects / TrafficRouteLeg[] bytes / TrafficVehicleState objects / TrafficVehicleState bytes / List&lt;TrafficRouteLeg&gt; outside caches objects / List&lt;TrafficRouteLeg&gt; outside caches bytes / TrafficRouteLeg outside caches objects / TrafficRouteLeg outside caches bytes / TrafficRouteLeg[] outside caches objects / TrafficRouteLeg[] outside caches bytes / TrafficVehicleState outside caches objects / TrafficVehicleState outside caches bytes. Drain count / byte gaps versus control TrafficRouteLeg 5 / 320, TrafficVehicleState 2 / 224, List&lt;TrafficRouteLeg&gt; 2 / 80, TrafficRouteLeg[] 2 / 104, Int32[] 13 / -328. |
+| L | PARTIAL (NOT ESTABLISHED) | 5 complete retime cycles and 7/7 matched reads. Outside-current-journeys-and-caches RouteLeg gaps 0 / 0 / 0 / 0 / 200 / 0 / 0. Raw RouteLeg gaps -726 / 420 / -558 / -258 / -264 / 582 / -1,884. Two matched series rose at R3 / R4 / R5 with slowing steps: RouteLeg[] outside caches 1,760 / 5,136 / 6,744 B (+3,376, then +1,608 B) and runtime.simulation Double[] 0 / 2,048 / 2,304 B (+2,048, then +256 B). Both fell at drain, to 3,032 B and 2,048 B. The aggregate Double[] series 0 / 2,048 / 4,352 B includes a one-time 2,048 B resize of static.TrafficNetwork.validationOffsets at R5 (1 object, 2,080 → 4,128 B, unchanged at drain). Under the #318 leak rule, three slowing cycles cannot separate growth from a plateau, so no series supports a fail. The traffic drain gaps are live traffic counts: retimed / control vehicles and routes 9 / 7 and traffic legs 719 / 714, all live, with 0 outside live traffic and caches. Int32[] drain gap 13 objects / -328 B. |
 | P | PASS | 0 immediate-retime advance/planning frames over 30 ms. 1 physical setup log rows. Reserved updates in this window 0. |
 | G | PARTIAL | 29/29 sampler ordinals joined to one probe row, phase and subsystem. 0 sampler rows lacked an unambiguous marker match. Mac sample captured 12/12 requested intervals. 4 collection frames overlapped the sample intervals. Exact scheduler attribution remains unavailable. Probe subsystem excess and same-frame arithmetic bounds are in the table. |
 
@@ -23468,7 +23468,7 @@ The raw command-order and save audit is in capture-integrity.json. The marker ex
 | Staging command | python3 &lt;agent-rig&gt;/scripts/install-mac.py --stage-mod PersistentCity ~/HART-Builds/persistent-city-rig-2026-11-23b-mac/package (absolute paths at execution) |
 | Candidate receipt UTC / staged_mod | 20261123T081220Z / [AgentRigOps] staged_mod name=PersistentCity version=absent informational=0.10.0-persistent-city-candidate sha256=566d363ec90d89f1797f7c34291eeaf82fcaf29d85e6cb9b9a3b81fde43e8ca4 |
 | Probe receipt UTC / staged_mod | 20261123T081220Z-1 / [AgentRigOps] staged_mod name=PerfUnionProbe version=absent informational=absent sha256=407f7ada8208f5c75ffda6afd2ba3abb55e4de8d8d0189b016aab7a5629acc5b |
-| No-mod reuse | 16x day steady; 16y immediate retime; 16u night |
+| No-mod reuse | 16x day steady; 16y immediate retime; 16u night; 16q RSS (E) |
 | Candidate and probe Player.log stamps | [AgentRigOps] staged_mod name=PerfUnionProbe version=absent informational=absent sha256=407f7ada8208f5c75ffda6afd2ba3abb55e4de8d8d0189b016aab7a5629acc5b / [AgentRigOps] staged_mod name=PersistentCity version=absent informational=0.10.0-persistent-city-candidate sha256=566d363ec90d89f1797f7c34291eeaf82fcaf29d85e6cb9b9a3b81fde43e8ca4 |
 | Pre-stage manifest SHA-256 | 3992e1eb98a987201d42ac5346f0f36ba23d7e63f9ab631e553e29c04f5ba387 |
 | Restored receipt SHA-256 | c7ce53dd99ade074830004f10aae2c4983af8e97457a15077f879020a0a14a7f |
@@ -23520,7 +23520,7 @@ The Unity ProfilerRecorder marker p95 uses collection-associated GC.Collect dura
 | Day steady no-mod | 7 / 7 | 198.2199 | 41.0027 | 14 / 14 / false | — / — / — |
 | Night no-mod (16u) | 7 / — | — | 21.3226 | 14 / 14 / false | — / — / — |
 
-No-mod gen0 comes from the probe’s post-collection Mono reads with Persistent City disabled and RLO active. Day steady, immediate retime and night reuse Mac 16x, 16y and 16u on the verified game build and sealed fixture. PR #346 specifies one 1→2 change at the start of A immediate. The candidate ran that window at 2× after the change. The reused 16y reference and the 17b candidate included the return to 1×, so the clock trajectories differ.
+The cached 16u probe export predates the collection-phase export, as the 21 November b (16w) report records, so its collection-frame and probe plain-excess cells are blank. No-mod gen0 comes from the probe’s post-collection Mono reads with Persistent City disabled and RLO active. Day steady, immediate retime and night reuse Mac 16x, 16y and 16u on the verified game build and sealed fixture. PR #346 specifies one 1→2 change at the start of A immediate. The candidate ran that window at 2× after the change. The reused 16y reference and the 17b candidate included the return to 1×, so the clock trajectories differ.
 
 | Rig | A steady | A immediate | B 20× | B 60× |
 | --- | --- | --- | --- | --- |
@@ -23692,7 +23692,7 @@ The two longest collection rows in each window expand the phase breakdown. The l
 | B 60× | gc-night-60-trace-505 | 26,593 | — |
 | B 60× | gc-night-60-trace-56 | 13,807 | — |
 
-Foreground host captures use the rig sample backend. They preserve the sample call graph, ps -M, top and pmset output. The night schedule was fixed before B began, using 17b’s collection times. Wait-leaf samples count stack observations. ps -M provides no stable thread IDs for before/after CPU deltas.
+Foreground host captures use the rig sample backend. They preserve the sample call graph, ps -M, top and pmset output. All twelve captures mark thermal, performance and CPU power readbacks as unrecorded, and the captures record no reason. The night schedule was fixed before B began, using 17b’s collection times. Wait-leaf samples count stack observations. ps -M provides no stable thread IDs for before/after CPU deltas.
 
 Wall and monotonic clocks were calibrated at both ends of the run (9.943 ms offset change). Collection overlap is shown only where the probe’s first frame validated the timebase and the sample timestamps fit the command envelope. An overlapping aggregate stack report cannot identify the stack of a particular collection frame.
 
@@ -23717,7 +23717,7 @@ Both arms started high-rate pre-positioning at 15:30. The rig time command pause
 
 B 20× reported paused 01:00 at 1× with 2 mod retime commits logged before the arm.
 
-B 20× collection frame 13,424 had 70.985 ms wall, 25.4008 ms GC.Collect and 1.118 ms UpdateCity. The largest outside-mod subsystem excess was 39.8406 ms in Update.ScriptRunBehaviourUpdate.
+B 20× gen0 ordinal 235 was sampled on sampler frame 13,424. The associated Unity marker and probe row are on frame 13,425, which had 70.985 ms wall, 25.4008 ms GC.Collect and 1.118 ms UpdateCity. The largest outside-mod subsystem excess was 39.8406 ms in Update.ScriptRunBehaviourUpdate. The sampler and marker frames differ, so the same-frame arithmetic remainder is unavailable for ordinal 235.
 
 B 60× reported paused 01:00 at 1× with 0 mod retime commits logged before the arm.
 
@@ -23806,6 +23806,8 @@ Spike counts are counted / retained / truncated. Whole-frame spike row truncatio
 | B 20× | 0 / 0 / false | 0 / 0 / false | 0 / 0 / false | 16,767 / 1,024 / true |
 | B 60× | 0 / 0 / false | 0 / 0 / false | 0 / 0 / false | 16,823 / 1,024 / true |
 | C street | 0 / 0 / false | 0 / 0 / false | 0 / 0 / false | 4,872 / 1,024 / true |
+
+B 60× planning observation: the population summary at game minute 4383.5 reported a 34.113 ms planning slice and a 34.114 ms route-planning advance unit with one collection inside the unit. The summary was emitted inside the 600 s window, 3.5 game minutes after its 01:00 start at minute 4380. The six B 60× collection rows cover every collection in the window (probe and sampler gen0 6, collections terminal true), and none has UpdateCity above 0.617 ms. The evidence therefore places the unit and its collection before the window opened, during the 60× approach that the first summary interval still covered. The union, PC phase and advance-call counts cover only frames inside the window, so their zero counts agree with this. The summary gives no frame number, so frame-level reconciliation is unavailable.
 
 | Window | Mod recorder off-CPU ≥30 ms | Sampler collection off-CPU ≥30 ms | Sampler CPU-covered frames |
 | --- | --- | --- | --- |
@@ -23960,7 +23962,7 @@ E uses its own 1→2→1 pair after A immediate has returned to 1×. The cached 
 
 ### L — repeated retime versus 1× control
 
-Each complete 1→2→1 pair waited for the commit and the new road snapshot. The settle interval starts at the return-to-1× road snapshot. The helper matches the control at native minutes and takes another read after the 30-game-minute drain. The final retime and drain are compared with their preceding maxima. An increasing final three-point series at a new maximum fails the existing leak criterion. A new maximum without that sustained rise leaves the plateau unestablished.
+Each complete 1→2→1 pair waited for the commit and the new road snapshot. The settle interval starts at the return-to-1× road snapshot. The helper matches the control at native minutes and takes another read after the 30-game-minute drain. The final retime and drain are compared with their preceding maxima. Under the #318 leak rule, a reading that rises at every checkpoint fails, unless the rise is slowing so that the cycles cannot tell continuing growth from a plateau; that case is NOT ESTABLISHED.
 
 | Checkpoint | Retimed / control native minute | Native-minute offset / matched | Retime settle s | Retimed / control TravelClockRate | RSS retimed / control KiB | vmmap footprint retimed / control |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -24174,11 +24176,13 @@ The largest native census-bracket offset was 0.4446564 min. The three traffic sn
 
 17c Mono heap gaps at R3/R4/R5 were -0.049152 / 7.356416 / 6.995968 MB and -29.458432 MB at drain.
 
-| Series with a sustained new maximum | R3 / R4 / R5 gaps |
-| --- | --- |
-| Double[] bytes | 0 / 2,048 / 4,352 |
-| Double[] outside caches bytes | 0 / 2,048 / 4,352 |
-| RouteLeg[] outside caches bytes | 1,760 / 5,136 / 6,744 |
+| Series rising at R3 / R4 / R5 | R3 / R4 / R5 gaps | Steps | Drain gap | #318 reading |
+| --- | --- | --- | --- | --- |
+| RouteLeg[] outside caches bytes | 1,760 / 5,136 / 6,744 | +3,376 / +1,608 | 3,032 | Slowing; NOT ESTABLISHED |
+| Double[] runtime.simulation bytes | 0 / 2,048 / 2,304 | +2,048 / +256 | 2,048 | Slowing; NOT ESTABLISHED |
+| Double[] bytes and Double[] outside caches bytes | 0 / 2,048 / 4,352 | +2,048 / +2,304 | 4,096 | Sum of runtime.simulation and the one-time static.TrafficNetwork.validationOffsets resize (+2,048 B at R5) |
+
+The L verdict rests on the RouteLeg[] outside caches and runtime.simulation Double[] series. The aggregate Double[] acceleration comes from the static validation buffer, which grew once from 2,080 to 4,128 B with an unchanged object count. The traffic drain differences are live traffic: the retimed arm had 9 live vehicles and routes against 7 in the control, and 719 live traffic legs against 714, with none outside live traffic and caches.
 
 Rig 17b Mono heap gaps at R3/R4/R5 were 62.03 / 68.09 / 70.11 MB and 28.20 MB after drain. Its post-drain census gaps were TrafficRouteLeg −99/−6,336 B, TrafficVehicleState +1/+112 B, List<TrafficRouteLeg> +1/+40 B and Int32[] +15/+392 B. The 17b traffic ledger used the same census semantics as 17c.
 
@@ -24197,8 +24201,8 @@ Original native preferences are minutes / maximum saves / preventAutoSave. Off m
 | B 20× / D / G | 5 / 3 / false | true | true / true | false / false | 17,075 / 17,075 / 0 / 0 | 600.0008493 | 0 |
 | B 60× / D / G | 5 / 3 / false | true | true / true | false / false | 17,168 / 17,168 / 0 / 0 | 600.0090077 | 0 |
 | C | 5 / 3 / false | true | true / true | false / false | 4,895 / 4,895 / 0 / 0 | 600.0006682 | 0 |
-| A no-mod immediate | 5 / 3 / false | true | true / true | — / — | 9,036 / 9,036 / 0 / 0 | 600.0074554 | 0 |
-| A / D no-mod steady | 5 / 3 / false | true | true / true | — / — | 10,044 / 10,044 / 0 / 0 | 600.0095402 | 0 |
+| A cached no-mod immediate (16y) | 5 / 3 / false | true | true / true | — / — | 9,036 / 9,036 / 0 / 0 | 600.0074554 | 0 |
+| A / D cached no-mod steady (16x) | 5 / 3 / false | true | true / true | — / — | 10,044 / 10,044 / 0 / 0 | 600.0095402 | 0 |
 | B / D cached no-mod night | 5 / 3 / false | true | true / true | — / — | 11,194 / 11,194 / 0 / 0 | 600.0023826 | 0 |
 
 | Read | Original native prefs | Suppression before / after |
