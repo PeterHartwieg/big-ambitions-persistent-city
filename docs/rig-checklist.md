@@ -17,6 +17,8 @@ Every GR-5 rig run from now on must:
 
 ## Latest evidence
 
+- **23 November d, Mac (rig 17e), build `1e0f8e03`**. 1 PASS / 2 PARTIAL / 0 FAIL / 0 NOT RUN on #352. Zero fallback gates, one tally line and zero footprint rows. [23d results](#rig-results---23-november-2026-d-mac-rig-17e-352-gate-checks-at-1e0f8e03).
+
 - **23 November c, Mac (rig 17d), build `ce8c514d`**. 0 PASS / 1 PARTIAL / 1 FAIL / 1 NOT RUN on #350. The fallback tally warning was absent. [23c results](#rig-results--23-november-2026-c-mac-rig-17d-350-gate-bounds-checks-at-ce8c514d).
 
 - **23 November b, Mac (rig 17c), build 6f92187b**. 2 PASS / 2 PARTIAL / 2 FAIL / 0 NOT RUN / 2 REPORTED. UpdateCity p95 3.8726 ms, union p95 3.9357 ms, 0 union spikes, retime subphase bound 7.529 ms. Both retimes stayed within the bound. Door search maximum 0.057 ms and index slice maximum 0 ms. The index was already warm in C. Retime restarts 0 (0 up, 0 return). Slowest food continuation: 1.786 ms (decision-evaluate). **PROVISIONAL (shared Mac / Mono)**. [23b results](#rig-results--23-november-2026-b-mac-rig-17c-gr-5-346-at-6f92187b).
@@ -24360,3 +24362,50 @@ Raw evidence is in `~/Coding_Projects/.agent-logs/persistent-city-rig-2026-11-23
 | line 2010 | Maximum advancement call 143.025 ms. The same summary reported a 139.929 ms optional-stop performer scan. |
 
 Refs #350, Refs #331
+
+## Rig results - 23 November 2026 d (Mac, rig 17e): #352 gate checks at 1e0f8e03
+
+**1 PASS / 2 PARTIAL / 0 FAIL / 0 NOT RUN** across the three checks on `FT GR5 13f Timing v1`. See [PR #352](https://github.com/PeterHartwieg/big-ambitions-persistent-city/pull/352).
+
+| Check | Result | Evidence |
+|---|---|---|
+| 1. Tally once per load | **PASS** | Cleared the isolated player log to 0 bytes before loading. The bridge marked the city loaded before Persistent City initialized. After mod initialization, the log contained one line ending `bounds: 0 using the 40x20x40 m fallback.` It still contained one line after day 2 15:00–15:11 at 1× and at shutdown. `pc gate status` returned `gates=4 collider=4 renderer=0 footprint=0 fallback=0` and `road_snapshot=ready nodes=29010`. |
+| 2. Closed Hamptons private gate | **PARTIAL** | The first query at the rig 17d driveway approach `(-2808, -1463)` matched zero rows. The full gate list identified a nearby Hamptons checkpoint. Moved the player to its approach and used the measured position in `pc gate status near -2894,-1518,30`. Both listed gates reported `public_road=no`. Six screenshots and six 12 m traffic-collider reads from day 2 15:33 through 15:36 showed closed gates and zero approaching or crossing vehicles in the samples. A vehicle approach did not occur in those samples. |
+| 3. Footprint gates on public roads | **PARTIAL** | At `road_snapshot=ready`, `pc gate status footprint` returned `matched=0 shown=0 omitted=0`. All four reported gates used collider bounds. This fixture supplied zero footprint boxes and therefore zero public-road overlaps, including overlaps without a physical gate. Positive-row ordering (public-road overlaps first) and traffic stopping or detouring at reported segments were unobservable here. |
+
+The two rows at the observed checkpoint had `building=none` and `source=collider`.
+
+| Door | Min (x, y, z) | Max (x, y, z) |
+|---|---|---|
+| `HamptonsGate` | `(-2906, -0.99, -1521.98)` | `(-2899, 3.96, -1514.98)` |
+| `HamptonsGate (1)` | `(-2906, -0.99, -1533.5)` | `(-2899, 3.96, -1526.5)` |
+
+**NOT RUN substeps.** Gate open/close stays for Peter. The rig has no gate toggle and `use {"op":"list","radius":12}` returned `things=[]` at both approaches. Positive footprint-row ordering and segment observations had no qualifying row or `first=` segment in this fixture. Pointer, hover and visual feel stay for Peter.
+
+### Build and isolation
+
+| Item | Evidence |
+|---|---|
+| Tested tip | `1e0f8e039912120d54c6fcf02862c68b8a0986f1` at the initial and post-run fetches. |
+| Mac rig and fixture | Isolated `agentmac`, game build 3682, Unity 2022.3.62f2, RLO 1.0.6. The FT fixture loaded in 59.1 s with 1,000 residents, 2,000 visitors and 1,683 places. Background graphics for screenshots, with commands sent through the rig bridge to the enabled game console. |
+| Stage | `python3 scripts/install-mac.py --stage-mod PersistentCity ~/HART-Builds/persistent-city-rig-2026-11-23d-mac/package` (absolute path at execution). Refreshed 28 entries. Receipt backup `~/Library/Application Support/BigAmbitionsAgentTestsMac/receipt-backups/20261123T132522Z`. |
+| Live DLL | `[AgentRigOps] staged_mod name=PersistentCity version=absent informational=0.10.0-persistent-city-candidate sha256=d3e9e1e225ae8f57f8ae3ca392b4a04a82aacbcc8d4bd373838005ae9de60436`, matching the built and staged DLL. |
+| Agent | agent-rig `9cee682`. AgentRigOps SHA-256 `a775ba0c17be67fa2f355a5e4240b31dd074955bafa833664d8e5884a246297c` before and after. |
+| Autosave | Original native settings were 5 minutes, 3 saves, `prevent_autosave=false`. The process guard read `suppressed=true` at the menu, after load, at the start and end of the tally and gate observations, before and after the footprint query, and before shutdown. SaveCostDiagnostics was off. The final save read showed zero attempts and no save or compression in progress. |
+| Restore | Closed normally. Restored the staged mod and receipt, isolated preference plist and console history. Verified 272 ModsLocal file hashes, 284 receipt entries, 3 agent/game DLLs and 4 sealed fixture files. The `FT RIGTMP-GR5-15c` and `FT RIGTMP-GR5-23d-mac` reads both returned `exists=false`. Released the lease after verification and confirmed the player stopped and the lease free. |
+| Shared Mac load | Start 14:24 CET `7.24 5.75 6.13`. End 14:31 CET `3.61 5.78 6.26`. |
+
+Raw evidence is in `~/Coding_Projects/.agent-logs/persistent-city-rig-2026-11-23d-mac/`, including the rollback in `stage.log`, the gate command replies, six gate screenshots with paired collider reads, and the restore manifest. Final `Player.log` SHA-256 is `c3fb212cd251e4280e817f569173e0ebd34ccd9bbd998cd8a9f07cdda4b06a3a`.
+
+### Incidental timings
+
+**PROVISIONAL (shared Mac).** No GR-5 windows, reference sessions or probe install. The mod printed no mod-work p95. Whole-frame timing was outside this run.
+
+| Player.log lines | Mod work at or above 30 ms |
+|---|---|
+| 1315 | Startup journey retime, frame 3295, 56.0 ms. |
+| 1328 | Routing preparation frame, 136.698 ms, with a 126.450 ms road-scene search. |
+| 1334 | Physical population setup, 122.6 ms after 1.4 ms earlier in that update. |
+| 1561 | Maximum advance call, 182.877 ms. The same summary reported a 166.643 ms optional-stop parks scene scan. |
+
+Refs #352, Refs #350, Refs #331.
