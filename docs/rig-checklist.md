@@ -17,7 +17,7 @@ Every GR-5 rig run from now on must:
 
 ## Latest evidence
 
-- **23 November d, Mac (rig 17e), build `1e0f8e03`**. 2 PASS / 1 PARTIAL / 0 FAIL / 0 NOT RUN on #352. Zero fallback gates, one tally line and zero footprint rows. [23d results](#rig-results---23-november-2026-d-mac-rig-17e-352-gate-checks-at-1e0f8e03).
+- **23 November d, Mac (rig 17e), build `1e0f8e03`**. 1 PASS / 2 PARTIAL / 0 FAIL / 0 NOT RUN on #352. Zero fallback gates, one tally line and zero footprint rows. [23d results](#rig-results---23-november-2026-d-mac-rig-17e-352-gate-checks-at-1e0f8e03).
 
 - **23 November c, Mac (rig 17d), build `ce8c514d`**. 0 PASS / 1 PARTIAL / 1 FAIL / 1 NOT RUN on #350. The fallback tally warning was absent. [23c results](#rig-results--23-november-2026-c-mac-rig-17d-350-gate-bounds-checks-at-ce8c514d).
 
@@ -24365,13 +24365,13 @@ Refs #350, Refs #331
 
 ## Rig results - 23 November 2026 d (Mac, rig 17e): #352 gate checks at 1e0f8e03
 
-**2 PASS / 1 PARTIAL / 0 FAIL / 0 NOT RUN** across the three checks on `FT GR5 13f Timing v1`. See [PR #352](https://github.com/PeterHartwieg/big-ambitions-persistent-city/pull/352).
+**1 PASS / 2 PARTIAL / 0 FAIL / 0 NOT RUN** across the three checks on `FT GR5 13f Timing v1`. See [PR #352](https://github.com/PeterHartwieg/big-ambitions-persistent-city/pull/352).
 
 | Check | Result | Evidence |
 |---|---|---|
 | 1. Tally once per load | **PASS** | Cleared the isolated player log to 0 bytes before loading. The bridge marked the city loaded before Persistent City initialized. After mod initialization, the log contained one line ending `bounds: 0 using the 40x20x40 m fallback.` It still contained one line after day 2 15:00–15:11 at 1× and at shutdown. `pc gate status` returned `gates=4 collider=4 renderer=0 footprint=0 fallback=0` and `road_snapshot=ready nodes=29010`. |
 | 2. Closed Hamptons private gate | **PARTIAL** | The first query at the rig 17d driveway approach `(-2808, -1463)` matched zero rows. The full gate list identified a nearby Hamptons checkpoint. Moved the player to its approach and used the measured position in `pc gate status near -2894,-1518,30`. Both listed gates reported `public_road=no`. Six screenshots and six 12 m traffic-collider reads from day 2 15:33 through 15:36 showed closed gates and zero approaching or crossing vehicles in the samples. A vehicle approach did not occur in those samples. |
-| 3. Footprint gates on public roads | **PASS (fixture inventory)** | At `road_snapshot=ready`, `pc gate status footprint` returned `matched=0 shown=0 omitted=0`. All four reported gates used collider bounds. This fixture supplied zero footprint boxes and therefore zero public-road overlaps, including overlaps without a physical gate. |
+| 3. Footprint gates on public roads | **PARTIAL** | At `road_snapshot=ready`, `pc gate status footprint` returned `matched=0 shown=0 omitted=0`. All four reported gates used collider bounds. This fixture supplied zero footprint boxes and therefore zero public-road overlaps, including overlaps without a physical gate. Positive-row ordering (public-road overlaps first) and traffic stopping or detouring at reported segments were unobservable here. |
 
 The two rows at the observed checkpoint had `building=none` and `source=collider`.
 
