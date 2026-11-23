@@ -369,7 +369,8 @@ namespace PersistentCity.Runtime
             private List<RoadRoutes.Curb>? starts, ends;
             private int endIndex, startIndex, searches;
             private RoadRoutes.RoadPlan? drive;
-            public Route? Result { get; private set; }
+            private readonly PublishedRoute published = new PublishedRoute();
+            public Route? Result { get => published.Route; private set => published.Route = value; }
             public bool Completed => stage == Stage.Done;
 
             internal PlanningJob(MultimodalRoutes owner) { this.owner = owner; }

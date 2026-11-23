@@ -383,13 +383,51 @@ public sealed class Gr5PlannerCandidateTests
         int jobStart = planner.IndexOf("private sealed class PlanningJob", StringComparison.Ordinal);
         Assert.True(jobStart >= 0);
         string job = planner.Substring(jobStart);
-        var results = System.Text.RegularExpressions.Regex.Matches(job, @"(?<![\w.])Result\s*=\s*([^;]+);").Select(m => m.Groups[1].Value.Trim()).ToArray();
+        Assert.Contains("private readonly PublishedRoute published = new PublishedRoute();", job);
+        Assert.Contains("public Route? Result { get => published.Route; private set => published.Route = value; }", job);
+        Assert.Single(System.Text.RegularExpressions.Regex.Matches(job, @"\bRoute\?\s+Result\b"));
+        Assert.Single(System.Text.RegularExpressions.Regex.Matches(job, @"\bpublished\.Route\s*=(?!=)"));
+        var results = System.Text.RegularExpressions.Regex.Matches(job, @"(?<![\w.])(?:this\.)?Result\s*=(?!=)\s*([^;]+);").Select(m => m.Groups[1].Value.Trim()).ToArray();
         Assert.NotEmpty(results);
         Assert.All(results, value => Assert.True(value == "null" || value == "best" || value.StartsWith("owner.walking.Plan(", StringComparison.Ordinal), value));
         Assert.Contains("best", results);
         var bests = System.Text.RegularExpressions.Regex.Matches(job, @"(?<![\w.])best\s*=\s*([^;=][^;]*);").Select(m => m.Groups[1].Value.Trim()).ToArray();
         Assert.Equal(new[] { "candidates.Publish()" }, bests);
         Assert.DoesNotContain("PlanShared", string.Join("\n", results));
+    }
+
+    [Fact]
+    public void APublishedCachedWalkIsACopyThatCallerEditsCannotReachTheCache()
+    {
+        var job = new Job(true);
+        int origin = 0;
+        var from = Job.From(origin); var to = Job.To(origin);
+        var cached = job.CachedWalk(origin, from, to, 6);
+        Assert.True(cached.IsCommitted);
+        var legs = cached.Legs.ToArray();
+        double estimate = cached.EstimatedMinutes;
+        var published = new PublishedRoute();
+        published.Route = cached;
+        var first = published.Route!;
+        Assert.NotSame(cached, first);
+        Assert.False(first.IsCommitted);
+        first.Legs.RemoveAt(0);
+        first.Legs.Add(new RouteLeg { From = to, To = to, Minutes = 9, Mode = TravelMode.Walk });
+        first.WithEstimate(first.Minutes + 40);
+        first.Legs = new RouteLegs();
+        Assert.Same(cached, job.CachedWalk(origin, from, to, 6));
+        published.Route = job.CachedWalk(origin, from, to, 6);
+        var second = published.Route!;
+        Assert.NotSame(first, second);
+        Assert.Equal(legs, second.Legs.ToArray());
+        Assert.Equal(legs, cached.Legs.ToArray());
+        Assert.Equal(estimate, second.EstimatedMinutes);
+        Assert.Equal(estimate, cached.EstimatedMinutes);
+        var fresh = new Route();
+        published.Route = fresh;
+        Assert.Same(fresh, published.Route);
+        published.Route = null;
+        Assert.Null(published.Route);
     }
 
     [Fact]
