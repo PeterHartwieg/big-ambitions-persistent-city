@@ -8,6 +8,104 @@ namespace PersistentCity.Core
 
     public enum ClockRetimeOutcome { None, ReleaseBodies, Began, Preparing, Restarted, Committed }
 
+    public enum RetimeFrameStage { Routes, Release, Journeys, Commit, Rebuild, HandOver, Report }
+
+    public sealed class RetimeFrameLedger
+    {
+        private const int Stages = 7;
+        private const int RetimeStages = 6;
+        public const double BoundMilliseconds = 11.3;
+        public const int ListedOverBound = 8;
+        private readonly int[] overFrames = new int[ListedOverBound];
+        private readonly RetimeFrameStage[] overStages = new RetimeFrameStage[ListedOverBound];
+        private readonly double[] overMilliseconds = new double[ListedOverBound];
+        private readonly string[] overDetails = new string[ListedOverBound];
+        private static readonly string[] Names = { "routes", "body release", "journey retime", "commit", "rebuild", "hand-over", "report" };
+        private readonly double[] slowest = new double[Stages];
+        private readonly int[] updates = new int[Stages];
+        private readonly string[] details = new string[Stages];
+
+        public bool Observed { get; private set; }
+        public int OverBound { get; private set; }
+        public int OverBoundFrame(int index) => index >= 0 && index < Math.Min(OverBound, ListedOverBound) ? overFrames[index] : throw new ArgumentOutOfRangeException(nameof(index));
+        public RetimeFrameStage OverBoundStage(int index) => index >= 0 && index < Math.Min(OverBound, ListedOverBound) ? overStages[index] : throw new ArgumentOutOfRangeException(nameof(index));
+        public double OverBoundMilliseconds(int index) => index >= 0 && index < Math.Min(OverBound, ListedOverBound) ? overMilliseconds[index] : throw new ArgumentOutOfRangeException(nameof(index));
+        public int Updates(RetimeFrameStage stage) => updates[(int)stage];
+        public double SlowestMilliseconds(RetimeFrameStage stage) => slowest[(int)stage];
+        public string SlowestDetail(RetimeFrameStage stage) => details[(int)stage] ?? "";
+
+        public RetimeFrameStage SlowestStage
+        {
+            get
+            {
+                int found = 0;
+                for (int i = 1; i < RetimeStages; i++) if (slowest[i] > slowest[found]) found = i;
+                return (RetimeFrameStage)found;
+            }
+        }
+
+        public void Observe(RetimeFrameStage stage, double milliseconds, string detail = "", int frame = -1)
+        {
+            if (double.IsNaN(milliseconds) || milliseconds < 0) milliseconds = 0;
+            int index = (int)stage;
+            updates[index]++; Observed = true;
+            if (stage == RetimeFrameStage.Report) ReportFrame = frame;
+            if (updates[index] == 1 || milliseconds > slowest[index]) { slowest[index] = milliseconds; details[index] = detail; }
+            if (milliseconds <= BoundMilliseconds) return;
+            if (OverBound < ListedOverBound)
+            {
+                overFrames[OverBound] = frame; overStages[OverBound] = stage; overMilliseconds[OverBound] = milliseconds; overDetails[OverBound] = detail;
+            }
+            OverBound++;
+        }
+
+        public int ReportFrame { get; private set; } = -1;
+        public bool ReportOverBound => updates[(int)RetimeFrameStage.Report] > 0 && slowest[(int)RetimeFrameStage.Report] > BoundMilliseconds;
+
+        public string DescribeReport()
+        {
+            var culture = System.Globalization.CultureInfo.InvariantCulture;
+            int index = (int)RetimeFrameStage.Report;
+            return "Clock retime report: frame " + ReportFrame.ToString(culture) + " report " + slowest[index].ToString("0.0", culture) + " ms, over "
+                + BoundMilliseconds.ToString("0.0", culture) + " ms (" + (details[index] ?? "") + ").";
+        }
+
+        public void Reset()
+        {
+            if (!Observed) return;
+            Array.Clear(slowest, 0, Stages); Array.Clear(updates, 0, Stages); Array.Clear(details, 0, Stages);
+            Array.Clear(overDetails, 0, ListedOverBound);
+            Observed = false; OverBound = 0; ReportFrame = -1;
+        }
+
+        public string Describe()
+        {
+            var culture = System.Globalization.CultureInfo.InvariantCulture;
+            var text = new System.Text.StringBuilder("Clock retime frames: slowest update ");
+            var top = SlowestStage;
+            text.Append(slowest[(int)top].ToString("0.0", culture)).Append(" ms in ").Append(Names[(int)top]);
+            for (int i = 0; i < RetimeStages; i++)
+            {
+                text.Append(i == 0 ? "; " : ", ").Append(Names[i]).Append(' ').Append(updates[i].ToString(culture))
+                    .Append(updates[i] == 1 ? " update" : " updates");
+                if (updates[i] == 0) continue;
+                text.Append(" slowest ").Append(slowest[i].ToString("0.0", culture)).Append(" ms");
+                if (!string.IsNullOrEmpty(details[i])) text.Append(" (").Append(details[i]).Append(')');
+            }
+            if (OverBound == 0) return text.Append("; no update over ").Append(BoundMilliseconds.ToString("0.0", culture)).Append(" ms.").ToString();
+            text.Append("; updates over ").Append(BoundMilliseconds.ToString("0.0", culture)).Append(" ms:");
+            int listed = Math.Min(OverBound, ListedOverBound);
+            for (int i = 0; i < listed; i++)
+            {
+                text.Append(i == 0 ? " " : ", ").Append("frame ").Append(overFrames[i].ToString(culture)).Append(' ').Append(Names[(int)overStages[i]])
+                    .Append(' ').Append(overMilliseconds[i].ToString("0.0", culture)).Append(" ms");
+                if (!string.IsNullOrEmpty(overDetails[i])) text.Append(" (").Append(overDetails[i]).Append(')');
+            }
+            if (OverBound > listed) text.Append(" and ").Append((OverBound - listed).ToString(culture)).Append(" more");
+            return text.Append('.').ToString();
+        }
+    }
+
     public static class ClockRetimeStages
     {
         public const double Tolerance = .000001;

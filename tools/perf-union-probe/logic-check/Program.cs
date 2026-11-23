@@ -223,6 +223,46 @@ internal static class Program
         Check(Equals(fields["slowest_unit_optional_stop_ms"], 7.0), "slowest unit's optional-stop time is its own seam, not the call total");
         Check(Equals(fields["unit_optional_stop_max_ms"], 7.0) && Equals(fields["unit_optional_stop_p95_ms"], 7.0), "unit seam maximum and p95");
         Check(Equals(fields["units"], 5), "unit count");
+        Check(fields.ContainsKey("slowest_unit_cpu_ms") && fields["slowest_unit_cpu_ms"] == null && fields["slowest_unit_off_cpu_ms"] == null,
+            "a unit without thread CPU reports null CPU and off-CPU");
+        var timed = new PersistentCity.Core.OptionalStopUnitSeams();
+        timed.BeginCall(); timed.EndUnit("citizen", 2.0, 1.5); timed.EndUnit("citizen", 30.5, 5.25); timed.EndUnit("snapshot", 0.1, 0.1); timed.EndCall();
+        source.Target = timed;
+        var timedRecord = new AdvanceCallRecord { Frame = 8, DurationTicks = 310_000 };
+        AdvanceCallRows.ReadUnits(ref timedRecord, source);
+        var timedFields = AdvanceCallRows.Fields(timedRecord, 1e-4).ToDictionary(f => f.Key, f => f.Value);
+        Check(Equals(timedFields["slowest_unit_cpu_ms"], 5.25) && Equals(timedFields["slowest_unit_off_cpu_ms"], 25.25),
+            "the slowest unit's thread CPU and off-CPU time come from that unit");
+        var maintained = new PersistentCity.Core.OptionalStopUnitSeams();
+        source.Target = maintained;
+        source.RecordCpu();
+        Check(maintained.RecordsCpu, "the probe switches on per-unit thread CPU for the recorder it reads");
+        source.Target = null;
+        var cpuSwitch = new UnitCpuSwitch();
+        var first = new PersistentCity.Core.OptionalStopUnitSeams();
+        var second = new PersistentCity.Core.OptionalStopUnitSeams();
+        cpuSwitch.Enable(source, first);
+        Check(first.RecordsCpu && ReferenceEquals(cpuSwitch.Enabled, first) && source.Target == null, "a window start switches on thread CPU for the city's recorder");
+        cpuSwitch.Disable(source);
+        Check(!first.RecordsCpu && cpuSwitch.Enabled == null && source.Target == null, "a window stop switches thread CPU off and releases the recorder");
+        cpuSwitch.Disable(source);
+        Check(!first.RecordsCpu && cpuSwitch.Enabled == null, "stopping twice is harmless");
+        cpuSwitch.Enable(source, first);
+        Check(first.RecordsCpu && ReferenceEquals(cpuSwitch.Enabled, first), "a restarted window switches thread CPU on again");
+        cpuSwitch.Enable(source, second);
+        Check(!first.RecordsCpu && second.RecordsCpu && ReferenceEquals(cpuSwitch.Enabled, second), "a new city's recorder replaces the old one, which stops reading CPU");
+        cpuSwitch.Disable(null);
+        Check(cpuSwitch.Enabled == null, "disarming without a bound source still releases the recorder");
+        second.RecordsCpu = false;
+        source.Target = maintained;
+        maintained.BeginCall(1_000_000); maintained.Maintained(25.0, 25_000_000); maintained.EndUnitAt("citizen", 25.5, 25_400_000); maintained.EndCall();
+        var maintainedRecord = new AdvanceCallRecord { Frame = 9, DurationTicks = 255_000 };
+        AdvanceCallRows.ReadUnits(ref maintainedRecord, source);
+        var maintainedFields = AdvanceCallRows.Fields(maintainedRecord, 1e-4).ToDictionary(f => f.Key, f => f.Value);
+        Check(Equals(maintainedFields["maintenance_ms"], 25.0) && Equals(maintainedFields["maintenance_cpu_ms"], 24.0)
+            && Equals(maintainedFields["slowest_unit_ms"], 0.5) && Math.Abs((double)maintainedFields["slowest_unit_off_cpu_ms"] - 0.1) < 1e-9,
+            "stop maintenance is reported apart and not charged to the first unit");
+        source.Target = units;
         var over = (UnitOptionalStop[])fields[AdvanceCallRows.UnitsOverThresholdField];
         Check(over.Length == 2 && over[0].Unit == 1 && over[0].Kind == "traffic" && over[0].OptionalStopMilliseconds == 7.0
             && over[1].Unit == 3 && over[1].Kind == "citizen" && over[1].OptionalStopMilliseconds == 5.5, "units over 5 ms are listed with their own seam");

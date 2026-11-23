@@ -136,8 +136,8 @@ public sealed class OptionalStopUnitSeamsTests
         string mod = File.ReadAllText(Path.Combine(root, "Runtime", "PersistentCityMod.cs"));
         string environment = File.ReadAllText(Path.Combine(root, "Runtime", "OptionalStopEnvironment.cs"));
         Assert.Contains("UnitSeams.Seam(elapsed);", environment);
-        Assert.Contains("unitSeams?.BeginCall();", mod);
-        Assert.Contains("unitSeams?.EndUnit(kind, elapsed - unitStarted);", mod);
+        Assert.Contains("unitSeams?.BeginCall(callCpu);", mod);
+        Assert.Contains("unitSeams?.EndUnitAt(kind, elapsed, unitCpu ? ThreadCpuClock.Nanoseconds() : -1);", mod);
         Assert.Contains("slowestAdvanceStopMilliseconds = unitSeams?.SlowestUnitSeamMilliseconds ?? 0;", mod);
         Assert.DoesNotContain("stopsBefore", mod);
         Assert.Matches(@"try\s*\{\s*bool hiddenSkip", mod);

@@ -29,7 +29,8 @@ namespace PersistentCity.Core
             double elapsed = (Stopwatch.GetTimestamp() - started) * 1000.0 / Stopwatch.Frequency;
             Milliseconds += elapsed;
             HandOverMilliseconds = elapsed;
-            lastUpdateMilliseconds += elapsed;
+            HandOverSeparate = !FinishedInLastStep;
+            lastUpdateMilliseconds = HandOverSeparate ? elapsed : lastUpdateMilliseconds + elapsed;
             SlowestUpdateMilliseconds = Math.Max(SlowestUpdateMilliseconds, lastUpdateMilliseconds);
             return result;
         }
@@ -40,10 +41,13 @@ namespace PersistentCity.Core
         public double Milliseconds { get; private set; }
         public double SlowestUpdateMilliseconds { get; private set; }
         public double HandOverMilliseconds { get; private set; }
+        public bool FinishedInLastStep { get; private set; }
+        public bool HandOverSeparate { get; private set; }
         private double lastUpdateMilliseconds;
 
         public bool Step(long deadlineTimestamp)
         {
+            FinishedInLastStep = false;
             if (Result != null) return true;
             if (steps == null) throw new InvalidOperationException("The route rebuild failed; begin a new one.");
             long started = Stopwatch.GetTimestamp();
@@ -54,7 +58,7 @@ namespace PersistentCity.Core
                 {
                     bool more = steps.MoveNext();
                     Units++;
-                    if (!more || steps.Current) { steps = null; Result = replacement; return true; }
+                    if (!more || steps.Current) { steps = null; Result = replacement; FinishedInLastStep = true; return true; }
                     if (Stopwatch.GetTimestamp() >= deadlineTimestamp) return false;
                 }
             }

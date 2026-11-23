@@ -18,8 +18,14 @@ namespace PersistentCity.Core
         public const int ListedOverThreshold = 8;
         private double[] seams = new double[64], sorted = new double[64];
         private string[] kinds = new string[64];
-        private double open;
+        private double open, boundaryWall;
+        private long boundaryCpu = -1;
         private bool callOpen;
+
+        public bool RecordsCpu { get; set; }
+        public double MaintenanceMilliseconds { get; private set; }
+        public double MaintenanceCpuMilliseconds { get; private set; } = -1;
+        public static double CpuBetween(long from, long to) => from >= 0 && to >= from ? (to - from) / 1e6 : -1;
 
         public bool CallOpen => callOpen;
         public int Units { get; private set; }
@@ -27,6 +33,7 @@ namespace PersistentCity.Core
         public int SlowestUnit { get; private set; } = -1;
         public string SlowestUnitKind { get; private set; } = "";
         public double SlowestUnitMilliseconds { get; private set; }
+        public double SlowestUnitCpuMilliseconds { get; private set; } = -1;
         public double SlowestUnitSeamMilliseconds => SlowestUnit < 0 ? 0 : seams[SlowestUnit];
         public double MaximumUnitSeamMilliseconds { get; private set; }
         public string MaximumUnitSeamKind { get; private set; } = "";
@@ -36,8 +43,27 @@ namespace PersistentCity.Core
 
         public void BeginCall()
         {
-            Units = 0; open = 0; CallSeamMilliseconds = 0; SlowestUnit = -1; SlowestUnitKind = ""; SlowestUnitMilliseconds = 0;
+            Units = 0; open = 0; CallSeamMilliseconds = 0; SlowestUnit = -1; SlowestUnitKind = ""; SlowestUnitMilliseconds = 0; SlowestUnitCpuMilliseconds = -1;
             MaximumUnitSeamMilliseconds = 0; MaximumUnitSeamKind = ""; Completed = false; callOpen = true;
+            MaintenanceMilliseconds = 0; MaintenanceCpuMilliseconds = -1; boundaryWall = 0; boundaryCpu = -1;
+        }
+
+        public void BeginCall(long cpuNanoseconds) { BeginCall(); boundaryCpu = cpuNanoseconds; }
+
+        public void Maintained(double wallMilliseconds, long cpuNanoseconds)
+        {
+            if (!callOpen) return;
+            MaintenanceMilliseconds = Math.Max(0, wallMilliseconds - boundaryWall);
+            MaintenanceCpuMilliseconds = CpuBetween(boundaryCpu, cpuNanoseconds);
+            boundaryWall = wallMilliseconds; boundaryCpu = cpuNanoseconds;
+        }
+
+        public void EndUnitAt(string kind, double wallMilliseconds, long cpuNanoseconds)
+        {
+            if (!callOpen) return;
+            double wall = wallMilliseconds - boundaryWall, cpu = CpuBetween(boundaryCpu, cpuNanoseconds);
+            boundaryWall = wallMilliseconds; boundaryCpu = cpuNanoseconds;
+            EndUnit(kind, wall, cpu);
         }
 
         public void Seam(double milliseconds)
@@ -46,7 +72,9 @@ namespace PersistentCity.Core
             open += milliseconds; CallSeamMilliseconds += milliseconds;
         }
 
-        public void EndUnit(string kind, double unitMilliseconds)
+        public void EndUnit(string kind, double unitMilliseconds) => EndUnit(kind, unitMilliseconds, -1);
+
+        public void EndUnit(string kind, double unitMilliseconds, double unitCpuMilliseconds)
         {
             if (!callOpen) return;
             if (Units == seams.Length)
@@ -54,7 +82,11 @@ namespace PersistentCity.Core
                 Array.Resize(ref seams, seams.Length * 2); Array.Resize(ref kinds, kinds.Length * 2); Array.Resize(ref sorted, sorted.Length * 2);
             }
             seams[Units] = open; kinds[Units] = kind;
-            if (unitMilliseconds > SlowestUnitMilliseconds) { SlowestUnitMilliseconds = unitMilliseconds; SlowestUnit = Units; SlowestUnitKind = kind; }
+            if (unitMilliseconds > SlowestUnitMilliseconds)
+            {
+                SlowestUnitMilliseconds = unitMilliseconds; SlowestUnit = Units; SlowestUnitKind = kind;
+                SlowestUnitCpuMilliseconds = double.IsNaN(unitCpuMilliseconds) || unitCpuMilliseconds < 0 ? -1 : unitCpuMilliseconds;
+            }
             if (open > MaximumUnitSeamMilliseconds) { MaximumUnitSeamMilliseconds = open; MaximumUnitSeamKind = kind; }
             Units++; open = 0;
         }
