@@ -1262,9 +1262,12 @@ internal static class Program
             new[] { unpatched[0], new ObservedPatch { Owner = "someone.else", Kind = "Postfix", Type = "PersistentCity.Runtime.Late", Method = "Postfix", Target = removingName, PcAssembly = true } });
         removeAfterRead = true;
         long rescansBefore = cache.Rescans;
-        scanner.Stop(watch, windowCoverage, false, true);
-        string stopJson = System.Text.Json.JsonSerializer.Serialize(scanner.StatusFields(true, () => windowCoverage.Complete).ToDictionary(f => f.Key, f => f.Value));
+        Dictionary<string, object> StatusRow() => scanner.Project(new Dictionary<string, object> { ["error"] = "", ["measuring"] = true, ["coverage_complete"] = false, ["stop_scan"] = "none" },
+            (row, key, value) => row[key] = value, true, () => windowCoverage.Complete);
+        var reply = PatchWindowScan.MeasureStop(StatusRow, () => scanner.Stop(watch, windowCoverage, false, true), (before, after) => new { before, after });
+        string stopJson = System.Text.Json.JsonSerializer.Serialize(reply.after);
         var stopStatus = System.Text.Json.JsonDocument.Parse(stopJson).RootElement;
+        Check(reply.before["measuring"] is true && (string)reply.before["error"] == "", "the measure-stop reply's before row is read before the stop rescan");
         Check(startScan == "watch-unchanged" && scanner.StopScan == "full" && readLate && cache.Rescans == rescansBefore + 1 && !watch.Pending && windowCoverage.Complete,
             "a PC postfix read and then removed before the state check during measure-stop is retried through the probe's stop rescan, and the settled scan reports complete coverage (" + (cache.Rescans - rescansBefore) + " rescans)");
         Check(stopStatus.GetProperty("coverage_complete").GetBoolean() && stopStatus.GetProperty("patch_set_changed_in_window").GetBoolean()

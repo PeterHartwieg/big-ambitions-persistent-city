@@ -217,7 +217,15 @@ public sealed class Gr5DiagnosticsProjectionTests
         Assert.DoesNotContain("GC.CollectionCount", stopText);
         Assert.DoesNotContain("Stopwatch.GetTimestamp", stopText);
         Assert.DoesNotContain("Rescan(true)", probe);
-        Assert.Contains("if (action == \"measure-stop\") { var stop = ReadStop(); var before = Status(); StopMeasurement(\"explicit-stop\", stop);", probe);
+        Assert.Contains("if (action == \"measure-stop\") { var stop = ReadStop(); return PatchWindowScan.MeasureStop(Status, () => StopMeasurement(\"explicit-stop\", stop), Wrap); }", probe);
+        int status = probe.IndexOf("private static JObject Status()", StringComparison.Ordinal);
+        int projected = probe.IndexOf("return scanner.Project(row, (r, key, value) => r[key] = JToken.FromObject(value), candidate, CoverageComplete);", status, StringComparison.Ordinal);
+        int statusEnd = probe.IndexOf("private static JObject CollectionFrameSummary()", status, StringComparison.Ordinal);
+        Assert.True(status > 0 && projected > status && statusEnd > projected, "the status row ends by projecting the window scan's fields");
+        string statusText = probe.Substring(status, statusEnd - status);
+        Assert.Single(System.Text.RegularExpressions.Regex.Matches(statusText, "return "));
+        foreach (string key in new[] { "error", "measuring", "coverage_complete", "patch_set_changed_in_window", "stop_scan" })
+            Assert.DoesNotContain("\"" + key + "\"", statusText);
         int read = probe.IndexOf("private static StopRead ReadStop()", StringComparison.Ordinal);
         int count = probe.IndexOf("int collections = GC.CollectionCount(0);", read, StringComparison.Ordinal);
         int heapRead = probe.IndexOf("ReadMonoHeap(out long heap, out long used);", read, StringComparison.Ordinal);

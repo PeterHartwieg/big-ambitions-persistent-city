@@ -435,6 +435,19 @@ namespace PerfUnionProbe
             Measuring = false;
         }
 
+        public T Project<T>(T row, Action<T, string, object> set, bool candidate, Func<bool> coverageComplete)
+        {
+            foreach (var field in StatusFields(candidate, coverageComplete)) set(row, field.Key, field.Value);
+            return row;
+        }
+
+        public static TReply MeasureStop<TStatus, TReply>(Func<TStatus> status, Action stop, Func<TStatus, TStatus, TReply> wrap)
+        {
+            var before = status();
+            stop();
+            return wrap(before, status());
+        }
+
         public KeyValuePair<string, object>[] StatusFields(bool candidate, Func<bool> coverageComplete) => new[]
         {
             new KeyValuePair<string, object>("measuring", Measuring), new KeyValuePair<string, object>("error", Error ?? ""),

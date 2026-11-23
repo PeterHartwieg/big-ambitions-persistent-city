@@ -172,7 +172,7 @@ namespace PerfUnionProbe
                 if (action == "heap") return Wrap(Status(), Heap());
                 Require(armed, "f4b_not_armed");
                 if (action == "measure-start") { var before = Status(); StartMeasurement(args); return Wrap(before, Status()); }
-                if (action == "measure-stop") { var stop = ReadStop(); var before = Status(); StopMeasurement("explicit-stop", stop); return Wrap(before, Status()); }
+                if (action == "measure-stop") { var stop = ReadStop(); return PatchWindowScan.MeasureStop(Status, () => StopMeasurement("explicit-stop", stop), Wrap); }
                 if (action == "page") { var status = Status(); return Wrap(status, Page(args, ReplyLimit - status.ToString(Formatting.None).Length - PageEnvelope)); }
                 if (action == "disarm") { var before = Status(); Disarm(); stopReason = "disarmed"; return Wrap(before, Status()); }
                 return Wrap(Status(), new JObject { ["supported"] = false, ["refusal"] = "f4b_unsupported_action", ["action"] = action });
@@ -812,8 +812,7 @@ namespace PerfUnionProbe
                     + "component-unbound and the union stays authoritative. Components are attribution only and are never summed. wholeFrameMs is wall time between "
                     + "player-loop frame starts, not CPU or GPU time. Unexpected, unbindable, off-main, cross-frame, overflow or error flags invalidate a window.",
             };
-            foreach (var field in scanner.StatusFields(candidate, CoverageComplete)) row[field.Key] = JToken.FromObject(field.Value);
-            return row;
+            return scanner.Project(row, (r, key, value) => r[key] = JToken.FromObject(value), candidate, CoverageComplete);
         }
 
         private static JObject CollectionFrameSummary()
