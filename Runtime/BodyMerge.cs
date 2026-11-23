@@ -94,14 +94,13 @@ namespace PersistentCity.Runtime
         public static void Release(SkinnedMeshCombiner? combiner)
         {
             if (ReferenceEquals(combiner, null)) return;
-            if (combiner == null) { ledger.ReleaseOrphans(); return; }
+            if (combiner == null) { ledger.ReleaseOrphan(combiner); return; }
             var tracked = ledger.Forget(combiner);
             var result = combiner.resultMergeGameObject;
             var renderer = result != null ? result.GetComponent<SkinnedMeshRenderer>() : null;
             var mesh = renderer != null ? renderer.sharedMesh : null;
             if (tracked != mesh) DestroyMesh(tracked);
             DestroyMesh(mesh);
-            ledger.ReleaseOrphans();
         }
 
         private static void DestroyMesh(Mesh? mesh)

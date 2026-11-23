@@ -50,6 +50,18 @@ namespace PersistentCity.Core
 
         public void Prune() => Sweep(false);
 
+        public void ReleaseOrphan(TBody? body)
+        {
+            if (body == null || bodyAlive(body)) return;
+            owned.Remove(body);
+            if (!merged.TryGetValue(body, out var mesh)) return;
+            if (!meshAlive(mesh)) { merged.Remove(body); return; }
+            if (destroyOrphan == null || stillShown != null && stillShown(body, mesh)) return;
+            merged.Remove(body);
+            CountReleased(mesh);
+            destroyOrphan(mesh);
+        }
+
         public void ReleaseOrphans() => Sweep(true);
 
         private void Sweep(bool release)

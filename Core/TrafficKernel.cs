@@ -1357,7 +1357,9 @@ namespace PersistentCity.Core
             {
                 if (Revision != revision) throw new InvalidOperationException("Traffic changed during a staged rescale; start it again.");
                 if (!steps.MoveNext()) yield break;
-                yield return steps.Current;
+                var current = steps.Current;
+                yield return current;
+                if (current != null) yield break;
             }
         }
 

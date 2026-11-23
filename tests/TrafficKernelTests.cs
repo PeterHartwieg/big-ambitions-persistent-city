@@ -61,6 +61,8 @@ public sealed class TrafficKernelTests
         Assert.NotNull(rescaled);
         Assert.Equal(0, Vehicle(rescaled!, "car0").RouteIndex);
         Assert.Equal(-1, Vehicle(rescaled!, "car1").RouteIndex);
+        kernel.Enqueue("late", Route(1, 2));
+        Assert.False(retry.MoveNext());
     }
 
     [Fact]

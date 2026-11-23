@@ -34,6 +34,8 @@ public sealed class Gr5OwnedMemoryTests
         Assert.Contains("if (tracked != mesh) DestroyMesh(tracked);", releaseBody);
         Assert.Contains("Object.Destroy(mesh);", releaseBody);
         Assert.DoesNotContain("ledger.Prune();", releaseBody);
+        Assert.DoesNotContain("ledger.ReleaseOrphans();", releaseBody);
+        Assert.Contains("if (combiner == null) { ledger.ReleaseOrphan(combiner); return; }", releaseBody);
         Assert.Contains("ledger.CountReleased(mesh);\n            Object.Destroy(mesh);", releaseBody.Replace("\r", ""));
         int keyed = merge.IndexOf("ledger.Merged(combiner, combined);", StringComparison.Ordinal);
         Assert.True(keyed > 0, "a redress replaces the combiner's previous mesh instead of adding another");
@@ -123,6 +125,37 @@ public sealed class Gr5OwnedMemoryTests
         Assert.Equal(0, ledger.LiveMeshes(out _));
         ledger.ReleaseOrphans();
         Assert.Equal(2, ledger.ReleasedMeshes);
+    }
+
+    [Fact]
+    public void ReleasingOneDeadCombinerTouchesOnlyItsOwnEntryAndKeepsAMeshALiveRendererShows()
+    {
+        var destroyed = new List<NativeHandle>();
+        var shown = new HashSet<NativeHandle>();
+        var ledger = new MergedBodyLedger<NativeHandle, NativeHandle>(body => body.Alive, mesh => mesh.Alive, _ => 37,
+            mesh => { destroyed.Add(mesh); mesh.Alive = false; }, (_, mesh) => shown.Contains(mesh));
+        var released = new NativeHandle(); var releasedMesh = new NativeHandle();
+        var other = new NativeHandle(); var otherMesh = new NativeHandle();
+        var kept = new NativeHandle(); var keptMesh = new NativeHandle();
+        var live = new NativeHandle(); var liveMesh = new NativeHandle();
+        foreach (var (body, mesh) in new[] { (released, releasedMesh), (other, otherMesh), (kept, keptMesh), (live, liveMesh) }) { ledger.Own(body); ledger.Merged(body, mesh); }
+        released.Alive = false; other.Alive = false; kept.Alive = false;
+        shown.Add(keptMesh);
+        ledger.ReleaseOrphan(released);
+        Assert.Equal(new[] { releasedMesh }, destroyed);
+        Assert.True(otherMesh.Alive);
+        ledger.ReleaseOrphan(kept);
+        Assert.Equal(new[] { releasedMesh }, destroyed);
+        Assert.True(keptMesh.Alive);
+        ledger.ReleaseOrphan(live);
+        ledger.ReleaseOrphan(released);
+        Assert.Equal(1, ledger.ReleasedMeshes);
+        Assert.Equal(3, ledger.LiveMeshes(out _));
+        shown.Remove(keptMesh);
+        ledger.ReleaseOrphans();
+        Assert.Equal(new[] { releasedMesh, otherMesh, keptMesh }, destroyed);
+        Assert.True(liveMesh.Alive);
+        Assert.Equal(1, ledger.LiveMeshes(out _));
     }
 
     [Fact]
