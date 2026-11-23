@@ -57,6 +57,9 @@ namespace PersistentCity.Runtime
         }
 
         public Route? Plan(Place from, Place to, double departureMinute, TravelPreferences preferences)
+            => PlanShared(from, to, departureMinute, preferences) is Route shared ? TransportComposition.Copy(shared) : null;
+
+        internal Route? PlanShared(Place from, Place to, double departureMinute, TravelPreferences preferences)
         {
             Metrics.WalkingRequests++;
             if (from == null || to == null || preferences == null || !from.Position.IsFinite || !to.Position.IsFinite
@@ -85,9 +88,8 @@ namespace PersistentCity.Runtime
                 if (path.Route == null) Metrics.WalkingNegativeCacheHits++;
             }
             if (path.Route == null || path.Metres > preferences.WalkingToleranceMetres) return null;
-            var legs = path.Route.Legs;
-            if (publicSegment != null) foreach (var leg in legs) if (!publicSegment(leg.From, leg.To)) return null;
-            return new Route { Legs = new RouteLegs(legs) };
+            if (publicSegment != null) foreach (var leg in path.Route.Legs) if (!publicSegment(leg.From, leg.To)) return null;
+            return path.Route;
         }
 
         private CachedPath Observe(Position from, Position to)

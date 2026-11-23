@@ -359,8 +359,7 @@ namespace PersistentCity.Runtime
             private readonly Place point = new Place();
             private readonly RoadRoutes.NearQuery curbQuery = new RoadRoutes.NearQuery();
             private bool curbsBegun, sliced;
-            private Route? best;
-            private double bestScore = double.PositiveInfinity;
+            private readonly RouteCandidates candidates = new RouteCandidates();
             private Place? home;
             private List<RoadRoutes.Curb>? homeCurbs;
             private int homeCurbIndex;
@@ -372,7 +371,8 @@ namespace PersistentCity.Runtime
             private List<RoadRoutes.Curb>? starts, ends;
             private int endIndex, startIndex, searches;
             private RoadRoutes.RoadPlan? drive;
-            public Route? Result { get; private set; }
+            private readonly PublishedRoute published = new PublishedRoute();
+            public Route? Result { get => published.Route; private set => published.Route = value; }
             public bool Completed => stage == Stage.Done;
 
             internal PlanningJob(MultimodalRoutes owner) { this.owner = owner; }
@@ -385,7 +385,7 @@ namespace PersistentCity.Runtime
                 this.person = person; this.preferences = preferences; this.preferenceOnly = preferenceOnly;
                 stage = Stage.Validate; Result = null;
                 roads = null; access = null; stationList = null; roadsCurrentAtBegin = false;
-                best = null; bestScore = double.PositiveInfinity; home = null;
+                candidates.Reset(); home = null;
                 homeCurbs = null; homeCurbIndex = 0; origins = destinations = null; originWalks = destinationWalks = null; connectorIndex = 0;
                 accessWalk = egress = null; accessMetres = driveCeiling = 0; starts = ends = null;
                 endIndex = startIndex = searches = 0; drive = null; curbsBegun = false; curbQuery.Search.Cancel();
@@ -495,7 +495,7 @@ namespace PersistentCity.Runtime
                         if (!owner.roads.IsCurrent) { Result = null; stage = Stage.Done; return; }
                         owner.EnsureAccess();
                         roads = owner.roads; access = owner.access;
-                        best = null; bestScore = double.PositiveInfinity;
+                        candidates.Reset();
                         if (roads.Available && person.Car == null && checkedPreferences.OwnsCar && person.Phase == CitizenPhase.AtPlace
                             && person.PlaceId == person.HomeId && from.Id == person.HomeId && owner.places.TryGetValue(person.HomeId, out var homePlace))
                         { home = homePlace; stage = Stage.HomeCurbs; }
@@ -511,14 +511,14 @@ namespace PersistentCity.Runtime
                     case Stage.HomeCurbWalk:
                     {
                         var curb = homeCurbs![homeCurbIndex++];
-                        var homeAccess = owner.walking.Plan(home!, At(curb.Position), departureMinute, Preferences);
+                        var homeAccess = owner.walking.PlanShared(home!, At(curb.Position), departureMinute, Preferences);
                         if ((homeAccess != null && TransportComposition.TryAllocateHomeCar(person!, from!, home!, curb.Position, homeAccess))
                             || homeCurbIndex >= homeCurbs.Count) stage = Stage.DirectWalk;
                         return;
                     }
                     case Stage.DirectWalk:
-                        Consider(owner.walking.Plan(from!, to!, departureMinute, Preferences));
-                        if (Preferences.AllowTransit && bestScore > TransportComposition.ModeLowerBound(TravelMode.Subway,
+                        Consider(owner.walking.PlanShared(from!, to!, departureMinute, Preferences));
+                        if (Preferences.AllowTransit && candidates.BestScore > TransportComposition.ModeLowerBound(TravelMode.Subway,
                             from!.Position, to!.Position, Preferences, person!.Identity.Id, owner.walkingSpeed, gameMinutesPerScaledSecond: owner.clockRate))
                             stage = Stage.SubwayStations;
                         else AfterModes();
@@ -552,12 +552,13 @@ namespace PersistentCity.Runtime
                                 if (a.Id == b.Id || originWalks![a.Id] == null || destinationWalks![b.Id] == null) continue;
                                 owner.Metrics.SubwayCandidates++;
                                 var train = owner.Train(a, b);
-                                if (train != null) Consider(TransportComposition.Join(originWalks[a.Id]!, train, destinationWalks[b.Id]!));
+                                if (train != null) candidates.ConsiderJoined(originWalks[a.Id], train, destinationWalks[b.Id], from!.Position, to!.Position,
+                                    Preferences, person!.Car?.ParkedPosition);
                             }
                         AfterModes();
                         return;
                     case Stage.CarAccessWalk:
-                        accessWalk = owner.walking.Plan(from!, At(person!.Car!.ParkedPosition), departureMinute, Preferences);
+                        accessWalk = owner.walking.PlanShared(from!, At(person!.Car!.ParkedPosition), departureMinute, Preferences);
                         if (accessWalk == null) { stage = Stage.Finish; return; }
                         accessMetres = WalkMetres(accessWalk);
                         stage = Stage.CarStarts;
@@ -577,7 +578,7 @@ namespace PersistentCity.Runtime
                     case Stage.CarEgressWalk:
                     {
                         var end = ends![endIndex];
-                        egress = owner.walking.Plan(At(end.Position), to!, departureMinute, Preferences);
+                        egress = owner.walking.PlanShared(At(end.Position), to!, departureMinute, Preferences);
                         if (egress == null || accessMetres + WalkMetres(egress) > Preferences.WalkingToleranceMetres) { endIndex++; NextEnd(); return; }
                         startIndex = 0;
                         NextStart();
@@ -605,6 +606,7 @@ namespace PersistentCity.Runtime
                             if (sliced) throw new RoutePlanningRestartRequired("The road snapshot, public access or station list changed before a route plan published.");
                             Result = null; stage = Stage.Done; return;
                         }
+                        var best = candidates.Publish();
                         if (best == null) owner.Metrics.NoFeasibleRoute++;
                         else if (Uses(best, TravelMode.Car)) owner.Metrics.SelectedCar++;
                         else if (Uses(best, TravelMode.Subway)) owner.Metrics.SelectedSubway++;
@@ -629,7 +631,7 @@ namespace PersistentCity.Runtime
             {
                 var car = person!.Car;
                 stage = roads!.Available && Preferences.OwnsCar && car != null
-                    && bestScore > TransportComposition.ModeLowerBound(TravelMode.Car, from!.Position, to!.Position,
+                    && candidates.BestScore > TransportComposition.ModeLowerBound(TravelMode.Car, from!.Position, to!.Position,
                         Preferences, person.Identity.Id, owner.walkingSpeed, car.ParkedPosition, gameMinutesPerScaledSecond: owner.clockRate)
                     ? Stage.CarAccessWalk : Stage.Finish;
             }
@@ -643,9 +645,9 @@ namespace PersistentCity.Runtime
                     var start = starts[startIndex]; var end = ends![endIndex];
                     double lower = accessWalk!.Minutes + egress!.Minutes + TransportComposition.ModeLowerBound(
                         TravelMode.Car, start.Position, end.Position, Preferences, person!.Identity.Id, owner.walkingSpeed, gameMinutesPerScaledSecond: owner.clockRate);
-                    if (bestScore <= lower) { startIndex++; continue; }
+                    if (candidates.BestScore <= lower) { startIndex++; continue; }
                     searches++;
-                    driveCeiling = TransportComposition.RemainingSearchMinutes(bestScore,
+                    driveCeiling = TransportComposition.RemainingSearchMinutes(candidates.BestScore,
                         accessWalk.EstimatedMinutes + TransportComposition.CarPreparationMinutes
                         + TransportComposition.CarParkingMinutes + egress.EstimatedMinutes);
                     stage = Stage.CarSearchBegin;
@@ -656,12 +658,7 @@ namespace PersistentCity.Runtime
             }
 
             private void Consider(Route? route)
-            {
-                if (route == null || !TransportComposition.Valid(route, from!.Position, to!.Position, Preferences, person!.Car?.ParkedPosition)) return;
-                double score = route.EstimatedMinutes;
-                if (!TransportComposition.IsFaster(score, bestScore)) return;
-                best = route; bestScore = score;
-            }
+                => candidates.Consider(route, from!.Position, to!.Position, Preferences, person!.Car?.ParkedPosition);
 
             public void Dispose()
             {
@@ -672,7 +669,7 @@ namespace PersistentCity.Runtime
                 homeCurbList.Clear(); startList.Clear(); endList.Clear(); originList.Clear(); destinationList.Clear();
                 originWalkMap.Clear(); destinationWalkMap.Clear();
                 homeCurbs = starts = ends = null; origins = destinations = null; originWalks = destinationWalks = null;
-                from = to = home = null; person = null; preferences = null; best = accessWalk = egress = null;
+                from = to = home = null; person = null; preferences = null; accessWalk = egress = null; candidates.Reset();
                 roads = null; access = null; stationList = null;
                 if (owner.spareJob == null) owner.spareJob = this;
             }
@@ -682,7 +679,7 @@ namespace PersistentCity.Runtime
         {
             Metrics.SubwayConnectorRequests++;
             long hits = Metrics.WalkingCacheHits, misses = Metrics.WalkingCacheMisses;
-            var route = walking.Plan(from, to, minute, preferences);
+            var route = walking.PlanShared(from, to, minute, preferences);
             Metrics.SubwayConnectorCacheHits += Metrics.WalkingCacheHits - hits;
             Metrics.SubwayConnectorCacheMisses += Metrics.WalkingCacheMisses - misses;
             return route;
@@ -784,9 +781,7 @@ namespace PersistentCity.Runtime
         }
         private static Route Pause(Position position, double minutes)
         {
-            var route = new Route { Legs = new RouteLegs(1) };
-            route.Legs.Add(new RouteLeg { From = position, To = position, Mode = TravelMode.Car, Minutes = minutes });
-            return TransportComposition.Shared(route);
+            return TransportComposition.Shared(TransportComposition.Single(new RouteLeg { From = position, To = position, Mode = TravelMode.Car, Minutes = minutes }));
         }
         private static Position Point(Vector3 p) => new Position(p.x, p.y, p.z);
     }

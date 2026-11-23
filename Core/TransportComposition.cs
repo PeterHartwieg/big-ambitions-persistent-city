@@ -9,14 +9,47 @@ namespace PersistentCity.Core
         public const int MaximumLegs = 512;
         public const double CarPreparationMinutes = 2;
         public const double CarParkingMinutes = 2;
-        public static Route? Join(params Route[] parts)
+        public static Route? Join(params Route[] parts) => Join(new Parts(parts));
+
+        public static Route? Join(Route? first, Route? second, Route? third) => Join(new Parts(3, first, second, third, null, null));
+
+        public static Route? Join(Route? first, Route? second, Route? third, Route? fourth, Route? fifth)
+            => Join(new Parts(5, first, second, third, fourth, fifth));
+
+        public static Route Copy(Route source)
+        {
+            if (source == null) throw new ArgumentNullException(nameof(source));
+            return new Route(new RouteLegs(source.Legs));
+        }
+
+        public static Route Single(RouteLeg leg)
+        {
+            var route = new Route(new RouteLegs(1));
+            route.Legs.Add(leg ?? throw new ArgumentNullException(nameof(leg)));
+            return route;
+        }
+
+        private readonly struct Parts
+        {
+            private readonly Route?[]? array;
+            private readonly Route? first, second, third, fourth, fifth;
+            internal readonly int Count;
+            internal Parts(Route?[] parts) { array = parts; first = second = third = fourth = fifth = null; Count = parts.Length; }
+            internal Parts(int count, Route? first, Route? second, Route? third, Route? fourth, Route? fifth)
+            { array = null; this.first = first; this.second = second; this.third = third; this.fourth = fourth; this.fifth = fifth; Count = count; }
+            internal Route? this[int index] => array != null ? array[index]
+                : index switch { 0 => first, 1 => second, 2 => third, 3 => fourth, _ => fifth };
+        }
+
+        private static Route? Join(in Parts parts)
         {
             int count = 0;
-            foreach (var part in parts) if (part != null) count += part.Legs.Count;
+            for (int i = 0; i < parts.Count; i++) { var part = parts[i]; if (part != null) count += part.Legs.Count; }
             var result = new Route(new RouteLegs(Math.Min(count, MaximumLegs)));
             double extraMinutes = 0;
-            foreach (var part in parts)
+            for (int i = 0; i < parts.Count; i++)
             {
+                var part = parts[i];
                 if (part == null) return null;
                 foreach (var leg in part.Legs)
                 {
@@ -45,17 +78,75 @@ namespace PersistentCity.Core
                 if (leg == null) throw new InvalidOperationException("A shared route has a null leg.");
                 if (shared) leg.Share(); else leg.Freeze();
             }
+            if (shared) route.MarkShared();
             return route;
         }
 
         public static bool Valid(Route route, Position from, Position to, TravelPreferences preferences, Position? parked = null)
         {
-            if (route == null || route.Legs.Count == 0 || route.Legs.Count > MaximumLegs || !from.IsFinite || !to.IsFinite
-                || preferences == null || !Position.Finite(preferences.WalkingToleranceMetres) || preferences.WalkingToleranceMetres < 0) return false;
-            Position previous = from;
-            double walking = 0, minutes = 0;
-            int carState = 0; bool transit = false;
-            foreach (var leg in route.Legs)
+            if (route == null || route.Legs.Count == 0 || route.Legs.Count > MaximumLegs || !ValidEnds(from, to, preferences)) return false;
+            var rules = new LegRules(from, preferences, parked);
+            foreach (var leg in route.Legs) if (!rules.Accept(leg)) return false;
+            return rules.Finish(route.EstimatedMinutes, to);
+        }
+
+        public static bool TryJoinedScore(Route? first, Route? second, Route? third, Position from, Position to,
+            TravelPreferences preferences, Position? parked, out double estimatedMinutes)
+        {
+            estimatedMinutes = 0;
+            if (first == null || second == null || third == null || !ValidEnds(from, to, preferences)) return false;
+            var rules = new LegRules(from, preferences, parked);
+            var joined = new JoinedScan();
+            if (!joined.Part(first, ref rules) || !joined.Part(second, ref rules) || !joined.Part(third, ref rules)) return false;
+            if (joined.Count == 0) return false;
+            double total = joined.Nominal + joined.Extra;
+            if (!Position.Finite(total) || !rules.Finish(total, to)) return false;
+            estimatedMinutes = total;
+            return true;
+        }
+
+        private static bool ValidEnds(Position from, Position to, TravelPreferences preferences)
+            => from.IsFinite && to.IsFinite && preferences != null
+                && Position.Finite(preferences.WalkingToleranceMetres) && preferences.WalkingToleranceMetres >= 0;
+
+        private struct JoinedScan
+        {
+            internal int Count;
+            internal double Nominal, Extra;
+            private Position last;
+
+            internal bool Part(Route part, ref LegRules rules)
+            {
+                foreach (var leg in part.Legs)
+                {
+                    if (leg == null || !leg.From.IsFinite || !leg.To.IsFinite || !Position.Finite(leg.Minutes) || leg.Minutes <= 0
+                        || (uint)leg.Mode > (uint)TravelMode.Car || Count >= MaximumLegs) return false;
+                    if (Count != 0 && Position.Distance(last, leg.From) > 0.001) return false;
+                    if (!rules.Accept(leg)) return false;
+                    Nominal += leg.Minutes; last = leg.To; Count++;
+                }
+                if (!Position.Finite(part.EstimatedMinutes) || part.EstimatedMinutes < part.Minutes) return false;
+                Extra += part.EstimatedMinutes - part.Minutes;
+                return Position.Finite(Extra);
+            }
+        }
+
+        private struct LegRules
+        {
+            private readonly TravelPreferences preferences;
+            private readonly Position? parked;
+            private Position previous;
+            private double walking, minutes;
+            private int carState;
+            private bool transit;
+
+            internal LegRules(Position from, TravelPreferences preferences, Position? parked)
+            {
+                this.preferences = preferences; this.parked = parked; previous = from;
+                walking = minutes = 0; carState = 0; transit = false;
+            }
+
+            internal bool Accept(RouteLeg leg)
             {
                 if (leg == null || !leg.From.IsFinite || !leg.To.IsFinite || !Position.Finite(leg.Minutes) || leg.Minutes <= 0
                     || Position.Distance(previous, leg.From) > 0.001 || leg.Mode == TravelMode.Bus || (uint)leg.Mode > (uint)TravelMode.Car) return false;
@@ -73,10 +164,13 @@ namespace PersistentCity.Core
                 }
                 if (leg.Mode == TravelMode.Walk) walking += Position.Distance(leg.From, leg.To);
                 minutes += leg.Minutes; previous = leg.To;
+                return true;
             }
-            return Position.Finite(minutes) && Position.Finite(route.EstimatedMinutes) && route.EstimatedMinutes >= minutes
-                && Position.Finite(walking) && walking <= preferences.WalkingToleranceMetres
-                && Position.Distance(previous, to) <= 0.001;
+
+            internal bool Finish(double estimatedMinutes, Position to)
+                => Position.Finite(minutes) && Position.Finite(estimatedMinutes) && estimatedMinutes >= minutes
+                    && Position.Finite(walking) && walking <= preferences.WalkingToleranceMetres
+                    && Position.Distance(previous, to) <= 0.001;
         }
 
         public static double Score(Route route, double fare, TravelPreferences preferences, string citizenId, double nonCarRetrievalPenalty = 0)

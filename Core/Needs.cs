@@ -245,8 +245,9 @@ namespace PersistentCity.Core
             {
                 double ends = start + ScheduledVisitMinutes;
                 bool clear = true;
-                foreach (var item in planned)
+                for (int i = 0; i < planned.Count; i++)
                 {
+                    var item = planned[i];
                     if (item.Kind == PlanItemKind.Meal) continue;
                     double before = item.Priority == PlanPriority.Fixed ? DayPlanner.WorkTravelAllowance : 30;
                     if (start < item.EndsAt + 30 && ends > item.EarliestStart - before) { clear = false; break; }
