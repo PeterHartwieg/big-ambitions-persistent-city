@@ -556,22 +556,61 @@ public sealed class Gr5RepeatedRetimeLeakTests
         Assert.Equal(1, Objects(sixty, "CitySimulator"));
     }
 
-    internal sealed class CandidatePlanner : IResumableRoutePlanner, ICommuteTimingPlanner
+    internal sealed class NightPlanner : IResumableRoutePlanner, ICommuteTimingPlanner, ITrafficRoutePlanner
     {
-        private const int CacheLimit = 1024;
-        private static readonly TravelPreferences Checked = new TravelPreferences { AllowTransit = true, WalkingToleranceMetres = 10_000_000 };
+        private const int CacheLimit = 1024, Side = 49;
+        private const double Spacing = 50, WalkMetresPerSecond = 1.4;
+        private const string Native = "3700000000000000000000000000000000000000000000000000000000000037";
+        private static readonly TravelPreferences Checked = new TravelPreferences { OwnsCar = true, AllowTransit = true, WalkingToleranceMetres = 10_000_000 };
         private static readonly Position[] Stations = { new Position(400, 0, 400), new Position(2000, 0, 400), new Position(400, 0, 2000), new Position(2000, 0, 2000) };
         private readonly bool head;
         private readonly RouteCandidates candidates = new RouteCandidates();
         private readonly Dictionary<(Position, Position), Route> cache = new Dictionary<(Position, Position), Route>();
         private readonly Queue<(Position, Position)> order = new Queue<(Position, Position)>();
         private readonly Dictionary<(Position, Position), Route> trains = new Dictionary<(Position, Position), Route>();
-        public long Requests, SubwayValid;
-        public CandidatePlanner(bool head) { this.head = head; }
+        private readonly TrafficNetwork grid;
+        private readonly Dictionary<double, TrafficNetwork> rated = new Dictionary<double, TrafficNetwork>();
+        public long Requests, SubwayValid, CarValid, CarChosen;
+        public TrafficNetwork? TrafficNetwork { get; private set; }
+
+        public NightPlanner(bool head)
+        {
+            this.head = head;
+            var nodes = new List<TrafficNetworkNode>();
+            for (int y = 0; y < Side; y++)
+                for (int x = 0; x < Side; x++)
+                {
+                    var next = new List<int>();
+                    if (x > 0) next.Add(Node(x - 1, y)); if (x + 1 < Side) next.Add(Node(x + 1, y));
+                    if (y > 0) next.Add(Node(x, y - 1)); if (y + 1 < Side) next.Add(Node(x, y + 1));
+                    nodes.Add(new TrafficNetworkNode { Id = Node(x, y), Position = At(Node(x, y)), KilometresPerHour = 36, AllowsCar = true, Boundary = true, Successors = next.ToArray() });
+                }
+            grid = new TrafficNetwork(Native, nodes, 1);
+            Rate(1);
+        }
+
+        private double rate = 1;
+
+        public void Rate(double rate)
+        {
+            if (!rated.TryGetValue(rate, out var network)) rated.Add(rate, network = grid.Rerated(rate, _ => null));
+            TrafficNetwork = network;
+            if (rate == this.rate) return;
+            this.rate = rate; cache.Clear(); order.Clear(); trains.Clear();
+        }
+
+        public void SetTrafficForecast(Func<int, double, TrafficLinkForecast>? forecast) { }
+        public bool IsTrafficLinkClosed(int linkId) => false;
+
+        private static int Node(int x, int y) => y * Side + x;
+        private static Position At(int node) => new Position(node % Side * Spacing, 0, node / Side * Spacing);
+        internal static Position Curb(Position p) => At(NodeOf(p));
+        private static int NodeOf(Position p) => Node(Math.Clamp((int)Math.Round(p.X / Spacing), 0, Side - 1), Math.Clamp((int)Math.Round(p.Z / Spacing), 0, Side - 1));
 
         private static Route Line(Position from, Position to, int legs, TravelMode mode, string service, double minutes)
         {
             var route = new Route();
+            if (Position.Distance(from, to) < 0.001) legs = 1;
             for (int i = 0; i < legs; i++)
                 route.Legs.Add(new RouteLeg { From = Position.Lerp(from, to, (double)i / legs), To = i == legs - 1 ? to : Position.Lerp(from, to, (double)(i + 1) / legs),
                     Mode = mode, ServiceId = service, Minutes = minutes / legs });
@@ -583,7 +622,7 @@ public sealed class Gr5RepeatedRetimeLeakTests
             if (!cache.TryGetValue((from, to), out var route))
             {
                 if (cache.Count >= CacheLimit) cache.Remove(order.Dequeue());
-                route = TransportComposition.Shared(Line(from, to, 6, TravelMode.Walk, "", Math.Max(0.5, Position.Distance(from, to) / 80)));
+                route = TransportComposition.Shared(Line(from, to, 6, TravelMode.Walk, "", Math.Max(0.5, Position.Distance(from, to) / TravelTiming.WalkingMetresPerMinute(WalkMetresPerSecond, rate))));
                 cache.Add((from, to), route); order.Enqueue((from, to));
             }
             return route;
@@ -594,7 +633,29 @@ public sealed class Gr5RepeatedRetimeLeakTests
         private Route Train(Position from, Position to)
         {
             if (!trains.TryGetValue((from, to), out var route))
-                trains.Add((from, to), route = TransportComposition.Shared(Line(from, to, 4, TravelMode.Subway, "native:subway", 90 + Position.Distance(from, to) / 600)));
+                trains.Add((from, to), route = TransportComposition.Shared(Line(from, to, 4, TravelMode.Subway, "native:subway", rate * (90 + Position.Distance(from, to) / 600))));
+            return route;
+        }
+
+        private static Route Pause(Position at)
+        {
+            var route = new Route { Legs = new RouteLegs(1) };
+            route.Legs.Add(new RouteLeg { From = at, To = at, Mode = TravelMode.Car, Minutes = TransportComposition.CarPreparationMinutes });
+            return TransportComposition.Shared(route);
+        }
+
+        private Route Road(int a, int b)
+        {
+            var route = new Route();
+            int x = a % Side, y = a / Side, tx = b % Side, ty = b / Side, at = a;
+            while (at != b)
+            {
+                if (x != tx) x += Math.Sign(tx - x); else y += Math.Sign(ty - y);
+                int next = Node(x, y);
+                TrafficNetwork!.TryGetEdge(at, next, out var edge);
+                route.Legs.Add(new RouteLeg { From = At(at), To = At(next), Mode = TravelMode.Car, Minutes = edge.FreeFlowMinutes, ServiceId = "native:road:v1:" + Native + ":" + at + ":" + next });
+                at = next;
+            }
             return route;
         }
 
@@ -605,44 +666,74 @@ public sealed class Gr5RepeatedRetimeLeakTests
             return best;
         }
 
-        public Route? Plan(Place from, Place to, double minute, TravelPreferences preferences)
+        private Route? best;
+        private double bestScore;
+        private Position from, to;
+        private Position? parked;
+
+        private void Consider(Route? route)
         {
-            Requests++;
-            Position a = from.Position, b = to.Position, start = Nearest(a), end = Nearest(b);
-            Route? best = null; double bestScore = double.PositiveInfinity;
-            void Consider(Route? route)
-            {
-                if (route == null || !TransportComposition.Valid(route, a, b, Checked, null)) return;
-                if (!TransportComposition.IsFaster(route.EstimatedMinutes, bestScore)) return;
-                best = route; bestScore = route.EstimatedMinutes;
-            }
-            if (head) { candidates.Reset(); candidates.Consider(Walk(a, b), a, b, Checked, null); }
-            else Consider(Walk(a, b));
-            if (start.Equals(end)) return head ? Publish() : best;
-            var origin = Walk(a, start); var train = Train(start, end); var back = Walk(end, b);
-            if (TransportComposition.TryJoinedScore(origin, train, back, a, b, Checked, null, out _)) SubwayValid++;
-            if (head) candidates.ConsiderJoined(origin, train, back, a, b, Checked, null);
-            else Consider(TransportComposition.Join(new[] { origin, train, back }));
-            return head ? Publish() : best;
+            if (head) { candidates.Consider(route, from, to, Checked, parked); return; }
+            if (route == null || !TransportComposition.Valid(route, from, to, Checked, parked)) return;
+            if (!TransportComposition.IsFaster(route.EstimatedMinutes, bestScore)) return;
+            best = route; bestScore = route.EstimatedMinutes;
         }
 
-        private Route? Publish()
+        public Route? Plan(Place origin, Place destination, double minute, TravelPreferences preferences) => Plan(origin, destination, null);
+
+        private Route? Plan(Place origin, Place destination, CitizenState? citizen)
         {
-            var published = candidates.Publish();
-            candidates.Reset();
-            return published;
+            Requests++;
+            from = origin.Position; to = destination.Position; best = null; bestScore = double.PositiveInfinity;
+            var car = citizen != null && citizen.Preferences.OwnsCar ? citizen.Car : null;
+            parked = car?.ParkedPosition;
+            if (head) candidates.Reset();
+            Consider(Walk(from, to));
+            Position start = Nearest(from), end = Nearest(to);
+            if (!start.Equals(end))
+            {
+                var origin1 = Walk(from, start); var train = Train(start, end); var back = Walk(end, to);
+                if (head)
+                {
+                    if (TransportComposition.TryJoinedScore(origin1, train, back, from, to, Checked, parked, out _)) SubwayValid++;
+                    candidates.ConsiderJoined(origin1, train, back, from, to, Checked, parked);
+                }
+                else
+                {
+                    var joined = TransportComposition.Join(new[] { origin1, train, back });
+                    if (joined != null && TransportComposition.Valid(joined, from, to, Checked, parked)) SubwayValid++;
+                    Consider(joined);
+                }
+            }
+            if (car != null)
+            {
+                int a = NodeOf(car.ParkedPosition), b = NodeOf(to);
+                if (a != b)
+                {
+                    var access = Walk(from, car.ParkedPosition); var road = Road(a, b); var egress = Walk(At(b), to);
+                    var drive = head ? TransportComposition.Join(access, Pause(car.ParkedPosition), road, Pause(At(b)), egress)
+                        : TransportComposition.Join(new[] { access, Pause(car.ParkedPosition), road, Pause(At(b)), egress });
+                    if (drive != null && TransportComposition.Valid(drive, from, to, Checked, parked)) CarValid++;
+                    Consider(drive);
+                }
+            }
+            var chosen = head ? candidates.Publish() : best;
+            if (head) candidates.Reset();
+            best = null; parked = null;
+            if (chosen != null) foreach (var leg in chosen.Legs) if (leg.Mode == TravelMode.Car) { CarChosen++; break; }
+            return chosen;
         }
 
         public IRoutePlanningJob Begin(RouteRequest request) => new Job(this, request);
         private sealed class Job : IRoutePlanningJob
         {
-            private readonly CandidatePlanner owner; private readonly RouteRequest request; private int slices;
-            public Job(CandidatePlanner owner, RouteRequest request) { this.owner = owner; this.request = request; }
+            private readonly NightPlanner owner; private readonly RouteRequest request; private int slices;
+            public Job(NightPlanner owner, RouteRequest request) { this.owner = owner; this.request = request; }
             public Route? Result { get; private set; }
             public bool Continue(double budgetMilliseconds)
             {
                 if (++slices < 2 && !double.IsPositiveInfinity(budgetMilliseconds)) return false;
-                Result = owner.Plan(request.From, request.To, request.DepartureMinute, request.Preferences);
+                Result = owner.Plan(request.From, request.To, request.Citizen);
                 return true;
             }
             public void Dispose() { }
@@ -653,18 +744,35 @@ public sealed class Gr5RepeatedRetimeLeakTests
     {
         public RetainedHeap ArmBefore = null!, ArmAfter = null!, SamplerStart = null!, SamplerStop = null!;
         public long RunToArmAfter, ArmAfterToSamplerStart, SamplerWindow;
-        public int CommitsBeforeSampler, CommitsInWindow;
-        public long Requests, SubwayValid;
+        public int CommitsToArmAfter, CommitsBeforeSampler, CommitsInWindow, Vehicles, MostVehicles;
+        public long Requests, SubwayValid, CarValid, CarChosen;
+        public int OffsetsLength = -1;
         public string Hash = "";
     }
 
-    private static readonly string[] RouteTypes = { "Route", "RouteLegs", "List<RouteLeg>", "RouteLeg[]", "RouteLeg", "RouteCandidates" };
+    private enum NightScenario { Recorded20, Recorded60, Hypothetical60 }
 
-    private static NightArm NightProtocol(double rate, bool head, double samplerMinutes)
+    private static readonly string[] RouteTypes = { "Route", "RouteLegs", "List<RouteLeg>", "RouteLeg[]", "RouteLeg", "RouteCandidates", "TrafficVehicleState", "TrafficRouteLeg", "Double[]" };
+
+    private static NightArm NightProtocol(NightScenario scenario, bool head, double samplerMinutes)
     {
+        NightArm? arm = null;
+        Exception? failure = null;
+        var thread = new System.Threading.Thread(() => { try { arm = RunNight(scenario, head, samplerMinutes); } catch (Exception error) { failure = error; } }, 64 * 1024 * 1024);
+        thread.Start(); thread.Join();
+        if (failure != null) throw new InvalidOperationException(scenario + (head ? " HEAD" : " base"), failure);
+        return arm!;
+    }
+
+    private static NightArm RunNight(NightScenario scenario, bool head, double samplerMinutes)
+    {
+        var offsets = typeof(TrafficNetwork).GetField("validationOffsets", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static)!;
         var arm = new NightArm();
-        var planner = new CandidatePlanner(head);
+        var planner = new NightPlanner(head);
         var state = Gr5AllocationMeasure.RigCity();
+        var homes = state.Places.ToDictionary(p => p.Id, StringComparer.Ordinal);
+        foreach (var person in state.Citizens)
+            if (person.Preferences.OwnsCar) person.Car = new CarState { Id = person.Identity.Id + ":car", ParkedPosition = NightPlanner.Curb(homes[person.HomeId].Position) };
         var city = new CitySimulator(state, planner);
         city.AttachFoodMarket(new VisitorRoutineTests.Market { Shops = F5gPopulationFillTests.Shops(state) });
         city.AttachOptionalStops(new Gr5AllocationMeasure.StopSpots(), OptionalStopPolicy.ApprovedChoicePercentage);
@@ -674,73 +782,93 @@ public sealed class Gr5RepeatedRetimeLeakTests
         CitySimulator Retime(double to)
         {
             while (driver.Update(state, to, false, 1.4, ClockRetimeStages.SliceMilliseconds) != ClockRetimeOutcome.Committed) { }
+            planner.Rate(to);
             var rebuild = city.BeginRebuildRoutes(planner, driver.TakeRetimedTraffic());
             while (!rebuild.Step(0)) { }
-            return rebuild.TakeResult();
+            var result = rebuild.TakeResult();
+            arm.Vehicles = result.Traffic?.VehicleCount ?? 0;
+            arm.MostVehicles = Math.Max(arm.MostVehicles, arm.Vehicles);
+            return result;
         }
-        RetainedHeap Read() => Census(("simulation", city), ("driver", driver), ("planner", planner));
-        city = Retime(rate);
+        RetainedHeap Read()
+        {
+            var roots = new List<(string, object)> { ("simulation", city), ("driver", driver), ("planner", planner) };
+            if (offsets.GetValue(null) is double[] buffer) roots.Add(("validationOffsets", buffer));
+            return Census(roots.ToArray());
+        }
+        if (scenario != NightScenario.Recorded60) city = Retime(scenario == NightScenario.Recorded20 ? 20 : 60);
         city.AdvanceTo(day + 1440 + 50, int.MaxValue);
         arm.ArmBefore = Read();
         long started = GC.GetAllocatedBytesForCurrentThread();
+        if (scenario == NightScenario.Recorded20) { city = Retime(1); city = Retime(20); arm.CommitsToArmAfter += 2; }
         city.AdvanceTo(day + 1440 + 60, int.MaxValue);
         arm.RunToArmAfter = GC.GetAllocatedBytesForCurrentThread() - started;
         arm.ArmAfter = Read();
         started = GC.GetAllocatedBytesForCurrentThread();
-        if (rate == 60) { city = Retime(1); arm.CommitsBeforeSampler++; }
+        if (scenario == NightScenario.Hypothetical60) { city = Retime(1); arm.CommitsBeforeSampler++; }
         arm.ArmAfterToSamplerStart = GC.GetAllocatedBytesForCurrentThread() - started;
         Assert.True(city.ActiveJourneyIndexMatchesState());
         arm.SamplerStart = Read();
         started = GC.GetAllocatedBytesForCurrentThread();
-        if (rate == 20)
-        {
-            city = Retime(1); arm.CommitsInWindow++;
-            city.AdvanceTo(state.Minute + 1.5, int.MaxValue);
-            city = Retime(1 + 4 * ClockRetimeStages.Tolerance); arm.CommitsInWindow++;
-        }
+        if (scenario == NightScenario.Recorded20) { city = Retime(1); arm.CommitsInWindow++; }
         city.AdvanceTo(day + 1440 + 60 + samplerMinutes, int.MaxValue);
         arm.SamplerWindow = GC.GetAllocatedBytesForCurrentThread() - started;
         Assert.True(city.ActiveJourneyIndexMatchesState());
         arm.SamplerStop = Read();
-        arm.Requests = planner.Requests; arm.SubwayValid = planner.SubwayValid;
-        state.PrepareForSave();
-        arm.Hash = RushSpikeReplay.Sha(SaveCodec.Write(state));
-        return arm;
+        return Finish();
+        NightArm Finish()
+        {
+            arm.Requests = planner.Requests; arm.SubwayValid = planner.SubwayValid; arm.CarValid = planner.CarValid; arm.CarChosen = planner.CarChosen;
+            arm.OffsetsLength = offsets.GetValue(null) is double[] used ? used.Length : -1;
+            state.PrepareForSave();
+            arm.Hash = RushSpikeReplay.Sha(SaveCodec.Write(state));
+            return arm;
+        }
     }
 
     [Fact]
     public void TheRigNightProtocolReportsAllocationAndRetainedGraphAtEachSamplerBoundary()
     {
         const double SamplerMinutes = 200;
-        string Line(RetainedHeap heap) => heap.Bytes + " B / " + heap.Objects + " objects";
+        string Line(RetainedHeap heap) => heap.Bytes + " B / " + heap.Objects + " objects / " + heap.References + " refs";
         string Routes(RetainedHeap heap) => string.Join(", ", RouteTypes.Select(t => t + " " + Objects(heap, t)));
-        output.WriteLine("rig food city, rig 17c B protocol with the logged commit timing: 15:30 retime to the arm rate (before the logged range), 00:50 arm-before read, 00:50 -> 01:00 at the arm rate, arm-after read; "
-            + "60x commits its drop to 1x before sampler start (0 commits in the window), 20x commits the drop and a near-1x re-rate inside the window (2 commits); " + SamplerMinutes + " game minutes at 1x. "
-            + "Deterministic candidate planner: cached shared 6-leg walks (1,024-entry FIFO), 4 stations, losing subway candidate; base = 6f92187b forms (copy per walk, Join + Valid), HEAD = RouteCandidates. Retained: Mono 64-bit layout model; allocation: .NET.");
-        var arms = new List<(string Name, NightArm Base, NightArm Head)>();
-        foreach (double rate in new[] { 20.0, 60.0 }) arms.Add((rate + "x", NightProtocol(rate, false, SamplerMinutes), NightProtocol(rate, true, SamplerMinutes)));
-        foreach (var (name, before, after) in arms)
+        output.WriteLine("rig food city with cars (35% owners, parked at the road node nearest home); commit order from the archived rig 17c night Player.logs; " + SamplerMinutes + " game minutes at 1x in the sampler window. "
+            + "Recorded20: 15:30 commit to 20x; 00:50 arm-before; commits to 1x and back to 20x; 01:00 arm-after; no commit before sampler start; one commit to 1x inside the window. "
+            + "Recorded60: the log has no commit after load, so the city keeps 1x travel timing and no interval has a commit. "
+            + "Hypothetical60 (not in the log): 15:30 commit to 60x and a 1x commit between arm-after and sampler start. "
+            + "Deterministic planner: cached shared 6-leg walks (1,024-entry FIFO), 4 stations, a fresh mapped car route with two parking pauses on a 49x49 road grid (50 m links); "
+            + "every commit re-rates the network to the new travel clock rate and drops the planner caches, as the runtime does with a new planner, so the rebuild validates every live vehicle against the re-rated network. "
+            + "base forms = copy per walk, array Join + Valid; HEAD forms = RouteCandidates, TryJoinedScore, fixed-arity Join. Each arm runs on a fresh thread. "
+            + "Retained: Mono 64-bit layout model, incl. the thread's validation offsets buffer; allocation: .NET.");
+        var arms = new List<(NightScenario Scenario, NightArm Base, NightArm Head)>();
+        foreach (var scenario in new[] { NightScenario.Recorded20, NightScenario.Recorded60, NightScenario.Hypothetical60 })
+            arms.Add((scenario, NightProtocol(scenario, false, SamplerMinutes), NightProtocol(scenario, true, SamplerMinutes)));
+        foreach (var (scenario, before, after) in arms)
         {
-            foreach (var (label, arm) in new[] { ("base", before), ("HEAD", after) })
+            foreach (var (label, arm) in new[] { ("base forms", before), ("HEAD forms", after) })
             {
-                output.WriteLine("  " + name + " " + label + ": arm-before " + Line(arm.ArmBefore) + "; arm-after " + Line(arm.ArmAfter) + "; sampler start " + Line(arm.SamplerStart) + "; sampler stop " + Line(arm.SamplerStop));
-                output.WriteLine("    allocated 00:50 -> arm-after " + arm.RunToArmAfter + " B, arm-after -> sampler start " + arm.ArmAfterToSamplerStart + " B (" + arm.CommitsBeforeSampler + " commits), sampler window "
-                    + arm.SamplerWindow + " B (" + arm.CommitsInWindow + " commits); " + arm.Requests + " planner requests, " + arm.SubwayValid + " valid subway candidates");
-                foreach (var (boundary, heap) in new[] { ("arm-after", arm.ArmAfter), ("sampler start", arm.SamplerStart), ("sampler stop", arm.SamplerStop) })
-                    output.WriteLine("    " + boundary + " route objects: " + Routes(heap));
+                output.WriteLine("  " + scenario + " " + label + ": arm-before " + Line(arm.ArmBefore) + "; arm-after " + Line(arm.ArmAfter) + "; sampler start " + Line(arm.SamplerStart) + "; sampler stop " + Line(arm.SamplerStop));
+                output.WriteLine("    allocated 00:50 -> arm-after " + arm.RunToArmAfter + " B (" + arm.CommitsToArmAfter + " commits), arm-after -> sampler start " + arm.ArmAfterToSamplerStart + " B (" + arm.CommitsBeforeSampler
+                    + " commits), sampler window " + arm.SamplerWindow + " B (" + arm.CommitsInWindow + " commits); " + arm.Requests + " planner requests, " + arm.SubwayValid + " valid subway candidates, "
+                    + arm.CarValid + " valid car candidates, " + arm.CarChosen + " car routes chosen; live vehicles validated at the last commit " + arm.Vehicles + " (most " + arm.MostVehicles + "); validation offsets length " + arm.OffsetsLength + "; save SHA-256 " + arm.Hash.Substring(0, 12));
+                foreach (var (boundary, heap) in new[] { ("arm-before", arm.ArmBefore), ("arm-after", arm.ArmAfter), ("sampler start", arm.SamplerStart), ("sampler stop", arm.SamplerStop) })
+                    output.WriteLine("    " + boundary + " objects: " + Routes(heap) + "; Double[] " + Bytes(heap, "Double[]") + " B");
                 Assert.Equal(1, Objects(arm.ArmAfter, "CitySimulator"));
                 Assert.Equal(1, Objects(arm.SamplerStart, "CitySimulator"));
                 Assert.Equal(1, Objects(arm.SamplerStop, "CitySimulator"));
+                Assert.True(arm.CarChosen > 0 && arm.SubwayValid > 0, scenario + " " + label + " cars " + arm.CarChosen + " / subway " + arm.SubwayValid);
             }
-            output.WriteLine("    HEAD minus base allocated: 00:50 -> arm-after " + (after.RunToArmAfter - before.RunToArmAfter).ToString("+0;-0;0") + " B, arm-after -> sampler start "
+            output.WriteLine("    HEAD minus base forms: allocated 00:50 -> arm-after " + (after.RunToArmAfter - before.RunToArmAfter).ToString("+0;-0;0") + " B, arm-after -> sampler start "
                 + (after.ArmAfterToSamplerStart - before.ArmAfterToSamplerStart).ToString("+0;-0;0") + " B, sampler window " + (after.SamplerWindow - before.SamplerWindow).ToString("+0;-0;0")
-                + " B; retained at sampler start " + (after.SamplerStart.Bytes - before.SamplerStart.Bytes).ToString("+0;-0;0") + " B, at sampler stop " + (after.SamplerStop.Bytes - before.SamplerStop.Bytes).ToString("+0;-0;0") + " B");
+                + " B; retained at arm-after " + (after.ArmAfter.Bytes - before.ArmAfter.Bytes).ToString("+0;-0;0") + " B, at sampler start " + (after.SamplerStart.Bytes - before.SamplerStart.Bytes).ToString("+0;-0;0")
+                + " B, at sampler stop " + (after.SamplerStop.Bytes - before.SamplerStop.Bytes).ToString("+0;-0;0") + " B");
             Assert.Equal(before.Hash, after.Hash);
             Assert.Equal(before.Requests, after.Requests);
-            Assert.True(after.Requests > 0 && after.SubwayValid > 0, after.Requests + " / " + after.SubwayValid);
-            Assert.True(after.RunToArmAfter < before.RunToArmAfter, name + " 00:50 -> arm-after " + before.RunToArmAfter + " -> " + after.RunToArmAfter);
-            Assert.True(after.SamplerWindow < before.SamplerWindow, name + " window " + before.SamplerWindow + " -> " + after.SamplerWindow);
-            Assert.True(Math.Abs(after.SamplerStop.Bytes - before.SamplerStop.Bytes) < Allowance, name + " retained at stop " + before.SamplerStop.Bytes + " -> " + after.SamplerStop.Bytes);
+            Assert.Equal(before.CarChosen, after.CarChosen);
+            Assert.True(after.SamplerWindow < before.SamplerWindow, scenario + " window " + before.SamplerWindow + " -> " + after.SamplerWindow);
+            Assert.True(Math.Abs(after.SamplerStop.Bytes - before.SamplerStop.Bytes) < Allowance, scenario + " retained at stop " + before.SamplerStop.Bytes + " -> " + after.SamplerStop.Bytes);
+            if (scenario != NightScenario.Recorded60)
+                Assert.True(after.MostVehicles > 0 && after.OffsetsLength > 0 && before.MostVehicles == after.MostVehicles, scenario + " validated vehicles " + before.MostVehicles + " / " + after.MostVehicles + ", offsets " + after.OffsetsLength);
         }
     }
 }

@@ -216,8 +216,12 @@ namespace PersistentCity.Core
         public double Minutes => legs.IsReadOnly ? committedMinutes : Sum();
         private double Sum() { double total = 0; foreach (var leg in legs) total += leg.Minutes; return total; }
         public bool IsCommitted => legs.IsReadOnly;
-        internal bool IsShared { get; private set; }
-        internal void MarkShared() => IsShared = true;
+        internal void MarkShared()
+        {
+            if (legs.IsReadOnly) return;
+            committedMinutes = Sum();
+            legs.Freeze();
+        }
         internal Route Commit()
         {
             if (legs.IsReadOnly) return this;

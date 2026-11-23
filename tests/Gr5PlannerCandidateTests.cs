@@ -304,6 +304,34 @@ public sealed class Gr5PlannerCandidateTests
     }
 
     [Fact]
+    public void ACachedWalkHandedOutWithoutThePublicationCopyRefusesEveryChangeAndTheNextHitKeepsItsLegs()
+    {
+        var job = new Job(after: true);
+        const int walkOrigin = 0;
+        var cached = job.CachedWalk(walkOrigin, Job.From(walkOrigin), Job.To(walkOrigin), 60);
+        var original = cached.Legs.ToArray();
+        double minutes = cached.Minutes, estimate = cached.EstimatedMinutes;
+        Assert.True(cached.IsCommitted);
+        var spare = new RouteLeg { From = P(-1), To = P(-2), Minutes = 1, Mode = TravelMode.Walk };
+        var changes = new Action[]
+        {
+            () => cached.Legs.Add(spare), () => cached.Legs.Insert(0, spare), () => cached.Legs.RemoveAt(cached.Legs.Count - 1),
+            () => cached.Legs.Remove(cached.Legs[0]), () => cached.Legs.Clear(), () => cached.Legs[0] = spare,
+            () => cached.Legs.AddRange(new[] { spare }), () => cached.Legs = new RouteLegs(), () => cached.Legs[0].Minutes = 9,
+            () => cached.Legs[0].To = P(-5),
+        };
+        foreach (var change in changes) Assert.Throws<InvalidOperationException>(change);
+        var hit = job.Plan(walkOrigin)!;
+        Assert.False(hit.Legs.IsReadOnly);
+        Assert.Equal(original.Length, cached.Legs.Count);
+        Assert.Equal(original.Length, hit.Legs.Count);
+        for (int i = 0; i < original.Length; i++) { Assert.Same(original[i], cached.Legs[i]); Assert.Same(original[i], hit.Legs[i]); }
+        Assert.Equal(minutes, cached.Minutes);
+        Assert.Equal(estimate, cached.EstimatedMinutes);
+        Assert.Equal(minutes, hit.Minutes);
+    }
+
+    [Fact]
     public void TheCandidateChoicePublishesACopyOnlyWhenTheSharedRouteWins()
     {
         var preferences = Job.Preferences;
@@ -329,7 +357,7 @@ public sealed class Gr5PlannerCandidateTests
         Assert.NotSame(shared, copy);
         Assert.NotSame(shared.Legs, copy.Legs);
         Assert.Same(shared.Legs[0], copy.Legs[0]);
-        Assert.False(copy.IsShared);
+        Assert.False(copy.IsCommitted);
         Assert.Same(copy, choice.Publish());
         copy.Legs.Clear();
         Assert.Single(shared.Legs);
@@ -375,7 +403,7 @@ public sealed class Gr5PlannerCandidateTests
         var seams = new OptionalStopUnitSeams();
         var field = typeof(OptionalStopUnitSeams).GetField("seams", BindingFlags.NonPublic | BindingFlags.Instance)!;
         int initial = ((double[])field.GetValue(seams)!).Length;
-                Assert.Equal(OptionalStopUnitSeams.PresizedUnits, initial);
+        Assert.Equal(OptionalStopUnitSeams.PresizedUnits, initial);
         for (int warm = 0; warm < 2; warm++) { seams.BeginCall(); for (int i = 0; i < 4; i++) seams.EndUnit("warm", .1); seams.EndCall(true); seams.P95UnitSeamMilliseconds(); }
         var calls = new[] { 128, 461, 753, PopulationFrameBudget.MaximumUnits + 1 };
         var recorded = new int[calls.Length];

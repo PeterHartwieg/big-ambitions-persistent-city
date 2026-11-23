@@ -25,7 +25,7 @@ namespace PersistentCity.Core
 
         public Route? Publish()
         {
-            if (best != null && best.IsShared) best = TransportComposition.Copy(best);
+            if (best != null && best.IsCommitted) best = TransportComposition.Copy(best);
             return best;
         }
     }
