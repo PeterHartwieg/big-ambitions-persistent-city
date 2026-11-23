@@ -189,14 +189,7 @@ namespace PersistentCity.Runtime
         private static void ReadFootprint(CityBuildingController controller, out double footprint, out double floors)
         {
             footprint = double.NaN; floors = double.NaN;
-            Bounds? combined = null;
-            foreach (var collider in controller.GetComponentsInChildren<Collider>())
-            {
-                if (collider == null || !collider.enabled || collider.isTrigger) continue;
-                var bounds = collider.bounds;
-                if (combined is Bounds sum) { sum.Encapsulate(bounds); combined = sum; } else combined = bounds;
-            }
-            if (!(combined is Bounds total)) return;
+            if (!(BuildingFootprint.ReadBounds(controller) is Bounds total)) return;
             footprint = (double)total.size.x * total.size.z;
             floors = Math.Floor(total.size.y / CityBalance.StoreyHeightMetres);
         }

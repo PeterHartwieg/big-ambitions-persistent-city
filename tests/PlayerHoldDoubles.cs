@@ -22,7 +22,10 @@ namespace UnityEngine
     {
         private static readonly object Gate = new();
         private static readonly List<string> lines = new();
+        private static readonly List<string> warnings = new();
         public static void Log(object message) { lock (Gate) lines.Add(message?.ToString() ?? ""); }
+        public static void LogWarning(object message) { lock (Gate) warnings.Add(message?.ToString() ?? ""); }
         public static List<string> Lines() { lock (Gate) return new List<string>(lines); }
+        public static List<string> Warnings() { lock (Gate) return new List<string>(warnings); }
     }
 }
