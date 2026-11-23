@@ -20,8 +20,9 @@ namespace PersistentCity.Runtime
                 var bounds = collider.bounds;
                 if (usableOnly && !Usable(bounds)) continue;
                 combined = Include(combined, bounds);
-                if (moving == null || !moving(collider.transform)) stationary = Include(stationary, bounds);
+                if (moving != null && !moving(collider.transform)) stationary = Include(stationary, bounds);
             }
+            if (moving == null) stationary = combined;
             return combined;
         }
 

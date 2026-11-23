@@ -264,6 +264,38 @@ public sealed class PhysicalRoadAdmissionTests
     }
 
     [Fact]
+    public void FootprintGatesOnOneBuildingKeepTheirLeafAreasWhenTheyOpenOnSuccessiveRefreshes()
+    {
+        var first = VehicleGate("first footprint gate");
+        var second = VehicleGate("second footprint gate");
+        var building = BuildingWithBounds(new Vector3(100, 3, 200), new Vector3(12, 6, 8));
+        var buildingRoot = new Transform { Component = building };
+        first.transform.parent = buildingRoot;
+        second.transform.parent = buildingRoot;
+        var firstLeaf = new Transform { parent = buildingRoot };
+        var secondLeaf = new Transform { parent = buildingRoot };
+        first.doors = new[] { firstLeaf };
+        second.doors = new[] { secondLeaf };
+        var firstCollider = new Collider { transform = { parent = firstLeaf }, bounds = new Bounds(new Vector3(110, 3, 200), new Vector3(4, 4, 2)) };
+        var secondCollider = new Collider { transform = { parent = secondLeaf }, bounds = new Bounds(new Vector3(90, 3, 200), new Vector3(4, 4, 2)) };
+        building.Colliders = building.Colliders.Append(firstCollider).Append(secondCollider).ToArray();
+        FenceDoor[] doors = { first, second };
+        var access = new PublicRoadAccess(doors, _ => { });
+        Assert.False(ClearAcrossGate(access, 111, 3));
+        Assert.False(ClearAcrossGate(access, 89, 3));
+
+        firstCollider.bounds = new Bounds(new Vector3(100, 3, 206), new Vector3(2, 4, 4));
+        var firstOpen = access.Refreshed(doors, out _) ?? access;
+        secondCollider.bounds = new Bounds(new Vector3(100, 3, 194), new Vector3(2, 4, 4));
+        var bothOpen = firstOpen.Refreshed(doors, out _);
+
+        Assert.NotNull(bothOpen);
+        Assert.False(ClearAcrossGate(bothOpen!, 111, 3));
+        Assert.False(ClearAcrossGate(bothOpen, 89, 3));
+        Assert.True(ClearAcrossGate(bothOpen, 115, 3));
+    }
+
+    [Fact]
     public void GateThatGainsCollidersDoesNotKeepItsOldRendererLeafUnion()
     {
         var gate = VehicleGate("renderer then collider", new Vector3(100, 2, 0));
