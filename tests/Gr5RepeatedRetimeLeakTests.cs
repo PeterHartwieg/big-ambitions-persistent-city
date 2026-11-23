@@ -837,7 +837,9 @@ public sealed class Gr5RepeatedRetimeLeakTests
             + "Recorded60: the log has no commit after load, so the city keeps 1x travel timing and no interval has a commit. "
             + "Hypothetical60 (not in the log): 15:30 commit to 60x and a 1x commit between arm-after and sampler start. "
             + "Deterministic planner: cached shared 6-leg walks (1,024-entry FIFO), 4 stations, a fresh mapped car route with two parking pauses on a 49x49 road grid (50 m links); "
-            + "every commit re-rates the network to the new travel clock rate and drops the planner caches, as the runtime does with a new planner, so the rebuild validates every live vehicle against the re-rated network. "
+            + "every commit switches the planner to the network rated for the new travel clock rate and drops the planner caches, as the runtime does with a new planner, so the rebuild validates every live vehicle against that network. "
+            + "Rated networks are kept per exact rate: the 1x network is built with the planner and the 20x or 60x network at the 15:30 commit, so every commit inside the measured intervals reuses a network built before arm-before. "
+            + "The measured intervals therefore include the rebuild's traffic mapping validation and leave out the allocation of reconstructing a rated network. "
             + "base forms = copy per walk, array Join + Valid; HEAD forms = RouteCandidates, TryJoinedScore, fixed-arity Join. Each arm runs on a fresh thread. "
             + "Retained: Mono 64-bit layout model, incl. the thread's validation offsets buffer; allocation: .NET.");
         var arms = new List<(NightScenario Scenario, NightArm Base, NightArm Head)>();

@@ -318,7 +318,7 @@ public sealed class Gr5PlannerCandidateTests
             () => cached.Legs.Add(spare), () => cached.Legs.Insert(0, spare), () => cached.Legs.RemoveAt(cached.Legs.Count - 1),
             () => cached.Legs.Remove(cached.Legs[0]), () => cached.Legs.Clear(), () => cached.Legs[0] = spare,
             () => cached.Legs.AddRange(new[] { spare }), () => cached.Legs = new RouteLegs(), () => cached.Legs[0].Minutes = 9,
-            () => cached.Legs[0].To = P(-5),
+            () => cached.Legs[0].To = P(-5), () => cached.WithEstimate(estimate + 1),
         };
         foreach (var change in changes) Assert.Throws<InvalidOperationException>(change);
         var hit = job.Plan(walkOrigin)!;
@@ -380,6 +380,16 @@ public sealed class Gr5PlannerCandidateTests
         Assert.Contains("var best = candidates.Publish();", planner);
         Assert.Contains("candidates.Consider(route,", planner);
         Assert.DoesNotContain("best = route", planner);
+        int jobStart = planner.IndexOf("private sealed class PlanningJob", StringComparison.Ordinal);
+        Assert.True(jobStart >= 0);
+        string job = planner.Substring(jobStart);
+        var results = System.Text.RegularExpressions.Regex.Matches(job, @"(?<![\w.])Result\s*=\s*([^;]+);").Select(m => m.Groups[1].Value.Trim()).ToArray();
+        Assert.NotEmpty(results);
+        Assert.All(results, value => Assert.True(value == "null" || value == "best" || value.StartsWith("owner.walking.Plan(", StringComparison.Ordinal), value));
+        Assert.Contains("best", results);
+        var bests = System.Text.RegularExpressions.Regex.Matches(job, @"(?<![\w.])best\s*=\s*([^;=][^;]*);").Select(m => m.Groups[1].Value.Trim()).ToArray();
+        Assert.Equal(new[] { "candidates.Publish()" }, bests);
+        Assert.DoesNotContain("PlanShared", string.Join("\n", results));
     }
 
     [Fact]

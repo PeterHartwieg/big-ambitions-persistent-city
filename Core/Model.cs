@@ -234,6 +234,7 @@ namespace PersistentCity.Core
         public double EstimatedMinutes => estimatedMinutes ?? Minutes;
         public Route WithEstimate(double total)
         {
+            if (legs.IsReadOnly) throw new InvalidOperationException("A committed route is immutable.");
             double nominal = Minutes;
             if (!Position.Finite(total) || !Position.Finite(nominal) || nominal <= 0 || total < nominal)
                 throw new ArgumentOutOfRangeException(nameof(total), "Estimated travel time must be finite and at least the nominal route duration.");
