@@ -81,6 +81,28 @@ public sealed class Gr5OwnedMemoryTests
     }
 
     [Fact]
+    public void ADeadCombinerWhoseMeshALiveRendererStillShowsKeepsThatMesh()
+    {
+        var destroyed = new List<NativeHandle>();
+        var shown = new HashSet<NativeHandle>();
+        var ledger = new MergedBodyLedger<NativeHandle, NativeHandle>(body => body.Alive, mesh => mesh.Alive, _ => 37,
+            mesh => { destroyed.Add(mesh); mesh.Alive = false; }, (_, mesh) => shown.Contains(mesh));
+        var kept = new NativeHandle();
+        var keptMesh = new NativeHandle();
+        var orphan = new NativeHandle();
+        var orphanMesh = new NativeHandle();
+        ledger.Own(kept); ledger.Merged(kept, keptMesh);
+        ledger.Own(orphan); ledger.Merged(orphan, orphanMesh);
+        shown.Add(keptMesh);
+        kept.Alive = false; orphan.Alive = false;
+        Assert.Equal(0, ledger.LiveMeshes(out _));
+        Assert.Equal(new[] { orphanMesh }, destroyed);
+        Assert.True(keptMesh.Alive);
+        Assert.Equal(1, ledger.ReleasedMeshes);
+        Assert.Equal(0, ledger.Owned);
+    }
+
+    [Fact]
     public void ASaveDuringTheStagedRebuildFinishesTheRebuildBeforeAnyMarketCompletion()
     {
         string mod = Source("Runtime", "PersistentCityMod.cs");

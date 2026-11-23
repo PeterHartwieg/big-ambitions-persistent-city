@@ -862,7 +862,7 @@ namespace PersistentCity.Runtime
                     && !float.IsNaN(yaw) && !float.IsInfinity(yaw)) return yaw;
             }
             catch (Exception) { }
-            return CarAppearance.Hash(car.CarId + ":parked") % 360u;
+            return CarAppearance.Hash(car.CarId, ":parked") % 360u;
         }
 
         private void FadeParked(float seconds)

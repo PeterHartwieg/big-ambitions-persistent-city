@@ -19,15 +19,18 @@ namespace PersistentCity.Core
         public static int Paint(CarState car)
         {
             if (car == null) throw new ArgumentNullException(nameof(car));
-            return car.PaintSeed != 0 ? car.PaintSeed : 1 + (int)(Hash(car.Id + ":paint") % 2147483646u);
+            return car.PaintSeed != 0 ? car.PaintSeed : 1 + (int)(Hash(car.Id, ":paint") % 2147483646u);
         }
 
-        public static uint Hash(string id)
+        public static uint Hash(string id) => Hash(id, "");
+
+        public static uint Hash(string id, string suffix)
         {
             unchecked
             {
                 uint value = 2166136261;
-                foreach (char c in id ?? "") value = (value ^ c) * 16777619;
+                if (id != null) for (int i = 0; i < id.Length; i++) value = (value ^ id[i]) * 16777619;
+                if (suffix != null) for (int i = 0; i < suffix.Length; i++) value = (value ^ suffix[i]) * 16777619;
                 return value;
             }
         }

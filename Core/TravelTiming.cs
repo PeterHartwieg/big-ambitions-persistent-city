@@ -218,6 +218,7 @@ namespace PersistentCity.Core
                             throw new ArgumentException("Traffic needs native timing at the city clock.");
                         sourceVehicles = new List<TrafficVehicleState>(kernel.VehicleCount);
                         kernel.CopyVehiclesInOrder(sourceVehicles);
+                        trafficRoutes.EnsureCapacity(sourceVehicles.Count);
                         foreach (var vehicle in sourceVehicles) trafficRoutes[vehicle.VehicleId] = vehicle;
                         savedTraffic = kernel;
                     }
@@ -226,6 +227,7 @@ namespace PersistentCity.Core
                 {
                     if (legacy || state.Traffic.Clock != state.Minute)
                         throw new ArgumentException("Traffic needs native timing at the city clock.");
+                    trafficRoutes.EnsureCapacity(state.Traffic.Vehicles.Count);
                     foreach (var vehicle in state.Traffic.Vehicles) trafficRoutes[vehicle.VehicleId] = vehicle;
                     if (state.SnapshotSynchronizer != null && ReferenceEquals(state.TrafficSourceState, state.Traffic)
                         && state.TrafficSource != null && state.TrafficSource.Clock == state.Minute)
@@ -409,7 +411,7 @@ namespace PersistentCity.Core
                 {
                     var citizen = schedules[i];
                     if (inputs[i].SafelyHome) citizen.NextEventMinute = state.Minute;
-                    citizen.CommutePreparation = new CommutePreparation();
+                    citizen.CommutePreparation = CommutePreparation.Reset(citizen.CommutePreparation);
                 }
                 foreach (var meal in meals) { meal.Meal.ReturnMinutes = meal.ReturnMinutes; meal.Meal.DueAt = meal.DueAt; }
                 state.TravelTimingVersion = 1;

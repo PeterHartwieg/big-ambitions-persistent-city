@@ -53,7 +53,7 @@ namespace PersistentCity.Core
                 person.Accrual = default;
                 person.EmploymentStartDay = 0;
                 person.JobChanges = checked(person.JobChanges + 1);
-                person.CommutePreparation = new CommutePreparation();
+                person.CommutePreparation = CommutePreparation.Reset(person.CommutePreparation);
                 return null;
             }
             if (person.Visitor?.Stay.Pattern == VisitorPattern.DayVisit) return null;
@@ -74,7 +74,7 @@ namespace PersistentCity.Core
             person.VisitorCarried = null;
             person.EmploymentStartDay = person.LastEmploymentCheckDay;
             person.JobChanges = checked(person.JobChanges + 1);
-            person.CommutePreparation = new CommutePreparation();
+            person.CommutePreparation = CommutePreparation.Reset(person.CommutePreparation);
         }
 
         public static CitizenIdentity RemixIdentity(CityState city, int sequence) => CreateRemixer(city)(sequence);

@@ -265,8 +265,8 @@ public sealed class TransportRoadSearchParityTests
             (_, _) => { if (callbackKind == 1) throw new InvalidOperationException(); return true; },
             pathFound: _ => { if (callbackKind == 2) throw new InvalidOperationException(); }));
         AssertSame(Capture(new BaselineRoadGraph(nodes).Plan, 0, 4), Capture(graph.Plan, 0, 4));
-        var lease = typeof(TransportRoadGraph).GetField("workspaceInUse", BindingFlags.Instance | BindingFlags.NonPublic)!;
-        Assert.Equal(0, lease.GetValue(graph));
+        var slot = WorkspaceSlot(graph);
+        Assert.Equal(0, slot.GetType().GetField("InUse", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(slot));
     }
 
     [Fact]
@@ -275,11 +275,15 @@ public sealed class TransportRoadSearchParityTests
         var nodes = CostUpdateNodes();
         var graph = new TransportRoadGraph(nodes);
         Assert.NotNull(Capture(graph.Plan, 0, 4).Route);
-        var workspace = typeof(TransportRoadGraph).GetField("workspace", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(graph)!;
+        var slot = WorkspaceSlot(graph);
+        var workspace = slot.GetType().GetField("Workspace", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(slot)!;
         workspace.GetType().GetField("generation", BindingFlags.Instance | BindingFlags.NonPublic)!.SetValue(workspace, int.MaxValue);
         nodes[0].Successors = new[] { 1 };
         AssertSame(Capture(new BaselineRoadGraph(nodes).Plan, 0, 4), Capture(graph.Plan, 0, 4));
     }
+
+    private static object WorkspaceSlot(TransportRoadGraph graph)
+        => typeof(TransportRoadGraph).GetField("slot", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(graph)!;
 
     private static TransportRoadNode Node(double x, double z, int[]? successors = null) => new()
     {

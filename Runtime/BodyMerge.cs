@@ -24,7 +24,7 @@ namespace PersistentCity.Runtime
         private static AccessTools.FieldRef<SkinnedMeshCombiner, Vector3>? originalPosition, originalRotation, originalScale;
         private static bool hooked;
         private static readonly MergedBodyLedger<SkinnedMeshCombiner, Mesh> ledger = new MergedBodyLedger<SkinnedMeshCombiner, Mesh>(
-            combiner => combiner != null, mesh => mesh != null, mesh => mesh.vertexCount, mesh => Object.Destroy(mesh));
+            combiner => combiner != null, mesh => mesh != null, mesh => mesh.vertexCount, mesh => Object.Destroy(mesh), ShownByResult);
         private static readonly BodyMergePlan plan = new BodyMergePlan();
         private static readonly BodyMergeGate gate = new BodyMergeGate();
         private static readonly BodyMergeFallbacks fallbacks = new BodyMergeFallbacks();
@@ -77,6 +77,13 @@ namespace PersistentCity.Runtime
                 hooked = true;
             }
             catch (Exception error) { LastError = error.GetType().Name + ": " + error.Message; }
+        }
+
+        private static bool ShownByResult(SkinnedMeshCombiner combiner, Mesh mesh)
+        {
+            var result = combiner.resultMergeGameObject;
+            var renderer = result != null ? result.GetComponent<SkinnedMeshRenderer>() : null;
+            return renderer != null && renderer.sharedMesh == mesh;
         }
 
         public static void Own(SkinnedMeshCombiner? combiner) { if (combiner != null) ledger.Own(combiner); }

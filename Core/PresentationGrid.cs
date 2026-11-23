@@ -50,11 +50,28 @@ namespace PersistentCity.Core
         private readonly List<long> routeCells = new List<long>();
         private int generation;
         private int slotCount;
+        private PresentationGrid? sizing;
 
         public PresentationGrid(Func<string, Position?>? placePosition = null) => this.placePosition = placePosition;
 
+        internal void SizeFrom(PresentationGrid source)
+        {
+            if (ReferenceEquals(source, this)) return;
+            sizing = source;
+            if (entries.Count == 0) entries.EnsureCapacity(source.entries.Count);
+            if (cells.Count == 0)
+            {
+                cells.EnsureCapacity(source.cells.Count);
+                if (cellSlots.Capacity < source.cellSlots.Count) cellSlots.Capacity = source.cellSlots.Count;
+            }
+            if (entrySlots.Capacity < source.entries.Count) entrySlots.Capacity = source.entries.Count;
+        }
+
+        internal void StopSizing() => sizing = null;
+
         internal void TakeSpareCells(PresentationGrid retired)
         {
+            sizing = null;
             if (ReferenceEquals(retired, this)) return;
             int peak = retired.entries.Count + retired.pool.Count;
             foreach (var pair in retired.cells)
@@ -230,23 +247,43 @@ namespace PersistentCity.Core
             entry.Kind = kind;
             entry.Journey = kind == Anchor.Route ? journey : null;
             entry.At = at;
-            if (kind == Anchor.Unplaced || !CellsOf(kind, journey, at, routeCells))
+            long[]? cached = null;
+            if (kind == Anchor.Unplaced || !RegisteredCells(kind, journey, at, out cached))
             { entry.UnplacedAt = unplaced.Count; unplaced.Add(entry); return; }
-            for (int k = 0; k < routeCells.Count; k++)
+            int count = cached?.Length ?? routeCells.Count;
+            var registrations = entry.Registrations;
+            var sized = sizing;
+            if (sized != null && registrations.Capacity < count)
+                registrations.Capacity = sized.entries.TryGetValue(entry.Citizen, out var previous) ? Math.Max(count, previous.Registrations.Count) : count;
+            for (int k = 0; k < count; k++)
             {
-                long key = routeCells[k];
+                long key = cached != null ? cached[k] : routeCells[k];
                 if (!cells.TryGetValue(key, out int cell))
                 {
                     cell = cellSlots.Count;
                     cells.Add(key, cell);
-                    cellSlots.Add(new List<Slot>());
+                    cellSlots.Add(NewCellList(sized, key));
                 }
                 var list = cellSlots[cell];
-                entry.Registrations.Add(new Registration(cell, list.Count));
+                registrations.Add(new Registration(cell, list.Count));
                 list.Add(new Slot(entry.Index, k));
             }
-            slotCount += entry.Registrations.Count;
+            slotCount += count;
         }
+
+        private bool RegisteredCells(Anchor kind, Route? journey, Position at, out long[]? cached)
+        {
+            cached = kind == Anchor.Route && journey!.IsCommitted ? journey.PresentationCells : null;
+            if (cached == null) return CellsOf(kind, journey, at, routeCells);
+            journey!.PresentationCells = null;
+            if (!ReferenceEquals(cached, Unplaceable)) return true;
+            cached = null;
+            return false;
+        }
+
+        private static List<Slot> NewCellList(PresentationGrid? sized, long key)
+            => sized != null && sized.cells.TryGetValue(key, out int old) && sized.cellSlots[old].Count > 0
+                ? new List<Slot>(sized.cellSlots[old].Count) : new List<Slot>();
 
         private void Unregister(Entry entry)
         {

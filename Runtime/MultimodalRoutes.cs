@@ -593,9 +593,10 @@ namespace PersistentCity.Runtime
                     {
                         if (!drive!.Continue(deadline)) { if (drive.RecheckDeferred) owner.jobRecheckHeldFrame = Time.frameCount; return; }
                         var road = drive.Result; drive.Dispose(); drive = null;
-                        if (road != null) Consider(TransportComposition.Join(accessWalk!,
+                        if (road != null) candidates.ConsiderJoined(accessWalk!,
                             Pause(person!.Car!.ParkedPosition, TransportComposition.CarPreparationMinutes), road,
-                            Pause(ends![endIndex].Position, TransportComposition.CarParkingMinutes), egress!));
+                            Pause(ends![endIndex].Position, TransportComposition.CarParkingMinutes), egress!,
+                            from!.Position, to!.Position, Preferences, person.Car?.ParkedPosition);
                         startIndex++;
                         NextStart();
                         return;

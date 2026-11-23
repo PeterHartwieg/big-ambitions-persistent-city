@@ -12,13 +12,16 @@ namespace PersistentCity.Core
         private readonly Func<TMesh, bool> meshAlive;
         private readonly Func<TMesh, int> vertexCount;
         private readonly Action<TMesh>? destroyOrphan;
+        private readonly Func<TBody, TMesh, bool>? stillShown;
 
-        public MergedBodyLedger(Func<TBody, bool> bodyAlive, Func<TMesh, bool> meshAlive, Func<TMesh, int> vertexCount, Action<TMesh>? destroyOrphan = null)
+        public MergedBodyLedger(Func<TBody, bool> bodyAlive, Func<TMesh, bool> meshAlive, Func<TMesh, int> vertexCount, Action<TMesh>? destroyOrphan = null,
+            Func<TBody, TMesh, bool>? stillShown = null)
         {
             this.bodyAlive = bodyAlive ?? throw new ArgumentNullException(nameof(bodyAlive));
             this.meshAlive = meshAlive ?? throw new ArgumentNullException(nameof(meshAlive));
             this.vertexCount = vertexCount ?? throw new ArgumentNullException(nameof(vertexCount));
             this.destroyOrphan = destroyOrphan;
+            this.stillShown = stillShown;
         }
 
         public int Owned => owned.Count;
@@ -56,7 +59,7 @@ namespace PersistentCity.Core
                     merged.Remove(body);
                     if (bodyAlive(body)) continue;
                     owned.Remove(body);
-                    if (destroyOrphan == null || !meshAlive(mesh)) continue;
+                    if (destroyOrphan == null || !meshAlive(mesh) || stillShown != null && stillShown(body, mesh)) continue;
                     CountReleased(mesh);
                     destroyOrphan(mesh);
                 }

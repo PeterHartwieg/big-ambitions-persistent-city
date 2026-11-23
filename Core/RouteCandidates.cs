@@ -23,6 +23,13 @@ namespace PersistentCity.Core
                 Consider(TransportComposition.Join(first, second, third), from, to, preferences, parked);
         }
 
+        public void ConsiderJoined(Route? first, Route? second, Route? third, Route? fourth, Route? fifth, Position from, Position to, TravelPreferences preferences, Position? parked)
+        {
+            if (TransportComposition.TryJoinedScore(first, second, third, fourth, fifth, from, to, preferences, parked, out double joined)
+                && TransportComposition.IsFaster(joined, BestScore))
+                Consider(TransportComposition.Join(first, second, third, fourth, fifth), from, to, preferences, parked);
+        }
+
         public Route? Publish()
         {
             if (best != null && best.IsCommitted) best = TransportComposition.Copy(best);

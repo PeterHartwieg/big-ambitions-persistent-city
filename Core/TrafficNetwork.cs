@@ -259,7 +259,12 @@ namespace PersistentCity.Core
             Links = links.AsReadOnly();
         }
 
-        public IReadOnlyList<int> NativeNodes(int linkId) => NativeNodeSpan(linkId).ToArray();
+        public IReadOnlyList<int> NativeNodes(int linkId)
+        {
+            if (linkId < 0 || linkId >= SectionCount) throw new ArgumentOutOfRangeException(nameof(linkId));
+            int start = sectionStarts[linkId];
+            return new ArraySegment<int>(sectionNodes, start, sectionStarts[linkId + 1] - start);
+        }
 
         internal ReadOnlySpan<int> NativeNodeSpan(int linkId)
         {
