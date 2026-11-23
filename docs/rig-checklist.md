@@ -25390,3 +25390,36 @@ The raw command-order and save audit is in capture-integrity.json. The marker ex
 The full 24-file evidence manifest is evidence-sha256.txt, SHA-256 a601100bc68a3c45388e82409a3b81f6a11c0ef7bf6e5c949d9c9a40d0efa39a.
 
 [Procedure #348](https://github.com/PeterHartwieg/big-ambitions-persistent-city/pull/348) · [Mac 17c #347](https://github.com/PeterHartwieg/big-ambitions-persistent-city/pull/347) · [Mac 17b #345](https://github.com/PeterHartwieg/big-ambitions-persistent-city/pull/345) · [Mac 17a #343](https://github.com/PeterHartwieg/big-ambitions-persistent-city/pull/343) · [Mac 16z #341](https://github.com/PeterHartwieg/big-ambitions-persistent-city/pull/341) · [Mac 16y #339](https://github.com/PeterHartwieg/big-ambitions-persistent-city/pull/339) · [Mac 16x #337](https://github.com/PeterHartwieg/big-ambitions-persistent-city/pull/337) · [Mac 16w #329](https://github.com/PeterHartwieg/big-ambitions-persistent-city/pull/329) · [Mac 16v #326](https://github.com/PeterHartwieg/big-ambitions-persistent-city/pull/326) · [Mac 16u #324](https://github.com/PeterHartwieg/big-ambitions-persistent-city/pull/324) · [Mac 16t #321](https://github.com/PeterHartwieg/big-ambitions-persistent-city/pull/321) · [PC 19c #315](https://github.com/PeterHartwieg/big-ambitions-persistent-city/pull/315)
+
+## Rig results - 23 November 2026 f (Mac, rig 17g): #350 check 2 gate open/close at f0f21f45
+
+**0 PASS / 1 PARTIAL / 0 FAIL / 0 NOT RUN** for the scoped check. Both locked gates opened, held open, closed and released. The samples showed zero gate crossings and zero passing vehicles on either adjoining road. The missing fixture is a Hamptons private vehicle gate beside a trafficked public road. [PR #350](https://github.com/PeterHartwieg/big-ambitions-persistent-city/pull/350)
+
+The scene-wide gate op found four active, locked `HamptonsPrivateFenceDoor` gates, all closed and unheld. Each `pc gate status near <x>,<z>,30` read used its native position and returned a ready snapshot with 29,010 road nodes.
+
+| Gate ID | Index | Source | Box min → max (x, y, z), m | Public road in box |
+| --- | ---: | --- | --- | --- |
+| `gate:-2902.5:0.0:-1515.5` | 0 | Collider | (-2906, -0.99, -1521.98) → (-2899, 3.96, -1514.98) | No |
+| `gate:-2902.5:0.0:-1527.0` | 0 | Collider | (-2906, -0.99, -1533.5) → (-2899, 3.96, -1526.5) | No |
+| `gate:-3243.9:0.0:-1485.4` | 1 | Collider | (-3250.38, -1, -1488.91) → (-3243.38, 3.95, -1481.91) | No |
+| `gate:-3268.6:0.0:-1470.1` | 1 | Collider | (-3274.45, -1, -1471.92) → (-3265.41, 3.95, -1462.88) | No |
+
+The daytime survey showed no passing cars near the index-1 pair, so the run used the requested index-0 fallback first. Its adjoining road probe was at x/z (-2943, -1519). With zero road traffic there, the repeat used the index-1 gate at (-3243.9, -1485.4), with a road probe at the adjoining junction at (-3231, -1458). The native gate op settled on every command and reported both gates locked throughout. There were zero gate-op errors.
+
+| Gate | State | Day 2 clock, 1× | Elapsed game min | Screenshots / 12 m reads per location | Gate crossings / road passes observed |
+| --- | --- | --- | ---: | ---: | ---: |
+| Index 0 | Closed | 15:30–15:33 | 2.52 | 3 / 3 | 0 / 0 |
+| Index 0 | Open | 15:34–15:37 | 3.23 | 4 / 4 | 0 / 0 |
+| Index 0 | Reclosed | 15:38–15:40 | 1.60 | 2 / 2 | 0 / 0 |
+| Index 1 | Closed | 15:44–15:46 | 2.26 | 3 / 3 | 0 / 0 |
+| Index 1 | Open | 15:47–15:50 | 2.32 | 3 / 3 | 0 / 0 |
+| Index 1 | Reclosed | 15:50–15:52 | 1.59 | 2 / 2 | 0 / 0 |
+
+All 34 observation reads were untruncated and returned `traffic_vehicle=0`. Screenshots sample the roads at intervals. The final sample took the first open arm to 3.23 game minutes. Setup retries covered a 50 m survey detail cap at 256 hits, an index-0 placement refusal (`No walkable ground at x -2918.0, z -1518.0 near y 0.06`), and the camera refusal `frames must be a whole number from 8 to 240.` The completed observations used the surveyed walkable approach and valid camera settings. Pointer, hover and visual feel **NOT RUN (for Peter)**.
+
+- **Build and fixture.** Both fetches gave `f0f21f456bd98176bbe60dc8596470a735c69182`. Loaded `FT GR5 13f Timing v1` in the isolated background player, build 3682, RLO 1.0.6, with 1,000 residents and 2,000 visitors. No disposable city was created.
+- **Stage.** `python3 scripts/install-mac.py --stage-mod PersistentCity ~/HART-Builds/persistent-city-rig-2026-11-23f-mac/package` used an absolute path. Receipt backup `~/Library/Application Support/BigAmbitionsAgentTestsMac/receipt-backups/20261123T205316Z`. Stage and Player.log agreed on `staged_mod name=PersistentCity version=absent informational=0.10.0-persistent-city-candidate sha256=2fa125950650a0e92aae98a52e9ead32a59c0a22e1ff9d36de47edbae9538f99`.
+- **Autosave and restore.** Suppression was true after load and before and after all six arms. Save attempts and writes were zero. Native autosave preferences read 5 minutes / 3 saves / prevent false before and after. Both holds were released and scene-wide held count was zero before shutdown. The game quit cleanly and the lease is free. The restored ModsLocal, preferences, fixture and all 284 receipt hashes matched. Agent-rig `b06b62c` and AgentRigOps SHA-256 `190c3fa3895a2c37d7388854b3abfc81cbcd93dc1a104c5cd46b1d3f7f830dfc` were verified.
+- **Host and evidence.** Uptime load averages at start were 5.15 / 4.78 / 5.98, and at end 2.46 / 3.93 / 5.30. Raw evidence is in `~/Coding_Projects/.agent-logs/persistent-city-rig-2026-11-23f-mac/`. The 85-file `evidence-sha256.txt` has SHA-256 `352e5ead3b98a5bfb65338ec734d530e98a6809821235add5e1f545af55c60cd`.
+
+Refs #350 #331.
