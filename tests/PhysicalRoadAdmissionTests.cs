@@ -296,6 +296,27 @@ public sealed class PhysicalRoadAdmissionTests
     }
 
     [Fact]
+    public void FootprintGateDoesNotLookUpBuildingsForColliderBackedGates()
+    {
+        var footprint = VehicleGate("footprint gate");
+        var building = BuildingWithBounds(new Vector3(100, 3, 200), new Vector3(12, 6, 8));
+        footprint.transform.parent = new Transform { Component = building };
+        footprint.doors = new[] { new Transform { parent = footprint.transform.parent } };
+        var collider = VehicleGate("collider gate", new Vector3(300, 3, 200));
+        collider.transform.parent = new Transform { Component = BuildingWithBounds(new Vector3(300, 3, 200), new Vector3(12, 6, 8)) };
+        collider.doors = new[] { new Transform { parent = collider.transform } };
+        collider.Colliders = new[] { new Collider { bounds = new Bounds(new Vector3(300, 3, 200), new Vector3(4, 4, 2)) } };
+        FenceDoor[] doors = { collider, footprint };
+
+        var access = new PublicRoadAccess(doors, _ => { });
+        access.Refreshed(doors, out _);
+
+        Assert.Equal(0, collider.ParentLookups);
+        Assert.Equal(2, footprint.ParentLookups);
+        Assert.False(ClearAcrossGate(access, 100, 3));
+    }
+
+    [Fact]
     public void GateThatGainsCollidersDoesNotKeepItsOldRendererLeafUnion()
     {
         var gate = VehicleGate("renderer then collider", new Vector3(100, 2, 0));

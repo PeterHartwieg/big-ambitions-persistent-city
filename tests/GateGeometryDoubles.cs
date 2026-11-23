@@ -90,6 +90,7 @@ public class FenceDoor
     public Transform[] doors = Array.Empty<Transform>();
     public Collider[] Colliders = Array.Empty<Collider>();
     public Renderer[] Renderers = Array.Empty<Renderer>();
+    public int ParentLookups;
 
     public bool IsForSale() => ForSale;
 
@@ -98,6 +99,7 @@ public class FenceDoor
 
     public T? GetComponentInParent<T>(bool includeInactive) where T : class
     {
+        ParentLookups++;
         for (Transform? part = transform; part != null; part = part.parent)
             if (part.GetComponent<T>() is T component) return component;
         return null;

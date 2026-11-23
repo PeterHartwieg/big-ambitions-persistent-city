@@ -48,7 +48,7 @@ namespace PersistentCity.Runtime
         {
             this.log = log;
             List<string>? fallback = null;
-            Dictionary<CityBuildingController, List<FenceDoor>>? buildingDoors = null;
+            Func<Transform, bool>? movingLeaf = null;
             foreach (var door in doors)
             {
                 if (door == null || (!(door is HamptonsPrivateFenceDoor) && (!door.acceptsVehicles || door.IsForSale()))) continue;
@@ -66,7 +66,7 @@ namespace PersistentCity.Runtime
                         fixedParts = new GateBox(Combine(renderers.Where(renderer => !Leaf(door, renderer.transform)))
                             ?? Anchor(door.transform), door.name);
                     }
-                    else if ((shape = FootprintBounds(door, doors, ref buildingDoors, out var stillFootprint)).HasValue)
+                    else if ((shape = FootprintBounds(door, doors, ref movingLeaf, out var stillFootprint)).HasValue)
                     {
                         source = GateSource.Footprint;
                         fixedParts = new GateBox(stillFootprint ?? Anchor(door.transform), door.name);
@@ -102,25 +102,26 @@ namespace PersistentCity.Runtime
             return true;
         }
         private static Bounds? FootprintBounds(FenceDoor door, FenceDoor[] doors,
-            ref Dictionary<CityBuildingController, List<FenceDoor>>? buildingDoors, out Bounds? stationary)
+            ref Func<Transform, bool>? movingLeaf, out Bounds? stationary)
         {
             stationary = null;
             var building = door.GetComponentInParent<CityBuildingController>(true);
             if (building == null) return null;
-            if (buildingDoors == null)
+            if (movingLeaf == null)
             {
-                buildingDoors = new Dictionary<CityBuildingController, List<FenceDoor>>();
+                var leaves = new HashSet<Transform>();
                 foreach (var other in doors)
                 {
                     if (other == null || other.doors == null) continue;
-                    var owner = other.GetComponentInParent<CityBuildingController>(true);
-                    if (owner == null) continue;
-                    if (!buildingDoors.TryGetValue(owner, out var shared)) buildingDoors.Add(owner, shared = new List<FenceDoor>());
-                    shared.Add(other);
+                    foreach (var leaf in other.doors) if (leaf != null) leaves.Add(leaf);
                 }
+                movingLeaf = part =>
+                {
+                    for (var step = part; step != null; step = step.parent) if (leaves.Contains(step)) return true;
+                    return false;
+                };
             }
-            buildingDoors.TryGetValue(building, out var neighbours);
-            return BuildingFootprint.ReadBounds(building, true, part => neighbours != null && neighbours.Exists(other => Leaf(other, part)), out stationary);
+            return BuildingFootprint.ReadBounds(building, true, movingLeaf, out stationary);
         }
         private static Bounds Anchor(Transform root)
         {
