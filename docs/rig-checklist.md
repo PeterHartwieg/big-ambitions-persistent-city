@@ -17,6 +17,8 @@ Every GR-5 rig run from now on must:
 
 ## Latest evidence
 
+- **23 November c, Mac (rig 17d), build `ce8c514d`**. 0 PASS / 1 PARTIAL / 1 FAIL / 1 NOT RUN on #350. The fallback tally warning was absent. [23c results](checks/rig-2026-11-23c-mac-results.md).
+
 - **23 November b, Mac (rig 17c), build 6f92187b**. 2 PASS / 2 PARTIAL / 2 FAIL / 0 NOT RUN / 2 REPORTED. UpdateCity p95 3.8726 ms, union p95 3.9357 ms, 0 union spikes, retime subphase bound 7.529 ms. Both retimes stayed within the bound. Door search maximum 0.057 ms and index slice maximum 0 ms. The index was already warm in C. Retime restarts 0 (0 up, 0 return). Slowest food continuation: 1.786 ms (decision-evaluate). **PROVISIONAL (shared Mac / Mono)**. [23b results](#rig-results--23-november-2026-b-mac-rig-17c-gr-5-346-at-6f92187b).
 
 - **23 November a, Mac (rig 17b), build d0918a03**. 0 PASS / 2 PARTIAL / 4 FAIL / 0 NOT RUN / 2 REPORTED. UpdateCity p95 3.9613 ms, union p95 4.0396 ms, retime subphase bound 15.839 ms. The rig union export counted 0 spikes. The probe collection export recorded a 37.6313 ms mod-work spike on frame 41,421, which has no union row: 35.3278 ms in ResidentInspector.UiRaycastPrefix, gen0 collection 251 in Update.ScriptRunBehaviourUpdate and a 25.9409 ms GC marker pause. Door search maximum 0.08 ms and index slice maximum 0 ms. The index was already warm in C. Retime restarts 0 (0 up, 0 return). Frame 42,134 recorded 15.838 ms in mod_routes_retime. Slowest food continuation: 0.739 ms (decision-quote). C fails on the missed retime subphase bound. **PROVISIONAL (shared Mac / Mono)**. [23a results](#rig-results--23-november-2026-a-mac-rig-17b-gr-5-344-at-d0918a03).
