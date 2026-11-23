@@ -23717,7 +23717,7 @@ Both arms started high-rate pre-positioning at 15:30. The rig time command pause
 
 B 20× reported paused 01:00 at 1× with 2 mod retime commits logged before the arm.
 
-B 20× gen0 ordinal 235 was sampled on sampler frame 13,424. The associated Unity marker and probe row are on frame 13,425, which had 70.985 ms wall, 25.4008 ms GC.Collect and 1.118 ms UpdateCity. The largest outside-mod subsystem excess was 39.8406 ms in Update.ScriptRunBehaviourUpdate. The sampler and marker frames differ, so the same-frame arithmetic remainder is unavailable for ordinal 235.
+B 20× gen0 ordinal 235 was sampled on sampler frame 13,424, which had 70.985 ms wall and 1.118 ms UpdateCity. The associated Unity marker and probe row are on frame 13,425, which had 25.4008 ms GC.Collect and a largest outside-mod subsystem excess of 39.8406 ms in Update.ScriptRunBehaviourUpdate. The sampler and marker frames differ, so the same-frame arithmetic remainder is unavailable for ordinal 235.
 
 B 60× reported paused 01:00 at 1× with 0 mod retime commits logged before the arm.
 
@@ -23807,7 +23807,7 @@ Spike counts are counted / retained / truncated. Whole-frame spike row truncatio
 | B 60× | 0 / 0 / false | 0 / 0 / false | 0 / 0 / false | 16,823 / 1,024 / true |
 | C street | 0 / 0 / false | 0 / 0 / false | 0 / 0 / false | 4,872 / 1,024 / true |
 
-B 60× planning observation: the population summary at game minute 4383.5 reported a 34.113 ms planning slice and a 34.114 ms route-planning advance unit with one collection inside the unit. The summary was emitted inside the 600 s window, 3.5 game minutes after its 01:00 start at minute 4380. The six B 60× collection rows cover every collection in the window (probe and sampler gen0 6, collections terminal true), and none has UpdateCity above 0.617 ms. The evidence therefore places the unit and its collection before the window opened, during the 60× approach that the first summary interval still covered. The union, PC phase and advance-call counts cover only frames inside the window, so their zero counts agree with this. The summary gives no frame number, so frame-level reconciliation is unavailable.
+B 60× planning observation: the population summary at game minute 4383.5 reported a 34.113 ms planning-slice maximum and a 34.114 ms route-planning advance unit maximum, tracked independently. It counted one gen0 collection across the slowest AdvancePopulation call; that count is at call scope and does not place the collection inside the route-planning unit. The summary was emitted inside the 600 s window, 3.5 game minutes after its 01:00 start at minute 4380. The six B 60× collection rows cover every collection in the window (probe and sampler gen0 6, collections terminal true), and none has UpdateCity above 0.617 ms. The union, PC phase and advance-call ledgers, which cover only frames inside the window, have zero counts. From these ledgers it is inferred that the slow call ran before the window opened; the evidence does not establish that it ran during the 60× approach. The summary gives no frame number, so the frame and the collection's exact placement are unresolved.
 
 | Window | Mod recorder off-CPU ≥30 ms | Sampler collection off-CPU ≥30 ms | Sampler CPU-covered frames |
 | --- | --- | --- | --- |
