@@ -61,7 +61,7 @@ namespace PersistentCity.Runtime
         public static void Install()
         {
             ledger.PruneOwned();
-            ledger.Prune();
+            ledger.ReleaseOrphans();
             if (hooked || LastError.Length != 0) return;
             try
             {
@@ -94,12 +94,14 @@ namespace PersistentCity.Runtime
         public static void Release(SkinnedMeshCombiner? combiner)
         {
             if (ReferenceEquals(combiner, null)) return;
+            if (combiner == null) { ledger.ReleaseOrphans(); return; }
             var tracked = ledger.Forget(combiner);
-            var result = combiner != null ? combiner.resultMergeGameObject : null;
+            var result = combiner.resultMergeGameObject;
             var renderer = result != null ? result.GetComponent<SkinnedMeshRenderer>() : null;
             var mesh = renderer != null ? renderer.sharedMesh : null;
             if (tracked != mesh) DestroyMesh(tracked);
             DestroyMesh(mesh);
+            ledger.ReleaseOrphans();
         }
 
         private static void DestroyMesh(Mesh? mesh)
@@ -118,7 +120,7 @@ namespace PersistentCity.Runtime
         public static void PruneReleased()
         {
             ledger.PruneOwned();
-            ledger.Prune();
+            ledger.ReleaseOrphans();
         }
 
         private static bool MergePrefix(SkinnedMeshCombiner __instance)

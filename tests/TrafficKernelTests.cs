@@ -45,6 +45,25 @@ public sealed class TrafficKernelTests
     }
 
     [Fact]
+    public void AStagedRescaleRefusesToResumeAfterAnAdmissionAndARetryUsesTheNewState()
+    {
+        var kernel = new TrafficKernel(new[] { Link(1), Link(2) });
+        for (int i = 0; i < 8; i++) kernel.Enqueue("car" + i, Route(1, 2));
+        var stale = kernel.RescaleTimeInSteps(2, null, 8);
+        Assert.True(stale.MoveNext());
+        Assert.Null(stale.Current);
+        Assert.True(kernel.AdvanceTo(0, 1).ProcessedEvents > 0);
+        Assert.Equal(0, Vehicle(kernel, "car0").RouteIndex);
+        Assert.Throws<InvalidOperationException>(() => stale.MoveNext());
+        var retry = kernel.RescaleTimeInSteps(2, null, 8);
+        TrafficKernel? rescaled = null;
+        while (rescaled == null && retry.MoveNext()) rescaled = retry.Current;
+        Assert.NotNull(rescaled);
+        Assert.Equal(0, Vehicle(rescaled!, "car0").RouteIndex);
+        Assert.Equal(-1, Vehicle(rescaled!, "car1").RouteIndex);
+    }
+
+    [Fact]
     public void EmptyClosedSectionRemainsDiscoverableUntilNativeReopeningAfterReload()
     {
         var kernel = new TrafficKernel(new[] { Link(1) });

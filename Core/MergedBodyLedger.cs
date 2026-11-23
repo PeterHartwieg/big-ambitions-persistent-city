@@ -48,18 +48,26 @@ namespace PersistentCity.Core
             stale.Clear();
         }
 
-        public void Prune()
+        public void Prune() => Sweep(false);
+
+        public void ReleaseOrphans() => Sweep(true);
+
+        private void Sweep(bool release)
         {
-            foreach (var pair in merged) if (!bodyAlive(pair.Key) || !meshAlive(pair.Value)) stale.Add(pair.Key);
+            foreach (var pair in merged)
+            {
+                if (!meshAlive(pair.Value)) stale.Add(pair.Key);
+                else if (bodyAlive(pair.Key)) continue;
+                else if (destroyOrphan == null || release && (stillShown == null || !stillShown(pair.Key, pair.Value))) stale.Add(pair.Key);
+            }
             try
             {
                 foreach (var body in stale)
                 {
-                    var mesh = merged[body];
-                    merged.Remove(body);
+                    merged.Remove(body, out var mesh);
                     if (bodyAlive(body)) continue;
                     owned.Remove(body);
-                    if (destroyOrphan == null || !meshAlive(mesh) || stillShown != null && stillShown(body, mesh)) continue;
+                    if (destroyOrphan == null || mesh == null || !meshAlive(mesh)) continue;
                     CountReleased(mesh);
                     destroyOrphan(mesh);
                 }

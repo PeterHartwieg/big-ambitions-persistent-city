@@ -1347,7 +1347,18 @@ namespace PersistentCity.Core
         {
             if (!Finite(factor) || factor <= 0) throw new ArgumentOutOfRangeException(nameof(factor));
             if (linksPerStep < 1) throw new ArgumentOutOfRangeException(nameof(linksPerStep));
-            return RescaleTimeSteps(factor, mapNominalMinutes, linksPerStep);
+            return Pinned(RescaleTimeSteps(factor, mapNominalMinutes, linksPerStep));
+        }
+
+        private IEnumerator<TrafficKernel?> Pinned(IEnumerator<TrafficKernel?> steps)
+        {
+            long revision = Revision;
+            while (true)
+            {
+                if (Revision != revision) throw new InvalidOperationException("Traffic changed during a staged rescale; start it again.");
+                if (!steps.MoveNext()) yield break;
+                yield return steps.Current;
+            }
         }
 
         private IEnumerator<TrafficKernel?> RescaleTimeSteps(double factor, Func<string, double, double>? mapNominalMinutes, int linksPerStep)

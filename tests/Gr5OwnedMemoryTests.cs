@@ -39,7 +39,7 @@ public sealed class Gr5OwnedMemoryTests
         Assert.True(keyed > 0, "a redress replaces the combiner's previous mesh instead of adding another");
         Assert.True(keyed < merge.IndexOf("Fast++;", keyed, StringComparison.Ordinal), "only a finished merge is tracked, so Discard never leaves an entry");
         Assert.DoesNotContain("HashSet<Mesh>", merge);
-        Assert.Contains("ledger.PruneOwned();\n            ledger.Prune();\n            if (hooked", merge.Replace("\r", ""));
+        Assert.Contains("ledger.PruneOwned();\n            ledger.ReleaseOrphans();\n            if (hooked", merge.Replace("\r", ""));
     }
 
     private sealed class NativeHandle
@@ -67,6 +67,11 @@ public sealed class Gr5OwnedMemoryTests
             ledger.Own(body);
             ledger.Merged(body, mesh);
             body.Alive = false;
+            Assert.Equal(2, ledger.LiveMeshes(out long retained));
+            Assert.Equal(74, retained);
+            Assert.Equal(i, ledger.ReleasedMeshes);
+            Assert.Equal(i, destroyed.Count);
+            ledger.ReleaseOrphans();
             Assert.Equal(1, ledger.LiveMeshes(out long vertices));
             Assert.Equal(37, vertices);
             Assert.Equal(1, ledger.Owned);
@@ -95,11 +100,29 @@ public sealed class Gr5OwnedMemoryTests
         ledger.Own(orphan); ledger.Merged(orphan, orphanMesh);
         shown.Add(keptMesh);
         kept.Alive = false; orphan.Alive = false;
-        Assert.Equal(0, ledger.LiveMeshes(out _));
+        Assert.Equal(2, ledger.LiveMeshes(out _));
+        Assert.Empty(destroyed);
+        Assert.Equal(0, ledger.ReleasedMeshes);
+        ledger.ReleaseOrphans();
         Assert.Equal(new[] { orphanMesh }, destroyed);
         Assert.True(keptMesh.Alive);
         Assert.Equal(1, ledger.ReleasedMeshes);
+        ledger.PruneOwned();
         Assert.Equal(0, ledger.Owned);
+        Assert.Equal(1, ledger.LiveMeshes(out long shownVertices));
+        Assert.Equal(37, shownVertices);
+        ledger.ReleaseOrphans();
+        Assert.Equal(1, ledger.ReleasedMeshes);
+        shown.Remove(keptMesh);
+        Assert.Equal(1, ledger.LiveMeshes(out _));
+        Assert.Equal(1, ledger.ReleasedMeshes);
+        ledger.ReleaseOrphans();
+        Assert.Equal(new[] { orphanMesh, keptMesh }, destroyed);
+        Assert.Equal(2, ledger.ReleasedMeshes);
+        Assert.Equal(74, ledger.ReleasedVertices);
+        Assert.Equal(0, ledger.LiveMeshes(out _));
+        ledger.ReleaseOrphans();
+        Assert.Equal(2, ledger.ReleasedMeshes);
     }
 
     [Fact]
