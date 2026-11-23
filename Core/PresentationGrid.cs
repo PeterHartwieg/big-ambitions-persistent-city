@@ -222,7 +222,7 @@ namespace PersistentCity.Core
             int hint = sized != null && sized.entries.TryGetValue(entry.Citizen, out var previous) ? previous.Count : -1;
             if (kind == Anchor.Unplaced || !Fill(entry, kind, journey, at, hint))
             { entry.Count = 0; entry.UnplacedAt = unplaced.Count; unplaced.Add(entry); return; }
-            if (entry.Slots.Length < entry.Count) entry.Slots = new int[sized != null ? entry.Count : Grown(entry.Slots.Length, entry.Count)];
+            if (entry.Slots.Length < entry.Count) entry.Slots = new int[sized != null ? entry.Count : Doubled(entry.Slots.Length, entry.Count)];
             for (int k = 0; k < entry.Count; k++)
             {
                 long key = entry.Cells[k];
@@ -231,6 +231,13 @@ namespace PersistentCity.Core
                 list.Add(new Slot(entry, k));
             }
             slotCount += entry.Count;
+        }
+
+        private static int Doubled(int current, int required)
+        {
+            long capacity = current == 0 ? 4 : current;
+            while (capacity < required) capacity *= 2;
+            return (int)Math.Min(capacity, int.MaxValue);
         }
 
         private static int Grown(int current, int required) => Math.Max(required, current == 0 ? 4 : current * 2);
@@ -250,14 +257,19 @@ namespace PersistentCity.Core
                 journey.PresentationCells = null;
                 if (ReferenceEquals(cached, Unplaceable)) return false;
                 if (entry.Cells.Length >= cached.Length) Array.Copy(cached, entry.Cells, cached.Length);
-                else entry.Cells = cached;
+                else if (hint >= 0 || Grown(entry.Cells.Length, cached.Length) == cached.Length) entry.Cells = cached;
+                else
+                {
+                    entry.Cells = new long[Grown(entry.Cells.Length, cached.Length)];
+                    Array.Copy(cached, entry.Cells, cached.Length);
+                }
                 entry.Count = cached.Length;
                 return true;
             }
             expected.Clear(); scratch.Clear();
             if (!RouteCells(journey, expected, scratch)) return false;
             int count = expected.Count;
-            if (entry.Cells.Length < count) entry.Cells = new long[hint >= count ? hint : Grown(entry.Cells.Length, count)];
+            if (entry.Cells.Length < count) entry.Cells = new long[hint >= count ? hint : hint >= 0 ? count : Doubled(entry.Cells.Length, count)];
             expected.CopyTo(entry.Cells);
             entry.Count = count;
             return true;
