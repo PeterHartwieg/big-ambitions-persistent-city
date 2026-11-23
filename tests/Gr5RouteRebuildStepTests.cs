@@ -384,4 +384,55 @@ public sealed class Gr5RouteRebuildStepTests
         }
         Assert.All(capacity, c => Assert.Equal(capacity[0], c));
     }
+
+    [Fact]
+    public void RebuildingALongRouteGridKeepsBothQueryOrdersAndReducesTheTransientGraph()
+    {
+        var travellers = new List<CitizenState>();
+        for (int i = 0; i < 1000; i++)
+        {
+            var person = Walker("r" + i, i);
+            double z = i % 50 * 64 + 1;
+            person.Journey = new Route { Legs =
+                { new RouteLeg { From = new Position(1, 0, z), To = new Position(10_241, 0, z), Mode = TravelMode.Walk, Minutes = 200 } } }.Commit();
+            travellers.Add(person);
+        }
+        var source = new PresentationGrid();
+        foreach (var person in travellers) source.File(person);
+        var replacement = new PresentationGrid();
+        long started = GC.GetAllocatedBytesForCurrentThread();
+        foreach (var person in travellers) replacement.File(person);
+        long allocated = GC.GetAllocatedBytesForCurrentThread() - started;
+        var model = new RetainedHeap();
+        model.Exclude(travellers);
+        foreach (var person in travellers) model.Exclude(person);
+        model.Add("source", source);
+        model.Add("replacement", replacement);
+        output.WriteLine($"tight grid: {replacement.Registrations} registrations, rebuild {allocated} B (.NET), overlap {model.Bytes} B, {model.Objects} objects, {model.ScannedBytes} scanned B, {model.References} references (Mono layout model)");
+        var first = new List<IPersonView>(travellers.Count);
+        var second = new List<IPersonView>(travellers.Count);
+        foreach (double radius in new[] { 0.0, 120.0, double.PositiveInfinity })
+        {
+            var focus = new Position(300, 0, 3);
+            source.Query(focus, radius, first);
+            replacement.Query(focus, radius, second);
+            Assert.Equal(first, second);
+        }
+        replacement.TakeSpareCells(source);
+        Assert.True(replacement.Matches(travellers, recompute: true));
+        var oldest = travellers[0];
+        replacement.Remove(oldest);
+        replacement.File(oldest);
+        Assert.True(replacement.Matches(travellers, recompute: true));
+        long before = GC.GetAllocatedBytesForCurrentThread();
+        for (int i = 0; i < 32; i++)
+        {
+            replacement.Remove(oldest);
+            replacement.File(oldest);
+            replacement.Query(new Position(300, 0, 3), 120, first);
+        }
+        Assert.Equal(0, GC.GetAllocatedBytesForCurrentThread() - before);
+        Assert.True(allocated < 11_000_000, allocated.ToString());
+        Assert.True(model.Bytes < 12_000_000, model.Bytes.ToString());
+    }
 }

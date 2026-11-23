@@ -172,7 +172,8 @@ namespace PersistentCity.Runtime
             typeof(TrafficRouteLeg[]), typeof(List<TrafficRouteLeg>), typeof(TrafficKernelState), typeof(CitySimulator), typeof(MultimodalRoutes), typeof(RoadRoutes) };
 
         internal static readonly Type[] RetainedPerRootTypes = { typeof(RouteLeg), typeof(RouteLeg[]), typeof(List<RouteLeg>), typeof(RouteLegs), typeof(Route),
-            typeof(TrafficRouteLeg), typeof(TrafficVehicleState), typeof(List<TrafficRouteLeg>), typeof(TrafficRouteLeg[]), typeof(string), typeof(double[]) };
+            typeof(TrafficRouteLeg), typeof(TrafficVehicleState), typeof(List<TrafficRouteLeg>), typeof(TrafficRouteLeg[]), typeof(string),
+            typeof(double[]), typeof(int[]), typeof(long[]), typeof(ushort[]) };
 
         internal static RetainedCensus RetainedCensusOf(object runtime, IDictionary<string, string>? modData)
         {
