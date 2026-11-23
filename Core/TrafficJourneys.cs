@@ -295,7 +295,7 @@ namespace PersistentCity.Core
             }
             if (routes is ITrafficRoutePlanner planner)
                 foreach (var leg in mapped) traffic.SetLinkClosed(leg.LinkId, planner.IsTrafficLinkClosed(leg.LinkId));
-            traffic.Enqueue(citizen.Identity.Id, mapped);
+            traffic.EnqueueOwned(citizen.Identity.Id, mapped);
             trafficCitizens.Add(citizen.Identity.Id, citizen);
             CountResidentCar();
             return true;

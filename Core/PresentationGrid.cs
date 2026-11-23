@@ -18,46 +18,81 @@ namespace PersistentCity.Core
             public Anchor Kind;
             public Route? Journey;
             public Position At;
-            public readonly List<long> Cells = new List<long>();
-            public readonly List<List<Slot>> Lists = new List<List<Slot>>();
-            public readonly List<int> Slots = new List<int>();
+            public readonly List<Registration> Registrations = new List<Registration>();
+            public int Index;
             public int UnplacedAt = -1;
             public int Stamp;
         }
 
+        private readonly struct Registration
+        {
+            public Registration(int cell, int slot) { Cell = cell; Slot = slot; }
+            public int Cell { get; }
+            public int Slot { get; }
+        }
+
         private readonly struct Slot
         {
-            public Slot(Entry entry, int k) { Entry = entry; K = k; }
-            public Entry Entry { get; }
-            public int K { get; }
+            public Slot(int entry, int registration) { Entry = entry; Registration = registration; }
+            public int Entry { get; }
+            public int Registration { get; }
         }
 
         private readonly Func<string, Position?>? placePosition;
         private readonly Dictionary<CitizenState, Entry> entries = new Dictionary<CitizenState, Entry>();
-        private readonly Dictionary<long, List<Slot>> cells = new Dictionary<long, List<Slot>>();
+        private readonly Dictionary<long, int> cells = new Dictionary<long, int>();
+        private readonly List<List<Slot>> cellSlots = new List<List<Slot>>();
+        private readonly List<Entry> entrySlots = new List<Entry>();
         private readonly List<Entry> unplaced = new List<Entry>();
         private readonly Stack<Entry> pool = new Stack<Entry>();
         private readonly HashSet<long> scratch = new HashSet<long>();
         private readonly List<long> expected = new List<long>();
+        private readonly List<long> routeCells = new List<long>();
         private int generation;
         private int slotCount;
+        private PresentationGrid? sizing;
 
         public PresentationGrid(Func<string, Position?>? placePosition = null) => this.placePosition = placePosition;
 
+        internal void SizeFrom(PresentationGrid source)
+        {
+            if (ReferenceEquals(source, this)) return;
+            sizing = source;
+            if (entries.Count == 0) entries.EnsureCapacity(source.entries.Count);
+            if (cells.Count == 0)
+            {
+                cells.EnsureCapacity(source.cells.Count);
+                if (cellSlots.Capacity < source.cellSlots.Count) cellSlots.Capacity = source.cellSlots.Count;
+            }
+            if (entrySlots.Capacity < source.entries.Count) entrySlots.Capacity = source.entries.Count;
+        }
+
+        internal void StopSizing() => sizing = null;
+
         internal void TakeSpareCells(PresentationGrid retired)
         {
+            sizing = null;
             if (ReferenceEquals(retired, this)) return;
             int peak = retired.entries.Count + retired.pool.Count;
-            retired.Clear();
             foreach (var pair in retired.cells)
-                if (!cells.ContainsKey(pair.Key)) cells.Add(pair.Key, pair.Value);
-            retired.cells.Clear();
+            {
+                var slots = retired.cellSlots[pair.Value];
+                if (slots.Count == 0 || cells.ContainsKey(pair.Key)) continue;
+                cells.Add(pair.Key, cellSlots.Count);
+                cellSlots.Add(slots);
+            }
+            retired.Clear();
             while (retired.pool.Count > 0 && entries.Count + pool.Count < peak)
             {
                 var entry = retired.pool.Pop();
                 entry.Stamp = 0;
+                entry.Index = entrySlots.Count;
+                entrySlots.Add(entry);
                 pool.Push(entry);
             }
+            retired.cells.Clear();
+            retired.cellSlots.Clear();
+            retired.entrySlots.Clear();
             retired.pool.Clear();
         }
 
@@ -73,7 +108,7 @@ namespace PersistentCity.Core
         {
             foreach (var entry in entries.Values) Recycle(entry);
             entries.Clear(); unplaced.Clear(); slotCount = 0;
-            foreach (var list in cells.Values) list.Clear();
+            foreach (var list in cellSlots) list.Clear();
         }
 
         internal void File(CitizenState c)
@@ -86,7 +121,12 @@ namespace PersistentCity.Core
             }
             else
             {
-                entry = pool.Count != 0 ? pool.Pop() : new Entry();
+                if (pool.Count != 0) entry = pool.Pop();
+                else
+                {
+                    entry = new Entry { Index = entrySlots.Count };
+                    entrySlots.Add(entry);
+                }
                 entry.Citizen = c;
                 entries.Add(c, entry);
             }
@@ -115,20 +155,20 @@ namespace PersistentCity.Core
             if ((double)(x1 - x0 + 1) * (z1 - z0 + 1) > cells.Count) { QueryAll(stamp, output); return output; }
             for (int x = x0; x <= x1; x++)
                 for (int z = z0; z <= z1; z++)
-                    if (cells.TryGetValue(Key(x, z), out var list)) Collect(list, stamp, output);
+                    if (cells.TryGetValue(Key(x, z), out int cell)) Collect(cellSlots[cell], stamp, output);
             return output;
         }
 
         private void QueryAll(int stamp, List<IPersonView> output)
         {
-            foreach (var list in cells.Values) Collect(list, stamp, output);
+            foreach (int cell in cells.Values) Collect(cellSlots[cell], stamp, output);
         }
 
-        private static void Collect(List<Slot> list, int stamp, List<IPersonView> output)
+        private void Collect(List<Slot> list, int stamp, List<IPersonView> output)
         {
             for (int i = 0; i < list.Count; i++)
             {
-                var entry = list[i].Entry;
+                var entry = entrySlots[list[i].Entry];
                 if (entry.Stamp == stamp) continue;
                 entry.Stamp = stamp;
                 output.Add(entry.Citizen);
@@ -157,29 +197,29 @@ namespace PersistentCity.Core
                 var c = members[i];
                 if (!entries.TryGetValue(c, out var entry) || !ReferenceEquals(entry.Citizen, c)) return false;
                 Anchor kind = AnchorOf(c, out Position at);
-                if (!Same(entry, kind, c, at) || entry.Cells.Count != entry.Slots.Count || entry.Cells.Count != entry.Lists.Count) return false;
+                if (!Same(entry, kind, c, at) || !ReferenceEquals(entrySlots[entry.Index], entry)) return false;
                 bool placed = entry.UnplacedAt < 0;
                 if (recompute && placed != (kind != Anchor.Unplaced && CellsOf(kind, c.Journey, at, expected))) return false;
                 if (!placed)
                 {
-                    if (entry.Cells.Count != 0 || entry.UnplacedAt < 0 || entry.UnplacedAt >= unplaced.Count
+                    if (entry.Registrations.Count != 0 || entry.UnplacedAt < 0 || entry.UnplacedAt >= unplaced.Count
                         || !ReferenceEquals(unplaced[entry.UnplacedAt], entry)) return false;
                     unplacedSeen++;
                     continue;
                 }
-                if (kind == Anchor.Unplaced || entry.Cells.Count == 0 || recompute && expected.Count != entry.Cells.Count) return false;
-                for (int k = 0; k < entry.Cells.Count; k++)
+                if (kind == Anchor.Unplaced || entry.Registrations.Count == 0 || recompute && expected.Count != entry.Registrations.Count) return false;
+                for (int k = 0; k < entry.Registrations.Count; k++)
                 {
-                    if (recompute && (expected[k] != entry.Cells[k] || !cells.TryGetValue(expected[k], out var keyed)
-                        || !ReferenceEquals(keyed, entry.Lists[k]))) return false;
-                    var list = entry.Lists[k];
-                    int slot = entry.Slots[k];
-                    if (slot < 0 || slot >= list.Count || !ReferenceEquals(list[slot].Entry, entry) || list[slot].K != k) return false;
+                    var registration = entry.Registrations[k];
+                    if (recompute && (!cells.TryGetValue(expected[k], out int cell) || cell != registration.Cell)) return false;
+                    var list = cellSlots[registration.Cell];
+                    int slot = registration.Slot;
+                    if (slot < 0 || slot >= list.Count || list[slot].Entry != entry.Index || list[slot].Registration != k) return false;
                 }
-                registered += entry.Cells.Count;
+                registered += entry.Registrations.Count;
             }
             int stored = 0;
-            foreach (var list in cells.Values) stored += list.Count;
+            foreach (var list in cellSlots) stored += list.Count;
             return unplacedSeen == unplaced.Count && registered == slotCount && stored == slotCount;
         }
 
@@ -207,18 +247,43 @@ namespace PersistentCity.Core
             entry.Kind = kind;
             entry.Journey = kind == Anchor.Route ? journey : null;
             entry.At = at;
-            if (kind == Anchor.Unplaced || !CellsOf(kind, journey, at, entry.Cells))
-            { entry.Cells.Clear(); entry.UnplacedAt = unplaced.Count; unplaced.Add(entry); return; }
-            for (int k = 0; k < entry.Cells.Count; k++)
+            long[]? cached = null;
+            if (kind == Anchor.Unplaced || !RegisteredCells(kind, journey, at, out cached))
+            { entry.UnplacedAt = unplaced.Count; unplaced.Add(entry); return; }
+            int count = cached?.Length ?? routeCells.Count;
+            var registrations = entry.Registrations;
+            var sized = sizing;
+            if (sized != null && registrations.Capacity < count)
+                registrations.Capacity = sized.entries.TryGetValue(entry.Citizen, out var previous) ? Math.Max(count, previous.Registrations.Count) : count;
+            for (int k = 0; k < count; k++)
             {
-                long key = entry.Cells[k];
-                if (!cells.TryGetValue(key, out var list)) cells.Add(key, list = new List<Slot>());
-                entry.Lists.Add(list);
-                entry.Slots.Add(list.Count);
-                list.Add(new Slot(entry, k));
+                long key = cached != null ? cached[k] : routeCells[k];
+                if (!cells.TryGetValue(key, out int cell))
+                {
+                    cell = cellSlots.Count;
+                    cells.Add(key, cell);
+                    cellSlots.Add(NewCellList(sized, key));
+                }
+                var list = cellSlots[cell];
+                registrations.Add(new Registration(cell, list.Count));
+                list.Add(new Slot(entry.Index, k));
             }
-            slotCount += entry.Cells.Count;
+            slotCount += count;
         }
+
+        private bool RegisteredCells(Anchor kind, Route? journey, Position at, out long[]? cached)
+        {
+            cached = kind == Anchor.Route && journey!.IsCommitted ? journey.PresentationCells : null;
+            if (cached == null) return CellsOf(kind, journey, at, routeCells);
+            journey!.PresentationCells = null;
+            if (!ReferenceEquals(cached, Unplaceable)) return true;
+            cached = null;
+            return false;
+        }
+
+        private static List<Slot> NewCellList(PresentationGrid? sized, long key)
+            => sized != null && sized.cells.TryGetValue(key, out int old) && sized.cellSlots[old].Count > 0
+                ? new List<Slot>(sized.cellSlots[old].Count) : new List<Slot>();
 
         private void Unregister(Entry entry)
         {
@@ -228,26 +293,27 @@ namespace PersistentCity.Core
                 if (at != last) { var moved = unplaced[last]; unplaced[at] = moved; moved.UnplacedAt = at; }
                 unplaced.RemoveAt(last);
             }
-            for (int k = 0; k < entry.Cells.Count; k++)
+            for (int k = 0; k < entry.Registrations.Count; k++)
             {
-                var list = entry.Lists[k];
-                int at = entry.Slots[k], last = list.Count - 1;
+                var registration = entry.Registrations[k];
+                var list = cellSlots[registration.Cell];
+                int at = registration.Slot, last = list.Count - 1;
                 if (at != last)
                 {
                     var moved = list[last];
                     list[at] = moved;
-                    moved.Entry.Slots[moved.K] = at;
+                    entrySlots[moved.Entry].Registrations[moved.Registration] = new Registration(registration.Cell, at);
                 }
                 list.RemoveAt(last);
             }
-            slotCount -= entry.Cells.Count;
-            entry.Cells.Clear(); entry.Slots.Clear(); entry.Lists.Clear();
+            slotCount -= entry.Registrations.Count;
+            entry.Registrations.Clear();
             entry.Kind = Anchor.None; entry.Journey = null; entry.UnplacedAt = -1;
         }
 
         private void Recycle(Entry entry)
         {
-            entry.Cells.Clear(); entry.Slots.Clear(); entry.Lists.Clear();
+            entry.Registrations.Clear();
             entry.Citizen = null!; entry.Kind = Anchor.None; entry.Journey = null; entry.UnplacedAt = -1;
             pool.Push(entry);
         }

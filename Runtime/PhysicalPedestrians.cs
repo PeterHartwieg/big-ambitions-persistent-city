@@ -102,6 +102,7 @@ namespace PersistentCity.Runtime
         internal static void DestroyReserve()
         {
             foreach (var kept in reserve) if (kept.Character != null) DestroyCharacter(kept.Character);
+            BodyMerge.PruneReleased();
             if (reserve.Count > 0) BlendshapeBake.Clear();
             reserve.Clear(); reserveParent = null;
         }

@@ -4,11 +4,15 @@ using System.Linq;
 using PersistentCity.Core;
 using PersistentCity.Persistence;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace PersistentCity.Tests;
 
 public sealed class ThroughTrafficTests
 {
+    private readonly ITestOutputHelper output;
+    public ThroughTrafficTests(ITestOutputHelper output) { this.output = output; }
+
     private const string Native = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
 
     private static TrafficNetwork Network()
@@ -245,6 +249,24 @@ public sealed class ThroughTrafficTests
         PerfGate.Under(build, 30, "GR-8 map edges, " + network.Links.Count + " sections");
         PerfGate.Under(worst, 30, "GR-8 one entry's paths, " + network.Links.Count + " sections");
         Console.WriteLine($"GR-8 perf: {network.Links.Count} sections, edges {build:0.00} ms, worst first path search {worst:0.00} ms");
+    }
+
+    [Fact]
+    public void AFullSizedNetworkKeepsOnlyCompactTreesForTheEntriesItRoutes()
+    {
+        var network = Grid(59);
+        var routes = new ThroughTrafficRoutes(network);
+        Assert.True(network.Links.Count > 13_000);
+        _ = routes.Route(routes.Entries[0], 7);
+        long started = GC.GetAllocatedBytesForCurrentThread();
+        for (int i = 0; i < 96; i++) _ = routes.Route(routes.Entries[i], 7);
+        long allocated = GC.GetAllocatedBytesForCurrentThread() - started;
+        var heap = new RetainedHeap();
+        heap.Exclude(network);
+        heap.Add("through routes", routes);
+        output.WriteLine($"{network.Links.Count} links, 96 trees: {allocated} B (.NET), {heap.Bytes} retained B, {heap.Objects} objects, {heap.ScannedBytes} scanned B, {heap.References} references (Mono layout model)");
+        Assert.True(heap.Bytes < 4_400_000, heap.Bytes.ToString());
+        Assert.True(allocated < 3_700_000, allocated.ToString());
     }
 
     [Fact]

@@ -19,9 +19,11 @@ namespace PersistentCity.Core
     public sealed class ThroughTrafficRoutes
     {
         public const double EdgeBand = 0.1, MinimumEdgeMetres = 30;
+        private const int MinimumPackedLinks = 4096;
         private readonly TrafficNetwork network;
         private readonly List<int>[] successors;
-        private readonly Dictionary<int, (int[] Previous, int[] Reachable)> routes = new Dictionary<int, (int[] Previous, int[] Reachable)>();
+        private readonly System.Collections.Concurrent.ConcurrentDictionary<int, PathTree> routes =
+            new System.Collections.Concurrent.ConcurrentDictionary<int, PathTree>();
         public IReadOnlyList<int> Entries { get; }
         public IReadOnlyList<int> Exits { get; }
 
@@ -35,10 +37,10 @@ namespace PersistentCity.Core
             double minX = double.PositiveInfinity, maxX = double.NegativeInfinity, minZ = double.PositiveInfinity, maxZ = double.NegativeInfinity;
             for (int id = 0; id < count; id++)
             {
-                var nodes = network.NativeNodes(id);
+                var nodes = network.NativeNodeSpan(id);
                 if (!startsAt.TryGetValue(nodes[0], out var list)) startsAt.Add(nodes[0], list = new List<int>());
                 list.Add(id);
-                endsAt.Add(nodes[nodes.Count - 1]);
+                endsAt.Add(nodes[nodes.Length - 1]);
                 foreach (int node in nodes)
                 {
                     var at = network.NodePosition(node);
@@ -54,8 +56,8 @@ namespace PersistentCity.Core
             var entries = new List<int>(); var exits = new List<int>();
             for (int id = 0; id < count; id++)
             {
-                var nodes = network.NativeNodes(id);
-                int first = nodes[0], last = nodes[nodes.Count - 1];
+                var nodes = network.NativeNodeSpan(id);
+                int first = nodes[0], last = nodes[nodes.Length - 1];
                 successors[id] = startsAt.TryGetValue(last, out var next) ? next : new List<int>();
                 if (!endsAt.Contains(first) && OnEdge(first)) entries.Add(id);
                 if (!startsAt.ContainsKey(last) && OnEdge(last)) exits.Add(id);
@@ -66,14 +68,55 @@ namespace PersistentCity.Core
         public bool IsEntry(int linkId) => ((List<int>)Entries).BinarySearch(linkId) >= 0;
         public bool IsExit(int linkId) => ((List<int>)Exits).BinarySearch(linkId) >= 0;
 
-        private readonly System.Collections.Concurrent.ConcurrentDictionary<int, (int[] Previous, int[] Reachable)> ready
-            = new System.Collections.Concurrent.ConcurrentDictionary<int, (int[] Previous, int[] Reachable)>();
         private readonly Dictionary<int, System.Threading.Tasks.Task> requested = new Dictionary<int, System.Threading.Tasks.Task>();
         internal static System.Threading.ManualResetEventSlim? HoldPrewarm;
         internal int MainThreadTrees { get; private set; }
-        private double[]? cost;
-        private readonly List<(double Cost, int Link)> open = new List<(double Cost, int Link)>();
-        public int Prewarmed => ready.Count;
+        private PathScratch? mainScratch;
+        public int Prewarmed
+        {
+            get
+            {
+                int count = 0;
+                foreach (int entry in requested.Keys) if (routes.ContainsKey(entry)) count++;
+                return count;
+            }
+        }
+
+        private sealed class PathScratch
+        {
+            internal readonly double[] Cost;
+            internal readonly int[]? PackingBuffer;
+            internal readonly List<(double Cost, int Link)> Open = new List<(double Cost, int Link)>();
+            internal readonly List<int> Reachable = new List<int>();
+
+            internal PathScratch(int count)
+            {
+                Cost = new double[count];
+                if (count >= MinimumPackedLinks && count <= ushort.MaxValue) PackingBuffer = new int[count];
+            }
+        }
+
+        private readonly struct PathTree
+        {
+            private readonly ushort[]? narrow;
+            private readonly int[]? wide;
+            internal readonly int[] Reachable;
+
+            internal PathTree(PathScratch scratch, int[] previous)
+            {
+                Reachable = scratch.Reachable.ToArray();
+                narrow = null; wide = null;
+                if (Reachable.Length == 0) return;
+                if (scratch.PackingBuffer != null)
+                {
+                    narrow = new ushort[previous.Length];
+                    for (int i = 0; i < previous.Length; i++) narrow[i] = (ushort)(previous[i] + 1);
+                }
+                else wide = previous;
+            }
+
+            internal int Previous(int link) => narrow != null ? narrow[link] - 1 : wide![link];
+        }
 
         public void Prewarm(List<int> entries)
         {
@@ -85,47 +128,50 @@ namespace PersistentCity.Core
             var work = System.Threading.Tasks.Task.Run(() =>
             {
                 hold?.Wait();
-                var scratch = new double[network.Links.Count];
-                var heap = new List<(double Cost, int Link)>();
-                foreach (int entry in missing) ready.TryAdd(entry, Paths(entry, scratch, heap));
+                var scratch = new PathScratch(network.Links.Count);
+                foreach (int entry in missing)
+                    if (!routes.ContainsKey(entry)) routes.TryAdd(entry, Paths(entry, scratch));
             });
             foreach (int entry in missing) requested.Add(entry, work);
         }
 
-        public bool Ready(int entry) => routes.ContainsKey(entry) || ready.ContainsKey(entry)
+        public bool Ready(int entry) => routes.ContainsKey(entry)
             || !requested.TryGetValue(entry, out var work) || work.IsCompleted;
 
-        private (int[] Previous, int[] Reachable) Tree(int entry)
+        private PathTree Tree(int entry)
         {
-            if (ready.TryRemove(entry, out var tree)) return tree;
+            requested.Remove(entry);
+            if (routes.TryGetValue(entry, out var tree)) return tree;
             MainThreadTrees++;
-            return Paths(entry, cost ??= new double[network.Links.Count], open);
+            var calculated = Paths(entry, mainScratch ??= new PathScratch(network.Links.Count));
+            if (!routes.TryAdd(entry, calculated)) return routes[entry];
+            return calculated;
         }
 
         public List<TrafficRouteLeg>? Route(int entry, uint draw)
         {
-            if (!routes.TryGetValue(entry, out var tree)) routes.Add(entry, tree = Tree(entry));
+            var tree = Tree(entry);
             if (tree.Reachable.Length == 0) return null;
-            var chain = new List<int>();
-            for (int link = tree.Reachable[(int)(draw % (uint)tree.Reachable.Length)]; link != -1; link = tree.Previous[link]) chain.Add(link);
-            chain.Reverse();
-            var legs = new List<TrafficRouteLeg>(chain.Count);
+            int exit = tree.Reachable[(int)(draw % (uint)tree.Reachable.Length)];
+            int count = 0;
+            for (int link = exit; link != -1; link = tree.Previous(link)) count++;
+            var legs = new List<TrafficRouteLeg>(count);
+            for (int link = exit; link != -1; link = tree.Previous(link)) legs.Add(new TrafficRouteLeg { LinkId = link });
+            legs.Reverse();
             double nominal = 0;
-            foreach (int link in chain)
+            foreach (var leg in legs)
             {
-                double minutes = network.Links[link].FreeFlowMinutes;
-                legs.Add(new TrafficRouteLeg { LinkId = link, StartNominalMinutes = nominal, EndNominalMinutes = nominal + minutes,
-                    FreeFlowMinutes = minutes, StartLinkFraction = 0, EndLinkFraction = 1 });
+                double minutes = network.Links[leg.LinkId].FreeFlowMinutes;
+                leg.StartNominalMinutes = nominal; leg.EndNominalMinutes = nominal + minutes; leg.FreeFlowMinutes = minutes;
                 nominal += minutes;
             }
             return legs;
         }
 
-        private (int[] Previous, int[] Reachable) Paths(int entry, double[] cost, List<(double Cost, int Link)> open)
+        private PathTree Paths(int entry, PathScratch scratch)
         {
-            int count = network.Links.Count;
-            var previous = new int[count];
-            for (int i = 0; i < count; i++) { cost[i] = double.PositiveInfinity; previous[i] = -1; }
+            var cost = scratch.Cost; var previous = scratch.PackingBuffer ?? new int[cost.Length]; var open = scratch.Open;
+            for (int i = 0; i < cost.Length; i++) { cost[i] = double.PositiveInfinity; previous[i] = -1; }
             cost[entry] = network.Links[entry].FreeFlowMinutes;
             open.Clear();
             Push(open, (cost[entry], entry));
@@ -140,10 +186,11 @@ namespace PersistentCity.Core
                     cost[next] = through; previous[next] = link; Push(open, (through, next));
                 }
             }
-            var reachable = new List<int>();
+            var reachable = scratch.Reachable;
+            reachable.Clear();
             foreach (int exit in Exits)
                 if (exit != entry && !double.IsPositiveInfinity(cost[exit])) reachable.Add(exit);
-            return (previous, reachable.ToArray());
+            return new PathTree(scratch, previous);
         }
 
         private static bool Before((double Cost, int Link) a, (double Cost, int Link) b) => a.Cost < b.Cost || a.Cost == b.Cost && a.Link < b.Link;
@@ -285,7 +332,7 @@ namespace PersistentCity.Core
                         closed |= shut;
                     }
                 if (closed) { state.SkippedClosed++; continue; }
-                traffic!.Enqueue(entry.Id, route);
+                traffic!.EnqueueOwned(entry.Id, route);
                 state.InFlight.Add(entry.Id); state.Generated++;
             }
             if (state.Cursor == state.Pending.Count) { state.Pending.Clear(); state.Cursor = 0; }

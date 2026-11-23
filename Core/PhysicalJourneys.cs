@@ -434,11 +434,22 @@ namespace PersistentCity.Core
 
         public ActiveJourneyIndex(Func<string, Position?>? placePosition = null) => grid = new PresentationGrid(placePosition);
 
+        internal void SizeFrom(ActiveJourneyIndex source)
+        {
+            if (ReferenceEquals(source, this)) return;
+            if (eligible.Count == 0 && eligible.Capacity < source.eligible.Count) eligible.Capacity = source.eligible.Count;
+            if (withheld.Count == 0 && withheld.Capacity < source.withheld.Count) withheld.Capacity = source.withheld.Count;
+            if (positions.Count == 0) positions.EnsureCapacity(source.positions.Count);
+            grid.SizeFrom(source.grid);
+        }
+
+        internal void StopSizing() => grid.StopSizing();
+
         internal void TakeSpareCells(ActiveJourneyIndex retired)
         {
             if (ReferenceEquals(retired, this)) return;
-            retired.Clear();
             grid.TakeSpareCells(retired.grid);
+            retired.eligible.Clear(); retired.withheld.Clear(); retired.positions.Clear();
         }
 
         public static bool Member(CitizenState c)

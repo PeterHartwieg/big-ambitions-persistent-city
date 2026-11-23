@@ -22,7 +22,7 @@ namespace PersistentCity.Core
             internal Queue<string> Sources => sources ?? NoSources;
             internal Queue<string> OwnSources => sources ??= new Queue<string>();
             internal void ClearSources() => sources?.Clear();
-            internal readonly SortedIds Incoming = new SortedIds();
+            internal SortedIds Incoming;
             internal TrafficEventState Event => linkEvent ??= new TrafficEventState { LinkId = Definition.Id };
             internal int HeapIndex = -1;
             internal bool Seen;
@@ -125,8 +125,8 @@ namespace PersistentCity.Core
         }
         private readonly Dictionary<int, Link> links;
         private readonly List<Link> orderedLinks;
-        private readonly SortedIds activeLinks = new SortedIds();
-        private readonly SortedIds closedLinks = new SortedIds();
+        private SortedIds activeLinks;
+        private SortedIds closedLinks;
         private readonly Dictionary<string, TrafficVehicleState> vehicles;
         private readonly EventHeap events = new EventHeap();
         private readonly Stack<LinkedListNode<TrafficVehicleState>> spareNodes = new Stack<LinkedListNode<TrafficVehicleState>>();
@@ -234,10 +234,16 @@ namespace PersistentCity.Core
         }
 
         public void Enqueue(string vehicleId, IReadOnlyList<TrafficRouteLeg> route)
+            => Enqueue(vehicleId, route, null);
+
+        internal void EnqueueOwned(string vehicleId, List<TrafficRouteLeg> ownedRoute)
+            => Enqueue(vehicleId, ownedRoute, ownedRoute);
+
+        private void Enqueue(string vehicleId, IReadOnlyList<TrafficRouteLeg> route, List<TrafficRouteLeg>? ownedRoute)
         {
             if (string.IsNullOrWhiteSpace(vehicleId)) throw new ArgumentException("A stable vehicle ID is required.", nameof(vehicleId));
             if (vehicles.ContainsKey(vehicleId)) throw new ArgumentException("Vehicle already owns traffic state.", nameof(vehicleId));
-            List<TrafficRouteLeg> saved = ValidateAndCopyRoute(route);
+            List<TrafficRouteLeg> saved = ValidateRoute(route, copy: ownedRoute == null) ?? ownedRoute!;
             var vehicle = new TrafficVehicleState
             {
                 VehicleId = vehicleId, Route = saved, Order = NextOrder(ref nextVehicleOrder), EnqueuedAt = Clock,
@@ -985,7 +991,8 @@ namespace PersistentCity.Core
             return CaptureSteps(linksPerStep, true, shareDefinitions: true);
         }
 
-        private IEnumerator<TrafficKernelState?> CaptureSteps(int linksPerStep, bool withLinks, bool shareDefinitions = false)
+        private IEnumerator<TrafficKernelState?> CaptureSteps(int linksPerStep, bool withLinks, bool shareDefinitions = false,
+            Func<string, bool>? exclude = null, bool trimRoutes = false)
         {
             int work = 0;
             var state = new TrafficKernelState
@@ -1009,7 +1016,15 @@ namespace PersistentCity.Core
                 });
                 if (++work % linksPerStep == 0) yield return null;
             }
-            foreach (TrafficVehicleState vehicle in vehicles.Values.OrderBy(v => v.Order)) state.Vehicles.Add(CopyVehicle(vehicle));
+            foreach (TrafficVehicleState vehicle in vehicles.Values.OrderBy(v => v.Order))
+            {
+                if (exclude != null && exclude(vehicle.VehicleId)) continue;
+                int start = trimRoutes ? Math.Max(0, vehicle.RouteIndex) : 0;
+                var copy = CopyVehicle(vehicle, CopyRoute(vehicle.Route, start));
+                copy.RouteIndex -= start;
+                state.Vehicles.Add(copy);
+                if (!withLinks && ++work % Math.Min(linksPerStep, 8) == 0) yield return null;
+            }
             var scheduled = new List<TrafficEventState>(events.Count);
             events.CopyTo(scheduled);
             scheduled.Sort(EventOrder);
@@ -1074,14 +1089,14 @@ namespace PersistentCity.Core
         {
             int work = 0;
             TrafficKernelState? state = null;
-            var capture = CaptureSteps(linksPerStep, !kernelResult, kernelResult);
+            var capture = CaptureSteps(linksPerStep, !kernelResult, kernelResult, kernelResult ? exclude : null);
             while (capture.MoveNext())
             {
                 if (capture.Current != null) { state = capture.Current; break; }
                 yield return null;
             }
             if (state == null) throw new InvalidOperationException("Traffic capture ended without a result.");
-            if (state.Vehicles.RemoveAll(v => exclude(v.VehicleId)) == 0) { yield return state; yield break; }
+            if (!kernelResult && state.Vehicles.RemoveAll(v => exclude(v.VehicleId)) == 0) { yield return state; yield break; }
             var rebased = new Dictionary<string, double>(StringComparer.Ordinal);
             foreach (Link link in orderedLinks)
             {
@@ -1117,7 +1132,7 @@ namespace PersistentCity.Core
                 if (++work % linksPerStep == 0) yield return null;
             }
             var restore = kernelResult
-                ? RestoreSteps(state, true, linksPerStep, adoptDefinitions: true, linkSource: this, excludeFromSource: exclude)
+                ? RestoreSteps(state, true, linksPerStep, adoptDefinitions: true, linkSource: this, excludeFromSource: exclude, adoptVehicles: true)
                 : RestoreSteps(state, true, linksPerStep, adoptDefinitions: true);
             while (restore.MoveNext())
             {
@@ -1133,7 +1148,7 @@ namespace PersistentCity.Core
         private static TrafficKernel Restore(TrafficKernelState state, bool rebuildWakeups) => RunToEnd(RestoreSteps(state, rebuildWakeups, int.MaxValue));
 
         private static IEnumerator<TrafficKernel?> RestoreSteps(TrafficKernelState state, bool rebuildWakeups, int linksPerStep, bool adoptDefinitions = false,
-            TrafficKernel? linkSource = null, double dischargeFactor = 1, Func<string, bool>? excludeFromSource = null)
+            TrafficKernel? linkSource = null, double dischargeFactor = 1, Func<string, bool>? excludeFromSource = null, bool adoptVehicles = false)
         {
             if (linksPerStep < 1) throw new ArgumentOutOfRangeException(nameof(linksPerStep));
             int work = 0;
@@ -1161,7 +1176,7 @@ namespace PersistentCity.Core
                 if (vehicle == null || string.IsNullOrWhiteSpace(vehicle.VehicleId) || vehicle.Order < 0 ||
                     vehicle.Order >= state.NextVehicleOrder || !orders.Add(vehicle.Order) || kernel.vehicles.ContainsKey(vehicle.VehicleId))
                     throw new ArgumentException("Invalid traffic vehicle identity/order.", nameof(state));
-                List<TrafficRouteLeg> route = kernel.ValidateAndCopyRoute(vehicle.Route);
+                List<TrafficRouteLeg> route = kernel.ValidateRoute(vehicle.Route, copy: !adoptVehicles) ?? vehicle.Route;
                 RequireTime(vehicle.EnqueuedAt, nameof(state));
                 RequireTime(vehicle.EnteredAt, nameof(state));
                 RequireTime(vehicle.ReadyAt, nameof(state));
@@ -1187,8 +1202,8 @@ namespace PersistentCity.Core
                     if (!Finite(motionReady) || vehicle.ReadyAt < motionReady - tolerance)
                         throw new ArgumentException("Traffic readiness precedes its committed motion schedule.", nameof(state));
                 }
-                TrafficVehicleState copy = CopyVehicle(vehicle, route);
-                kernel.vehicles.Add(vehicle.VehicleId, copy);
+                kernel.vehicles.Add(vehicle.VehicleId, adoptVehicles ? vehicle : CopyVehicle(vehicle, route));
+                if (adoptVehicles && ++work % Math.Min(linksPerStep, 8) == 0) yield return null;
             }
             var seenLinks = linkSource == null ? new HashSet<int>(state.Links.Count) : null;
             int seenCount = 0;
@@ -1332,14 +1347,27 @@ namespace PersistentCity.Core
         {
             if (!Finite(factor) || factor <= 0) throw new ArgumentOutOfRangeException(nameof(factor));
             if (linksPerStep < 1) throw new ArgumentOutOfRangeException(nameof(linksPerStep));
-            return RescaleTimeSteps(factor, mapNominalMinutes, linksPerStep);
+            return Pinned(RescaleTimeSteps(factor, mapNominalMinutes, linksPerStep));
+        }
+
+        private IEnumerator<TrafficKernel?> Pinned(IEnumerator<TrafficKernel?> steps)
+        {
+            long revision = Revision;
+            while (true)
+            {
+                if (Revision != revision) throw new InvalidOperationException("Traffic changed during a staged rescale; start it again.");
+                if (!steps.MoveNext()) yield break;
+                var current = steps.Current;
+                yield return current;
+                if (current != null) yield break;
+            }
         }
 
         private IEnumerator<TrafficKernel?> RescaleTimeSteps(double factor, Func<string, double, double>? mapNominalMinutes, int linksPerStep)
         {
             int work = 0;
             TrafficKernelState? state = null;
-            var capture = CaptureSteps(linksPerStep, false);
+            var capture = CaptureSteps(linksPerStep, false, trimRoutes: true);
             while (capture.MoveNext())
             {
                 if (capture.Current != null) { state = capture.Current; break; }
@@ -1362,11 +1390,6 @@ namespace PersistentCity.Core
             }
             foreach (TrafficVehicleState vehicle in state.Vehicles)
             {
-                if (vehicle.RouteIndex > 0)
-                {
-                    vehicle.Route.RemoveRange(0, vehicle.RouteIndex);
-                    vehicle.RouteIndex = 0;
-                }
                 int currentIndex = vehicle.RouteIndex;
                 bool active = currentIndex >= 0 && !vehicle.Completed;
                 double actual = Snapshot(vehicles[vehicle.VehicleId]).NominalMinutes;
@@ -1412,9 +1435,10 @@ namespace PersistentCity.Core
                     double motionReady = vehicle.MotionStartedAt + (1 - vehicle.MotionStartFraction) * current.FreeFlowMinutes;
                     vehicle.ReadyAt = Math.Max(vehicle.ReadyAt, motionReady);
                 }
+                if (++work % Math.Min(linksPerStep, 8) == 0) yield return null;
             }
             foreach (TrafficEventState item in state.Events) item.At = Clock + (item.At - Clock) * factor;
-            var restore = RestoreSteps(state, true, linksPerStep, adoptDefinitions: true, linkSource: this, dischargeFactor: factor);
+            var restore = RestoreSteps(state, true, linksPerStep, adoptDefinitions: true, linkSource: this, dischargeFactor: factor, adoptVehicles: true);
             while (restore.MoveNext())
             {
                 if (restore.Current != null) { yield return restore.Current; yield break; }
@@ -1470,27 +1494,30 @@ namespace PersistentCity.Core
             ? value : throw new KeyNotFoundException("Unknown traffic vehicle: " + id);
         private Link FindLink(int id) => links.TryGetValue(id, out Link? value)
             ? value : throw new KeyNotFoundException("Unknown traffic link: " + id);
-        private List<TrafficRouteLeg> ValidateAndCopyRoute(IReadOnlyList<TrafficRouteLeg> route)
+        private List<TrafficRouteLeg>? ValidateRoute(IReadOnlyList<TrafficRouteLeg> route, bool copy)
         {
             if (route == null || route.Count == 0) throw new ArgumentException("Traffic needs a committed route.", nameof(route));
-            var copy = new List<TrafficRouteLeg>(route.Count);
+            var result = copy ? new List<TrafficRouteLeg>(route.Count) : null;
             double previous = 0;
             int previousLink = -1;
-            foreach (TrafficRouteLeg leg in route)
+            for (int i = 0; i < route.Count; i++)
             {
+                var leg = route[i];
                 if (leg == null || !links.ContainsKey(leg.LinkId) || !Finite(leg.StartNominalMinutes) || !Finite(leg.EndNominalMinutes) ||
                     leg.StartNominalMinutes < previous || leg.EndNominalMinutes <= leg.StartNominalMinutes || leg.LinkId == previousLink ||
                     !Finite(leg.FreeFlowMinutes) || leg.FreeFlowMinutes < 0 ||
                     !Finite(leg.StartLinkFraction) || !Finite(leg.EndLinkFraction) || leg.StartLinkFraction < 0 ||
                     leg.EndLinkFraction > 1 || leg.StartLinkFraction >= leg.EndLinkFraction)
                     throw new ArgumentException("Invalid traffic route geometry/link.", nameof(route));
-                copy.Add(new TrafficRouteLeg { LinkId = leg.LinkId, StartNominalMinutes = leg.StartNominalMinutes, EndNominalMinutes = leg.EndNominalMinutes,
-                    FreeFlowMinutes = leg.FreeFlowMinutes > 0 ? leg.FreeFlowMinutes : leg.EndNominalMinutes - leg.StartNominalMinutes,
-                    StartLinkFraction = leg.StartLinkFraction, EndLinkFraction = leg.EndLinkFraction });
+                double duration = leg.FreeFlowMinutes > 0 ? leg.FreeFlowMinutes : leg.EndNominalMinutes - leg.StartNominalMinutes;
+                if (result != null)
+                    result.Add(new TrafficRouteLeg { LinkId = leg.LinkId, StartNominalMinutes = leg.StartNominalMinutes, EndNominalMinutes = leg.EndNominalMinutes,
+                        FreeFlowMinutes = duration, StartLinkFraction = leg.StartLinkFraction, EndLinkFraction = leg.EndLinkFraction });
+                else leg.FreeFlowMinutes = duration;
                 previous = leg.EndNominalMinutes;
                 previousLink = leg.LinkId;
             }
-            return copy;
+            return result;
         }
         private static void ValidateDefinition(TrafficLinkDefinition definition)
         {
@@ -1512,15 +1539,18 @@ namespace PersistentCity.Core
                 GreenDurationMinutes = value.Signal.GreenDurationMinutes, PhaseOffsetMinutes = value.Signal.PhaseOffsetMinutes
             }
         };
-        private static List<TrafficRouteLeg> CopyRoute(List<TrafficRouteLeg> route)
+        private static List<TrafficRouteLeg> CopyRoute(List<TrafficRouteLeg> route, int start)
         {
-            var copy = new List<TrafficRouteLeg>(route.Count);
-            foreach (var leg in route)
+            var copy = new List<TrafficRouteLeg>(route.Count - start);
+            for (int i = start; i < route.Count; i++)
+            {
+                var leg = route[i];
                 copy.Add(new TrafficRouteLeg { LinkId = leg.LinkId, StartNominalMinutes = leg.StartNominalMinutes, EndNominalMinutes = leg.EndNominalMinutes,
                     FreeFlowMinutes = leg.FreeFlowMinutes, StartLinkFraction = leg.StartLinkFraction, EndLinkFraction = leg.EndLinkFraction });
+            }
             return copy;
         }
-        private static TrafficVehicleState CopyVehicle(TrafficVehicleState value, List<TrafficRouteLeg>? route = null) => new TrafficVehicleState(route ?? CopyRoute(value.Route))
+        private static TrafficVehicleState CopyVehicle(TrafficVehicleState value, List<TrafficRouteLeg> route) => new TrafficVehicleState(route)
         {
             VehicleId = value.VehicleId, Order = value.Order,
             RouteIndex = value.RouteIndex, EnqueuedAt = value.EnqueuedAt, EnteredAt = value.EnteredAt,
