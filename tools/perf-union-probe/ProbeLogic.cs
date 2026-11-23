@@ -388,8 +388,6 @@ namespace PerfUnionProbe
         private readonly Action scan, matched;
         private PatchStateWatch watch;
         private CoverageTracker coverage;
-        private bool measuring;
-        private string error;
 
         public PatchWindowScan(PatchScanCache cache, Action<MethodBase, List<ObservedPatch>> observe, Func<IEnumerable<MethodBase>> allPatched, int attempts)
         {
@@ -403,34 +401,52 @@ namespace PerfUnionProbe
         public long MatchedScans { get; private set; }
         public void ResetMatched() => MatchedScans = 0;
 
-        public bool Run(PatchStateWatch watch, CoverageTracker coverage, bool full, bool measuring, ref string error)
+        public string Error { get; set; } = "";
+        public bool Measuring { get; private set; }
+        public string StopScan { get; private set; } = "none";
+
+        public bool Run(PatchStateWatch watch, CoverageTracker coverage, bool full)
         {
-            this.watch = watch; this.coverage = coverage; this.measuring = measuring; this.error = error;
+            this.watch = watch; this.coverage = coverage;
             try { return PatchStateWatch.Run(watch, full, coverage == null ? matched : scan); }
-            finally { error = this.error; this.watch = null; this.coverage = null; this.error = null; }
+            finally { this.watch = null; this.coverage = null; }
         }
 
-        public string Rescan(PatchStateWatch watch, CoverageTracker coverage, bool reference, bool full, bool measuring, ref string error)
+        public string Rescan(PatchStateWatch watch, CoverageTracker coverage, bool reference, bool full)
         {
             if (coverage == null && (!reference || !full && watch == null)) return "none";
             bool ran = false;
-            try { ran = Run(watch, coverage, full, measuring, ref error); } catch { error = FailedError; }
-            if (coverage != null) error = Window.Rescanned(coverage, measuring, error);
+            try { ran = Run(watch, coverage, full); } catch { Error = FailedError; }
+            if (coverage != null) Error = Window.Rescanned(coverage, Measuring, Error);
             return ran ? "full" : "watch-unchanged";
         }
 
-        public KeyValuePair<string, object>[] StatusFields(bool candidate, bool measuring, string error, Func<bool> coverageComplete, string stopScan) => new[]
+        public string Start(PatchStateWatch watch, CoverageTracker coverage, bool reference)
         {
-            new KeyValuePair<string, object>("measuring", measuring), new KeyValuePair<string, object>("error", error ?? ""),
+            Error = ""; StopScan = "none";
+            string startScan = Rescan(watch, coverage, reference, false);
+            Window.Begin(coverage); Measuring = true;
+            return startScan;
+        }
+
+        public void Stop(PatchStateWatch watch, CoverageTracker coverage, bool reference, bool explicitStop)
+        {
+            if (explicitStop) StopScan = Rescan(watch, coverage, reference, false);
+            Measuring = false;
+        }
+
+        public KeyValuePair<string, object>[] StatusFields(bool candidate, Func<bool> coverageComplete) => new[]
+        {
+            new KeyValuePair<string, object>("measuring", Measuring), new KeyValuePair<string, object>("error", Error ?? ""),
             new KeyValuePair<string, object>("coverage_complete", candidate ? (object)coverageComplete() : "n/a"),
             new KeyValuePair<string, object>("patch_set_changed_in_window", candidate ? (object)Window.Changed : "n/a"),
-            new KeyValuePair<string, object>("stop_scan", stopScan),
+            new KeyValuePair<string, object>("stop_scan", StopScan),
         };
 
         private List<ObservedPatch> Observe()
         {
             scanned.Clear();
-            if (watch?.Scanning != null) error = Window.Scanned(Cache, watch, observe, scanned, attempts, measuring, error);
+            if (watch?.Scanning != null) Error = Window.Scanned(Cache, watch, observe, scanned, attempts, Measuring, Error);
             else foreach (var target in allPatched()) observe(target, scanned);
             return scanned;
         }

@@ -1257,36 +1257,32 @@ internal static class Program
             Set(removing, unpatchedState, unpatched);
         }
         var scanner = new PatchWindowScan(cache, ReadThenRemove, () => targets, 4);
-        string probeError = "";
-        string startScan = scanner.Rescan(watch, windowCoverage, false, false, true, ref probeError);
-        scanner.Window.Begin(windowCoverage);
+        string startScan = scanner.Start(watch, windowCoverage, false);
         Set(removing, PatchState("realliveoverhaul", gameModule, "someone.else", pcModule),
             new[] { unpatched[0], new ObservedPatch { Owner = "someone.else", Kind = "Postfix", Type = "PersistentCity.Runtime.Late", Method = "Postfix", Target = removingName, PcAssembly = true } });
         removeAfterRead = true;
         long rescansBefore = cache.Rescans;
-        string frameScan = scanner.Rescan(watch, windowCoverage, false, false, true, ref probeError);
-        Check(startScan == "watch-unchanged" && frameScan == "full" && readLate && cache.Rescans == rescansBefore + 1 && !watch.Pending && windowCoverage.Complete,
-            "a PC postfix read and then removed before the state check is retried through the probe's rescan, and the settled scan reports complete coverage (" + (cache.Rescans - rescansBefore) + " rescans)");
-        string stopScan = scanner.Rescan(watch, windowCoverage, false, false, true, ref probeError);
-        var stopStatus = scanner.StatusFields(true, false, probeError, () => windowCoverage.Complete, stopScan).ToDictionary(f => f.Key, f => f.Value);
-        Check(stopScan == "watch-unchanged" && Equals(stopStatus["coverage_complete"], true) && Equals(stopStatus["patch_set_changed_in_window"], true)
-            && Equals(stopStatus["error"], PatchSetWindow.ChangedError) && Equals(stopStatus["stop_scan"], stopScan) && Equals(stopStatus["measuring"], false),
-            "the probe's measure-stop status reports complete coverage and the error " + PatchSetWindow.ChangedError + " (" + stopStatus["error"] + ")");
-        if (stopStatusPath != null) System.IO.File.WriteAllText(stopStatusPath, System.Text.Json.JsonSerializer.Serialize(stopStatus));
+        scanner.Stop(watch, windowCoverage, false, true);
+        string stopJson = System.Text.Json.JsonSerializer.Serialize(scanner.StatusFields(true, () => windowCoverage.Complete).ToDictionary(f => f.Key, f => f.Value));
+        var stopStatus = System.Text.Json.JsonDocument.Parse(stopJson).RootElement;
+        Check(startScan == "watch-unchanged" && scanner.StopScan == "full" && readLate && cache.Rescans == rescansBefore + 1 && !watch.Pending && windowCoverage.Complete,
+            "a PC postfix read and then removed before the state check during measure-stop is retried through the probe's stop rescan, and the settled scan reports complete coverage (" + (cache.Rescans - rescansBefore) + " rescans)");
+        Check(stopStatus.GetProperty("coverage_complete").GetBoolean() && stopStatus.GetProperty("patch_set_changed_in_window").GetBoolean()
+            && stopStatus.GetProperty("error").GetString() == PatchSetWindow.ChangedError && stopStatus.GetProperty("stop_scan").GetString() == "full" && !stopStatus.GetProperty("measuring").GetBoolean(),
+            "the probe's measure-stop response reports complete coverage, measuring false and the error " + PatchSetWindow.ChangedError + " (" + stopStatus.GetProperty("error").GetString() + ")");
+        if (stopStatusPath != null) System.IO.File.WriteAllText(stopStatusPath, stopJson);
         Check(scanner.Window.Note(true, true, "f4b_cross_frame_scope") == "f4b_cross_frame_scope" && scanner.Window.Note(false, true, "") == "",
             "a drift keeps an earlier error and does not set one outside a measured window");
-        scanner.Window.Begin(windowCoverage);
-        string nextError = "";
-        scanner.Rescan(watch, windowCoverage, false, true, true, ref nextError);
-        Check(!scanner.Window.Changed && nextError == "", "the next window starts unchanged");
-        string failedError = "";
-        Check(new PatchWindowScan(cache, (t, into) => throw new InvalidOperationException(), () => targets, 4).Rescan(null, windowCoverage, false, true, true, ref failedError) == "watch-unchanged"
-            && failedError == PatchWindowScan.FailedError, "a scan that throws sets the probe error");
-        string referenceError = "";
+        scanner.Start(watch, windowCoverage, false);
+        scanner.Rescan(watch, windowCoverage, false, true);
+        Check(!scanner.Window.Changed && scanner.Error == "", "the next window starts unchanged");
+        var failing = new PatchWindowScan(cache, (t, into) => throw new InvalidOperationException(), () => targets, 4);
+        failing.Start(null, windowCoverage, false); failing.Error = "";
+        Check(failing.Rescan(null, windowCoverage, false, true) == "watch-unchanged" && failing.Error == PatchWindowScan.FailedError, "a scan that throws sets the probe error");
         int referenceReads = 0;
         var reference = new PatchWindowScan(cache, (t, into) => referenceReads++, () => targets, 4);
-        Check(reference.Rescan(null, null, false, true, true, ref referenceError) == "none" && reference.Rescan(null, null, true, true, true, ref referenceError) == "full"
-            && reference.MatchedScans == 1 && referenceReads == targets.Length && referenceError == "", "a reference probe without a watch reads every patched target once per matched scan, and a candidate probe without coverage does not scan");
+        Check(reference.Rescan(null, null, false, true) == "none" && reference.Rescan(null, null, true, true) == "full"
+            && reference.MatchedScans == 1 && referenceReads == targets.Length && reference.Error == "", "a reference probe without a watch reads every patched target once per matched scan, and a candidate probe without coverage does not scan");
 
         var unfiltered = new PatchScanCache();
         unfiltered.Configure(new[] { "", null });
