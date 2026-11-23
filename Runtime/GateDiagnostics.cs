@@ -16,9 +16,9 @@ namespace PersistentCity.Runtime
             if (failed || current == null || access == null)
             { Debug.LogWarning("[Persistent City] gate status unavailable: no active Persistent City routes or gate snapshot yet."); return; }
             var roads = current.Roads;
-            string state = roads == null ? "none" : roads.SceneMissing ? "missing" : roads.Ready ? "ready" : "building";
+            string state = GateStatusReport.RoadState(roads != null, roads?.Available == true, roads?.Ready == true);
             Debug.Log(GateStatusReport.Format(access.Readings(), Building, roads?.Nodes, state,
-                index => roads?.RoadId(index) ?? -1, source, list, x, z, radius));
+                index => roads?.RoadId(index) ?? -1, index => roads?.ImportsNode(index) == true, source, list, x, z, radius));
         }
 
         private static string Building(FenceDoor door)

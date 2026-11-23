@@ -34,7 +34,7 @@ namespace PersistentCity.Runtime
         }
 
         public static string Format(IReadOnlyList<PublicRoadAccess.GateReading> gates, Func<FenceDoor, string> building,
-            IReadOnlyList<TransportRoadNode>? roads, string roadState, Func<int, int> roadId,
+            IReadOnlyList<TransportRoadNode>? roads, string roadState, Func<int, int> roadId, Func<int, bool> imported,
             PublicRoadAccess.GateShape? source, bool list, double x, double z, double radius)
         {
             var counts = new int[4];
@@ -45,7 +45,7 @@ namespace PersistentCity.Runtime
             text.Append("\nroad_snapshot=").Append(roadState).Append(" nodes=").Append(roads?.Count ?? 0);
             if (!list) return text.ToString();
             bool near = !double.IsNaN(radius);
-            var segments = string.Equals(roadState, "ready", StringComparison.Ordinal) && roads != null ? new RoadSegments(roads) : null;
+            var segments = string.Equals(roadState, "ready", StringComparison.Ordinal) && roads != null ? new RoadSegments(roads, imported) : null;
             var matched = new List<(PublicRoadAccess.GateReading Gate, int Hits, int From, int To)>();
             foreach (var gate in gates)
             {
@@ -74,6 +74,9 @@ namespace PersistentCity.Runtime
             return text.ToString();
         }
 
+        public static string RoadState(bool present, bool available, bool ready)
+            => !present ? "none" : !available ? "missing" : ready ? "ready" : "building";
+
         public static string Name(PublicRoadAccess.GateShape shape) => shape switch
         {
             PublicRoadAccess.GateShape.Collider => "collider",
@@ -91,15 +94,15 @@ namespace PersistentCity.Runtime
             private int[] seen = Array.Empty<int>();
             private int stamp;
 
-            public RoadSegments(IReadOnlyList<TransportRoadNode> roads)
+            public RoadSegments(IReadOnlyList<TransportRoadNode> roads, Func<int, bool> imported)
             {
                 for (int i = 0; i < roads.Count; i++)
                 {
                     var node = roads[i];
-                    if (!Usable(node)) continue;
+                    if (!Usable(node) || !imported(i)) continue;
                     foreach (int next in node.Successors)
                     {
-                        if (next == i || next < 0 || next >= roads.Count || !Usable(roads[next])
+                        if (next == i || next < 0 || next >= roads.Count || !Usable(roads[next]) || !imported(next)
                             || !TrafficNetwork.EdgeLength(Position.Distance(node.Position, roads[next].Position))) continue;
                         int index = segments.Count;
                         var a = node.Position; var b = roads[next].Position;

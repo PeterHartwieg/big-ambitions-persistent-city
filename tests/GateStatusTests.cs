@@ -190,14 +190,51 @@ public sealed class GateStatusTests
         Assert.Contains("public_road=yes segments=2 first=0->1 road_id=100", text, StringComparison.Ordinal);
     }
 
+    [Theory]
+    [InlineData(0)]
+    [InlineData(1)]
+    public void RoadOverlapSkipsWaypointsTheTrafficImporterExcludes(int excluded)
+    {
+        var access = Access();
+
+        var text = Report(access, Roads(), "footprint", "", "ready", index => index != excluded);
+
+        Assert.Contains("source=footprint | min=(693.5, -1, 195.5) | max=(706.5, 7, 204.5) | public_road=no", text, StringComparison.Ordinal);
+        Assert.Contains("public_road=yes segments=1 first=0->1", Report(access, Roads(), "footprint", "", "ready", _ => true), StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData(false, false, false, "none")]
+    [InlineData(true, false, true, "missing")]
+    [InlineData(true, false, false, "missing")]
+    [InlineData(true, true, false, "building")]
+    [InlineData(true, true, true, "ready")]
+    public void RoadStateIsReadyOnlyForACompleteSnapshotWithWaypoints(bool present, bool available, bool ready, string expected)
+    {
+        Assert.Equal(expected, GateStatusReport.RoadState(present, available, ready));
+    }
+
+    [Fact]
+    public void SceneWithoutWaypointsReportsUnknownOverlap()
+    {
+        var state = GateStatusReport.RoadState(true, false, true);
+
+        var text = Report(Access(), new List<TransportRoadNode>(), "all", "", state);
+
+        Assert.Contains("road_snapshot=missing nodes=0", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("public_road=no", text, StringComparison.Ordinal);
+        Assert.Equal(4, text.Split('\n').Count(line => line.EndsWith("public_road=unknown", StringComparison.Ordinal)));
+    }
+
     private static string Report(PublicRoadAccess access, IReadOnlyList<TransportRoadNode>? roads, string detail, string value)
         => Report(access, roads, detail, value, roads == null ? "none" : "ready");
 
-    private static string Report(PublicRoadAccess access, IReadOnlyList<TransportRoadNode>? roads, string detail, string value, string state)
+    private static string Report(PublicRoadAccess access, IReadOnlyList<TransportRoadNode>? roads, string detail, string value, string state,
+        Func<int, bool>? imported = null)
     {
         Assert.True(GateStatusReport.TryParse(detail, value, out var source, out bool list, out double x, out double z, out double radius, out string error), error);
         return GateStatusReport.Format(access.Readings(), door => door.GetComponentInParent<CityBuildingController>(true) != null ? "yard" : "none",
-            roads, state, index => index + 100, source, list, x, z, radius);
+            roads, state, index => index + 100, imported ?? (_ => true), source, list, x, z, radius);
     }
 
     private static PublicRoadAccess Access()

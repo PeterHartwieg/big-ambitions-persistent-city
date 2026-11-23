@@ -126,6 +126,7 @@ namespace PersistentCity.Runtime
         private bool[] sampleDisabled = Array.Empty<bool>();
         public string TopologyId { get; private set; } = "";
         internal IReadOnlyList<TransportRoadNode> Nodes => nodes;
+        internal bool ImportsNode(int index) => trafficBuilder?.ImportsNode(index) == true;
         internal int RoadId(int index) => scene?.roadIds != null && scene.roadIds.Length == waypoints.Length && index >= 0 && index < waypoints.Length ? scene.roadIds[index] : -1;
         public bool Ready => copiedNodes == waypoints.Length && TrafficNetwork != null;
         public bool Available => scene != null && waypoints.Length > 0;
