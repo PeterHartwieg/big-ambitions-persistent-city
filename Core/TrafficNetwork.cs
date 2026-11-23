@@ -55,9 +55,8 @@ namespace PersistentCity.Core
         private readonly double clockRate;
         private readonly double[] linkSpeeds;
         private readonly List<TrafficLinkDefinition> links;
-        private readonly int[][] linkNodes;
+        private readonly int[] sectionNodes;
         private readonly Dictionary<int, Position> positions;
-        private readonly Dictionary<int, double> kilometres;
         private readonly Position[] sectionPoints;
         private readonly double[] sectionDistances;
         private readonly int[] sectionStarts;
@@ -126,8 +125,7 @@ namespace PersistentCity.Core
                 throw new ArgumentException("Invalid traffic network snapshot.");
             NativeTopologyId = nativeTopologyId;
             links = new List<TrafficLinkDefinition>();
-            var nodeLists = new List<int[]>(); positions = new Dictionary<int, Position>();
-            kilometres = new Dictionary<int, double>();
+            positions = new Dictionary<int, Position>();
 
             var nodes = new Dictionary<int, TrafficNetworkNode>();
             foreach (var node in snapshot)
@@ -135,7 +133,6 @@ namespace PersistentCity.Core
                 if (node == null || node.Id < 0 || node.Successors == null || node.StructuralContract == null
                     || !nodes.TryAdd(node.Id, node)) throw new ArgumentException("Duplicate/invalid traffic node.");
                 positions.Add(node.Id, node.Position);
-                kilometres.Add(node.Id, node.KilometresPerHour);
             }
             var outgoing = nodes.Keys.ToDictionary(i => i, i => new List<Edge>());
             var incoming = nodes.Keys.ToDictionary(i => i, i => 0);
@@ -166,6 +163,8 @@ namespace PersistentCity.Core
             }
             edges = new EdgeTable(all.Count);
             var visited = new HashSet<(int, int)>();
+            var nativeNodes = new List<int>(all.Count);
+            var starts = new List<int>(all.Count + 1);
             foreach (var first in all.Where(e => !Interior(e.From)).Concat(all))
             {
                 if (visited.Contains((first.From, first.To))) continue;
@@ -185,34 +184,30 @@ namespace PersistentCity.Core
                 links.Add(TrafficLinkDefinition.Frozen(id, Math.Max(1, checked((int)Math.Floor(Math.Max(metres, 6) / 6))),
                     minutes, 1.8 * clockRate, nodes[chain[chain.Count - 1].To].Signal));
                 speeds.Add(Math.Min(40, nodes[chain[0].From].KilometresPerHour) / 3.6);
-                var indices = new List<int> { chain[0].From };
+                starts.Add(nativeNodes.Count);
+                nativeNodes.Add(chain[0].From);
                 double offset = 0;
                 foreach (var part in chain)
                 {
                     int index = edges.Add(part.From, part.To, id, offset / metres, (offset + part.Metres) / metres, part.Metres);
                     if (EdgeMinutes(edges, speeds[id], clockRate, index) != part.Minutes) throw new ArgumentException("Native section speed differs along a section.");
-                    indices.Add(part.To); offset += part.Metres;
+                    nativeNodes.Add(part.To); offset += part.Metres;
                 }
-                nodeLists.Add(indices.ToArray());
             }
-            linkNodes = nodeLists.ToArray();
-            int total = 0;
-            foreach (var list in linkNodes) total += list.Length;
-            sectionPoints = new Position[total]; sectionDistances = new double[total]; sectionStarts = new int[linkNodes.Length + 1];
-            int at = 0;
-            for (int link = 0; link < linkNodes.Length; link++)
+            starts.Add(nativeNodes.Count);
+            sectionNodes = nativeNodes.ToArray(); sectionStarts = starts.ToArray();
+            sectionPoints = new Position[sectionNodes.Length]; sectionDistances = new double[sectionNodes.Length];
+            for (int link = 0; link < links.Count; link++)
             {
-                sectionStarts[link] = at;
-                var list = linkNodes[link];
+                int start = sectionStarts[link], end = sectionStarts[link + 1];
                 double cumulative = 0;
-                for (int i = 0; i < list.Length; i++, at++)
+                for (int i = start; i < end; i++)
                 {
-                    Position point = positions[list[i]];
-                    if (i > 0) cumulative += Position.Distance(sectionPoints[at - 1], point);
-                    sectionPoints[at] = point; sectionDistances[at] = cumulative;
+                    Position point = positions[sectionNodes[i]];
+                    if (i > start) cumulative += Position.Distance(sectionPoints[i - 1], point);
+                    sectionPoints[i] = point; sectionDistances[i] = cumulative;
                 }
             }
-            sectionStarts[linkNodes.Length] = at;
             this.clockRate = clockRate;
             linkSpeeds = speeds.ToArray();
             Links = links.AsReadOnly();
@@ -227,7 +222,7 @@ namespace PersistentCity.Core
                     writer.Write(node.Successors.Length); foreach (int successor in node.Successors) writer.Write(successor);
                     WriteSignal(writer, node.Signal, clockRate);
                 }
-                foreach (var link in links) { writer.Write(link.Id); writer.Write(link.Capacity); foreach (int native in linkNodes[link.Id]) writer.Write(native); writer.Write(-1); }
+                foreach (var link in links) { writer.Write(link.Id); writer.Write(link.Capacity); foreach (int native in NativeNodeSpan(link.Id)) writer.Write(native); writer.Write(-1); }
             }
             using var hash = SHA256.Create();
             TopologyId = BitConverter.ToString(hash.ComputeHash(buffer.ToArray())).Replace("-", "").ToLowerInvariant();
@@ -243,31 +238,35 @@ namespace PersistentCity.Core
         private TrafficNetwork(TrafficNetwork source, double clockRate, Func<int, TrafficSignalSchedule?> signalAt)
         {
             NativeTopologyId = source.NativeTopologyId; TopologyId = source.TopologyId;
-            positions = source.positions; kilometres = source.kilometres; linkNodes = source.linkNodes;
+            positions = source.positions; sectionNodes = source.sectionNodes;
             edges = source.edges; sectionPoints = source.sectionPoints; sectionDistances = source.sectionDistances; sectionStarts = source.sectionStarts;
             linkSpeeds = source.linkSpeeds; this.clockRate = clockRate; RatedCopy = true;
             links = new List<TrafficLinkDefinition>(source.links.Count);
             for (int id = 0; id < source.links.Count; id++)
             {
-                var indices = linkNodes[id];
+                int start = sectionStarts[id], end = sectionStarts[id + 1];
+                double metresPerMinute = linkSpeeds[id] / clockRate;
                 double minutes = 0;
-                for (int i = 1; i < indices.Length; i++)
+                for (int i = start + 1; i < end; i++)
                 {
-                    int from = indices[i - 1], to = indices[i];
-                    double length = Position.Distance(positions[from], positions[to]);
-                    double part = length / (Math.Min(40, kilometres[from]) / 3.6 / clockRate);
+                    double part = Position.Distance(sectionPoints[i - 1], sectionPoints[i]) / metresPerMinute;
                     if (!Position.Finite(part) || part <= 0) throw new ArgumentException("Invalid native edge duration.");
-                    if (EdgeMinutes(edges, linkSpeeds[id], clockRate, edges.Index[(from, to)]) != part) throw new ArgumentException("Native section speed differs along a section.");
                     minutes += part;
                 }
                 var link = source.links[id];
-                links.Add(TrafficLinkDefinition.Frozen(id, link.Capacity, minutes, 1.8 * clockRate, signalAt(indices[indices.Length - 1])));
+                links.Add(TrafficLinkDefinition.Frozen(id, link.Capacity, minutes, 1.8 * clockRate, signalAt(sectionNodes[end - 1])));
             }
             Links = links.AsReadOnly();
         }
 
-        public IReadOnlyList<int> NativeNodes(int linkId) => linkId >= 0 && linkId < linkNodes.Length
-            ? linkNodes[linkId] : throw new ArgumentOutOfRangeException(nameof(linkId));
+        public IReadOnlyList<int> NativeNodes(int linkId) => NativeNodeSpan(linkId).ToArray();
+
+        internal ReadOnlySpan<int> NativeNodeSpan(int linkId)
+        {
+            if (linkId < 0 || linkId >= SectionCount) throw new ArgumentOutOfRangeException(nameof(linkId));
+            int start = sectionStarts[linkId];
+            return sectionNodes.AsSpan(start, sectionStarts[linkId + 1] - start);
+        }
         public bool TryGetEdge(int from, int to, out TrafficNetworkEdge edge)
         {
             if (!edges.Index.TryGetValue((from, to), out int index)) { edge = default; return false; }

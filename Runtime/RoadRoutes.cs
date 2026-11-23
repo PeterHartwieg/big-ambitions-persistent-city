@@ -84,8 +84,8 @@ namespace PersistentCity.Runtime
             if (!Ready || (closureBatch ? unsafeTopology || !closureBatchCurrent : !IsCurrent) || network == null || linkId < 0 || linkId >= network.Links.Count) return true;
             if (!closureBatch) trafficBuilder?.BeginQuery();
             if (closureGateClear.Length != network.Links.Count) closureGateClear = new bool[network.Links.Count];
-            var indices = network.NativeNodes(linkId);
-            for (int i = 0; i < indices.Count; i++)
+            var indices = network.NativeNodeSpan(linkId);
+            for (int i = 0; i < indices.Length; i++)
             {
                 int index = indices[i];
                 bool disabled;
@@ -655,9 +655,9 @@ namespace PersistentCity.Runtime
                 if (!network.TryGetEdge(a, b, out var edge)) return double.NaN;
                 if (!SectionPace.TryGetValue(edge.LinkId, out double factor))
                 {
-                    var indices = network.NativeNodes(edge.LinkId);
+                    var indices = network.NativeNodeSpan(edge.LinkId);
                     double effective = 0; bool changed = false;
-                    for (int i = 1; i < indices.Count; i++)
+                    for (int i = 1; i < indices.Length; i++)
                     {
                         int fromNode = indices[i - 1];
                         if (!network.TryGetEdge(fromNode, indices[i], out var part)) return double.NaN;
@@ -683,8 +683,8 @@ namespace PersistentCity.Runtime
                     if (!EntryDelays.TryGetValue(edge.LinkId, out entryDelay))
                     {
                         double endFraction = 1;
-                        var sectionNodes = network.NativeNodes(edge.LinkId);
-                        for (int i = 1; i < sectionNodes.Count; i++)
+                        var sectionNodes = network.NativeNodeSpan(edge.LinkId);
+                        for (int i = 1; i < sectionNodes.Length; i++)
                             if (sectionNodes[i] == toNode && network.TryGetEdge(sectionNodes[i - 1], toNode, out var final)
                                 && final.EndLinkFraction > edge.StartLinkFraction)
                             { endFraction = final.EndLinkFraction; break; }

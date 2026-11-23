@@ -4,17 +4,45 @@ using System.Linq;
 using System.Text.Json;
 using PersistentCity.Core;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace PersistentCity.Tests;
 
 public sealed class TrafficKernelTests
 {
+    private readonly ITestOutputHelper output;
+    public TrafficKernelTests(ITestOutputHelper output) { this.output = output; }
+
     private static TrafficLinkDefinition Link(int id, int capacity = 1, double free = 1, double headway = 0) =>
         new() { Id = id, Capacity = capacity, FreeFlowMinutes = free, HeadwayMinutes = headway };
     private static List<TrafficRouteLeg> Route(params int[] ids) => ids.Select((id, i) =>
         new TrafficRouteLeg { LinkId = id, StartNominalMinutes = i, EndNominalMinutes = i + 1 }).ToList();
     private static TrafficVehicleSnapshot Vehicle(TrafficKernel kernel, string id) => kernel.GetPermission(id);
     private static string State(TrafficKernel kernel) => JsonSerializer.Serialize(kernel.Capture());
+
+    [Fact]
+    public void AdoptingANewlyMappedRouteAvoidsTheSecondCopyAndPreservesThePublicCopyContract()
+    {
+        var ids = Enumerable.Range(0, 200).ToArray();
+        var definitions = ids.Select(id => Link(id)).ToArray();
+        var copying = new TrafficKernel(definitions);
+        var adopting = new TrafficKernel(definitions);
+        copying.Enqueue("warm", Route(ids));
+        adopting.EnqueueOwned("warm", Route(ids));
+        var copy = Route(ids); var own = Route(ids);
+        long before = GC.GetAllocatedBytesForCurrentThread();
+        copying.Enqueue("car", copy);
+        long copied = GC.GetAllocatedBytesForCurrentThread() - before;
+        before = GC.GetAllocatedBytesForCurrentThread();
+        adopting.EnqueueOwned("car", own);
+        long adopted = GC.GetAllocatedBytesForCurrentThread() - before;
+        output.WriteLine($"200-leg traffic enqueue after warm-up: {copied} -> {adopted} B (.NET)");
+        Assert.Equal(State(copying), State(adopting));
+        copy[5].EndNominalMinutes = 1000;
+        Assert.Equal(0, copy[5].FreeFlowMinutes);
+        Assert.Equal(State(copying), State(adopting));
+        Assert.True(copied - adopted > 10_000, copied + " -> " + adopted);
+    }
 
     [Fact]
     public void EmptyClosedSectionRemainsDiscoverableUntilNativeReopeningAfterReload()

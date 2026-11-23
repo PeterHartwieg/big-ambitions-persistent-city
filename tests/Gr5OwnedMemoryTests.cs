@@ -1,8 +1,10 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using Xunit;
+using PersistentCity.Core;
 
 namespace PersistentCity.Tests;
 
@@ -27,16 +29,55 @@ public sealed class Gr5OwnedMemoryTests
         int release = merge.IndexOf("public static void Release(SkinnedMeshCombiner? combiner)", StringComparison.Ordinal);
         Assert.True(release > 0);
         string releaseBody = merge.Substring(release, merge.IndexOf("public static int LiveMeshes", release, StringComparison.Ordinal) - release);
-        Assert.Contains("ledger.Forget(combiner);", releaseBody);
+        Assert.Contains("var tracked = ledger.Forget(combiner);", releaseBody);
         Assert.Contains("combiner.resultMergeGameObject", releaseBody);
+        Assert.Contains("if (tracked != mesh) DestroyMesh(tracked);", releaseBody);
         Assert.Contains("Object.Destroy(mesh);", releaseBody);
-        Assert.Contains("ledger.Forget(combiner);\n            ledger.Prune();", releaseBody.Replace("\r", ""));
+        Assert.DoesNotContain("ledger.Prune();", releaseBody);
         Assert.Contains("ledger.CountReleased(mesh);\n            Object.Destroy(mesh);", releaseBody.Replace("\r", ""));
         int keyed = merge.IndexOf("ledger.Merged(combiner, combined);", StringComparison.Ordinal);
         Assert.True(keyed > 0, "a redress replaces the combiner's previous mesh instead of adding another");
         Assert.True(keyed < merge.IndexOf("Fast++;", keyed, StringComparison.Ordinal), "only a finished merge is tracked, so Discard never leaves an entry");
         Assert.DoesNotContain("HashSet<Mesh>", merge);
         Assert.Contains("ledger.PruneOwned();\n            ledger.Prune();\n            if (hooked", merge.Replace("\r", ""));
+    }
+
+    private sealed class NativeHandle
+    {
+        public bool Alive = true;
+    }
+
+    [Fact]
+    public void ADeadCombinerWithALiveMeshReleasesTheMeshOnceWhileLiveCombinerCountsStayIntact()
+    {
+        var destroyed = new List<NativeHandle>();
+        var ledger = new MergedBodyLedger<NativeHandle, NativeHandle>(body => body.Alive, mesh => mesh.Alive, _ => 37, mesh =>
+        {
+            destroyed.Add(mesh);
+            mesh.Alive = false;
+        });
+        var survivor = new NativeHandle();
+        var survivorMesh = new NativeHandle();
+        ledger.Own(survivor);
+        ledger.Merged(survivor, survivorMesh);
+        for (int i = 0; i < 5; i++)
+        {
+            var body = new NativeHandle();
+            var mesh = new NativeHandle();
+            ledger.Own(body);
+            ledger.Merged(body, mesh);
+            body.Alive = false;
+            Assert.Equal(1, ledger.LiveMeshes(out long vertices));
+            Assert.Equal(37, vertices);
+            Assert.Equal(1, ledger.Owned);
+            Assert.Equal(0, ledger.Unmerged);
+            Assert.Same(mesh, destroyed[i]);
+            Assert.Equal(i + 1, ledger.ReleasedMeshes);
+            Assert.Equal((i + 1) * 37, ledger.ReleasedVertices);
+        }
+        Assert.True(survivorMesh.Alive);
+        Assert.Same(survivorMesh, ledger.Forget(survivor));
+        Assert.Null(ledger.Forget(survivor));
     }
 
     [Fact]

@@ -11,12 +11,14 @@ namespace PersistentCity.Core
         private readonly Func<TBody, bool> bodyAlive;
         private readonly Func<TMesh, bool> meshAlive;
         private readonly Func<TMesh, int> vertexCount;
+        private readonly Action<TMesh>? destroyOrphan;
 
-        public MergedBodyLedger(Func<TBody, bool> bodyAlive, Func<TMesh, bool> meshAlive, Func<TMesh, int> vertexCount)
+        public MergedBodyLedger(Func<TBody, bool> bodyAlive, Func<TMesh, bool> meshAlive, Func<TMesh, int> vertexCount, Action<TMesh>? destroyOrphan = null)
         {
             this.bodyAlive = bodyAlive ?? throw new ArgumentNullException(nameof(bodyAlive));
             this.meshAlive = meshAlive ?? throw new ArgumentNullException(nameof(meshAlive));
             this.vertexCount = vertexCount ?? throw new ArgumentNullException(nameof(vertexCount));
+            this.destroyOrphan = destroyOrphan;
         }
 
         public int Owned => owned.Count;
@@ -29,11 +31,11 @@ namespace PersistentCity.Core
 
         public void Merged(TBody body, TMesh mesh) => merged[body] = mesh;
 
-        public void Forget(TBody? body)
+        public TMesh? Forget(TBody? body)
         {
-            if (body == null) return;
+            if (body == null) return null;
             owned.Remove(body);
-            merged.Remove(body);
+            return merged.Remove(body, out var mesh) ? mesh : null;
         }
 
         public void PruneOwned()
@@ -46,8 +48,20 @@ namespace PersistentCity.Core
         public void Prune()
         {
             foreach (var pair in merged) if (!bodyAlive(pair.Key) || !meshAlive(pair.Value)) stale.Add(pair.Key);
-            foreach (var body in stale) merged.Remove(body);
-            stale.Clear();
+            try
+            {
+                foreach (var body in stale)
+                {
+                    var mesh = merged[body];
+                    merged.Remove(body);
+                    if (bodyAlive(body)) continue;
+                    owned.Remove(body);
+                    if (destroyOrphan == null || !meshAlive(mesh)) continue;
+                    CountReleased(mesh);
+                    destroyOrphan(mesh);
+                }
+            }
+            finally { stale.Clear(); }
         }
 
         public int Unmerged

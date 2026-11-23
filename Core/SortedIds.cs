@@ -2,7 +2,7 @@ using System.Collections.Generic;
 
 namespace PersistentCity.Core
 {
-    internal sealed class SortedIds
+    internal struct SortedIds
     {
         private static readonly List<int> None = new List<int>();
         private List<int>? items;

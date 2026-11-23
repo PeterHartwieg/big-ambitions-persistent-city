@@ -221,6 +221,36 @@ public sealed class Gr5RetimeKernelSourceTests
         Assert.Null(state.Traffic);
     }
 
+    [Fact]
+    public void RescalingADrivingCarCopiesOnlyItsRemainingRouteAndKeepsTheSourceIndependent()
+    {
+        const int links = 256;
+        var definitions = Enumerable.Range(0, links).Select(id => new TrafficLinkDefinition
+        { Id = id, Capacity = 1, FreeFlowMinutes = 1 }).ToArray();
+        var route = Enumerable.Range(0, links).Select(id => new TrafficRouteLeg
+        { LinkId = id, StartNominalMinutes = id, EndNominalMinutes = id + 1, FreeFlowMinutes = 1 }).ToList();
+        var original = new TrafficKernel(definitions);
+        original.Enqueue("car", route);
+        original.AdvanceTo(200.25, 1000);
+        string before = Json(original.Capture());
+        _ = original.RescaleTime(2);
+        long bytes = GC.GetAllocatedBytesForCurrentThread();
+        var retimed = original.RescaleTime(2);
+        bytes = GC.GetAllocatedBytesForCurrentThread() - bytes;
+        output.WriteLine($"rescale 256 sections, car 200 sections in: {bytes} B (.NET)");
+        Assert.Equal(before, Json(original.Capture()));
+        var vehicles = new List<TrafficVehicleState>();
+        retimed.CopyVehiclesInOrder(vehicles);
+        var vehicle = Assert.Single(vehicles);
+        Assert.Equal(200, vehicle.Route[0].LinkId);
+        Assert.Equal(56, vehicle.Route.Count);
+        Assert.Equal(56, vehicle.Route.Capacity);
+        Assert.Equal(original.GetPermission("car").NominalMinutes, retimed.GetPermission("car").NominalMinutes);
+        retimed.AdvanceTo(210, 1000);
+        Assert.Equal(before, Json(original.Capture()));
+        Assert.True(bytes < 80_000, bytes.ToString());
+    }
+
     [Theory]
     [InlineData(0, false, "the live kernel")]
     [InlineData(40, false, "a copy without through cars")]

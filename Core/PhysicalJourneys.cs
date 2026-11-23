@@ -437,8 +437,8 @@ namespace PersistentCity.Core
         internal void TakeSpareCells(ActiveJourneyIndex retired)
         {
             if (ReferenceEquals(retired, this)) return;
-            retired.Clear();
             grid.TakeSpareCells(retired.grid);
+            retired.eligible.Clear(); retired.withheld.Clear(); retired.positions.Clear();
         }
 
         public static bool Member(CitizenState c)
