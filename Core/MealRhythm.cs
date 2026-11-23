@@ -29,7 +29,8 @@ namespace PersistentCity.Core
         {
             var plan = person.Plan;
             if (plan == null || plan.Day != day) return null;
-            foreach (var item in plan.Items) if (item.Kind == PlanItemKind.Meal && item.Meal == kind) return item;
+            var items = plan.Items;
+            for (int i = 0; i < items.Count; i++) { var item = items[i]; if (item.Kind == PlanItemKind.Meal && item.Meal == kind) return item; }
             return null;
         }
 

@@ -404,7 +404,7 @@ namespace PersistentCity.Core
         {
             if (journey == null || journey.Legs == null || journey.Legs.Count == 0 || traffic == null || traffic.Count == 0)
                 throw new ArgumentException("A committed journey and traffic mapping are required.");
-            offsets = validationOffsets ??= new double[64];
+            offsets = validationOffsets ??= new double[TransportComposition.MaximumLegs + 1];
             if (offsets.Length < journey.Legs.Count + 1) offsets = validationOffsets = new double[Math.Max(journey.Legs.Count + 1, offsets.Length * 2)];
             offsets[0] = 0;
             for (int i = 0; i < journey.Legs.Count; i++)
