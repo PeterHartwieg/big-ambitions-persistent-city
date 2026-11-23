@@ -386,6 +386,9 @@ public sealed class Gr5PlannerCandidateTests
         Assert.Contains("private readonly PublishedRoute published = new PublishedRoute();", job);
         Assert.Contains("public Route? Result { get => published.Route; private set => published.Route = value; }", job);
         Assert.Single(System.Text.RegularExpressions.Regex.Matches(job, @"\bRoute\?\s+Result\b"));
+        Assert.Single(System.Text.RegularExpressions.Regex.Matches(job, @"\bResult\s*(?:\{|=>)"));
+        Assert.DoesNotContain("IRoutePlanningJob.", job);
+        Assert.Single(System.Text.RegularExpressions.Regex.Matches(planner, @"[:,]\s*IRoutePlanningJob\b"));
         Assert.Single(System.Text.RegularExpressions.Regex.Matches(job, @"\bpublished\.Route\s*=(?!=)"));
         var results = System.Text.RegularExpressions.Regex.Matches(job, @"(?<![\w.])(?:this\.)?Result\s*=(?!=)\s*([^;]+);").Select(m => m.Groups[1].Value.Trim()).ToArray();
         Assert.NotEmpty(results);
