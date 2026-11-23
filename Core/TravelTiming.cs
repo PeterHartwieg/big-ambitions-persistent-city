@@ -43,9 +43,14 @@ namespace PersistentCity.Core
         }
         private sealed class NominalMap
         {
-            internal readonly List<(double OldStart, double OldEnd, double NewStart, double NewEnd)> Segments =
-                new List<(double, double, double, double)>();
-            internal readonly List<(double Start, double End)> UnscaledCarPrefixes = new List<(double, double)>();
+            private readonly List<(double OldEnd, double NewEnd)> ends;
+            internal readonly List<(double Start, double End)> UnscaledCarPrefixes;
+            internal NominalMap(int segments, int prefixes)
+            {
+                ends = new List<(double, double)>(segments);
+                UnscaledCarPrefixes = new List<(double, double)>(prefixes);
+            }
+            internal void Add(double oldEnd, double newEnd) => ends.Add((oldEnd, newEnd));
             internal bool HasFutureUnscaledTrafficPrefix(double observed, IReadOnlyList<TrafficRouteLeg> route)
             {
                 foreach (var prefix in UnscaledCarPrefixes)
@@ -60,14 +65,15 @@ namespace PersistentCity.Core
             internal double Map(double value)
             {
                 if (!Position.Finite(value) || value < 0) throw new ArgumentException("Invalid traffic route offset.");
-                foreach (var segment in Segments)
+                double oldStart = 0, newStart = 0;
+                for (int i = 0; i < ends.Count; i++)
                 {
-                    if (value > segment.OldEnd) continue;
-                    if (value < segment.OldStart) break;
-                    if (value == segment.OldStart) return segment.NewStart;
+                    var segment = ends[i];
+                    if (value > segment.OldEnd) { oldStart = segment.OldEnd; newStart = segment.NewEnd; continue; }
+                    if (value < oldStart) break;
+                    if (value == oldStart) return newStart;
                     if (value == segment.OldEnd) return segment.NewEnd;
-                    return segment.NewStart + (value - segment.OldStart) / (segment.OldEnd - segment.OldStart)
-                        * (segment.NewEnd - segment.NewStart);
+                    return newStart + (value - oldStart) / (segment.OldEnd - oldStart) * (segment.NewEnd - newStart);
                 }
                 throw new ArgumentException("Traffic offset is outside the committed route.");
             }
@@ -153,7 +159,7 @@ namespace PersistentCity.Core
             private readonly bool legacy;
             private readonly int version, places;
             private readonly TrafficKernelState? trafficState;
-            private readonly List<CitizenState> schedules = new List<CitizenState>();
+            private readonly List<CitizenState> schedules;
             private readonly Input[] inputs;
             private const int LinksPerStep = 256;
             private TrafficKernel? savedTraffic, kernel, liveTraffic;
@@ -162,11 +168,11 @@ namespace PersistentCity.Core
             private RetimedTraffic? restoredTraffic;
             private readonly Dictionary<string, TrafficVehicleState> trafficRoutes = new Dictionary<string, TrafficVehicleState>(StringComparer.Ordinal);
             private readonly HashSet<string> evicted = new HashSet<string>(StringComparer.Ordinal);
-            private readonly List<Change> changes = new List<Change>();
+            private readonly List<Change> changes;
             private readonly Dictionary<string, NominalMap> maps = new Dictionary<string, NominalMap>(StringComparer.Ordinal);
             private readonly Dictionary<string, TrafficCheck> trafficChanges;
             private readonly SourceLegs sourceLegs = new SourceLegs();
-            private readonly Dictionary<string, Place> placeIndex = new Dictionary<string, Place>(StringComparer.Ordinal);
+            private readonly Dictionary<string, Place> placeIndex;
             private TrafficKernelState? traffic;
             private TrafficKernel? rescaledKernel;
             private Dictionary<string, CitizenState>? citizens;
@@ -194,6 +200,9 @@ namespace PersistentCity.Core
                 State = state; this.walk = walk; this.rate = rate; this.legacy = legacy; this.sharedLegHint = Math.Max(0, sharedLegHint); this.coalesce = coalesce;
                 ratio = rate / state.TravelClockRate; minute = state.Minute; stateRate = state.TravelClockRate;
                 version = state.TravelTimingVersion; places = state.Places.Count; trafficState = state.Traffic;
+                int people = state.Citizens.Count + state.VisitorRoutines.Count;
+                schedules = new List<CitizenState>(people); changes = new List<Change>(people);
+                placeIndex = new Dictionary<string, Place>(places, StringComparer.Ordinal);
                 kernelMode = source != null;
                 if (kernelMode)
                 {
@@ -205,6 +214,7 @@ namespace PersistentCity.Core
                             throw new ArgumentException("Traffic needs native timing at the city clock.");
                         sourceVehicles = new List<TrafficVehicleState>(kernel.VehicleCount);
                         kernel.CopyVehiclesInOrder(sourceVehicles);
+                        trafficRoutes.EnsureCapacity(sourceVehicles.Count);
                         foreach (var vehicle in sourceVehicles) trafficRoutes[vehicle.VehicleId] = vehicle;
                         savedTraffic = kernel;
                     }
@@ -213,6 +223,7 @@ namespace PersistentCity.Core
                 {
                     if (legacy || state.Traffic.Clock != state.Minute)
                         throw new ArgumentException("Traffic needs native timing at the city clock.");
+                    trafficRoutes.EnsureCapacity(state.Traffic.Vehicles.Count);
                     foreach (var vehicle in state.Traffic.Vehicles) trafficRoutes[vehicle.VehicleId] = vehicle;
                     if (state.SnapshotSynchronizer != null && ReferenceEquals(state.TrafficSourceState, state.Traffic)
                         && state.TrafficSource != null && state.TrafficSource.Clock == state.Minute)
@@ -390,7 +401,7 @@ namespace PersistentCity.Core
                     change.Citizen.NextEventMinute = change.EventMinute;
                     if (change.MealStayUntil.HasValue) change.Citizen.ActivityUntilMinute = change.MealStayUntil.Value;
                 }
-                foreach (var citizen in schedules) citizen.CommutePreparation = new CommutePreparation();
+                foreach (var citizen in schedules) citizen.CommutePreparation = CommutePreparation.Reset(citizen.CommutePreparation);
                 foreach (var meal in meals) { meal.Meal.ReturnMinutes = meal.ReturnMinutes; meal.Meal.DueAt = meal.DueAt; }
                 state.TravelTimingVersion = 1;
                 state.TravelClockRate = rate;
@@ -868,9 +879,11 @@ namespace PersistentCity.Core
         {
             merges = 0;
             int mergeCount = 0;
-            var route = new Route(new RouteLegs(original.Count + 1));
+            bool atEnd = elapsed == original.Minutes;
+            bool inside = !atEnd && measuredSample.LegFraction > 0 && measuredSample.LegFraction < 1;
+            var route = new Route(new RouteLegs(original.Count + (inside ? 1 : 0)));
             NominalMap? mapping = null;
-            if (mapped) { mapping = new NominalMap(); mapping.Segments.Capacity = original.Count + 2; mapping.UnscaledCarPrefixes.Capacity = original.Count + 1; }
+            if (mapped) mapping = new NominalMap(original.Count + 2, atEnd ? original.Count : Math.Min(original.Count, Math.Max(0, measuredSample.LegIndex) + 1));
             map = mapping;
             completed = 0;
             double oldOffset = 0, newOffset = 0;
@@ -881,7 +894,7 @@ namespace PersistentCity.Core
                 route.Legs.Add(copy);
                 double minutes = copy.Minutes;
                 double end = oldEnd ?? oldOffset + oldMinutes;
-                mapping?.Segments.Add((oldOffset, end, newOffset, newOffset + minutes));
+                mapping?.Add(end, newOffset + minutes);
                 oldOffset = end; newOffset += minutes;
             }
             void AddUnscaledCarPrefix(RouteLeg leg, Position from, Position to, double minutes, string service, double oldMinutes, double? oldEnd = null, bool splitPrefix = false)
@@ -914,7 +927,7 @@ namespace PersistentCity.Core
                         && SpanGeometryKept(traffic, previous, fragmentStart, to, minutes, merged))
                     {
                         double segmentEnd = oldEnd ?? oldOffset + oldMinutes;
-                        mapping?.Segments.Add((oldOffset, segmentEnd, newOffset, joinedEnd));
+                        mapping?.Add(segmentEnd, joinedEnd);
                         if (mapping != null && leg.Mode == TravelMode.Car && Position.Distance(from, to) > 0) mapping.UnscaledCarPrefixes.Add((newOffset, joinedEnd));
                         route.Legs[fragment] = previous.CopyAs(previous.From, to, merged, service, splitPrefix);
                         oldOffset = segmentEnd; newOffset = joinedEnd;
@@ -929,7 +942,7 @@ namespace PersistentCity.Core
                 fragment = route.Legs.Count - 1;
                 fragmentContinues = continues;
             }
-            if (elapsed == original.Minutes)
+            if (atEnd)
             {
                 for (int i = 0; i < original.Count; i++)
                 {
@@ -964,7 +977,7 @@ namespace PersistentCity.Core
                             && measuredSample.LegFraction == 1);
                     if (sampledStart)
                     {
-                        mapping?.Segments.Add((oldOffset, elapsed, newOffset, newOffset));
+                        mapping?.Add(elapsed, newOffset);
                         oldOffset = elapsed;
                         AddLeg(ScaledFuture(leg, shared, legacy, walkSpeed, rate, ratio), oldLegEnd - elapsed, oldLegEnd);
                         reachedPresent = true;
@@ -991,7 +1004,7 @@ namespace PersistentCity.Core
                         {
                             if (!sampledEndpoint && oldTail > CitySimulator.JourneyClockTolerance(elapsed, leg.Minutes))
                                 throw new ArgumentException("A material native road tail lost its representable geometry.");
-                            mapping?.Segments.Add((oldOffset, oldLegEnd, newOffset, newOffset));
+                            mapping?.Add(oldLegEnd, newOffset);
                             oldOffset = oldLegEnd;
                         }
                         else

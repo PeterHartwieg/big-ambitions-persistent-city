@@ -288,6 +288,13 @@ namespace PersistentCity.Core
         public double WorkEndsAt { get; set; }
         public double PreparedAt { get; set; }
         public double TravelMinutes { get; set; }
+
+        internal static CommutePreparation Reset(CommutePreparation? preparation, string placeId = "", double startsAt = 0, double endsAt = 0, double preparedAt = 0, double minutes = 0)
+        {
+            var target = preparation ?? new CommutePreparation();
+            target.PlaceId = placeId; target.WorkStartsAt = startsAt; target.WorkEndsAt = endsAt; target.PreparedAt = preparedAt; target.TravelMinutes = minutes;
+            return target;
+        }
     }
 
     public class CitizenState : IPersonView

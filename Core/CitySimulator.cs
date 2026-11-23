@@ -881,7 +881,7 @@ namespace PersistentCity.Core
                 return false;
             }
             if (person.CommutePreparation.PlaceId != person.DayPlaceId)
-                person.CommutePreparation = new CommutePreparation();
+                person.CommutePreparation = CommutePreparation.Reset(person.CommutePreparation);
             bool attending = !s.PaidRefusedArrival && person.Phase == CitizenPhase.AtPlace && person.Activity != Activity.Home
                 && !(person.Activity == Activity.Work && person.Accrual.Shift == EmploymentWages.Closed)
                 && now < person.ActivityUntilMinute;
@@ -1118,11 +1118,7 @@ namespace PersistentCity.Core
             if (now < prepareAt) return new CommuteDecision(false, window, prepareAt, CommutePlanPoint.None);
             if (previousMinutes > 0)
             {
-                person.CommutePreparation = new CommutePreparation
-                {
-                    PlaceId = window.PlaceId, WorkStartsAt = window.StartsAt, WorkEndsAt = window.EndsAt,
-                    PreparedAt = now, TravelMinutes = previousMinutes
-                };
+                person.CommutePreparation = CommutePreparation.Reset(person.CommutePreparation, window.PlaceId, window.StartsAt, window.EndsAt, now, previousMinutes);
                 double leaveAt = Math.Max(now, window.StartsAt - previousMinutes);
                 return new CommuteDecision(true, window, leaveAt,
                     now < leaveAt || !allowPlanning ? CommutePlanPoint.None : CommutePlanPoint.KnownDuration);
@@ -1144,11 +1140,7 @@ namespace PersistentCity.Core
                     return new CommuteDecision(true, window, decision.LeaveAt, CommutePlanPoint.None);
                 case CommutePlanPoint.FreshEstimate:
                     double minutes = route?.EstimatedMinutes ?? 0;
-                    person.CommutePreparation = new CommutePreparation
-                    {
-                        PlaceId = window.PlaceId, WorkStartsAt = window.StartsAt, WorkEndsAt = window.EndsAt,
-                        PreparedAt = now, TravelMinutes = minutes
-                    };
+                    person.CommutePreparation = CommutePreparation.Reset(person.CommutePreparation, window.PlaceId, window.StartsAt, window.EndsAt, now, minutes);
                     return new CommuteDecision(true, window, minutes > 0 ? Math.Max(now, window.StartsAt - minutes) : window.StartsAt, CommutePlanPoint.None);
                 default:
                     return decision;
