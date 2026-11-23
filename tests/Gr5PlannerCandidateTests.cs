@@ -125,24 +125,55 @@ public sealed class Gr5PlannerCandidateTests
         Assert.Throws<ArgumentNullException>(() => TransportComposition.Single(null!));
     }
 
+    private enum Winner { Walk, Subway, Car }
+
     private sealed class Job
     {
         private readonly bool after;
-        private readonly Dictionary<int, Route> walks = new Dictionary<int, Route>();
-        private readonly Dictionary<int, Route> trains = new Dictionary<int, Route>();
-        private readonly Random shape = new Random(3704);
+        private readonly RouteCandidates candidates = new RouteCandidates();
+        private readonly Dictionary<(Position, Position), Route> walks = new Dictionary<(Position, Position), Route>();
+        private readonly Dictionary<(Position, Position), Route> trains = new Dictionary<(Position, Position), Route>();
         public Job(bool after) { this.after = after; }
 
-        private Route Cached(Dictionary<int, Route> cache, int key, Position from, int legs, TravelMode mode, string service)
+        internal static Position From(int origin) => P(origin * 1000, origin % 7);
+        internal static Position To(int origin) => P(origin * 1000 + 300, origin % 7);
+        internal static Winner Expected(int origin) => (Winner)(origin % 3);
+        private static double WalkPace(int origin) => Expected(origin) == Winner.Walk ? .01 : .05;
+        private static double TrainMinutes(int origin) => Expected(origin) == Winner.Subway ? .5 : 30;
+        private static double RoadMinutes(int origin) => Expected(origin) == Winner.Car ? .2 : 30;
+
+        private static Route Line(Position from, Position to, int legs, TravelMode mode, string service, double totalMinutes)
         {
-            if (!cache.TryGetValue(key, out var route)) cache.Add(key, route = Path(shape, from, legs, mode, service, true, estimate: false));
+            var route = new Route();
+            var at = from;
+            for (int i = 1; i <= legs; i++)
+            {
+                double f = (double)i / legs;
+                var next = i == legs ? to : new Position(from.X + (to.X - from.X) * f, 0, from.Z + (to.Z - from.Z) * f + (i % 2 == 0 ? .5 : -.5));
+                route.Legs.Add(new RouteLeg { From = at, To = next, Minutes = totalMinutes / legs, Mode = mode, ServiceId = service });
+                at = next;
+            }
             return route;
         }
 
-        private Route Walk(int key, Position from, int legs)
+        public Route CachedWalk(int origin, Position from, Position to, int legs)
         {
-            var cached = Cached(walks, key, from, legs, TravelMode.Walk, "");
+            if (!walks.TryGetValue((from, to), out var route))
+                walks.Add((from, to), route = TransportComposition.Shared(Line(from, to, legs, TravelMode.Walk, "", Position.Distance(from, to) * WalkPace(origin))));
+            return route;
+        }
+
+        private Route Walk(int origin, Position from, Position to, int legs)
+        {
+            var cached = CachedWalk(origin, from, to, legs);
             return after ? cached : new Route { Legs = new RouteLegs(cached.Legs) };
+        }
+
+        private Route Train(int origin, Position from, Position to)
+        {
+            if (!trains.TryGetValue((from, to), out var route))
+                trains.Add((from, to), route = TransportComposition.Shared(Line(from, to, 4, TravelMode.Subway, "native:subway", TrainMinutes(origin))));
+            return route;
         }
 
         private Route Pause(Position at)
@@ -154,58 +185,61 @@ public sealed class Gr5PlannerCandidateTests
             return TransportComposition.Shared(route);
         }
 
-        public Route? Plan(int origin, TravelPreferences preferences)
+        internal static Position Parked(int origin) => P(origin * 1000, -50);
+        private static Position RoadEnd(int origin) => P(origin * 1000 + 300, -50);
+        private static Position Station(int origin, bool start, int index) => P(origin * 1000 + (start ? 40 : 260) + index * 5, 30 + index * 3);
+        internal static TravelPreferences Preferences { get; } = new TravelPreferences { OwnsCar = true, AllowTransit = true, WalkingToleranceMetres = 4000 };
+
+        public Route? Plan(int origin)
         {
-            var from = P(origin * 1000);
-            Route? best = null; double bestScore = double.PositiveInfinity; bool bestShared = false;
-            void Consider(Route? route, Position to, bool shared = false)
+            var from = From(origin); var to = To(origin); var parked = Parked(origin); var preferences = Preferences;
+            Route? best = null; double bestScore = double.PositiveInfinity;
+            if (after) candidates.Reset();
+            void Consider(Route? route, bool shared = false)
             {
-                if (route == null || !TransportComposition.Valid(route, from, to, preferences, from)) return;
+                if (after) { candidates.Consider(route, from, to, preferences, parked, shared); return; }
+                if (route == null || !TransportComposition.Valid(route, from, to, preferences, parked)) return;
                 if (!TransportComposition.IsFaster(route.EstimatedMinutes, bestScore)) return;
-                best = route; bestScore = route.EstimatedMinutes; bestShared = shared;
+                best = route; bestScore = route.EstimatedMinutes;
             }
-            var direct = Walk(origin * 10, from, 60);
-            var destination = End(direct, from);
-            Consider(direct, destination, after);
+            Consider(Walk(origin, from, to, 60), shared: true);
             for (int a = 0; a < 2; a++)
             {
-                var originWalk = Walk(origin * 10 + 1 + a, from, 12 + a);
+                var originWalk = Walk(origin, from, Station(origin, true, a), 12 + a);
                 for (int b = 0; b < 2; b++)
                 {
-                    var train = Cached(trains, origin * 10 + a * 2 + b, End(originWalk, from), 4 + b, TravelMode.Subway, "native:subway");
-                    var stationEnd = End(train, from);
-                    var back = Walk(origin * 10 + 5 + a * 2 + b, stationEnd, 10 + b);
-                    var to = End(back, stationEnd);
-                    if (after)
-                    {
-                        if (TransportComposition.TryJoinedScore(originWalk, train, back, from, to, preferences, from, out double score)
-                            && TransportComposition.IsFaster(score, bestScore))
-                            Consider(TransportComposition.Join(originWalk, train, back), to);
-                    }
-                    else Consider(TransportComposition.Join(new[] { originWalk, train, back }), to);
+                    var stationEnd = Station(origin, false, b);
+                    var train = Train(origin, Station(origin, true, a), stationEnd);
+                    var back = Walk(origin, stationEnd, to, 10 + b);
+                    if (after) candidates.ConsiderJoined(originWalk, train, back, from, to, preferences, parked);
+                    else Consider(TransportComposition.Join(new[] { originWalk, train, back }));
                 }
             }
-            var access = Walk(origin * 10 + 9, from, 8);
-            var parkedAt = End(access, from);
-            var road = Path(shape, parkedAt, 20, TravelMode.Car, "", false, estimate: false);
-            var egress = Walk(origin * 10 + 9 + 1000, End(road, parkedAt), 8);
-            var carParts = after
-                ? TransportComposition.Join(access, Pause(parkedAt), road, Pause(End(road, parkedAt)), egress)
-                : TransportComposition.Join(new[] { access, Pause(parkedAt), road, Pause(End(road, parkedAt)), egress });
-            if (carParts != null && TransportComposition.IsFaster(carParts.EstimatedMinutes, bestScore)) { best = carParts; bestScore = carParts.EstimatedMinutes; bestShared = false; }
-            return best != null && bestShared ? TransportComposition.Copy(best) : best;
+            var access = Walk(origin, from, parked, 8);
+            var road = Line(parked, RoadEnd(origin), 20, TravelMode.Car, "", RoadMinutes(origin));
+            var egress = Walk(origin, RoadEnd(origin), to, 8);
+            Consider(after
+                ? TransportComposition.Join(access, Pause(parked), road, Pause(RoadEnd(origin)), egress)
+                : TransportComposition.Join(new[] { access, Pause(parked), road, Pause(RoadEnd(origin)), egress }));
+            return after ? candidates.Publish() : best;
         }
+    }
+
+    private static Winner Mode(Route route)
+    {
+        foreach (var leg in route.Legs) if (leg.Mode == TravelMode.Car) return Winner.Car;
+        foreach (var leg in route.Legs) if (leg.Mode == TravelMode.Subway) return Winner.Subway;
+        return Winner.Walk;
     }
 
     private static long BytesPerJob(bool after, out List<Route?> results)
     {
         var job = new Job(after);
-        var preferences = new TravelPreferences { OwnsCar = true, AllowTransit = true, WalkingToleranceMetres = 4000 };
         results = new List<Route?>();
-        for (int i = 0; i < 50; i++) results.Add(job.Plan(i, preferences));
+        for (int i = 0; i < 48; i++) results.Add(job.Plan(i));
         long before = GC.GetAllocatedBytesForCurrentThread();
-        const int jobs = 500;
-        for (int i = 0; i < jobs; i++) job.Plan(i % 50, preferences);
+        const int jobs = 480;
+        for (int i = 0; i < jobs; i++) job.Plan(i % 48);
         long bytes = GC.GetAllocatedBytesForCurrentThread() - before;
         return bytes / jobs;
     }
@@ -215,18 +249,89 @@ public sealed class Gr5PlannerCandidateTests
     {
         long before = BytesPerJob(after: false, out var expected), after = BytesPerJob(after: true, out var actual);
         Assert.Equal(expected.Count, actual.Count);
+        var winners = new int[3];
         for (int i = 0; i < expected.Count; i++)
         {
-            Assert.Equal(expected[i] == null, actual[i] == null);
-            if (expected[i] == null) continue;
+            Assert.NotNull(expected[i]); Assert.NotNull(actual[i]);
+            Assert.Equal(Job.Expected(i), Mode(expected[i]!));
+            Assert.Equal(Job.Expected(i), Mode(actual[i]!));
+            winners[(int)Mode(actual[i]!)]++;
             Assert.Equal(expected[i]!.EstimatedMinutes, actual[i]!.EstimatedMinutes);
             Assert.Equal(expected[i]!.Legs.Count, actual[i]!.Legs.Count);
             for (int leg = 0; leg < expected[i]!.Legs.Count; leg++) Assert.True(RouteLegContent(expected[i]!.Legs[leg], actual[i]!.Legs[leg]));
         }
+        Assert.All(winners, count => Assert.Equal(16, count));
         output.WriteLine(string.Format(CultureInfo.InvariantCulture,
-            "planning job (1 direct walk of 60 legs, 2x2 subway candidates, 1 car candidate with 2 pauses, cached walks): before {0:N0} B/job, after {1:N0} B/job (.NET)",
+            "warmed planning job, one destination (60-leg direct walk, 2x2 valid subway candidates, 1 valid car candidate with 2 pauses and a fresh 20-leg road, cached walks; 16 walk / 16 subway / 16 car winners): before {0:N0} B/job, after {1:N0} B/job (.NET)",
             before, after));
         Assert.True(after * 3 <= before * 2, before + " -> " + after);
+    }
+
+    [Fact]
+    public void APublishedRouteNeverSharesTheCachedWalkingLegList()
+    {
+        var job = new Job(after: true);
+        const int walkOrigin = 0, subwayOrigin = 1;
+        Assert.Equal(Winner.Walk, Job.Expected(walkOrigin));
+        Assert.Equal(Winner.Subway, Job.Expected(subwayOrigin));
+        var cached = job.CachedWalk(walkOrigin, Job.From(walkOrigin), Job.To(walkOrigin), 60);
+        var original = cached.Legs.ToArray();
+        var first = job.Plan(walkOrigin)!;
+        Assert.Equal(Winner.Walk, Mode(first));
+        Assert.NotSame(cached, first);
+        Assert.NotSame(cached.Legs, first.Legs);
+        first.Legs.RemoveAt(first.Legs.Count - 1);
+        first.Legs.Add(new RouteLeg { From = P(-1), To = P(-2), Minutes = 1, Mode = TravelMode.Walk });
+        first.Legs.Insert(0, new RouteLeg { From = P(-3), To = P(-1), Minutes = 1, Mode = TravelMode.Walk });
+        Assert.Same(cached, job.CachedWalk(walkOrigin, Job.From(walkOrigin), Job.To(walkOrigin), 60));
+        var again = job.Plan(walkOrigin)!;
+        Assert.Equal(original.Length, cached.Legs.Count);
+        Assert.Equal(original.Length, again.Legs.Count);
+        for (int i = 0; i < original.Length; i++) { Assert.Same(original[i], cached.Legs[i]); Assert.Same(original[i], again.Legs[i]); }
+
+        var joinedCached = job.CachedWalk(subwayOrigin, Job.From(subwayOrigin), Job.To(subwayOrigin), 60);
+        var joinedOriginal = joinedCached.Legs.ToArray();
+        var joined = job.Plan(subwayOrigin)!;
+        Assert.Equal(Winner.Subway, Mode(joined));
+        int joinedCount = joined.Legs.Count;
+        joined.Legs.Clear();
+        var rejoined = job.Plan(subwayOrigin)!;
+        Assert.Equal(joinedCount, rejoined.Legs.Count);
+        Assert.Equal(joinedOriginal.Length, joinedCached.Legs.Count);
+        var repeat = job.Plan(walkOrigin)!;
+        Assert.Equal(original.Length, repeat.Legs.Count);
+        Assert.NotSame(again.Legs, repeat.Legs);
+    }
+
+    [Fact]
+    public void TheCandidateChoicePublishesACopyOnlyWhenTheSharedRouteWins()
+    {
+        var preferences = Job.Preferences;
+        var from = P(0); var to = P(10);
+        Route Straight(double minutes) => TransportComposition.Shared(new Route { Legs = new List<RouteLeg> { new RouteLeg { From = from, To = to, Minutes = minutes, Mode = TravelMode.Walk } } });
+        var choice = new RouteCandidates();
+        var slow = Straight(5); var fast = Straight(3);
+        choice.Consider(slow, from, to, preferences, null, shared: true);
+        choice.Consider(fast, from, to, preferences, null);
+        Assert.Same(fast, choice.Publish());
+        choice.Reset();
+        Assert.False(choice.HasBest);
+        Assert.Null(choice.Publish());
+        choice.Consider(fast, from, to, preferences, null);
+        choice.Consider(slow, from, to, preferences, null, shared: true);
+        Assert.Same(fast, choice.Publish());
+        choice.Reset();
+        choice.Consider(fast, from, to, preferences, null, shared: true);
+        choice.Consider(slow, from, to, preferences, null);
+        var copy = choice.Publish()!;
+        Assert.NotSame(fast, copy);
+        Assert.NotSame(fast.Legs, copy.Legs);
+        Assert.Same(fast.Legs[0], copy.Legs[0]);
+        Assert.Same(copy, choice.Publish());
+        choice.Reset();
+        choice.Consider(Straight(1), from, P(11), preferences, null, shared: true);
+        Assert.False(choice.HasBest);
+        Assert.Equal(double.PositiveInfinity, choice.BestScore);
     }
 
     [Fact]

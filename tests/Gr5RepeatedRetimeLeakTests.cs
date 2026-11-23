@@ -555,4 +555,59 @@ public sealed class Gr5RepeatedRetimeLeakTests
         Assert.True(sixty.Bytes - one.Bytes < Allowance, "60x minus 1x " + (sixty.Bytes - one.Bytes) + " B");
         Assert.Equal(1, Objects(sixty, "CitySimulator"));
     }
+
+    [Fact]
+    public void TheRigNightProtocolReportsAllocationAndRetainedGraphAtEachSamplerBoundary()
+    {
+        const double SamplerMinutes = 200;
+        (RetainedHeap Armed, RetainedHeap BeforeSampler, RetainedHeap Stopped, long Approach, long Window) Run(double rate)
+        {
+            var state = Gr5AllocationMeasure.RigCity();
+            var city = new CitySimulator(state, new Gr5AdvanceSegmentMeasure.Straight());
+            city.AttachFoodMarket(new VisitorRoutineTests.Market { Shops = F5gPopulationFillTests.Shops(state) });
+            city.AttachOptionalStops(new Gr5AllocationMeasure.StopSpots(), OptionalStopPolicy.ApprovedChoicePercentage);
+            double day = Math.Floor(state.Minute / 1440) * 1440 + 1440;
+            city.AdvanceTo(day + 15.5 * 60, int.MaxValue);
+            var driver = new ClockRetimeDriver();
+            CitySimulator Retime(double to)
+            {
+                while (driver.Update(state, to, false, 1.4, ClockRetimeStages.SliceMilliseconds) != ClockRetimeOutcome.Committed) { }
+                var rebuild = city.BeginRebuildRoutes(new Gr5AdvanceSegmentMeasure.Straight(), driver.TakeRetimedTraffic());
+                while (!rebuild.Step(0)) { }
+                return rebuild.TakeResult();
+            }
+            city = Retime(rate);
+            city.AdvanceTo(day + 1440 + 50, int.MaxValue);
+            var armed = Census(("simulation", city), ("driver", driver));
+            long approachStarted = GC.GetAllocatedBytesForCurrentThread();
+            city.AdvanceTo(day + 1440 + 60, int.MaxValue);
+            city = Retime(1);
+            long approach = GC.GetAllocatedBytesForCurrentThread() - approachStarted;
+            Assert.True(city.ActiveJourneyIndexMatchesState());
+            var beforeSampler = Census(("simulation", city), ("driver", driver));
+            long windowStarted = GC.GetAllocatedBytesForCurrentThread();
+            city.AdvanceTo(day + 1440 + 60 + SamplerMinutes, int.MaxValue);
+            long window = GC.GetAllocatedBytesForCurrentThread() - windowStarted;
+            Assert.True(city.ActiveJourneyIndexMatchesState());
+            return (armed, beforeSampler, Census(("simulation", city), ("driver", driver)), approach, window);
+        }
+        string Line(string name, RetainedHeap heap) => name + " " + heap.Bytes + " B / " + heap.Objects + " objects / " + heap.References + " references";
+        var twenty = Run(20); var sixty = Run(60);
+        output.WriteLine("rig food city, B protocol (15:30 -> 00:50 at rate, 00:50 -> 01:00 at rate, drop to 1x, " + SamplerMinutes + " game minutes at 1x), Mono 64-bit layout model:");
+        foreach (var (name, arm) in new[] { ("20x", twenty), ("60x", sixty) })
+        {
+            output.WriteLine("  " + name + ": " + Line("00:50", arm.Armed) + "; " + Line("before sampler", arm.BeforeSampler) + "; " + Line("sampler stop", arm.Stopped));
+            output.WriteLine("  " + name + ": allocated 00:50 -> sampler start " + arm.Approach + " B, sampler window " + arm.Window + " B (.NET)");
+            foreach (var row in arm.BeforeSampler.Types.Take(8))
+            {
+                var armedRow = arm.Armed.Types.FirstOrDefault(r => r.Name == row.Name);
+                output.WriteLine("    " + row.Name + ": 00:50 " + (armedRow?.Objects ?? 0) + " / before sampler " + row.Objects + " objects, "
+                    + (row.Bytes - (armedRow?.Bytes ?? 0)).ToString("+0;-0;0", System.Globalization.CultureInfo.InvariantCulture) + " B");
+            }
+            Assert.Equal(1, Objects(arm.BeforeSampler, "CitySimulator"));
+            Assert.Equal(1, Objects(arm.Stopped, "CitySimulator"));
+        }
+        Assert.True(Math.Abs(sixty.BeforeSampler.Bytes - twenty.BeforeSampler.Bytes) < Allowance, "before sampler 60x minus 20x " + (sixty.BeforeSampler.Bytes - twenty.BeforeSampler.Bytes) + " B");
+        Assert.True(Math.Abs(sixty.Stopped.Bytes - twenty.Stopped.Bytes) < Allowance, "sampler stop 60x minus 20x " + (sixty.Stopped.Bytes - twenty.Stopped.Bytes) + " B");
+    }
 }
