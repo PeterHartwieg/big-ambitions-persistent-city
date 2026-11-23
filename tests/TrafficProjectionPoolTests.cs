@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Runtime.CompilerServices;
 using Newtonsoft.Json;
 using PersistentCity.Core;
 using Xunit;
@@ -237,5 +238,70 @@ public sealed class TrafficProjectionPoolTests
             city.Size, city.Kernel.VehicleCount, minutes, measured.Plans, measured.Events, measured.Bytes, measured.Bytes / 1048576.0, measured.EnqueueBytes / 1048576.0));
         Assert.True(measured.Events > 5000, measured.Events + " events");
         Assert.True(measured.Bytes < 64 * 1024, measured.Bytes + " B");
+    }
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private static List<WeakReference> ForecastEveryQueuedLink(City city, double minute)
+    {
+        var vehicles = new List<TrafficVehicleState>();
+        city.Kernel.CopyVehiclesInOrder(vehicles);
+        var weak = new List<WeakReference>();
+        foreach (var vehicle in vehicles)
+        {
+            weak.Add(new WeakReference(vehicle)); weak.Add(new WeakReference(vehicle.Route));
+            foreach (var leg in vehicle.Route) weak.Add(new WeakReference(leg));
+        }
+        for (int link = 0; link < city.Size; link++) city.Kernel.ForecastEntry(link, minute + 0.2, 0.4, 0.6);
+        return weak;
+    }
+
+    [Fact]
+    public void AnEntryForecastKeepsNoCarRouteOrLegOnceItReturns()
+    {
+        var city = new City(17);
+        for (int i = 0; i < 40; i++) city.Enqueue(3 + city.Random.Next(4));
+        city.Advance(0.3);
+        Assert.True(city.Kernel.VehicleCount > 20, city.Kernel.VehicleCount + " cars");
+        var weak = ForecastEveryQueuedLink(city, 0.3);
+        Assert.Equal(0, city.Kernel.ProjectionVehiclesHeld());
+        city.Advance(10_000);
+        Assert.Equal(0, city.Kernel.VehicleCount);
+        GC.Collect(); GC.WaitForPendingFinalizers(); GC.Collect();
+        int alive = 0;
+        foreach (var reference in weak) if (reference.IsAlive) alive++;
+        Assert.True(weak.Count > 100, weak.Count + " references");
+        Assert.Equal(0, alive);
+    }
+
+    [Fact]
+    public void TheCensusSeparatesLiveCarsAndTheForecastPoolFromAStrayCar()
+    {
+        var city = new City(17, 24);
+        for (int i = 0; i < 30; i++) city.Enqueue(2 + city.Random.Next(3));
+        city.Advance(0.6);
+        for (int link = 0; link < city.Size; link++) city.Kernel.ForecastEntry(link, 0.8, 0.4, 0.6);
+        var stray = new List<TrafficVehicleState> { new TrafficVehicleState { VehicleId = "stray", Route = { new TrafficRouteLeg { LinkId = 1, EndNominalMinutes = 1, FreeFlowMinutes = 1 } } } };
+        var tracked = new[] { typeof(TrafficVehicleState), typeof(TrafficRouteLeg), typeof(List<TrafficRouteLeg>) };
+        System.Text.Json.JsonElement Read(bool withStray)
+        {
+            var census = new RetainedCensus();
+            census.TrackPerRoot(tracked);
+            city.Kernel.RetainedCaches((name, cache, bound) => census.DeferCache("cache.traffic." + name, cache, bound));
+            census.Add("runtime.simulation", city.Kernel);
+            if (withStray) census.Add("runtime.stray", stray);
+            census.AddDeferredCaches();
+            using var report = System.Text.Json.JsonDocument.Parse(census.ReportJson(1, 0, null, RetainedCensus.InstrumentRoot, tracked, null, RetainedCensus.TrafficVehicles(city.Kernel)));
+            return report.RootElement.GetProperty("traffic_vehicles").Clone();
+        }
+        var clean = Read(false);
+        var vehicles = clean.GetProperty("vehicles");
+        Assert.Equal(city.Kernel.VehicleCount, vehicles.GetProperty("live").GetInt64());
+        Assert.True(vehicles.GetProperty("in_caches").GetInt64() > 0, clean.ToString());
+        foreach (var series in new[] { "vehicles", "routes", "legs" })
+            Assert.Equal(0, clean.GetProperty(series).GetProperty("outside_live_and_caches").GetInt64());
+        Assert.Equal(0, clean.GetProperty("legs").GetProperty("in_caches").GetInt64());
+        var leaked = Read(true);
+        foreach (var series in new[] { "vehicles", "routes", "legs" })
+            Assert.Equal(1, leaked.GetProperty(series).GetProperty("outside_live_and_caches").GetInt64());
     }
 }

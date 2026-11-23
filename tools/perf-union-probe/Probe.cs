@@ -69,7 +69,7 @@ namespace PerfUnionProbe
 
         internal static volatile bool armed;
         internal static bool measuring;
-        private static string mode = "none", error = "", stopReason = "not-started", window = "", boundarySource = "none";
+        private static string mode = "none", stopReason = "not-started", window = "", boundarySource = "none";
         private static object save;
         private static int armThread, offMainCallbacks;
         private static Assembly pc;
@@ -82,10 +82,9 @@ namespace PerfUnionProbe
         private static string[] componentNames = Array.Empty<string>();
         internal static UnionClock union = new UnionClock(0, 0, Stopwatch.Frequency);
         internal static readonly HoldTracker holds = new HoldTracker();
-        private static bool loopInstalled, eventsSubscribed, holdsBound, advanceBound, patchSetChanged;
+        private static bool loopInstalled, eventsSubscribed, holdsBound, advanceBound;
         private static CoverageTracker coverage;
         private static PatchStateWatch patchWatch;
-        private static int unexpectedAtWindowStart;
 
         private static readonly FrameRow[] frames = new FrameRow[FrameLimit];
         private static float[] frameComponents = new float[FrameLimit * ScopeInventory.Components.Count];
@@ -97,7 +96,7 @@ namespace PerfUnionProbe
         private static readonly int[] subCollected = new int[LoopPhaseRecorder.MaxSubPhases];
         private static bool subPhasesTruncated;
         private static Action<string> markDiagnostic;
-        private static string startScan = "none", stopScan = "none";
+        private static string startScan = "none";
         private static readonly RingCursor frameRing = new RingCursor(FrameLimit);
         private static int currentFrame = -1, firstMeasureFrame = -1;
         private static long frameStartQpc, nextDiagnosticQpc;
@@ -173,7 +172,7 @@ namespace PerfUnionProbe
                 if (action == "heap") return Wrap(Status(), Heap());
                 Require(armed, "f4b_not_armed");
                 if (action == "measure-start") { var before = Status(); StartMeasurement(args); return Wrap(before, Status()); }
-                if (action == "measure-stop") { var stop = ReadStop(); var before = Status(); StopMeasurement("explicit-stop", stop); return Wrap(before, Status()); }
+                if (action == "measure-stop") { var stop = ReadStop(); return PatchWindowScan.MeasureStop(Status, () => StopMeasurement("explicit-stop", stop), Wrap); }
                 if (action == "page") { var status = Status(); return Wrap(status, Page(args, ReplyLimit - status.ToString(Formatting.None).Length - PageEnvelope)); }
                 if (action == "disarm") { var before = Status(); Disarm(); stopReason = "disarmed"; return Wrap(before, Status()); }
                 return Wrap(Status(), new JObject { ["supported"] = false, ["refusal"] = "f4b_unsupported_action", ["action"] = action });
@@ -217,9 +216,10 @@ namespace PerfUnionProbe
             Require(requested == "candidate" || requested == "reference", "f4b_mode_candidate_or_reference_required");
             Disarm();
             ReadMonoHeap(out armHeapBefore, out armUsedBefore); armHeapAfter = armUsedAfter = -1;
-            armThread = Thread.CurrentThread.ManagedThreadId; offMainCallbacks = 0; error = "";
+            armThread = Thread.CurrentThread.ManagedThreadId; offMainCallbacks = 0; scanner.Error = "";
             save = SaveGameManager.Current;
             pc = AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault(a => a.GetName().Name == "PersistentCity");
+            ConfigureScanCache();
             var foreignOwners = ScopeInventory.Owners.Where(Harmony.HasAnyPatches).ToArray();
             try
             {
@@ -234,9 +234,9 @@ namespace PerfUnionProbe
                     patches.Patch(tick, prefix: new HarmonyMethod(typeof(ShimPatch), nameof(ShimPatch.Prefix)) { priority = Priority.First + 1 });
                     shimInstalled = true;
                     union = new UnionClock(0, 0, Stopwatch.Frequency); componentNames = Array.Empty<string>();
-                    coverage = null; matchedScans = 0;
+                    coverage = null; scanner.ResetMatched();
                     try { patchWatch = PatchStateWatch.Shared(); } catch { patchWatch = null; }
-                    PatchStateWatch.Run(patchWatch, true, Matched);
+                    scanner.Run(patchWatch, null, true);
                 }
                 else
                 {
@@ -331,7 +331,7 @@ namespace PerfUnionProbe
             }
             coverage = new CoverageTracker(ScopeInventory.Patches, exp => bindings.Any(b => ReferenceEquals(b.Expected, exp) && b.Status == "timed"), PatchId);
             try { patchWatch = PatchStateWatch.Shared(); } catch { patchWatch = null; }
-            PatchStateWatch.Run(patchWatch, true, Scan);
+            scanner.Run(patchWatch, coverage, true);
             for (int i = 0; i < components.Length; i++)
             {
                 var method = Find(components[i], components[i].Target);
@@ -372,14 +372,25 @@ namespace PerfUnionProbe
             }
         }
 
-        private static readonly Action Scan = ScanPatches;
-        private static void ScanPatches()
+        private const int ScanAttempts = 4;
+        private static readonly Action<MethodBase, List<ObservedPatch>> ObserveTarget = (target, into) => HarmonyScan.Observe(target, Harmony.GetPatchInfo(target), pc, into);
+        private static readonly PatchWindowScan scanner = new PatchWindowScan(new PatchScanCache(), ObserveTarget, () => Harmony.GetAllPatchedMethods().ToArray(), ScanAttempts);
+        private static PatchScanCache scanCache => scanner.Cache;
+
+        private static void ConfigureScanCache()
         {
-            if (coverage == null) return;
-            var observed = new List<ObservedPatch>();
-            foreach (var target in Harmony.GetAllPatchedMethods().ToArray()) HarmonyScan.Observe(target, Harmony.GetPatchInfo(target), pc, observed);
-            coverage.Observe(observed);
+            var mentions = new List<string>(ScopeInventory.Owners);
+            if (pc != null) foreach (var module in pc.GetModules()) mentions.Add(module.ModuleVersionId.ToString());
+            scanCache.Configure(mentions);
         }
+
+        private static JObject ScanCacheRow() => new JObject
+        {
+            ["entries"] = scanCache.Entries, ["mentions"] = scanCache.Needles, ["scans"] = scanCache.Scans,
+            ["last_targets"] = scanCache.LastTargets, ["last_deserialized"] = scanCache.LastDeserialized, ["last_skipped"] = scanCache.LastSkipped, ["last_reused"] = scanCache.LastReused, ["last_drifted"] = scanCache.LastDrifted, ["drifted"] = scanCache.Drifted, ["rescans"] = scanCache.Rescans,
+            ["deserialized"] = scanCache.Deserialized, ["skipped"] = scanCache.Skipped, ["reused"] = scanCache.Reused,
+            ["qualification"] = "Harmony patch-info reads per scan. A target is read again only when Harmony replaced its serialized patch state; a target whose state names no inventory owner and no Persistent City module is skipped unread, because coverage ignores its patches. A target whose Harmony state changed between the snapshot and its read is drifted: the scan is taken again from a fresh snapshot, nothing is cached under the old state, and a drift inside a measured window sets patch_set_changed_in_window and the error f4b_patch_set_changed_in_window, which stays for the rest of the window.",
+        };
 
         private static bool CoverageComplete() => coverage != null && coverage.Complete && bindings.All(b => b.Status != "unbindable");
 
@@ -579,7 +590,7 @@ namespace PerfUnionProbe
             long now = Stopwatch.GetTimestamp();
             if (Thread.CurrentThread.ManagedThreadId != armThread) { Interlocked.Increment(ref offMainCallbacks); return; }
             if (!ReferenceEquals(save, SaveGameManager.Current) || !FtCity()) { StopMeasurement("save_changed"); Disarm(); stopReason = "save_changed"; return; }
-            if (Volatile.Read(ref offMainCallbacks) != 0 && measuring) { error = "f4b_off_main_thread_callbacks_capture_invalid"; StopMeasurement("off_main"); }
+            if (Volatile.Read(ref offMainCallbacks) != 0 && measuring) { scanner.Error = "f4b_off_main_thread_callbacks_capture_invalid"; StopMeasurement("off_main"); }
             CloseFrame(Time.frameCount, now, true);
             if (measuring && now >= nextDiagnosticQpc)
             {
@@ -609,7 +620,7 @@ namespace PerfUnionProbe
             if (union.Depth != 0)
             {
                 crossFrame++; union.Abandon();
-                if (measuring) { error = "f4b_cross_frame_scope"; StopMeasurement("cross_frame", writeStopFrame: false); }
+                if (measuring) { scanner.Error = "f4b_cross_frame_scope"; StopMeasurement("cross_frame", writeStopFrame: false); }
             }
             if (measuring && pendingWindowStart) { pendingWindowStart = false; holds.BeginWindow(nowFrame, now); }
             currentFrame = nowFrame; frameStartQpc = now; union.ResetFrame(); observerTicks = boundaryTicks = 0;
@@ -644,29 +655,7 @@ namespace PerfUnionProbe
             catch { sampleFailures++; }
         }
 
-        private static long matchedScans;
-        private static void MatchedScan()
-        {
-            var observed = new List<ObservedPatch>();
-            foreach (var target in Harmony.GetAllPatchedMethods().ToArray()) HarmonyScan.Observe(target, Harmony.GetPatchInfo(target), pc, observed);
-            matchedScans++;
-        }
-
-        private static readonly Action Matched = MatchedScan;
-
-        private static string Rescan(bool full)
-        {
-            bool scanned = false;
-            if (coverage == null)
-            {
-                if (mode != "reference" || !full && patchWatch == null) return "none";
-                try { scanned = PatchStateWatch.Run(patchWatch, full, Matched); } catch { error = "f4b_patch_scan_failed"; }
-                return scanned ? "full" : "watch-unchanged";
-            }
-            try { scanned = PatchStateWatch.Run(patchWatch, full, Scan); } catch { error = "f4b_patch_scan_failed"; }
-            if (measuring && coverage.Unexpected.Count > unexpectedAtWindowStart) patchSetChanged = true;
-            return scanned ? "full" : "watch-unchanged";
-        }
+        private static string Rescan(bool full) => scanner.Rescan(patchWatch, coverage, mode == "reference", full);
 
         private static long monoHeapStart = -1, monoUsedStart = -1, monoHeapStop = -1, monoUsedStop = -1;
         private static readonly CollectionSeries collectionSeries = new CollectionSeries();
@@ -700,10 +689,10 @@ namespace PerfUnionProbe
             Require(union.Depth == 0, "f4b_active_scope");
             string label = (string)args["window"] ?? "";
             Require(label.Length <= 64 && label.All(ch => char.IsLetterOrDigit(ch) || ch == '-' || ch == '_' || ch == '.'), "f4b_invalid_window_label");
-            window = label; error = ""; stopReason = "measuring";
+            window = label; stopReason = "measuring";
             frameRing.Reset(); tickRing.Reset(); sampleRing.Reset(); calls.Reset(); sampleFailures = advanceCalls = 0;
             ReadMonoHeap(out startScanHeap, out startScanUsed); monoHeapStop = monoUsedStop = -1;
-            startScan = Rescan(false); stopScan = "none"; unexpectedAtWindowStart = coverage?.Unexpected.Count ?? 0; patchSetChanged = false;
+            startScan = scanner.Start(patchWatch, coverage, mode == "reference");
             phases.Reset(); if (subPhases.Phases > 0) subPhases.Reset();
             ReadMonoHeap(out monoHeapStart, out monoUsedStart);
             collectionSeries.Begin(GC.CollectionCount(0));
@@ -734,7 +723,7 @@ namespace PerfUnionProbe
             stop.Close(collectionSeries, phases, currentFrame, closePhases, union.FrameTicks * ToMs, frameLate, ToMs, union.FrameTicks);
             NoteRowScope(stopRetained);
             if (closePhases && subPhases.Phases > 0) subPhases.Close(currentFrame, stop.Ticks, stop.Collections, union.FrameTicks * ToMs, true, frameLate, ToMs, true, union.FrameTicks);
-            if (reason == "explicit-stop") stopScan = Rescan(false);
+            scanner.Stop(patchWatch, coverage, mode == "reference", reason == "explicit-stop");
             if (writeStopFrame && currentFrame > firstMeasureFrame) { frameDiagnostic = true; WriteFrame(currentFrame + 1, stop, true); }
             if (pendingWindowStart) pendingWindowStart = false;
             else holds.EndWindow(currentFrame, stop.Ticks);
@@ -745,8 +734,8 @@ namespace PerfUnionProbe
         {
             if (measuring) StopMeasurement("disarm");
             measuring = false; armed = false;
-            try { patches.UnpatchAll(PatchId); } catch { error = "f4b_unpatch_failed"; }
-            try { RemoveLoop(); } catch { error = "f4b_player_loop_restore_failed"; }
+            try { patches.UnpatchAll(PatchId); } catch { scanner.Error = "f4b_unpatch_failed"; }
+            try { RemoveLoop(); } catch { scanner.Error = "f4b_player_loop_restore_failed"; }
             if (eventsSubscribed)
             {
                 SceneManager.sceneLoaded -= SceneLoaded; SceneManager.sceneUnloaded -= SceneUnloaded;
@@ -777,15 +766,14 @@ namespace PerfUnionProbe
             JToken NotApplicable(Func<JToken> value) => candidate ? value() : (JToken)"n/a";
             int Count(string status) => bindings.Count(b => b.Status == status);
             JArray Names(string status) => new JArray(bindings.Where(b => b.Status == status).Select(b => b.Label).Distinct().Take(64));
-            return new JObject
+            var row = new JObject
             {
-                ["prototype"] = true, ["native_validated"] = false, ["packaged"] = false, ["mode"] = mode, ["armed"] = armed, ["measuring"] = measuring,
-                ["window"] = window, ["error"] = error, ["stop_reason"] = stopReason,
+                ["prototype"] = true, ["native_validated"] = false, ["packaged"] = false, ["mode"] = mode, ["armed"] = armed,
+                ["window"] = window, ["stop_reason"] = stopReason,
                 ["scope_inventory_version"] = ScopeInventory.Version, ["expected_scope_hash"] = ScopeInventory.Hash(),
-                ["coverage_complete"] = NotApplicable(() => CoverageComplete()),
-                ["patch_scans"] = NotApplicable(() => coverage?.Scans ?? 0), ["patch_state_checks"] = NotApplicable(() => patchWatch?.Checks ?? 0),
-                ["patch_state_changes"] = NotApplicable(() => patchWatch?.Changes ?? 0), ["patch_state_watch"] = NotApplicable(() => patchWatch != null), ["patch_scan_pending"] = NotApplicable(() => patchWatch?.Pending ?? false), ["matched_reference_scans"] = mode == "reference" ? (JToken)matchedScans : "n/a", ["patch_set_changed_in_window"] = NotApplicable(() => patchSetChanged),
-                ["start_scan"] = startScan, ["stop_scan"] = stopScan, ["diagnostic_mark_bound"] = NotApplicable(() => markDiagnostic != null),
+                ["patch_scans"] = NotApplicable(() => coverage?.Scans ?? 0), ["patch_scan_cache"] = ScanCacheRow(), ["patch_state_checks"] = NotApplicable(() => patchWatch?.Checks ?? 0),
+                ["patch_state_changes"] = NotApplicable(() => patchWatch?.Changes ?? 0), ["patch_state_watch"] = NotApplicable(() => patchWatch != null), ["patch_scan_pending"] = NotApplicable(() => patchWatch?.Pending ?? false), ["matched_reference_scans"] = mode == "reference" ? (JToken)scanner.MatchedScans : "n/a",
+                ["start_scan"] = startScan, ["diagnostic_mark_bound"] = NotApplicable(() => markDiagnostic != null),
                 ["collection_frames"] = CollectionFrameSummary(),
                 ["scopes"] = NotApplicable(() => new JObject { ["timed_methods"] = scopeIndex.Count, ["timed"] = Count("timed"),
                     ["untimed_transpiled"] = Names("untimed-transpiled"),
@@ -824,6 +812,7 @@ namespace PerfUnionProbe
                     + "component-unbound and the union stays authoritative. Components are attribution only and are never summed. wholeFrameMs is wall time between "
                     + "player-loop frame starts, not CPU or GPU time. Unexpected, unbindable, off-main, cross-frame, overflow or error flags invalidate a window.",
             };
+            return scanner.Project(row, (r, key, value) => r[key] = JToken.FromObject(value), candidate, CoverageComplete);
         }
 
         private static JObject CollectionFrameSummary()

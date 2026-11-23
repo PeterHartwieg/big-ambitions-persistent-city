@@ -137,15 +137,22 @@ public sealed class Gr5DiagnosticsProjectionTests
     public void CollectionRowsAreBoundedAndAllocateNothingPerFrame()
     {
         var sampler = new GcPauseSampler(4096);
-        sampler.Start(1000);
-        sampler.Observe(0, 0, 0, 0, 1000, 0);
-        long before = GC.GetAllocatedBytesForCurrentThread();
-        for (int frame = 1; frame <= 3000; frame++) { sampler.ModWork(1); sampler.Observe(frame * 16.0, frame / 10, 0, 0, 1000, frame); }
-        Assert.Equal(0, GC.GetAllocatedBytesForCurrentThread() - before);
+        ObserveCollectionFrames(sampler);
+        long allocated = ObserveCollectionFrames(sampler);
+        Assert.Equal(0, allocated);
         Assert.Equal(GcPauseSampler.CollectionRowCapacity, sampler.CollectionRowCount);
         Assert.True(sampler.CollectionRowsTruncated);
         sampler.Start(1000);
         Assert.Equal(0, sampler.CollectionRowCount);
+    }
+
+    private static long ObserveCollectionFrames(GcPauseSampler sampler)
+    {
+        sampler.Start(1000);
+        sampler.Observe(0, 0, 0, 0, 1000, 0);
+        long before = GC.GetAllocatedBytesForCurrentThread();
+        for (int frame = 1; frame <= 3000; frame++) { sampler.ModWork(1); sampler.Observe(frame * 16.0, frame / 10, 0, 0, 1000, frame); }
+        return GC.GetAllocatedBytesForCurrentThread() - before;
     }
 
     [Fact]
@@ -192,12 +199,12 @@ public sealed class Gr5DiagnosticsProjectionTests
         int armedGate = probe.IndexOf("Require(armed, \"f4b_not_armed\");", StringComparison.Ordinal);
         Assert.True(heap > 0 && armedGate > heap, "the forced-collection heap read is available before arm");
         int scanBefore = probe.IndexOf("ReadMonoHeap(out startScanHeap, out startScanUsed);", StringComparison.Ordinal);
-        int startScan = probe.IndexOf("startScan = Rescan(false); stopScan = \"none\"; unexpectedAtWindowStart", StringComparison.Ordinal);
+        int startScan = probe.IndexOf("startScan = scanner.Start(patchWatch, coverage, mode == \"reference\");", StringComparison.Ordinal);
         int start = probe.IndexOf("ReadMonoHeap(out monoHeapStart, out monoUsedStart);", StringComparison.Ordinal);
         Assert.True(scanBefore > 0 && startScan > scanBefore && start > startScan, "the window baseline is read after the start patch check, which is bracketed");
         int stop = probe.IndexOf("monoHeapStop = stop.Heap; monoUsedStop = stop.Used;", StringComparison.Ordinal);
         int stopSeries = probe.IndexOf("stop.Close(collectionSeries, phases, currentFrame,", StringComparison.Ordinal);
-        int stopScan = probe.IndexOf("if (reason == \"explicit-stop\") stopScan = Rescan(false);", StringComparison.Ordinal);
+        int stopScan = probe.IndexOf("scanner.Stop(patchWatch, coverage, mode == \"reference\", reason == \"explicit-stop\");", StringComparison.Ordinal);
         Assert.True(stop > 0 && stopSeries > stop && stopScan > stopSeries, "the stop reading and its collection sample precede the stop patch check");
         Assert.Contains("WriteFrame(currentFrame + 1, stop, true);", probe);
         Assert.Contains("else holds.EndWindow(currentFrame, stop.Ticks);", probe);
@@ -210,13 +217,21 @@ public sealed class Gr5DiagnosticsProjectionTests
         Assert.DoesNotContain("GC.CollectionCount", stopText);
         Assert.DoesNotContain("Stopwatch.GetTimestamp", stopText);
         Assert.DoesNotContain("Rescan(true)", probe);
-        Assert.Contains("if (action == \"measure-stop\") { var stop = ReadStop(); var before = Status(); StopMeasurement(\"explicit-stop\", stop);", probe);
+        Assert.Contains("if (action == \"measure-stop\") { var stop = ReadStop(); return PatchWindowScan.MeasureStop(Status, () => StopMeasurement(\"explicit-stop\", stop), Wrap); }", probe);
+        int status = probe.IndexOf("private static JObject Status()", StringComparison.Ordinal);
+        int projected = probe.IndexOf("return scanner.Project(row, (r, key, value) => r[key] = JToken.FromObject(value), candidate, CoverageComplete);", status, StringComparison.Ordinal);
+        int statusEnd = probe.IndexOf("private static JObject CollectionFrameSummary()", status, StringComparison.Ordinal);
+        Assert.True(status > 0 && projected > status && statusEnd > projected, "the status row ends by projecting the window scan's fields");
+        string statusText = probe.Substring(status, statusEnd - status);
+        Assert.Single(System.Text.RegularExpressions.Regex.Matches(statusText, "return "));
+        foreach (string key in new[] { "error", "measuring", "coverage_complete", "patch_set_changed_in_window", "stop_scan" })
+            Assert.DoesNotContain("\"" + key + "\"", statusText);
         int read = probe.IndexOf("private static StopRead ReadStop()", StringComparison.Ordinal);
         int count = probe.IndexOf("int collections = GC.CollectionCount(0);", read, StringComparison.Ordinal);
         int heapRead = probe.IndexOf("ReadMonoHeap(out long heap, out long used);", read, StringComparison.Ordinal);
         Assert.True(read > 0 && count > read && heapRead > count, "the explicit stop reads the collection count and heap before the status response is built");
-        Assert.Contains("try { scanned = PatchStateWatch.Run(patchWatch, full, Matched); }", probe);
-        Assert.Contains("coverage = null; matchedScans = 0;\n                    try { patchWatch = PatchStateWatch.Shared(); } catch { patchWatch = null; }\n                    PatchStateWatch.Run(patchWatch, true, Matched);", probe);
+        Assert.Contains("private static string Rescan(bool full) => scanner.Rescan(patchWatch, coverage, mode == \"reference\", full);", probe);
+        Assert.Contains("coverage = null; scanner.ResetMatched();\n                    try { patchWatch = PatchStateWatch.Shared(); } catch { patchWatch = null; }\n                    scanner.Run(patchWatch, null, true);", probe);
         string pedestrians = System.IO.File.ReadAllText(System.IO.Path.Combine(root, "Runtime", "PhysicalPedestrians.cs"));
         Assert.Contains("\" ms grow start max/\"", pedestrians);
         Assert.Contains("\" ms grow finish max/\" + growLog.Report();", pedestrians);

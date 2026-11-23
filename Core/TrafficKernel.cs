@@ -560,22 +560,26 @@ namespace PersistentCity.Core
             if (link.Closed) return double.PositiveInfinity;
             if (link.Queue.Count == 0 && link.Sources.Count == 0) return 0;
             if (link.Queue.Count + link.Sources.Count > ForecastMaximumVehicles) return double.PositiveInfinity;
-            TrafficKernel? projection = BuildEntryProjection(linkId);
-            if (projection == null) return double.PositiveInfinity;
-            int remaining = ForecastMaximumEvents;
-            double target = Math.Max(Clock, entryMinute);
-            TrafficAdvanceResult advance = projection.AdvanceTo(target, remaining);
-            remaining -= advance.ProcessedEvents;
-            if (!advance.ReachedTarget) return double.PositiveInfinity;
-            Link projected = projection.links[linkId];
-            while (projected.Queue.Count != 0 || projected.Sources.Count != 0)
+            try
             {
-                if (remaining-- == 0 || !projection.NextEventTime.HasValue) return double.PositiveInfinity;
-                projection.AdvanceTo(Math.Max(target, projection.NextEventMinute), 1);
+                TrafficKernel? projection = BuildEntryProjection(linkId);
+                if (projection == null) return double.PositiveInfinity;
+                int remaining = ForecastMaximumEvents;
+                double target = Math.Max(Clock, entryMinute);
+                TrafficAdvanceResult advance = projection.AdvanceTo(target, remaining);
+                remaining -= advance.ProcessedEvents;
+                if (!advance.ReachedTarget) return double.PositiveInfinity;
+                Link projected = projection.links[linkId];
+                while (projected.Queue.Count != 0 || projected.Sources.Count != 0)
+                {
+                    if (remaining-- == 0 || !projection.NextEventTime.HasValue) return double.PositiveInfinity;
+                    projection.AdvanceTo(Math.Max(target, projection.NextEventMinute), 1);
+                }
+                double included = Math.Max(0, link.NextDischargeAt - entryMinute)
+                    + (link.Queue.Count + link.Sources.Count) * link.Definition.HeadwayMinutes;
+                return Math.Max(0, projection.Clock - entryMinute - included * sectionShare);
             }
-            double included = Math.Max(0, link.NextDischargeAt - entryMinute)
-                + (link.Queue.Count + link.Sources.Count) * link.Definition.HeadwayMinutes;
-            return Math.Max(0, projection.Clock - entryMinute - included * sectionShare);
+            finally { ResetProjection(); }
         }
 
         private TrafficKernel? BuildEntryProjection(int firstId)
@@ -621,14 +625,7 @@ namespace PersistentCity.Core
             }
             order.Sort(AscendingIds);
             TrafficKernel projection = scratch.Kernel;
-            foreach (int id in scratch.Used)
-            {
-                Link used = projection.links[id];
-                while (used.Queue.First != null) projection.Detach(used, used.Queue.First);
-                used.ClearSources(); used.Incoming.Clear();
-            }
-            scratch.Used.Clear();
-            projection.events.Clear(); projection.vehicles.Clear(); projection.activeLinks.Clear(); projection.closedLinks.Clear();
+            ClearProjection(scratch);
             projection.Clock = projection.RequestedTime = Clock;
             projection.nextEventOrder = projection.nextVehicleOrder = 0;
             projection.Reconsiders = projection.ProcessedEvents = 0;
@@ -668,6 +665,46 @@ namespace PersistentCity.Core
                     projection.Append(projection.links[id], projection.vehicles[vehicle.VehicleId]);
             foreach (int id in order) projection.Reconsider(projection.links[id]);
             return projection;
+        }
+
+        private void ResetProjection()
+        {
+            var scratch = projectionScratch;
+            if (scratch == null) return;
+            scratch.Selected.Clear(); scratch.Pending.Clear(); scratch.Order.Clear(); scratch.Vehicles.Clear();
+            ClearProjection(scratch);
+            for (int i = 0; i < scratch.Copies.Count; i++)
+            {
+                var copy = scratch.Copies[i];
+                copy.Route.Clear(); copy.VehicleId = ""; copy.CompletedAt = null; copy.Completed = false;
+            }
+        }
+
+        private static void ClearProjection(ProjectionScratch scratch)
+        {
+            TrafficKernel projection = scratch.Kernel;
+            foreach (int id in scratch.Used)
+            {
+                Link used = projection.links[id];
+                while (used.Queue.First != null) projection.Detach(used, used.Queue.First);
+                used.ClearSources(); used.Incoming.Clear();
+            }
+            scratch.Used.Clear();
+            projection.events.Clear(); projection.vehicles.Clear(); projection.activeLinks.Clear(); projection.closedLinks.Clear();
+        }
+
+        internal void RetainedCaches(Action<string, object, int> add)
+        {
+            if (projectionScratch != null) add("projection", projectionScratch, ForecastMaximumVehicles);
+        }
+
+        internal int ProjectionVehiclesHeld()
+        {
+            var scratch = projectionScratch;
+            if (scratch == null) return 0;
+            int held = scratch.Vehicles.Count + scratch.Kernel.vehicles.Count;
+            for (int i = 0; i < scratch.Copies.Count; i++) if (scratch.Copies[i].Route.Count > 0 || scratch.Copies[i].VehicleId.Length > 0) held++;
+            return held;
         }
 
         private void Append(Link link, TrafficVehicleState vehicle)

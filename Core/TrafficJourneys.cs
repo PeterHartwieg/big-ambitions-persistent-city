@@ -427,6 +427,8 @@ namespace PersistentCity.Core
 
         private TrafficKernel? LiveKernel() => traffic;
 
+        internal TrafficKernel? LiveTrafficKernel => traffic;
+
         private IEnumerator<bool> CaptureForRetimeInSteps(int linksPerStep)
         {
             SynchronizeSnapshot();

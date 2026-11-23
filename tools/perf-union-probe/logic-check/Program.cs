@@ -19,6 +19,8 @@ internal static class Program
         Console.WriteLine("FAIL " + name);
     }
 
+    private static string stopStatusPath;
+
     private static int Main(string[] args)
     {
         System.Globalization.CultureInfo.DefaultThreadCurrentCulture = System.Globalization.CultureInfo.InvariantCulture;
@@ -29,7 +31,8 @@ internal static class Program
         {
             if (args[i] == "--expect-hash" && i + 1 < args.Length) expectHash = args[++i];
             else if (args[i] == "--perf") perf = true;
-            else { Console.WriteLine("usage: LogicCheck [--expect-hash HEX] [--perf]"); return 2; }
+            else if (args[i] == "--stop-status" && i + 1 < args.Length) stopStatusPath = args[++i];
+            else { Console.WriteLine("usage: LogicCheck [--expect-hash HEX] [--perf] [--stop-status PATH]"); return 2; }
         }
         Profiles();
         Shim();
@@ -44,6 +47,7 @@ internal static class Program
         Capacity();
         HarmonyAdapter();
         PatchWatch();
+        ScanCache();
         LoopPhases();
         Console.WriteLine("logic-check: " + (checks - failures) + "/" + checks + " checks passed");
         Console.WriteLine("expected_scope_hash " + ScopeInventory.Hash());
@@ -1050,6 +1054,250 @@ internal static class Program
         Scan();
         long scan = GC.GetAllocatedBytesForCurrentThread() - before;
         Console.WriteLine("patch watch: full scan of 600 patch infos without Harmony's deserialization " + scan + " B, unchanged watch check 0 B (.NET " + Environment.Version + ")");
+    }
+
+    private static byte[] PatchState(params string[] strings)
+    {
+        using (var stream = new System.IO.MemoryStream())
+        using (var writer = new System.IO.BinaryWriter(stream, System.Text.Encoding.UTF8))
+        {
+            writer.Write((byte)0); writer.Write(1); writer.Write(-1); writer.Write(1); writer.Write(0);
+            writer.Write("0Harmony, Version=2.2.2.0, Culture=neutral, PublicKeyToken=null");
+            writer.Write("HarmonyLib.PatchInfo");
+            foreach (var text in strings) { writer.Write((byte)6); writer.Write(text.Length); writer.Write(text); }
+            writer.Write((byte)11);
+            return stream.ToArray();
+        }
+    }
+
+    private const int SerializableType = 0x2000, NotSerializedField = 0x80;
+
+    private static void ScanCache()
+    {
+        var moduleField = typeof(HarmonyLib.Patch).GetField("moduleGUID", BindingFlags.NonPublic | BindingFlags.Instance);
+        var ownerField = typeof(HarmonyLib.Patch).GetField("owner", BindingFlags.Public | BindingFlags.Instance);
+        var sample = NewPatch("hart.persistentcity.cityclock.v1");
+        Check(moduleField != null && moduleField.FieldType == typeof(string) && (string)moduleField.GetValue(sample) == PatchMethod.Module.ModuleVersionId.ToString(),
+            "the pinned Harmony keeps each patch's module as the module version id string it serializes");
+        Check(ownerField != null && ownerField.FieldType == typeof(string) && (string)ownerField.GetValue(sample) == "hart.persistentcity.cityclock.v1"
+            && ((int)typeof(HarmonyLib.Patch).Attributes & SerializableType) != 0
+            && ((int)ownerField.Attributes & NotSerializedField) == 0 && ((int)moduleField.Attributes & NotSerializedField) == 0,
+            "the pinned Harmony serializes each patch's owner and module as string fields");
+
+        byte[] haystack = System.Text.Encoding.UTF8.GetBytes("abcabd");
+        Check(PatchScanCache.Contains(haystack, System.Text.Encoding.UTF8.GetBytes("abd")) && PatchScanCache.Contains(haystack, haystack)
+            && !PatchScanCache.Contains(haystack, System.Text.Encoding.UTF8.GetBytes("bde")) && !PatchScanCache.Contains(haystack, System.Text.Encoding.UTF8.GetBytes("abcabdx"))
+            && PatchScanCache.Contains(haystack, System.Text.Encoding.UTF8.GetBytes("a")) && !PatchScanCache.Contains(new byte[0], System.Text.Encoding.UTF8.GetBytes("a")),
+            "the byte search finds a mention at the end and refuses partial and longer needles");
+
+        const string probe = "f4b.perf-union-probe";
+        string pcModule = Guid.NewGuid().ToString(), probeModule = Guid.NewGuid().ToString(), gameModule = Guid.NewGuid().ToString(), rigModule = Guid.NewGuid().ToString();
+        var targets = AppDomain.CurrentDomain.GetAssemblies().Where(a => a.GetName().Name.StartsWith("System", StringComparison.Ordinal))
+            .SelectMany(a => { try { return a.GetTypes(); } catch (ReflectionTypeLoadException) { return Type.EmptyTypes; } })
+            .Where(t => t.IsPublic).SelectMany(t => t.GetMethods(BindingFlags.Public | BindingFlags.Static | BindingFlags.DeclaredOnly)).Cast<MethodBase>()
+            .Distinct().Take(2400).ToArray();
+        Check(targets.Length == 2400, "the scan model has 2,400 patched targets (" + targets.Length + ")");
+        var state = new Dictionary<MethodBase, byte[]>();
+        var truth = new Dictionary<MethodBase, ObservedPatch[]>();
+        void Set(MethodBase target, byte[] bytes, ObservedPatch[] observed) { state[target] = bytes; truth[target] = observed; }
+        ObservedPatch Foreign(string owner, string target) => new ObservedPatch { Owner = owner, Kind = "Prefix", Type = "Other.Mod", Method = "Prefix", Target = target };
+        int next = 0;
+        var pcTargets = new List<MethodBase>();
+        foreach (var group in ScopeInventory.Patches.GroupBy(r => r.Target))
+        {
+            var target = targets[next++];
+            pcTargets.Add(target);
+            var rows = group.Select(r => new ObservedPatch { Owner = r.Owner, Kind = r.Kind.ToString(), Type = r.Type, Method = r.Method, Target = r.Target, PcAssembly = true })
+                .Concat(new[] { Foreign("realliveoverhaul", group.Key) }).ToArray();
+            Set(target, PatchState(rows.SelectMany(o => new[] { o.Owner, o.PcAssembly ? pcModule : gameModule }).ToArray()), rows);
+        }
+        var foreignTargets = new List<MethodBase>();
+        while (next < targets.Length)
+        {
+            var target = targets[next++];
+            foreignTargets.Add(target);
+            string name = target.DeclaringType?.Name + "." + target.Name;
+            var rows = new[] { Foreign("realliveoverhaul", name), Foreign("hart.foodtrucks", name) };
+            Set(target, PatchState("realliveoverhaul", gameModule, "hart.foodtrucks", gameModule), rows);
+        }
+        int reads = 0;
+        MethodBase failOn = null;
+        void Read(MethodBase target, List<ObservedPatch> into)
+        {
+            if (ReferenceEquals(target, failOn)) { failOn = null; throw new InvalidOperationException("patch info read failed"); }
+            reads++; into.AddRange(truth[target]);
+        }
+        Action<MethodBase, List<ObservedPatch>> reader = Read;
+        var cache = new PatchScanCache();
+        cache.Configure(ScopeInventory.Owners.Concat(new[] { pcModule }));
+        var output = new List<ObservedPatch>();
+        bool Same(string what)
+        {
+            var full = new CoverageTracker(ScopeInventory.Patches, _ => true, probe);
+            full.Observe(state.Keys.SelectMany(t => truth[t]).ToList());
+            var cached = new CoverageTracker(ScopeInventory.Patches, _ => true, probe);
+            output.Clear();
+            cache.Scan(state, reader, output);
+            cached.Observe(output);
+            bool same = full.Complete == cached.Complete && full.UnexpectedAtLastScan == cached.UnexpectedAtLastScan && full.Unexpected.SequenceEqual(cached.Unexpected)
+                && ScopeInventory.Patches.All(r => full.Installed(r) == cached.Installed(r));
+            Check(same, "a cached scan gives the coverage a full read gives: " + what);
+            return same;
+        }
+        int pcCount = pcTargets.Count;
+        Same("first scan");
+        Check(cache.LastTargets == 2400 && cache.LastDeserialized == pcCount && cache.LastSkipped == 2400 - pcCount && cache.LastReused == 0 && reads == pcCount,
+            "the first scan reads only the " + pcCount + " targets that name an inventory owner or the PC module (" + cache.LastDeserialized + " read, " + cache.LastSkipped + " skipped)");
+        int firstReads = cache.LastDeserialized;
+        Same("unchanged state");
+        Check(cache.LastDeserialized == 0 && cache.LastReused == 2400 && cache.LastSkipped == 0, "an unchanged state reads nothing (" + cache.LastDeserialized + ")");
+        for (int i = 0; i < 4; i++) { output.Clear(); cache.Scan(state, reader, output); }
+        long before = GC.GetAllocatedBytesForCurrentThread();
+        for (int i = 0; i < 50; i++) { output.Clear(); cache.Scan(state, reader, output); }
+        long unchangedBytes = GC.GetAllocatedBytesForCurrentThread() - before;
+        Check(unchangedBytes == 0, "50 warm scans of 2,400 unchanged targets allocate nothing (" + unchangedBytes + " B)");
+
+        foreach (var target in foreignTargets.Take(71))
+        {
+            string name = target.DeclaringType?.Name + "." + target.Name;
+            Set(target, PatchState("realliveoverhaul", gameModule, "hart.foodtrucks", gameModule, "agent.rig.modwork", rigModule),
+                truth[target].Concat(new[] { Foreign("agent.rig.modwork", name) }).ToArray());
+        }
+        foreach (var target in pcTargets.Take(5))
+            Set(target, PatchState(truth[target].SelectMany(o => new[] { o.Owner, o.PcAssembly ? pcModule : gameModule }).Concat(new[] { probe, probeModule }).ToArray()),
+                truth[target].Concat(new[] { Foreign(probe, truth[target][0].Target) }).ToArray());
+        int afterRig = reads;
+        Same("71 targets patched by another tool and 5 PC targets patched by the probe");
+        Check(cache.LastDeserialized == 5 && reads - afterRig == 5 && cache.LastSkipped == 71,
+            "another tool's patches are skipped unread and only the 5 PC targets whose state changed are read again (" + cache.LastDeserialized + " read, " + cache.LastSkipped + " skipped)");
+
+        var stray = foreignTargets[100];
+        Set(stray, PatchState("realliveoverhaul", gameModule, "someone.else", pcModule),
+            new[] { Foreign("realliveoverhaul", "X.Y"), new ObservedPatch { Owner = "someone.else", Kind = "Postfix", Type = "PersistentCity.Runtime.Stray", Method = "Postfix", Target = "X.Y", PcAssembly = true } });
+        Same("a PC-module patch under an unknown owner");
+        Check(cache.LastDeserialized == 1 && output.Any(o => o.Owner == "someone.else" && o.PcAssembly), "a PC-module patch under an unknown owner is read through the module mention");
+        var tracker = new CoverageTracker(ScopeInventory.Patches, _ => true, probe);
+        tracker.Observe(output);
+        Check(!tracker.Complete && tracker.Unexpected.Any(u => u.Contains("PersistentCity.Runtime.Stray")), "and makes coverage incomplete");
+        Set(stray, PatchState("realliveoverhaul", gameModule), new[] { Foreign("realliveoverhaul", "X.Y") });
+
+        var removed = pcTargets[3];
+        state.Remove(removed); truth.Remove(removed);
+        Same("a PC target whose patches all went away");
+        Check(cache.Entries == state.Count, "a target that left Harmony's state leaves the cache (" + cache.Entries + "/" + state.Count + ")");
+
+        var changed = pcTargets[6];
+        Set(changed, PatchState(truth[changed].Select(o => o.Owner).Concat(new[] { pcModule }).ToArray()), truth[changed].ToArray());
+        failOn = changed;
+        bool threw = false;
+        try { output.Clear(); cache.Scan(state, reader, output); } catch (InvalidOperationException) { threw = true; }
+        Check(threw, "a failed patch-info read fails the scan");
+        Same("the scan after a failed read");
+        Check(cache.LastDeserialized == 1, "the target whose read failed is read again (" + cache.LastDeserialized + ")");
+
+        var watch = new PatchStateWatch(state);
+        watch.Capture();
+        var removing = foreignTargets[200];
+        string removingName = removing.DeclaringType?.Name + "." + removing.Name;
+        var unpatched = new[] { Foreign("realliveoverhaul", removingName) };
+        var unpatchedState = PatchState("realliveoverhaul", gameModule);
+        Set(removing, PatchState("realliveoverhaul", gameModule, "someone.else", pcModule),
+            new[] { unpatched[0], new ObservedPatch { Owner = "someone.else", Kind = "Postfix", Type = "PersistentCity.Runtime.Late", Method = "Postfix", Target = removingName, PcAssembly = true } });
+        watch.BeginScan();
+        var capturedPatched = watch.Scanning[removing];
+        bool removeBeforeRead = true;
+        void RemoveThenRead(MethodBase target, List<ObservedPatch> into)
+        {
+            if (removeBeforeRead && ReferenceEquals(target, removing)) { removeBeforeRead = false; Set(removing, unpatchedState, unpatched); }
+            Read(target, into);
+        }
+        int drifted = cache.ScanSettled(watch, RemoveThenRead, output, 4);
+        Check(drifted == 1 && cache.Rescans == 1 && cache.LastDrifted == 0 && !ReferenceEquals(watch.Scanning[removing], capturedPatched) && ReferenceEquals(watch.Scanning[removing], unpatchedState),
+            "a patch removed after the snapshot and before its read is caught and the scan is taken again from a fresh snapshot (" + drifted + " drifted, " + cache.Rescans + " rescans)");
+        var settled = new CoverageTracker(ScopeInventory.Patches, _ => true, probe);
+        settled.Observe(output);
+        Check(settled.Complete && !output.Any(o => o.Type == "PersistentCity.Runtime.Late"), "the settled scan matches the snapshot the watch commits");
+        watch.CommitScan();
+        Check(!watch.Changed(), "the committed snapshot is the state the settled scan read");
+        Set(removing, PatchState("realliveoverhaul", gameModule, "someone.else", pcModule),
+            new[] { unpatched[0], new ObservedPatch { Owner = "someone.else", Kind = "Postfix", Type = "PersistentCity.Runtime.Late", Method = "Postfix", Target = removingName, PcAssembly = true } });
+        watch.BeginScan();
+        var reAdded = watch.Scanning[removing];
+        output.Clear(); cache.Scan(watch.Scanning, reader, watch.HoldsState, output);
+        Check(cache.LastDrifted == 0 && output.Any(o => o.Type == "PersistentCity.Runtime.Late"), "a PC patch present at capture and at read is reported");
+        Set(removing, unpatchedState, unpatched);
+        watch.BeginScan();
+        output.Clear(); cache.Scan(watch.Scanning, reader, watch.HoldsState, output);
+        Check(!ReferenceEquals(reAdded, unpatchedState) && !output.Any(o => o.Type == "PersistentCity.Runtime.Late"), "the cache does not reuse observations across a state change");
+        int forever = 0;
+        void AlwaysChanging(MethodBase target, List<ObservedPatch> into)
+        {
+            if (ReferenceEquals(target, removing)) { forever++; Set(removing, PatchState("realliveoverhaul", gameModule, "someone.else", pcModule, "n" + forever), unpatched); }
+            Read(target, into);
+        }
+        Set(removing, PatchState("realliveoverhaul", gameModule, "someone.else", pcModule), unpatched);
+        watch.BeginScan();
+        bool exhausted = false;
+        try { cache.ScanSettled(watch, AlwaysChanging, output, 4); } catch (InvalidOperationException) { exhausted = true; }
+        Check(exhausted && watch.Pending && forever == 4, "a target that changes during every attempt fails the scan and leaves the watch pending (" + forever + " attempts)");
+        Set(removing, unpatchedState, unpatched);
+        watch.BeginScan();
+        cache.ScanSettled(watch, reader, output, 4);
+        watch.CommitScan();
+
+        var windowCoverage = new CoverageTracker(ScopeInventory.Patches, _ => true, probe);
+        output.Clear(); cache.Scan(state, reader, output); windowCoverage.Observe(output);
+        bool removeAfterRead = false, readLate = false;
+        void ReadThenRemove(MethodBase target, List<ObservedPatch> into)
+        {
+            Read(target, into);
+            if (!removeAfterRead || !ReferenceEquals(target, removing)) return;
+            removeAfterRead = false;
+            readLate = into.Any(o => o.Type == "PersistentCity.Runtime.Late");
+            Set(removing, unpatchedState, unpatched);
+        }
+        var scanner = new PatchWindowScan(cache, ReadThenRemove, () => targets, 4);
+        string startScan = scanner.Start(watch, windowCoverage, false);
+        Set(removing, PatchState("realliveoverhaul", gameModule, "someone.else", pcModule),
+            new[] { unpatched[0], new ObservedPatch { Owner = "someone.else", Kind = "Postfix", Type = "PersistentCity.Runtime.Late", Method = "Postfix", Target = removingName, PcAssembly = true } });
+        removeAfterRead = true;
+        long rescansBefore = cache.Rescans;
+        Dictionary<string, object> StatusRow() => scanner.Project(new Dictionary<string, object> { ["error"] = "", ["measuring"] = true, ["coverage_complete"] = false, ["stop_scan"] = "none" },
+            (row, key, value) => row[key] = value, true, () => windowCoverage.Complete);
+        var reply = PatchWindowScan.MeasureStop(StatusRow, () => scanner.Stop(watch, windowCoverage, false, true), (before, after) => new { before, after });
+        string stopJson = System.Text.Json.JsonSerializer.Serialize(reply.after);
+        var stopStatus = System.Text.Json.JsonDocument.Parse(stopJson).RootElement;
+        Check(reply.before["measuring"] is true && (string)reply.before["error"] == "", "the measure-stop reply's before row is read before the stop rescan");
+        Check(startScan == "watch-unchanged" && scanner.StopScan == "full" && readLate && cache.Rescans == rescansBefore + 1 && !watch.Pending && windowCoverage.Complete,
+            "a PC postfix read and then removed before the state check during measure-stop is retried through the probe's stop rescan, and the settled scan reports complete coverage (" + (cache.Rescans - rescansBefore) + " rescans)");
+        Check(stopStatus.GetProperty("coverage_complete").GetBoolean() && stopStatus.GetProperty("patch_set_changed_in_window").GetBoolean()
+            && stopStatus.GetProperty("error").GetString() == PatchSetWindow.ChangedError && stopStatus.GetProperty("stop_scan").GetString() == "full" && !stopStatus.GetProperty("measuring").GetBoolean(),
+            "the probe's measure-stop response reports complete coverage, measuring false and the error " + PatchSetWindow.ChangedError + " (" + stopStatus.GetProperty("error").GetString() + ")");
+        if (stopStatusPath != null) System.IO.File.WriteAllText(stopStatusPath, stopJson);
+        Check(scanner.Window.Note(true, true, "f4b_cross_frame_scope") == "f4b_cross_frame_scope" && scanner.Window.Note(false, true, "") == "",
+            "a drift keeps an earlier error and does not set one outside a measured window");
+        scanner.Start(watch, windowCoverage, false);
+        scanner.Rescan(watch, windowCoverage, false, true);
+        Check(!scanner.Window.Changed && scanner.Error == "", "the next window starts unchanged");
+        var failing = new PatchWindowScan(cache, (t, into) => throw new InvalidOperationException(), () => targets, 4);
+        failing.Start(null, windowCoverage, false); failing.Error = "";
+        Check(failing.Rescan(null, windowCoverage, false, true) == "watch-unchanged" && failing.Error == PatchWindowScan.FailedError, "a scan that throws sets the probe error");
+        int referenceReads = 0;
+        var reference = new PatchWindowScan(cache, (t, into) => referenceReads++, () => targets, 4);
+        Check(reference.Rescan(null, null, false, true) == "none" && reference.Rescan(null, null, true, true) == "full"
+            && reference.MatchedScans == 1 && referenceReads == targets.Length && reference.Error == "", "a reference probe without a watch reads every patched target once per matched scan, and a candidate probe without coverage does not scan");
+
+        var unfiltered = new PatchScanCache();
+        unfiltered.Configure(new[] { "", null });
+        output.Clear(); unfiltered.Scan(state, reader, output);
+        Check(unfiltered.Needles == 0 && unfiltered.LastDeserialized == state.Count, "with no mention to look for every target is read");
+        cache.Configure(ScopeInventory.Owners.Concat(new[] { pcModule }));
+        Check(cache.Entries == state.Count, "configuring the same mentions keeps the cache");
+        cache.Configure(ScopeInventory.Owners);
+        Check(cache.Entries == 0, "different mentions clear it");
+
+        Console.WriteLine("patch scan cache: " + targets.Length + " patched targets; Harmony patch-info reads per scan, before (every target) / after: first " + targets.Length + " / " + firstReads
+            + ", unchanged " + targets.Length + " / 0 (" + unchangedBytes + " B over 50 warm scans), after another tool patches 71 targets and the probe 5 PC targets " + targets.Length + " / 5 (.NET " + Environment.Version + ")");
     }
 
     private static void ScanPerf(int infos)

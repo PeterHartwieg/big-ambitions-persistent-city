@@ -352,6 +352,119 @@ namespace PerfUnionProbe
         }
     }
 
+    public sealed class PatchSetWindow
+    {
+        public const string ChangedError = "f4b_patch_set_changed_in_window";
+        private int unexpectedAtStart;
+        public bool Changed { get; private set; }
+
+        public void Begin(CoverageTracker coverage)
+        {
+            Changed = false;
+            unexpectedAtStart = coverage?.Unexpected.Count ?? 0;
+        }
+
+        public string Scanned(PatchScanCache cache, PatchStateWatch watch, Action<MethodBase, List<ObservedPatch>> observe, List<ObservedPatch> into, int attempts, bool measuring, string error)
+            => Note(measuring, cache.ScanSettled(watch, observe, into, attempts) > 0, error);
+
+        public string Rescanned(CoverageTracker coverage, bool measuring, string error)
+            => Note(measuring, coverage.Unexpected.Count > unexpectedAtStart, error);
+
+        public string Note(bool measuring, bool changed, string error)
+        {
+            if (!measuring || !changed) return error;
+            Changed = true;
+            return string.IsNullOrEmpty(error) ? ChangedError : error;
+        }
+    }
+
+    public sealed class PatchWindowScan
+    {
+        public const string FailedError = "f4b_patch_scan_failed";
+        private readonly List<ObservedPatch> scanned = new List<ObservedPatch>();
+        private readonly Action<MethodBase, List<ObservedPatch>> observe;
+        private readonly Func<IEnumerable<MethodBase>> allPatched;
+        private readonly int attempts;
+        private readonly Action scan, matched;
+        private PatchStateWatch watch;
+        private CoverageTracker coverage;
+
+        public PatchWindowScan(PatchScanCache cache, Action<MethodBase, List<ObservedPatch>> observe, Func<IEnumerable<MethodBase>> allPatched, int attempts)
+        {
+            Cache = cache; this.observe = observe; this.allPatched = allPatched; this.attempts = attempts;
+            scan = () => coverage.Observe(Observe());
+            matched = () => { Observe(); MatchedScans++; };
+        }
+
+        public PatchScanCache Cache { get; }
+        public PatchSetWindow Window { get; } = new PatchSetWindow();
+        public long MatchedScans { get; private set; }
+        public void ResetMatched() => MatchedScans = 0;
+
+        public string Error { get; set; } = "";
+        public bool Measuring { get; private set; }
+        public string StopScan { get; private set; } = "none";
+
+        public bool Run(PatchStateWatch watch, CoverageTracker coverage, bool full)
+        {
+            this.watch = watch; this.coverage = coverage;
+            try { return PatchStateWatch.Run(watch, full, coverage == null ? matched : scan); }
+            finally { this.watch = null; this.coverage = null; }
+        }
+
+        public string Rescan(PatchStateWatch watch, CoverageTracker coverage, bool reference, bool full)
+        {
+            if (coverage == null && (!reference || !full && watch == null)) return "none";
+            bool ran = false;
+            try { ran = Run(watch, coverage, full); } catch { Error = FailedError; }
+            if (coverage != null) Error = Window.Rescanned(coverage, Measuring, Error);
+            return ran ? "full" : "watch-unchanged";
+        }
+
+        public string Start(PatchStateWatch watch, CoverageTracker coverage, bool reference)
+        {
+            Error = ""; StopScan = "none";
+            string startScan = Rescan(watch, coverage, reference, false);
+            Window.Begin(coverage); Measuring = true;
+            return startScan;
+        }
+
+        public void Stop(PatchStateWatch watch, CoverageTracker coverage, bool reference, bool explicitStop)
+        {
+            if (explicitStop) StopScan = Rescan(watch, coverage, reference, false);
+            Measuring = false;
+        }
+
+        public T Project<T>(T row, Action<T, string, object> set, bool candidate, Func<bool> coverageComplete)
+        {
+            foreach (var field in StatusFields(candidate, coverageComplete)) set(row, field.Key, field.Value);
+            return row;
+        }
+
+        public static TReply MeasureStop<TStatus, TReply>(Func<TStatus> status, Action stop, Func<TStatus, TStatus, TReply> wrap)
+        {
+            var before = status();
+            stop();
+            return wrap(before, status());
+        }
+
+        public KeyValuePair<string, object>[] StatusFields(bool candidate, Func<bool> coverageComplete) => new[]
+        {
+            new KeyValuePair<string, object>("measuring", Measuring), new KeyValuePair<string, object>("error", Error ?? ""),
+            new KeyValuePair<string, object>("coverage_complete", candidate ? (object)coverageComplete() : "n/a"),
+            new KeyValuePair<string, object>("patch_set_changed_in_window", candidate ? (object)Window.Changed : "n/a"),
+            new KeyValuePair<string, object>("stop_scan", StopScan),
+        };
+
+        private List<ObservedPatch> Observe()
+        {
+            scanned.Clear();
+            if (watch?.Scanning != null) Error = Window.Scanned(Cache, watch, observe, scanned, attempts, Measuring, Error);
+            else foreach (var target in allPatched()) observe(target, scanned);
+            return scanned;
+        }
+    }
+
     public sealed class AdvanceCallBuffer
     {
         public AdvanceCallBuffer(int slowCapacity, int unitCapacity)

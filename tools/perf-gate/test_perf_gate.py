@@ -1,6 +1,7 @@
 import copy
 import importlib.util
 import json
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -201,6 +202,34 @@ class InvalidationTests(unittest.TestCase):
         self.assertIn('receipt failed: probe_flags', win(run(w), 'c')['invalid_reasons'])
         w['probe']['status'] = dict(status, timing_coverage_complete=False)
         self.assertIn('receipt failed: probe_coverage', win(run(w), 'c')['invalid_reasons'])
+        w['probe']['status'] = dict(status, error='f4b_patch_set_changed_in_window')
+        entry = win(run(w), 'c')
+        self.assertIn('probe flag: probe_error', entry['invalid_reasons'])
+        self.assertIn('receipt failed: probe_flags', entry['invalid_reasons'])
+
+    def test_probe_stop_status_after_a_patch_race_is_rejected(self):
+        root = HERE.parent.parent
+        dotnet = shutil.which('dotnet')
+        if dotnet is None or not (root / 'build' / 'PersistentCity' / 'Dependencies' / '0Harmony.dll').exists():
+            self.skipTest('dotnet and the pinned 0Harmony.dll are needed to run the probe logic check')
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / 'stop-status.json'
+            done = subprocess.run([dotnet, 'run', '-c', 'Release', '--project', str(root / 'tools' / 'perf-union-probe' / 'logic-check' / 'LogicCheck.csproj'),
+                                   '--', '--stop-status', str(path)], capture_output=True, text=True, timeout=600)
+            self.assertEqual(done.returncode, 0, done.stdout + done.stderr)
+            stop = json.loads(path.read_text(encoding='utf-8'))
+        self.assertEqual((stop['coverage_complete'], stop['patch_set_changed_in_window'], stop['measuring'], stop['error']),
+                         (True, True, False, 'f4b_patch_set_changed_in_window'))
+        w = synthetic.window('c')
+        del w['frames']
+        clean = dict(timing_coverage_complete=True, event_dropped=0, frame_dropped=0, timed_exceptions=0, cross_frame_scopes=0,
+                     off_main_callbacks=0, error='', measuring=False)
+        w['probe'] = dict(status=clean, frames=[dict(frame=i, modWorkMs=0.5, wholeFrameMs=16.0) for i in range(50)])
+        self.assertTrue(win(run(w), 'c')['valid'])
+        w['probe']['status'] = dict(clean, **stop)
+        entry = win(run(w), 'c')
+        self.assertFalse(entry['valid'])
+        self.assertEqual([r for r in entry['invalid_reasons'] if r.startswith('probe flag')], ['probe flag: probe_error'])
 
     def test_missing_probe_status_fields_fail_closed(self):
         w = synthetic.window('c')
