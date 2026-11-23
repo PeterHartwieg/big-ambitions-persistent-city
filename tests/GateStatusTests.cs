@@ -97,8 +97,8 @@ public sealed class GateStatusTests
         var access = new PublicRoadAccess(doors, new PublicRoadAccess.FallbackTally(_ => { }));
         var roads = new List<TransportRoadNode>
         {
-            new() { Position = new Position(4400, 3, 150), AllowsCar = true, Successors = new[] { 1 } },
-            new() { Position = new Position(4400, 3, 250), AllowsCar = true }
+            new() { Position = new Position(4400, 3, 175), AllowsCar = true, KilometresPerHour = 40, Successors = new[] { 1 } },
+            new() { Position = new Position(4400, 3, 225), AllowsCar = true, KilometresPerHour = 40 }
         };
 
         var text = Report(access, roads, "all", "");
@@ -136,11 +136,68 @@ public sealed class GateStatusTests
         Assert.Equal(4, access.Readings().Count);
     }
 
+    [Fact]
+    public void RoadOverlapIsUnknownUntilTheRoadSnapshotIsReady()
+    {
+        var access = Access();
+        var partial = Roads().Take(1).ToList();
+
+        foreach (var state in new[] { "building", "missing", "none" })
+        {
+            var text = Report(access, partial, "footprint", "", state);
+            Assert.Contains("road_snapshot=" + state, text, StringComparison.Ordinal);
+            Assert.Contains("source=footprint | min=(693.5, -1, 195.5) | max=(706.5, 7, 204.5) | public_road=unknown", text, StringComparison.Ordinal);
+        }
+        Assert.Contains("public_road=unknown", Report(access, Roads(), "footprint", "", "building"), StringComparison.Ordinal);
+        Assert.Contains("public_road=yes segments=1 first=0->1", Report(access, Roads(), "footprint", ""), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void RoadOverlapCountsOnlyEdgesTrafficImports()
+    {
+        var access = Access();
+        List<TransportRoadNode> Crossing(double fromX, double toX, bool car = true, double speed = 40) => new()
+        {
+            new() { Position = new Position(fromX, 3, 200), AllowsCar = car, KilometresPerHour = speed, Successors = new[] { 1 } },
+            new() { Position = new Position(toX, 3, 200), AllowsCar = true, KilometresPerHour = 40 }
+        };
+
+        Assert.Contains("public_road=yes segments=1", Report(access, Crossing(670, 730), "footprint", ""), StringComparison.Ordinal);
+        Assert.Contains("public_road=no", Report(access, Crossing(660, 740), "footprint", ""), StringComparison.Ordinal);
+        Assert.Contains("public_road=no", Report(access, Crossing(690, 710, car: false), "footprint", ""), StringComparison.Ordinal);
+        Assert.Contains("public_road=no", Report(access, Crossing(690, 710, speed: 0), "footprint", ""), StringComparison.Ordinal);
+        Assert.True(TrafficNetwork.EdgeLength(TrafficNetwork.MaximumEdgeMetres));
+        Assert.False(TrafficNetwork.EdgeLength(TrafficNetwork.MaximumEdgeMetres + 0.01));
+    }
+
+    [Fact]
+    public void RoadOverlapFindsEdgesAcrossGridCellsAndCountsEachOnce()
+    {
+        var huge = Gate("huge gate", 0);
+        huge.Colliders = new[] { new Collider { bounds = new Bounds(new Vector3(0, 3, 0), new Vector3(9000, 4, 9000)) } };
+        var access = new PublicRoadAccess(new FenceDoor[] { huge, ColliderGate("edge gate", 128) }, new PublicRoadAccess.FallbackTally(_ => { }));
+        var roads = new List<TransportRoadNode>
+        {
+            new() { Position = new Position(100, 3, 200), AllowsCar = true, KilometresPerHour = 40, Successors = new[] { 1 } },
+            new() { Position = new Position(150, 3, 200), AllowsCar = true, KilometresPerHour = 40, Successors = new[] { 2 } },
+            new() { Position = new Position(150, 3, 250), AllowsCar = true, KilometresPerHour = 40 }
+        };
+
+        var text = Report(access, roads, "all", "");
+
+        Assert.Contains("door=edge gate | building=none | source=collider | min=(125.5, 1, 198.5) | max=(130.5, 5, 201.5) | public_road=yes segments=1 first=0->1 road_id=100", text, StringComparison.Ordinal);
+        Assert.Contains("door=huge gate | building=none | source=collider", text, StringComparison.Ordinal);
+        Assert.Contains("public_road=yes segments=2 first=0->1 road_id=100", text, StringComparison.Ordinal);
+    }
+
     private static string Report(PublicRoadAccess access, IReadOnlyList<TransportRoadNode>? roads, string detail, string value)
+        => Report(access, roads, detail, value, roads == null ? "none" : "ready");
+
+    private static string Report(PublicRoadAccess access, IReadOnlyList<TransportRoadNode>? roads, string detail, string value, string state)
     {
         Assert.True(GateStatusReport.TryParse(detail, value, out var source, out bool list, out double x, out double z, out double radius, out string error), error);
         return GateStatusReport.Format(access.Readings(), door => door.GetComponentInParent<CityBuildingController>(true) != null ? "yard" : "none",
-            roads, roads == null ? "none" : "ready", index => index + 100, source, list, x, z, radius);
+            roads, state, index => index + 100, source, list, x, z, radius);
     }
 
     private static PublicRoadAccess Access()
@@ -158,10 +215,10 @@ public sealed class GateStatusTests
 
     private static List<TransportRoadNode> Roads() => new()
     {
-        new() { Position = new Position(690, 3, 200), AllowsCar = true, Successors = new[] { 1 } },
-        new() { Position = new Position(710, 3, 200), AllowsCar = true },
-        new() { Position = new Position(90, 3, 300), AllowsCar = true, Successors = new[] { 3 } },
-        new() { Position = new Position(110, 3, 300), AllowsCar = true }
+        new() { Position = new Position(690, 3, 200), AllowsCar = true, KilometresPerHour = 40, Successors = new[] { 1 } },
+        new() { Position = new Position(710, 3, 200), AllowsCar = true, KilometresPerHour = 40 },
+        new() { Position = new Position(90, 3, 300), AllowsCar = true, KilometresPerHour = 40, Successors = new[] { 3 } },
+        new() { Position = new Position(110, 3, 300), AllowsCar = true, KilometresPerHour = 40 }
     };
 
     private static FenceDoor ColliderGate(string name, float x)

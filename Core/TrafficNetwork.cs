@@ -151,7 +151,7 @@ namespace PersistentCity.Core
                 {
                     if (next == node.Id || !nodes.TryGetValue(next, out var target) || !Usable(target)) continue;
                     double length = Position.Distance(node.Position, target.Position);
-                    if (!Position.Finite(length) || length <= 0.000001 || length > 60) continue;
+                    if (!EdgeLength(length)) continue;
                     double minutes = length / (Math.Min(40, node.KilometresPerHour) / 3.6 / clockRate);
                     if (!Position.Finite(minutes) || minutes <= 0) throw new ArgumentException("Invalid native edge duration.");
                     var edge = new Edge { From = node.Id, To = next, Metres = length, Minutes = minutes };
@@ -632,6 +632,8 @@ namespace PersistentCity.Core
             fragment = tag.Kind == RoadTagKind.Fragment1;
             return true;
         }
+        public const double MaximumEdgeMetres = 60;
+        public static bool EdgeLength(double metres) => Position.Finite(metres) && metres > 0.000001 && metres <= MaximumEdgeMetres;
         private static bool Usable(TrafficNetworkNode node) => node.AllowsCar && node.Position.IsFinite
             && Position.Finite(node.KilometresPerHour) && node.KilometresPerHour > 0;
         private static double EdgeMinutes(EdgeTable edges, double speed, double clockRate, int index) => edges.Metres[index] / (speed / clockRate);
