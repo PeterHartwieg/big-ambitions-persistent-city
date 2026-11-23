@@ -239,11 +239,13 @@ namespace PersistentCity.Core
             }
             yield return false;
             activeJourneys.Clear();
+            if (source != null) activeJourneys.SizeFrom(source.activeJourneys);
             for (int i = 0; i < state.Citizens.Count + state.VisitorRoutines.Count; i++)
             {
                 activeJourneys.File(i < state.Citizens.Count ? state.Citizens[i] : state.VisitorRoutines[i - state.Citizens.Count]);
                 if (i % RebuildPeoplePerStep == RebuildPeoplePerStep - 1) yield return false;
             }
+            activeJourneys.StopSizing();
             yield return false;
             occupancy.Rebuild(state);
             yield return false;
