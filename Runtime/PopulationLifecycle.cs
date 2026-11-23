@@ -21,7 +21,7 @@ namespace PersistentCity.Runtime
                 _ = initialization.ContinueWith(task => { _ = task.Exception; }, TaskContinuationOptions.OnlyOnFaulted);
             initialization = null; initializingSave = null; initializingPayload = null; initializingHadPayload = false;
             startupHold.Reset();
-            simulation = null; saveSession = null; stopEnvironment = null; retimeDriver.Cancel(); retimeAllocation.Reset(); retimedRoutes = null; routeRebuild = null;
+            simulation = null; saveSession = null; stopEnvironment = null; retimeDriver.Cancel(); retimeAllocation.Reset(); retimeFrames.Reset(); retimedRoutes = null; routeRebuild = null;
             routes = null; clockRetimingRoutes = false; saveIdentity = null; RoadRoutes.ForgetSnapshot();
             accountingText = ""; nextAccountingText = 0;
             economyRefresh.Reset();

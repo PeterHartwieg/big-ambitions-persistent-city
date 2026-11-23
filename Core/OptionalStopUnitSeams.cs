@@ -27,6 +27,7 @@ namespace PersistentCity.Core
         public int SlowestUnit { get; private set; } = -1;
         public string SlowestUnitKind { get; private set; } = "";
         public double SlowestUnitMilliseconds { get; private set; }
+        public double SlowestUnitCpuMilliseconds { get; private set; } = -1;
         public double SlowestUnitSeamMilliseconds => SlowestUnit < 0 ? 0 : seams[SlowestUnit];
         public double MaximumUnitSeamMilliseconds { get; private set; }
         public string MaximumUnitSeamKind { get; private set; } = "";
@@ -36,7 +37,7 @@ namespace PersistentCity.Core
 
         public void BeginCall()
         {
-            Units = 0; open = 0; CallSeamMilliseconds = 0; SlowestUnit = -1; SlowestUnitKind = ""; SlowestUnitMilliseconds = 0;
+            Units = 0; open = 0; CallSeamMilliseconds = 0; SlowestUnit = -1; SlowestUnitKind = ""; SlowestUnitMilliseconds = 0; SlowestUnitCpuMilliseconds = -1;
             MaximumUnitSeamMilliseconds = 0; MaximumUnitSeamKind = ""; Completed = false; callOpen = true;
         }
 
@@ -46,7 +47,9 @@ namespace PersistentCity.Core
             open += milliseconds; CallSeamMilliseconds += milliseconds;
         }
 
-        public void EndUnit(string kind, double unitMilliseconds)
+        public void EndUnit(string kind, double unitMilliseconds) => EndUnit(kind, unitMilliseconds, -1);
+
+        public void EndUnit(string kind, double unitMilliseconds, double unitCpuMilliseconds)
         {
             if (!callOpen) return;
             if (Units == seams.Length)
@@ -54,7 +57,11 @@ namespace PersistentCity.Core
                 Array.Resize(ref seams, seams.Length * 2); Array.Resize(ref kinds, kinds.Length * 2); Array.Resize(ref sorted, sorted.Length * 2);
             }
             seams[Units] = open; kinds[Units] = kind;
-            if (unitMilliseconds > SlowestUnitMilliseconds) { SlowestUnitMilliseconds = unitMilliseconds; SlowestUnit = Units; SlowestUnitKind = kind; }
+            if (unitMilliseconds > SlowestUnitMilliseconds)
+            {
+                SlowestUnitMilliseconds = unitMilliseconds; SlowestUnit = Units; SlowestUnitKind = kind;
+                SlowestUnitCpuMilliseconds = double.IsNaN(unitCpuMilliseconds) || unitCpuMilliseconds < 0 ? -1 : unitCpuMilliseconds;
+            }
             if (open > MaximumUnitSeamMilliseconds) { MaximumUnitSeamMilliseconds = open; MaximumUnitSeamKind = kind; }
             Units++; open = 0;
         }

@@ -223,6 +223,17 @@ internal static class Program
         Check(Equals(fields["slowest_unit_optional_stop_ms"], 7.0), "slowest unit's optional-stop time is its own seam, not the call total");
         Check(Equals(fields["unit_optional_stop_max_ms"], 7.0) && Equals(fields["unit_optional_stop_p95_ms"], 7.0), "unit seam maximum and p95");
         Check(Equals(fields["units"], 5), "unit count");
+        Check(fields.ContainsKey("slowest_unit_cpu_ms") && fields["slowest_unit_cpu_ms"] == null && fields["slowest_unit_off_cpu_ms"] == null,
+            "a unit without thread CPU reports null CPU and off-CPU");
+        var timed = new PersistentCity.Core.OptionalStopUnitSeams();
+        timed.BeginCall(); timed.EndUnit("citizen", 2.0, 1.5); timed.EndUnit("citizen", 30.5, 5.25); timed.EndUnit("snapshot", 0.1, 0.1); timed.EndCall();
+        source.Target = timed;
+        var timedRecord = new AdvanceCallRecord { Frame = 8, DurationTicks = 310_000 };
+        AdvanceCallRows.ReadUnits(ref timedRecord, source);
+        var timedFields = AdvanceCallRows.Fields(timedRecord, 1e-4).ToDictionary(f => f.Key, f => f.Value);
+        Check(Equals(timedFields["slowest_unit_cpu_ms"], 5.25) && Equals(timedFields["slowest_unit_off_cpu_ms"], 25.25),
+            "the slowest unit's thread CPU and off-CPU time come from that unit");
+        source.Target = units;
         var over = (UnitOptionalStop[])fields[AdvanceCallRows.UnitsOverThresholdField];
         Check(over.Length == 2 && over[0].Unit == 1 && over[0].Kind == "traffic" && over[0].OptionalStopMilliseconds == 7.0
             && over[1].Unit == 3 && over[1].Kind == "citizen" && over[1].OptionalStopMilliseconds == 5.5, "units over 5 ms are listed with their own seam");

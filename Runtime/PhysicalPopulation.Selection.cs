@@ -55,6 +55,8 @@ namespace PersistentCity.Runtime
         private int retimeStage;
         public int RetimeReleaseSteps { get; private set; }
         public bool ReleasingForRetime => RetimeReleaseSteps > 0;
+        private static readonly string[] RetimeReleaseStages = { "bindings", "leaving", "vehicle release", "ambient", "vehicle pool", "pedestrian pool", "done" };
+        public string RetimeReleaseStage => RetimeReleaseStages[Math.Max(0, Math.Min(RetimeReleaseStages.Length - 1, retimeStage))];
         public bool ReleaseForRetime(long deadlineTimestamp)
         {
             if (disposed || retimeStage == 6) { retimeRelease.Clear(); return true; }
