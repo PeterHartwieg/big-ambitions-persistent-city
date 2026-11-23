@@ -8,18 +8,19 @@ namespace PersistentCity.Core
 
     public enum ClockRetimeOutcome { None, ReleaseBodies, Began, Preparing, Restarted, Committed }
 
-    public enum RetimeFrameStage { Routes, Release, Journeys, Commit, Rebuild, HandOver }
+    public enum RetimeFrameStage { Routes, Release, Journeys, Commit, Rebuild, HandOver, Report }
 
     public sealed class RetimeFrameLedger
     {
-        private const int Stages = 6;
+        private const int Stages = 7;
+        private const int RetimeStages = 6;
         public const double BoundMilliseconds = 11.3;
         public const int ListedOverBound = 8;
         private readonly int[] overFrames = new int[ListedOverBound];
         private readonly RetimeFrameStage[] overStages = new RetimeFrameStage[ListedOverBound];
         private readonly double[] overMilliseconds = new double[ListedOverBound];
         private readonly string[] overDetails = new string[ListedOverBound];
-        private static readonly string[] Names = { "routes", "body release", "journey retime", "commit", "rebuild", "hand-over" };
+        private static readonly string[] Names = { "routes", "body release", "journey retime", "commit", "rebuild", "hand-over", "report" };
         private readonly double[] slowest = new double[Stages];
         private readonly int[] updates = new int[Stages];
         private readonly string[] details = new string[Stages];
@@ -38,7 +39,7 @@ namespace PersistentCity.Core
             get
             {
                 int found = 0;
-                for (int i = 1; i < Stages; i++) if (slowest[i] > slowest[found]) found = i;
+                for (int i = 1; i < RetimeStages; i++) if (slowest[i] > slowest[found]) found = i;
                 return (RetimeFrameStage)found;
             }
         }
@@ -48,6 +49,7 @@ namespace PersistentCity.Core
             if (double.IsNaN(milliseconds) || milliseconds < 0) milliseconds = 0;
             int index = (int)stage;
             updates[index]++; Observed = true;
+            if (stage == RetimeFrameStage.Report) ReportFrame = frame;
             if (updates[index] == 1 || milliseconds > slowest[index]) { slowest[index] = milliseconds; details[index] = detail; }
             if (milliseconds <= BoundMilliseconds) return;
             if (OverBound < ListedOverBound)
@@ -57,12 +59,23 @@ namespace PersistentCity.Core
             OverBound++;
         }
 
+        public int ReportFrame { get; private set; } = -1;
+        public bool ReportOverBound => updates[(int)RetimeFrameStage.Report] > 0 && slowest[(int)RetimeFrameStage.Report] > BoundMilliseconds;
+
+        public string DescribeReport()
+        {
+            var culture = System.Globalization.CultureInfo.InvariantCulture;
+            int index = (int)RetimeFrameStage.Report;
+            return "Clock retime report: frame " + ReportFrame.ToString(culture) + " report " + slowest[index].ToString("0.0", culture) + " ms, over "
+                + BoundMilliseconds.ToString("0.0", culture) + " ms (" + (details[index] ?? "") + ").";
+        }
+
         public void Reset()
         {
             if (!Observed) return;
             Array.Clear(slowest, 0, Stages); Array.Clear(updates, 0, Stages); Array.Clear(details, 0, Stages);
             Array.Clear(overDetails, 0, ListedOverBound);
-            Observed = false; OverBound = 0;
+            Observed = false; OverBound = 0; ReportFrame = -1;
         }
 
         public string Describe()
@@ -71,7 +84,7 @@ namespace PersistentCity.Core
             var text = new System.Text.StringBuilder("Clock retime frames: slowest update ");
             var top = SlowestStage;
             text.Append(slowest[(int)top].ToString("0.0", culture)).Append(" ms in ").Append(Names[(int)top]);
-            for (int i = 0; i < Stages; i++)
+            for (int i = 0; i < RetimeStages; i++)
             {
                 text.Append(i == 0 ? "; " : ", ").Append(Names[i]).Append(' ').Append(updates[i].ToString(culture))
                     .Append(updates[i] == 1 ? " update" : " updates");

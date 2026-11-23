@@ -311,7 +311,7 @@ namespace PersistentCity.Runtime
                     Fail("Game clock moved behind the population snapshot. Reload the matching save; no state was overwritten.");
                     return;
                 }
-                if (retimeReport != null) { ReportRetime(); WaitForRetime(); return; }
+                if (retimeReport != null) { ReportRetime(Stopwatch.GetTimestamp(), "own update"); WaitForRetime(); return; }
                 if (routeRebuild != null) { long rebuildStarted = Stopwatch.GetTimestamp(); var rebuildMark = RetimeMark(); ContinueRouteRebuild(rebuildMark, rebuildStarted); WaitForRetime(); return; }
                 if (vendorMarket?.Prepare((long)target) == true) { ModFrames.Charge(GcAllocationSegment.ModFood); return; }
                 foodMarket?.RefreshRoutineHours(target);
@@ -790,16 +790,24 @@ namespace PersistentCity.Runtime
             ForgetResearchSnapshot();
             seenPlanningRequests = seenEventRestarts = seenInlineRestarts = 0;
             retimeAllocation.Add(RetimeAllocationStage.Rebuild, mark, GcAllocationCounter.Mark());
+            CloseRetimeTally();
             retimeFrames.Observe(RetimeFrameStage.HandOver, (Stopwatch.GetTimestamp() - started) * MillisecondsPerTimestamp, detail, Time.frameCount);
             retimeReport = rebuild;
-            if (reportNow) ReportRetime();
+            if (reportNow) ReportRetime(Stopwatch.GetTimestamp(), "save");
         }
 
-        private void ReportRetime()
+        private void CloseRetimeTally()
+        {
+            if (!retimeAllocation.Open) OpenRetimeTally();
+            long heap = -1, used = -1;
+            try { heap = UnityEngine.Profiling.Profiler.GetMonoHeapSizeLong(); used = UnityEngine.Profiling.Profiler.GetMonoUsedSizeLong(); } catch (Exception) { }
+            retimeAllocation.Finish(heap, used);
+        }
+
+        private void ReportRetime(long started, string detail)
         {
             var rebuild = retimeReport!;
             retimeReport = null;
-            var mark = GcAllocationCounter.Mark();
             log?.Info("Clock retime: body release " + Milliseconds(retimeReleaseMilliseconds) + " ms over "
                 + retimeReleaseUpdates.ToString(System.Globalization.CultureInfo.InvariantCulture) + " updates, journey retime "
                 + Milliseconds(retimeDriver.SliceMilliseconds) + " ms over " + retimeDriver.Slices.ToString(System.Globalization.CultureInfo.InvariantCulture)
@@ -813,21 +821,12 @@ namespace PersistentCity.Runtime
                 + retimeDriver.JoinsRefused.ToString(System.Globalization.CultureInfo.InvariantCulture) + ", shared leg copies "
                 + retimeDriver.SharedLegs.ToString(System.Globalization.CultureInfo.InvariantCulture) + ", earlier shared legs reused "
                 + retimeDriver.ReusedLegs.ToString(System.Globalization.CultureInfo.InvariantCulture) + ", traffic retimed from " + retimeDriver.RetimedFrom + ".");
-            string allocation = RetimeAllocationLine(mark);
-            log?.Info("Clock retime allocation: " + allocation + ".");
+            log?.Info("Clock retime allocation: " + retimeAllocation.Describe(GcAllocationCounter.Name) + ".");
             log?.Info(retimeFrames.Describe());
+            retimeFrames.Observe(RetimeFrameStage.Report, (Stopwatch.GetTimestamp() - started) * MillisecondsPerTimestamp, detail, Time.frameCount);
+            if (retimeFrames.ReportOverBound) log?.Info(retimeFrames.DescribeReport());
             retimeFrames.Reset();
             retimeReleaseMilliseconds = 0; retimeReleaseUpdates = 0;
-        }
-
-        private string RetimeAllocationLine(RetimeAllocationMark mark)
-        {
-            if (!retimeAllocation.Open) OpenRetimeTally();
-            retimeAllocation.Add(RetimeAllocationStage.Rebuild, mark, GcAllocationCounter.Mark());
-            long heap = -1, used = -1;
-            try { heap = UnityEngine.Profiling.Profiler.GetMonoHeapSizeLong(); used = UnityEngine.Profiling.Profiler.GetMonoUsedSizeLong(); } catch (Exception) { }
-            retimeAllocation.Finish(heap, used);
-            return retimeAllocation.Describe(GcAllocationCounter.Name);
         }
 
         private void WaitForRetime()

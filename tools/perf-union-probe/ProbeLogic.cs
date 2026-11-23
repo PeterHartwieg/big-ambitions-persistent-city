@@ -173,6 +173,28 @@ namespace PerfUnionProbe
         int NextUnitOverThreshold(int from);
     }
 
+    public sealed class UnitCpuSwitch
+    {
+        public object Enabled { get; private set; }
+
+        public void Enable(ReflectedUnitSeams source, object units)
+        {
+            if (source == null || units == null || ReferenceEquals(units, Enabled)) return;
+            Disable(source);
+            try { source.Target = units; source.RecordCpu(); Enabled = units; }
+            finally { source.Target = null; }
+        }
+
+        public void Disable(ReflectedUnitSeams source)
+        {
+            var units = Enabled;
+            Enabled = null;
+            if (source == null || units == null) return;
+            try { source.Target = units; source.StopCpu(); }
+            finally { source.Target = null; }
+        }
+    }
+
     public sealed class ReflectedUnitSeams : IUnitSeamSource
     {
         private PropertyInfo units, completed, slowestKind, slowestMs, slowestSeam, maximumSeam, slowestCpu, maintenance, maintenanceCpu, recordsCpu;
@@ -202,7 +224,9 @@ namespace PerfUnionProbe
         public double SlowestUnitCpuMilliseconds => slowestCpu == null ? -1 : (double)slowestCpu.GetValue(Target);
         public double MaintenanceMilliseconds => maintenance == null ? double.NaN : (double)maintenance.GetValue(Target);
         public double MaintenanceCpuMilliseconds => maintenanceCpu == null ? -1 : (double)maintenanceCpu.GetValue(Target);
-        public void RecordCpu() { if (recordsCpu != null && recordsCpu.CanWrite && !(bool)recordsCpu.GetValue(Target)) recordsCpu.SetValue(Target, true); }
+        public void RecordCpu() => SetRecordsCpu(true);
+        public void StopCpu() => SetRecordsCpu(false);
+        private void SetRecordsCpu(bool on) { if (recordsCpu != null && recordsCpu.CanWrite && (bool)recordsCpu.GetValue(Target) != on) recordsCpu.SetValue(Target, on); }
         public double MaximumUnitSeamMilliseconds => (double)maximumSeam.GetValue(Target);
         public double P95UnitSeamMilliseconds() => (double)p95.Invoke(Target, null);
         public double UnitSeamMilliseconds(int unit) => (double)unitSeam.Invoke(Target, new object[] { unit });

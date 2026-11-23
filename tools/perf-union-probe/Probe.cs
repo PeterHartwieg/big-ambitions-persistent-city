@@ -466,21 +466,21 @@ namespace PerfUnionProbe
             finally { unitSeamSource.Target = null; }
         }
         internal static long unitSeamFailures;
-        private static object unitCpuEnabledFor;
+        private static readonly UnitCpuSwitch unitCpu = new UnitCpuSwitch();
         internal static void EnableUnitCpu()
         {
             if (readUnitSeams == null || unitSeamSource == null || runtime == null) return;
             try
             {
                 var stops = readStopEnvironment(runtime);
-                var units = stops == null ? null : readUnitSeams(stops);
-                if (units == null || ReferenceEquals(units, unitCpuEnabledFor)) return;
-                unitSeamSource.Target = units;
-                unitSeamSource.RecordCpu();
-                unitCpuEnabledFor = units;
+                unitCpu.Enable(unitSeamSource, stops == null ? null : readUnitSeams(stops));
             }
             catch (Exception) { unitSeamFailures++; }
-            finally { unitSeamSource.Target = null; }
+        }
+        private static void DisableUnitCpu()
+        {
+            try { unitCpu.Disable(unitSeamSource); }
+            catch (Exception) { unitSeamFailures++; }
         }
         internal static double UnitMaximum()
         {
@@ -743,12 +743,14 @@ namespace PerfUnionProbe
             if (writeStopFrame && currentFrame > firstMeasureFrame) { frameDiagnostic = true; WriteFrame(currentFrame + 1, stop, true); }
             if (pendingWindowStart) pendingWindowStart = false;
             else holds.EndWindow(currentFrame, stop.Ticks);
+            DisableUnitCpu();
             measuring = false; stopReason = reason;
         }
 
         public static void Disarm()
         {
             if (measuring) StopMeasurement("disarm");
+            DisableUnitCpu();
             measuring = false; armed = false;
             try { patches.UnpatchAll(PatchId); } catch { scanner.Error = "f4b_unpatch_failed"; }
             try { RemoveLoop(); } catch { scanner.Error = "f4b_player_loop_restore_failed"; }
