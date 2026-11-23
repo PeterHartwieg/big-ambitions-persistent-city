@@ -178,16 +178,20 @@ namespace PersistentCity.Runtime
             return true;
         }
 
-        public static void Charge(GcAllocationSegment segment)
+        public static void Charge(GcAllocationSegment segment) => Charge(segment, System.Diagnostics.Stopwatch.GetTimestamp());
+
+        public static void Charge(GcAllocationSegment segment, long timestamp)
         {
             var current = recorder;
-            if (current != null) current.Charge(segment, System.Diagnostics.Stopwatch.GetTimestamp(), GcAllocationCounter.Read(), GC.CollectionCount(0), GcAllocationCounter.Collections);
+            if (current != null) current.Charge(segment, timestamp, GcAllocationCounter.Read(), GC.CollectionCount(0), GcAllocationCounter.Collections);
         }
 
-        public static void Detail(GcAllocationSegment segment)
+        public static void Detail(GcAllocationSegment segment) => Detail(segment, System.Diagnostics.Stopwatch.GetTimestamp());
+
+        public static void Detail(GcAllocationSegment segment, long timestamp)
         {
             var current = recorder;
-            if (current != null) current.Detail(segment, System.Diagnostics.Stopwatch.GetTimestamp(), GcAllocationCounter.Read(), GC.CollectionCount(0), GcAllocationCounter.Collections);
+            if (current != null) current.Detail(segment, timestamp, GcAllocationCounter.Read(), GC.CollectionCount(0), GcAllocationCounter.Collections);
         }
 
         public static void NoteGrow(in GrowTiming timing) => recorder?.NoteGrow(timing);

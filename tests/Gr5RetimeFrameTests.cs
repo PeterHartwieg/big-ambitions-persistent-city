@@ -110,6 +110,30 @@ public sealed class Gr5RetimeFrameTests
     }
 
     [Fact]
+    public void AStreetRetimeSubphaseBreachInTheReportUpdateHasAReportLineWithTheSameFrame()
+    {
+        var recorder = new ModFrameRecorder();
+        recorder.Arm(1_000_000);
+        var ledger = new RetimeFrameLedger();
+        ledger.Observe(RetimeFrameStage.HandOver, 2.0, "with the last rebuild step", 42_300);
+        const int frame = 42_301;
+        recorder.Begin(frame, 0, 0, 0);
+        long rloCharged = 1_000;
+        recorder.Charge(GcAllocationSegment.ModRlo, rloCharged, 0, 0);
+        long reported = rloCharged + 11_301;
+        recorder.Detail(GcAllocationSegment.ModRoutesRetime, reported, 0, 0);
+        recorder.Charge(GcAllocationSegment.ModRoutes, reported + 5, 0, 0);
+        recorder.End(reported + 10, 0, 0, null);
+        double street = recorder.TotalMilliseconds(GcAllocationSegment.ModRoutesRetime);
+        ledger.Observe(RetimeFrameStage.Report, (reported - rloCharged) / 1_000.0, "own update", frame);
+        Assert.True(street > RetimeFrameLedger.BoundMilliseconds);
+        Assert.Equal(street, ledger.SlowestMilliseconds(RetimeFrameStage.Report));
+        Assert.True(ledger.ReportOverBound);
+        Assert.Equal(recorder.Top(0).Frame, ledger.ReportFrame);
+        Assert.Equal("Clock retime report: frame 42301 report 11.3 ms, over 11.3 ms (own update).", ledger.DescribeReport());
+    }
+
+    [Fact]
     public void TheAllocationTallyClosedAtPublicationIgnoresTheReportUpdate()
     {
         var tally = new RetimeAllocationTally();
@@ -249,7 +273,7 @@ public sealed class Gr5RetimeFrameTests
         var driver = new ClockRetimeDriver();
         var steady = new RetainedCensus();
         steady.Add("runtime.simulation", city);
-        var lastSteps = new List<double>(); var handOvers = new List<double>(); var reports = new List<double>();
+        var deferredNext = new List<double>(); var publishingFinish = new List<double>(); var lastSteps = new List<double>(); var reportUpdates = new List<double>();
         long deferredBytes = 0, publishedBytes = 0;
         foreach (double rate in traffic ? new[] { 3.0, 20, 1, 20 } : new[] { 2.0, 1, 2, 1 })
         {
@@ -293,15 +317,16 @@ public sealed class Gr5RetimeFrameTests
             double report = System.Diagnostics.Stopwatch.GetElapsedTime(reportStarted).TotalMilliseconds;
             Assert.NotEmpty(lines);
             Assert.True(city.ActiveJourneyIndexMatchesState());
-            lastSteps.Add(last); handOvers.Add(handOver); reports.Add(report);
+            lastSteps.Add(last); deferredNext.Add(handOver + report); publishingFinish.Add(last + handOver); reportUpdates.Add(report);
             city.AdvanceTo(state.Minute + 3, int.MaxValue);
         }
         Assert.True(publishedBytes < deferredBytes, "published " + publishedBytes + ", deferred " + deferredBytes);
         string F(double v) => v.ToString("0.000", System.Globalization.CultureInfo.InvariantCulture);
-        double step = lastSteps.Skip(1).Max(), hand = handOvers.Skip(1).Max(), log = reports.Skip(1).Max();
-        output.WriteLine(model + " model, slowest of retimes 2 to " + lastSteps.Count + " after a warm-up retime (.NET; report is formatting only, log I/O not modelled): "
-            + "16bba2a5 finishing update " + F(step) + " ms (last step), next update " + F(hand + log) + " ms (hand-over " + F(hand) + " + report " + F(log) + "); "
-            + "HEAD finishing update " + F(step + hand) + " ms (last step + hand-over), report update " + F(log) + " ms. "
+        double step = lastSteps.Skip(1).Max(), next = deferredNext.Skip(1).Max(), finishing = publishingFinish.Skip(1).Max(), log = reportUpdates.Skip(1).Max();
+        output.WriteLine(model + " model, estimated updates from one timed sequence per retime (step, hand-over and report summed within each retime, then the slowest of retimes 2 to " + lastSteps.Count
+            + " after a warm-up retime; .NET; report is formatting only, log I/O not modelled): "
+            + "16bba2a5 finishing update " + F(step) + " ms (last step), next update " + F(next) + " ms (hand-over + report); "
+            + "HEAD finishing update " + F(finishing) + " ms (last step + hand-over), report update " + F(log) + " ms. "
             + "Retained at the finishing frame boundary: steady " + steady.Bytes + " B, 16bba2a5 " + deferredBytes + " B (2 CitySimulator, " + (deferredBytes - steady.Bytes).ToString("+0;-0")
             + "), HEAD " + publishedBytes + " B (1 CitySimulator, " + (publishedBytes - steady.Bytes).ToString("+0;-0") + ")");
     }
@@ -351,13 +376,16 @@ public sealed class Gr5RetimeFrameTests
         string mod = Source(Path.Combine("Runtime", "PersistentCityMod.cs"));
         Assert.Contains("if (done) { FinishRouteRebuild(rebuild, mark, started, \"with the last rebuild step\", reportNow: false); return; }", mod);
         Assert.Contains("FinishRouteRebuild(rebuild, RetimeMark(), Stopwatch.GetTimestamp(), \"save\", reportNow: true);", mod);
-        Assert.Contains("if (reportNow) ReportRetime(Stopwatch.GetTimestamp(), \"save\");", mod);
-        Assert.Contains("if (retimeReport != null) { ReportRetime(Stopwatch.GetTimestamp(), \"own update\"); WaitForRetime(); return; }", mod);
+        Assert.Contains("if (reportNow) { long reportStarted = Stopwatch.GetTimestamp(); WriteRetimeReport(); CloseRetimeReport(reportStarted, Stopwatch.GetTimestamp(), \"save\"); }", mod);
+        Assert.Contains("long rloCharged = Stopwatch.GetTimestamp();\n                ModFrames.Charge(GcAllocationSegment.ModRlo, rloCharged);", mod);
+        Assert.Contains("if (retimeReport != null) { WriteRetimeReport(); long reported = Stopwatch.GetTimestamp(); WaitForRetime(reported); CloseRetimeReport(rloCharged, reported, \"own update\"); return; }", mod);
+        Assert.Contains("ModFrames.Detail(GcAllocationSegment.ModRoutesRetime, timestamp);", mod);
         int finish = mod.IndexOf("private void FinishRouteRebuild(RouteRebuild rebuild, RetimeAllocationMark mark", StringComparison.Ordinal);
         int close = mod.IndexOf("private void CloseRetimeTally()", StringComparison.Ordinal);
-        int report = mod.IndexOf("private void ReportRetime(long started, string detail)", StringComparison.Ordinal);
+        int report = mod.IndexOf("private void WriteRetimeReport()", StringComparison.Ordinal);
+        int closing = mod.IndexOf("private void CloseRetimeReport(long started, long ended, string detail)", StringComparison.Ordinal);
         int wait = mod.IndexOf("private void WaitForRetime()", StringComparison.Ordinal);
-        Assert.True(finish > 0 && close > finish && report > close && wait > report);
+        Assert.True(finish > 0 && close > finish && report > close && closing > report && wait > closing);
         string finishing = mod.Substring(finish, report - finish);
         Assert.Contains("simulation = rebuild.TakeResult();", finishing);
         Assert.DoesNotContain("log?.Info", finishing);
@@ -369,11 +397,12 @@ public sealed class Gr5RetimeFrameTests
         Assert.DoesNotContain("retimeAllocation.Add", reporting);
         Assert.DoesNotContain("retimeAllocation.Finish", reporting);
         Assert.DoesNotContain("GcAllocationCounter.Mark", reporting);
+        Assert.DoesNotContain("Stopwatch.GetTimestamp()", reporting);
         int frames = reporting.IndexOf("log?.Info(retimeFrames.Describe());", StringComparison.Ordinal);
-        int timed = reporting.IndexOf("retimeFrames.Observe(RetimeFrameStage.Report, (Stopwatch.GetTimestamp() - started) * MillisecondsPerTimestamp, detail, Time.frameCount);", StringComparison.Ordinal);
-        int flagged = reporting.IndexOf("if (retimeFrames.ReportOverBound) log?.Info(retimeFrames.DescribeReport());", StringComparison.Ordinal);
+        int timed = reporting.IndexOf("retimeFrames.Observe(RetimeFrameStage.Report, (ended - started) * MillisecondsPerTimestamp, detail, Time.frameCount);", StringComparison.Ordinal);
         int reset = reporting.IndexOf("retimeFrames.Reset();", StringComparison.Ordinal);
-        Assert.True(frames > 0 && timed > frames && flagged > timed && reset > flagged, "the report update is timed after its last ledger line and flagged when over the bound");
+        int flagged = reporting.IndexOf("if (over) log?.Info(breach);", StringComparison.Ordinal);
+        Assert.True(frames > 0 && timed > frames && reset > timed && flagged > reset, "the report interval closes before the ledger resets and the breach line follows it");
         Assert.Contains("retimeReport = null;", Source(Path.Combine("Runtime", "PopulationLifecycle.cs")));
         Assert.Contains("retimeFrames.Observe(RetimeFrameStage.Rebuild,", mod);
         Assert.Contains("retimeFrames.Observe(RetimeFrameStage.HandOver,", mod);

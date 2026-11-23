@@ -304,14 +304,15 @@ namespace PersistentCity.Runtime
                     nextStationScan = float.PositiveInfinity;
                     routes?.RefreshStations();
                 }
-                ModFrames.Charge(GcAllocationSegment.ModRlo);
+                long rloCharged = Stopwatch.GetTimestamp();
+                ModFrames.Charge(GcAllocationSegment.ModRlo, rloCharged);
                 double target = Now();
                 if (target < simulation.State.Minute - 0.001)
                 {
                     Fail("Game clock moved behind the population snapshot. Reload the matching save; no state was overwritten.");
                     return;
                 }
-                if (retimeReport != null) { ReportRetime(Stopwatch.GetTimestamp(), "own update"); WaitForRetime(); return; }
+                if (retimeReport != null) { WriteRetimeReport(); long reported = Stopwatch.GetTimestamp(); WaitForRetime(reported); CloseRetimeReport(rloCharged, reported, "own update"); return; }
                 if (routeRebuild != null) { long rebuildStarted = Stopwatch.GetTimestamp(); var rebuildMark = RetimeMark(); ContinueRouteRebuild(rebuildMark, rebuildStarted); WaitForRetime(); return; }
                 if (vendorMarket?.Prepare((long)target) == true) { ModFrames.Charge(GcAllocationSegment.ModFood); return; }
                 foodMarket?.RefreshRoutineHours(target);
@@ -793,7 +794,7 @@ namespace PersistentCity.Runtime
             CloseRetimeTally();
             retimeFrames.Observe(RetimeFrameStage.HandOver, (Stopwatch.GetTimestamp() - started) * MillisecondsPerTimestamp, detail, Time.frameCount);
             retimeReport = rebuild;
-            if (reportNow) ReportRetime(Stopwatch.GetTimestamp(), "save");
+            if (reportNow) { long reportStarted = Stopwatch.GetTimestamp(); WriteRetimeReport(); CloseRetimeReport(reportStarted, Stopwatch.GetTimestamp(), "save"); }
         }
 
         private void CloseRetimeTally()
@@ -804,7 +805,7 @@ namespace PersistentCity.Runtime
             retimeAllocation.Finish(heap, used);
         }
 
-        private void ReportRetime(long started, string detail)
+        private void WriteRetimeReport()
         {
             var rebuild = retimeReport!;
             retimeReport = null;
@@ -823,15 +824,23 @@ namespace PersistentCity.Runtime
                 + retimeDriver.ReusedLegs.ToString(System.Globalization.CultureInfo.InvariantCulture) + ", traffic retimed from " + retimeDriver.RetimedFrom + ".");
             log?.Info("Clock retime allocation: " + retimeAllocation.Describe(GcAllocationCounter.Name) + ".");
             log?.Info(retimeFrames.Describe());
-            retimeFrames.Observe(RetimeFrameStage.Report, (Stopwatch.GetTimestamp() - started) * MillisecondsPerTimestamp, detail, Time.frameCount);
-            if (retimeFrames.ReportOverBound) log?.Info(retimeFrames.DescribeReport());
-            retimeFrames.Reset();
-            retimeReleaseMilliseconds = 0; retimeReleaseUpdates = 0;
         }
 
-        private void WaitForRetime()
+        private void CloseRetimeReport(long started, long ended, string detail)
         {
-            ModFrames.Detail(GcAllocationSegment.ModRoutesRetime);
+            retimeFrames.Observe(RetimeFrameStage.Report, (ended - started) * MillisecondsPerTimestamp, detail, Time.frameCount);
+            bool over = retimeFrames.ReportOverBound;
+            string breach = over ? retimeFrames.DescribeReport() : "";
+            retimeFrames.Reset();
+            retimeReleaseMilliseconds = 0; retimeReleaseUpdates = 0;
+            if (over) log?.Info(breach);
+        }
+
+        private void WaitForRetime() => WaitForRetime(Stopwatch.GetTimestamp());
+
+        private void WaitForRetime(long timestamp)
+        {
+            ModFrames.Detail(GcAllocationSegment.ModRoutesRetime, timestamp);
             ModFrames.Charge(GcAllocationSegment.ModRoutes);
             waitingFrames++;
             inspector.Suspend();
