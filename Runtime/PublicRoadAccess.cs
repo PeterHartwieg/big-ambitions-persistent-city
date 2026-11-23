@@ -62,10 +62,14 @@ namespace PersistentCity.Runtime
                     if ((shape = Combine(renderers)).HasValue)
                     {
                         source = GateSource.Renderers;
-                        fixedParts = Combine(renderers.Where(renderer => !Leaf(door, renderer.transform))) is Bounds stillRenderers
-                            ? new GateBox(stillRenderers, door.name) : (GateBox?)null;
+                        fixedParts = new GateBox(Combine(renderers.Where(renderer => !Leaf(door, renderer.transform)))
+                            ?? Anchor(door.transform), door.name);
                     }
-                    else if ((shape = FootprintBounds(door)).HasValue) source = GateSource.Footprint;
+                    else if ((shape = FootprintBounds(door, out var stillFootprint)).HasValue)
+                    {
+                        source = GateSource.Footprint;
+                        fixedParts = new GateBox(stillFootprint ?? Anchor(door.transform), door.name);
+                    }
                 }
                 GateBox gate;
                 if (shape is Bounds geometry)
@@ -96,10 +100,19 @@ namespace PersistentCity.Runtime
             for (int i = 0; i < left.Length; i++) if (!string.Equals(left[i], right[i], StringComparison.Ordinal)) return false;
             return true;
         }
-        private static Bounds? FootprintBounds(FenceDoor door)
+        private static Bounds? FootprintBounds(FenceDoor door, out Bounds? stationary)
         {
+            stationary = null;
             var building = door.GetComponentInParent<CityBuildingController>(true);
-            return building == null ? null : BuildingFootprint.ReadBounds(building, usableOnly: true);
+            return building == null ? null : BuildingFootprint.ReadBounds(building, true, part => Leaf(door, part), out stationary);
+        }
+        private static Bounds Anchor(Transform root)
+        {
+            var anchor = new Bounds(root.TransformPoint(Vector3.zero), Vector3.zero);
+            anchor.Encapsulate(root.TransformPoint(new Vector3(1, 0, 0)));
+            anchor.Encapsulate(root.TransformPoint(new Vector3(0, 1, 0)));
+            anchor.Encapsulate(root.TransformPoint(new Vector3(0, 0, 1)));
+            return anchor;
         }
         private void BuildIndex()
         {

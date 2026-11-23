@@ -213,6 +213,57 @@ public sealed class PhysicalRoadAdmissionTests
     }
 
     [Fact]
+    public void RendererGateWhoseOnlyRendererIsTheLeafKeepsTheClosedLeafAreaWhenItOpens()
+    {
+        var gate = VehicleGate("leaf only gate", new Vector3(100, 2, 0));
+        var leaf = new Transform { parent = gate.transform };
+        gate.doors = new[] { leaf };
+        var leafRenderer = new Renderer { transform = { parent = leaf }, bounds = new Bounds(new Vector3(102, 2, 0), new Vector3(2, 4, 2)) };
+        gate.Renderers = new[] { leafRenderer };
+        var access = new PublicRoadAccess(new[] { gate }, _ => { });
+        Assert.False(access.ClearSegment(new Position(102, 2, -5), new Position(102, 2, 5)));
+
+        leafRenderer.bounds = new Bounds(new Vector3(100, 2, 4), new Vector3(2, 4, 2));
+        var refreshed = access.Refreshed(new[] { gate }, out _);
+
+        Assert.NotNull(refreshed);
+        Assert.False(refreshed!.ClearSegment(new Position(102, 2, -5), new Position(102, 2, 5)));
+        Assert.False(refreshed.ClearSegment(new Position(95, 2, 4), new Position(105, 2, 4)));
+
+        gate.transform.position = new Vector3(300, 2, 0);
+        leafRenderer.bounds = new Bounds(new Vector3(302, 2, 0), new Vector3(2, 4, 2));
+        var moved = refreshed.Refreshed(new[] { gate }, out _);
+
+        Assert.NotNull(moved);
+        Assert.True(moved!.ClearSegment(new Position(102, 2, -5), new Position(102, 2, 5)));
+        Assert.False(moved.ClearSegment(new Position(302, 2, -5), new Position(302, 2, 5)));
+    }
+
+    [Fact]
+    public void FootprintGateKeepsItsSiblingLeafAreaWhenTheLeafSwings()
+    {
+        var gate = VehicleGate("footprint leaf gate");
+        var building = BuildingWithBounds(new Vector3(100, 3, 200), new Vector3(12, 6, 8));
+        var buildingRoot = new Transform { Component = building };
+        gate.transform.parent = buildingRoot;
+        var leaf = new Transform { parent = buildingRoot };
+        gate.doors = new[] { leaf };
+        var leafCollider = new Collider { transform = { parent = leaf }, bounds = new Bounds(new Vector3(110, 3, 200), new Vector3(4, 4, 2)) };
+        building.Colliders = building.Colliders.Append(leafCollider).ToArray();
+        var access = new PublicRoadAccess(new[] { gate }, _ => { });
+        Assert.False(ClearAcrossGate(access, 111, 3));
+        Assert.True(ClearAcrossGate(access, 113, 3));
+
+        leafCollider.bounds = new Bounds(new Vector3(100, 3, 206), new Vector3(2, 4, 4));
+        var refreshed = access.Refreshed(new[] { gate }, out _);
+
+        Assert.NotNull(refreshed);
+        Assert.False(ClearAcrossGate(refreshed!, 111, 3));
+        Assert.True(ClearAcrossGate(refreshed, 113, 3));
+        Assert.False(refreshed.ClearSegment(new Position(95, 3, 207.5), new Position(105, 3, 207.5)));
+    }
+
+    [Fact]
     public void GateThatGainsCollidersDoesNotKeepItsOldRendererLeafUnion()
     {
         var gate = VehicleGate("renderer then collider", new Vector3(100, 2, 0));

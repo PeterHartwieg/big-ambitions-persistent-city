@@ -1,3 +1,4 @@
+using System;
 using Buildings;
 using PersistentCity.Core;
 using UnityEngine;
@@ -7,17 +8,28 @@ namespace PersistentCity.Runtime
     internal static class BuildingFootprint
     {
         public static Bounds? ReadBounds(CityBuildingController controller, bool usableOnly = false)
+            => ReadBounds(controller, usableOnly, null, out _);
+
+        public static Bounds? ReadBounds(CityBuildingController controller, bool usableOnly, Func<Transform, bool>? moving, out Bounds? stationary)
         {
             Bounds? combined = null;
+            stationary = null;
             foreach (var collider in controller.GetComponentsInChildren<Collider>())
             {
                 if (collider == null || !collider.enabled || collider.isTrigger) continue;
                 var bounds = collider.bounds;
                 if (usableOnly && !Usable(bounds)) continue;
-                if (combined is Bounds sum) { sum.Encapsulate(bounds); combined = sum; }
-                else combined = bounds;
+                combined = Include(combined, bounds);
+                if (moving == null || !moving(collider.transform)) stationary = Include(stationary, bounds);
             }
             return combined;
+        }
+
+        private static Bounds Include(Bounds? combined, Bounds bounds)
+        {
+            if (!(combined is Bounds sum)) return bounds;
+            sum.Encapsulate(bounds);
+            return sum;
         }
 
         public static bool Usable(Bounds world) =>
