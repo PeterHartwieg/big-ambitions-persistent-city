@@ -26403,3 +26403,723 @@ The raw command-order and save audit is in capture-integrity.json. The marker ex
 The full 57-file evidence manifest is evidence-sha256.txt, SHA-256 2c4d047b13aa10e9d4df4a10c6c1cde07527757bd18ce637cac2b799eca2ccd5.
 
 [Procedure #356](https://github.com/PeterHartwieg/big-ambitions-persistent-city/pull/356) · [Mac 17f #354](https://github.com/PeterHartwieg/big-ambitions-persistent-city/pull/354) · [Mac 17c #347](https://github.com/PeterHartwieg/big-ambitions-persistent-city/pull/347) · [Mac 17b #345](https://github.com/PeterHartwieg/big-ambitions-persistent-city/pull/345) · [Mac 17a #343](https://github.com/PeterHartwieg/big-ambitions-persistent-city/pull/343) · [Mac 16z #341](https://github.com/PeterHartwieg/big-ambitions-persistent-city/pull/341) · [Mac 16y #339](https://github.com/PeterHartwieg/big-ambitions-persistent-city/pull/339) · [Mac 16x #337](https://github.com/PeterHartwieg/big-ambitions-persistent-city/pull/337) · [Mac 16w #329](https://github.com/PeterHartwieg/big-ambitions-persistent-city/pull/329) · [Mac 16v #326](https://github.com/PeterHartwieg/big-ambitions-persistent-city/pull/326) · [Mac 16u #324](https://github.com/PeterHartwieg/big-ambitions-persistent-city/pull/324) · [Mac 16t #321](https://github.com/PeterHartwieg/big-ambitions-persistent-city/pull/321) · [PC 19c #315](https://github.com/PeterHartwieg/big-ambitions-persistent-city/pull/315)
+
+## Rig results - 24 November 2026 a (Mac, rig 17i): #358 GR-5 checks at d1e868fe
+
+**1 PASS / 2 PARTIAL / 3 FAIL / 0 NOT RUN / 2 REPORTED.** Shared Mac and locked-PC substitute timings are **PROVISIONAL**. Fixture FT GR5 13f Timing v1.
+
+| Check | Outcome | Readback |
+| --- | --- | --- |
+| A | FAIL | A steady gen0 8 vs 6, pause p95 32.845 ms. A immediate gen0 8 vs 7, pause p95 130.192 ms. immediate citizen allocation 35,436,592 B vs 17h 40,206,664 B. A steady gen0 8 exceeded matched no-mod 6. A immediate pause p95 130.192 ms reached 36 ms. A immediate pause p95 129.383 ms excluding UpdateCity reached 36 ms. A immediate gen0 8 exceeded 6. A immediate gen0 8 exceeded matched no-mod 7. |
+| B | FAIL | B 20× gen0 7 vs 6, pause p95 161.447 ms. B 20× heap 1442.430976 MB, margin 27.569024 MB. B 60× gen0 7 vs 7, pause p95 36.123 ms. B 60× heap 1377.042432 MB, margin 92.957568 MB. B 20× pause p95 161.447 ms reached 36 ms. B 20× pause p95 161.238 ms excluding UpdateCity reached 36 ms. B 20× gen0 7 exceeded 6. B 20× gen0 7 exceeded matched no-mod 6. B 60× pause p95 36.123 ms reached 36 ms. B 60× gen0 7 exceeded 6. |
+| C | FAIL | UpdateCity / mod-work p95 3.8388 / 3.9057 ms, retime sub 6.091 ms, 1 mod spikes, whole-frame p95 / max 169.6379 / 607.5002 ms. 1 mod-work frame(s) reached 30 ms |
+| D | REPORTED | check_scopes: PASS. Candidate Mono heap and forced-live compared with the 16x reference. |
+| E/F | REPORTED | RSS KiB 5,295,008 / 5,333,440 / 5,338,144. Owned identity true / true / true. |
+| L | PARTIAL | 7/7 matched reads. Drain span 30.387798 native minutes.  Raw RouteLeg[] 2,696 / 1,816 / 3,440 / 2,216 B over R3–R5 and drain. The raw byte gate passed. Drain new maxima in Int32[] bytes, Int32[] objects, Int32[] outside caches bytes, Int32[] outside caches objects. Plateau unestablished for Double[] bytes, Double[] outside caches bytes, String bytes, String objects, String outside caches bytes, String outside caches objects. |
+| P | PASS | 0 immediate-retime advance/planning frames over 30 ms. Call pages retain 0 call rows and 0 unit rows. 17h recorded frame 15,646 at 31.23 ms with one collection in the citizen unit. 17f and 17c passed P. |
+| G | PARTIAL | 30/30 candidate ordinals joined to a probe collection, a phase and a subsystem. 4/4 reference windows read back. 0 collection rows lacked a marker pairing. Mac sample captured 12/12 requested intervals, overlapping 0 collection frames. Exact per-frame scheduling attribution is unavailable on the Mac sample backend. 17h joined 28/28, 17f 27/27 and 17c 29/29. |
+
+### A and B. Day and night collection windows
+
+| Arm | Gen0 | Pause p95 / excl. UpdateCity / excl. mod work / inclusive / diagnostic collections | GC.Collect p95 ms | Probe start heap / used B | Probe stop heap / used B | Sampler heap / used B | Mod MB | Fast / native / failed merges | Sampler frames | Seconds |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| A steady | 8 | 32.845 / 32.267 / 32.246 / 32.845 / 0 | 26.0832 | 1,339,686,912 / 1,281,859,584 | 1,373,241,344 / 1,275,682,816 | 1,373,241,344 / 1,273,335,808 | 77.099984 | 317 / 0 / 0 | 17,353 | 600.00931 |
+| A immediate | 8 | 130.192 / 129.383 / 129.354 / 130.192 / 0 | 25.1866 | 1,472,512,000 / 1,217,126,400 | 1,360,297,984 / 1,320,144,896 | 1,360,297,984 / 1,317,367,808 | 145.146272 | 367 / 0 / 0 | 17,068 | 600.007041 |
+| B 20× | 7 | 161.447 / 161.238 / 161.218 / 161.447 / 0 | 25.8034 | 1,425,653,760 / 1,344,380,928 | 1,442,430,976 / 1,345,945,600 | 1,442,430,976 / 1,344,897,024 | 59.316944 | 264 / 0 / 0 | 17,369 | 600.008727 |
+| B 60× | 7 | 36.123 / 35.944 / 35.926 / 36.123 / 0 | 28.1238 | 1,360,265,216 / 1,284,648,960 | 1,377,042,432 / 1,296,076,800 | 1,377,042,432 / 1,294,774,272 | 26.596336 | 203 / 0 / 0 | 17,222 | 600.002829 |
+| A steady no-mod | 6 | 32.3094 / — / — / — / — | 24.2248 | 1,278,771,200 / 1,039,069,184 | 1,223,163,904 / 1,160,323,072 | — / — | — | — / — / — | — | 600.010041 |
+| A immediate no-mod | 7 | 27.2651 / — / — / — / — | 21.9766 | 1,283,620,864 / 1,102,770,176 | 1,283,620,864 / 1,184,186,368 | — / — | — | — / — / — | — | 600.009772 |
+| B 20× no-mod | 6 | 32.2872 / — / — / — / — | 22.115 | 1,295,024,128 / 1,134,608,384 | 1,319,239,680 / 1,184,710,656 | — / — | — | — / — / — | — | 600.009274 |
+| B 60× no-mod | 7 | 27.1689 / — / — / — / — | 22.3349 | 1,286,766,592 / 1,193,959,424 | 1,303,543,808 / 1,127,989,248 | — / — | — | — / — / — | — | 600.006001 |
+
+Candidate pauses use sampler collection-frame excess in ms. Reference pauses use probe collection-frame excess in ms. Persistent City allocation, merge counts and sampler details are unavailable in no-mod processes. Day processes were cold-started on the fixture and settled for 60 s at 15:30 before measurement.
+
+| Arm | 17i | 17h | 17f | 17c | PC 19c |
+| --- | --- | --- | --- | --- | --- |
+| A steady | 8 / 32.845 / 26.0832 / 1373.241344 | 7 / 29.877 / 25.2776 / 1329.201152 | 7 / 32.033 / 25.9247 / 1373.405184 | 8 / 35.49 / 27.3902 / 1362.804736 | 14 / 563.157 / 17.395 / 1091.6864 |
+| A immediate | 8 / 130.192 / 25.1866 / 1360.297984 | 8 / 54.969 / 27.5126 / 1382.989824 | 7 / 31.708 / 28.5685 / 1481.867264 | 8 / 37.098 / 27.1312 / 1386.65984 | 14 / 24.465 / 18.784 / 1133.801472 |
+| B 20× | 7 / 161.447 / 25.8034 / 1442.430976 | 6 / 49.069 / 29.6859 / 1449.885696 | 6 / 35.939 / 27.0575 / 1477.689344 | 7 / 37.274 / 25.4008 / 1463.41888 | 13 / 22.636 / 17.357 / 1169.784832 |
+| B 60× | 7 / 36.123 / 28.1238 / 1377.042432 | 7 / 32.604 / 27.1888 / 1405.66528 | 7 / 34.551 / 27.3445 / 1408.827392 | 6 / 64.498 / 30.0331 / 1420.558336 | — |
+
+Comparison entries give gen0 / pause p95 ms / GC.Collect p95 ms / sampler heap MB. PC 19c used 957 residents and 1,914 visitors on the Windows host.
+
+| Segment | A steady | A immediate | B 20× | B 60× |
+| --- | --- | --- | --- | --- |
+| advance | 41,304,552 / 17,354 / 0 / 0 | 89,979,520 / 17,010 / 0 / 0 | 21,738,184 / 17,318 / 0 / 0 | 6,714,336 / 17,223 / 0 / 0 |
+| advance_events | 12,242,416 / 22,192 / 0 / 511.363 | 47,855,536 / 30,753 / 0 / 816.512 | 5,069,504 / 20,525 / 0 / 216.341 | 471,200 / 18,155 / 0 / 129.85 |
+| advance_events_citizen | 8,661,072 / 3,228 / 0 / 162.515 | 35,436,592 / 9,405 / 0 / 385.735 | 749,360 / 1,663 / 0 / 55.298 | 207,200 / 574 / 0 / 17.373 |
+| advance_events_food | 1,811,456 / 1,090 / 0 / 51.777 | 9,587,008 / 3,087 / 0 / 92.115 | 3,208,016 / 410 / 0 / 12.124 | 192 / 360 / 0 / 7.121 |
+| advance_events_other | 4,960 / 10,931 / 0 / 51.123 | 0 / 7,761 / 0 / 35.514 | 0 / 14,804 / 0 / 68.579 | 0 / 16,685 / 0 / 90.233 |
+| advance_events_route_begin | 1,437,152 / 3,469 / 0 / 201.264 | 2,415,056 / 5,550 / 0 / 239.603 | 910,672 / 2,102 / 0 / 58.728 | 263,664 / 463 / 0 / 11.794 |
+| advance_events_traffic | 327,776 / 3,474 / 0 / 42.459 | 415,232 / 4,950 / 0 / 60.446 | 201,456 / 1,546 / 0 / 18.677 | 144 / 73 / 0 / 0.946 |
+| advance_other | 4,960 / 17,354 / 0 / 195.028 | 0 / 17,010 / 0 / 267.903 | 167,856 / 17,318 / 0 / 113.536 | 0 / 17,223 / 0 / 74.862 |
+| advance_planning | 26,558,040 / 9,721 / 0 / 5988.393 | 39,672,144 / 16,697 / 0 / 9276.385 | 14,007,032 / 5,184 / 0 / 3832.363 | 3,763,024 / 1,341 / 0 / 1332.532 |
+| advance_planning_finish | 7,840,424 / 3,469 / 0 / 1021.406 | 10,721,488 / 5,550 / 0 / 1351.528 | 3,239,936 / 2,102 / 0 / 502.949 | 1,460,656 / 463 / 0 / 277.877 |
+| advance_planning_slice | 18,717,616 / 6,252 / 0 / 4965.403 | 28,950,656 / 11,147 / 0 / 7922.162 | 10,767,096 / 3,082 / 0 / 3328.259 | 2,302,368 / 878 / 0 / 1054.33 |
+| advance_stops | 2,498,976 / 17,354 / 0 / 86.677 | 2,451,840 / 17,010 / 0 / 90.578 | 2,493,792 / 17,318 / 0 / 121.642 | 2,480,112 / 17,223 / 0 / 123.851 |
+| mod | 77,099,984 / 17,354 / 0 / 0 | 145,146,272 / 17,069 / 0 / 0 | 59,316,944 / 17,370 / 0 / 0 | 26,596,336 / 17,223 / 0 / 0 |
+| mod_closures | 11,792 / 17,354 / 0 / 1055.503 | 464,352 / 17,012 / 0 / 1449.232 | 541,888 / 17,322 / 0 / 555.216 | 1,456 / 17,223 / 0 / 216.426 |
+| mod_closures_links | 8,544 / 17,354 / 0 / 809.755 | 321,088 / 17,011 / 0 / 1138.622 | 263,120 / 17,319 / 0 / 382.989 | 0 / 17,223 / 0 / 94.747 |
+| mod_closures_network | 3,248 / 17,354 / 0 / 197.477 | 10,112 / 17,011 / 0 / 261.404 | 1,216 / 17,319 / 0 / 128.513 | 112 / 17,223 / 0 / 89.536 |
+| mod_food | 1,283,296 / 17,354 / 0 / 81.264 | 2,128,640 / 17,064 / 0 / 83.638 | 1,277,184 / 17,364 / 0 / 79.027 | 1,282,592 / 17,223 / 0 / 87.422 |
+| mod_hold_replay | 560 / 17,354 / 0 / 25.159 | 160 / 17,011 / 0 / 24.872 | 112 / 17,319 / 0 / 31.401 | 0 / 17,223 / 0 / 34.503 |
+| mod_inspector | 2,546,256 / 17,354 / 0 / 118.026 | 2,508,736 / 17,011 / 0 / 121.996 | 2,493,936 / 17,319 / 0 / 121.348 | 2,480,176 / 17,223 / 0 / 120.976 |
+| mod_optional_stops | 2,532,160 / 17,354 / 0 / 1166.909 | 2,469,600 / 17,064 / 0 / 919.23 | 2,500,480 / 17,364 / 0 / 177.782 | 2,483,712 / 17,223 / 0 / 172.799 |
+| mod_optional_stops_physical | 2,510,336 / 17,354 / 0 / 107.797 | 2,458,288 / 17,064 / 0 / 104.106 | 2,500,480 / 17,364 / 0 / 104.749 | 2,482,128 / 17,223 / 0 / 110.178 |
+| mod_optional_stops_refresh | 21,824 / 17,354 / 0 / 1057.962 | 11,312 / 17,064 / 0 / 813.952 | 0 / 17,364 / 0 / 71.948 | 1,584 / 17,223 / 0 / 61.336 |
+| mod_other | 5,280 / 17,354 / 0 / 12.172 | 8,432 / 17,069 / 0 / 13.029 | 0 / 17,370 / 0 / 12.092 | 0 / 17,223 / 0 / 11.915 |
+| mod_physical_setup | 0 / 17,194 / 0 / 4.136 | 0 / 16,972 / 0 / 4.331 | 0 / 17,024 / 0 / 3.814 | 0 / 17,221 / 0 / 4.84 |
+| mod_prelude | 2,653,008 / 17,354 / 0 / 1677.829 | 2,552,816 / 17,069 / 0 / 1567.986 | 2,597,552 / 17,370 / 0 / 1637.015 | 2,573,760 / 17,223 / 0 / 1690.428 |
+| mod_rlo | 1,996,368 / 17,353 / 0 / 45.504 | 2,004,368 / 17,069 / 0 / 42.486 | 1,997,728 / 17,370 / 0 / 46.491 | 2,001,760 / 17,223 / 0 / 47.87 |
+| mod_routes | 3,819,312 / 17,354 / 0 / 544.471 | 18,024,864 / 17,069 / 0 / 668.521 | 18,282,600 / 17,370 / 0 / 705.598 | 3,777,152 / 17,223 / 0 / 592.67 |
+| mod_routes_nodes | 176 / 14,716 / 0 / 10.574 | 3,472,216 / 12,827 / 0 / 22.009 | 3,368,600 / 16,239 / 0 / 21.647 | 0 / 16,821 / 0 / 7.19 |
+| mod_routes_rebuild | 3,815,328 / 17,354 / 0 / 84.484 | 3,927,776 / 17,027 / 0 / 96.78 | 4,033,760 / 17,336 / 0 / 74.199 | 3,776,976 / 17,223 / 0 / 69.249 |
+| mod_routes_retime | 1,584 / 17,354 / 0 / 31.38 | 10,079,752 / 17,069 / 0 / 158.271 | 10,875,728 / 17,370 / 0 / 139.771 | 0 / 17,223 / 0 / 30.749 |
+| mod_routes_speeds | 1,552 / 14,716 / 0 / 148.302 | 3,648 / 12,827 / 0 / 126.969 | 848 / 16,239 / 0 / 185.343 | 176 / 16,821 / 0 / 185.88 |
+| mod_routes_sweep | 240 / 17,346 / 0 / 255.538 | 0 / 16,983 / 0 / 247.957 | 0 / 17,317 / 0 / 265.843 | 0 / 17,223 / 0 / 280.941 |
+| mod_summary | 577,168 / 17,345 / 0 / 15.077 | 833,824 / 16,481 / 0 / 14.443 | 574,768 / 17,281 / 0 / 17.023 | 577,296 / 17,223 / 0 / 20.409 |
+| physical | 20,351,944 / 17,354 / 0 / 0 | 24,140,992 / 17,028 / 0 / 0 | 7,312,512 / 17,337 / 0 / 0 | 4,702,432 / 17,223 / 0 / 0 |
+| physical_ambient | 1,840 / 17,354 / 0 / 125.387 | 169,312 / 17,009 / 0 / 149.562 | 1,648 / 17,311 / 0 / 132.344 | 1,568 / 17,223 / 0 / 135.263 |
+| physical_bindings | 26,880 / 553,132 / 0 / 522.999 | 124,928 / 694,909 / 0 / 669.449 | 10,336 / 173,542 / 0 / 210.912 | 0 / 17,705 / 0 / 17.028 |
+| physical_fade | 0 / 17,354 / 0 / 4.234 | 0 / 17,009 / 0 / 6.007 | 0 / 17,311 / 0 / 4.755 | 0 / 17,223 / 0 / 5.063 |
+| physical_focus | 192 / 17,354 / 0 / 79.196 | 176 / 17,009 / 0 / 80.424 | 0 / 17,311 / 0 / 71.739 | 0 / 17,223 / 0 / 79.472 |
+| physical_index | 80 / 2,260 / 0 / 17.088 | 80 / 2,233 / 0 / 19.745 | 80 / 2,242 / 0 / 17.376 | 0 / 2,250 / 0 / 7.968 |
+| physical_observe | 339,328 / 535,440 / 0 / 3685.886 | 534,208 / 677,425 / 0 / 4576.018 | 75,904 / 156,108 / 0 / 1239.074 | 784 / 478 / 0 / 6.198 |
+| physical_parked | 1,774,816 / 1,190 / 0 / 556.114 | 1,898,688 / 1,189 / 0 / 556.75 | 1,615,840 / 1,196 / 0 / 500.655 | 2,218,512 / 1,777 / 0 / 712.081 |
+| physical_queues | 7,840 / 2,240 / 0 / 100.446 | 8,960 / 2,213 / 0 / 134.264 | 17,200 / 2,222 / 0 / 121.625 | 0 / 2,230 / 0 / 17.933 |
+| physical_release | 5,536 / 350 / 0 / 55.61 | 18,608 / 483 / 0 / 77.397 | 736 / 171 / 0 / 24.912 | 0 / 10 / 0 / 0.868 |
+| physical_roster | 12,864 / 2,240 / 0 / 451.839 | 8,688 / 2,213 / 0 / 675.761 | 17,040 / 2,222 / 0 / 440.458 | 0 / 2,230 / 0 / 10.716 |
+| physical_selection | 1,557,048 / 2,941 / 0 / 77.42 | 2,810,344 / 3,074 / 0 / 113.736 | 575,680 / 2,355 / 0 / 32.693 | 0 / 2,230 / 0 / 2.836 |
+| physical_setup_ambient | 0 | 190,128 / 2 / 0 / 1.344 | 190,128 / 2 / 0 / 1.479 | 0 |
+| physical_setup_bodies | 0 | 3,088 / 1 / 0 / 0.025 | 25,088 / 1 / 0 / 0.12 | 0 |
+| physical_setup_places | 0 | 355,248 / 1 / 0 / 1.628 | 355,248 / 1 / 0 / 1.784 | 0 |
+| physical_setup_preflight | 0 | 752 / 1 / 0 / 0.079 | 752 / 1 / 0 / 0.083 | 0 |
+| physical_setup_vehicles | 0 | 15,984 / 2 / 0 / 1.024 | 15,904 / 2 / 0 / 1.193 | 0 |
+| physical_spawn_appearance | 8,192,528 / 987 / 0 / 462.926 | 9,214,048 / 1,143 / 0 / 518.073 | 1,346,240 / 192 / 0 / 88.345 | 0 |
+| physical_spawn_bake | 1,879,408 / 329 / 0 / 177.971 | 1,978,656 / 381 / 0 / 196.311 | 61,888 / 64 / 0 / 33.577 | 0 |
+| physical_spawn_check | 0 / 658 / 0 / 1.157 | 0 / 762 / 0 / 1.334 | 736 / 128 / 0 / 0.217 | 0 |
+| physical_spawn_grow | 587,664 / 246 / 0 / 78.524 | 481,952 / 216 / 0 / 69.933 | 0 | 0 |
+| physical_spawn_pedestrian | 4,608,496 / 958 / 0 / 395.12 | 3,325,096 / 1,089 / 0 / 451.582 | 235,392 / 175 / 0 / 81.197 | 0 |
+| physical_spawn_randomize | 2,939,952 / 329 / 0 / 15.597 | 3,385,040 / 381 / 0 / 17.874 | 595,968 / 64 / 0 / 3.215 | 0 |
+| physical_spawn_vehicle | 85,936 / 72 / 0 / 11.688 | 614,032 / 153 / 0 / 20.931 | 31,744 / 22 / 0 / 4.228 | 0 |
+| physical_unattributed | 2,516,016 / 34,708 / 0 / 126.079 | 3,216,544 / 34,039 / 0 / 129.726 | 3,091,152 / 34,650 / 0 / 128.525 | 2,480,112 / 34,446 / 0 / 121.308 |
+| physical_unattributed_entry | 2,500,848 / 17,354 / 0 / 68.166 | 2,617,152 / 17,009 / 0 / 63.977 | 2,492,784 / 17,311 / 0 / 72.956 | 2,480,112 / 17,223 / 0 / 71.881 |
+| physical_unattributed_setup | 0 | 7,648 / 1 / 0 / 0.309 | 7,648 / 1 / 0 / 0.372 | 0 |
+| physical_unattributed_update | 15,168 / 17,354 / 0 / 47.308 | 19,888 / 17,011 / 0 / 52.461 | 1,152 / 17,319 / 0 / 43.128 | 0 / 17,223 / 0 / 40.284 |
+| physical_unattributed_waiting | 0 | 6,656 / 16 / 0 / 0.064 | 2,448 / 17 / 0 / 0.068 | 0 |
+| physical_vehicles | 1,222,080 / 17,354 / 0 / 433.677 | 2,197,280 / 17,009 / 0 / 705.839 | 292,784 / 17,311 / 0 / 228.144 | 1,456 / 17,223 / 0 / 132.435 |
+| physical_vendor_meals | 464 / 17,354 / 0 / 6.215 | 0 / 17,009 / 0 / 5.911 | 0 / 17,311 / 0 / 7.292 | 0 / 17,223 / 0 / 7.658 |
+
+Segment entries give allocated B / allocation spans / skipped spans / phase ms. Zero denotes four zero values.
+
+| Segment allocation B delta vs 17h / 17f / 17c | A steady | A immediate | B 20× | B 60× |
+| --- | --- | --- | --- | --- |
+| advance | -932,480 / -6,549,608 / -17,683,224 | -4,212,200 / -11,027,896 / -33,488,576 | -92,272 / -5,406,208 / -9,497,256 | 61,280 / -761,968 / -1,776,048 |
+| advance_events | -960,112 / -1,920,000 / -2,623,552 | -5,096,408 / -11,336,432 / -8,119,400 | -118,512 / -889,808 / -885,584 | -1,552 / -42,528 / -40,736 |
+| advance_events_citizen | -760,624 / -1,260,560 / -1,722,336 | -4,770,072 / -9,686,016 / -6,308,952 | -33,776 / -60,848 / -46,656 | -976 / -13,392 / -12,000 |
+| advance_events_food | 21,376 / -75,440 / -204,896 | 50,928 / -1,157,040 / -795,712 | 0 / -670,736 / -676,768 | 0 / 0 / 0 |
+| advance_events_other | 4,960 / 4,960 / 4,960 | 0 / 0 / -2,752 | 0 / 0 / -64 | -64 / 0 / 0 |
+| advance_events_route_begin | -228,864 / -426,416 / -446,048 | -380,976 / -384,768 / -768,064 | -28,432 / -124,432 / -132,752 | -512 / -29,136 / -28,736 |
+| advance_events_traffic | 3,040 / -162,544 / -255,232 | 3,408 / -110,112 / -245,424 | -56,304 / -33,792 / -29,344 | 0 / 0 / 0 |
+| advance_other | -162,704 / 4,960 / 4,784 | -181,232 / -192 / -6,880 | 167,856 / 56,096 / 167,856 | 0 / 0 / 0 |
+| advance_planning | 149,856 / -4,679,224 / -15,103,208 | 1,053,680 / 305,896 / -25,366,904 | -150,112 / -4,602,688 / -8,826,488 | 55,056 / -714,832 / -1,747,984 |
+| advance_planning_finish | -80,992 / -2,347,704 / -4,865,976 | -528,928 / -647,072 / -7,673,864 | -403,408 / -1,297,568 / -1,869,264 | -23,840 / -358,208 / -440,464 |
+| advance_planning_slice | 230,848 / -2,331,520 / -10,237,232 | 1,582,608 / 952,968 / -17,693,040 | 253,296 / -3,305,120 / -6,957,224 | 78,896 / -356,624 / -1,307,520 |
+| advance_stops | 40,320 / 44,496 / 38,592 | 11,904 / 2,832 / 5,152 | 8,496 / 30,240 / 46,960 | 7,776 / -4,608 / 12,672 |
+| mod | -142,096 / -5,157,576 / -16,970,664 | -2,000,904 / -5,766,424 / -34,559,720 | -1,371,752 / -9,630,632 / -14,216,264 | 108,400 / -781,072 / -1,732,544 |
+| mod_closures | 11,312 / 10,416 / 11,312 | -121,120 / -77,440 / -102,752 | 255,648 / 263,616 / -260,336 | 1,392 / 272 / 1,456 |
+| mod_closures_links | 8,544 / 8,016 / 8,544 | 704 / 59,184 / 27,072 | -7,168 / -128 / 1,904 | -64 / 0 / 0 |
+| mod_closures_network | 2,768 / 2,400 / 2,768 | 9,024 / 7,840 / 1,568 | -1,184 / -256 / 0 | 112 / -1,072 / 112 |
+| mod_food | 6,112 / 6,112 / 160 | -1,408 / -832 / -2,080 | -176 / 0 / -176 | 4,656 / 5,264 / 4,016 |
+| mod_hold_replay | 560 / 560 / 560 | -608 / 160 / -640 | 64 / -55,792 / 112 | 0 / 0 / 0 |
+| mod_inspector | 26,720 / 38,784 / 28,592 | 9,136 / 51,376 / 17,264 | 7,712 / 30,208 / 45,968 | 7,840 / -4,544 / 8,784 |
+| mod_optional_stops | 63,632 / 75,776 / 65,712 | -3,632 / 8,432 / -7,424 | 7,792 / 29,968 / 47,232 | 7,232 / -5,280 / 16,272 |
+| mod_optional_stops_physical | 51,680 / 55,856 / 49,952 | 10,464 / 1,216 / 3,104 | 8,224 / 30,160 / 47,296 | 7,440 / -5,840 / 14,688 |
+| mod_optional_stops_refresh | 11,952 / 19,920 / 15,760 | -14,096 / 7,216 / -10,528 | -432 / -192 / -64 | -208 / 560 / 1,584 |
+| mod_other | -3,616 / 0 / 288 | 1,056 / 7,200 / 3,936 | -2,160 / -480 / -128 | 0 / 0 / -1,344 |
+| mod_physical_setup | 0 / 0 / 0 | -160 / 0 / 0 | 0 / 0 / 0 | 0 / 0 / 0 |
+| mod_prelude | 96,064 / 102,240 / 98,944 | 72,416 / 53,424 / -11,040 | 18,128 / 30,608 / 55,696 | 13,968 / 2,672 / 2,608 |
+| mod_rlo | 10,560 / -880 / 6,720 | 40,688 / -1,792 / 12,544 | -10,800 / 6,160 / -3,520 | -7,360 / -2,096 / -6,272 |
+| mod_routes | 44,304 / 58,176 / 51,904 | 4,704 / -4,510,456 / -1,291,560 | -921,200 / -5,083,184 / -5,037,472 | 7,888 / -10,080 / 12,784 |
+| mod_routes_nodes | 176 / 176 / 176 | 0 / 0 / -128 | -103,616 / -103,616 / -103,616 | 0 / 0 / 0 |
+| mod_routes_rebuild | 40,384 / 54,240 / 48,176 | -27,472 / -71,936 / -63,600 | 16,800 / 25,024 / 51,472 | 10,832 / -8,240 / 13,728 |
+| mod_routes_retime | 1,584 / 1,584 / 1,584 | -16,448 / -4,725,048 / -1,560,600 | -400,768 / -4,753,472 / -4,768,496 | -1,616 / 0 / 0 |
+| mod_routes_speeds | 1,488 / 1,552 / 1,552 | -5,504 / 720 / -1,888 | -4,032 / -432 / 0 | -1,328 / -1,840 / -944 |
+| mod_routes_sweep | 240 / 240 / -16 | 0 / -14,112 / 0 | 0 / 0 / 0 | 0 / 0 / 0 |
+| mod_summary | -160 / -192 / -244,128 | 262,464 / 262,688 / -31,232 | -1,328 / 416 / -560 | 2,128 / 2,432 / 48 |
+| physical | 542,272 / 1,101,760 / 696,128 | 1,941,344 / 9,556,376 / 331,056 | -628,888 / 555,912 / 436,800 | 7,712 / -9,408 / 23,264 |
+| physical_ambient | -167,280 / 1,120 / -109,920 | 50,528 / 54,368 / 161,440 | 0 / -32 / -167,712 | 1,568 / 1,568 / 1,296 |
+| physical_bindings | 14,304 / 5,712 / 13,520 | -81,104 / 20,224 / -4,320 | -4,144 / 3,888 / 8,592 | -544 / 0 / -48 |
+| physical_fade | 0 / 0 / 0 | 0 / -111,760 / -80 | 0 / 0 / 0 | 0 / 0 / 0 |
+| physical_focus | 192 / 160 / 128 | -112 / -111,792 / -3,056 | 0 / 0 / 0 | 0 / 0 / -144 |
+| physical_index | 0 / 0 / 0 | 0 / 0 / 0 | 0 / 0 / 0 | -2,656 / 0 / 0 |
+| physical_observe | 77,792 / 107,136 / 64,896 | 54,304 / 203,280 / -213,552 | -203,344 / 19,648 / 19,376 | -7,680 / 480 / 640 |
+| physical_parked | 208 / 42,592 / 16,064 | -5,072 / -151,856 / -174,416 | 197,264 / 3,008 / 222,640 | 9,552 / 1,632 / 13,088 |
+| physical_queues | 256 / 256 / 64 | 0 / -17,024 / 0 | 0 / 0 / 0 | 0 / -8,704 / 0 |
+| physical_release | -576 / -2,704 / 64 | 784 / 17,568 / 1,760 | -848 / 128 / 0 | 0 / 0 / 0 |
+| physical_roster | 7,200 / 0 / -64 | 608 / -185,104 / -128 | -12,608 / 2,016 / 2,016 | 0 / 0 / 0 |
+| physical_selection | 95,960 / 237,112 / 54,808 | 915,744 / 1,433,520 / 391,584 | -240,104 / 132,360 / 129,168 | 0 / 0 / 0 |
+| physical_setup_ambient | 0 / 0 / 0 | 0 / 0 / 0 | 0 / 0 / 0 | 0 / 0 / 0 |
+| physical_setup_bodies | 0 / 0 / 0 | 0 / -26,528 / 0 | 0 / 0 / 0 | 0 / 0 / 0 |
+| physical_setup_places | 0 / 0 / 0 | 0 / 0 / 0 | 0 / 0 / 0 | 0 / 0 / 0 |
+| physical_setup_preflight | 0 / 0 / 0 | 0 / 0 / 0 | -96 / 0 / 0 | 0 / 0 / 0 |
+| physical_setup_vehicles | 0 / 0 / 0 | 4,032 / 4,032 / 0 | 0 / 0 / 0 | 0 / 0 / 0 |
+| physical_spawn_appearance | 144,688 / 228,400 / 68,528 | 130,736 / 3,515,336 / -109,136 | -77,344 / 84,096 / -36,848 | 0 / 0 / 0 |
+| physical_spawn_bake | -99,504 / -99,504 / -99,936 | -512 / 1,978,656 / 0 | 61,888 / 61,888 / 61,888 | 0 / 0 / 0 |
+| physical_spawn_check | 0 / 0 / 0 | 0 / 0 / 0 | 736 / 736 / 736 | 0 / 0 / 0 |
+| physical_spawn_grow | 33,376 / 28,896 / 95,776 | -15,056 / 458,912 / 9,664 | -35,552 / 0 / -14,736 | 0 / 0 / 0 |
+| physical_spawn_pedestrian | 72,280 / -127,592 / 481,112 | -302,144 / 2,999,600 / -308,896 | -130,880 / 190,608 / 135,024 | 0 / 0 / 0 |
+| physical_spawn_randomize | 144,144 / 177,328 / 94,656 | 61,392 / 531,248 / -50,528 | -95,936 / -32,544 / -93,072 | 0 / 0 / 0 |
+| physical_spawn_vehicle | -48,320 / 31,232 / -10,480 | 372,512 / 545,760 / 484,288 | -20,560 / 6,752 / 1,504 | 0 / 0 / 0 |
+| physical_unattributed | 38,464 / 41,568 / 35,776 | 187,136 / 107,696 / 182,032 | 4,016 / 28,560 / 45,456 | 7,776 / -4,608 / 8,352 |
+| physical_unattributed_entry | 41,616 / 46,336 / 40,464 | 176,640 / 168,208 / 171,360 | 7,232 / 30,384 / 46,656 | 7,776 / -4,608 / 12,672 |
+| physical_unattributed_setup | 0 / 0 / 0 | 0 / 0 / 0 | 0 / 0 / 0 | 0 / 0 / 0 |
+| physical_unattributed_update | -3,104 / -4,768 / -4,688 | 5,376 / 15,216 / 7,088 | 160 / -144 / 208 | 0 / 0 / -4,320 |
+| physical_unattributed_waiting | 0 / 0 / 0 | 1,216 / 2,672 / 3,584 | -3,280 / -1,680 / -1,408 | 0 / 0 / 0 |
+| physical_vehicles | 306,800 / 536,304 / 81,168 | 617,712 / 1,236,560 / -76,464 | -141,072 / 84,144 / 76,848 | -304 / 224 / 224 |
+| physical_vendor_meals | 304 / 464 / 464 | -288 / 0 / 0 | 0 / 0 / 0 | 0 / 0 / -144 |
+
+PC 19c allocated 43.594 MB in A steady and 77.914 MB in its repeat arm. The PC report supplies a different trajectory and aggregate figures.
+
+| Arm | Citizen B / spans / B per span | 17h B / spans / B per span | 17f B / spans / B per span | 17c B / spans / B per span |
+| --- | --- | --- | --- | --- |
+| A steady | 8,661,072 / 3,228 / 2683.107807 | 9,421,696 / 3,180 / 2962.797484 | 9,921,632 / 3,174 / 3125.908003 | 10,383,408 / 3,310 / 3136.981269 |
+| A immediate | 35,436,592 / 9,405 / 3767.846039 | 40,206,664 / 9,182 / 4378.856894 | 45,122,608 / 11,908 / 3789.268391 | 41,745,544 / 9,548 / 4372.176791 |
+| B 20× | 749,360 / 1,663 / 450.607336 | 783,136 / 1,629 / 480.74647 | 810,208 / 1,664 / 486.903846 | 796,016 / 1,664 / 478.375 |
+| B 60× | 207,200 / 574 / 360.97561 | 208,176 / 574 / 362.675958 | 220,592 / 575 / 383.638261 | 219,200 / 573 / 382.547993 |
+
+### B. Passive heap checkpoints and committed rates
+
+| Arm | Read | Mono heap B | Mono used B | GC.GetTotalMemory B | Gen0 counter or window delta |
+| --- | --- | --- | --- | --- | --- |
+| B 20× | 00:50 | 1,375,322,112 | 1,274,068,992 | 1,274,068,992 | 228 |
+| B 20× | 01:00 arrival | 1,375,322,112 | 1,268,109,312 | 1,268,109,312 | 229 |
+| B 20× | Immediately before start | 1,425,653,760 | 1,347,543,040 | 1,347,543,040 | 230 |
+| B 20× | Probe starts | 1,425,653,760 | 1,344,380,928 | — | — |
+| B 20× | Sampler stop report | 1,442,430,976 | 1,344,897,024 | 1,344,897,024 | 7 |
+| B 20× | Probe stops | 1,442,430,976 | 1,345,945,600 | — | 7 |
+| B 20× | After probe stops | 1,442,430,976 | 1,348,120,576 | 1,348,120,576 | 237 |
+| B 20× no-mod | 00:50 | 1,295,024,128 | 1,197,891,584 | — | — |
+| B 20× no-mod | 01:00 arrival | 1,295,024,128 | 1,223,655,424 | — | — |
+| B 20× no-mod | Immediately before start | 1,295,024,128 | 1,132,613,632 | — | — |
+| B 20× no-mod | Probe starts | 1,295,024,128 | 1,134,608,384 | — | — |
+| B 20× no-mod | Probe stops | 1,319,239,680 | 1,184,710,656 | — | 6 |
+| B 60× | 00:50 | 1,326,710,784 | 1,305,718,784 | 1,305,718,784 | 229 |
+| B 60× | 01:00 arrival | 1,326,710,784 | 1,213,988,864 | 1,213,988,864 | 230 |
+| B 60× | Immediately before start | 1,360,265,216 | 1,287,503,872 | 1,287,503,872 | 231 |
+| B 60× | Probe starts | 1,360,265,216 | 1,284,648,960 | — | — |
+| B 60× | Sampler stop report | 1,377,042,432 | 1,294,774,272 | 1,294,774,272 | 7 |
+| B 60× | Probe stops | 1,377,042,432 | 1,296,076,800 | — | 7 |
+| B 60× | After probe stops | 1,377,042,432 | 1,298,526,208 | 1,298,526,208 | 238 |
+| B 60× no-mod | 00:50 | 1,286,766,592 | 1,128,067,072 | — | — |
+| B 60× no-mod | 01:00 arrival | 1,286,766,592 | 1,139,625,984 | — | — |
+| B 60× no-mod | Immediately before start | 1,286,766,592 | 1,191,424,000 | — | — |
+| B 60× no-mod | Probe starts | 1,286,766,592 | 1,193,959,424 | — | — |
+| B 60× no-mod | Probe stops | 1,303,543,808 | 1,127,989,248 | — | 7 |
+
+| Arm | Interval | Net heap B | Net used B | Collections within interval |
+| --- | --- | --- | --- | --- |
+| B 20× | 01:00 arrival → before sampler | 50,331,648 | 79,433,728 | 1 |
+| B 20× | Before sampler → official stop | 16,777,216 | -2,646,016 | 7 |
+| B 20× no-mod | 01:00 arrival → probe start | 0 | -89,047,040 | 1 |
+| B 20× no-mod | Probe start → probe stop | 24,215,552 | 50,102,272 | 6 |
+| B 60× | 01:00 arrival → before sampler | 33,554,432 | 73,515,008 | 1 |
+| B 60× | Before sampler → official stop | 16,777,216 | 7,270,400 | 7 |
+| B 60× no-mod | 01:00 arrival → probe start | 0 | 54,333,440 | 0 |
+| B 60× no-mod | Probe start → probe stop | 16,777,216 | -65,970,176 | 7 |
+
+| Arm | Gen0 from / through | Frame | After-collection used B |
+| --- | --- | --- | --- |
+| B 20× | — / — | 14,338 | 1,283,411,968 |
+| B 20× | — / — | 16,921 | 1,289,703,424 |
+| B 20× | — / — | 19,577 | 1,295,400,960 |
+| B 20× | — / — | 22,136 | 1,302,368,256 |
+| B 20× | — / — | 24,792 | 1,304,784,896 |
+| B 20× | — / — | 27,439 | 1,307,385,856 |
+| B 20× | — / — | 30,091 | 1,316,749,312 |
+| B 20× no-mod | — / — | 6,272 | 1,138,565,120 |
+| B 20× no-mod | — / — | 8,922 | 1,140,862,976 |
+| B 20× no-mod | — / — | 11,737 | 1,086,738,432 |
+| B 20× no-mod | — / — | 14,296 | 1,088,581,632 |
+| B 20× no-mod | — / — | 16,783 | 1,090,019,328 |
+| B 20× no-mod | — / — | 19,356 | 1,091,231,744 |
+| B 60× | — / — | 14,160 | 1,227,538,432 |
+| B 60× | — / — | 16,613 | 1,231,028,224 |
+| B 60× | — / — | 19,136 | 1,235,292,160 |
+| B 60× | — / — | 21,609 | 1,241,206,784 |
+| B 60× | — / — | 24,176 | 1,243,357,184 |
+| B 60× | — / — | 26,687 | 1,245,716,480 |
+| B 60× | — / — | 29,249 | 1,249,161,216 |
+| B 60× no-mod | — / — | 5,281 | 1,147,883,520 |
+| B 60× no-mod | — / — | 7,982 | 1,088,778,240 |
+| B 60× no-mod | — / — | 10,430 | 1,090,342,912 |
+| B 60× no-mod | — / — | 12,979 | 1,092,210,688 |
+| B 60× no-mod | — / — | 15,464 | 1,093,726,208 |
+| B 60× no-mod | — / — | 18,005 | 1,095,045,120 |
+| B 60× no-mod | — / — | 20,486 | 1,096,593,408 |
+
+| Candidate | Log checkpoint | Observed native day / minute / frame | Committed game min/s | Committed mod multiplier |
+| --- | --- | --- | --- | --- |
+| B 20× | en route 15:30 | 2 / 15:00 / 2,740 | 0.333 | 1 |
+| B 20× | en route 00:50 | 2 / 15:31 / 5,500 | 6.667 | 20 |
+| B 20× | en route 01:00 | 3 / 00:50 / 12,703 | 0.333 | 1 |
+| B 20× | en route 01:00 | 3 / 00:55 / 13,146 | 6.667 | 20 |
+| B 20× | window | 3 / 01:00 / 13,719 | 0.333 | 1 |
+| B 60× | en route 15:30 | 2 / 15:00 / 2,746 | 0.333 | 1 |
+
+Native commands were 1× to 15:30, the recorded 20× or 60× to 00:50, then the same rate to 01:00. Each arrival paused at native 1×. The two night references used fresh processes. The no-mod native recorder includes the final positioning prelude for interval counts. The collection-marker comparison uses rows inside the probe window. The 20× section explanation remains inconclusive from aggregate heap and used-byte reads. Neither night arm called the forced-heap operation.
+
+### Clock retime and live observation
+
+| Arm | Body release / journey retime / simulation rebuild | Retime allocation B / phase ms |
+| --- | --- | --- |
+| A immediate | [Mod:PersistentCity] Clock retime: body release 84.9 ms over 28 updates, journey retime 24.0 ms over 7 updates (snapshot 2, slowest 4.0 ms, restarts 0), final slice and commit 0.8 ms, simulation rebuild 12.8 ms over 4 updates (slowest 4.3 ms); journeys with a split leg 4, earlier splits joined 120, joins refused for an inexact pose 0, shared leg copies 245, earlier shared legs reused 461, traffic retimed from a copy without through cars. | 10,079,752 / 158.271 |
+| B 20× | [Mod:PersistentCity] Clock retime: body release 32.9 ms over 12 updates, journey retime 50.6 ms over 14 updates (snapshot 0, slowest 4.1 ms, restarts 0), final slice and commit 1.5 ms, simulation rebuild 17.2 ms over 5 updates (slowest 4.3 ms); journeys with a split leg 72, earlier splits joined 1669, joins refused for an inexact pose 0, shared leg copies 3140, earlier shared legs reused 13363, traffic retimed from the live kernel. | 10,875,728 / 139.771 |
+| C street | [Mod:PersistentCity] Clock retime: body release 70.9 ms over 23 updates, journey retime 26.2 ms over 7 updates (snapshot 2, slowest 3.9 ms, restarts 0), final slice and commit 1.0 ms, simulation rebuild 12.0 ms over 4 updates (slowest 4.3 ms); journeys with a split leg 306, earlier splits joined 27, joins refused for an inexact pose 0, shared leg copies 1438, earlier shared legs reused 1865, traffic retimed from a copy without through cars. | — / — |
+| C street | [Mod:PersistentCity] Clock retime: body release 74.7 ms over 24 updates, journey retime 33.2 ms over 10 updates (snapshot 2, slowest 3.9 ms, restarts 0), final slice and commit 1.1 ms, simulation rebuild 14.1 ms over 4 updates (slowest 4.0 ms); journeys with a split leg 607, earlier splits joined 200, joins refused for an inexact pose 0, shared leg copies 2381, earlier shared legs reused 7100, traffic retimed from a copy without through cars. | — / — |
+
+| A immediate arm | Same observed Unity frame | Frame evidence |
+| --- | --- | --- |
+| A immediate | true | 5,439 / 5,439 / — / — |
+| A immediate no-mod | true | — / — / 4,507 / 4,507 |
+
+| Window | Traffic summaries | First city cars / through cars / events / sections | Last same fields | Log anomalies | Follow-up food decisions | At-stop decisions |
+| --- | --- | --- | --- | --- | --- | --- |
+| A steady | 10 | 0 / 1 / 1 / 13965 | 6 / 2 / 8 / 13965 | 0 | 0 | 0 |
+| A immediate | 10 | 2 / 0 / 2 / 13965 | 12 / 3 / 15 / 13965 | 0 | 50 | 6 |
+| C street | 10 | 1 / 1 / 2 / 13965 | 10 / 0 / 10 / 13965 | 0 | 15 | 0 |
+
+| Window | Car followers / lag samples / lag releases / corrections / kernel held at native green / native stop at kernel green before | Same counters after |
+| --- | --- | --- |
+| A steady | 0 / 0 / 0 / 0 / 0 / 0 | 2 / 1840 / 36 / 36 / 1 / 3 |
+| A immediate | 0 / 0 / 0 / 0 / 0 / 0 | 1 / 3538 / 57 / 57 / 7 / 6 |
+| C street | 0 / 0 / 0 / 0 / 0 / 0 | 0 / 410 / 15 / 15 / 2 / 3 |
+
+The food trace is a separate post-window observation. The at-stop shortlist and resident IDs test recorded decisions. Nested-provider re-entry and individual traffic link queues remain unobserved.
+
+### C and P. Timing, spikes and calls
+
+| Arm | UpdateCity p95 / mod-work p95 / max ms | Rig mod spikes counted / retained / truncated | PC phase spikes counted / retained / truncated | Coverage complete / recorder valid |
+| --- | --- | --- | --- | --- |
+| A steady | 3.3684 / 3.4384 / 6.9315 | 0 / 0 / false | 0 / 0 / false | true / true |
+| A immediate | 3.5806 / 3.6485 / 9.2963 | 0 / 0 / false | 0 / 0 / false | true / true |
+| B 20× | 2.5973 / 2.6672 / 8.8791 | 0 / 0 / false | 0 / 0 / false | true / true |
+| B 60× | 0.7711 / 0.8436 / 4.9875 | 0 / 0 / false | 0 / 0 / false | true / true |
+| C street | 3.8388 / 3.9057 / 32.8997 | 1 / 1 / false | 1 / 1 / false | true / true |
+
+| Arm | Unity frame | Rig union / UpdateCity / probe union ms | Phase / detail / sub | GC phase | Off-CPU ms | Dominant rig scope / largest probe scope / ms |
+| --- | --- | --- | --- | --- | --- | --- |
+| C street | 7,443 | 32.8997 / 32.796 / 33.2506 | advance_planning / none / advance_planning_slice | advance_planning | 0.078 | updatecity / PopulationRuntime.Update / 32.8547 |
+
+| Arm | Whole-frame p95 / max ms | Whole-frame ≥30 ms counted / retained / truncated |
+| --- | --- | --- |
+| A steady | 36.0322 / 301.0455 | 17,136 / 1,024 / true |
+| A immediate | 37.3894 / 303.6998 | 16,799 / 1,024 / true |
+| B 20× | 36.1455 / 314.7847 | 17,207 / 1,024 / true |
+| B 60× | 36.8422 / 318.855 | 16,973 / 1,024 / true |
+| C street | 169.6379 / 607.5002 | 4,611 / 1,024 / true |
+| A steady no-mod | 36.5686 / 320.6405 | 16,553 / 1,024 / true |
+| A immediate no-mod | 37.2123 / 324.7444 | 16,737 / 1,024 / true |
+| B 20× no-mod | 36.9947 / 565.8662 | 16,728 / 1,024 / true |
+| B 60× no-mod | 37.4765 / 501.7843 | 16,689 / 1,024 / true |
+
+| Arm | Largest retained whole-frame stall without ≥30 ms mod work, Unity frame | Whole ms | GC phase | Largest outside-mod excess phase |
+| --- | --- | --- | --- | --- |
+| A steady | 6,269 | 301.046 | — | — |
+| A immediate | 5,437 | 303.7 | — | — |
+| B 20× | 13,663 | 302.3 | — | — |
+| B 60× | 13,238 | 303.414 | — | — |
+| C street | 3,803 | 336.066 | — | — |
+
+Whole-frame values include native work, engine wait and host scheduling. Where the largest retained stall has no phase readback, its remainder is unattributed.
+
+| Rig | UpdateCity p95 ms | Mod-work p95 ms | Whole p95 ms | Whole max ms | Mod spikes | Retime sub max ms |
+| --- | --- | --- | --- | --- | --- | --- |
+| 17i | 3.8388 | 3.9057 | 169.6379 | 607.5002 | 1 | 6.091 |
+| 17h | 3.8277 | 3.8957 | 199.592 | 711.2977 | 0 | 6.059 |
+| 17f | 3.8991 | 3.9749 | 199.521 | 617.3886 | 1 | 7.463 |
+| 17c | 3.8726 | 3.9357 | 169.967 | 616.9177 | 0 | 7.529 |
+| PC 19c | 3.718 | 3.812 | 129.834 | 428.113 | 0 | 18.634 |
+
+| Street | Pan commands accepted | Retime commits | Phase spike records truncated | GC sampler measuring before |
+| --- | --- | --- | --- | --- |
+| 17i | 9 | 2 | false | false |
+
+| Street retime frames and reports |
+| --- |
+| [Mod:PersistentCity] Clock retime frames: slowest update 5.5 ms in body release; routes 1 update slowest 0.7 ms, body release 23 updates slowest 5.5 ms (ambient), journey retime 7 updates slowest 3.9 ms, commit 1 update slowest 1.7 ms, rebuild 3 updates slowest 4.3 ms, hand-over 1 update slowest 0.5 ms (with the last rebuild step); no update over 11.3 ms. |
+| [Mod:PersistentCity] Clock retime frames: slowest update 4.6 ms in body release; routes 1 update slowest 0.7 ms, body release 24 updates slowest 4.6 ms (ambient), journey retime 10 updates slowest 3.9 ms, commit 1 update slowest 1.9 ms, rebuild 3 updates slowest 4.0 ms, hand-over 1 update slowest 2.4 ms (with the last rebuild step); no update over 11.3 ms. |
+
+| Street advance spike frame | Call ms | Slowest unit / CPU ms / off-CPU ms | Optional-stop ms | Gen0 delta | GC.Collect ms |
+| --- | --- | --- | --- | --- | --- |
+| 7,443 | 30.8667 | route-planning / 30.768042 / 0.074758 | 0 | 1 | 23.2633 |
+
+| Arm | Slowest planning slice ms | Slowest unit kind | Unit ms |
+| --- | --- | --- | --- |
+| A steady | 3.298 | subway-connector | 1.43 |
+| A immediate | 8.076 | subway-stations | 7.124 |
+| B 20× | 3.061 | direct-walk | 1.137 |
+| B 60× | 3.213 | subway-connector | 1.366 |
+| C street | 30.841 | car-search | 29.443 |
+
+### D and E/F. Report-only footprints
+
+| D boundary | Metric | 17i mod | 16x no-mod | Gap B | Gap % |
+| --- | --- | --- | --- | --- | --- |
+| start | Mono heap B | 1,346,568,192 | 1,254,785,024 | 91,783,168 | 7.314653 |
+| start | Mono used B | 1,192,198,144 | 1,118,830,592 | 73,367,552 | 6.557521 |
+| start | Forced-live B | 1,135,128,576 | 1,048,817,664 | 86,310,912 | 8.229353 |
+| stop | Mono heap B | 1,336,311,808 | 1,208,877,056 | 127,434,752 | 10.541581 |
+| stop | Mono used B | 1,247,584,256 | 1,101,123,584 | 146,460,672 | 13.30102 |
+| stop | Forced-live B | 1,206,157,312 | 1,062,166,528 | 143,990,784 | 13.556329 |
+
+| D probe boundary | Scope completeness | Last deserialized / drifted / rescans | Patch set changed |
+| --- | --- | --- | --- |
+| arm | true | 42 / 0 / 0 | false |
+| start | true | 0 / 0 / 0 | false |
+| stop | true | 0 / 0 / 0 | false |
+
+D uses the 16x no-mod separation endpoints because that arm recorded forced-live at the boundaries on the same fixture and build. A and B use separate fresh references. Heap gaps in 17h were 8.513% / 8.357% at start / stop. PC 19c measured 6.261% / 7.906%.
+
+| E boundary | RSS KiB | Seconds from observed retime completion | Owned / live / unmerged | Reserved bodies | Live vertices / scratch B | Released meshes / vertices | Mono heap / used B | vmmap footprint | Owned = live + unmerged |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| before | 5,295,008 | — | 108 / 108 / 0 | 108 | 420,741 / 1,718,964 | 8 / 32,298 | 1,413,906,432 / 1,223,778,304 | 5.0G | true |
+| after | 5,333,440 | 0.626682 | 108 / 108 / 0 | 108 | 419,623 / 1,718,964 | 8 / 32,298 | 1,456,357,376 / 1,327,366,144 | 5.0G | true |
+| 60s | 5,338,144 | 60.53397 | 108 / 108 / 0 | 0 | 420,416 / 1,718,964 | 8 / 32,298 | 1,456,357,376 / 1,271,840,768 | 5.0G | true |
+
+| E arm | Before / after / +60 s RSS KiB | Gap against 16q reference KiB |
+| --- | --- | --- |
+| 17i | 5,295,008 / 5,333,440 / 5,338,144 | 2,911,568 / 2,950,000 / 2,954,704 |
+| 17h | 4,241,088 / 4,276,320 / 4,298,960 | 1,857,648 / 1,892,880 / 1,915,520 |
+| 17f | 3,550,512 / 3,571,072 / 3,576,464 | — |
+| 17c | 3,028,608 / 2,639,584 / 2,694,624 | — |
+
+The 16q no-mod RSS reference was a single 2,383,440 KiB read on the same Mac. It supplies the historical RSS comparison. PC 19c measured +1,067,495,424 B at +120 s on Windows. The E retime and census ran outside A immediate.
+
+| F census read | CitySimulator count | Retained bytes / objects / city bytes / diagnostic bytes | Travelling / current legs / split prefixes |
+| --- | --- | --- | --- |
+| before | 1 | 56,744,760 / 400,142 / 55,253,640 / 1,491,120 | 1,029 / 8,570 / 1,026 |
+| settled | 1 | 57,982,592 / 410,659 / 56,491,472 / 1,491,120 | 853 / 7,126 / 583 |
+
+### L. Repeated retimes and drain
+
+| Checkpoint | Retimed native min | Control native min | Census gap min | Matched |
+| --- | --- | --- | --- | --- |
+| R0 | 3810.01 | 3810.01 | 0 | true |
+| R1 | 3818.999996 | 3819.022728 | 0.000507 | true |
+| R2 | 3829.611149 | 3829.722466 | 0.055504 | true |
+| R3 | 3840.011108 | 3840.011112 | 0.000004 | true |
+| R4 | 3849.011107 | 3849.011106 | -0.011323 | true |
+| R5 | 3858.6222 | 3858.744343 | 0.043867 | true |
+| After30GameMinutes | 3889.009998 | 3889.009998 | 0 | true |
+
+| Checkpoint | Arm | RSS KiB | Travel game min/s | Mono heap / used B | Forced-live B | Census bytes / objects / city bytes / diagnostic bytes | CitySimulator count |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| R0 | Retime | 5,158,800 | 0.333333 | 1,457,668,096 / 1,156,538,368 | 1,155,571,712 | 49,188,616 / 353,445 / 49,186,688 / 1,928 | 1 |
+| R0 | Control | 5,031,184 | 0.333333 | 1,341,374,464 / 1,096,638,464 | 1,095,131,136 | 49,308,024 / 354,735 / 49,306,096 / 1,928 | 1 |
+| R1 | Retime | 5,093,152 | 0.333333 | 1,382,105,088 / 1,153,261,568 | 1,152,253,952 | 48,878,624 / 350,813 / 48,876,696 / 1,928 | 1 |
+| R1 | Control | 4,978,016 | 0.333333 | 1,283,096,576 / 1,096,630,272 | 1,095,671,808 | 49,216,368 / 352,202 / 49,214,440 / 1,928 | 1 |
+| R2 | Retime | 5,089,856 | 0.333333 | 1,372,733,440 / 1,156,759,552 | 1,155,584,000 | 48,962,840 / 355,338 / 48,960,912 / 1,928 | 1 |
+| R2 | Control | 4,932,784 | 0.333333 | 1,232,158,720 / 1,098,469,376 | 1,097,355,264 | 49,427,480 / 353,161 / 49,425,552 / 1,928 | 1 |
+| R3 | Retime | 5,059,840 | 0.333333 | 1,335,869,440 / 1,158,225,920 | 1,157,226,496 | 50,056,800 / 364,726 / 50,054,872 / 1,928 | 1 |
+| R3 | Control | 4,939,632 | 0.333333 | 1,230,913,536 / 1,100,951,552 | 1,100,017,664 | 49,981,352 / 353,985 / 49,979,424 / 1,928 | 1 |
+| R4 | Retime | 5,078,816 | 0.333333 | 1,343,520,768 / 1,163,694,080 | 1,162,743,808 | 50,764,640 / 368,412 / 50,762,712 / 1,928 | 1 |
+| R4 | Control | 4,958,800 | 0.333333 | 1,233,043,456 / 1,104,207,872 | 1,103,282,176 | 51,005,160 / 360,345 / 51,003,232 / 1,928 | 1 |
+| R5 | Retime | 5,077,728 | 0.333333 | 1,335,721,984 / 1,166,053,376 | 1,164,935,168 | 51,610,312 / 373,780 / 51,608,384 / 1,928 | 1 |
+| R5 | Control | 4,974,112 | 0.333333 | 1,235,697,664 / 1,107,607,552 | 1,106,690,048 | 51,686,520 / 364,825 / 51,684,592 / 1,928 | 1 |
+| After30GameMinutes | Retime | 5,156,112 | 0.333333 | 1,361,936,384 / 1,182,334,976 | 1,180,905,472 | 52,463,920 / 376,770 / 52,461,992 / 1,928 | 1 |
+| After30GameMinutes | Control | 5,083,776 | 0.333333 | 1,297,776,640 / 1,124,851,712 | 1,123,852,288 | 52,422,208 / 369,604 / 52,420,280 / 1,928 | 1 |
+
+| Checkpoint | Arm | Raw outside-cache arrays / B | Journey / cache / other array B | Current arrays / backing slots / live legs / split prefixes |
+| --- | --- | --- | --- | --- |
+| R0 | Retime | 13 / 2,200 | 1,776 / 16,312 / 424 | 7 / 194 / 194 / 7 |
+| R0 | Control | 7 / 1,776 | 1,776 / 26,096 / 0 | 7 / 194 / 194 / 7 |
+| R1 | Retime | 10 / 1,960 | 1,960 / 16,304 / 0 | 10 / 205 / 205 / 5 |
+| R1 | Control | 9 / 1,832 | 1,832 / 7,112 / 0 | 9 / 193 / 193 / 4 |
+| R2 | Retime | 27 / 4,032 | 4,032 / 5,168 / 0 | 27 / 396 / 393 / 11 |
+| R2 | Control | 28 / 4,104 | 4,104 / 12,584 / 0 | 28 / 401 / 401 / 3 |
+| R3 | Retime | 64 / 13,872 | 11,240 / 18,432 / 2,632 | 57 / 1,177 / 1,151 / 27 |
+| R3 | Control | 59 / 11,176 | 11,048 / 4,968 / 128 | 58 / 1,149 / 1,139 / 2 |
+| R4 | Retime | 241 / 51,376 | 51,376 / 5,224 / 0 | 241 / 5,458 / 3,494 / 124 |
+| R4 | Control | 241 / 49,560 | 49,560 / 5,224 / 0 | 241 / 5,231 / 3,902 / 2 |
+| R5 | Retime | 287 / 63,328 | 63,328 / 30,664 / 0 | 287 / 6,768 / 4,754 / 140 |
+| R5 | Control | 287 / 59,888 | 59,888 / 28,736 / 0 | 287 / 6,338 / 4,924 / 2 |
+| After30GameMinutes | Retime | 405 / 84,392 | 84,392 / 7,424 / 0 | 405 / 8,929 / 7,044 / 62 |
+| After30GameMinutes | Control | 405 / 82,176 | 82,176 / 26,264 / 0 | 405 / 8,652 / 7,154 / 2 |
+
+| Checkpoint | Arm | Live meshes | Leased | Pooled | Reserved | Orphan | Deferred orphan | Unmatched | Unmatched vertices | Owned / unmerged / live vertices / scratch B | Owner identity |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| R0 | Retime | 8 | 1 | 7 | 0 | 0 | 0 | 0 | 0 | 8 / 0 / 32,208 / 671,544 | true |
+| R0 | Control | 8 | 1 | 7 | 0 | 0 | 0 | 0 | 0 | 8 / 0 / 32,208 / 671,544 | true |
+| R1 | Retime | 8 | 1 | 7 | 0 | 0 | 0 | 0 | 0 | 8 / 0 / 32,276 / 759,492 | true |
+| R1 | Control | 8 | 1 | 7 | 0 | 0 | 0 | 0 | 0 | 8 / 0 / 32,018 / 759,492 | true |
+| R2 | Retime | 10 | 3 | 7 | 0 | 0 | 0 | 0 | 0 | 10 / 0 / 40,703 / 965,592 | true |
+| R2 | Control | 12 | 3 | 9 | 0 | 0 | 0 | 0 | 0 | 12 / 0 / 49,154 / 932,760 | true |
+| R3 | Retime | 14 | 8 | 6 | 0 | 0 | 0 | 0 | 0 | 14 / 0 / 55,029 / 1,238,076 | true |
+| R3 | Control | 16 | 7 | 9 | 0 | 0 | 0 | 0 | 0 | 17 / 1 / 64,099 / 1,177,452 | true |
+| R4 | Retime | 21 | 15 | 6 | 0 | 0 | 0 | 0 | 0 | 21 / 0 / 83,630 / 1,378,944 | true |
+| R4 | Control | 24 | 15 | 9 | 0 | 0 | 0 | 0 | 0 | 24 / 0 / 96,284 / 1,378,944 | true |
+| R5 | Retime | 29 | 21 | 8 | 0 | 0 | 0 | 0 | 0 | 29 / 0 / 113,199 / 1,499,292 | true |
+| R5 | Control | 30 | 20 | 10 | 0 | 0 | 0 | 0 | 0 | 31 / 1 / 118,712 / 1,499,292 | true |
+| After30GameMinutes | Retime | 63 | 30 | 33 | 0 | 0 | 0 | 0 | 0 | 63 / 0 / 252,476 / 1,674,072 | true |
+| After30GameMinutes | Control | 63 | 30 | 33 | 0 | 0 | 0 | 0 | 0 | 63 / 0 / 252,476 / 1,674,072 | true |
+
+| Checkpoint | Arm | Vehicles live / outside | Routes live / outside | Legs live / outside | TrafficVehicleState objects / B | TrafficRouteLeg objects / B | List&lt;TrafficRouteLeg&gt; objects / B | TrafficRouteLeg[] objects / B |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| R0 | Retime | 1 / 0 | 1 / 0 | 285 / 0 | 1 / 112 | 285 / 18,240 | 1 / 40 | 1 / 2,312 |
+| R0 | Control | 1 / 0 | 1 / 0 | 285 / 0 | 1 / 112 | 285 / 18,240 | 1 / 40 | 1 / 2,312 |
+| R1 | Retime | 0 / 0 | 0 / 0 | 0 / 0 | 0 / 0 | 0 / 0 | 0 / 0 | 0 / 0 |
+| R1 | Control | 1 / 0 | 1 / 0 | 285 / 0 | 1 / 112 | 285 / 18,240 | 1 / 40 | 1 / 2,312 |
+| R2 | Retime | 0 / 0 | 0 / 0 | 0 / 0 | 0 / 0 | 0 / 0 | 0 / 0 | 0 / 0 |
+| R2 | Control | 1 / 0 | 1 / 0 | 285 / 0 | 1 / 112 | 285 / 18,240 | 1 / 40 | 1 / 2,312 |
+| R3 | Retime | 2 / 0 | 2 / 0 | 107 / 0 | 2 / 224 | 107 / 6,848 | 2 / 80 | 2 / 920 |
+| R3 | Control | 3 / 0 | 3 / 0 | 392 / 0 | 3 / 336 | 392 / 25,088 | 3 / 120 | 3 / 3,232 |
+| R4 | Retime | 7 / 0 | 7 / 0 | 554 / 0 | 7 / 784 | 554 / 35,456 | 7 / 280 | 7 / 4,656 |
+| R4 | Control | 8 / 0 | 8 / 0 | 844 / 0 | 8 / 896 | 844 / 54,016 | 8 / 320 | 8 / 7,008 |
+| R5 | Retime | 10 / 0 | 10 / 0 | 671 / 0 | 10 / 1,120 | 671 / 42,944 | 10 / 400 | 10 / 5,688 |
+| R5 | Control | 10 / 0 | 10 / 0 | 997 / 0 | 10 / 1,120 | 997 / 63,808 | 10 / 400 | 10 / 8,296 |
+| After30GameMinutes | Retime | 9 / 0 | 9 / 0 | 720 / 0 | 9 / 1,008 | 720 / 46,080 | 9 / 360 | 9 / 6,048 |
+| After30GameMinutes | Control | 7 / 0 | 7 / 0 | 714 / 0 | 7 / 784 | 714 / 45,696 | 7 / 280 | 7 / 5,936 |
+
+| Checkpoint | Arm | Static validationOffsets B | Simulation Double[] B | Simulation Int32[] B |
+| --- | --- | --- | --- | --- |
+| R0 | Retime | 4,136 | 1,139,544 | 4,502,848 |
+| R0 | Control | 4,136 | 1,139,544 | 4,502,848 |
+| R1 | Retime | 4,136 | 1,139,544 | 4,477,944 |
+| R1 | Control | 4,136 | 1,139,544 | 4,503,224 |
+| R2 | Retime | 4,136 | 1,139,544 | 4,469,624 |
+| R2 | Control | 4,136 | 1,139,672 | 4,504,416 |
+| R3 | Retime | 4,136 | 1,139,672 | 4,492,712 |
+| R3 | Control | 4,136 | 1,139,672 | 4,509,744 |
+| R4 | Retime | 4,136 | 1,139,672 | 4,506,336 |
+| R4 | Control | 4,136 | 1,139,672 | 4,530,600 |
+| R5 | Retime | 4,136 | 1,139,928 | 4,630,064 |
+| R5 | Control | 4,136 | 1,139,672 | 4,650,112 |
+| After30GameMinutes | Retime | 4,136 | 1,140,440 | 4,663,944 |
+| After30GameMinutes | Control | 4,136 | 1,140,440 | 4,657,520 |
+
+| Gap series | R0 / R1 / R2 / R3 / R4 / R5 / Drain | Sustained gate rise | Drain above earlier max |
+| --- | --- | --- | --- |
+| mono heap | 116,293,632 / 99,008,512 / 140,574,720 / 104,955,904 / 110,477,312 / 100,024,320 / 64,159,744 | false | false |
+| mono used | 59,899,904 / 56,631,296 / 58,290,176 / 57,274,368 / 59,486,208 / 58,445,824 / 57,483,264 | false | false |
+| forced live | 60,440,576 / 56,582,144 / 58,228,736 / 57,208,832 / 59,461,632 / 58,245,120 / 57,053,184 | false | false |
+| RSS | 127,616 / 115,136 / 157,072 / 120,208 / 120,016 / 103,616 / 72,336 | false | false |
+| census.bytes | -119,408 / -337,744 / -464,640 / 75,448 / -240,520 / -76,208 / 41,712 | false | false |
+| census.objects | -1,290 / -1,389 / 2,177 / 10,741 / 8,067 / 8,955 / 7,166 | false | false |
+| RouteLeg[] outside caches | 6 / 1 / -1 / 5 / 0 / 0 / 0 | false | false |
+| RouteLeg[] outside caches bytes | 424 / 128 / -72 / 2,696 / 1,816 / 3,440 / 2,216 | false | false |
+| RouteLeg outside current journeys and caches | 23 / 0 / 0 / 282 / 0 / 0 / 0 | false | false |
+| Double[] | 0 / 0 / 0 / 0 / 0 / 0 / 0 | false | false |
+| owned | 0 / 0 / -2 / -3 / -3 / -2 / 0 | false | false |
+| live | 0 / 0 / -2 / -2 / -3 / -1 / 0 | false | false |
+| live vertices | 0 / 258 / -8,451 / -9,070 / -12,654 / -5,513 / 0 | false | false |
+| CitySimulator | 0 / 0 / 0 / 0 / 0 / 0 / 0 | false | false |
+| Int32[] outside caches objects | 0 / -16 / -22 / -17 / -19 / -7 / 15 | false | true |
+| Int32[] outside caches bytes | 0 / -25,280 / -34,792 / -17,032 / -24,264 / -20,208 / 6,424 | false | true |
+| Double[] outside caches bytes | 0 / 0 / -128 / 0 / 0 / 256 / 0 | false | false |
+| String outside caches objects | 0 / -35 / -25 / 171 / -24 / 341 / 225 | false | false |
+| String outside caches bytes | 0 / -2,784 / -1,920 / 38,312 / -1,760 / 49,928 / 44,112 | false | false |
+| RouteLeg leg array bytes in current journeys | 0 / 128 / -72 / 192 / 1,816 / 3,440 / 2,216 | false | false |
+| RouteLeg leg array slots in current journeys | 0 / 12 / -5 / 28 / 227 / 430 / 277 | false | false |
+| RouteLeg split prefix legs | 0 / 1 / 8 / 25 / 122 / 138 / 60 | false | false |
+| Double[] bytes | 0 / 0 / -128 / 0 / 0 / 256 / 0 | false | false |
+| Int32[] bytes | 0 / -28,168 / -36,744 / -19,920 / -27,152 / -23,096 / 6,424 | false | true |
+| Int32[] objects | 0 / -16 / -22 / -17 / -19 / -7 / 15 | false | true |
+| String bytes | 0 / -2,784 / -1,920 / 38,312 / -1,760 / 49,928 / 44,112 | false | false |
+| String objects | 0 / -35 / -25 / 171 / -24 / 341 / 225 | false | false |
+
+| Comparison | Mono used final three / drain B | Forced-live final three / drain B | Raw RouteLeg[] final three / drain B | Drain meshes retimed / control |
+| --- | --- | --- | --- | --- |
+| 17i | 57,274,368 / 59,486,208 / 58,445,824 / 57,483,264 | 57,208,832 / 59,461,632 / 58,245,120 / 57,053,184 | 2,696 / 1,816 / 3,440 / 2,216 | 63 / 63 |
+| 17h | -8,974,336 / -7,892,992 / -6,578,176 / -7,229,440 | -9,101,312 / -7,704,576 / -6,455,392 / -7,151,616 | -208 / -72 / 1,632 / 624 | 63 / 63 |
+| 17f | -16,154,624 / -13,910,016 / -12,894,208 / -12,619,776 | -15,568,896 / -13,930,496 / -12,656,640 / -13,070,336 | 1,432 / 1,944 / 3,080 / 7,272 | — |
+
+17c was partial after three cycles. Its post-drain traffic difference was two extra live vehicles with zero vehicles, routes or legs outside live state and caches. PC 19c predates this matched repeated-retime procedure.
+
+Zero orphans indicates each tracked mesh still has a live combiner. The leased, pooled and reserved counts identify which mod bodies hold those combiners. The owner identity is leased + pooled + reserved + orphan = live, with unmatched = 0.
+
+Raw RouteLeg[] byte rule **PASS**. Final three retime gaps were 2,696 / 1,816 / 3,440 B, and drain was 2,216 B. Earlier maximum was 3,440 B. The other-owner gaps were 2,504 / 0 / 0 / 0 B. Current-journey gaps were 192 / 1,816 / 3,440 / 2,216 B and 28 / 227 / 430 / 277 backing slots.
+
+The outside-cache Int32[] drain gap of 6,424 B exceeds the earlier maximum used by the PR’s offline mixed-traffic model. The live verdict records this secondary series as plateau unestablished.
+
+All matched traffic reads reported zero vehicles, routes and legs outside live state and caches. At drain both arms had 63 meshes, with 30 leased and 33 pooled and zero reserved, orphaned or unmatched.
+
+### G. Every collection frame
+
+| Arm | Gen0 ordinal | Sampler / probe / marker Unity frame | Wall / UpdateCity / LateUpdate / off-CPU ms | GC.Collect ms | Wall − UpdateCity − GC ms | GC phase / subsystem | Outside-mod excess phase / subsystem / ms | Largest mod scope / ms | Async grow / diagnostic / partial |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| A steady | 227 | 6,302 / 6,302 / 6,302 | 65.918 / 0.426 / 0.018 / 17.556 | 25.5426 | 39.9494 | TimeUpdate / TimeUpdate.WaitForLastPresentationAndUpdateTime | TimeUpdate / TimeUpdate.WaitForLastPresentationAndUpdateTime / 30.0397 | PopulationRuntime.Update / 0.4283 | none / false / false |
+| A steady | 228 | 8,583 / 8,583 / 8,583 | 65.215 / 0.395 / 0.02 / 19.513 | 25.7875 | 39.0325 | TimeUpdate / TimeUpdate.WaitForLastPresentationAndUpdateTime | TimeUpdate / TimeUpdate.WaitForLastPresentationAndUpdateTime / 30.6422 | PopulationRuntime.Update / 0.407 | none / false / false |
+| A steady | 229 | 10,890 / 10,890 / 10,890 | 65.292 / 3.738 / 0.029 / 17.474 | 24.901 | 36.653 | TimeUpdate / TimeUpdate.WaitForLastPresentationAndUpdateTime | TimeUpdate / TimeUpdate.WaitForLastPresentationAndUpdateTime / 30.252 | PopulationRuntime.Update / 3.7408 | none / false / false |
+| A steady | 230 | 13,251 / 13,251 / 13,251 | 57.78 / 0.726 / 0.05 / 10.385 | 26.0811 | 30.9729 | TimeUpdate / TimeUpdate.WaitForLastPresentationAndUpdateTime | TimeUpdate / TimeUpdate.WaitForLastPresentationAndUpdateTime / 31.4589 | PopulationRuntime.Update / 0.7288 | none / false / false |
+| A steady | 231 | 15,672 / 15,673 / 15,673 | 66.391 / 0.578 / 0.02 / 22.219 | 25.3105 | — | Update / Update.ScriptRunBehaviourUpdate | Update / Update.ScriptRunBehaviourUpdate / 31.4299 | PopulationRuntime.Update / 0.4544 | none / false / false |
+| A steady | 232 | 18,112 / 18,112 / 18,112 | 60.87 / 0.453 / 0.017 / 16.073 | 26.0832 | 34.3338 | TimeUpdate / TimeUpdate.WaitForLastPresentationAndUpdateTime | TimeUpdate / TimeUpdate.WaitForLastPresentationAndUpdateTime / 31.515 | PopulationRuntime.Update / 0.4671 | none / false / false |
+| A steady | 233 | 20,549 / 20,549 / 20,549 | 60.312 / 0.876 / 0.018 / 14.006 | 25.437 | 33.999 | TimeUpdate / TimeUpdate.WaitForLastPresentationAndUpdateTime | TimeUpdate / TimeUpdate.WaitForLastPresentationAndUpdateTime / 31.1216 | PopulationRuntime.Update / 0.8784 | none / false / false |
+| A steady | 234 | 22,845 / 22,845 / 22,845 | 56.416 / 0.831 / 0.02 / 9.422 | 24.9505 | 30.6345 | TimeUpdate / TimeUpdate.WaitForLastPresentationAndUpdateTime | TimeUpdate / TimeUpdate.WaitForLastPresentationAndUpdateTime / 29.8735 | PopulationRuntime.Update / 0.8634 | none / false / false |
+| A immediate | 224 | 5,846 / 5,846 / 5,846 | 163.928 / 0.808 / 0.029 / 23.961 | 22.8369 | 140.2831 | TimeUpdate / TimeUpdate.WaitForLastPresentationAndUpdateTime | Update / Update.ScriptRunDelayedDynamicFrameRate / 90.3823 | PopulationRuntime.Update / 0.8106 | none / false / false |
+| A immediate | 225 | 7,849 / 7,849 / 7,849 | 59.128 / 0.513 / 0.024 / 13.074 | 25.1866 | 33.4284 | TimeUpdate / TimeUpdate.WaitForLastPresentationAndUpdateTime | TimeUpdate / TimeUpdate.WaitForLastPresentationAndUpdateTime / 30.1467 | PopulationRuntime.Update / 0.5146 | none / false / false |
+| A immediate | 226 | 9,923 / 9,923 / 9,923 | 62.537 / 0.78 / 0.019 / 18.587 | 24.8399 | 36.9171 | TimeUpdate / TimeUpdate.WaitForLastPresentationAndUpdateTime | TimeUpdate / TimeUpdate.WaitForLastPresentationAndUpdateTime / 30.3149 | PopulationRuntime.Update / 0.7822 | none / false / false |
+| A immediate | 227 | 12,203 / 12,203 / 12,203 | 62.034 / 1.886 / 0.02 / 15.736 | 23.4895 | 36.6585 | TimeUpdate / TimeUpdate.WaitForLastPresentationAndUpdateTime | TimeUpdate / TimeUpdate.WaitForLastPresentationAndUpdateTime / 27.3075 | PopulationRuntime.Update / 1.8881 | none / false / false |
+| A immediate | 228 | 14,414 / 14,414 / 14,414 | 59.831 / 3.177 / 0.019 / 10.877 | 22.8011 | 33.8529 | TimeUpdate / TimeUpdate.WaitForLastPresentationAndUpdateTime | TimeUpdate / TimeUpdate.WaitForLastPresentationAndUpdateTime / 24.5374 | PopulationRuntime.Update / 3.1797 | none / false / false |
+| A immediate | 229 | 16,500 / 16,500 / 16,500 | 60.226 / 0.444 / 0.014 / 17.042 | 23.7447 | 36.0373 | TimeUpdate / TimeUpdate.WaitForLastPresentationAndUpdateTime | TimeUpdate / TimeUpdate.WaitForLastPresentationAndUpdateTime / 24.0967 | PopulationRuntime.Update / 0.4454 | none / false / false |
+| A immediate | 230 | 18,729 / 18,729 / 18,729 | 55.219 / 1.078 / 0.018 / 8.613 | 23.775 | 30.366 | TimeUpdate / TimeUpdate.WaitForLastPresentationAndUpdateTime | TimeUpdate / TimeUpdate.WaitForLastPresentationAndUpdateTime / 23.167 | PopulationRuntime.Update / 1.0798 | none / false / false |
+| A immediate | 231 | 20,927 / 20,927 / 20,927 | 62.514 / 0.663 / 0.017 / 17.112 | 25.1597 | 36.6913 | TimeUpdate / TimeUpdate.WaitForLastPresentationAndUpdateTime | TimeUpdate / TimeUpdate.WaitForLastPresentationAndUpdateTime / 28.3426 | PopulationRuntime.Update / 0.6651 | none / false / false |
+| B 20× | 231 | 14,337 / 14,337 / 14,337 | 64.123 / 0.636 / 0.019 / 20.046 | 24.5794 | 38.9076 | TimeUpdate / TimeUpdate.WaitForLastPresentationAndUpdateTime | TimeUpdate / TimeUpdate.WaitForLastPresentationAndUpdateTime / 29.3013 | PopulationRuntime.Update / 0.6378 | none / false / false |
+| B 20× | 232 | 16,919 / 16,920 / 16,920 | 66.022 / 2.873 / 0.024 / 19.916 | 25.5513 | — | Update / Update.ScriptRunBehaviourUpdate | Update / Update.ScriptRunBehaviourUpdate / 35.188 | PopulationRuntime.Update / 0.4565 | none / false / false |
+| B 20× | 233 | 19,576 / 19,576 / 19,576 | 65.256 / 0.284 / 0.016 / 19.855 | 25.5037 | 39.4683 | TimeUpdate / TimeUpdate.WaitForLastPresentationAndUpdateTime | TimeUpdate / TimeUpdate.WaitForLastPresentationAndUpdateTime / 30.2071 | PopulationRuntime.Update / 0.2862 | none / false / false |
+| B 20× | 234 | 22,135 / 22,135 / 22,135 | 195.005 / 0.209 / 0.02 / 26.407 | 23.7147 | 171.0813 | PreLateUpdate / PreLateUpdate.ScriptRunBehaviourLateUpdate | PreLateUpdate / PreLateUpdate.ScriptRunBehaviourLateUpdate / 147.3712 | PopulationRuntime.Update / 0.211 | none / false / false |
+| B 20× | 235 | 24,791 / 24,791 / 24,791 | 60.651 / 0.221 / 0.015 / 17.602 | 23.5885 | 36.8415 | TimeUpdate / TimeUpdate.WaitForLastPresentationAndUpdateTime | TimeUpdate / TimeUpdate.WaitForLastPresentationAndUpdateTime / 27.8513 | PopulationRuntime.Update / 0.2234 | none / false / false |
+| B 20× | 236 | 27,438 / 27,438 / 27,438 | 64.826 / 0.202 / 0.019 / 21.234 | 24.7426 | 39.8814 | TimeUpdate / TimeUpdate.WaitForLastPresentationAndUpdateTime | TimeUpdate / TimeUpdate.WaitForLastPresentationAndUpdateTime / 30.1096 | PopulationRuntime.Update / 0.2043 | none / false / false |
+| B 20× | 237 | 30,090 / 30,090 / 30,090 | 64.638 / 0.198 / 0.023 / 17.327 | 25.8034 | 38.6366 | TimeUpdate / TimeUpdate.WaitForLastPresentationAndUpdateTime | TimeUpdate / TimeUpdate.WaitForLastPresentationAndUpdateTime / 31.2216 | PopulationRuntime.Update / 0.2 | none / false / false |
+| B 60× | 232 | 14,159 / 14,159 / 14,159 | 67.425 / 0.591 / 0.018 / 22.096 | 26.1121 | 40.7219 | TimeUpdate / TimeUpdate.WaitForLastPresentationAndUpdateTime | TimeUpdate / TimeUpdate.WaitForLastPresentationAndUpdateTime / 31.7698 | PopulationRuntime.Update / 0.5926 | none / false / false |
+| B 60× | 233 | 16,612 / 16,612 / 16,612 | 67.161 / 0.194 / 0.016 / 23.345 | 25.5835 | 41.3835 | TimeUpdate / TimeUpdate.WaitForLastPresentationAndUpdateTime | TimeUpdate / TimeUpdate.WaitForLastPresentationAndUpdateTime / 30.9313 | PopulationRuntime.Update / 0.1966 | none / false / false |
+| B 60× | 234 | 19,135 / 19,135 / 19,135 | 47.773 / 0.208 / 0.017 / 1.192 | 28.1238 | 19.4412 | TimeUpdate / TimeUpdate.WaitForLastPresentationAndUpdateTime | TimeUpdate / TimeUpdate.WaitForLastPresentationAndUpdateTime / 31.2975 | PopulationRuntime.Update / 0.2108 | none / false / false |
+| B 60× | 235 | 21,608 / 21,608 / 21,608 | 69.813 / 0.179 / 0.017 / 22.601 | 26.851 | 42.783 | TimeUpdate / TimeUpdate.WaitForLastPresentationAndUpdateTime | TimeUpdate / TimeUpdate.WaitForLastPresentationAndUpdateTime / 32.0435 | PopulationRuntime.Update / 0.1813 | none / false / false |
+| B 60× | 236 | 24,175 / 24,175 / 24,175 | 67.864 / 0.194 / 0.023 / 21.759 | 26.3748 | 41.2952 | TimeUpdate / TimeUpdate.WaitForLastPresentationAndUpdateTime | TimeUpdate / TimeUpdate.WaitForLastPresentationAndUpdateTime / 32.1721 | PopulationRuntime.Update / 0.2051 | none / false / false |
+| B 60× | 237 | 26,686 / 26,686 / 26,686 | 67.123 / 0.223 / 0.018 / 21.054 | 26.8579 | 40.0421 | TimeUpdate / TimeUpdate.WaitForLastPresentationAndUpdateTime | TimeUpdate / TimeUpdate.WaitForLastPresentationAndUpdateTime / 32.7912 | PopulationRuntime.Update / 0.2249 | none / false / false |
+| B 60× | 238 | 29,248 / 29,248 / 29,248 | 66.747 / 0.178 / 0.018 / 20.19 | 27.9313 | 38.6377 | TimeUpdate / TimeUpdate.WaitForLastPresentationAndUpdateTime | TimeUpdate / TimeUpdate.WaitForLastPresentationAndUpdateTime / 34.0894 | PopulationRuntime.Update / 0.1804 | none / false / false |
+| A steady no-mod | 222 | 6,885 / 6,885 / 6,885 | 65.6133 / 0 / 0 / — | 23.8041 | 41.8092 | Update / Update.ScriptRunBehaviourUpdate | Update / Update.ScriptRunBehaviourUpdate / 30.0854 | — / — | — / false / false |
+| A steady no-mod | 223 | 9,423 / 9,423 / 9,423 | 59.9924 / 0 / 0 / — | 22.2961 | 37.6963 | TimeUpdate / TimeUpdate.WaitForLastPresentationAndUpdateTime | TimeUpdate / TimeUpdate.WaitForLastPresentationAndUpdateTime / 26.646 | — / — | — / false / false |
+| A steady no-mod | 224 | 12,015 / 12,015 / 12,015 | 62.6564 / 0 / 0 / — | 24.2248 | 38.4316 | TimeUpdate / TimeUpdate.WaitForLastPresentationAndUpdateTime | TimeUpdate / TimeUpdate.WaitForLastPresentationAndUpdateTime / 29.3323 | — / — | — / false / false |
+| A steady no-mod | 225 | 14,569 / 14,569 / 14,569 | 65.59 / 0 / 0 / — | 22.2623 | 43.3277 | Update / Update.ScriptRunBehaviourUpdate | Update / Update.ScriptRunBehaviourUpdate / 31.2857 | — / — | — / false / false |
+| A steady no-mod | 226 | 17,177 / 17,177 / 17,177 | 65.6389 / 0 / 0 / — | 22.968 | 42.6709 | PreLateUpdate / PreLateUpdate.ScriptRunBehaviourLateUpdate | PreLateUpdate / PreLateUpdate.ScriptRunBehaviourLateUpdate / 28.5326 | — / — | — / false / false |
+| A steady no-mod | 227 | 19,753 / 19,753 / 19,753 | 62.0509 / 0 / 0 / — | 23.5758 | 38.4751 | TimeUpdate / TimeUpdate.WaitForLastPresentationAndUpdateTime | TimeUpdate / TimeUpdate.WaitForLastPresentationAndUpdateTime / 28.6984 | — / — | — / false / false |
+| A immediate no-mod | 220 | 6,181 / 6,181 / 6,181 | 57.9695 / 0 / 0 / — | 20.6318 | 37.3377 | TimeUpdate / TimeUpdate.WaitForLastPresentationAndUpdateTime | TimeUpdate / TimeUpdate.WaitForLastPresentationAndUpdateTime / 24.6522 | — / — | — / false / false |
+| A immediate no-mod | 221 | 8,522 / 8,522 / 8,522 | 56.861 / 0 / 0 / — | 21.0705 | 35.7905 | TimeUpdate / TimeUpdate.WaitForLastPresentationAndUpdateTime | TimeUpdate / TimeUpdate.WaitForLastPresentationAndUpdateTime / 23.2626 | — / — | — / false / false |
+| A immediate no-mod | 222 | 10,949 / 10,949 / 10,949 | 59.1192 / 0 / 0 / — | 20.8143 | 38.3049 | TimeUpdate / TimeUpdate.WaitForLastPresentationAndUpdateTime | TimeUpdate / TimeUpdate.WaitForLastPresentationAndUpdateTime / 25.7694 | — / — | — / false / false |
+| A immediate no-mod | 223 | 13,269 / 13,269 / 13,269 | 58.3086 / 0 / 0 / — | 21.5273 | 36.7813 | TimeUpdate / TimeUpdate.WaitForLastPresentationAndUpdateTime | TimeUpdate / TimeUpdate.WaitForLastPresentationAndUpdateTime / 24.4355 | — / — | — / false / false |
+| A immediate no-mod | 224 | 15,642 / 15,642 / 15,642 | 60.5958 / 0 / 0 / — | 21.9766 | 38.6192 | TimeUpdate / TimeUpdate.WaitForLastPresentationAndUpdateTime | TimeUpdate / TimeUpdate.WaitForLastPresentationAndUpdateTime / 27.2578 | — / — | — / false / false |
+| A immediate no-mod | 225 | 17,956 / 17,956 / 17,956 | 58.4087 / 0 / 0 / — | 20.6276 | 37.7811 | TimeUpdate / TimeUpdate.WaitForLastPresentationAndUpdateTime | TimeUpdate / TimeUpdate.WaitForLastPresentationAndUpdateTime / 25.0829 | — / — | — / false / false |
+| A immediate no-mod | 226 | 20,313 / 20,313 / 20,313 | 58.6351 / 0 / 0 / — | 21.2998 | 37.3353 | TimeUpdate / TimeUpdate.WaitForLastPresentationAndUpdateTime | TimeUpdate / TimeUpdate.WaitForLastPresentationAndUpdateTime / 25.3423 | — / — | — / false / false |
+| B 20× no-mod | 225 | 6,271 / 6,271 / 6,271 | 57.8003 / 0 / 0 / — | 22.115 | 35.6853 | TimeUpdate / TimeUpdate.WaitForLastPresentationAndUpdateTime | TimeUpdate / TimeUpdate.WaitForLastPresentationAndUpdateTime / 24.7232 | — / — | — / false / false |
+| B 20× no-mod | 226 | 8,921 / 8,921 / 8,921 | 58.5854 / 0 / 0 / — | 20.7008 | 37.8846 | TimeUpdate / TimeUpdate.WaitForLastPresentationAndUpdateTime | TimeUpdate / TimeUpdate.WaitForLastPresentationAndUpdateTime / 25.2345 | — / — | — / false / false |
+| B 20× no-mod | 227 | 11,736 / 11,736 / 11,736 | 58.9538 / 0 / 0 / — | 20.7394 | 38.2144 | TimeUpdate / TimeUpdate.WaitForLastPresentationAndUpdateTime | TimeUpdate / TimeUpdate.WaitForLastPresentationAndUpdateTime / 25.5966 | — / — | — / false / false |
+| B 20× no-mod | 228 | 14,295 / 14,295 / 14,295 | 65.6185 / 0 / 0 / — | 21.0567 | 44.5618 | Update / Update.ScriptRunBehaviourUpdate | Update / Update.ScriptRunBehaviourUpdate / 28.3305 | — / — | — / false / false |
+| B 20× no-mod | 229 | 16,782 / 16,782 / 16,782 | 65.615 / 0 / 0 / — | 20.7091 | 44.9059 | Update / Update.ScriptRunBehaviourUpdate | Update / Update.ScriptRunBehaviourUpdate / 17.8538 | — / — | — / false / false |
+| B 20× no-mod | 230 | 19,355 / 19,355 / 19,355 | 59.581 / 0 / 0 / — | 21.6812 | 37.8998 | TimeUpdate / TimeUpdate.WaitForLastPresentationAndUpdateTime | TimeUpdate / TimeUpdate.WaitForLastPresentationAndUpdateTime / 26.2631 | — / — | — / false / false |
+| B 60× no-mod | 221 | 5,280 / 5,280 / 5,280 | 57.3849 / 0 / 0 / — | 20.391 | 36.9939 | TimeUpdate / TimeUpdate.WaitForLastPresentationAndUpdateTime | TimeUpdate / TimeUpdate.WaitForLastPresentationAndUpdateTime / 22.8938 | — / — | — / false / false |
+| B 60× no-mod | 222 | 7,981 / 7,981 / 7,981 | 59.8406 / 0 / 0 / — | 21.4202 | 38.4204 | TimeUpdate / TimeUpdate.WaitForLastPresentationAndUpdateTime | TimeUpdate / TimeUpdate.WaitForLastPresentationAndUpdateTime / 26.4763 | — / — | — / false / false |
+| B 60× no-mod | 223 | 10,429 / 10,429 / 10,429 | 58.8482 / 0 / 0 / — | 21.0504 | 37.7978 | TimeUpdate / TimeUpdate.WaitForLastPresentationAndUpdateTime | TimeUpdate / TimeUpdate.WaitForLastPresentationAndUpdateTime / 25.4994 | — / — | — / false / false |
+| B 60× no-mod | 224 | 12,978 / 12,978 / 12,978 | 53.9323 / 0 / 0 / — | 19.3554 | 34.5769 | TimeUpdate / TimeUpdate.WaitForLastPresentationAndUpdateTime | TimeUpdate / TimeUpdate.WaitForLastPresentationAndUpdateTime / 20.5033 | — / — | — / false / false |
+| B 60× no-mod | 225 | 15,463 / 15,463 / 15,463 | 58.3835 / 0 / 0 / — | 21.6144 | 36.7691 | TimeUpdate / TimeUpdate.WaitForLastPresentationAndUpdateTime | TimeUpdate / TimeUpdate.WaitForLastPresentationAndUpdateTime / 25.4323 | — / — | — / false / false |
+| B 60× no-mod | 226 | 18,004 / 18,004 / 18,004 | 60.1152 / 0 / 0 / — | 21.8216 | 38.2936 | TimeUpdate / TimeUpdate.WaitForLastPresentationAndUpdateTime | TimeUpdate / TimeUpdate.WaitForLastPresentationAndUpdateTime / 26.7807 | — / — | — / false / false |
+| B 60× no-mod | 227 | 20,485 / 20,485 / 20,485 | 60.5019 / 0 / 0 / — | 22.3349 | 38.167 | TimeUpdate / TimeUpdate.WaitForLastPresentationAndUpdateTime | TimeUpdate / TimeUpdate.WaitForLastPresentationAndUpdateTime / 27.1149 | — / — | — / false / false |
+
+| Arm | Ordinals joined | Ordinals in export | Collection-marked frames | Subsystem truncated | Sampler / probe truncated |
+| --- | --- | --- | --- | --- | --- |
+| A steady | 8 | 8 | 8 | false | false / false |
+| A immediate | 8 | 8 | 8 | false | false / false |
+| B 20× | 7 | 7 | 7 | false | false / false |
+| B 60× | 7 | 7 | 7 | false | false / false |
+| A steady no-mod | 6 | 6 | 6 | false | — / false |
+| A immediate no-mod | 7 | 7 | 7 | false | — / false |
+| B 20× no-mod | 6 | 6 | 6 | false | — / false |
+| B 60× no-mod | 7 | 7 | 7 | false | — / false |
+
+| Arm | Longest sampler collection frame | Wall / UpdateCity / off-CPU ms | Marker ms | Largest probe subsystem excess / ms / outside-mod ms |
+| --- | --- | --- | --- | --- |
+| A steady | 15,672 | 66.391 / 0.578 / 22.219 | 25.3105 | Update.ScriptRunBehaviourUpdate / 31.2884 / 31.4299 |
+| A immediate | 5,846 | 163.928 / 0.808 / 23.961 | 22.8369 | Update.ScriptRunDelayedDynamicFrameRate / 90.3823 / 90.3823 |
+| B 20× | 22,135 | 195.005 / 0.209 / 26.407 | 23.7147 | PreLateUpdate.ScriptRunBehaviourLateUpdate / 147.3792 / 147.3712 |
+| B 60× | 21,608 | 69.813 / 0.179 / 22.601 | 26.851 | TimeUpdate.WaitForLastPresentationAndUpdateTime / 32.0435 / 32.0435 |
+
+The remainder is an arithmetic residual where sampler and marker frame identities agree. GC and UpdateCity can overlap. Raw ordinal-attribution.json includes per-subsystem excess and timing stamps. No-mod off-CPU is unavailable from the reference probe.
+
+| Window | Trace artifact | Seconds | Threads | Main samples / wait-leaf samples | Host load start / end | Collection frame overlap |
+| --- | --- | --- | --- | --- | --- | --- |
+| A immediate | gc-day-retime-trace-120 | 12 | 60 | 8,681 / 5,158 | 2.53 / 2.84 / 2.93 / 2.61 / 2.85 / 2.93 | — |
+| A immediate | gc-day-retime-trace-325 | 12 | 60 | 8,707 / 5,042 | 3.35 / 2.98 / 2.95 / 3.15 / 2.95 / 2.94 | — |
+| A immediate | gc-day-retime-trace-525 | 12 | 59 | 8,725 / 5,162 | 3.04 / 2.86 / 2.89 / 3.1 / 2.88 / 2.9 | — |
+| A steady | gc-day-trace-120 | 12 | 60 | 8,687 / 5,381 | 2.22 / 2.74 / 2.95 / 2.25 / 2.72 / 2.94 | — |
+| A steady | gc-day-trace-325 | 12 | 59 | 8,699 / 5,480 | 2.37 / 2.67 / 2.87 / 2.52 / 2.69 / 2.87 | — |
+| A steady | gc-day-trace-525 | 12 | 59 | 8,697 / 5,175 | 3.01 / 2.93 / 2.94 / 3.21 / 2.98 / 2.96 | — |
+| B 20× | gc-night-20-trace-245 | 12 | 58 | 8,717 / 5,716 | 2.07 / 2.54 / 2.73 / 1.84 / 2.46 / 2.7 | — |
+| B 20× | gc-night-20-trace-528 | 12 | 59 | 8,750 / 5,961 | 1.94 / 2.32 / 2.57 / 2.03 / 2.32 / 2.57 | — |
+| B 20× | gc-night-20-trace-59 | 12 | 58 | 8,684 / 5,351 | 3.11 / 2.98 / 2.9 / 2.66 / 2.88 / 2.87 | — |
+| B 60× | gc-night-60-trace-245 | 12 | 59 | 8,725 / 5,820 | 2.32 / 2.51 / 2.58 / 2.47 / 2.54 / 2.58 | — |
+| B 60× | gc-night-60-trace-528 | 12 | 58 | 8,710 / 5,812 | 2.13 / 2.3 / 2.46 / 1.8 / 2.22 / 2.42 | — |
+| B 60× | gc-night-60-trace-59 | 12 | 63 | 8,674 / 5,751 | 2.46 / 2.52 / 2.6 / 2.64 / 2.56 / 2.61 | — |
+
+Foreground host captures use the rig sample backend. They preserve the sample call graph, ps -M, top and pmset output. The night schedule was fixed before B began, using 17b’s collection times. Wait-leaf samples count stack observations. ps -M provides no stable thread IDs for before/after CPU deltas.
+
+Wall and monotonic clocks were calibrated during the run and after the last window (0.029 ms offset change). Collection overlap is shown only where the probe’s first frame validated the timebase and the sample timestamps fit the command envelope. An overlapping aggregate stack report cannot identify the stack of a particular collection frame.
+
+### Build, autosave, host and restoration
+
+| Staging | Command | Receipt backup UTC | Staged DLL line |
+| --- | --- | --- | --- |
+| stage | python3 ~/Coding_Projects/big-ambitions/big-ambitions-agent-rig/scripts/install-mac.py --stage-mod PersistentCity ~/HART-Builds/persistent-city-rig-2026-11-24a-mac/package | 20261124T040516Z | [AgentRigOps] staged_mod name=PersistentCity version=absent informational=0.10.0-persistent-city-candidate sha256=dc97418851639a4181201046b72992ffadab13ecbcdf0a7eb4f05ac2feac651a |
+| probe-stage | python3 ~/Coding_Projects/big-ambitions/big-ambitions-agent-rig/scripts/install-mac.py --stage-mod PerfUnionProbe ~/Coding_Projects/big-ambitions/big-ambitions-persistent-city-worktrees/rig-2026-11-24a-mac-evidence/build/perf-union-probe/stage | 20261124T040516Z-1 | [AgentRigOps] staged_mod name=PerfUnionProbe version=absent informational=absent sha256=407f7ada8208f5c75ffda6afd2ba3abb55e4de8d8d0189b016aab7a5629acc5b |
+| reference-refresh | python3 ~/Coding_Projects/big-ambitions/big-ambitions-agent-rig/scripts/install-mac.py --refresh-mods --mod PersistentCity | 20261124T060025Z | — |
+
+| Item | Readback |
+| --- | --- |
+| Source tip tested | d1e868fe040581b2afebf79f01cdf7cd49732431 |
+| Post-run source tip | d1e868fe040581b2afebf79f01cdf7cd49732431 |
+| Lease acquired UTC | 2026-11-24T04:03:27.964016Z |
+| Agent rig HEAD | b06b62c4667316e063bdd885bfc467eec751825e |
+| Game and RLO | Loaded Big Ambitions (Build 3682) / [Mod:RealLifeOverhaul] Real Life Overhaul 1.0.6 initialised. |
+| Persistent City DLL SHA-256 | dc97418851639a4181201046b72992ffadab13ecbcdf0a7eb4f05ac2feac651a |
+| Probe SHA-256 / scope hash | 407f7ada8208f5c75ffda6afd2ba3abb55e4de8d8d0189b016aab7a5629acc5b / 4e2e1f1bdedf7f54b625c67d448979ddce92d609d5134c138ef190b59f84e55b |
+| AgentRigOps SHA-256 before / after | 190c3fa3895a2c37d7388854b3abfc81cbcd93dc1a104c5cd46b1d3f7f830dfc / 190c3fa3895a2c37d7388854b3abfc81cbcd93dc1a104c5cd46b1d3f7f830dfc |
+| Fixture | FT GR5 13f Timing v1. Candidate 1,000 residents and 2,000 visitors. |
+| SaveCostDiagnostics / price weight | false / 1.2 |
+| Native autosave minutes / max saves / prevent before run | 5 / 3 / false |
+| Snapshot files / all ModsLocal files / install receipt hashes | files 34, rlo 53, sealed 4 / 272 / 284 |
+| Hash mismatches / autosave native match / probe absent / fixture sidecars | 0 / true / true / 0 |
+| Final game running / lease held | false / false |
+| Disposable save presence after cleanup | FT RIGTMP-GR5-24a-mac false, FT RIGTMP-GR5-15c false, FT RIGTMP-GR5-15c-mac false |
+| RLO option matches | living_population true, social_media true, social_media_notices true |
+
+| Arm | Autosave suppressed after load | Before / after window | Admitted native saves | PID |
+| --- | --- | --- | --- | --- |
+| A steady | true | true / true | 0 | 95,308 |
+| A immediate | true | true / true | 0 | 96,656 |
+| B 20× | true | true / true | 0 | 2,242 |
+| B 60× | true | true / true | 0 | 3,541 |
+| C street | true | true / true | 0 | 4,565 |
+| D separation | true | true / true | 0 | 12,738 |
+| A steady no-mod | true | true / true | 0 | 13,356 |
+| A immediate no-mod | true | true / true | 0 | 13,776 |
+| B 20× no-mod | true | true / true | 0 | 14,228 |
+| B 60× no-mod | true | true / true | 0 | 20,349 |
+
+| E/F read | Autosave suppressed before / after |
+| --- | --- |
+| before | true / true |
+| after | true / true |
+| 60s | true / true |
+
+| L process | Autosave after load / pre / post | Each checkpoint before / after |
+| --- | --- | --- |
+| retention | true / true / true | R0 / true / true / R1 / true / true / R2 / true / true / R3 / true / true / R4 / true / true / R5 / true / true / After30GameMinutes / true / true |
+| retention-control | true / true / true | R0 / true / true / R1 / true / true / R2 / true / true / R3 / true / true / R4 / true / true / R5 / true / true / After30GameMinutes / true / true |
+
+| 600 s window | Start load averages | Start test processes | End load averages | End test processes |
+| --- | --- | --- | --- | --- |
+| A steady | 2.42 3.03 3.07 | none | 3.36 3.04 2.98 | none |
+| A immediate | 2.74 3.07 3.02 | none | 3.17 2.98 2.93 | none |
+| B 20× | 4.42 3.10 2.93 | none | 2.67 2.46 2.60 | none |
+| B 60× | 2.36 2.55 2.62 | none | 1.88 2.15 2.38 | none |
+| C street | 3.11 2.57 2.52 | none | 2.67 2.83 2.71 | none |
+| D separation | 2.67 3.12 2.99 | none | 2.18 2.64 2.80 | none |
+| A steady no-mod | 2.42 2.72 2.81 | none | 2.54 2.54 2.65 | none |
+| A immediate no-mod | 3.08 2.73 2.71 | none | 2.28 2.43 2.53 | none |
+| B 20× no-mod | 2.62 2.57 2.57 | none | 3.46 3.13 2.81 | none |
+| B 60× no-mod | 3.29 3.25 2.91 | none | 2.48 2.60 2.69 | none |
+
+| Controller evidence | Tooling or protocol readback |
+| --- | --- |
+| A steady setup | First controller invocation lacked the probe build manifest copy. Copied the built manifest before entering the window in the same fresh process. |
+| L fractional-minute drain | First whole-minute stop was 3888.009998. Continued the same 1× process to 3889.009998, preserving the full 30-minute drain and using the corrected control target. |
+| L control native-minute bracket | First-pass unmatched bracket gaps (native minutes) were R1 / 0.577785 / R2 / 0.59996. A fresh control retry used tighter polling. First-pass evidence is under discarded/retention-control/. |
+
+Pointer, hover and visual-feel observations are NOT RUN for Peter. The #350 traffic-past-gate check awaits a fixture with a private gate beside a trafficked public road. Locked-PC checks used the provisional Mac substitute. The run measured the staged build and introduced no production code changes.
+
+### Evidence references
+
+Raw evidence and the receipt rollback logs are in `~/Coding_Projects/.agent-logs/persistent-city-rig-2026-11-24a-mac/`. SHA-256 of `evidence-sha256.txt` is `13579917efa0792560d3097c94d461152948e2d8905741da0f7c206cf5910bd1`.
+
+[PR #358](https://github.com/PeterHartwieg/big-ambitions-persistent-city/pull/358) · [Mac 17h](https://github.com/PeterHartwieg/big-ambitions-persistent-city/pull/357) · [Mac 17f](https://github.com/PeterHartwieg/big-ambitions-persistent-city/pull/354) · [Mac 17c](https://github.com/PeterHartwieg/big-ambitions-persistent-city/pull/347) · [PC 19c](https://github.com/PeterHartwieg/big-ambitions-persistent-city/pull/315)
+
+Refs #358
