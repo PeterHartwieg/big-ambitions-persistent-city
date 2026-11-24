@@ -42,18 +42,40 @@ namespace PersistentCity.Core
 
         public int CarriedUnits { get; private set; }
         public int CarriedCitizenEvents { get; private set; }
+        public int CarriedUpdates { get; private set; }
+        public const double LoadDecay = 0.9;
+        public double PeakLoad { get; private set; } = 1;
         public bool CatchingUp => CarriedCitizenEvents > 0;
+        public bool CapacityAllowsDeferral => (CarriedUpdates + 2) * PeakLoad <= 1;
+
+        public static double Load(double elapsedMilliseconds, double timeBudgetMilliseconds, int units, int baseUnits, int citizenEvents, int baseCitizenEvents,
+            int routePaths, int routePathLimit, bool limitedByAdmission)
+        {
+            if (!(timeBudgetMilliseconds > 0) || baseUnits <= 0 || baseCitizenEvents <= 0 || routePathLimit <= 0 || !Position.Finite(elapsedMilliseconds))
+                return 1;
+            double load = Math.Max(Math.Max(elapsedMilliseconds / timeBudgetMilliseconds, (double)units / baseUnits),
+                Math.Max((double)citizenEvents / baseCitizenEvents, (double)routePaths / routePathLimit));
+            return limitedByAdmission ? Math.Max(1, load) : load;
+        }
 
         public void Carry(PopulationFrameBudget skipped)
         {
             CarriedUnits = Math.Min(PopulationFrameBudget.MaximumUnits, CarriedUnits + skipped.Units);
             CarriedCitizenEvents += skipped.CitizenEvents;
+            CarriedUpdates++;
         }
+
+        public void Release() { CarriedUnits = CarriedCitizenEvents = CarriedUpdates = 0; PeakLoad = 1; }
 
         public (int Units, int CitizenEvents) Limits(PopulationFrameBudget current)
             => (Math.Min(PopulationFrameBudget.MaximumUnits, current.Units + CarriedUnits), current.CitizenEvents + CarriedCitizenEvents);
 
-        public void Advanced(bool caughtUp) { if (caughtUp) CarriedUnits = CarriedCitizenEvents = 0; }
+        public void Advanced(bool caughtUp, double load)
+        {
+            if (!(load >= 0) || double.IsInfinity(load)) load = 1;
+            PeakLoad = Math.Max(load, PeakLoad * LoadDecay);
+            if (caughtUp) CarriedUnits = CarriedCitizenEvents = CarriedUpdates = 0;
+        }
 
         public static bool ClockReady(bool caughtUp, bool guardDeferred, double logicalMinute, double nativeMinute)
             => caughtUp || guardDeferred && AccountingClock.Target(nativeMinute) == nativeMinute && AccountingClock.Compatible(logicalMinute, nativeMinute);

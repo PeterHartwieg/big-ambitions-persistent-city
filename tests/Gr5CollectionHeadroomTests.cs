@@ -294,15 +294,17 @@ public sealed class Gr5CollectionHeadroomTests
         public double Withheld, NativeEnd;
     }
 
-    private static CatchUpResult CatchUpModel(double eventsPerTick, int period, int phase, int run, bool deferrals, bool carry)
+    private enum CatchUpPolicy { Naive, Carry, Capacity }
+
+    private static CatchUpResult CatchUpModel(double eventsPerTick, double eventMilliseconds, int admissionsPerFrame, int period, int phase, int run, bool deferrals, CatchUpPolicy policy)
     {
         const float tick = 2f / 30;
-        const double seconds = 1.0 / 30;
+        const double seconds = 1.0 / 30, timeBudget = UpdateCityBudget.AdvanceFloorMilliseconds;
         var headroom = new CollectionHeadroom();
         var result = new CatchUpResult();
         double spacing = tick / eventsPerTick, native = 600, city = 600;
         long next = 0;
-        bool deferredFlag = false, caughtUpAfter = true;
+        bool deferredFlag = false, caughtUpAfter = true, carry = policy != CatchUpPolicy.Naive;
         double Due(long index) => 600 + (index + 1) * spacing;
         for (int frame = 0; frame < 3000; frame++)
         {
@@ -314,48 +316,122 @@ public sealed class Gr5CollectionHeadroomTests
             deferredFlag = false;
             var budget = new PopulationFrameBudget(seconds, false);
             bool wanted = deferrals && (frame + phase) % period < run;
-            if (wanted && CollectionHeadroom.ClockAllowsDeferral(caughtUpAfter, native, carry ? tick : 0f))
+            if (wanted && CollectionHeadroom.ClockAllowsDeferral(caughtUpAfter, native, carry ? tick : 0f)
+                && (policy != CatchUpPolicy.Capacity || headroom.CapacityAllowsDeferral))
             {
                 deferredFlag = true; result.Deferred++;
                 if (carry) headroom.Carry(budget);
                 continue;
             }
-            int limit = carry ? headroom.Limits(budget).CitizenEvents : budget.CitizenEvents;
-            double target = AccountingClock.Target(native);
+            var (unitLimit, citizenLimit) = carry ? headroom.Limits(budget) : (budget.Units, budget.CitizenEvents);
+            double target = AccountingClock.Target(native), elapsed = 0;
             int done = 0;
-            while (done < limit && Due(next) <= target) { next++; done++; }
+            bool limited = false;
+            while (done < unitLimit && done < citizenLimit && Due(next) <= target)
+            {
+                if (done >= admissionsPerFrame) { limited = true; break; }
+                next++; done++; elapsed += eventMilliseconds;
+                if (elapsed >= timeBudget) break;
+            }
             result.Processed += done;
             caughtUpAfter = Due(next) > target;
             city = caughtUpAfter ? target : Due(next - 1);
             if (!caughtUpAfter) result.BehindAfterAdvance++;
-            headroom.Advanced(caughtUpAfter);
+            headroom.Advanced(caughtUpAfter, CollectionHeadroom.Load(elapsed, timeBudget, done, budget.Units, done, budget.CitizenEvents, done, admissionsPerFrame, limited));
         }
         result.NativeEnd = native;
         return result;
     }
 
     [Fact]
-    public void DeferredAdvancementCatchesUpWithinItsCarriedBudgetBeforeTheFenceAndHoldsTheClockNoMoreThanWithoutDeferrals()
+    public void ADeferralIsRefusedWithoutSpareCapacityAndTheCarryIsReleased()
     {
-        var naive = CatchUpModel(20, 15, 0, 1, true, false);
-        var naiveBaseline = CatchUpModel(20, 15, 0, 1, false, false);
+        var headroom = new CollectionHeadroom();
+        Assert.False(headroom.CapacityAllowsDeferral);
+        headroom.Advanced(true, .2);
+        Assert.False(headroom.CapacityAllowsDeferral);
+        for (int i = 0; i < 20; i++) headroom.Advanced(true, .2);
+        Assert.Equal(.2, headroom.PeakLoad);
+        Assert.True(headroom.CapacityAllowsDeferral);
+        var budget = new PopulationFrameBudget(1.0 / 30, false);
+        for (int i = 0; i < 3; i++) { headroom.Carry(budget); Assert.True(headroom.CapacityAllowsDeferral); }
+        headroom.Carry(budget);
+        Assert.False(headroom.CapacityAllowsDeferral);
+        Assert.True(headroom.CatchingUp);
+        headroom.Release();
+        Assert.False(headroom.CatchingUp);
+        Assert.Equal((0, 0, 0), (headroom.CarriedUnits, headroom.CarriedCitizenEvents, headroom.CarriedUpdates));
+        Assert.Equal(1, headroom.PeakLoad);
+        for (int i = 0; i < 20; i++) headroom.Advanced(true, .2);
+        headroom.Advanced(true, .55);
+        Assert.False(headroom.CapacityAllowsDeferral);
+        headroom.Advanced(true, double.NaN);
+        Assert.Equal(1, headroom.PeakLoad);
+        Assert.Equal(1, CollectionHeadroom.Load(.1, 2, 1, 256, 1, 32, 0, 16, true));
+        Assert.Equal(1, CollectionHeadroom.Load(2, 2, 8, 256, 8, 32, 0, 16, false));
+        Assert.Equal(.5, CollectionHeadroom.Load(.1, 2, 16, 256, 16, 32, 0, 16, false));
+        Assert.Equal(.75, CollectionHeadroom.Load(.1, 2, 4, 256, 4, 32, 12, 16, false));
+    }
+
+    [Fact]
+    public void DeferredAdvancementUnderTheLiveTimeAndAdmissionLimitsHoldsTheClockNoMoreThanWithoutDeferrals()
+    {
+        var naive = CatchUpModel(20, .01, 1024, 15, 0, 1, true, CatchUpPolicy.Naive);
+        var naiveBaseline = CatchUpModel(20, .01, 1024, 15, 0, 1, false, CatchUpPolicy.Naive);
         output.WriteLine("without lookahead or carried budget, 20 events per tick at 2x and 30 fps: " + naive.Holds + " ordinary holds, "
             + naive.Withheld.ToString("0.000000") + " minutes withheld vs " + naiveBaseline.Holds + " / " + naiveBaseline.Withheld.ToString("0.000000") + " without deferrals");
         Assert.Equal(0, naiveBaseline.Holds);
         Assert.True(naive.Holds > 0, "the old policy holds the clock after a deferral next to the fence");
-        long cases = 0, deferred = 0, behind = 0;
-        foreach (double rate in new[] { 4.0, 12, 20, 26, 31 })
-            for (int run = 1; run <= CollectionHeadroom.MaximumDeferredUpdates; run++)
-                for (int phase = 0; phase < 15; phase++)
-                {
-                    var baseline = CatchUpModel(rate, 15, phase, run, false, true);
-                    var guarded = CatchUpModel(rate, 15, phase, run, true, true);
-                    Assert.Equal(0, baseline.Holds);
-                    Assert.True(guarded.Deferred > 0, "rate " + rate + " run " + run + " phase " + phase);
-                    Assert.Equal((baseline.Holds, baseline.Withheld, baseline.NativeEnd), (guarded.Holds, guarded.Withheld, guarded.NativeEnd));
-                    Assert.True(baseline.Processed - guarded.Processed <= (long)Math.Ceiling(rate) * (run + 1), "rate " + rate + " run " + run + " phase " + phase);
-                    cases++; deferred += guarded.Deferred; behind += guarded.BehindAfterAdvance;
-                }
-        output.WriteLine(cases + " cases, " + deferred + " deferred updates; with the fence lookahead and carried budget every case keeps the baseline's holds, withheld minutes and native clock; updates still catching up after advancing " + behind);
+        var saturatedBaseline = CatchUpModel(8, .25, 1024, 15, 0, 1, false, CatchUpPolicy.Capacity);
+        var carryOnly = CatchUpModel(8, .25, 1024, 15, 0, 1, true, CatchUpPolicy.Carry);
+        var saturated = CatchUpModel(8, .25, 1024, 15, 0, 1, true, CatchUpPolicy.Capacity);
+        output.WriteLine("eight units per tick at 0.25 ms against a 2 ms budget: carried limits alone " + carryOnly.Holds + " holds, "
+            + carryOnly.Withheld.ToString("0.000000") + " minutes withheld; with the capacity check " + saturated.Holds + " / " + saturated.Withheld.ToString("0.000000")
+            + " (" + saturated.Deferred + " deferred); baseline " + saturatedBaseline.Holds + " / " + saturatedBaseline.Withheld.ToString("0.000000"));
+        Assert.Equal(0, saturatedBaseline.Holds);
+        Assert.True(carryOnly.Holds > 0, "carried event limits do not lift the wall-time limit");
+        Assert.Equal((saturatedBaseline.Holds, saturatedBaseline.Withheld, saturatedBaseline.NativeEnd), (saturated.Holds, saturated.Withheld, saturated.NativeEnd));
+        long cases = 0, deferred = 0, behind = 0, lightDeferred = 0;
+        foreach (double rate in new[] { 4.0, 8, 12, 20, 26, 31 })
+            foreach (double cost in new[] { .01, .05, .1, .25 })
+                foreach (int admissions in new[] { 8, 16, 1024 })
+                    for (int run = 1; run <= CollectionHeadroom.MaximumDeferredUpdates; run++)
+                        for (int phase = 0; phase < 15; phase += 4)
+                        {
+                            var baseline = CatchUpModel(rate, cost, admissions, 15, phase, run, false, CatchUpPolicy.Capacity);
+                            if (baseline.Holds > 0) continue;
+                            var guarded = CatchUpModel(rate, cost, admissions, 15, phase, run, true, CatchUpPolicy.Capacity);
+                            string name = "rate " + rate + " cost " + cost + " admissions " + admissions + " run " + run + " phase " + phase;
+                            Assert.True((baseline.Holds, baseline.Withheld, baseline.NativeEnd) == (guarded.Holds, guarded.Withheld, guarded.NativeEnd),
+                                name + ": holds " + guarded.Holds + " withheld " + guarded.Withheld + " vs " + baseline.Holds + " / " + baseline.Withheld);
+                            Assert.True(baseline.Processed - guarded.Processed <= (long)Math.Ceiling(rate) * (run + 1), name);
+                            if (rate == 4 && cost == .01 && admissions == 1024) { Assert.True(guarded.Deferred > 0, name); lightDeferred += guarded.Deferred; }
+                            cases++; deferred += guarded.Deferred; behind += guarded.BehindAfterAdvance;
+                        }
+        output.WriteLine(cases + " cases without baseline holds, " + deferred + " deferred updates (" + lightDeferred + " in the light-load cases); every case keeps the baseline's holds, withheld minutes and native clock; updates still catching up after advancing " + behind);
+        Assert.True(cases > 300, "cases " + cases);
+        Assert.True(deferred > 0);
+    }
+
+    [Fact]
+    public void EverySimulationReplacementReleasesTheCarriedCatchUpAndTheClockForgetsItsLastTick()
+    {
+        string root = CapabilityReportTests.Root();
+        int sites = 0;
+        foreach (var file in new[] { "PersistentCityMod.cs", "PopulationLifecycle.cs" })
+        {
+            var lines = System.IO.File.ReadAllLines(System.IO.Path.Combine(root, "Runtime", file));
+            for (int i = 0; i < lines.Length; i++)
+            {
+                if (!System.Text.RegularExpressions.Regex.IsMatch(lines[i], @"^\s*simulation = ")) continue;
+                sites++;
+                Assert.True(lines.Skip(i).Take(3).Any(line => line.Contains("ForgetCollectionCatchUp();")), file + ":" + (i + 1) + " " + lines[i].Trim());
+            }
+        }
+        Assert.Equal(4, sites);
+        string clock = System.IO.File.ReadAllText(System.IO.Path.Combine(root, "Runtime", "NativeCityClock.cs"));
+        int reset = clock.IndexOf("private static void ResetDiagnostics()", StringComparison.Ordinal);
+        Assert.True(reset > 0 && clock.IndexOf("LastRequestedMinutes = float.NaN;", reset, StringComparison.Ordinal) > reset);
+        Assert.False(CollectionHeadroom.ClockAllowsDeferral(true, 600.25, float.NaN));
     }
 }

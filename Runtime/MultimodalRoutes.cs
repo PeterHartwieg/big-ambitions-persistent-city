@@ -316,6 +316,7 @@ namespace PersistentCity.Runtime
         public double JobPathReserveMilliseconds => jobPathReserveMilliseconds;
         public bool JobAdmissionExhaustedForFrame => jobAdmissionHeldFrame == Time.frameCount || jobRecheckHeldFrame == Time.frameCount
             || jobPathFrame == Time.frameCount && jobFramePaths >= MaximumJobPathsPerFrame;
+        public int FramePaths => jobPathFrame == Time.frameCount ? jobFramePaths : 0;
         public string LastJobUnit { get; private set; } = "";
         public double LastContinueMilliseconds { get; private set; }
         public double SliceUnitMilliseconds { get; private set; }
