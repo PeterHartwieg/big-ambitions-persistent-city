@@ -17,6 +17,8 @@ Every GR-5 rig run from now on must:
 
 ## Latest evidence
 
+- **24 November g, Mac (rig 17o), build `477d11a5`**. 3 PASS / 6 PARTIAL / 0 FAIL / 4 NOT RUN. Minute-level vendor handback joined. Recorder-off mod-work p95 was 3.5703 ms with five spikes at or above 30 ms. [24g results](#rig-results---24-november-2026-g-mac-rig-17o-e6-checks-1-3-6-7-at-477d11a5).
+
 - **24 November f, Mac (rig 17n), build `40fe3bf8`**. 2 PASS / 4 PARTIAL / 0 FAIL / 7 NOT RUN. The headless stop-2 retime and reversal passed. The camera and tagged cart arms were partial. [24f results](#rig-results---24-november-2026-f-mac-rig-17n-e6-checks-2-and-4-after-366-at-40fe3bf8).
 
 - **24 November e, Mac (rig 17m), build `1c22343d`**. 1 PASS / 0 PARTIAL / 0 FAIL / 1 NOT RUN across the through-gate arms. The rig reported `blocked_at_gate` in both states. The open traversal was NOT RUN (tooling) after the same approach stall. [24e results](#rig-results---24-november-2026-e-mac-rig-17m-350-check-2-through-gate-half-at-1c22343d).
@@ -27400,3 +27402,97 @@ Five Node processes appeared at every endpoint. The process reads found zero dot
 - Raw commands, log lines, frame reports, captures and archives are in `~/Coding_Projects/.agent-logs/persistent-city-rig-2026-11-24f-mac/`. SHA-256 of `evidence-sha256.txt` is `3ea64763a31e2dfcfa2190b79b3c479220e60c51dc8eb2cd457173346ea974f4`.
 
 Refs #366 #364
+
+## Rig results - 24 November 2026 g (Mac, rig 17o): E6 checks 1, 3, 6, 7 at 477d11a5
+
+Tested `477d11a5e595fc8820f50065817c352b79e8c7b5` after fetching origin. Product changes are from `40fe3bf8`. The current-tip rebuild reproduced the 17n binary (`a2b007972ef3d0164d6cae2b4d78b537a4420b4bfdc59dbdd5614ed960de33b5`). The private inventory updated the Persistent City DLL pin and provenance. Game build 3682, Street Food 0.10.12, RLO 1.0.6, and 1,000 residents. Persistent City's schema was 1 and `FoodChoicePriceWeight` was 1.2.
+
+Agent-rig checkout `d2d2ebd6887758a81dec88794d09fec95eebaa4d` used the existing overlays. Street Food pins were `7771637dcfcc254544548c72d8a84de56acb6f4863a4c47111f0376c3494c0f4` (FoodTrucks.dll), `06733f5e9d9c11ff57940f285f0300f3c98fab1505df0d77e8de15f3ca11c68e` (FoodTrucks.Core.dll), `368eb2675e198b9ed342e7d372f18328a4145891ecc46a5b63b241ef626012e7` (BridgeControl.dll), and `7b9e756306fa3d7620e02a857c8927a6ab04973f9bd8a77d3866700a6deac55c` (0Harmony.dll in both packages).
+
+3 PASS / 6 PARTIAL / 0 FAIL / 4 NOT RUN across E6, including carried results.
+
+| E6 check | Verdict | Evidence |
+| --- | --- | --- |
+| 1. Contract present, missing and old | PARTIAL | E6a bound Vendor API v1 and both vehicles were eligible. The pinned 0.10.11 DLL was unavailable and Contract 2 still has no reviewed build. |
+| 2. Ownership starts at an opening | PARTIAL | Carried from 17n. The headless stop-2 retime and reversal passed. The camera evidence did not follow the same vehicle across a committed retime. |
+| 3. Positive sale with exact money | PARTIAL | 24 paid hot dogs matched cargo, 9,600 cents and the midnight payment. 23 wallet debits joined. One buyer lacked a same-run baseline. |
+| 4. Choice next to shops and rivals | PARTIAL | Carried from 17n. Tagged choices and rival fingerprints were verified. The cart stayed closed in the day-two tagged sample. |
+| 5. Stand move with committed residents | NOT RUN | Needs the FT route `edit_stop` operation. |
+| 6. Handback mid-opening | PASS | Two committed meals missed safely. Street Food took over the same opening, and 83 consecutive ledger reads found no mixed-source minute. PC reclaimed the next opening. |
+| 7. Lease and missing PC | PARTIAL | Lease expiry, native sales, renewal and paid receipt continuity were observed. The with-PC flow failed its log gate on the Street Food shutdown exception. |
+| 8. Player-opened windows | PASS | Carried from 17l at `7714484f`. The player opening stayed Street Food-owned and the next crew opening was PC-owned. |
+| 9. Uncertain sale is not retried | NOT RUN | Needs RIG-SFFAULT. |
+| 10. Modded products on a vehicle | PARTIAL | Carried from 17l. Seven dumpling and 21 chopped-cheese paid receipts survived reload. Per-resident taste and the Mac `metadata_config` Drink override remain outside this batch. |
+| 11. Bodies at the hatch | PASS | Carried from 17l at `7714484f`. A resident approached, served, and left on the pavement side. |
+| 12. Older city refused | NOT RUN | Contract-2 render refused because reviewed pins are absent. The check still needs the schema-1 restatement. |
+| 13. Performance window | NOT RUN | Needs F6b's unified acceptance checks. Recorder-off timing is reported separately. |
+
+Pointer, hover, click and visual-feel checks stay with Peter. The #350 open arm and the separate Drink-override run were outside this batch.
+
+### Check 1. Vendor contract
+
+The stock E6a template ran on the Mac. Its flow reported PASS for the bridge calls, while the vendor console said `Warning: [Persistent City] vendor diagnostics unavailable: no active city.` The exact template DLL set omitted the installed Real Life Overhaul dependency. A run-local retry retained the hash-verified RLO DLL and bound the Vendor API. Its clock was still at 08:00 when the wait was interrupted, and the flow restored the rig.
+
+The manual present-contract arm used the pinned Street Food 0.10.12 DLLs and current-tip PC DLL on the isolated Mac's restored dependency set. After the 08:00–09:00 advance, `pc vendor status` read `bridge: Ready`, `apiAssembly: FoodTrucks.Core`, and both vehicles eligible with `Reason: ""` and requests pending before opening. FT `day_summary` still listed zero sales after the setup hour. Truck B's kabob arm is **restated for E6f**. Burger and kabob were allowed and truck B subsequently had active PC ownership and `canServe: true`, like cart A.
+
+The 0.10.11 missing-API arm was NOT RUN. Its Mac render returned `INPUT_ERROR` (exit 3), `Mod source hash mismatch: FoodTrucks/FoodTrucks.dll`. The pinned patched file was absent from the local inputs. The documented archive was unavailable without additional SSH authentication. Contract 2 was NOT RUN. Its Mac render returned `INPUT_ERROR` (exit 3), `sf-contract-2 has no reviewed pin yet`, and listed all six entries. Evidence is in `flows/sf-e6a-mac-01/`, `flows/sf-e6a-mac-02/`, `check1-present-*.json`, and the two render logs.
+
+### Check 3. Positive sale and exact money
+
+The first live VLEDGER request was `{"action":"vehicles","day":1,"vehicles":["xt84y+PrUSEBQH3LDzlFg=="]}`. The `rig-ledger-vehicles/v1` reply at day 1 08:00 recorded cart A owned, 40 hot dogs, zero sales and receipts, `sf_api_sales_sequence: null`, `in_summary: false`, and `complete: false`. The exact request and reply are in `check3-first-vledger-request.json` and `check3-first-vledger.json`.
+
+The controlled replay's 11:00 baseline and 11:30 read matched two unique paid hot-dog receipts to two units, 800 cents, an API sequence increase of two, and exact 400-cent balance and prepared-food debits for both residents. After lunch at 13:10, the ledger matched 24 unique paid receipts to 24 hot dogs and 9,600 cents, sequence 0 → 24, and stock 40 → 16. There were no duplicate paid intents or PC credits to the player. The 15 `pc_receipt_not_paid` rows were missed visits with no receipt record. The same-run wallet join matched all 23 observed prepared-food debits. Twenty-two balances fell by exactly 400 cents, and `pc:340` had a 900-cent net balance fall with 400 cents attributed to prepared food. The 32-resident baseline omitted `pv:639`, so its paid receipt lacks a same-run wallet join.
+
+At day 2 00:10, VLEDGER used the original baseline and 13:10 closing snapshot. It found one exact 9,600-cent native `foodtrucks:transaction_crew_sales` line for 24 sales, attributed by the Food cart label, with zero unattributed payments. All 24 paid receipts remained present. The sole remaining mismatch was `wallet_evidence_missing` for `pv:639`. The exact closing and midnight requests and replies are in `check3-lunch-final-closing*.json` and `check3-midnight-vledger*.json`.
+
+### Check 6. Handback during an opening
+
+At 11:08, cart A was open and PC-owned. `pc vendor withdraw xt84y+PrUSEBQH3LDzlFg==` was accepted with residents `pc:432` and `pv:837` already committed. Both were missed by 11:28, with no receipt and unchanged balances of 122,369 and 139,629 cents. There were no new cart meal intents. Street Food's log handed opening 10448 back at 12:15 and FT `state` still showed the cart open.
+
+VLEDGER supplied 83 consecutive minute reads from 11:09 through 12:31. The API sequence and PC paid count stayed at zero. The first increase in the native books was visible at 12:31 (one hot dog, 400 cents, stock 40 → 39), with no mixed-source minute in the captured interval. The baseline/closing join flagged the 400-cent, one-unit native sale because its equality checks expect PC-only deltas. The two receipt flags were visits with status `Missed` and no receipt. At the next opening (15:00, opening 14416), cart A took PC ownership again and was serving at 15:10.
+
+The data is in `check6-baseline.json`, `check6-minute-join.json`, `check6-baseline-closing-join.json`, and `check6-session-Player.log`.
+
+### Check 7. Lease and missing Persistent City
+
+The first paused check-7 candidate at 11:00 had cart A open and `canServe: true`. For the two flows, a fresh base replay produced a checkpoint at 11:30 with the same ownership, two paid receipts and five committed meals. The save came from the FT bridge with the clock paused and was hashed after shutdown. Both flows loaded their own copy of that 11:30 original.
+
+The run-local flow copies retained the installed, hash-verified RLO and Driven Rides support DLLs in both arms. The mod sets differed only in the two Persistent City DLLs. Without PC, the native log recorded lease expiry and handback of opening 10448 at 12:30, exactly 60 game minutes after load. The cart was still open and Street Food initialized its queue at the handback. Paid sales were still two at the 60-minute read. At 13:00 the books showed seven hot dogs and 2,800 cents, up five native sales and 2,000 cents. The crew log attributes all five new sales to Street Food before closure.
+
+With PC present, cart A reloaded open and serving on opening 10448. The lease read 2190 at load and renewed to 2205 by 11:50 and 2250 by 12:40. The original two receipt keys and values were unchanged. All five saved commitments were paid by 12:15, and the final read had 21 unique paid receipts. A separate ledger read on this relaunch saw `pv:639` miss, so this replay supplies no wallet proof for the earlier paid visit in check 3.
+
+All 30 gameplay steps passed in the with-PC flow. Its log gate returned FAIL (exit 1) because Street Food logged `Vendor API: refreshing after a change failed: System.NullReferenceException: Object reference not set to an instance of an object` in `Helpers.PlayerHelper.GetPosition` after the quit command released both vendors. The gameplay and teardown results make check 7 PARTIAL. Both flows confirmed shutdown, restored the mod DLL set and receipt, verified the original fixture, and released their own leases. Evidence is in `flows/check7-without-pc-mac-01/` and `flows/check7-with-pc-mac-01/`.
+
+### Recorder-off performance
+
+The shared Mac sample ran for 600.398 real seconds at 1× from day 1 11:00 to about 13:57, with the food decision recorder off. RIG-MODWORK bound 66 entry points with complete coverage and valid samples. Across 16,313 union frames, mod-work p95 was **3.5703 ms** (gate <5 ms), down from 3.8595 ms in 17n's provisional recorder-off read. Five spikes were counted and all five retained, with no truncation. 17n counted 11 and reached 176.2397 ms. The runs had different host loads.
+
+| Unity frame | Mod work | Dominant scope |
+| --- | ---: | --- |
+| 10823 | 40.4845 ms | `PopulationRuntime.Update` |
+| 11010 | 30.4770 ms | `PopulationRuntime.Update` |
+| 11411 | 63.6283 ms | `PopulationRuntime.Update` |
+| 12628 | 34.7309 ms | `PopulationRuntime.Update` |
+| 15345 | 109.1549 ms | `PopulationRuntime.Update` |
+
+Separate native whole-frame timing was p95 **46.6622 ms**, max **1,063.0813 ms**, with 15,687 spikes of at least 30 ms and 1,024 retained by the whole-frame cap. Mac load (1/5/15 min) was 7.60 / 6.71 / 5.36 at 18:34 and 4.97 / 5.54 / 5.50 at 18:44. The process read found one Node process at the start and four at the end. It detected the `20261124-140600` nightly-ci run at the end. No dotnet or MSBuild process appeared at either endpoint.
+
+The native values were 5 minutes, 3 saves, and `prevent_autosave: false`. The rig guard confirmed suppression after load and before and after the window. During the window it recorded 16,246 refusals, 0 allowed saves, and 0 native saving frames. Route A timing was outside this session's measurement.
+
+### Fixture hashes and restore
+
+| Fixture | Bytes | SHA-256 |
+| --- | ---: | --- |
+| `FT-E6-Vendors-base.hsg` | 3,488,213 | `4bf00a225b1e4ed20eb66ae2095752c0e77bcc138ff57ba476bdbb330e1ff796` |
+| `FT-E6-Vendors-check7-pc-owned.hsg` (11:30, both flows) | 4,749,872 | `2b6b4c8cef4857d9d048b5a57bcbd7da29b5688fc91eee76596049ba20227cc8` |
+| Earlier 11:00 check-7 checkpoint | 5,171,376 | `59b6e1f7a1e592482c562f3011f88d17786fe6ab1877230b7275e485287bc170` |
+
+The base archive and imported original matched. After the flows, the imported and generated saves were archived with their sidecars, including six residual flow portraits and three generated shop logos. The original SaveGames manifest matched exactly. The 17l archive stayed in place and matched its recorded hash.
+
+Manual staging used `python3 scripts/install-mac.py --stage-mod PersistentCity <absolute package path>` with `~/HART-Builds/persistent-city-rig-2026-11-24g-mac/package`. The first staging readback still showed the baseline DLL because the package contents were nested. That session was stopped, the original files were restored, and the package layout was corrected before measurement. The corrected stage and Player.log both show `staged_mod name=PersistentCity version=absent informational=0.10.0-persistent-city-candidate sha256=a2b007972ef3d0164d6cae2b4d78b537a4420b4bfdc59dbdd5614ed960de33b5`. The correct-stage receipt backup was `~/Library/Application Support/BigAmbitionsAgentTestsMac/receipt-backups/20261124T172828Z`.
+
+The isolated game stopped and the lease was released with zero pending operations. SHA-256 of AgentRigOps.dll matched before and after (`5e8559e84a7fea79e75d92709c1c03e2b4351507f60275622506383044a7c3f1`). All 272 ModsLocal files, 284 receipt entries, isolated preferences, original PC config and original SaveGames matched. Native autosave values matched the pre-run values.
+
+Raw logs, flow results, requests, ledger replies and retained saves are in `~/Coding_Projects/.agent-logs/persistent-city-rig-2026-11-24g-mac/`. SHA-256 of `evidence-sha256.txt` is `3fca1b27da1e7922fc2e4c29562e7e1e122e7be76ff39423ef9babcd0a358f30`.
+
+Refs #364 #366 #367
