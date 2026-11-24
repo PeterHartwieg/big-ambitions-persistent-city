@@ -382,7 +382,9 @@ namespace PersistentCity.Runtime
                         retimeCommitMilliseconds = (Stopwatch.GetTimestamp() - retimeStarted) * MillisecondsPerTimestamp;
                         if (retimeDriver.Degraded > 0)
                             log?.Info("Clock retime degraded " + retimeDriver.Degraded.ToString(System.Globalization.CultureInfo.InvariantCulture)
-                                + " journeys: each keeps its old pace on its current road edge or drives outside traffic until its next road section.");
+                                + " journeys: each keeps its old pace on its current road edge or drives outside traffic until its next road section; "
+                                + retimeDriver.PoseDegraded.ToString(System.Globalization.CultureInfo.InvariantCulture)
+                                + " of them could not keep their exact pose on the retimed route and left traffic or kept their old timing.");
                         var swapped = retimedRoutes != null && retimedRoutesRate == clockRate ? retimedRoutes
                             : new MultimodalRoutes(simulation.State.Places, TravelTiming.WalkingMetresPerMinute(NativeTravelPace.WalkingMetresPerSecond, clockRate), clockRate, dependency, routeObjects);
                         retimedRoutes = null;
@@ -852,7 +854,9 @@ namespace PersistentCity.Runtime
                 + rebuild.Updates.ToString(System.Globalization.CultureInfo.InvariantCulture) + " updates (slowest " + Milliseconds(rebuild.SlowestUpdateMilliseconds) + " ms); journeys with a split leg "
                 + retimeDriver.Split.ToString(System.Globalization.CultureInfo.InvariantCulture) + ", earlier splits joined "
                 + retimeDriver.Joined.ToString(System.Globalization.CultureInfo.InvariantCulture) + ", joins refused for an inexact pose "
-                + retimeDriver.JoinsRefused.ToString(System.Globalization.CultureInfo.InvariantCulture) + ", shared leg copies "
+                + retimeDriver.JoinsRefused.ToString(System.Globalization.CultureInfo.InvariantCulture) + ", degraded "
+                + retimeDriver.Degraded.ToString(System.Globalization.CultureInfo.InvariantCulture) + " (inexact pose "
+                + retimeDriver.PoseDegraded.ToString(System.Globalization.CultureInfo.InvariantCulture) + "), shared leg copies "
                 + retimeDriver.SharedLegs.ToString(System.Globalization.CultureInfo.InvariantCulture) + ", earlier shared legs reused "
                 + retimeDriver.ReusedLegs.ToString(System.Globalization.CultureInfo.InvariantCulture) + ", traffic retimed from " + retimeDriver.RetimedFrom + ".");
             log?.Info("Clock retime allocation: " + retimeAllocation.Describe(GcAllocationCounter.Name) + ".");

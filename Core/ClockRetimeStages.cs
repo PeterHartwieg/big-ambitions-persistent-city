@@ -137,6 +137,7 @@ namespace PersistentCity.Core
         public double SliceMilliseconds { get; private set; }
         public double SlowestSliceMilliseconds { get; private set; }
         public int Degraded { get; private set; }
+        public int PoseDegraded { get; private set; }
         public int Split { get; private set; }
         public int Joined { get; private set; }
         public int JoinsRefused { get; private set; }
@@ -146,6 +147,7 @@ namespace PersistentCity.Core
         public long SourceLegsExamined { get; private set; }
         public string RetimedFrom { get; private set; } = "";
         internal bool CoalesceReversals { get; set; } = true;
+        internal bool StrictPose { get; set; } = TravelTiming.StrictPoseDefault;
 
         public ClockRetimeOutcome Update(CityState state, double nativeRate, bool bodiesLive, double walkMetresPerSecond, double budgetMilliseconds)
         {
@@ -184,9 +186,9 @@ namespace PersistentCity.Core
                 restartPending = false;
                 var source = state.TakeRetimeSource();
                 RetimedFrom = source == null ? "a save snapshot" : source.Kernel == null ? "no traffic" : source.WithoutThroughCars ? "a copy without through cars" : "the live kernel";
-                Pending = TravelTiming.Begin(state, walkMetresPerSecond, nativeRate, source, sharedLegHint, CoalesceReversals);
+                Pending = TravelTiming.Begin(state, walkMetresPerSecond, nativeRate, source, sharedLegHint, CoalesceReversals, StrictPose);
                 CountSlice(started);
-                if (Pending == null) { Degraded = 0; finished = true; return ClockRetimeOutcome.Committed; }
+                if (Pending == null) { Degraded = PoseDegraded = 0; finished = true; return ClockRetimeOutcome.Committed; }
                 return restarted ? ClockRetimeOutcome.Restarted : ClockRetimeOutcome.Began;
             }
             if (!Pending.Ready)
@@ -197,7 +199,7 @@ namespace PersistentCity.Core
                 return ClockRetimeOutcome.Preparing;
             }
             if (!Pending.Commit()) { Pending = null; Restarts++; return ClockRetimeOutcome.Restarted; }
-            Degraded = Pending.Degraded; Split = Pending.Split; Joined = Pending.Joined; JoinsRefused = Pending.JoinsRefused; SharedLegs = Pending.SharedLegs; ReusedLegs = Pending.ReusedLegs; SourceLegsExamined = Pending.SourceLegsExamined; sharedLegHint = Pending.SharedPool;
+            Degraded = Pending.Degraded; PoseDegraded = Pending.PoseDegraded; Split = Pending.Split; Joined = Pending.Joined; JoinsRefused = Pending.JoinsRefused; SharedLegs = Pending.SharedLegs; ReusedLegs = Pending.ReusedLegs; SourceLegsExamined = Pending.SourceLegsExamined; sharedLegHint = Pending.SharedPool;
             RetimedTraffic = Pending.TakeRestoredTraffic(); Pending = null; finished = true;
             return ClockRetimeOutcome.Committed;
         }
@@ -219,7 +221,7 @@ namespace PersistentCity.Core
 
         private void Reset()
         {
-            finished = false; Restarts = 0; Slices = 0; SnapshotSlices = 0; SliceMilliseconds = SlowestSliceMilliseconds = 0; Degraded = 0; Split = Joined = JoinsRefused = 0; RetimedTraffic = null; SharedLegs = ReusedLegs = 0; SourceLegsExamined = 0; RetimedFrom = "";
+            finished = false; Restarts = 0; Slices = 0; SnapshotSlices = 0; SliceMilliseconds = SlowestSliceMilliseconds = 0; Degraded = PoseDegraded = 0; Split = Joined = JoinsRefused = 0; RetimedTraffic = null; SharedLegs = ReusedLegs = 0; SourceLegsExamined = 0; RetimedFrom = "";
         }
     }
 }

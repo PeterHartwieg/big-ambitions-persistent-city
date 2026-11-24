@@ -1430,7 +1430,8 @@ namespace PersistentCity.Core
                         current.FreeFlowMinutes = oldDuration * (1 - oldActualFraction) * factor;
                     }
                     double span = current.EndNominalMinutes - current.StartNominalMinutes;
-                    double mappedMotion = mapNominalMinutes == null ? motionCoordinate : mapNominalMinutes(vehicle.VehicleId, motionCoordinate);
+                    double mappedMotion = actual < motionCoordinate ? vehicle.NominalMinutes
+                        : mapNominalMinutes == null ? motionCoordinate : mapNominalMinutes(vehicle.VehicleId, motionCoordinate);
                     vehicle.MotionStartFraction = Math.Max(0, Math.Min(1, (mappedMotion - current.StartNominalMinutes) / span));
                     double motionReady = vehicle.MotionStartedAt + (1 - vehicle.MotionStartFraction) * current.FreeFlowMinutes;
                     vehicle.ReadyAt = Math.Max(vehicle.ReadyAt, motionReady);
