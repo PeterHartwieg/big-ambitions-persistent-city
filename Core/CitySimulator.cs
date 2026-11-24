@@ -309,6 +309,8 @@ namespace PersistentCity.Core
         public bool IsCaughtUpTo(double targetMinute) => Position.Finite(targetMinute)
             && State.Minute >= targetMinute && NoEventsThrough(targetMinute);
 
+        public bool NothingDueThrough(double targetMinute) => Position.Finite(targetMinute) && NoEventsThrough(targetMinute);
+
         public bool IsAccountingEpochDrained(double nativeMinute)
         {
             double target = AccountingClock.PreviousEpochTarget(nativeMinute);

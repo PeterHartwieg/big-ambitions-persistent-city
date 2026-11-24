@@ -104,7 +104,7 @@ public sealed class Gr5ImmediateRetimeAdvanceTests
         Assert.Equal(Reference, hash);
     }
 
-    private static (int Behind, int Deferred, double MaxLag) RunWithDeferrals(CitySimulator city, Gr5AdvanceAllocationTests.Planner planner, double from, double to, double rate, int period, int run)
+    private static (int Behind, int Deferred, double MaxLag) RunWithDeferrals(CitySimulator city, Gr5AdvanceAllocationTests.Planner planner, double from, double to, double rate, int period, int run, bool nothingDue = false)
     {
         int frame = 0, behind = 0, deferred = 0;
         double maxLag = 0, last = from;
@@ -112,7 +112,7 @@ public sealed class Gr5ImmediateRetimeAdvanceTests
         for (double minute = from; minute < to; minute += rate / 30, frame++)
         {
             last = minute;
-            if (frame % period < run) { city.RefreshOptionalStops(); deferred++; owed = true; maxLag = Math.Max(maxLag, minute - city.State.Minute); continue; }
+            if (frame % period < run && (!nothingDue || city.NothingDueThrough(AccountingClock.Target(minute)))) { city.RefreshOptionalStops(); deferred++; owed = true; maxLag = Math.Max(maxLag, minute - city.State.Minute); continue; }
             Run(city, planner, minute, minute + rate / 60, rate, null);
             owed = false;
             if (!city.IsCaughtUpTo(minute)) behind++;
@@ -138,6 +138,14 @@ public sealed class Gr5ImmediateRetimeAdvanceTests
             + deferred.MaxLag.ToString("0.000") + " game minutes; updates left behind the native minute after advancing " + deferred.Behind + " with deferrals / " + baseline.Behind + " without");
         Assert.True(deferred.Deferred > 80, "deferred updates " + deferred.Deferred);
         Assert.Equal(Reference, hash);
+        var (gatedState, gatedCity, gatedPlanner) = AfterImmediateRetime(out var gatedMarket);
+        gatedMarket.FreshRivals = true;
+        var gated = RunWithDeferrals(gatedCity, gatedPlanner, Start, Start + 240, 2, 300, CollectionHeadroom.MaximumDeferredUpdates, true);
+        gatedCity.SynchronizeSnapshot();
+        output.WriteLine("with the runtime nothing-due check: " + gated.Deferred + " of " + deferred.Deferred + " wanted updates deferred, largest backlog " + gated.MaxLag.ToString("0.000")
+            + " game minutes, updates left behind " + gated.Behind);
+        Assert.Equal(Reference, RushSpikeReplay.Sha(DevelopmentChain.Write(gatedState)));
+        Assert.Equal(baseline.Behind, gated.Behind);
     }
 
     private static FoodAlternativeObservation Rival(string owner = "rival-owner", int opens = 0) =>

@@ -609,7 +609,7 @@ namespace PersistentCity.Runtime
         private bool DeferForCollection(double native)
         {
             if (collectionGuard != 1 || NativeCityClock.ProcessingEconomySkip || !CollectionHeadroom.ClockAllowsDeferral(caughtUpAfterAdvance, native, NativeCityClock.LastRequestedMinutes)
-                || !collectionHeadroom.CapacityAllowsDeferral) return false;
+                || !collectionHeadroom.CapacityAllowsDeferral || simulation?.NothingDueThrough(AccountingClock.Target(native)) != true) return false;
             int before = GC.CollectionCount(0);
             long since = GcAllocationCounter.BytesSinceCollection();
             collectionDeferred = collectionHeadroom.Defer(before, since, GC.CollectionCount(0));

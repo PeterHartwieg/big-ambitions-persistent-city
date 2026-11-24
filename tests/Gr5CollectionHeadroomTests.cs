@@ -175,26 +175,31 @@ public sealed class Gr5CollectionHeadroomTests
     private sealed class ModelResult
     {
         public int Collections, InMod;
-        public long FenceRefusals, Unpredicted, Deferred, Capped, MaxDeferred, CompletedBytes, MaxBacklogBytes, Holds, MaxBacklogFrames;
+        public long FenceRefusals, Unpredicted, Deferred, Capped, MaxDeferred, CompletedBytes, MaxBacklogBytes, Holds, MaxBacklogFrames, DueRefusals, CapacityRefusals;
         public double Withheld, NativeEnd;
     }
 
     private sealed class ModelInputs
     {
-        public ModelInputs(int seed, int frames, double modShare, double bursty)
+        public ModelInputs(int seed, int frames, double modShare, double bursty, double dueShare = 1, double dueLoad = .3, double idleShare = .2)
         {
             var random = new Random(seed);
-            Game = new long[frames]; Mod = new long[frames];
+            var work = new Random(seed + 7919);
+            Game = new long[frames]; Mod = new long[frames]; Due = new bool[frames]; Load = new double[frames];
             for (int f = 0; f < frames; f++)
             {
                 Game[f] = (long)((60 + random.NextDouble() * 80) * 1024);
                 Mod[f] = (long)(Game[f] * modShare * (random.NextDouble() < bursty ? 20 : 1));
+                Due[f] = work.NextDouble() < dueShare;
+                Load[f] = Due[f] ? .05 + work.NextDouble() * (dueLoad - .05) : .02;
+                if (!Due[f]) Mod[f] = (long)(Mod[f] * idleShare);
             }
             Drift = new double[4096]; Jitter = new double[4096];
             for (int k = 0; k < Drift.Length; k++) { Drift[k] = random.NextDouble(); Jitter[k] = random.NextDouble(); }
         }
         public long[] Game, Mod;
-        public double[] Drift, Jitter;
+        public bool[] Due;
+        public double[] Drift, Jitter, Load;
     }
 
     private const double MinutesPerFrame = .035;
@@ -243,14 +248,21 @@ public sealed class Gr5CollectionHeadroomTests
             long game = inputs.Game[frame];
             Allocate(game / 2);
             if (guard) headroom.Observe(result.Collections, since, live, result.Collections);
-            bool skip = guard && CollectionHeadroom.ClockAllowsDeferral(caughtUpAfter, native, (float)MinutesPerFrame) && headroom.Defer(result.Collections, since, result.Collections);
+            bool skip = false;
+            if (guard && CollectionHeadroom.ClockAllowsDeferral(caughtUpAfter, native, (float)MinutesPerFrame))
+            {
+                if (!headroom.CapacityAllowsDeferral) result.CapacityRefusals++;
+                else if (inputs.Due[frame]) result.DueRefusals++;
+                else skip = headroom.Defer(result.Collections, since, result.Collections);
+            }
             if (skip)
             {
+                headroom.Carry(new PopulationFrameBudget(1.0 / 30, false));
                 deferredFlag = true; result.Deferred++; run++; result.MaxDeferred = Math.Max(result.MaxDeferred, run);
                 backlog += inputs.Mod[frame]; backlogFrames++;
                 result.MaxBacklogBytes = Math.Max(result.MaxBacklogBytes, backlog); result.MaxBacklogFrames = Math.Max(result.MaxBacklogFrames, backlogFrames);
             }
-            else { run = 0; Advance(inputs.Mod[frame]); }
+            else { run = 0; Advance(inputs.Mod[frame]); headroom.Advanced(true, inputs.Load[frame]); }
             Allocate(game - game / 2);
         }
         if (backlog > 0) Advance(0);
@@ -258,14 +270,18 @@ public sealed class Gr5CollectionHeadroomTests
         return result;
     }
 
-    [Fact]
-    public void InABoehmStyleFrameModelTheGuardMovesCollectionsOutOfModWorkWithTheSameWorkAndNoClockHolds()
+    private sealed class FrameScenario
     {
-        int baselineIn = 0, guardedIn = 0, collections = 0;
-        long deferred = 0, capped = 0, maxRun = 0, maxBacklog = 0, maxBacklogFrames = 0, holds = 0;
+        public int BaselineIn, GuardedIn, Collections;
+        public long Deferred, Capped, MaxRun, MaxBacklog, MaxBacklogFrames, Holds, DueRefusals, CapacityRefusals;
+    }
+
+    private FrameScenario FrameModelScenario(string name, double dueShare, double dueLoad)
+    {
+        var total = new FrameScenario();
         for (int seed = 1; seed <= 6; seed++)
         {
-            var inputs = new ModelInputs(seed, 17000 * 6, .06, .02);
+            var inputs = new ModelInputs(seed, 17000 * 6, .06, .02, dueShare, dueLoad);
             var baseline = Model(false, inputs);
             var guarded = Model(true, inputs);
             Assert.Equal(baseline.CompletedBytes, guarded.CompletedBytes);
@@ -273,30 +289,44 @@ public sealed class Gr5CollectionHeadroomTests
             Assert.Equal(baseline.NativeEnd, guarded.NativeEnd);
             Assert.Equal(baseline.Withheld, guarded.Withheld);
             Assert.Equal(0, baseline.Holds);
-            output.WriteLine("seed " + seed + ": in mod " + baseline.InMod + " / " + guarded.InMod + ", at a minute fence " + guarded.FenceRefusals + ", without a prediction " + guarded.Unpredicted + ", capped " + guarded.Capped);
-            baselineIn += baseline.InMod; guardedIn += guarded.InMod; collections += guarded.Collections;
-            deferred += guarded.Deferred; capped += guarded.Capped; maxRun = Math.Max(maxRun, guarded.MaxDeferred);
-            maxBacklog = Math.Max(maxBacklog, guarded.MaxBacklogBytes); maxBacklogFrames = Math.Max(maxBacklogFrames, guarded.MaxBacklogFrames); holds += guarded.Holds;
+            total.BaselineIn += baseline.InMod; total.GuardedIn += guarded.InMod; total.Collections += guarded.Collections;
+            total.Deferred += guarded.Deferred; total.Capped += guarded.Capped; total.MaxRun = Math.Max(total.MaxRun, guarded.MaxDeferred);
+            total.MaxBacklog = Math.Max(total.MaxBacklog, guarded.MaxBacklogBytes); total.MaxBacklogFrames = Math.Max(total.MaxBacklogFrames, guarded.MaxBacklogFrames);
+            total.Holds += guarded.Holds; total.DueRefusals += guarded.DueRefusals; total.CapacityRefusals += guarded.CapacityRefusals;
         }
-        output.WriteLine("model: " + collections + " collections; inside mod work without / with the guard " + baselineIn + " / " + guardedIn
-            + "; deferred updates " + deferred + " (" + (deferred / (double)collections).ToString("0.0") + " per collection), capped cycles " + capped + ", longest deferral " + maxRun
-            + " updates; largest backlog " + maxBacklog + " B over " + maxBacklogFrames + " updates, drained; ordinary clock holds " + holds + "; equal completed work and native clock in both arms");
-        Assert.Equal(0, holds);
-        Assert.True(collections > 100, "collections " + collections);
-        Assert.True(baselineIn >= collections / 20, "baseline collections in mod work " + baselineIn);
-        Assert.True(guardedIn * 4 <= baselineIn, "guarded collections in mod work " + guardedIn + " vs " + baselineIn);
-        Assert.True(maxRun <= CollectionHeadroom.MaximumDeferredUpdates);
-        Assert.True(deferred <= (long)collections * CollectionHeadroom.MaximumDeferredUpdates);
+        output.WriteLine(name + " (due work in " + dueShare.ToString("0%") + " of updates, load up to " + dueLoad.ToString("0.00") + "): " + total.Collections
+            + " collections; inside mod work without / with the guard " + total.BaselineIn + " / " + total.GuardedIn + "; deferred updates " + total.Deferred
+            + ", refused for due work " + total.DueRefusals + ", for capacity " + total.CapacityRefusals + ", capped cycles " + total.Capped + ", longest deferral " + total.MaxRun
+            + " updates; largest backlog " + total.MaxBacklog + " B over " + total.MaxBacklogFrames + " updates; ordinary clock holds " + total.Holds);
+        Assert.Equal(0, total.Holds);
+        Assert.True(total.Collections > 100, name + " collections " + total.Collections);
+        Assert.True(total.MaxRun <= CollectionHeadroom.MaximumDeferredUpdates);
+        Assert.True(total.Deferred <= (long)total.Collections * CollectionHeadroom.MaximumDeferredUpdates);
+        return total;
     }
+
+    [Fact]
+    public void InABoehmStyleFrameModelTheGuardDefersOnlyUpdatesWithNothingDueAndKeepsTheWorkAndClock()
+    {
+        var saturated = FrameModelScenario("due work every update", 1, .3);
+        Assert.Equal(0, saturated.Deferred);
+        Assert.Equal(saturated.BaselineIn, saturated.GuardedIn);
+        foreach (var scenario in new[] { FrameModelScenario("half idle, heavy", .5, .7), FrameModelScenario("half idle, light", .5, .3), FrameModelScenario("mostly idle, light", .2, .3) })
+        {
+            Assert.True(scenario.Deferred > 0);
+            Assert.True(scenario.GuardedIn <= scenario.BaselineIn + 1, scenario.GuardedIn + " vs " + scenario.BaselineIn);
+        }
+    }
+
     private sealed class CatchUpResult
     {
         public long Holds, Deferred, BehindAfterAdvance, Processed;
         public double Withheld, NativeEnd;
     }
 
-    private enum CatchUpPolicy { Naive, Carry, Capacity }
+    private enum CatchUpPolicy { Naive, Carry, Capacity, NothingDue }
 
-    private static CatchUpResult CatchUpModel(double eventsPerTick, double eventMilliseconds, int admissionsPerFrame, int period, int phase, int run, bool deferrals, CatchUpPolicy policy)
+    private static CatchUpResult CatchUpModel(double eventsPerTick, double eventMilliseconds, int admissionsPerFrame, int period, int phase, int run, bool deferrals, CatchUpPolicy policy, double[]? schedule = null)
     {
         const float tick = 2f / 30;
         const double seconds = 1.0 / 30, timeBudget = UpdateCityBudget.AdvanceFloorMilliseconds;
@@ -305,7 +335,7 @@ public sealed class Gr5CollectionHeadroomTests
         double spacing = tick / eventsPerTick, native = 600, city = 600;
         long next = 0;
         bool deferredFlag = false, caughtUpAfter = true, carry = policy != CatchUpPolicy.Naive;
-        double Due(long index) => 600 + (index + 1) * spacing;
+        double Due(long index) => schedule == null ? 600 + (index + 1) * spacing : index < schedule.Length ? schedule[index] : double.PositiveInfinity;
         for (int frame = 0; frame < 3000; frame++)
         {
             bool caughtUp = city >= AccountingClock.Target(native);
@@ -317,7 +347,8 @@ public sealed class Gr5CollectionHeadroomTests
             var budget = new PopulationFrameBudget(seconds, false);
             bool wanted = deferrals && (frame + phase) % period < run;
             if (wanted && CollectionHeadroom.ClockAllowsDeferral(caughtUpAfter, native, carry ? tick : 0f)
-                && (policy != CatchUpPolicy.Capacity || headroom.CapacityAllowsDeferral))
+                && (policy < CatchUpPolicy.Capacity || headroom.CapacityAllowsDeferral)
+                && (policy != CatchUpPolicy.NothingDue || Due(next) > AccountingClock.Target(native)))
             {
                 deferredFlag = true; result.Deferred++;
                 if (carry) headroom.Carry(budget);
@@ -392,25 +423,62 @@ public sealed class Gr5CollectionHeadroomTests
         Assert.True(carryOnly.Holds > 0, "carried event limits do not lift the wall-time limit");
         Assert.Equal((saturatedBaseline.Holds, saturatedBaseline.Withheld, saturatedBaseline.NativeEnd), (saturated.Holds, saturated.Withheld, saturated.NativeEnd));
         long cases = 0, deferred = 0, behind = 0, lightDeferred = 0;
-        foreach (double rate in new[] { 4.0, 8, 12, 20, 26, 31 })
+        foreach (double rate in new[] { .25, .5, 4.0, 8, 12, 20, 26, 31 })
             foreach (double cost in new[] { .01, .05, .1, .25 })
                 foreach (int admissions in new[] { 8, 16, 1024 })
                     for (int run = 1; run <= CollectionHeadroom.MaximumDeferredUpdates; run++)
                         for (int phase = 0; phase < 15; phase += 4)
                         {
-                            var baseline = CatchUpModel(rate, cost, admissions, 15, phase, run, false, CatchUpPolicy.Capacity);
+                            var baseline = CatchUpModel(rate, cost, admissions, 15, phase, run, false, CatchUpPolicy.NothingDue);
                             if (baseline.Holds > 0) continue;
-                            var guarded = CatchUpModel(rate, cost, admissions, 15, phase, run, true, CatchUpPolicy.Capacity);
+                            var guarded = CatchUpModel(rate, cost, admissions, 15, phase, run, true, CatchUpPolicy.NothingDue);
                             string name = "rate " + rate + " cost " + cost + " admissions " + admissions + " run " + run + " phase " + phase;
                             Assert.True((baseline.Holds, baseline.Withheld, baseline.NativeEnd) == (guarded.Holds, guarded.Withheld, guarded.NativeEnd),
                                 name + ": holds " + guarded.Holds + " withheld " + guarded.Withheld + " vs " + baseline.Holds + " / " + baseline.Withheld);
                             Assert.True(baseline.Processed - guarded.Processed <= (long)Math.Ceiling(rate) * (run + 1), name);
-                            if (rate == 4 && cost == .01 && admissions == 1024) { Assert.True(guarded.Deferred > 0, name); lightDeferred += guarded.Deferred; }
+                            if (rate < 1) lightDeferred += guarded.Deferred;
                             cases++; deferred += guarded.Deferred; behind += guarded.BehindAfterAdvance;
                         }
         output.WriteLine(cases + " cases without baseline holds, " + deferred + " deferred updates (" + lightDeferred + " in the light-load cases); every case keeps the baseline's holds, withheld minutes and native clock; updates still catching up after advancing " + behind);
         Assert.True(cases > 300, "cases " + cases);
-        Assert.True(deferred > 0);
+        Assert.True(lightDeferred > 0);
+    }
+
+    private static double[] QuietThenBusy(int minutes, bool idleFirstBusyUpdate)
+    {
+        const double tick = 2.0 / 30;
+        var due = new System.Collections.Generic.List<double>();
+        for (int minute = 0; minute < minutes; minute++)
+            for (int k = 1; k <= 15; k++)
+            {
+                double start = 600 + minute + (k - 1) * tick;
+                int units = k <= 11 ? 1 : k == 12 && idleFirstBusyUpdate ? 0 : 8;
+                for (int j = 0; j < units; j++) due.Add(start + (j + .5) / units * tick);
+            }
+        return due.ToArray();
+    }
+
+    [Fact]
+    public void ABusyStretchThatStartsOnTheDeferredUpdateDoesNotHoldTheClock()
+    {
+        var schedule = QuietThenBusy(220, false);
+        var baseline = CatchUpModel(0, .25, 1024, 15, 4, 1, false, CatchUpPolicy.NothingDue, schedule);
+        var capacity = CatchUpModel(0, .25, 1024, 15, 4, 1, true, CatchUpPolicy.Capacity, schedule);
+        var shipped = CatchUpModel(0, .25, 1024, 15, 4, 1, true, CatchUpPolicy.NothingDue, schedule);
+        output.WriteLine("11 updates with one due unit, then four with eight, 0.25 ms per unit, 2 ms budget, 2x at 30 fps, deferral wanted on the first busy update: baseline "
+            + baseline.Holds + " holds / " + baseline.Withheld.ToString("0.000000") + " minutes withheld; capacity check alone " + capacity.Holds + " / " + capacity.Withheld.ToString("0.000000")
+            + " (" + capacity.Deferred + " deferred); with the nothing-due check " + shipped.Holds + " / " + shipped.Withheld.ToString("0.000000") + " (" + shipped.Deferred + " deferred)");
+        Assert.Equal(0, baseline.Holds);
+        Assert.True(capacity.Deferred > 0 && capacity.Holds > 0 && capacity.Withheld > baseline.Withheld, "the capacity check alone defers into the busy stretch");
+        Assert.Equal((baseline.Holds, baseline.Withheld, baseline.NativeEnd, baseline.Processed), (shipped.Holds, shipped.Withheld, shipped.NativeEnd, shipped.Processed));
+        Assert.Equal(0, shipped.Deferred);
+        var gap = QuietThenBusy(220, true);
+        var gapBaseline = CatchUpModel(0, .25, 1024, 15, 4, 1, false, CatchUpPolicy.NothingDue, gap);
+        var gapGuarded = CatchUpModel(0, .25, 1024, 15, 4, 1, true, CatchUpPolicy.NothingDue, gap);
+        output.WriteLine("with nothing due on the wanted update: " + gapGuarded.Deferred + " deferred, " + gapGuarded.Holds + " holds / " + gapGuarded.Withheld.ToString("0.000000")
+            + " vs baseline " + gapBaseline.Holds + " / " + gapBaseline.Withheld.ToString("0.000000"));
+        Assert.True(gapGuarded.Deferred > 0);
+        Assert.Equal((gapBaseline.Holds, gapBaseline.Withheld, gapBaseline.NativeEnd, gapBaseline.Processed), (gapGuarded.Holds, gapGuarded.Withheld, gapGuarded.NativeEnd, gapGuarded.Processed));
     }
 
     [Fact]
