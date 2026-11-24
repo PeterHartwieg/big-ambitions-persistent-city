@@ -352,6 +352,10 @@ def type_outside_caches_read(row, key):
     return next((item['objects'] for item in row.get('tracked_types_outside_caches', []) if item['name'] == key), None)
 
 
+def type_outside_caches_bytes_read(row, key):
+    return next((item.get('bytes') for item in row.get('tracked_types_outside_caches', []) if item['name'] == key), None)
+
+
 def game_pid(timeout=10.0, interval=.25):
     deadline = time.monotonic() + timeout
     while True:

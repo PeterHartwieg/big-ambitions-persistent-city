@@ -197,6 +197,9 @@ public sealed class Gr5RepeatedRetimeLeakTests
             int yields = 0;
             while (!rebuild.Step(0))
                 Observe(Census(("simulation", city), ("rebuild", rebuild), ("driver", driver)), "rebuild yield " + ++yields);
+            var completed = Census(("simulation", city), ("rebuild", rebuild), ("driver", driver));
+            Observe(completed, "rebuild completed before TakeResult");
+            Assert.True(Objects(completed, "CitySimulator") <= 2);
             var result = rebuild.TakeResult();
             var handedOver = Census(("simulation", city), ("result", result), ("rebuild", rebuild), ("driver", driver));
             Observe(handedOver, "old and new simulation held");
@@ -227,6 +230,11 @@ public sealed class Gr5RepeatedRetimeLeakTests
             }
             Assert.True(p[HandoverCycles - 1].Bytes - p[1].Bytes < PlateauAllowance, "to " + rate + "x peak rose over cycles 2.." + HandoverCycles + ": " + string.Join(", ", p.Select(h => h.Bytes)));
             Assert.True(a[HandoverCycles - 1].Bytes - a[1].Bytes < PlateauAllowance, "to " + rate + "x settled graph rose over cycles 2.." + HandoverCycles + ": " + string.Join(", ", a.Select(h => h.Bytes)));
+            var overhead = p.Zip(a, (peak, after) => peak.Bytes - after.Bytes).ToList();
+            output.WriteLine("  to " + rate + "x peak minus settled by cycle: " + string.Join(" / ", overhead.Select(o => o.ToString("+0;-0;0") + " B")));
+            for (int k = 1; k < HandoverCycles; k++)
+                Assert.True(overhead[k] - overhead[k - 1] < PlateauAllowance, "to " + rate + "x peak minus settled rose from cycle " + k + " to " + (k + 1) + ": " + string.Join(", ", overhead));
+            Assert.True(overhead[HandoverCycles - 1] - overhead[1] < PlateauAllowance, "to " + rate + "x peak minus settled rose over cycles 2.." + HandoverCycles + ": " + string.Join(", ", overhead));
         }
     }
 
@@ -609,6 +617,122 @@ public sealed class Gr5RepeatedRetimeLeakTests
             "drained RouteLeg " + Objects(drained, "RouteLeg") + " vs control " + Objects(drainedControl, "RouteLeg") + " with " + inFlight.Count + " journeys in flight at R" + cycles);
     }
 
+    private static readonly Type[] OutsideCacheTypes = { typeof(RouteLeg), typeof(Route), typeof(RouteLeg[]), typeof(RouteLegs), typeof(int[]) };
+
+    private sealed class MixedRead
+    {
+        public long Bytes, LegArrayBytes, LegArrayBytesOutsideCaches, LegArrayBytesInCaches, IntArrayBytes, IntArrayBytesOutsideCaches, Legs, MostLegs;
+        public RetainedCensus.JourneyLegLedger Journeys;
+    }
+
+    private static MixedRead MixedCensus(CityState state, CitySimulator city, ClockRetimeDriver driver, NightPlanner planner)
+    {
+        var census = new RetainedCensus();
+        census.TrackPerRoot(OutsideCacheTypes);
+        planner.RetainedCaches((name, cache, bound) => census.DeferCache("cache.routes." + name, cache, bound));
+        city.Traffic?.RetainedCaches((name, cache, bound) => census.DeferCache("cache.traffic." + name, cache, bound));
+        census.Add("runtime.simulation", city);
+        census.Add("runtime.driver", driver);
+        census.Add("runtime.planner", planner);
+        census.AddDeferredCaches();
+        var journeys = RetainedCensus.JourneyLegs(state);
+        return new MixedRead
+        {
+            Bytes = census.Bytes, Journeys = journeys, Legs = census.ObjectsOf(typeof(RouteLeg)), MostLegs = journeys.MostLegs,
+            LegArrayBytes = census.BytesOf(typeof(RouteLeg[])), LegArrayBytesInCaches = census.CachedBytesOf(typeof(RouteLeg[])),
+            LegArrayBytesOutsideCaches = census.BytesOf(typeof(RouteLeg[])) - census.CachedBytesOf(typeof(RouteLeg[])),
+            IntArrayBytes = census.BytesOf(typeof(int[])), IntArrayBytesOutsideCaches = census.BytesOf(typeof(int[])) - census.CachedBytesOf(typeof(int[])),
+        };
+    }
+
+    [Fact]
+    public void FiveOneTwoOneRetimesOfTheMixedTrafficCityKeepOutsideCacheLegArrayBytesMatchedToAControlThroughA30MinuteDrain()
+    {
+        const int cycles = 5;
+        const double spacing = 10, drain = 30;
+        List<MixedRead>? retimedReads = null, controlReads = null;
+        int mostVehicles = 0;
+        Exception? failure = null;
+        var thread = new System.Threading.Thread(() =>
+        {
+            try
+            {
+                (CityState State, CitySimulator City, NightPlanner Planner) Build()
+                {
+                    var planner = new NightPlanner(true);
+                    var state = Gr5AllocationMeasure.RigCity();
+                    var homes = state.Places.ToDictionary(p => p.Id, StringComparer.Ordinal);
+                    foreach (var person in state.Citizens)
+                        if (person.Preferences.OwnsCar) person.Car = new CarState { Id = person.Identity.Id + ":car", ParkedPosition = NightPlanner.Curb(homes[person.HomeId].Position) };
+                    var built = new CitySimulator(state, planner);
+                    built.AttachFoodMarket(new VisitorRoutineTests.Market { Shops = F5gPopulationFillTests.Shops(state) });
+                    built.AttachOptionalStops(new Gr5AllocationMeasure.StopSpots(), OptionalStopPolicy.ApprovedChoicePercentage);
+                    built.AdvanceTo(Math.Floor(state.Minute / 1440) * 1440 + 1440 + 15.5 * 60, int.MaxValue);
+                    return (state, built, planner);
+                }
+                var retimed = Build(); var control = Build();
+                var driver = new ClockRetimeDriver(); var controlDriver = new ClockRetimeDriver();
+                var city = retimed.City; var state = retimed.State;
+                CitySimulator Retime(double rate)
+                {
+                    while (driver.Update(state, rate, false, 1.4, ClockRetimeStages.SliceMilliseconds) != ClockRetimeOutcome.Committed) { }
+                    retimed.Planner.Rate(rate);
+                    var rebuild = city.BeginRebuildRoutes(retimed.Planner, driver.TakeRetimedTraffic());
+                    while (!rebuild.Step(0)) { }
+                    var result = rebuild.TakeResult();
+                    mostVehicles = Math.Max(mostVehicles, result.Traffic?.VehicleCount ?? 0);
+                    return result;
+                }
+                retimedReads = new List<MixedRead> { MixedCensus(state, city, driver, retimed.Planner) };
+                controlReads = new List<MixedRead> { MixedCensus(control.State, control.City, controlDriver, control.Planner) };
+                double start = state.Minute;
+                for (int cycle = 1; cycle <= cycles; cycle++)
+                {
+                    city = Retime(2);
+                    city.AdvanceTo(state.Minute + 0.05, int.MaxValue);
+                    city = Retime(1);
+                    double end = start + cycle * spacing;
+                    city.AdvanceTo(end, int.MaxValue);
+                    control.City.AdvanceTo(end, int.MaxValue);
+                    Assert.Equal(end, control.State.Minute);
+                    Assert.True(city.ActiveJourneyIndexMatchesState());
+                    retimedReads.Add(MixedCensus(state, city, driver, retimed.Planner));
+                    controlReads.Add(MixedCensus(control.State, control.City, controlDriver, control.Planner));
+                }
+                double drainedAt = state.Minute + drain;
+                city.AdvanceTo(drainedAt, int.MaxValue); control.City.AdvanceTo(drainedAt, int.MaxValue);
+                Assert.True(city.ActiveJourneyIndexMatchesState());
+                retimedReads.Add(MixedCensus(state, city, driver, retimed.Planner));
+                controlReads.Add(MixedCensus(control.State, control.City, controlDriver, control.Planner));
+            }
+            catch (Exception error) { failure = error; }
+        }, 64 * 1024 * 1024);
+        thread.Start(); thread.Join();
+        if (failure != null) throw new InvalidOperationException("mixed-traffic five-retime run", failure);
+        output.WriteLine("rig food city with cars (35% owners), cached shared 6-leg walks, 4 stations and mapped car routes on a 49x49 road grid; five 1->2->1 retimes " + spacing + " game minutes apart, then a " + drain
+            + "-minute drain; the retimed planner drops its caches at every rate change as the runtime does; at most " + mostVehicles + " vehicles. Retimed / control / gap (production RetainedCensus, Mono 64-bit layout model):");
+        var outside = new List<long>(); var ints = new List<long>();
+        for (int i = 0; i < retimedReads!.Count; i++)
+        {
+            var r = retimedReads[i]; var c = controlReads![i];
+            string label = i <= cycles ? "R" + i : "drained";
+            outside.Add(r.LegArrayBytesOutsideCaches - c.LegArrayBytesOutsideCaches);
+            ints.Add(r.IntArrayBytesOutsideCaches - c.IntArrayBytesOutsideCaches);
+            output.WriteLine("  " + label + " graph " + r.Bytes + " / " + c.Bytes + " / " + (r.Bytes - c.Bytes).ToString("+0;-0;0") + " B; RouteLeg[] outside caches " + r.LegArrayBytesOutsideCaches + " / " + c.LegArrayBytesOutsideCaches + " / " + outside[i].ToString("+0;-0;0")
+                + " B, in caches " + r.LegArrayBytesInCaches + " / " + c.LegArrayBytesInCaches + " B, current journeys " + r.Journeys.LegArrayBytes + " / " + c.Journeys.LegArrayBytes + " B (" + r.Journeys.LegArrays + " / " + c.Journeys.LegArrays + " arrays, "
+                + r.Journeys.Legs + " / " + c.Journeys.Legs + " legs, " + r.Journeys.LegArraySlots + " / " + c.Journeys.LegArraySlots + " slots, longest " + r.MostLegs + " / " + c.MostLegs + " legs); Int32[] outside caches " + r.IntArrayBytesOutsideCaches + " / " + c.IntArrayBytesOutsideCaches + " / " + ints[i].ToString("+0;-0;0") + " B");
+        }
+        Assert.True(retimedReads.Max(r => r.MostLegs) >= 40, "the fixture has no long car route; longest journey " + retimedReads.Max(r => r.MostLegs) + " legs");
+        Assert.Equal(0, outside[0]); Assert.Equal(0, ints[0]);
+        var finalThree = outside.Skip(cycles - 2).Take(3).ToList();
+        Assert.False(finalThree[1] > finalThree[0] && finalThree[2] > finalThree[1], "RouteLeg[] outside caches gap rose at each of the final three retime cycles: " + string.Join(", ", outside));
+        Assert.True(outside[cycles + 1] <= Math.Max(0, outside.Take(cycles + 1).Max()), "drained RouteLeg[] outside caches gap " + outside[cycles + 1] + " B is above every earlier read: " + string.Join(", ", outside));
+        var intFinal = ints.Skip(cycles - 2).Take(3).ToList();
+        Assert.False(intFinal[1] > intFinal[0] && intFinal[2] > intFinal[1], "Int32[] outside caches gap rose at each of the final three retime cycles: " + string.Join(", ", ints));
+        Assert.True(ints[cycles + 1] <= Math.Max(0, ints.Take(cycles + 1).Max()), "drained Int32[] outside caches gap " + ints[cycles + 1] + " B is above every earlier read: " + string.Join(", ", ints));
+        Assert.True(retimedReads[cycles + 1].Bytes - controlReads![cycles + 1].Bytes < Allowance, "drained retimed minus control " + (retimedReads[cycles + 1].Bytes - controlReads[cycles + 1].Bytes) + " B");
+    }
+
     [Fact]
     public void PrePositioningTheRigFoodCityToNightAtSixtyTimesRetainsNoMoreThanAtTwentyTimes()
     {
@@ -689,6 +813,13 @@ public sealed class Gr5RepeatedRetimeLeakTests
             TrafficNetwork = network;
             if (rate == this.rate) return;
             this.rate = rate; cache.Clear(); order.Clear(); trains.Clear();
+        }
+
+        public void RetainedCaches(Action<string, object, int> add)
+        {
+            add("walking.cache", cache, CacheLimit);
+            add("walking.order", order, CacheLimit);
+            add("trains", trains, Stations.Length * Stations.Length);
         }
 
         public void SetTrafficForecast(Func<int, double, TrafficLinkForecast>? forecast) { }

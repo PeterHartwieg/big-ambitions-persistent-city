@@ -6,7 +6,7 @@ import time
 
 from rigcommon import (FIXTURE, LOG, NATIVE_TOLERANCE, archive, auto, call, census, console, clock, clock_text, footprint, game_pid, go, host, idle,
                        loaded_identity, log_size, log_since, native_minute, now, optional, pause_at_native, probe_read, prop, rate,
-                       require_lock, rss_kib, run, start_and_load, stop, route_leg_read, track_cost, type_outside_caches_read, type_read, wait_native,
+                       require_lock, rss_kib, run, start_and_load, stop, route_leg_read, track_cost, type_outside_caches_bytes_read, type_outside_caches_read, type_read, wait_native,
                        wrap, write)
 from rigpaths import absolute
 
@@ -136,6 +136,7 @@ def readings_summary(rows):
         **{t: (lambda r, t=t: type_read(r['census'], t)) for t in TYPES},
         **{'RouteLeg ' + k.replace('_', ' '): (lambda r, k=k: route_leg_read(r['census'], k)) for k in ROUTE_LEGS},
         **{t + ' outside caches': (lambda r, t=t: type_outside_caches_read(r['census'], t)) for t in OUTSIDE_CACHES},
+        **{t + ' outside caches bytes': (lambda r, t=t: type_outside_caches_bytes_read(r['census'], t)) for t in OUTSIDE_CACHES},
     }
     return {name: [get(r) for r in rows] for name, get in paths.items()}
 

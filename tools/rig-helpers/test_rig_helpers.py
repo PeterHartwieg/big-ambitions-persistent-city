@@ -209,7 +209,8 @@ class RetentionRunnerTests(unittest.TestCase):
     def test_bounded_route_caches_are_read_apart_from_the_leak_series(self):
         retention = self.local(importlib.import_module('retention'))
         row = {'census': {'tracked_types': [{'name': 'RouteLeg', 'objects': 12179}, {'name': 'Route', 'objects': 1084}],
-                          'tracked_types_outside_caches': [{'name': 'RouteLeg', 'objects': 9990}, {'name': 'Route', 'objects': 640}],
+                          'tracked_types_outside_caches': [{'name': 'RouteLeg', 'objects': 9990}, {'name': 'Route', 'objects': 640},
+                                                           {'name': 'RouteLeg[]', 'objects': 518, 'bytes': 83_168}],
                           'cache_roots': [{'name': 'cache.routes.walking.cache', 'bound': 1024, 'routes': 444, 'route_legs': 2189}],
                           'route_legs': {'retained': 12179, 'in_current_journeys': 9936, 'outside_current_journeys': 2243,
                                          'in_caches': 2189, 'outside_current_journeys_and_caches': 54}},
@@ -219,6 +220,9 @@ class RetentionRunnerTests(unittest.TestCase):
         self.assertEqual(series['RouteLeg'], [12179])
         self.assertEqual(series['RouteLeg outside caches'], [9990])
         self.assertEqual(series['Route outside caches'], [640])
+        self.assertEqual(series['RouteLeg[] outside caches'], [518])
+        self.assertEqual(series['RouteLeg[] outside caches bytes'], [83_168])
+        self.assertEqual(series['RouteLeg outside caches bytes'], [None])
         self.assertEqual(series['RouteLeg in caches'], [2189])
         self.assertEqual(series['RouteLeg outside current journeys and caches'], [54])
 
