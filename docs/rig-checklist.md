@@ -17,6 +17,8 @@ Every GR-5 rig run from now on must:
 
 ## Latest evidence
 
+- **24 November i, Mac (rig 17q), build `3db17f5e`**. 1 PASS / 1 PARTIAL / 0 FAIL / 1 NOT RUN. The closed leaf stopped the car and the held-open leaf still blocked the through-route. Provisional recorder-off mod-work p95 was 3.6813 ms with 0 spikes ≥30 ms. [24i results](#rig-results---24-november-2026-i-mac-rig-17q-350-through-gate-after-agent-rig-123-at-3db17f5e).
+
 - **24 November h, Mac (rig 17p), build `c20d4ec4`**. 2 PASS / 2 PARTIAL / 0 FAIL / 2 NOT RUN across the six scoped arms. The same taxi advanced across the committed 20× retime. Provisional recorder-off mod-work p95 on the shared Mac was 3.3696 ms with one spike at or above 30 ms. [24h results](#rig-results---24-november-2026-h-mac-rig-17p-350-through-gate-e6-2b101-01011-at-c20d4ec4).
 
 - **24 November g, Mac (rig 17o), build `477d11a5`**. 3 PASS / 6 PARTIAL / 0 FAIL / 4 NOT RUN. Minute-level vendor handback joined. Provisional recorder-off mod-work p95 on the shared Mac was 3.5703 ms with five spikes at or above 30 ms. [24g results](#rig-results---24-november-2026-g-mac-rig-17o-e6-checks-1-3-6-7-at-477d11a5).
@@ -27574,3 +27576,80 @@ The manual and flow players stopped cleanly. All 272 ModsLocal files, 284 receip
 Raw evidence is in `~/Coding_Projects/.agent-logs/persistent-city-rig-2026-11-24h-mac/`. Both flow reports, Player.log files and transaction receipts are under `flows/`. SHA-256 of the evidence index is `b46a75e7674513795c4c7f17b6f9ebd5c8fdab7fff025741f10b59b020137899`.
 
 Refs #350 #365 #366 #367 #368
+
+## Rig results - 24 November 2026 i (Mac, rig 17q): #350 through-gate after agent-rig #123 at 3db17f5e
+
+**1 PASS / 1 PARTIAL / 0 FAIL / 1 NOT RUN** across the three scoped checks.
+
+`git fetch origin` confirmed `3db17f5e8182193edf4aafcebc9f348b48f40bfc` (#369). Only the checklist changed after product commit `40fe3bf8` (#366). Staging and both Player.log readbacks reported PersistentCity.dll SHA-256 `a2b007972ef3d0164d6cae2b4d78b537a4420b4bfdc59dbdd5614ed960de33b5`, reused from the verified 24g package. The agent-rig checkout at `96aeda09d654678b96e9854307397e877f715c4e` includes #123 at `8d640f7`. Both headless players reported the installed overlay ready with AgentRigOps.dll SHA-256 `0f6e6f3a4641b7d087f00b7fae492dbaa31e05498fe92d0dcd15d71fd439dd4d`. Game build 3682 ran with RLO 1.0.6 and Street Food 0.10.12. FoodChoicePriceWeight was 1.2 and schema was 1.
+
+The gate arms used `FT RIGTMP-GATE-24i-mac` from `FT GR5 13f Timing v1`. The performance session used `FT RIGTMP-PERF-24i-mac` from the existing `FT-E6-Vendors-base` at SHA-256 `4bf00a225b1e4ed20eb66ae2095752c0e77bcc138ff57ba476bdbb330e1ff796`. Both disposables were created with native `call save`. The native autosave preferences were five minutes, three saves and `prevent_autosave: false`. The `--rig-test` guard suppressed native autosaves in both sessions. Route A save time was outside the measurement.
+
+### #350 through-gate
+
+Both Ambulances used the same 62.98 m synthesized through-route at HamptonsPrivateFenceDoor index 0, `gate:-2902.5:0.0:-1515.5`. The requested start was `[-2960,0,-1519]`. The plan snapped it to waypoint 16447. The target was `{"beyond_gate":8}`, resolved to `[-2894.5,0.01,-1515.48]`. The gate plane was at x = −2902.5 m. The rig rechecked autosave suppression for each arm.
+
+| Terminal `vehicle_route` field | Closed | Open |
+| --- | --- | --- |
+| Verdict | **PARTIAL**. Confirmed leaf block. Release readback was `removed`. | **NOT RUN (tooling)**. The settled open gate still produced a leaf block. |
+| Handle / prefab / `vehicle_index` | `route:1` / Ambulance / 19 | `route:2` / Ambulance / 19 |
+| `state_at_spawn` / `hold_at_spawn` / `open_at_spawn` | closed / closed / false | open / open / true |
+| `state_now` / `hold_now` | closed / closed | open / open |
+| `live` / `outcome` / `drive_outcome` / `drive_phase` | true / blocked / blocked / gate_leg | true / blocked / blocked / gate_leg |
+| `passed_gate` / `passed_gate_at` / `arrived` / `bypassed` | false / null / false / false | false / null / false / false |
+| `blocked` / `blocked_at_gate` / `blocked_by_gate_collider` | true / true / true | true / true / true |
+| `gate_contact` / `gate_leaf_contact` / `ever_gate_contact` / `ever_gate_leaf_contact` | true / true / true / true | true / true / true / true |
+| `position` / metres short of plane / `gate_side` | (−2907.54, −0.02, −1515.47) / 5.04 / 1 | (−2907.46, 0.00, −1515.54) / 4.96 / 1 |
+| `distance_to_target` / `travelled_m` / `min_gate_distance` | 13.04 / 52.74 / 5.03 m | 12.96 / 53.24 / 4.81 m |
+| `body_speed` / `steer_speed` / `stalled_seconds` | 0.02 / 4.0 m/s / 8.63 s | 0.02 / 4.0 m/s / 8.30 s |
+| `gate_sweep` / `track_breaks` / `steer_failures` / `read_failures` | hit / 0 / 0 / 0 | hit / 0 / 0 / 0 |
+| After release (`outcome` / `live` / `removal` / `last_failure`) | released / false / removed / null | released / false / removed / null |
+
+`gate_volumes_ignored` was `["Collider","SM_GatedCommunityDoor"]` in each arm. The following rows preserve the paths as emitted by the rig, including its leading ellipses.
+
+| Arm | Field | Name | Path | Layer | Type | Reason or kind |
+| --- | --- | --- | --- | --- | --- | --- |
+| Closed | `gate_volumes_ignored_detail` | `Collider` | `.../Residential/GatedCommunities/Community1/Fences/SM_GatedCommunityFence_01/Collider` | 26 | MeshCollider | family_sweep |
+| Closed | `gate_volumes_ignored_detail` | `SM_GatedCommunityDoor` | `TheHamptons/Roads/Residential/GatedCommunities/Community1/SM_GatedCommunityDoor` | 26 | MeshCollider | family_sweep |
+| Closed | `stall_contacts` | `Door_1` | `.../Residential/GatedCommunities/Community1/Fences/HamptonsGate/Door_1` | 26 | BoxCollider | gate_leaf |
+| Open | `gate_volumes_ignored_detail` | `Collider` | `.../Residential/GatedCommunities/Community1/Fences/SM_GatedCommunityFence_01/Collider` | 26 | MeshCollider | family_sweep |
+| Open | `gate_volumes_ignored_detail` | `SM_GatedCommunityDoor` | `TheHamptons/Roads/Residential/GatedCommunities/Community1/SM_GatedCommunityDoor` | 26 | MeshCollider | family_sweep |
+| Open | `stall_contacts` | `Door_1` | `.../Residential/GatedCommunities/Community1/Fences/HamptonsGate/Door_1` | 26 | BoxCollider | gate_leaf |
+
+The #123 sweep picked up the perimeter mesh that stopped both 17p routes. The new stall contact was the same leaf in both arms. The open arm's `blocked_at_gate` had a real collider contact while the hold was satisfied. It never crossed the plane.
+
+Each release returned `removal: removed`, with no `unignore_pending` or `unignore_dropped` and zero removal failures. In the installed revision, the explicit release path restores collider pairs and clears the Gley ignore before removal. The route record emits `removed` on that path. The requested literal `unignored` readback was absent in both arms. Paused traffic snapshots in 70 m showed only the injected pin before each release and zero rows after. Slot 19 / instance −1380984 used activation 1 when closed and activation 2 when open. No ambient car was removed. Final reads showed zero live routes and zero held gates. The full terminal and post-release status replies, including track and plan, are in the local report copy and the raw run directory. [Release and collider reset](https://github.com/PeterHartwieg/big-ambitions-agent-rig/blob/96aeda09d654678b96e9854307397e877f715c4e/rig-ops/Runtime/VehicleRouteWorld.cs#L773-L790), [route status mapping](https://github.com/PeterHartwieg/big-ambitions-agent-rig/blob/96aeda09d654678b96e9854307397e877f715c4e/rig-ops/Shared/VehicleRoute.cs#L384-L392).
+
+### Recorder-off performance
+
+**PASS, provisional on the shared Mac.** Persistent City confirmed its decision recorder was off before the 1× window. The rig measured 600.374 s of mod work, from day 1 11:00 to 13:56, at 1,000 residents. Coverage was complete across 66 entry points with 17,031 mod-work frames. Mod-work p95 was **3.6813 ms** against the <5 ms gate. The maximum was 13.9124 ms. The rig counted **0** spikes ≥30 ms and listed **0**. `spikes_truncated: false`.
+
+Whole-frame timing was p95 37.5837 ms and max 521.7031 ms over 601.699 s, with 16,736 frames ≥30 ms and 1,024 rows retained.
+
+Mac load (1 / 5 / 15 min) was 3.41 / 3.61 / 3.66 at 23:17 CET and 2.76 / 3.04 / 3.28 at 23:27 CET. Endpoint process reads found Unity Hub and one Node process at each end. Nightly-ci, dotnet and MSBuild counts were zero at both reads.
+
+The guard confirmed suppression after load and immediately before and after the window. It refused 15,448 attempts, allowed 0 saves and recorded 0 native saving frames. The first pre-window vendor status read preceded city activation. A fresh read was Ready before the warm-up.
+
+### Carried and excluded checks
+
+- E6 2b carries **PASS** and E6 10 carries **PARTIAL** from 17p (#369). The 20× traffic pin moved through the retime. The Drink override kept the opening Street Food-owned and produced the intended sales behaviour. The shutdown log gate kept the end-to-end Drink check partial.
+- E6 1's 0.10.11 arm is **NOT RUN**, outside the 17q scope. The 17o Vendor API v1-present arm remains carried, with truck B eligible and `Reason: ""`, restated for E6f.
+- E6 3, 6 and 7 are **NOT RUN**. Rig PR #121's `20261124-201132-rig-e6-17o-rlo-ledger-loggate` failed to finish CI in 60 minutes, has `merge_sha: null` and is absent from the installed overlay.
+- E6 4 is **NOT RUN**. Base-v2 failed the day-two proof with cart A off-map, a $250 fine and zero minutes open. It needs Street Food `edit_stop`.
+- E6 5, 9 and 12 are **NOT RUN** pending the Street Food `edit_stop`, `vendor_fault` and contract-2 builds. E6 13 is **NOT RUN** pending F6b.
+- Pointer, hover, click and visual feel stay with Peter.
+
+### Restore and evidence
+
+Both headless players stopped cleanly. The staging command was `python3 scripts/install-mac.py --stage-mod PersistentCity <absolute 24i package path>`. The receipt backup was `~/Library/Application Support/BigAmbitionsAgentTestsMac/receipt-backups/20261124T221036Z`.
+
+All 272 ModsLocal files, 284 receipt entries, isolated preferences, config and original SaveGames matched their baseline hashes. The restored config uses the default price weight of 1.2. The AgentRigOps hash matched again. Both disposables and their sidecars were archived, leaving the originals hash-identical. The final agentmac read showed the lease free with zero pending operations.
+
+| Archived disposable | SHA-256 |
+| --- | --- |
+| `FT RIGTMP-GATE-24i-mac.hsg` | `3f102c9a1172ab4a149db140929e9e8a340fc592b140f93c337ec55313b05542` |
+| `FT RIGTMP-PERF-24i-mac.hsg` | `ae14f3e889c196c1244d5ce7b73b4d81a43dcf1bae47cb127a42f728fc0b9d40` |
+
+Raw evidence is in `~/Coding_Projects/.agent-logs/persistent-city-rig-2026-11-24i-mac/`. SHA-256 of `evidence-sha256.txt` is `4b620322dbb8e1e7d7aa8f962de512e3dbe93a035615fda09c1bad4dd3ec572d`.
+
+Refs #350 #365 #369
