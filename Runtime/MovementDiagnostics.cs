@@ -75,6 +75,7 @@ namespace PersistentCity.Runtime
                 gcSampler ??= new GcPauseSampler();
                 string counter = GcAllocationCounter.Probe();
                 gcSampler.Start(GC.GetTotalMemory(false), counter);
+                collectionHeadroom.ResetCounters();
                 gcSampler.FrameRecorder.Arm(System.Diagnostics.Stopwatch.Frequency);
                 Debug.Log("[Persistent City] gc measurement started (diagnostic only, " + GcPauseSampler.PolicyId + ", " + gcSampler.Capacity + " stored frames, allocation counter " + counter + "). Use pc gc report or pc gc stop.");
                 return;
@@ -112,6 +113,7 @@ namespace PersistentCity.Runtime
                 Debug.Log(GcPauseSampler.ReportPrefix + gcSampler.ReportJson(context));
                 Debug.Log(gcSampler.ReportHuman(context));
                 Debug.Log(gcSampler.FrameRecorder.ReportHuman());
+                Debug.Log("[Persistent City] collection headroom " + CollectionHeadroomJson());
                 gcSampler.Rebaseline();
                 return;
             }

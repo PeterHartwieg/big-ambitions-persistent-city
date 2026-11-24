@@ -59,6 +59,38 @@ namespace PersistentCity.Runtime
             _ => GC.GetTotalMemory(false),
         };
 
+        private static int sinceSource = -1;
+
+        public static bool SinceCollectionAvailable { get { BytesSinceCollection(); return sinceSource > 0; } }
+
+        public static long BytesSinceCollection()
+        {
+            if (sinceSource == 0) return -1;
+            if (sinceSource > 0) return ReadSince(sinceSource);
+            for (int candidate = 1; candidate <= 3; candidate++)
+            {
+                try
+                {
+                    long value = ReadSince(candidate);
+                    if (value >= 0) { sinceSource = candidate; return value; }
+                }
+                catch (Exception) { }
+            }
+            sinceSource = 0;
+            return -1;
+        }
+
+        private static long ReadSince(int from) => from switch
+        {
+            1 => (long)LibrarySince().ToUInt64(),
+            2 => (long)WindowsSince().ToUInt64(),
+            _ => (long)InternalSince().ToUInt64(),
+        };
+
+        [DllImport("libmonobdwgc-2.0", EntryPoint = "GC_get_bytes_since_gc")] private static extern UIntPtr LibrarySince();
+        [DllImport("mono-2.0-bdwgc", EntryPoint = "GC_get_bytes_since_gc")] private static extern UIntPtr WindowsSince();
+        [DllImport("__Internal", EntryPoint = "GC_get_bytes_since_gc")] private static extern UIntPtr InternalSince();
+
         [DllImport("libmonobdwgc-2.0", EntryPoint = "GC_get_total_bytes")] private static extern UIntPtr LibraryTotal();
         [DllImport("mono-2.0-bdwgc", EntryPoint = "GC_get_total_bytes")] private static extern UIntPtr WindowsTotal();
         [DllImport("__Internal", EntryPoint = "GC_get_total_bytes")] private static extern UIntPtr InternalTotal();
