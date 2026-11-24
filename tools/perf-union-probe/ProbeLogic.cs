@@ -938,4 +938,120 @@ namespace PerfUnionProbe
             return new SubPhasePlan(names.ToArray(), before, rootBefore, truncated);
         }
     }
+
+    public struct HookState { public long Start; public int Frame, Index; public bool Timed, Inside; }
+
+    public interface IHookSink
+    {
+        void Enter(int slot, out HookState state);
+        void Exit(Exception exception, HookState state);
+    }
+
+    public interface IHookDigit { int Value { get; } }
+    public struct HookDigit0 : IHookDigit { public int Value => 0; }
+    public struct HookDigit1 : IHookDigit { public int Value => 1; }
+    public struct HookDigit2 : IHookDigit { public int Value => 2; }
+    public struct HookDigit3 : IHookDigit { public int Value => 3; }
+    public struct HookDigit4 : IHookDigit { public int Value => 4; }
+    public struct HookDigit5 : IHookDigit { public int Value => 5; }
+    public struct HookDigit6 : IHookDigit { public int Value => 6; }
+    public struct HookDigit7 : IHookDigit { public int Value => 7; }
+    public struct HookDigit8 : IHookDigit { public int Value => 8; }
+    public struct HookDigit9 : IHookDigit { public int Value => 9; }
+    public struct HookDigit10 : IHookDigit { public int Value => 10; }
+    public struct HookDigit11 : IHookDigit { public int Value => 11; }
+    public struct HookDigit12 : IHookDigit { public int Value => 12; }
+    public struct HookDigit13 : IHookDigit { public int Value => 13; }
+    public struct HookDigit14 : IHookDigit { public int Value => 14; }
+    public struct HookDigit15 : IHookDigit { public int Value => 15; }
+
+    public static class HookSlot<TSink, THigh, TLow> where TSink : struct, IHookSink where THigh : struct, IHookDigit where TLow : struct, IHookDigit
+    {
+        public static readonly int Slot = HookSlots.Index(default(THigh).Value, default(TLow).Value);
+        public static void Before(out HookState __state) => default(TSink).Enter(Slot, out __state);
+        public static void After(Exception __exception, HookState __state) => default(TSink).Exit(__exception, __state);
+    }
+
+    public static class HookSlots
+    {
+        public const int Radix = 16, Capacity = Radix * Radix;
+        private static readonly Type[] Digits =
+        {
+            typeof(HookDigit0), typeof(HookDigit1), typeof(HookDigit2), typeof(HookDigit3), typeof(HookDigit4), typeof(HookDigit5), typeof(HookDigit6), typeof(HookDigit7),
+            typeof(HookDigit8), typeof(HookDigit9), typeof(HookDigit10), typeof(HookDigit11), typeof(HookDigit12), typeof(HookDigit13), typeof(HookDigit14), typeof(HookDigit15),
+        };
+        public static int Index(int high, int low) => high * Radix + low;
+        public static bool Fits(int slot) => slot >= 0 && slot < Capacity;
+        public static Type Close(Type sink, int slot)
+        {
+            if (sink == null || !sink.IsValueType || !typeof(IHookSink).IsAssignableFrom(sink)) throw new ArgumentException("A hook sink is a struct implementing IHookSink.", nameof(sink));
+            if (!Fits(slot)) throw new ArgumentOutOfRangeException(nameof(slot));
+            return typeof(HookSlot<,,>).MakeGenericType(sink, Digits[slot / Radix], Digits[slot % Radix]);
+        }
+        public static MethodInfo Prefix(Type sink, int slot) => Close(sink, slot).GetMethod("Before", BindingFlags.Public | BindingFlags.Static);
+        public static MethodInfo Finalizer(Type sink, int slot) => Close(sink, slot).GetMethod("After", BindingFlags.Public | BindingFlags.Static);
+    }
+
+    public sealed class FrameScopeLedger
+    {
+        public const int FrameEntries = 32, RowEntries = 8;
+        private readonly int rows;
+        private readonly int[] sub = new int[FrameEntries], scope = new int[FrameEntries], calls = new int[FrameEntries];
+        private readonly long[] ticks = new long[FrameEntries];
+        private int count, dropped;
+        private readonly int[] rowCount, rowDropped, rowSub, rowScope, rowCalls;
+        private readonly long[] rowTicks;
+        private readonly bool[] taken = new bool[FrameEntries];
+
+        public FrameScopeLedger(int rows)
+        {
+            if (rows <= 0) throw new ArgumentOutOfRangeException(nameof(rows));
+            this.rows = rows;
+            rowCount = new int[rows]; rowDropped = new int[rows];
+            rowSub = new int[rows * RowEntries]; rowScope = new int[rows * RowEntries]; rowCalls = new int[rows * RowEntries]; rowTicks = new long[rows * RowEntries];
+        }
+
+        public int Count => count;
+        public int Dropped => dropped;
+
+        public void ResetFrame() { count = 0; dropped = 0; }
+
+        public void Add(int subPhase, int scopeIndex, long duration)
+        {
+            if (duration < 0) duration = 0;
+            for (int i = 0; i < count; i++)
+                if (sub[i] == subPhase && scope[i] == scopeIndex) { ticks[i] += duration; calls[i]++; return; }
+            if (count == FrameEntries) { dropped++; return; }
+            sub[count] = subPhase; scope[count] = scopeIndex; ticks[count] = duration; calls[count] = 1; count++;
+        }
+
+        public void Retain(int row)
+        {
+            if (row < 0 || row >= rows) return;
+            int kept = Math.Min(count, RowEntries);
+            Array.Clear(taken, 0, FrameEntries);
+            for (int k = 0; k < kept; k++)
+            {
+                int best = -1;
+                for (int i = 0; i < count; i++)
+                    if (!taken[i] && (best < 0 || ticks[i] > ticks[best])) best = i;
+                taken[best] = true;
+                int at = row * RowEntries + k;
+                rowSub[at] = sub[best]; rowScope[at] = scope[best]; rowCalls[at] = calls[best]; rowTicks[at] = ticks[best];
+            }
+            rowCount[row] = kept; rowDropped[row] = dropped + count - kept;
+        }
+
+        public int Entries(int row) => row >= 0 && row < rows ? rowCount[row] : 0;
+        public int EntriesDropped(int row) => row >= 0 && row < rows ? rowDropped[row] : 0;
+        public int SubPhase(int row, int entry) => rowSub[At(row, entry)];
+        public int Scope(int row, int entry) => rowScope[At(row, entry)];
+        public int Calls(int row, int entry) => rowCalls[At(row, entry)];
+        public long Ticks(int row, int entry) => rowTicks[At(row, entry)];
+        private int At(int row, int entry)
+        {
+            if (row < 0 || row >= rows || entry < 0 || entry >= rowCount[row]) throw new ArgumentOutOfRangeException(nameof(entry));
+            return row * RowEntries + entry;
+        }
+    }
 }
