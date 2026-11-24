@@ -17,6 +17,8 @@ Every GR-5 rig run from now on must:
 
 ## Latest evidence
 
+- **24 November b, Mac (rig 17j), build `22750a58`**. 0 PASS / 1 PARTIAL / 0 FAIL / 0 NOT RUN on the scoped #350 check. All four public-road drives arrived without crossing the gate. Both through-gate plans returned `ops_vehicle_route_gate_leg_none`. [24b results](#rig-results---24-november-2026-b-mac-rig-17j-350-check-2-traffic-half-at-22750a58).
+
 - **24 November a, Mac (rig 17i), build `d1e868fe`**. 1 PASS / 2 PARTIAL / 3 FAIL / 0 NOT RUN / 2 REPORTED. A FAIL (steady gen0 8 > matched no-mod 6, immediate pause p95 130.192 ms), B FAIL (20× pause p95 161.447 ms, 20× and 60× gen0 7), C FAIL (1 mod-work frame reached 30 ms), L PARTIAL (raw RouteLeg[] byte gate passed; plateau unestablished for several types), P PASS, G PARTIAL. **PROVISIONAL (shared Mac / Mono)**. [24a results](#rig-results---24-november-2026-a-mac-rig-17i-358-gr-5-checks-at-d1e868fe).
 
 - **23 November g, Mac (rig 17h), build `ce73d8db`**. 1 PASS / 1 PARTIAL / 4 FAIL / 0 NOT RUN / 2 REPORTED. A FAIL (immediate gen0 8 > 6, pause p95 54.969 ms > 37 ms), B FAIL (20× heap margin 20.114304 MB < 23 MB, 20× pause p95 49.069 ms > 37 ms, 60× gen0 7 > 6), L FAIL (sustained growth in Mono used, forced-live and outside-cache RouteLeg[] bytes over the final three cycles), P FAIL (frame 15,646 took 31.2333 ms in AdvancePopulation), C PASS, G PARTIAL. **PROVISIONAL (shared Mac / Mono)**. [23g results](#rig-results---23-november-2026-g-mac-rig-17h-356-gr-5-checks-at-ce73d8db).
@@ -27125,3 +27127,31 @@ Raw evidence and the receipt rollback logs are in `~/Coding_Projects/.agent-logs
 [PR #358](https://github.com/PeterHartwieg/big-ambitions-persistent-city/pull/358) · [Mac 17h](https://github.com/PeterHartwieg/big-ambitions-persistent-city/pull/357) · [Mac 17f](https://github.com/PeterHartwieg/big-ambitions-persistent-city/pull/354) · [Mac 17c](https://github.com/PeterHartwieg/big-ambitions-persistent-city/pull/347) · [PC 19c](https://github.com/PeterHartwieg/big-ambitions-persistent-city/pull/315)
 
 Refs #358
+
+## Rig results - 24 November 2026 b (Mac, rig 17j): #350 check 2 traffic half at 22750a58
+
+**0 PASS / 1 PARTIAL / 0 FAIL / 0 NOT RUN** at the check level. Adjoining public-road travel passed in both gate states. The two through-gate arms were **NOT RUN (tooling)**. The run verified that the public road still carries the injected car with the gate open. It leaves physical traversal of the opening untested. [PR #350](https://github.com/PeterHartwieg/big-ambitions-persistent-city/pull/350)
+
+The fetched tip was `22750a58409b2846b5a3362d15d10a15c424e09d`. The rig ran game build 3682 and RLO 1.0.6 at 1× in `FT RIGTMP-GATE-24b-mac`, a byte-identical copy of `FT GR5 13f Timing v1` with 1,000 residents and 2,000 visitors. The scene had four closed, locked Hamptons vehicle gates. The run held `gate:-2902.5:0.0:-1515.5`, private-fence index 0. Persistent City reported `source=collider`, `public_road=no` and a 29,010-node road snapshot. The gate settled and stayed locked in both holds. Gate-op errors were zero.
+
+| Arm | Gate held | Handle / Gley slot | Passed gate | Arrived | Outcome |
+| --- | --- | --- | --- | --- | --- |
+| Public road, position-snapped target | Closed | `route:1` / 19 | false | true | 46.17 m travelled |
+| Public road, position-snapped target | Open | `route:2` / 19 | false | true | 50.77 m travelled |
+| Public road, same-lane target | Closed | `route:3` / 19 | false | true | 44.63 m travelled |
+| Public road, same-lane target | Open | `route:4` / 19 | false | true | 43.42 m travelled |
+| Through-gate attempt | Closed | — | — | — | NOT RUN. `vehicle_route plan` returned `ops_vehicle_route_gate_leg_none`. |
+| Through-gate attempt | Open | — | — | — | NOT RUN. `vehicle_route plan` returned `ops_vehicle_route_gate_leg_none`. |
+
+**First live use of `vehicle_route`.** The position-based target snapped to the parallel lane. The planner returned a 356.33 m loop, and both cars entered the 6 m arrival radius from the start lane before completing the loop. The repeat used explicit same-lane waypoints 16447 → 15163 and returned a 41.79 m path. All four public-road drives had zero read failures and track breaks. The closest observed approach to the selected gate was 50.02 m. Both through plans used the same start near (-2960, 0, -1519) and target probe near (-2902.5, 0, -1510). The Gley planner returned no crossing leg in either state before any through car could spawn.
+
+**Cleanup.** Across 24 pre-spawn and 28 post-release local overlap reads, traffic collider counts were zero. Immediately before each release, the overlap centred on the injected car saw its `BodyCollider` and `FrontTrigger` (2 → 0). Other positive reads overlapped that same car. Each `release` used `RemoveVehicle` on the tracked car in slot 19, and route status changed from live to `removed` with zero removal errors. `release all` found zero live routes. No ambient car removal was observed. The collider op supplies counts and collider names and has no ambient vehicle ID field. The repeated use of slot 19 was across injected cars. Ambient reuse within 50 m was unobserved. Final scene-wide held gates were zero.
+
+- **Stage.** `python3 scripts/install-mac.py --stage-mod PersistentCity ~/HART-Builds/persistent-city-rig-2026-11-24b-mac/package` was invoked with an absolute path. Receipt backup `~/Library/Application Support/BigAmbitionsAgentTestsMac/receipt-backups/20261124T073432Z`. Stage output and Player.log agreed on `staged_mod name=PersistentCity version=absent informational=0.10.0-persistent-city-candidate sha256=dc97418851639a4181201046b72992ffadab13ecbcdf0a7eb4f05ac2feac651a`.
+- **Autosave.** The rig verified suppression after both loads, before each road arm and before the test session closed. Native preferences read 5 minutes / 3 saves / prevent false before and after. The guard recorded zero save attempts or writes. The three RLO option readbacks matched.
+- **Restore.** Both sessions stopped cleanly. The disposable save was deleted and its follow-up read returned `exists=false`. The 272 ModsLocal files, sealed fixture, preferences, Persistent City config and all 284 receipt hashes matched. Agent-rig `44e2227` stayed installed and AgentRigOps SHA-256 `be1d8caca5726697ff0c6d06faada420f9b65a3a1fa5d6d14a85187811c7b6bd` matched before and after. The lease was released after verification.
+- **Host and evidence.** Mac load averages were 2.64 / 2.57 / 2.67 at start and 5.84 / 3.93 / 3.28 at finish. Raw evidence is in `~/Coding_Projects/.agent-logs/persistent-city-rig-2026-11-24b-mac/`. SHA-256 of `evidence-sha256.txt` is `0178c77dd80f584776cbb1ed7f2857c0e70a8ffa89227964353fce4786277c59`.
+
+Pointer, hover and visual-feel checks were NOT RUN (for Peter). GR-5 windows, no-mod references and PR #358/#356/#348 checks were outside this run.
+
+Refs #350 #331
