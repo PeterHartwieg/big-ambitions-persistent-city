@@ -75,6 +75,9 @@ public sealed class Gr5CensusCacheTests
             .GetProperty("roots").EnumerateArray().ToDictionary(r => r.GetProperty("name").GetString()!, r => r.GetProperty("bytes").GetInt64());
         Assert.Equal(journeys.Distinct().Count(), legs.GetProperty("leg_arrays_in_current_journeys").GetInt64());
         Assert.Equal(arrayHolders["runtime.simulation"], legs.GetProperty("leg_array_bytes_in_current_journeys").GetInt64());
+        var journeyArrays = new HashSet<RouteLegs>(journeys.Select(j => j.Legs), ReferenceEqualityComparer.Instance);
+        Assert.Equal(journeyArrays.Sum(a => (long)a.Capacity), legs.GetProperty("leg_array_slots_in_current_journeys").GetInt64());
+        Assert.Equal(journeyArrays.Sum(a => (32 + 8L * a.Capacity + 7) / 8 * 8), legs.GetProperty("leg_array_bytes_in_current_journeys").GetInt64());
         Assert.Equal(arrayHolders["cache.routes.walking.cache"], legs.GetProperty("leg_array_bytes_in_caches").GetInt64());
         Assert.Equal(arrayHolders["runtime.stale"], legs.GetProperty("leg_array_bytes_outside_current_journeys_and_caches").GetInt64());
         Assert.Equal((32 + 8L * staleLegs + 7) / 8 * 8, arrayHolders["runtime.stale"]);

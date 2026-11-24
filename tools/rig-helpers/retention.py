@@ -18,7 +18,7 @@ FIELDS = ('ownedBodyCombiners', 'liveMergedMeshes', 'unmergedBodyCombiners', 're
           'reservedMergedMeshes', 'unmatchedMergedMeshes', 'unmatchedMergedVertices')
 TYPES = ('Position[]', 'Double[]', 'Int64[]', 'RouteLeg', 'Route', 'RouteLeg[]', 'List<RouteLeg>', 'RouteLegs', 'CitySimulator', 'RoadRoutes')
 ROUTE_LEGS = ('in_current_journeys', 'outside_current_journeys', 'split_prefix_legs', 'travelling', 'in_caches', 'outside_current_journeys_and_caches',
-              'leg_arrays_in_current_journeys', 'leg_array_bytes_in_current_journeys', 'leg_array_bytes_in_caches', 'leg_array_bytes_outside_current_journeys_and_caches')
+              'leg_arrays_in_current_journeys', 'leg_array_slots_in_current_journeys', 'leg_array_bytes_in_current_journeys', 'leg_array_bytes_in_caches', 'leg_array_bytes_outside_current_journeys_and_caches')
 OUTSIDE_CACHES = ('RouteLeg', 'Route', 'RouteLeg[]', 'List<RouteLeg>', 'RouteLegs')
 TARGETS = 'retention-targets'
 MISSING_TARGETS = 'Retimed process did not export matched native clock targets'

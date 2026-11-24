@@ -82,7 +82,7 @@ namespace PersistentCity.Runtime
         private static Transform? reserveParent;
         internal static int ReserveCount => reserve.Count;
 
-        internal const int LeasedOwner = 0, PooledOwner = 1, ReservedOwner = 2, UnmatchedOwner = 3, OwnerKinds = 4;
+        internal const int LeasedOwner = 0, PooledOwner = 1, ReservedOwner = 2, UnmatchedOwner = 3, OrphanOwner = 4, OwnerKinds = 5;
 
         private static bool Holds(ThirdPersonCharacter? character, object combiner)
             => !ReferenceEquals(character, null) && !ReferenceEquals(character.appearanceSetter, null) && ReferenceEquals(character.appearanceSetter.meshCombiner, combiner);

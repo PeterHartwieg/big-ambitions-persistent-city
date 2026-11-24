@@ -170,50 +170,64 @@ public sealed class Gr5RepeatedRetimeLeakTests
     [Fact]
     public void TheRetimeHandoverPeakLiveGraphStaysFlatAcrossRepeatedOneTwoOneCycles()
     {
+        const int HandoverCycles = 4;
         var state = Gr5AllocationMeasure.RigCity();
         var city = new CitySimulator(state, new Gr5AdvanceSegmentMeasure.Straight());
         city.AttachFoodMarket(new VisitorRoutineTests.Market { Shops = F5gPopulationFillTests.Shops(state) });
         city.AttachOptionalStops(new Gr5AllocationMeasure.StopSpots(), OptionalStopPolicy.ApprovedChoicePercentage);
         city.AdvanceTo(Math.Floor(state.Minute / 1440) * 1440 + 1440 + 15.5 * 60, int.MaxValue);
         var driver = new ClockRetimeDriver();
-        var peaks = new List<long>();
-        var settled = new List<long>();
-        output.WriteLine("rig food city from 15:30, four 1->2->1 cycles; live graph at each handover stage (simulation + driver + rebuild roots, Mono 64-bit layout model):");
+        var peaks = new Dictionary<double, List<RetainedHeap>> { [2] = new List<RetainedHeap>(), [1] = new List<RetainedHeap>() };
+        var settled = new Dictionary<double, List<RetainedHeap>> { [2] = new List<RetainedHeap>(), [1] = new List<RetainedHeap>() };
+        output.WriteLine("rig food city from 15:30, " + HandoverCycles + " 1->2->1 cycles; live graph read after every driver slice and at every rebuild yield while the rebuild iterator is reachable (simulation + driver + rebuild roots, Mono 64-bit layout model):");
         string Line(RetainedHeap heap) => heap.Bytes + " B / " + heap.Objects + " objects, CitySimulator " + Objects(heap, "CitySimulator") + ", RouteLeg " + Objects(heap, "RouteLeg") + ", RouteLeg[] " + Bytes(heap, "RouteLeg[]") + " B";
-        long Retime(double rate, int cycle)
+        void Retime(double rate, int cycle)
         {
             var before = Census(("simulation", city), ("driver", driver));
-            long peak = before.Bytes;
+            var peak = before;
+            string where = "before";
+            void Observe(RetainedHeap heap, string stage) { if (heap.Bytes > peak.Bytes) { peak = heap; where = stage; } }
             int slices = 0;
             while (driver.Update(state, rate, false, 1.4, ClockRetimeStages.SliceMilliseconds) != ClockRetimeOutcome.Committed)
-                if (++slices % 4 == 0) peak = Math.Max(peak, Census(("simulation", city), ("driver", driver)).Bytes);
+                Observe(Census(("simulation", city), ("driver", driver)), "driver slice " + ++slices);
             var committed = Census(("simulation", city), ("driver", driver));
+            Observe(committed, "commit");
             var rebuild = city.BeginRebuildRoutes(new Gr5AdvanceSegmentMeasure.Straight(), driver.TakeRetimedTraffic());
-            var begun = Census(("simulation", city), ("rebuild", rebuild), ("driver", driver));
-            while (!rebuild.Step(0)) { }
-            var stepped = Census(("simulation", city), ("rebuild", rebuild), ("driver", driver));
+            Observe(Census(("simulation", city), ("rebuild", rebuild), ("driver", driver)), "rebuild begun");
+            int yields = 0;
+            while (!rebuild.Step(0))
+                Observe(Census(("simulation", city), ("rebuild", rebuild), ("driver", driver)), "rebuild yield " + ++yields);
             var result = rebuild.TakeResult();
             var handedOver = Census(("simulation", city), ("result", result), ("rebuild", rebuild), ("driver", driver));
+            Observe(handedOver, "old and new simulation held");
             city = result;
             var after = Census(("simulation", city), ("driver", driver));
-            peak = Math.Max(peak, Math.Max(committed.Bytes, Math.Max(begun.Bytes, Math.Max(stepped.Bytes, handedOver.Bytes))));
-            output.WriteLine("  cycle " + cycle + " to " + rate + "x: before " + Line(before) + "; committed " + Line(committed) + "; rebuild begun " + Line(begun) + "; rebuild stepped " + Line(stepped)
-                + "; old and new simulation both held " + Line(handedOver) + "; after release " + Line(after) + "; peak minus after " + (peak - after.Bytes).ToString("+0;-0;0") + " B");
+            output.WriteLine("  cycle " + cycle + " to " + rate + "x: " + slices + " driver slices, " + yields + " rebuild yields; before " + Line(before) + "; peak at " + where + " " + Line(peak)
+                + "; settled " + Line(after) + "; peak minus settled " + (peak.Bytes - after.Bytes).ToString("+0;-0;0") + " B / " + (peak.Objects - after.Objects).ToString("+0;-0;0") + " objects");
             Assert.True(Objects(handedOver, "CitySimulator") <= 2);
             Assert.Equal(1, Objects(after, "CitySimulator"));
-            settled.Add(after.Bytes);
-            return peak;
+            Assert.True(yields > 0, "the rebuild finished without a yield to read");
+            peaks[rate].Add(peak); settled[rate].Add(after);
         }
-        for (int cycle = 1; cycle <= 4; cycle++)
+        for (int cycle = 1; cycle <= HandoverCycles; cycle++)
         {
-            peaks.Add(Retime(2, cycle));
+            Retime(2, cycle);
             city.AdvanceTo(state.Minute + 0.05, int.MaxValue);
-            peaks.Add(Retime(1, cycle));
+            Retime(1, cycle);
             city.AdvanceTo(state.Minute + 0.01, int.MaxValue);
         }
-        output.WriteLine("  peaks " + string.Join(" / ", peaks) + " B; settled " + string.Join(" / ", settled) + " B");
-        var excess = peaks.Zip(settled, (p, a) => p - a).ToList();
-        Assert.True(excess.Skip(2).Max() - excess.Take(2).Max() < PlateauAllowance, "handover excess over the settled graph rose: " + string.Join(", ", excess));
+        foreach (double rate in new[] { 2.0, 1.0 })
+        {
+            var p = peaks[rate]; var a = settled[rate];
+            output.WriteLine("  to " + rate + "x by cycle: peak " + string.Join(" / ", p.Select(h => h.Bytes + " B (" + h.Objects + " objects)")) + "; settled " + string.Join(" / ", a.Select(h => h.Bytes + " B (" + h.Objects + " objects)")));
+            for (int k = 1; k < HandoverCycles; k++)
+            {
+                Assert.True(p[k].Bytes - p[k - 1].Bytes < PlateauAllowance, "to " + rate + "x peak rose from cycle " + k + " to " + (k + 1) + ": " + string.Join(", ", p.Select(h => h.Bytes)));
+                Assert.True(a[k].Bytes - a[k - 1].Bytes < PlateauAllowance, "to " + rate + "x settled graph rose from cycle " + k + " to " + (k + 1) + ": " + string.Join(", ", a.Select(h => h.Bytes)));
+            }
+            Assert.True(p[HandoverCycles - 1].Bytes - p[1].Bytes < PlateauAllowance, "to " + rate + "x peak rose over cycles 2.." + HandoverCycles + ": " + string.Join(", ", p.Select(h => h.Bytes)));
+            Assert.True(a[HandoverCycles - 1].Bytes - a[1].Bytes < PlateauAllowance, "to " + rate + "x settled graph rose over cycles 2.." + HandoverCycles + ": " + string.Join(", ", a.Select(h => h.Bytes)));
+        }
     }
 
     private static long InstrumentBytes()
@@ -572,10 +586,17 @@ public sealed class Gr5RepeatedRetimeLeakTests
             otherGaps.Add(retimedOther - controlOther);
             output.WriteLine("    " + label + " all " + Objects(retimedReads[i], "RouteLeg[]") + " / " + Objects(controlReads[i], "RouteLeg[]") + " arrays, " + retimedTotal + " / " + controlTotal + " / " + (retimedTotal - controlTotal).ToString("+0;-0;0")
                 + " B; current journeys " + retimedArrays[i].LegArrays + " / " + controlArrays[i].LegArrays + " arrays, " + retimedJourney + " / " + controlJourney + " / " + (retimedJourney - controlJourney).ToString("+0;-0;0")
-                + " B; other owners " + retimedOther + " / " + controlOther + " / " + (retimedOther - controlOther).ToString("+0;-0;0") + " B");
+                + " B; other owners " + retimedOther + " / " + controlOther + " / " + (retimedOther - controlOther).ToString("+0;-0;0") + " B; live legs / backing slots in current journeys "
+                + retimedArrays[i].Legs + " / " + retimedArrays[i].LegArraySlots + " vs " + controlArrays[i].Legs + " / " + controlArrays[i].LegArraySlots);
             Assert.True(retimedOther >= 0 && controlOther >= 0, label + " journey arrays exceed the census RouteLeg[] bytes");
         }
         Assert.All(otherGaps, gap => Assert.Equal(0, gap));
+        var rawGaps = retimedReads.Zip(controlReads, (r, c) => Bytes(r, "RouteLeg[]") - Bytes(c, "RouteLeg[]")).ToList();
+        var finalThree = rawGaps.Skip(cycles - 2).Take(3).ToList();
+        output.WriteLine("  raw RouteLeg[] (the straight planner keeps no route cache, so every array is outside caches), retimed minus control at R0..R" + cycles + " and drained: " + string.Join(" / ", rawGaps.Select(g => g.ToString("+0;-0;0"))) + " B");
+        Assert.False(finalThree[1] > finalThree[0] && finalThree[2] > finalThree[1], "raw RouteLeg[] gap rose at each of the final three retime cycles: " + string.Join(", ", finalThree));
+        Assert.True(rawGaps[rawGaps.Count - 1] <= Math.Max(0, rawGaps.Take(cycles + 1).Max()), "drained raw RouteLeg[] gap " + rawGaps[rawGaps.Count - 1] + " B is above every earlier read: " + string.Join(", ", rawGaps));
+        Assert.All(rawGaps, gap => Assert.True(Math.Abs(gap) < PlateauAllowance, "raw RouteLeg[] gap " + gap + " B"));
         retimedReads.RemoveAt(retimedReads.Count - 1); controlReads.RemoveAt(controlReads.Count - 1);
         output.WriteLine("  drained at minute " + drainedAt.ToString("0.00") + ": RouteLeg " + Objects(drained, "RouteLeg") + "/" + Objects(drainedControl, "RouteLeg")
             + ", retimed minus control " + (drained.Bytes - drainedControl.Bytes).ToString("+0;-0") + " B");
@@ -903,9 +924,9 @@ public sealed class Gr5RepeatedRetimeLeakTests
         const double SamplerMinutes = 200;
         string Line(RetainedHeap heap) => heap.Bytes + " B / " + heap.Objects + " objects / " + heap.References + " refs";
         string Routes(RetainedHeap heap) => string.Join(", ", RouteTypes.Select(t => t + " " + Objects(heap, t)));
-        output.WriteLine("rig food city with cars (35% owners, parked at the road node nearest home); commit order from the archived rig 17c night Player.logs; " + SamplerMinutes + " game minutes at 1x in the sampler window. "
-            + "Recorded20: 15:30 commit to 20x; 00:50 arm-before; commits to 1x and back to 20x; 01:00 arm-after; no commit before sampler start; one commit to 1x inside the window. "
-            + "Recorded60: the log has no commit after load, so the city keeps 1x travel timing and no interval has a commit. "
+        output.WriteLine("rig food city with cars (35% owners, parked at the road node nearest home); commit order from the archived rig 17c and 17h night Player.logs; " + SamplerMinutes + " game minutes at 1x in the sampler window. "
+            + "Recorded20: native clock speed 1 to 15:30, speed 20 to 00:50, speed 20 to 01:00, each arrival pausing at speed 1; committed mod travel rate 20x from 15:30, 00:50 arm-before, commits to 1x and back to 20x, 01:00 arm-after at 20x, no commit before sampler start, one commit to 1x inside the window. "
+            + "Recorded60: native clock speed 1 to 15:30, speed 60 to 00:50, speed 60 to 01:00, each arrival pausing at speed 1; the mod reads 1x throughout (17h food reach 0.333 game minutes per second, only the load-time commit), so the committed travel rate stays 1x at 15:30, 00:50, 01:00 and sampler start and no interval has a commit. "
             + "Hypothetical60 (not in the log): 15:30 commit to 60x and a 1x commit between arm-after and sampler start. "
             + "Deterministic planner: cached shared 6-leg walks (1,024-entry FIFO), 4 stations, a fresh mapped car route with two parking pauses on a 49x49 road grid (50 m links); "
             + "every commit switches the planner to the network rated for the new travel clock rate and drops the planner caches, as the runtime does with a new planner, so the rebuild validates every live vehicle against that network. "
