@@ -8,7 +8,8 @@ namespace PersistentCity.Core
         public const int Capacity = 50;
         public const int Retained = 1000;
         private readonly Queue<string> lines = new Queue<string>();
-        private readonly Queue<(string Line, string Resident, Position? Origin)> rows = new Queue<(string, string, Position?)>();
+        private (FoodDecisionTrace? Trace, Position? Origin)[]? rows;
+        private int rowStart, rowCount;
         private readonly Func<FoodDecisionTrace, string?> format;
         private readonly Func<FoodDecisionTrace, string>? brief;
         private readonly Action<Exception> failed;
@@ -22,24 +23,23 @@ namespace PersistentCity.Core
         }
 
         public bool Recording => observed != null;
-        public int Count => rows.Count;
+        public int Count => rowCount;
         public IEnumerable<string> Lines => lines;
         internal CitySimulator? Observed => observed;
 
         public IReadOnlyList<string> Near(double x, double z, double radiusMetres, int count)
         {
             var found = new List<string>();
-            if (count <= 0 || !(radiusMetres >= 0)) return found;
-            var all = rows.ToArray();
+            if (count <= 0 || !(radiusMetres >= 0) || rows == null) return found;
             var seen = new HashSet<string>(StringComparer.Ordinal);
-            for (int i = all.Length - 1; i >= 0 && found.Count < count; i--)
+            for (int i = rowCount - 1; i >= 0 && found.Count < count; i--)
             {
-                var row = all[i];
-                if (row.Origin == null) continue;
+                var row = rows[(rowStart + i) % Retained];
+                if (row.Origin == null || row.Trace == null) continue;
                 double dx = row.Origin.Value.X - x, dz = row.Origin.Value.Z - z;
                 double distance = Math.Sqrt(dx * dx + dz * dz);
-                if (distance > radiusMetres || !seen.Add(row.Resident)) continue;
-                found.Add(distance.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture) + " m | " + row.Line);
+                if (distance > radiusMetres || !seen.Add(row.Trace.Consumer.Id)) continue;
+                found.Add(distance.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture) + " m | " + (brief?.Invoke(row.Trace) ?? format(row.Trace)));
             }
             found.Reverse();
             return found;
@@ -50,6 +50,7 @@ namespace PersistentCity.Core
             if (city == null) throw new ArgumentNullException(nameof(city));
             if (ReferenceEquals(observed, city)) return;
             Stop();
+            rows ??= new (FoodDecisionTrace?, Position?)[Retained];
             observed = city;
             city.FoodDecisionObserved += Record;
         }
@@ -69,7 +70,7 @@ namespace PersistentCity.Core
             city.FoodDecisionObserved += Record;
         }
 
-        public void Detach() { Stop(); lines.Clear(); rows.Clear(); }
+        public void Detach() { Stop(); lines.Clear(); rows = null; rowStart = rowCount = 0; }
 
         private void Record(FoodDecisionTrace trace)
         {
@@ -79,8 +80,10 @@ namespace PersistentCity.Core
                 if (line == null) return;
                 if (lines.Count == Capacity) lines.Dequeue();
                 lines.Enqueue(line);
-                if (rows.Count == Retained) rows.Dequeue();
-                rows.Enqueue((brief?.Invoke(trace) ?? line, trace.Consumer.Id, observed?.FindPosition(trace.Consumer.OriginPlaceId)));
+                var buffer = rows!;
+                var row = (trace, observed?.FindPosition(trace.Consumer.OriginPlaceId));
+                if (rowCount < Retained) buffer[(rowStart + rowCount++) % Retained] = row;
+                else { buffer[rowStart] = row; rowStart = (rowStart + 1) % Retained; }
             }
             catch (Exception error) { Stop(); failed(error); }
         }

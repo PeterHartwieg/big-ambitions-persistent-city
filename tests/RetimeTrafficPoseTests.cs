@@ -92,6 +92,17 @@ public sealed class RetimeTrafficPoseTests
 
     private static Position Pose(CitySimulator city, CitizenState person) => city.SampleJourney(person).Position;
 
+    private static (double End, Position To) CurrentLeg(CitySimulator city, CitizenState person)
+    {
+        double progress = city.State.Minute - person.DepartureMinute, end = 0;
+        foreach (var leg in person.Journey!.Legs)
+        {
+            end += leg.Minutes;
+            if (end > progress + 1e-6) return (person.DepartureMinute + end, leg.To);
+        }
+        throw new InvalidOperationException("no current leg");
+    }
+
     private static (ClockRetimeDriver Driver, CitySimulator City) Retime(CitySimulator city, double rate, bool strict)
     {
         var driver = new ClockRetimeDriver { StrictPose = strict };
@@ -152,37 +163,184 @@ public sealed class RetimeTrafficPoseTests
         foreach (double past in new[] { 3e-10, 3e-9, 3e-8 })
         {
             var city = JustPast(LunchDrive(), past);
-            var error = Assert.Throws<ArgumentException>(() => Retime(city, 20, strict: true));
+            var error = Assert.ThrowsAny<ArgumentException>(() => Retime(city, 20, strict: true));
             Assert.Contains("measured physical pose", error.Message);
         }
     }
 
-    [Fact]
-    public void ACarJustPastALegStartDegradesAcrossOneToTwentyToOneAndKeepsTheLunchOuting()
+    private static readonly Position OfficeAt = new Position(396.5, 0.42, 303.25);
+    private static readonly Position FlatAt = new Position(380.25, 0.42, 300.5);
+    private const string Walker = "pv:990";
+
+    private static CitySimulator Commute(int drivers)
     {
-        var city = JustPast(LunchDrive(), 3e-9);
-        var c = city.State.Citizens[0];
-        var meal = c.MealOuting;
-        var pose = Pose(city, c);
-        double stay = c.ActivityUntilMinute - c.NextEventMinute;
-        var (driver, fast) = Retime(city, 20, strict: false);
-        Assert.Equal(1, driver.PoseDegraded);
-        Assert.Equal(1, driver.Degraded);
+        var identities = Enumerable.Range(0, drivers).Select(i => new CitizenIdentity { Id = "pv:" + (985 + i), Name = "Driver " + i, Age = 30, AppearanceSeed = 3 + i, Persona = Persona.Commuter })
+            .Append(new CitizenIdentity { Id = Walker, Name = "Lunch walker", Age = 30, AppearanceSeed = 9, Persona = Persona.Commuter });
+        var state = Population.Create(identities, new[]
+        {
+            new Place { Id = "home", Name = "Home", Kind = PlaceKind.Home, Capacity = 8, Position = Corners[0] },
+            new Place { Id = "flat", Name = "Flat", Kind = PlaceKind.Home, Capacity = 1, Position = FlatAt },
+            new Place { Id = "office", Name = "Office", Kind = PlaceKind.Work, Capacity = 8, Position = OfficeAt },
+        }, "retime-pose-test", "0.40.4", 7, 1440);
+        state.Food = new FoodCommerceState();
+        var scope = new FoodScope { AlternativeKind = FoodAlternativeKind.Player, PlaceId = Stand, ProductId = FoodProducts.Croissant };
+        scope.UseChannel(FoodScopeChannel.Vehicle);
+        state.Food.Shops.Add(scope);
+        var row = state.Vendors.Admit("cart-a", "cart");
+        row.Stand = new VendorStand { OpeningId = 1, Position = StandAt, OpenedDay = 1, OpenedMinute = 0, ClosesDay = 1, ClosesMinute = 1400, Published = true };
+        row.PlacePublished = true;
+        for (int d = 0; d < drivers; d++)
+        {
+            var c = state.Citizens[d];
+            c.PlaceId = c.HomeId = "home"; c.DayPlaceId = "office";
+            c.Phase = CitizenPhase.Travelling; c.DestinationId = "office"; c.DestinationActivity = Activity.Work;
+            c.Preferences.OwnsCar = true;
+            c.Car = new CarState { Id = c.Identity.Id + ":car", ParkedPosition = Nodes[0] };
+            var route = new Route();
+            var walk = Corners.Append(Nodes[0]).ToArray();
+            for (int i = 0; i + 1 < walk.Length; i++)
+                route.Legs.Add(new RouteLeg { From = walk[i], To = walk[i + 1], Minutes = Position.Distance(walk[i], walk[i + 1]) / 1.4, Mode = TravelMode.Walk });
+            for (int i = 0; i + 1 < Nodes.Length; i++)
+                route.Legs.Add(new RouteLeg { From = Nodes[i], To = Nodes[i + 1], Minutes = Position.Distance(Nodes[i], Nodes[i + 1]) / 10 * 1.3, Mode = TravelMode.Car, ServiceId = "native:road:v1:" + Native + ":" + i + ":" + (i + 1) });
+            route.Legs.Add(new RouteLeg { From = Nodes[Nodes.Length - 1], To = OfficeAt, Minutes = Position.Distance(Nodes[Nodes.Length - 1], OfficeAt) / 1.4, Mode = TravelMode.Walk });
+            c.Journey = route; c.DepartureMinute = 1440 - 0.3 * d; c.NextEventMinute = c.DepartureMinute + route.Minutes;
+            c.ActivityUntilMinute = c.NextEventMinute + 480;
+        }
+        var w = state.Citizens[drivers];
+        w.PlaceId = w.HomeId = w.DayPlaceId = "flat"; w.Phase = CitizenPhase.AtPlace; w.Activity = Activity.Home;
+        w.NextEventMinute = w.ActivityUntilMinute = 1440 + 600;
+        var city = new CitySimulator(state, new Planner(1));
+        city.AttachFoodMarket(new VisitorRoutineTests.Market());
+        city.PublishVendorPlace(row, null);
+        return city;
+    }
+
+    private static ResidentMeal BookLunch(CitySimulator city)
+    {
+        var walk = new Route { Legs = new() { new RouteLeg { From = FlatAt, To = StandAt, Minutes = Position.Distance(FlatAt, StandAt) / 1.4, Mode = TravelMode.Walk } } };
+        Assert.True(city.TryBeginMealVisit(Walker, Stand, walk, 12, 20, 1440 + 500));
+        var person = city.State.Citizens.Single(c => c.Identity.Id == Walker);
+        var meal = city.State.Food!.Residents.SingleOrDefault(m => m.ResidentId == Walker);
+        if (meal == null) city.State.Food.Residents.Add(meal = new ResidentMeal { ResidentId = Walker, AnchorId = Walker });
+        meal.Day = 1; meal.Kind = MealKind.Lunch; meal.Status = MealStatus.Travelling; meal.PlaceId = Stand;
+        meal.BusinessId = city.State.Vendors.Find("cart-a")!.BusinessId; meal.ProductId = FoodProducts.Croissant; meal.ReturnMinutes = 12; meal.DueAt = person.NextEventMinute;
+        return meal;
+    }
+
+    private static void AssertLunchBooked(CitySimulator city, ResidentMeal meal, MealOuting outing, double stay)
+    {
+        var person = city.State.Citizens.Single(c => c.Identity.Id == Walker);
+        Assert.Equal(CitizenPhase.Travelling, person.Phase);
+        Assert.Same(outing, person.MealOuting);
+        Assert.Equal(Stand, person.DestinationId);
+        Assert.Same(meal, Assert.Single(city.State.Food!.Residents, m => m.ResidentId == Walker));
+        Assert.Equal(MealStatus.Travelling, meal.Status);
+        Assert.Equal(person.NextEventMinute, meal.DueAt);
+        Assert.Equal(person.DepartureMinute + person.Journey!.Minutes, person.NextEventMinute, 9);
+        Assert.Equal(stay, person.ActivityUntilMinute - person.NextEventMinute, 9);
+        var references = new VendorReferences();
+        city.CollectVendorReferences(references);
+        Assert.Contains(Stand, references.ShortLived);
+    }
+
+    [Fact]
+    public void ACarJustPastALegStartDegradesAtItsNewPaceAcrossOneToTwentyToOneWhileABookedLunchWalkerKeepsItsBooking()
+    {
+        var city = Commute(1);
+        var driver = city.State.Citizens[0];
+        city.AdvanceTo(1440 + Boundary(city, Corners.Length - 1) - 5, int.MaxValue);
+        var meal = BookLunch(city);
+        var walker = city.State.Citizens.Single(c => c.Identity.Id == Walker);
+        var outing = walker.MealOuting!;
+        double stay = walker.ActivityUntilMinute - walker.NextEventMinute;
+        JustPast(city, 3e-9);
+        var pose = Pose(city, driver);
+        var walkerPose = Pose(city, walker);
+        double remaining = driver.NextEventMinute - city.State.Minute, walkerRemaining = walker.NextEventMinute - city.State.Minute;
+
+        var (fastDriver, fast) = Retime(city, 20, strict: false);
+        Assert.Equal(1, fastDriver.PoseDegraded);
+        Assert.Equal(1, fastDriver.Degraded);
+        Assert.Equal(0, fastDriver.TimingKept);
         Assert.Equal(20, fast.State.TravelClockRate);
-        var c20 = fast.State.Citizens[0];
-        Assert.Same(meal, c20.MealOuting);
-        Assert.Equal(Stand, c20.DestinationId);
-        Assert.Equal(CitizenPhase.Travelling, c20.Phase);
-        Assert.InRange(Position.Distance(pose, Pose(fast, c20)), 0, 1e-6);
-        Assert.Equal(stay, c20.ActivityUntilMinute - c20.NextEventMinute, 9);
+        Assert.Equal(CitizenPhase.Travelling, driver.Phase);
+        Assert.Equal("office", driver.DestinationId);
+        Assert.False(fast.TryGetTrafficPermission(driver.Identity.Id, out _));
+        Assert.InRange(Position.Distance(pose, Pose(fast, driver)), 0, 1e-6);
+        Assert.InRange(driver.NextEventMinute - fast.State.Minute, remaining * 20 * 0.999, remaining * 20 * 1.001);
+        Assert.Equal(walkerPose, Pose(fast, walker));
+        Assert.InRange(walker.NextEventMinute - fast.State.Minute, walkerRemaining * 20 * 0.999, walkerRemaining * 20 * 1.001);
+        AssertLunchBooked(fast, meal, outing, stay);
+
         fast.AdvanceTo(fast.State.Minute + 0.5, int.MaxValue);
-        var (back, slow) = Retime(fast, 1, strict: false);
+        double fastRemaining = driver.NextEventMinute - fast.State.Minute;
+        var (slowDriver, slow) = Retime(fast, 1, strict: false);
+        output.WriteLine("1x remaining " + remaining.ToString("R") + ", 20x " + fastRemaining.ToString("R") + ", back at 1x " + (driver.NextEventMinute - slow.State.Minute).ToString("R")
+            + "; degraded back " + slowDriver.Degraded + ", inexact pose " + slowDriver.PoseDegraded);
         Assert.Equal(1, slow.State.TravelClockRate);
-        output.WriteLine("degraded back " + back.Degraded + ", inexact pose " + back.PoseDegraded);
-        slow.AdvanceTo(1800, int.MaxValue);
-        var arrived = slow.State.Citizens[0];
-        Assert.Equal(Stand, arrived.PlaceId);
-        Assert.Equal(1, arrived.CompletedJourneys);
+        Assert.InRange(driver.NextEventMinute - slow.State.Minute, fastRemaining / 20 * 0.999, fastRemaining / 20 * 1.001);
+        AssertLunchBooked(slow, meal, outing, stay);
+
+        slow.AdvanceTo(walker.NextEventMinute + 0.01, int.MaxValue);
+        Assert.Equal(Stand, walker.PlaceId);
+        Assert.Equal(CitizenPhase.AtPlace, walker.Phase);
+        Assert.Same(outing, walker.MealOuting);
+        slow.AdvanceTo(1440 + 400, int.MaxValue);
+        Assert.Equal("office", driver.PlaceId);
+        Assert.Equal(1, driver.CompletedJourneys);
+    }
+
+    [Fact]
+    public void ALateEvictedLeaderLeavesItsLinkSpanUnjoinedAndOvertakesNothingWhileTheFollowerKeepsTraffic()
+    {
+        var city = Commute(2);
+        var state = city.State;
+        var leader = state.Citizens[1];
+        var follower = state.Citizens[0];
+        city.AdvanceTo(1440 + Boundary(city, Corners.Length - 1) + 1.1, int.MaxValue);
+        Assert.True(city.TryGetTrafficPermission(leader.Identity.Id, out var ahead));
+        Assert.True(city.TryGetTrafficPermission(follower.Identity.Id, out var behind));
+        Assert.Equal(ahead.LinkId, behind.LinkId);
+        var pose = Pose(city, leader);
+        var driver = new ClockRetimeDriver { StrictPose = false };
+        bool moved = false;
+        while (true)
+        {
+            var outcome = driver.Update(state, 20, false, 1.4, 0);
+            if (outcome == ClockRetimeOutcome.Committed) break;
+            var pending = driver.Pending;
+            if (moved || pending == null || (int)Stage.GetValue(pending)! != 8) continue;
+            var vehicles = new List<TrafficVehicleState>();
+            ((TrafficKernel)Rescaled.GetValue(pending)!).CopyVehiclesInOrder(vehicles);
+            Assert.Equal(2, vehicles.Count);
+            vehicles.Single(v => v.VehicleId == leader.Identity.Id).MotionStartFraction = 0.5;
+            moved = true;
+        }
+        Assert.True(moved);
+        Assert.Equal(1, driver.PoseDegraded);
+        var rebuild = city.BeginRebuildRoutes(new Planner(20), driver.TakeRetimedTraffic());
+        while (!rebuild.Step(0)) { }
+        var fast = rebuild.Result!;
+        Assert.InRange(Position.Distance(pose, Pose(fast, leader)), 0, 1e-6);
+        Assert.True(fast.TryGetTrafficPermission(follower.Identity.Id, out _));
+        Assert.NotNull(ahead.LinkId);
+        var (legEnd, linkEnd) = CurrentLeg(fast, leader);
+        Assert.Equal(Nodes[1], linkEnd);
+        double previous = Position.Distance(Pose(fast, leader), linkEnd);
+        int steps = 0;
+        for (double minute = fast.State.Minute + 1; minute < legEnd - 1; minute += 1)
+        {
+            fast.AdvanceTo(minute, int.MaxValue);
+            Assert.False(fast.TryGetTrafficPermission(leader.Identity.Id, out _), "the leader rejoined its link at " + minute.ToString("R"));
+            double left = Position.Distance(Pose(fast, leader), linkEnd);
+            Assert.True(left < previous, "the leader stopped at " + minute.ToString("R"));
+            previous = left; steps++;
+        }
+        output.WriteLine("the leader drove " + steps + " one-minute steps outside traffic on its link; the follower kept its permission");
+        Assert.True(steps >= 10, "only " + steps + " steps");
+        fast.AdvanceTo(1440 + 2400, int.MaxValue);
+        Assert.Equal("office", leader.PlaceId);
+        Assert.Equal("office", follower.PlaceId);
     }
 
     [Fact]
@@ -253,7 +411,7 @@ public sealed class RetimeTrafficPoseTests
         }
         if (strict)
         {
-            Assert.Contains("measured physical pose", Assert.Throws<ArgumentException>(Run).Message);
+            Assert.Contains("measured physical pose", Assert.ThrowsAny<ArgumentException>(Run).Message);
             return;
         }
         Run();

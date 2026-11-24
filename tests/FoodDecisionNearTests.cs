@@ -62,6 +62,7 @@ public sealed class FoodDecisionNearTests
         while (!city.AdvanceTo(2 * 1440 + 11 * 60, 256).CaughtUp) { }
         var origins = new List<(string Resident, Position Origin)>();
         long bytes = 0, briefBytes = 0;
+        int briefCalls = 0;
         var recorder = new FoodDecisionRecorder(trace =>
         {
             var at = city.FindPosition(trace.Consumer.OriginPlaceId);
@@ -74,15 +75,17 @@ public sealed class FoodDecisionNearTests
         {
             string line = JsonConvert.SerializeObject(new { resident = trace.Consumer.Id, trace.Consumer.OriginPlaceId, trace.Intent.Id, trace.MealKind, trace.Intent.BusinessId,
                 trace.ChoiceCosts, result = trace.Decision?.Result, reason = trace.Decision?.Reason, chosen = trace.Decision?.BusinessId, product = trace.Decision?.ProductId });
-            briefBytes += line.Length * 2;
+            briefBytes += line.Length * 2; briefCalls++;
             return line;
         });
         recorder.Start(city);
         for (double minute = 2 * 1440 + 11 * 60; minute < 2 * 1440 + 14 * 60; minute += 1.0 / 30) city.AdvanceTo(minute, 64);
         recorder.Stop();
         int recorded = origins.Count;
-        output.WriteLine(recorded + " decisions, full row " + (bytes / Math.Max(1, recorded)) + " B, compact row " + (briefBytes / Math.Max(1, recorded)) + " B, "
-            + recorder.Count + " compact rows retained (" + (briefBytes / Math.Max(1, recorded) * recorder.Count / 1e6).ToString("0.00") + " MB) and " + recorder.Lines.Count() + " full rows ("
+        Assert.Equal(0, briefCalls);
+        recorder.Near(0, 0, double.MaxValue, FoodDecisionRecorder.Retained);
+        output.WriteLine(recorded + " decisions, full row " + (bytes / Math.Max(1, recorded)) + " B, compact row formatted on read " + (briefBytes / Math.Max(1, briefCalls)) + " B, "
+            + recorder.Count + " traces retained and " + recorder.Lines.Count() + " full rows ("
             + (bytes / Math.Max(1, recorded) * recorder.Lines.Count() / 1e6).ToString("0.00") + " MB)");
         Assert.True(recorded > FoodDecisionRecorder.Capacity, "only " + recorded + " decisions");
         Assert.Equal(Math.Min(recorded, FoodDecisionRecorder.Retained), recorder.Count);
