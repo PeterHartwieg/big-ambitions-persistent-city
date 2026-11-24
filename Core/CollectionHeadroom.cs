@@ -10,75 +10,27 @@ namespace PersistentCity.Core
         public const long MaximumBurstBytes = 4L * 1024 * 1024;
         public const double BurstDecay = 0.99;
         public const long MinimumCycleBytes = 16L * 1024 * 1024;
-        public const int MaximumDeferredUpdates = 8;
+        public const int MaximumWantedUpdates = 8;
         public const int History = 16;
 
         private long lastBytes = -1, cycleLive = -1, predicted = -1;
-        private int lastCollections = -1, deferredThisCycle;
+        private int lastCollections = -1, wantedThisCycle;
         private double ratio = double.NaN;
         private long burst;
         private readonly long[] predictedHistory = new long[History], observedHistory = new long[History];
-        private readonly int[] deferredHistory = new int[History];
+        private readonly int[] wantedHistory = new int[History];
         private long recorded;
 
         public long Predicted => predicted;
         public long Burst => burst;
         public double Ratio => ratio;
         public long Cycles { get; private set; }
-        public long DeferredUpdates { get; private set; }
-        public long DeferredCycles { get; private set; }
+        public long WantedUpdates { get; private set; }
+        public long WantedCycles { get; private set; }
         public long CappedCycles { get; private set; }
         public long Invalidated { get; private set; }
         public long TornSamples { get; private set; }
-        public long StaleDeferrals { get; private set; }
-
-        public static bool ClockAllowsDeferral(bool caughtUpLastUpdate, double nativeMinute, float nextTickMinutes)
-        {
-            if (!caughtUpLastUpdate || AccountingClock.Target(nativeMinute) != nativeMinute) return false;
-            if (!Position.Finite(nextTickMinutes) || nextTickMinutes < 0) return false;
-            double ahead = nativeMinute + 2.0 * nextTickMinutes;
-            return Math.Floor(ahead) == Math.Floor(nativeMinute) && AccountingClock.Target(ahead) == ahead;
-        }
-
-        public int CarriedUnits { get; private set; }
-        public int CarriedCitizenEvents { get; private set; }
-        public int CarriedUpdates { get; private set; }
-        public const double LoadDecay = 0.9;
-        public double PeakLoad { get; private set; } = 1;
-        public bool CatchingUp => CarriedCitizenEvents > 0;
-        public bool CapacityAllowsDeferral => (CarriedUpdates + 2) * PeakLoad <= 1;
-
-        public static double Load(double elapsedMilliseconds, double timeBudgetMilliseconds, int units, int baseUnits, int citizenEvents, int baseCitizenEvents,
-            int routePaths, int routePathLimit, bool limitedByAdmission)
-        {
-            if (!(timeBudgetMilliseconds > 0) || baseUnits <= 0 || baseCitizenEvents <= 0 || routePathLimit <= 0 || !Position.Finite(elapsedMilliseconds))
-                return 1;
-            double load = Math.Max(Math.Max(elapsedMilliseconds / timeBudgetMilliseconds, (double)units / baseUnits),
-                Math.Max((double)citizenEvents / baseCitizenEvents, (double)routePaths / routePathLimit));
-            return limitedByAdmission ? Math.Max(1, load) : load;
-        }
-
-        public void Carry(PopulationFrameBudget skipped)
-        {
-            CarriedUnits = Math.Min(PopulationFrameBudget.MaximumUnits, CarriedUnits + skipped.Units);
-            CarriedCitizenEvents += skipped.CitizenEvents;
-            CarriedUpdates++;
-        }
-
-        public void Release() { CarriedUnits = CarriedCitizenEvents = CarriedUpdates = 0; PeakLoad = 1; }
-
-        public (int Units, int CitizenEvents) Limits(PopulationFrameBudget current)
-            => (Math.Min(PopulationFrameBudget.MaximumUnits, current.Units + CarriedUnits), current.CitizenEvents + CarriedCitizenEvents);
-
-        public void Advanced(bool caughtUp, double load)
-        {
-            if (!(load >= 0) || double.IsInfinity(load)) load = 1;
-            PeakLoad = Math.Max(load, PeakLoad * LoadDecay);
-            if (caughtUp) CarriedUnits = CarriedCitizenEvents = CarriedUpdates = 0;
-        }
-
-        public static bool ClockReady(bool caughtUp, bool guardDeferred, double logicalMinute, double nativeMinute)
-            => caughtUp || guardDeferred && AccountingClock.Target(nativeMinute) == nativeMinute && AccountingClock.Compatible(logicalMinute, nativeMinute);
+        public long StaleChecks { get; private set; }
 
         public void Observe(int collectionsBefore, long bytesSinceCollection, long liveBytes, int collectionsAfter)
         {
@@ -95,12 +47,12 @@ namespace PersistentCity.Core
                 if (collections == lastCollections + 1 && lastBytes >= MinimumCycleBytes && cycleLive > 0)
                 {
                     int slot = (int)(recorded++ % History);
-                    predictedHistory[slot] = predicted; observedHistory[slot] = lastBytes; deferredHistory[slot] = deferredThisCycle;
+                    predictedHistory[slot] = predicted; observedHistory[slot] = lastBytes; wantedHistory[slot] = wantedThisCycle;
                     ratio = (double)lastBytes / cycleLive;
                     Cycles++;
                 }
-                if (deferredThisCycle > 0) DeferredCycles++;
-                deferredThisCycle = 0;
+                if (wantedThisCycle > 0) WantedCycles++;
+                wantedThisCycle = 0;
                 cycleLive = collections == lastCollections + 1 && liveBytes > 0 ? liveBytes : -1;
                 predicted = cycleLive > 0 && !double.IsNaN(ratio) ? (long)(ratio * cycleLive) : -1;
             }
@@ -115,51 +67,51 @@ namespace PersistentCity.Core
             burst = Math.Min(MaximumBurstBytes, Math.Max(allocatedBytes, decayed));
         }
 
-        public bool Defer(int collectionsBefore, long bytesSinceCollection, int collectionsAfter)
+        public bool WantsDeferral(int collectionsBefore, long bytesSinceCollection, int collectionsAfter)
         {
-            if (collectionsBefore != collectionsAfter || collectionsAfter != lastCollections) { StaleDeferrals++; return false; }
-            return Defer(bytesSinceCollection);
+            if (collectionsBefore != collectionsAfter || collectionsAfter != lastCollections) { StaleChecks++; return false; }
+            return WantsDeferral(bytesSinceCollection);
         }
 
-        public bool Defer(long bytesSinceCollection)
+        public bool WantsDeferral(long bytesSinceCollection)
         {
             if (predicted < MinimumCycleBytes || bytesSinceCollection < 0 || bytesSinceCollection + burst < predicted - MarginBytes) return false;
-            if (deferredThisCycle >= MaximumDeferredUpdates)
+            if (wantedThisCycle >= MaximumWantedUpdates)
             {
-                if (deferredThisCycle == MaximumDeferredUpdates) { CappedCycles++; deferredThisCycle++; }
+                if (wantedThisCycle == MaximumWantedUpdates) { CappedCycles++; wantedThisCycle++; }
                 return false;
             }
-            deferredThisCycle++; DeferredUpdates++;
+            wantedThisCycle++; WantedUpdates++;
             return true;
         }
 
         public void ResetCounters()
         {
-            Cycles = DeferredUpdates = DeferredCycles = CappedCycles = Invalidated = TornSamples = StaleDeferrals = 0;
+            Cycles = WantedUpdates = WantedCycles = CappedCycles = Invalidated = TornSamples = StaleChecks = 0;
             recorded = 0;
         }
 
-        private void Forget() { lastBytes = -1; lastCollections = -1; cycleLive = -1; predicted = -1; deferredThisCycle = 0; }
+        private void Forget() { lastBytes = -1; lastCollections = -1; cycleLive = -1; predicted = -1; wantedThisCycle = 0; }
 
         public int RecordedCycles => (int)Math.Min(recorded, History);
 
-        public (long Predicted, long Observed, int Deferred) Cycle(int index)
+        public (long Predicted, long Observed, int Wanted) Cycle(int index)
         {
             int count = RecordedCycles;
             if (index < 0 || index >= count) throw new ArgumentOutOfRangeException(nameof(index));
             int slot = (int)((recorded - count + index) % History);
-            return (predictedHistory[slot], observedHistory[slot], deferredHistory[slot]);
+            return (predictedHistory[slot], observedHistory[slot], wantedHistory[slot]);
         }
 
         public string ReportJson(bool available)
         {
             var text = new StringBuilder(256 + History * 64);
             string N(long value) => value.ToString(CultureInfo.InvariantCulture);
-            text.Append("{\"available\":").Append(available ? "true" : "false")
-                .Append(",\"margin_bytes\":").Append(N(MarginBytes)).Append(",\"maximum_deferred_updates\":").Append(N(MaximumDeferredUpdates))
-                .Append(",\"cycles\":").Append(N(Cycles)).Append(",\"deferred_updates\":").Append(N(DeferredUpdates))
-                .Append(",\"deferred_cycles\":").Append(N(DeferredCycles)).Append(",\"capped_cycles\":").Append(N(CappedCycles))
-                .Append(",\"invalidated\":").Append(N(Invalidated)).Append(",\"torn_samples\":").Append(N(TornSamples)).Append(",\"stale_deferrals\":").Append(N(StaleDeferrals)).Append(",\"advance_burst_bytes\":").Append(N(burst)).Append(",\"predicted_bytes\":").Append(N(predicted))
+            text.Append("{\"available\":").Append(available ? "true" : "false").Append(",\"deferral\":\"report_only\"")
+                .Append(",\"margin_bytes\":").Append(N(MarginBytes)).Append(",\"maximum_wanted_updates\":").Append(N(MaximumWantedUpdates))
+                .Append(",\"cycles\":").Append(N(Cycles)).Append(",\"wanted_updates\":").Append(N(WantedUpdates))
+                .Append(",\"wanted_cycles\":").Append(N(WantedCycles)).Append(",\"capped_cycles\":").Append(N(CappedCycles))
+                .Append(",\"invalidated\":").Append(N(Invalidated)).Append(",\"torn_samples\":").Append(N(TornSamples)).Append(",\"stale_checks\":").Append(N(StaleChecks)).Append(",\"advance_burst_bytes\":").Append(N(burst)).Append(",\"predicted_bytes\":").Append(N(predicted))
                 .Append(",\"ratio\":").Append(double.IsNaN(ratio) ? "null" : ratio.ToString("0.######", CultureInfo.InvariantCulture))
                 .Append(",\"recent_cycles\":[");
             for (int i = 0; i < RecordedCycles; i++)
@@ -168,7 +120,7 @@ namespace PersistentCity.Core
                 if (i > 0) text.Append(',');
                 text.Append("{\"predicted_bytes\":").Append(N(cycle.Predicted)).Append(",\"observed_bytes\":").Append(N(cycle.Observed))
                     .Append(",\"error_bytes\":").Append(cycle.Predicted < 0 ? "null" : N(cycle.Observed - cycle.Predicted))
-                    .Append(",\"deferred_updates\":").Append(N(cycle.Deferred)).Append('}');
+                    .Append(",\"wanted_updates\":").Append(N(cycle.Wanted)).Append('}');
             }
             return text.Append("]}").ToString();
         }

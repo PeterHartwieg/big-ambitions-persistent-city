@@ -20,7 +20,6 @@ namespace PersistentCity.Runtime
         public static long HeldOrdinaryTicks { get; private set; }
         public static long BoundaryClips { get; private set; }
         public static double WithheldMinutes { get; private set; }
-        public static float LastRequestedMinutes { get; private set; } = float.NaN;
         public static double LagMinutes { get; private set; }
         public static double MaximumLagMinutes { get; private set; }
         public static bool AccountingLimited { get; private set; }
@@ -123,7 +122,6 @@ namespace PersistentCity.Runtime
             if (!CheckInputEpoch(native, logical)) return;
             if (deltaTimeWithMultiplier <= 0) return;
             float requested = deltaTimeWithMultiplier;
-            LastRequestedMinutes = requested;
             bool ready = !Refused && populationCaughtUp();
             float allowed = AccountingClock.Limit(ready, native, requested);
             AccountingLimited = allowed < requested;
@@ -147,7 +145,6 @@ namespace PersistentCity.Runtime
             HeldEconomySkipTicks = HeldOrdinaryTicks = BoundaryClips = waitingSince = lastHeldAt = 0;
             WithheldMinutes = LagMinutes = MaximumLagMinutes = MaximumRecoverySeconds = 0;
             AccountingLimited = Refused = StartupHold = false;
-            LastRequestedMinutes = float.NaN;
         }
         private static void RidePrefix(float __0, out float __state) => __state = OrdinaryTick ? __0 : float.NaN;
         private static void RidePostfix(ref float __0, float __state)
