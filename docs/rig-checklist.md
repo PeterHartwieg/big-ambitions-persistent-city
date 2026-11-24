@@ -17,7 +17,7 @@ Every GR-5 rig run from now on must:
 
 ## Latest evidence
 
-- **24 November g, Mac (rig 17o), build `477d11a5`**. 3 PASS / 6 PARTIAL / 0 FAIL / 4 NOT RUN. Minute-level vendor handback joined. Recorder-off mod-work p95 was 3.5703 ms with five spikes at or above 30 ms. [24g results](#rig-results---24-november-2026-g-mac-rig-17o-e6-checks-1-3-6-7-at-477d11a5).
+- **24 November g, Mac (rig 17o), build `477d11a5`**. 3 PASS / 6 PARTIAL / 0 FAIL / 4 NOT RUN. Minute-level vendor handback joined. Provisional recorder-off mod-work p95 on the shared Mac was 3.5703 ms with five spikes at or above 30 ms. [24g results](#rig-results---24-november-2026-g-mac-rig-17o-e6-checks-1-3-6-7-at-477d11a5).
 
 - **24 November f, Mac (rig 17n), build `40fe3bf8`**. 2 PASS / 4 PARTIAL / 0 FAIL / 7 NOT RUN. The headless stop-2 retime and reversal passed. The camera and tagged cart arms were partial. [24f results](#rig-results---24-november-2026-f-mac-rig-17n-e6-checks-2-and-4-after-366-at-40fe3bf8).
 
@@ -27413,16 +27413,16 @@ Agent-rig checkout `d2d2ebd6887758a81dec88794d09fec95eebaa4d` used the existing 
 
 | E6 check | Verdict | Evidence |
 | --- | --- | --- |
-| 1. Contract present, missing and old | PARTIAL | E6a bound Vendor API v1 and both vehicles were eligible. The pinned 0.10.11 DLL was unavailable and Contract 2 still has no reviewed build. |
-| 2. Ownership starts at an opening | PARTIAL | Carried from 17n. The headless stop-2 retime and reversal passed. The camera evidence did not follow the same vehicle across a committed retime. |
+| 1. Contract present, missing and old | PARTIAL | The manual 0.10.12 present-contract arm showed Vendor API v1 ready and both vehicles eligible. The pinned 0.10.11 DLL was unavailable and Contract 2 still has no reviewed build. |
+| 2. Ownership starts at an opening | PARTIAL | Carried from 17n at `40fe3bf8`. The headless stop-2 retime and reversal passed. The camera evidence did not follow the same vehicle across a committed retime. |
 | 3. Positive sale with exact money | PARTIAL | 24 paid hot dogs matched cargo, 9,600 cents and the midnight payment. 23 wallet debits joined. One buyer lacked a same-run baseline. |
-| 4. Choice next to shops and rivals | PARTIAL | Carried from 17n. Tagged choices and rival fingerprints were verified. The cart stayed closed in the day-two tagged sample. |
+| 4. Choice next to shops and rivals | PARTIAL | Carried from 17n at `40fe3bf8`. Tagged choices and rival fingerprints were verified. The cart stayed closed in the day-two tagged sample. |
 | 5. Stand move with committed residents | NOT RUN | Needs the FT route `edit_stop` operation. |
 | 6. Handback mid-opening | PASS | Two committed meals missed safely. Street Food took over the same opening, and 83 consecutive ledger reads found no mixed-source minute. PC reclaimed the next opening. |
 | 7. Lease and missing PC | PARTIAL | Lease expiry, native sales, renewal and paid receipt continuity were observed. The with-PC flow failed its log gate on the Street Food shutdown exception. |
 | 8. Player-opened windows | PASS | Carried from 17l at `7714484f`. The player opening stayed Street Food-owned and the next crew opening was PC-owned. |
 | 9. Uncertain sale is not retried | NOT RUN | Needs RIG-SFFAULT. |
-| 10. Modded products on a vehicle | PARTIAL | Carried from 17l. Seven dumpling and 21 chopped-cheese paid receipts survived reload. Per-resident taste and the Mac `metadata_config` Drink override remain outside this batch. |
+| 10. Modded products on a vehicle | PARTIAL | Carried from 17l at `7714484f`. Seven dumpling and 21 chopped-cheese paid receipts survived reload. Per-resident taste and the Mac `metadata_config` Drink override remain outside this batch. |
 | 11. Bodies at the hatch | PASS | Carried from 17l at `7714484f`. A resident approached, served, and left on the pavement side. |
 | 12. Older city refused | NOT RUN | Contract-2 render refused because reviewed pins are absent. The check still needs the schema-1 restatement. |
 | 13. Performance window | NOT RUN | Needs F6b's unified acceptance checks. Recorder-off timing is reported separately. |
@@ -27465,7 +27465,7 @@ All 30 gameplay steps passed in the with-PC flow. Its log gate returned FAIL (ex
 
 ### Recorder-off performance
 
-The shared Mac sample ran for 600.398 real seconds at 1× from day 1 11:00 to about 13:57, with the food decision recorder off. RIG-MODWORK bound 66 entry points with complete coverage and valid samples. Across 16,313 union frames, mod-work p95 was **3.5703 ms** (gate <5 ms), down from 3.8595 ms in 17n's provisional recorder-off read. Five spikes were counted and all five retained, with no truncation. 17n counted 11 and reached 176.2397 ms. The runs had different host loads.
+The shared Mac sample is provisional. It ran for 600.398 real seconds at 1× from day 1 11:00 to about 13:57, with the food decision recorder off. RIG-MODWORK bound 66 entry points with complete coverage and valid samples. Across 16,313 union frames, mod-work p95 was **3.5703 ms** (gate <5 ms), down from 3.8595 ms in 17n's provisional recorder-off read. Five spikes were counted and all five retained, with no truncation. 17n counted 11 and reached 176.2397 ms. The runs had different host loads.
 
 | Unity frame | Mod work | Dominant scope |
 | --- | ---: | --- |
@@ -27475,7 +27475,7 @@ The shared Mac sample ran for 600.398 real seconds at 1× from day 1 11:00 to ab
 | 12628 | 34.7309 ms | `PopulationRuntime.Update` |
 | 15345 | 109.1549 ms | `PopulationRuntime.Update` |
 
-Separate native whole-frame timing was p95 **46.6622 ms**, max **1,063.0813 ms**, with 15,687 spikes of at least 30 ms and 1,024 retained by the whole-frame cap. Mac load (1/5/15 min) was 7.60 / 6.71 / 5.36 at 18:34 and 4.97 / 5.54 / 5.50 at 18:44. The process read found one Node process at the start and four at the end. It detected the `20261124-140600` nightly-ci run at the end. No dotnet or MSBuild process appeared at either endpoint.
+Separate native whole-frame timing, also provisional on the shared Mac, was p95 **46.6622 ms**, max **1,063.0813 ms**, with 15,687 spikes of at least 30 ms and 1,024 retained by the whole-frame cap. Mac load (1/5/15 min) was 7.60 / 6.71 / 5.36 at 18:34 and 4.97 / 5.54 / 5.50 at 18:44. The process read found one Node process at the start and four at the end. It detected the `20261124-140600` nightly-ci run at the end. No dotnet or MSBuild process appeared at either endpoint.
 
 The native values were 5 minutes, 3 saves, and `prevent_autosave: false`. The rig guard confirmed suppression after load and before and after the window. During the window it recorded 16,246 refusals, 0 allowed saves, and 0 native saving frames. Route A timing was outside this session's measurement.
 
