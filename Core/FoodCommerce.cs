@@ -21,8 +21,17 @@ namespace PersistentCity.Core
             TimeCents = c.ScoreCents - c.Price.ApproximateCents() - c.ServiceQualityAdjustmentCents - c.DistrictAppealAdjustmentCents
                 - MealRhythm.ProductPenalty(MealKind, c.ProductId)
                 + (c.ProductId == Consumer.PreferredProductId ? Consumer.PreferenceBonusCents : 0),
-            HomeFoodMarginCents = Intent.OutsideOptionScoreCents - c.ScoreCents
+            HomeFoodMarginCents = Intent.OutsideOptionScoreCents - c.ScoreCents,
+            Sources = SourceTags(c.BusinessId)
         });
+        private string? SourceTags(string business)
+        {
+            var union = Decision?.Awareness?.Union;
+            if (union == null) return null;
+            foreach (var candidate in union)
+                if (candidate != null && string.Equals(candidate.BusinessId, business, StringComparison.Ordinal)) return FoodAwarenessTags.Format(candidate.Sources);
+            return "";
+        }
         public int RouteCalls { get; set; }
         public double ElapsedMilliseconds { get; set; }
         public FoodDecisionState? Decision { get; set; }
