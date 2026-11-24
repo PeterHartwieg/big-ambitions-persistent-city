@@ -130,5 +130,12 @@ public sealed class FoodDecisionNearTests
         }
         output.WriteLine(tagged + " tagged candidate rows in the last " + FoodDecisionRecorder.Capacity);
         Assert.True(tagged > 0, "no decision carried an awareness image");
+
+        long held = GC.GetTotalMemory(true);
+        recorder.Detach();
+        long released = held - GC.GetTotalMemory(true);
+        GC.KeepAlive(city);
+        output.WriteLine("detaching " + FoodDecisionRecorder.Retained + " retained slots released " + (released / 1e6).ToString("0.00") + " MB; compact rows formatted at record time would hold "
+            + (briefBytes / Math.Max(1, briefCalls) * FoodDecisionRecorder.Retained / 1e6).ToString("0.00") + " MB");
     }
 }

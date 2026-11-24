@@ -227,6 +227,20 @@ public sealed class RetimeTrafficPoseTests
         return meal;
     }
 
+    private static int LunchReservations(CitySimulator city)
+    {
+        var food = typeof(CitySimulator).GetField("food", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!.GetValue(city)!;
+        var reservations = (Dictionary<string, int>)food.GetType().GetField("reservations", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!.GetValue(food)!;
+        return reservations.TryGetValue(Stand + "\n" + FoodProducts.Croissant, out int count) ? count : 0;
+    }
+
+    private static CitySimulator Restored(CitySimulator city)
+    {
+        var rebuild = city.BeginRebuildRoutes(new Planner(city.State.TravelClockRate), null);
+        while (!rebuild.Step(0)) { }
+        return rebuild.Result!;
+    }
+
     private static void AssertLunchBooked(CitySimulator city, ResidentMeal meal, MealOuting outing, double stay)
     {
         var person = city.State.Citizens.Single(c => c.Identity.Id == Walker);
@@ -250,10 +264,13 @@ public sealed class RetimeTrafficPoseTests
         var driver = city.State.Citizens[0];
         city.AdvanceTo(1440 + Boundary(city, Corners.Length - 1) - 5, int.MaxValue);
         var meal = BookLunch(city);
+        city = Restored(city);
+        Assert.Equal(1, LunchReservations(city));
         var walker = city.State.Citizens.Single(c => c.Identity.Id == Walker);
         var outing = walker.MealOuting!;
         double stay = walker.ActivityUntilMinute - walker.NextEventMinute;
         JustPast(city, 3e-9);
+        Assert.Equal(1, LunchReservations(city));
         var pose = Pose(city, driver);
         var walkerPose = Pose(city, walker);
         double remaining = driver.NextEventMinute - city.State.Minute, walkerRemaining = walker.NextEventMinute - city.State.Minute;
@@ -271,6 +288,7 @@ public sealed class RetimeTrafficPoseTests
         Assert.Equal(walkerPose, Pose(fast, walker));
         Assert.InRange(walker.NextEventMinute - fast.State.Minute, walkerRemaining * 20 * 0.999, walkerRemaining * 20 * 1.001);
         AssertLunchBooked(fast, meal, outing, stay);
+        Assert.Equal(1, LunchReservations(fast));
 
         fast.AdvanceTo(fast.State.Minute + 0.5, int.MaxValue);
         double fastRemaining = driver.NextEventMinute - fast.State.Minute;
@@ -280,6 +298,7 @@ public sealed class RetimeTrafficPoseTests
         Assert.Equal(1, slow.State.TravelClockRate);
         Assert.InRange(driver.NextEventMinute - slow.State.Minute, fastRemaining / 20 * 0.999, fastRemaining / 20 * 1.001);
         AssertLunchBooked(slow, meal, outing, stay);
+        Assert.Equal(1, LunchReservations(slow));
 
         slow.AdvanceTo(walker.NextEventMinute + 0.01, int.MaxValue);
         Assert.Equal(Stand, walker.PlaceId);
@@ -304,6 +323,7 @@ public sealed class RetimeTrafficPoseTests
         var pose = Pose(city, leader);
         var driver = new ClockRetimeDriver { StrictPose = false };
         bool moved = false;
+        double spanEnd = double.NaN;
         while (true)
         {
             var outcome = driver.Update(state, 20, false, 1.4, 0);
@@ -313,7 +333,9 @@ public sealed class RetimeTrafficPoseTests
             var vehicles = new List<TrafficVehicleState>();
             ((TrafficKernel)Rescaled.GetValue(pending)!).CopyVehiclesInOrder(vehicles);
             Assert.Equal(2, vehicles.Count);
-            vehicles.Single(v => v.VehicleId == leader.Identity.Id).MotionStartFraction = 0.5;
+            var ahead20 = vehicles.Single(v => v.VehicleId == leader.Identity.Id);
+            ahead20.MotionStartFraction = 0.5;
+            spanEnd = ahead20.Route[ahead20.RouteIndex].EndNominalMinutes;
             moved = true;
         }
         Assert.True(moved);
@@ -324,23 +346,81 @@ public sealed class RetimeTrafficPoseTests
         Assert.InRange(Position.Distance(pose, Pose(fast, leader)), 0, 1e-6);
         Assert.True(fast.TryGetTrafficPermission(follower.Identity.Id, out _));
         Assert.NotNull(ahead.LinkId);
-        var (legEnd, linkEnd) = CurrentLeg(fast, leader);
-        Assert.Equal(Nodes[1], linkEnd);
-        double previous = Position.Distance(Pose(fast, leader), linkEnd);
-        int steps = 0;
-        for (double minute = fast.State.Minute + 1; minute < legEnd - 1; minute += 1)
+        var (legEnd, nodeOne) = CurrentLeg(fast, leader);
+        Assert.Equal(Nodes[1], nodeOne);
+        double progress = fast.State.Minute - leader.DepartureMinute, offset = 0;
+        int untagged = 0, rejoined = 0;
+        foreach (var leg in leader.Journey!.Legs)
+        {
+            double start = offset;
+            offset += leg.Minutes;
+            if (leg.Mode != TravelMode.Car || offset <= progress + 1e-6) continue;
+            if (start < spanEnd - 1e-6) { Assert.Equal("", leg.ServiceId); untagged++; }
+            else { Assert.StartsWith("native:road:", leg.ServiceId); rejoined++; }
+        }
+        Assert.True(untagged >= 2, "only " + untagged + " road legs left traffic on the link");
+        Assert.True(rejoined >= 1, "no road leg after the link keeps its traffic tag");
+        double linkEnd = leader.DepartureMinute + spanEnd;
+        Assert.True(linkEnd > legEnd + 10, "the link ends at its first interior node");
+        var previous = Pose(fast, leader);
+        int steps = 0, pastInterior = 0;
+        for (double minute = fast.State.Minute + 1; minute < linkEnd - 1; minute += 1)
         {
             fast.AdvanceTo(minute, int.MaxValue);
             Assert.False(fast.TryGetTrafficPermission(leader.Identity.Id, out _), "the leader rejoined its link at " + minute.ToString("R"));
-            double left = Position.Distance(Pose(fast, leader), linkEnd);
-            Assert.True(left < previous, "the leader stopped at " + minute.ToString("R"));
-            previous = left; steps++;
+            var now = Pose(fast, leader);
+            Assert.True(Position.Distance(now, previous) > 1e-3, "the leader stopped at " + minute.ToString("R"));
+            if (minute > legEnd) pastInterior++;
+            previous = now; steps++;
         }
-        output.WriteLine("the leader drove " + steps + " one-minute steps outside traffic on its link; the follower kept its permission");
+        output.WriteLine("the leader drove " + steps + " one-minute steps outside traffic to the end of its link, " + pastInterior + " past the interior node; the follower kept its permission");
         Assert.True(steps >= 10, "only " + steps + " steps");
+        Assert.True(pastInterior >= 5, "only " + pastInterior + " steps past the interior node");
         fast.AdvanceTo(1440 + 2400, int.MaxValue);
         Assert.Equal("office", leader.PlaceId);
         Assert.Equal("office", follower.PlaceId);
+    }
+
+    [Fact]
+    public void ATrafficCarWhoseMealStayCannotBeRetimedKeepsItsOldTimingAndDrivesOutsideTrafficToItsNextLeg()
+    {
+        var city = LunchDrive();
+        var c = city.State.Citizens[0];
+        city.AdvanceTo(1440 + Boundary(city, Corners.Length) + 1.1, int.MaxValue);
+        Assert.True(city.TryGetTrafficPermission(c.Identity.Id, out _));
+        c.ActivityUntilMinute = 1000000000 - 1;
+        double arrival = c.NextEventMinute, departure = c.DepartureMinute;
+        var (driver, fast) = Retime(city, 20, strict: false);
+        Assert.Equal(1, driver.TimingKept);
+        Assert.Equal(1, driver.Degraded);
+        Assert.Equal(0, driver.PoseDegraded);
+        Assert.Equal(arrival, c.NextEventMinute);
+        Assert.Equal(departure, c.DepartureMinute);
+        Assert.False(fast.TryGetTrafficPermission(c.Identity.Id, out _));
+        double progress = fast.State.Minute - c.DepartureMinute, offset = 0;
+        int untagged = 0;
+        foreach (var leg in c.Journey!.Legs)
+        {
+            offset += leg.Minutes;
+            if (leg.Mode != TravelMode.Car || offset <= progress + 1e-6) continue;
+            Assert.Equal("", leg.ServiceId); untagged++;
+        }
+        Assert.Equal(2, untagged);
+        var (legEnd, next) = CurrentLeg(fast, c);
+        Assert.Equal(Nodes[2], next);
+        var previous = Pose(fast, c);
+        int steps = 0;
+        for (double minute = fast.State.Minute + 0.25; minute < legEnd - 0.25; minute += 0.25)
+        {
+            fast.AdvanceTo(minute, int.MaxValue);
+            Assert.False(fast.TryGetTrafficPermission(c.Identity.Id, out _), "the car rejoined traffic at " + minute.ToString("R"));
+            var now = Pose(fast, c);
+            Assert.True(Position.Distance(now, previous) > 1e-3, "the car stopped at " + minute.ToString("R"));
+            previous = now; steps++;
+        }
+        Assert.True(steps >= 4, "only " + steps + " steps");
+        fast.AdvanceTo(arrival + 1, int.MaxValue);
+        Assert.Equal(Stand, c.PlaceId);
     }
 
     [Fact]

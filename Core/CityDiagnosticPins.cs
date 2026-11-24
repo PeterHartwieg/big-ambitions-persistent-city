@@ -8,7 +8,9 @@ namespace PersistentCity.Core
         public const int Capacity = 50;
         public const int Retained = 1000;
         private readonly Queue<string> lines = new Queue<string>();
-        private (FoodDecisionTrace? Trace, Position? Origin)[]? rows;
+        private FoodDecisionTrace?[]? traces;
+        private FoodDecisionState?[]? decisions;
+        private Position?[]? origins;
         private int rowStart, rowCount;
         private readonly Func<FoodDecisionTrace, string?> format;
         private readonly Func<FoodDecisionTrace, string>? brief;
@@ -30,16 +32,18 @@ namespace PersistentCity.Core
         public IReadOnlyList<string> Near(double x, double z, double radiusMetres, int count)
         {
             var found = new List<string>();
-            if (count <= 0 || !(radiusMetres >= 0) || rows == null) return found;
+            if (count <= 0 || !(radiusMetres >= 0) || traces == null) return found;
             var seen = new HashSet<string>(StringComparer.Ordinal);
             for (int i = rowCount - 1; i >= 0 && found.Count < count; i--)
             {
-                var row = rows[(rowStart + i) % Retained];
-                if (row.Origin == null || row.Trace == null) continue;
-                double dx = row.Origin.Value.X - x, dz = row.Origin.Value.Z - z;
+                int at = (rowStart + i) % Retained;
+                var origin = origins![at];
+                var trace = traces[at];
+                if (origin == null || trace == null) continue;
+                double dx = origin.Value.X - x, dz = origin.Value.Z - z;
                 double distance = Math.Sqrt(dx * dx + dz * dz);
-                if (distance > radiusMetres || !seen.Add(row.Trace.Consumer.Id)) continue;
-                found.Add(distance.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture) + " m | " + (brief?.Invoke(row.Trace) ?? format(row.Trace)));
+                if (distance > radiusMetres || !seen.Add(trace.Consumer.Id)) continue;
+                found.Add(distance.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture) + " m | " + (brief?.Invoke(trace) ?? format(trace)));
             }
             found.Reverse();
             return found;
@@ -50,7 +54,16 @@ namespace PersistentCity.Core
             if (city == null) throw new ArgumentNullException(nameof(city));
             if (ReferenceEquals(observed, city)) return;
             Stop();
-            rows ??= new (FoodDecisionTrace?, Position?)[Retained];
+            if (traces == null)
+            {
+                traces = new FoodDecisionTrace?[Retained];
+                origins = new Position?[Retained];
+                if (brief != null)
+                {
+                    decisions = new FoodDecisionState?[Retained];
+                    for (int i = 0; i < Retained; i++) { traces[i] = new FoodDecisionTrace(); decisions[i] = new FoodDecisionState(); }
+                }
+            }
             observed = city;
             city.FoodDecisionObserved += Record;
         }
@@ -70,7 +83,7 @@ namespace PersistentCity.Core
             city.FoodDecisionObserved += Record;
         }
 
-        public void Detach() { Stop(); lines.Clear(); rows = null; rowStart = rowCount = 0; }
+        public void Detach() { Stop(); lines.Clear(); traces = null; decisions = null; origins = null; rowStart = rowCount = 0; }
 
         private void Record(FoodDecisionTrace trace)
         {
@@ -80,10 +93,19 @@ namespace PersistentCity.Core
                 if (line == null) return;
                 if (lines.Count == Capacity) lines.Dequeue();
                 lines.Enqueue(line);
-                var buffer = rows!;
-                var row = (trace, observed?.FindPosition(trace.Consumer.OriginPlaceId));
-                if (rowCount < Retained) buffer[(rowStart + rowCount++) % Retained] = row;
-                else { buffer[rowStart] = row; rowStart = (rowStart + 1) % Retained; }
+                int at;
+                if (rowCount < Retained) at = (rowStart + rowCount++) % Retained;
+                else { at = rowStart; rowStart = (rowStart + 1) % Retained; }
+                origins![at] = observed?.FindPosition(trace.Consumer.OriginPlaceId);
+                if (decisions == null) { traces![at] = trace; return; }
+                var slot = traces![at]!;
+                slot.Consumer = trace.Consumer; slot.Intent = trace.Intent; slot.MealKind = trace.MealKind;
+                var decision = trace.Decision;
+                if (decision == null) { slot.Decision = null; return; }
+                var kept = decisions[at]!;
+                kept.Result = decision.Result; kept.Reason = decision.Reason; kept.BusinessId = decision.BusinessId;
+                kept.ProductId = decision.ProductId; kept.Awareness = decision.Awareness;
+                slot.Decision = kept;
             }
             catch (Exception error) { Stop(); failed(error); }
         }

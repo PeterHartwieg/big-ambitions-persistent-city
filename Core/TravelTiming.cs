@@ -208,7 +208,7 @@ namespace PersistentCity.Core
 
             private readonly bool coalesce, strictPose;
             private HashSet<string>? lateEvicted;
-            private List<string>? lateOrder;
+            private List<(string Id, double Through)>? lateOrder;
             private int lateHandled;
 
             internal TravelRetime(CityState state, double walk, double rate, bool legacy, RetimeSource? source = null, int sharedLegHint = 0, bool coalesce = true, bool strictPose = false)
@@ -317,11 +317,21 @@ namespace PersistentCity.Core
                             if (worked && System.Diagnostics.Stopwatch.GetTimestamp() >= deadlineTimestamp) return false;
                             var vehicle = checking[checkedVehicles++];
                             if (!CheckVehicle(vehicle) && (lateEvicted ??= new HashSet<string>(StringComparer.Ordinal)).Add(vehicle.VehicleId))
-                                (lateOrder ??= new List<string>()).Add(vehicle.VehicleId);
+                                (lateOrder ??= new List<(string, double)>()).Add((vehicle.VehicleId, SpanEnd(vehicle, trafficChanges[vehicle.VehicleId].Mapped)));
                             worked = true;
                         }
                         if (lateEvicted != null && lateEvicted.Count > lateHandled) { stage = 10; continue; }
                         stage = 9; rescaledKernel = null;
+                        continue;
+                    }
+                    if (stage == 11)
+                    {
+                        while (lateHandled < lateOrder!.Count)
+                        {
+                            if (worked && System.Diagnostics.Stopwatch.GetTimestamp() >= deadlineTimestamp) return false;
+                            EvictLate(lateOrder[lateHandled]); lateHandled++; worked = true;
+                        }
+                        stage = 6;
                         continue;
                     }
                     if (stage == 9) { trafficDone = true; break; }
@@ -364,7 +374,7 @@ namespace PersistentCity.Core
                     case 3: kernel = (TrafficKernel)result; excluded = null; break;
                     case 5: rescaledKernel = (TrafficKernel)result; kernel = null; break;
                     case 6: traffic = (TrafficKernelState)result; restoredTraffic = new RetimedTraffic(traffic, rescaledKernel!); checkedVehicles = 0; break;
-                    case 10: rescaledKernel = (TrafficKernel)result; EvictLate(); stage = 5; break;
+                    case 10: rescaledKernel = (TrafficKernel)result; break;
                 }
             }
 
@@ -567,7 +577,7 @@ namespace PersistentCity.Core
                 catch (ArgumentException error) when (!strictPose)
                 {
                     if (trafficOwned) evicted.Add(citizen.Identity.Id);
-                    var unjoined = Unjoined(route, rawElapsed, state.Minute, true);
+                    var unjoined = Unjoined(route, rawElapsed, state.Minute, double.PositiveInfinity);
                     if (unjoined != null)
                         changes.Add(new Change { Citizen = citizen, Route = unjoined, EventMinute = citizen.NextEventMinute });
                     Degraded++;
@@ -707,37 +717,41 @@ namespace PersistentCity.Core
                 return true;
             }
 
-            private void EvictLate()
+            private static double SpanEnd(TrafficVehicleState vehicle, double progress)
+            {
+                if (vehicle.Completed) return progress;
+                foreach (var span in vehicle.Route)
+                    if (span.EndNominalMinutes > progress) return span.EndNominalMinutes;
+                return progress;
+            }
+
+            private void EvictLate((string Id, double Through) late)
             {
                 var state = State;
-                for (; lateHandled < lateOrder!.Count; lateHandled++)
+                var check = trafficChanges[late.Id];
+                var change = check.Change;
+                var citizen = change.Citizen;
+                double departure = state.Minute - check.Mapped;
+                if (!Position.Finite(departure) || departure < 0 || departure > state.Minute)
+                    throw new ArgumentException("Invalid journey departure.", nameof(state));
+                double arrival = departure + change.Route!.Minutes;
+                if (arrival < state.Minute && state.Minute - arrival <= CitySimulator.JourneyClockTolerance(state.Minute, change.Route.Minutes))
+                    arrival = state.Minute;
+                if (!Position.Finite(arrival) || arrival < state.Minute || arrival > MaxMinute)
+                    throw new ArgumentException("Retimed arrival exceeds the supported clock.", nameof(state));
+                if (change.MealStayUntil.HasValue)
                 {
-                    string id = lateOrder[lateHandled];
-                    var check = trafficChanges[id];
-                    var change = check.Change;
-                    var citizen = change.Citizen;
-                    double departure = state.Minute - check.Mapped;
-                    if (!Position.Finite(departure) || departure < 0 || departure > state.Minute)
-                        throw new ArgumentException("Invalid journey departure.", nameof(state));
-                    double arrival = departure + change.Route!.Minutes;
-                    if (arrival < state.Minute && state.Minute - arrival <= CitySimulator.JourneyClockTolerance(state.Minute, change.Route.Minutes))
-                        arrival = state.Minute;
-                    if (!Position.Finite(arrival) || arrival < state.Minute || arrival > MaxMinute)
-                        throw new ArgumentException("Retimed arrival exceeds the supported clock.", nameof(state));
-                    if (change.MealStayUntil.HasValue)
-                    {
-                        double until = citizen.ActivityUntilMinute + arrival - citizen.NextEventMinute;
-                        if (!Position.Finite(until) || until < arrival || until > MaxMinute)
-                            throw new ArgumentException("Retimed meal stay exceeds the supported clock.");
-                        change.MealStayUntil = until;
-                    }
-                    change.DepartureMinute = departure == citizen.DepartureMinute ? (double?)null : departure;
-                    change.EventMinute = arrival;
-                    var unjoined = Unjoined(change.Route, check.Mapped, state.Minute, false);
-                    if (unjoined != null) change.Route = unjoined;
-                    trafficChanges.Remove(id);
-                    Degraded++; PoseDegraded++;
+                    double until = citizen.ActivityUntilMinute + arrival - citizen.NextEventMinute;
+                    if (!Position.Finite(until) || until < arrival || until > MaxMinute)
+                        throw new ArgumentException("Retimed meal stay exceeds the supported clock.");
+                    change.MealStayUntil = until;
                 }
+                change.DepartureMinute = departure == citizen.DepartureMinute ? (double?)null : departure;
+                change.EventMinute = arrival;
+                var unjoined = Unjoined(change.Route, check.Mapped, state.Minute, late.Through);
+                if (unjoined != null) change.Route = unjoined;
+                trafficChanges.Remove(late.Id);
+                Degraded++; PoseDegraded++;
             }
         }
 
@@ -797,26 +811,30 @@ namespace PersistentCity.Core
 
         private const double DegradedPoseMetres = 0.000001;
 
-        private static Route? Unjoined(Route route, double progress, double minute, bool remaining)
+        private static Route? Unjoined(Route route, double progress, double minute, double through)
         {
             var legs = route.Legs;
             double tolerance = CitySimulator.JourneyClockTolerance(minute, route.Minutes), offset = 0;
             RouteLegs? copy = null;
+            bool current = true;
             for (int i = 0; i < legs.Count; i++)
             {
                 var leg = legs[i];
+                double start = offset;
                 offset += leg.Minutes;
                 if (!(offset > progress + tolerance)) continue;
+                if (!current && !(start < through - tolerance)) break;
+                current = false;
                 if (leg.Mode == TravelMode.Car && leg.ServiceId.StartsWith("native:road:", StringComparison.Ordinal))
                 {
                     copy ??= new RouteLegs(legs);
                     copy[i] = leg.CopyAs(leg.From, leg.To, leg.Minutes, "", leg.SplitPrefix);
                 }
-                if (!remaining) break;
             }
             if (copy == null) return null;
             var unjoined = new Route(copy).Commit();
-            PresentationGrid.Precompute(unjoined);
+            if (route.PresentationCells != null) unjoined.PresentationCells = route.PresentationCells;
+            else PresentationGrid.Precompute(unjoined);
             return unjoined;
         }
 
