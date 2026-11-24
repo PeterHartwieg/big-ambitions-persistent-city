@@ -481,7 +481,7 @@ namespace PersistentCity.Runtime
                 network = owner.TrafficNetwork;
                 scratch.Begin(speeds, waypoints, network, owner.trafficForecast, owner.trafficEntryForecast, from.Node, to.Node, departureMinute + begin.Minutes);
                 search = owner.graph.BeginSearch(from.Node, to.Node, owner.disabledSearch ??= owner.SearchDisabled, owner.ClearSegment(), scratch.Traversal,
-                    pathFound: scratch.PathFound, extraMinutes: scratch.Extra, maximumEstimatedMinutes: roadCeiling);
+                    pathFound: scratch.PathFound, extraMinutes: scratch.Extra, maximumEstimatedMinutes: roadCeiling, edgeTag: owner.edgeTagFor ??= owner.EdgeTag);
             }
 
             public bool Continue(long deadlineTimestamp)
@@ -550,7 +550,6 @@ namespace PersistentCity.Runtime
                             if (!network.TryGetEdge(path[i], path[i + 1], out var edge)
                                 || captured!.TryGetValue(edge.LinkId, out var value) && (value.Closed || !Position.Finite(value.DelayMinutes))
                                 || i == 0 && entryDelays!.TryGetValue(edge.LinkId, out var entryDelay) && (!Position.Finite(entryDelay) || entryDelay < 0)) { Finish(null); return true; }
-                            road.Legs[i].ServiceId = owner.EdgeTag(path[i], path[i + 1]);
                             continue;
                         }
                         default:
@@ -600,6 +599,7 @@ namespace PersistentCity.Runtime
         }
 
         private readonly Dictionary<long, string> edgeTags = new Dictionary<long, string>();
+        private Func<int, int, string>? edgeTagFor;
         private string edgeTagTopology = "";
         internal int EdgeTags => edgeTags.Count;
         private string EdgeTag(int from, int to)

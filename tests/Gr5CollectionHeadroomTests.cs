@@ -15,7 +15,7 @@ public sealed class Gr5CollectionHeadroomTests
     private const long MB = 1024 * 1024;
 
     [Fact]
-    public void ThePredictorLearnsTheTriggerFromACompletedCycleAndWantsDeferralOnlyInsideTheMarginUpToTheCap()
+    public void ThePredictorLearnsTheTriggerFromACompletedCycleCountsEveryUpdateInsideTheMarginAndFlagsCyclesPastTheCap()
     {
         var headroom = new CollectionHeadroom();
         headroom.Observe(5 * MB, 900 * MB, 10);
@@ -31,9 +31,10 @@ public sealed class Gr5CollectionHeadroomTests
         Assert.Equal(predicted, headroom.Predicted);
         Assert.False(headroom.WantsDeferral(predicted - CollectionHeadroom.MarginBytes - 1));
         for (int i = 0; i < CollectionHeadroom.MaximumWantedUpdates; i++) Assert.True(headroom.WantsDeferral(predicted - CollectionHeadroom.MarginBytes + i));
-        Assert.False(headroom.WantsDeferral(predicted));
-        Assert.False(headroom.WantsDeferral(predicted + MB));
-        Assert.Equal((long)CollectionHeadroom.MaximumWantedUpdates, headroom.WantedUpdates);
+        Assert.Equal(0, headroom.CappedCycles);
+        Assert.True(headroom.WantsDeferral(predicted));
+        Assert.True(headroom.WantsDeferral(predicted + MB));
+        Assert.Equal((long)CollectionHeadroom.MaximumWantedUpdates + 2, headroom.WantedUpdates);
         Assert.Equal(1, headroom.CappedCycles);
         headroom.Observe(predicted + 2 * MB, 1000 * MB, 12);
         headroom.Observe(2 * MB, 1010 * MB, 13);
@@ -41,7 +42,7 @@ public sealed class Gr5CollectionHeadroomTests
         Assert.Equal(1, headroom.WantedCycles);
         Assert.True(headroom.WantsDeferral(headroom.Predicted));
         var cycle = headroom.Cycle(1);
-        Assert.Equal((predicted, predicted + 2 * MB, CollectionHeadroom.MaximumWantedUpdates + 1), (cycle.Predicted, cycle.Observed, cycle.Wanted));
+        Assert.Equal((predicted, predicted + 2 * MB, CollectionHeadroom.MaximumWantedUpdates + 2), (cycle.Predicted, cycle.Observed, cycle.Wanted));
         using var report = JsonDocument.Parse(headroom.ReportJson(true));
         Assert.True(report.RootElement.GetProperty("available").GetBoolean());
         Assert.Equal(2 * MB, report.RootElement.GetProperty("recent_cycles")[1].GetProperty("error_bytes").GetInt64());
@@ -104,6 +105,36 @@ public sealed class Gr5CollectionHeadroomTests
         Assert.Equal(300 * MB, headroom.Predicted);
         headroom.ResetCounters();
         Assert.Equal((0L, 0L, 0L, 0), (headroom.Cycles, headroom.WantedUpdates, headroom.CappedCycles, headroom.RecordedCycles));
+    }
+
+    [Fact]
+    public void ANewWindowStartedInsideACappedCycleKeepsThePredictionAndCountsOnlyItsOwnUpdates()
+    {
+        var headroom = new CollectionHeadroom();
+        headroom.Observe(1 * MB, 900 * MB, 1);
+        headroom.Observe(1 * MB, 900 * MB, 2);
+        headroom.Observe(300 * MB, 900 * MB, 2);
+        headroom.Observe(1 * MB, 900 * MB, 3);
+        long predicted = headroom.Predicted;
+        Assert.True(predicted > 0);
+        for (int i = 0; i < CollectionHeadroom.MaximumWantedUpdates + 3; i++) Assert.True(headroom.WantsDeferral(predicted));
+        Assert.Equal(1, headroom.CappedCycles);
+        headroom.ResetCounters();
+        Assert.Equal(predicted, headroom.Predicted);
+        Assert.Equal((0L, 0L, 0L, 0L), (headroom.WantedUpdates, headroom.WantedCycles, headroom.CappedCycles, headroom.Cycles));
+        Assert.True(headroom.WantsDeferral(predicted));
+        Assert.True(headroom.WantsDeferral(predicted));
+        Assert.Equal(2, headroom.WantedUpdates);
+        Assert.Equal(0, headroom.CappedCycles);
+        headroom.Observe(predicted + MB, 900 * MB, 3);
+        headroom.Observe(1 * MB, 900 * MB, 4);
+        Assert.Equal((1L, 1L, 1), (headroom.Cycles, headroom.WantedCycles, headroom.RecordedCycles));
+        Assert.Equal(2, headroom.Cycle(0).Wanted);
+        using var report = JsonDocument.Parse(headroom.ReportJson(true));
+        Assert.Equal(2, report.RootElement.GetProperty("wanted_updates").GetInt64());
+        Assert.Equal(1, report.RootElement.GetProperty("wanted_cycles").GetInt64());
+        Assert.Equal(0, report.RootElement.GetProperty("capped_cycles").GetInt64());
+        Assert.Equal(2, report.RootElement.GetProperty("recent_cycles")[0].GetProperty("wanted_updates").GetInt64());
     }
 
     [Fact]

@@ -76,19 +76,15 @@ namespace PersistentCity.Core
         public bool WantsDeferral(long bytesSinceCollection)
         {
             if (predicted < MinimumCycleBytes || bytesSinceCollection < 0 || bytesSinceCollection + burst < predicted - MarginBytes) return false;
-            if (wantedThisCycle >= MaximumWantedUpdates)
-            {
-                if (wantedThisCycle == MaximumWantedUpdates) { CappedCycles++; wantedThisCycle++; }
-                return false;
-            }
             wantedThisCycle++; WantedUpdates++;
+            if (wantedThisCycle == MaximumWantedUpdates + 1) CappedCycles++;
             return true;
         }
 
         public void ResetCounters()
         {
             Cycles = WantedUpdates = WantedCycles = CappedCycles = Invalidated = TornSamples = StaleChecks = 0;
-            recorded = 0;
+            recorded = 0; wantedThisCycle = 0;
         }
 
         private void Forget() { lastBytes = -1; lastCollections = -1; cycleLive = -1; predicted = -1; wantedThisCycle = 0; }

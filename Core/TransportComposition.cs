@@ -323,7 +323,7 @@ namespace PersistentCity.Core
         public RoadSearch BeginSearch(int start, int goal, Func<int, bool> disabled, Func<Position, Position, bool> clear,
             Func<int, int, double, double>? traversalMinutes = null, int expansionLimit = 30000, Action<int[]>? pathFound = null,
             Func<int, int, double>? extraMinutes = null, Action<double>? estimateFound = null,
-            double maximumEstimatedMinutes = double.PositiveInfinity)
+            double maximumEstimatedMinutes = double.PositiveInfinity, Func<int, int, string>? edgeTag = null)
         {
             if (double.IsNaN(maximumEstimatedMinutes) || maximumEstimatedMinutes < 0)
                 throw new ArgumentOutOfRangeException(nameof(maximumEstimatedMinutes));
@@ -332,8 +332,11 @@ namespace PersistentCity.Core
             if (!Usable(start) || !Usable(goal) || start == goal || disabled(start) || disabled(goal)) return new RoadSearch(this);
             bool borrowed = Interlocked.CompareExchange(ref slot.InUse, 1, 0) == 0;
             return new RoadSearch(this, start, goal, disabled, clear, traversalMinutes, expansionLimit, pathFound, extraMinutes, estimateFound,
-                TransportComposition.RemainingSearchMinutes(maximumEstimatedMinutes, 0), borrowed ? slot.Workspace : new RoadSearchWorkspace(), borrowed);
+                TransportComposition.RemainingSearchMinutes(maximumEstimatedMinutes, 0), borrowed ? slot.Workspace : new RoadSearchWorkspace(), borrowed, edgeTag);
         }
+        public long RoadLegReuses => slot.Workspace.RoadLegReuses;
+        public long RoadLegBuilds => slot.Workspace.RoadLegBuilds;
+        internal int CachedRoadLegs => slot.Workspace.RoadLegs.Count;
         private bool Usable(int index) => index >= 0 && index < nodes.Count && nodes[index] != null && nodes[index].AllowsCar
             && nodes[index].Position.IsFinite && Position.Finite(nodes[index].KilometresPerHour) && nodes[index].KilometresPerHour > 0;
 
@@ -348,6 +351,7 @@ namespace PersistentCity.Core
             private readonly Func<int, int, double>? extraMinutes;
             private readonly Action<double>? estimateFound;
             private readonly double maximumEstimatedMinutes;
+            private readonly Func<int, int, string>? edgeTag;
             private readonly RoadSearchWorkspace? search;
             private readonly bool borrowed;
             private readonly Dictionary<(int From, int To), (double Baseline, double Nominal, double Extra)>? costs;
@@ -363,8 +367,9 @@ namespace PersistentCity.Core
             }
             internal RoadSearch(TransportRoadGraph graph, int start, int goal, Func<int, bool> disabled, Func<Position, Position, bool> clear,
                 Func<int, int, double, double>? traversalMinutes, int expansionLimit, Action<int[]>? pathFound, Func<int, int, double>? extraMinutes,
-                Action<double>? estimateFound, double maximumEstimatedMinutes, RoadSearchWorkspace search, bool borrowed)
+                Action<double>? estimateFound, double maximumEstimatedMinutes, RoadSearchWorkspace search, bool borrowed, Func<int, int, string>? edgeTag)
             {
+                this.edgeTag = edgeTag;
                 this.graph = graph; this.start = start; this.goal = goal; this.disabled = disabled; this.clear = clear;
                 this.traversalMinutes = traversalMinutes; this.expansionLimit = expansionLimit; this.pathFound = pathFound;
                 this.extraMinutes = extraMinutes; this.estimateFound = estimateFound; this.maximumEstimatedMinutes = maximumEstimatedMinutes;
@@ -445,8 +450,29 @@ namespace PersistentCity.Core
                             || nominal != captured.Nominal || !Position.Finite(currentExtra) || currentExtra < 0
                             || currentExtra != captured.Extra) return Finish(null);
                     }
-                    building!.Legs.Add(new RouteLeg { From = a.Position, To = b.Position, Mode = TravelMode.Car, Minutes = nominal });
+                    building!.Legs.Add(Leg(path[k - 1], path[k], a.Position, b.Position, nominal));
                 }
+            }
+
+            private RouteLeg Leg(int from, int to, Position a, Position b, double minutes)
+            {
+                if (edgeTag == null) return new RouteLeg { From = a, To = b, Mode = TravelMode.Car, Minutes = minutes };
+                string tag = edgeTag(from, to);
+                var search = this.search!;
+                long key = (long)from << 32 | (uint)to;
+                RouteLeg? cached = null;
+                bool known = borrowed && search.RoadLegs.TryGetValue(key, out cached);
+                if (known && cached!.Minutes == minutes && cached.From.Equals(a) && cached.To.Equals(b)
+                    && (ReferenceEquals(cached.ServiceId, tag) || string.Equals(cached.ServiceId, tag, StringComparison.Ordinal)))
+                { search.RoadLegReuses++; return cached; }
+                var leg = new RouteLeg { From = a, To = b, Mode = TravelMode.Car, Minutes = minutes, ServiceId = tag };
+                leg.Freeze();
+                if (borrowed)
+                {
+                    search.RoadLegBuilds++;
+                    if (known || search.RoadLegs.Count < RoadSearchWorkspace.MaximumRoadLegs) search.RoadLegs[key] = leg;
+                }
+                return leg;
             }
 
             private bool Finish(Route? route)

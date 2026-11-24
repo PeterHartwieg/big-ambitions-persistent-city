@@ -583,7 +583,7 @@ namespace PersistentCity.Runtime
                             + simulation.Traffic.PendingEventCount + " scheduled road events, " + simulation.Traffic.LinkCount + " road sections.");
                     if (collectionGuard == 1)
                         log?.Info("Collection headroom: " + collectionHeadroom.Cycles + " collection cycles, " + collectionHeadroom.WantedUpdates + " advancement updates predicted to collect in "
-                            + collectionHeadroom.WantedCycles + " cycles (" + collectionHeadroom.CappedCycles + " reached the " + CollectionHeadroom.MaximumWantedUpdates + "-update cap); deferral is report-only.");
+                            + collectionHeadroom.WantedCycles + " cycles (" + collectionHeadroom.CappedCycles + " had more than " + CollectionHeadroom.MaximumWantedUpdates + " such updates); deferral is report-only.");
                     ResetAdvanceDiagnostics();
                 }
                 ModFrames.Charge(GcAllocationSegment.ModSummary);
