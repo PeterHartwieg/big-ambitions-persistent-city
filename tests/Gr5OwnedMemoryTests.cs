@@ -17,7 +17,7 @@ public sealed class Gr5OwnedMemoryTests
     {
         string pedestrians = Source("Runtime", "PhysicalPedestrians.cs");
         Assert.DoesNotContain("BodyMerge.Forget(", pedestrians);
-        var destroys = Regex.Matches(pedestrians, @"UnityEngine\.Object\.Destroy\(character\.gameObject\);");
+        var destroys = Regex.Matches(pedestrians, @"ModUnityWork\.Destroy\(character\.gameObject\);");
         Assert.Equal(2, destroys.Count);
         foreach (Match destroy in destroys)
         {
@@ -32,11 +32,11 @@ public sealed class Gr5OwnedMemoryTests
         Assert.Contains("var tracked = ledger.Forget(combiner);", releaseBody);
         Assert.Contains("combiner.resultMergeGameObject", releaseBody);
         Assert.Contains("if (tracked != mesh) DestroyMesh(tracked);", releaseBody);
-        Assert.Contains("Object.Destroy(mesh);", releaseBody);
+        Assert.Contains("ModUnityWork.Destroy(mesh);", releaseBody);
         Assert.DoesNotContain("ledger.Prune();", releaseBody);
         Assert.DoesNotContain("ledger.ReleaseOrphans();", releaseBody);
         Assert.Contains("if (combiner == null) { ledger.ReleaseOrphan(combiner); return; }", releaseBody);
-        Assert.Contains("ledger.CountReleased(mesh);\n            Object.Destroy(mesh);", releaseBody.Replace("\r", ""));
+        Assert.Contains("ledger.CountReleased(mesh);\n            ModUnityWork.Destroy(mesh);", releaseBody.Replace("\r", ""));
         int keyed = merge.IndexOf("ledger.Merged(combiner, combined);", StringComparison.Ordinal);
         Assert.True(keyed > 0, "a redress replaces the combiner's previous mesh instead of adding another");
         Assert.True(keyed < merge.IndexOf("Fast++;", keyed, StringComparison.Ordinal), "only a finished merge is tracked, so Discard never leaves an entry");
