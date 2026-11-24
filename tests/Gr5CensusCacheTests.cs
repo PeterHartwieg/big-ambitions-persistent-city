@@ -41,14 +41,14 @@ public sealed class Gr5CensusCacheTests
         JsonElement Read(bool deferCache)
         {
             var census = new RetainedCensus();
-            census.TrackPerRoot(new[] { typeof(RouteLeg), typeof(Route) });
+            census.TrackPerRoot(new[] { typeof(RouteLeg), typeof(Route), typeof(RouteLeg[]) });
             if (deferCache) census.DeferCache("cache.routes.walking.cache", cache, 1024);
             census.Add("runtime.simulation", city);
             census.Add("runtime.cache", cache);
             census.Add("runtime.stale", stale);
             census.AddDeferredCaches();
             using var report = JsonDocument.Parse(census.ReportJson(1, 0, null, RetainedCensus.InstrumentRoot,
-                new[] { typeof(RouteLeg), typeof(Route) }, RetainedCensus.JourneyLegs(state)));
+                new[] { typeof(RouteLeg), typeof(Route), typeof(RouteLeg[]) }, RetainedCensus.JourneyLegs(state)));
             return report.RootElement.Clone();
         }
 
@@ -71,6 +71,14 @@ public sealed class Gr5CensusCacheTests
         Assert.Equal(exclusive, holders["cache.routes.walking.cache"]);
         Assert.Equal(staleLegs, holders["runtime.stale"]);
         Assert.Equal(legs.GetProperty("in_current_journeys").GetInt64(), holders["runtime.simulation"]);
+        var arrayHolders = deferred.GetProperty("tracked_roots").EnumerateArray().Single(t => t.GetProperty("name").GetString() == "RouteLeg[]")
+            .GetProperty("roots").EnumerateArray().ToDictionary(r => r.GetProperty("name").GetString()!, r => r.GetProperty("bytes").GetInt64());
+        Assert.Equal(journeys.Distinct().Count(), legs.GetProperty("leg_arrays_in_current_journeys").GetInt64());
+        Assert.Equal(arrayHolders["runtime.simulation"], legs.GetProperty("leg_array_bytes_in_current_journeys").GetInt64());
+        Assert.Equal(arrayHolders["cache.routes.walking.cache"], legs.GetProperty("leg_array_bytes_in_caches").GetInt64());
+        Assert.Equal(arrayHolders["runtime.stale"], legs.GetProperty("leg_array_bytes_outside_current_journeys_and_caches").GetInt64());
+        Assert.Equal((32 + 8L * staleLegs + 7) / 8 * 8, arrayHolders["runtime.stale"]);
+        Assert.Equal(arrayHolders.Values.Sum(), legs.GetProperty("leg_array_bytes_retained").GetInt64());
 
         var plain = Read(false);
         Assert.Equal(0, plain.GetProperty("route_legs").GetProperty("in_caches").GetInt64());

@@ -228,6 +228,24 @@ public sealed class Gr5OwnedMemoryTests
     }
 
     [Fact]
+    public void MergedMeshesAreCountedByTheOwnerHoldingTheirCombiner()
+    {
+        var ledger = new MergedBodyLedger<NativeHandle, NativeHandle>(body => body.Alive, mesh => mesh.Alive, _ => 11);
+        var bodies = Enumerable.Range(0, 6).Select(_ => (Body: new NativeHandle(), Mesh: new NativeHandle())).ToArray();
+        foreach (var (body, mesh) in bodies) { ledger.Own(body); ledger.Merged(body, mesh); }
+        var kinds = new Dictionary<NativeHandle, int> { [bodies[0].Body] = 0, [bodies[1].Body] = 0, [bodies[2].Body] = 1, [bodies[3].Body] = 2 };
+        var meshes = new int[4];
+        var vertices = new long[4];
+        ledger.CountMergedByOwner(body => kinds.TryGetValue(body, out int kind) ? kind : 3, meshes, vertices);
+        Assert.Equal(new[] { 2, 1, 1, 2 }, meshes);
+        Assert.Equal(new long[] { 22, 11, 11, 22 }, vertices);
+        bodies[5].Mesh.Alive = false;
+        ledger.CountMergedByOwner(body => kinds.TryGetValue(body, out int kind) ? kind : 3, meshes, vertices);
+        Assert.Equal(new[] { 2, 1, 1, 1 }, meshes);
+        Assert.Equal(ledger.LiveMeshes(out _), meshes.Sum());
+    }
+
+    [Fact]
     public void OrphanMeshCountsSeparateDeadCombinersFromLiveBodiesUntilTheirMeshesAreReleased()
     {
         var destroyed = new List<NativeHandle>();

@@ -127,11 +127,18 @@ namespace PersistentCity.Runtime
                 var context = GcContext();
                 int meshes = BodyMerge.LiveMeshes(out long vertices);
                 int orphans = BodyMerge.OrphanMeshes(out long orphanVertices);
+                var owners = new int[PhysicalPedestrians.OwnerKinds];
+                var ownerVertices = new long[PhysicalPedestrians.OwnerKinds];
+                var live = physical?.Pedestrians;
+                BodyMerge.CountMergedByOwner(combiner => PhysicalPedestrians.OwnerOf(live, combiner), owners, ownerVertices);
                 return new { monoHeapBytes = context.MonoHeapBytes, monoUsedBytes = context.MonoUsedBytes, totalMemoryBytes = GC.GetTotalMemory(false),
                     gen0 = GcCount(0), gen1 = GcCount(1), gen2 = GcCount(2), incremental = context.Incremental, measuring = gcSampler?.Running == true,
                     ownedBodyCombiners = BodyMerge.Owned, unmergedBodyCombiners = BodyMerge.Unmerged, reservedBodies = PhysicalPedestrians.ReserveCount, liveMergedMeshes = meshes, liveMergedVertices = vertices,
                     releasedMergedMeshes = BodyMerge.ReleasedMeshes, releasedMergedVertices = BodyMerge.ReleasedVertices, orphanMergedMeshes = orphans, orphanMergedVertices = orphanVertices,
-                    deferredOrphanMeshes = BodyMerge.DeferredOrphans, bakeScratchBytes = BlendshapeBake.ScratchBytes,
+                    deferredOrphanMeshes = BodyMerge.DeferredOrphans,
+                    leasedMergedMeshes = owners[PhysicalPedestrians.LeasedOwner], pooledMergedMeshes = owners[PhysicalPedestrians.PooledOwner],
+                    reservedMergedMeshes = owners[PhysicalPedestrians.ReservedOwner], unmatchedMergedMeshes = owners[PhysicalPedestrians.UnmatchedOwner],
+                    unmatchedMergedVertices = ownerVertices[PhysicalPedestrians.UnmatchedOwner], bakeScratchBytes = BlendshapeBake.ScratchBytes,
                     asyncIntegrationTimeMs = AsyncIntegrationMilliseconds(), backgroundLoadingPriority = Application.backgroundLoadingPriority.ToString(),
                     bodyGrowIntegrating = physical?.GrowSample.Pending ?? false };
             }

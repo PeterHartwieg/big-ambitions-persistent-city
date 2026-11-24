@@ -14,9 +14,11 @@ LABEL = 'retention'
 CONTROL = 'retention-control'
 FIELDS = ('ownedBodyCombiners', 'liveMergedMeshes', 'unmergedBodyCombiners', 'reservedBodies',
           'liveMergedVertices', 'bakeScratchBytes', 'monoHeapBytes', 'monoUsedBytes',
-          'orphanMergedMeshes', 'orphanMergedVertices', 'deferredOrphanMeshes')
+          'orphanMergedMeshes', 'orphanMergedVertices', 'deferredOrphanMeshes', 'leasedMergedMeshes', 'pooledMergedMeshes',
+          'reservedMergedMeshes', 'unmatchedMergedMeshes', 'unmatchedMergedVertices')
 TYPES = ('Position[]', 'Double[]', 'Int64[]', 'RouteLeg', 'Route', 'RouteLeg[]', 'List<RouteLeg>', 'RouteLegs', 'CitySimulator', 'RoadRoutes')
-ROUTE_LEGS = ('in_current_journeys', 'outside_current_journeys', 'split_prefix_legs', 'travelling', 'in_caches', 'outside_current_journeys_and_caches')
+ROUTE_LEGS = ('in_current_journeys', 'outside_current_journeys', 'split_prefix_legs', 'travelling', 'in_caches', 'outside_current_journeys_and_caches',
+              'leg_arrays_in_current_journeys', 'leg_array_bytes_in_current_journeys', 'leg_array_bytes_in_caches', 'leg_array_bytes_outside_current_journeys_and_caches')
 OUTSIDE_CACHES = ('RouteLeg', 'Route', 'RouteLeg[]', 'List<RouteLeg>', 'RouteLegs')
 TARGETS = 'retention-targets'
 MISSING_TARGETS = 'Retimed process did not export matched native clock targets'
@@ -126,6 +128,11 @@ def readings_summary(rows):
         'orphan meshes': lambda r: r['mesh'].get('orphanMergedMeshes'),
         'orphan vertices': lambda r: r['mesh'].get('orphanMergedVertices'),
         'deferred orphans': lambda r: r['mesh'].get('deferredOrphanMeshes'),
+        'leased meshes': lambda r: r['mesh'].get('leasedMergedMeshes'),
+        'pooled meshes': lambda r: r['mesh'].get('pooledMergedMeshes'),
+        'reserved meshes': lambda r: r['mesh'].get('reservedMergedMeshes'),
+        'unmatched meshes': lambda r: r['mesh'].get('unmatchedMergedMeshes'),
+        'unmatched vertices': lambda r: r['mesh'].get('unmatchedMergedVertices'),
         **{t: (lambda r, t=t: type_read(r['census'], t)) for t in TYPES},
         **{'RouteLeg ' + k.replace('_', ' '): (lambda r, k=k: route_leg_read(r['census'], k)) for k in ROUTE_LEGS},
         **{t + ' outside caches': (lambda r, t=t: type_outside_caches_read(r['census'], t)) for t in OUTSIDE_CACHES},

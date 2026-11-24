@@ -167,6 +167,55 @@ public sealed class Gr5RepeatedRetimeLeakTests
             Census(("simulation", city), ("driver", driver)), Census(("simulation", control.City), ("driver", new ClockRetimeDriver())));
     }
 
+    [Fact]
+    public void TheRetimeHandoverPeakLiveGraphStaysFlatAcrossRepeatedOneTwoOneCycles()
+    {
+        var state = Gr5AllocationMeasure.RigCity();
+        var city = new CitySimulator(state, new Gr5AdvanceSegmentMeasure.Straight());
+        city.AttachFoodMarket(new VisitorRoutineTests.Market { Shops = F5gPopulationFillTests.Shops(state) });
+        city.AttachOptionalStops(new Gr5AllocationMeasure.StopSpots(), OptionalStopPolicy.ApprovedChoicePercentage);
+        city.AdvanceTo(Math.Floor(state.Minute / 1440) * 1440 + 1440 + 15.5 * 60, int.MaxValue);
+        var driver = new ClockRetimeDriver();
+        var peaks = new List<long>();
+        var settled = new List<long>();
+        output.WriteLine("rig food city from 15:30, four 1->2->1 cycles; live graph at each handover stage (simulation + driver + rebuild roots, Mono 64-bit layout model):");
+        string Line(RetainedHeap heap) => heap.Bytes + " B / " + heap.Objects + " objects, CitySimulator " + Objects(heap, "CitySimulator") + ", RouteLeg " + Objects(heap, "RouteLeg") + ", RouteLeg[] " + Bytes(heap, "RouteLeg[]") + " B";
+        long Retime(double rate, int cycle)
+        {
+            var before = Census(("simulation", city), ("driver", driver));
+            long peak = before.Bytes;
+            int slices = 0;
+            while (driver.Update(state, rate, false, 1.4, ClockRetimeStages.SliceMilliseconds) != ClockRetimeOutcome.Committed)
+                if (++slices % 4 == 0) peak = Math.Max(peak, Census(("simulation", city), ("driver", driver)).Bytes);
+            var committed = Census(("simulation", city), ("driver", driver));
+            var rebuild = city.BeginRebuildRoutes(new Gr5AdvanceSegmentMeasure.Straight(), driver.TakeRetimedTraffic());
+            var begun = Census(("simulation", city), ("rebuild", rebuild), ("driver", driver));
+            while (!rebuild.Step(0)) { }
+            var stepped = Census(("simulation", city), ("rebuild", rebuild), ("driver", driver));
+            var result = rebuild.TakeResult();
+            var handedOver = Census(("simulation", city), ("result", result), ("rebuild", rebuild), ("driver", driver));
+            city = result;
+            var after = Census(("simulation", city), ("driver", driver));
+            peak = Math.Max(peak, Math.Max(committed.Bytes, Math.Max(begun.Bytes, Math.Max(stepped.Bytes, handedOver.Bytes))));
+            output.WriteLine("  cycle " + cycle + " to " + rate + "x: before " + Line(before) + "; committed " + Line(committed) + "; rebuild begun " + Line(begun) + "; rebuild stepped " + Line(stepped)
+                + "; old and new simulation both held " + Line(handedOver) + "; after release " + Line(after) + "; peak minus after " + (peak - after.Bytes).ToString("+0;-0;0") + " B");
+            Assert.True(Objects(handedOver, "CitySimulator") <= 2);
+            Assert.Equal(1, Objects(after, "CitySimulator"));
+            settled.Add(after.Bytes);
+            return peak;
+        }
+        for (int cycle = 1; cycle <= 4; cycle++)
+        {
+            peaks.Add(Retime(2, cycle));
+            city.AdvanceTo(state.Minute + 0.05, int.MaxValue);
+            peaks.Add(Retime(1, cycle));
+            city.AdvanceTo(state.Minute + 0.01, int.MaxValue);
+        }
+        output.WriteLine("  peaks " + string.Join(" / ", peaks) + " B; settled " + string.Join(" / ", settled) + " B");
+        var excess = peaks.Zip(settled, (p, a) => p - a).ToList();
+        Assert.True(excess.Skip(2).Max() - excess.Take(2).Max() < PlateauAllowance, "handover excess over the settled graph rose: " + string.Join(", ", excess));
+    }
+
     private static long InstrumentBytes()
     {
         var census = new RetainedCensus();
@@ -453,6 +502,8 @@ public sealed class Gr5RepeatedRetimeLeakTests
         var retimedOwned = new List<long> { OwnedLegs(state) };
         var controlOwned = new List<long> { OwnedLegs(control.State) };
         var held = new List<long> { 0 };
+        var retimedArrays = new List<RetainedCensus.JourneyLegLedger> { RetainedCensus.JourneyLegs(state) };
+        var controlArrays = new List<RetainedCensus.JourneyLegLedger> { RetainedCensus.JourneyLegs(control.State) };
         double start = state.Minute;
         for (int cycle = 1; cycle <= cycles; cycle++)
         {
@@ -472,6 +523,8 @@ public sealed class Gr5RepeatedRetimeLeakTests
             retimedOwned.Add(OwnedLegs(state));
             controlOwned.Add(OwnedLegs(control.State));
             held.Add(HeldSplits());
+            retimedArrays.Add(RetainedCensus.JourneyLegs(state));
+            controlArrays.Add(RetainedCensus.JourneyLegs(control.State));
             retimedReads.Add(Census(("simulation", city), ("driver", driver)));
             controlReads.Add(Census(("simulation", control.City), ("driver", new ClockRetimeDriver())));
         }
@@ -506,6 +559,24 @@ public sealed class Gr5RepeatedRetimeLeakTests
         city.AdvanceTo(drainedAt, int.MaxValue); control.City.AdvanceTo(drainedAt, int.MaxValue);
         var drained = Census(("simulation", city), ("driver", driver));
         var drainedControl = Census(("simulation", control.City), ("driver", new ClockRetimeDriver()));
+        retimedReads.Add(drained); controlReads.Add(drainedControl);
+        retimedArrays.Add(RetainedCensus.JourneyLegs(state)); controlArrays.Add(RetainedCensus.JourneyLegs(control.State));
+        output.WriteLine("  RouteLeg[] bytes by owner, retimed / control / gap (Mono 64-bit layout model; journey arrays from the census journey ledger):");
+        var otherGaps = new List<long>();
+        for (int i = 0; i < retimedReads.Count; i++)
+        {
+            string label = i <= cycles ? "R" + i : "drained";
+            long retimedTotal = Bytes(retimedReads[i], "RouteLeg[]"), controlTotal = Bytes(controlReads[i], "RouteLeg[]");
+            long retimedJourney = retimedArrays[i].LegArrayBytes, controlJourney = controlArrays[i].LegArrayBytes;
+            long retimedOther = retimedTotal - retimedJourney, controlOther = controlTotal - controlJourney;
+            otherGaps.Add(retimedOther - controlOther);
+            output.WriteLine("    " + label + " all " + Objects(retimedReads[i], "RouteLeg[]") + " / " + Objects(controlReads[i], "RouteLeg[]") + " arrays, " + retimedTotal + " / " + controlTotal + " / " + (retimedTotal - controlTotal).ToString("+0;-0;0")
+                + " B; current journeys " + retimedArrays[i].LegArrays + " / " + controlArrays[i].LegArrays + " arrays, " + retimedJourney + " / " + controlJourney + " / " + (retimedJourney - controlJourney).ToString("+0;-0;0")
+                + " B; other owners " + retimedOther + " / " + controlOther + " / " + (retimedOther - controlOther).ToString("+0;-0;0") + " B");
+            Assert.True(retimedOther >= 0 && controlOther >= 0, label + " journey arrays exceed the census RouteLeg[] bytes");
+        }
+        Assert.All(otherGaps, gap => Assert.Equal(0, gap));
+        retimedReads.RemoveAt(retimedReads.Count - 1); controlReads.RemoveAt(controlReads.Count - 1);
         output.WriteLine("  drained at minute " + drainedAt.ToString("0.00") + ": RouteLeg " + Objects(drained, "RouteLeg") + "/" + Objects(drainedControl, "RouteLeg")
             + ", retimed minus control " + (drained.Bytes - drainedControl.Bytes).ToString("+0;-0") + " B");
         Assert.True(drained.Bytes - drainedControl.Bytes < Allowance, "drained retimed minus control " + (drained.Bytes - drainedControl.Bytes) + " B");
