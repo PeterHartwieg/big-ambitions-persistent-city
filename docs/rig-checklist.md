@@ -17,6 +17,8 @@ Every GR-5 rig run from now on must:
 
 ## Latest evidence
 
+- **24 November f, Mac (rig 17n), build `40fe3bf8`**. 2 PASS / 4 PARTIAL / 0 FAIL / 7 NOT RUN. The headless stop-2 retime and reversal passed. The camera and tagged cart arms were partial. [24f results](#rig-results---24-november-2026-f-mac-rig-17n-e6-checks-2-and-4-after-366-at-40fe3bf8).
+
 - **24 November e, Mac (rig 17m), build `1c22343d`**. 1 PASS / 0 PARTIAL / 0 FAIL / 1 NOT RUN across the through-gate arms. The rig reported `blocked_at_gate` in both states. The open traversal was NOT RUN (tooling) after the same approach stall. [24e results](#rig-results---24-november-2026-e-mac-rig-17m-350-check-2-through-gate-half-at-1c22343d).
 
 - **24 November d, Mac (rig 17l), build `7714484f`**. 2 PASS / 3 PARTIAL / 1 FAIL / 7 NOT RUN. Vendor API preflight was Ready from `FoodTrucks.Core`. A traffic retime stopped the stop-2 ownership follow-up. [24d results](#rig-results---24-november-2026-d-mac-rig-17l-e6-partial-batch-checks-245681011-at-7714484f).
@@ -27307,3 +27309,94 @@ Both cars stopped at (-2907.96, approximately 0.02, -1515.63), 5.46 m short of t
 Pointer, hover and visual-feel checks were NOT RUN (for Peter). Public-road arms, GR-5 windows, no-mod references and E6 checks were outside this run.
 
 Refs #350 #331
+
+## Rig results - 24 November 2026 f (Mac, rig 17n): E6 checks 2 and 4 after #366 at 40fe3bf8
+
+**2 PASS / 4 PARTIAL / 0 FAIL / 7 NOT RUN.**
+
+The fetched tip was `40fe3bf89c4d739d46bfa8c8a083d7b19e30eeca` (#366). The isolated game used build 3682, Street Food 0.10.12, RLO 1.0.6, and 1,000 Persistent City residents. The FT-E6-Vendors fixture was restored from the archived 17l `FT-E6-Vendors-base` checkpoint. Cart A served hot dogs. Truck B served burgers and kabobs. The rented PC-owned shop was the coffee shop at 18 4th Avenue. Brewed Beans at 20 3rd Street supplied the rival fingerprint. The save schema was 1 and the staged `FoodChoicePriceWeight` was 1.2.
+
+Preflight `pc vendor status` returned `bridge: Ready`, `apiAssembly: FoodTrucks.Core`, and an empty reason. Player.log recorded `Street Food vendor API bound; api assembly: FoodTrucks.Core`. The package and staged DLL had SHA-256 `a2b007972ef3d0164d6cae2b4d78b537a4420b4bfdc59dbdd5614ed960de33b5`. The stage receipt backup was `~/Library/Application Support/BigAmbitionsAgentTestsMac/receipt-backups/20261124T151616Z`.
+
+### Check results
+
+| E6 check | Status | Evidence |
+| --- | --- | --- |
+| 1. Contract present, missing and old | NOT RUN | Needs RIG-SFAPI with the E6a, 0.10.11 and contract-2 Street Food sets. Restate the truck B expectation for E6f. |
+| 2. Ownership starts at an opening | PARTIAL | 2a passed the headless retime and the mid-leg reversal. 2b confirmed meal completion and moving traffic in separate observations. The camera sample did not span a committed retime. |
+| 3. Positive sale with exact money | NOT RUN | Needs RIG-VLEDGER for the resident wallet, stock, sale and midnight payment join. |
+| 4. Choice next to shops and rivals | PARTIAL | 4a verified the command forms, tags, and truck and shop choices. The cart fixture remained closed on the tagged day-two arm. 4b reported both timing windows. |
+| 5. Stand move with committed residents | NOT RUN | FT route help replied `Unknown route op 'help': add_stop, paste_day.` The in-place `edit_stop` operation is absent. |
+| 6. Handback mid-opening | PARTIAL | Carried from 17l. Both committed visits ended as missed meals with unchanged wallets and no receipts. Street Food then resumed sales in the same opening. The minute-level sale-source join needs RIG-VLEDGER. |
+| 7. Lease and missing PC | NOT RUN | Needs the RIG-SFAPI E6a set for the without-PC and with-PC relaunches. |
+| 8. Player-opened windows | PASS | Carried from 17l at `7714484f`. The player opening stayed with Street Food and the next crew opening was PC-owned. |
+| 9. Uncertain sale is not retried | NOT RUN | Needs RIG-SFFAULT. |
+| 10. Modded products on a vehicle | PARTIAL | Carried from 17l. Seven dumpling and 21 chopped-cheese paid receipts matched across reload. Per-resident taste was not replayed. The current ops list still lacks `metadata_config` for the Drink override, which returned `ops_unknown_op` in 17l. |
+| 11. Bodies at the hatch | PASS | Carried from 17l at `7714484f`. A resident approached, queued and left on the pavement side after a paid meal. |
+| 12. Older city refused | NOT RUN | Needs RIG-SFAPI and a restated check because the save schema is held at 1. |
+| 13. Performance window | NOT RUN | Needs the unified mod-work and whole-frame assertions requested for F6b. |
+
+Pointer, hover, click and visual-feel checks are for Peter's playtest. The #350 open-gate arm was outside this batch. Its through-gate drive stalled 5.46 m before the gate plane in 17m.
+
+### Check 2. Opening ownership and retime
+
+**2a PASS.** Both vehicles requested ownership while closed at native hour 08 (`RequestedHour: 32`). A's stop-1 opening was 10:52 (`FromHour: 34`), and B's was 09:42 (`FromHour: 33`), consistent with 17l. **Truck B, restated for E6f:** burger and kabob were eligible, `Reason: ""`, and B followed the same opening rules as A. The 11:55 Street Food ledger had eight hot dogs, matching the eight PC receipts, and zero truck sales. Both requests preceded their openings. A same-hour request did not arise in this fixture.
+
+The background arm reached 16:00 on the specified 20× command, with stop-2 grants at 14:30 for B and 15:00 for A. At 15:48 Persistent City's measured travel rate still read 0.333333 game minutes/s. The accounting clock had reported clipped ticks on the approach. The rig replayed from 17l's archived `FT-E6-Vendors-lunch` checkpoint, a descendant of the base fixture, headless. After a 1× lunch through 12:25, it ran `time {"run_until":{"day":1,"time":"16:00"},"speed":20}`. The measured rate was 6.666667 game minutes/s, with 5.85 m lunch reach. The 14:31 B and 15:00 A stop-2 openings were PC-owned. Both had `Managed: true` at 16:00, 16:04 and after the separate mid-leg reversal. A's stop-2 stand was deferred in the headless arm and the vehicle kept ownership. The 1× return committed by 16:04. The second cycle started at 16:04, reached 20× by 16:08, and was back at 1× by 16:09.
+
+| Session | Retime transitions | Degraded / inexact pose / other refusals |
+| --- | --- | --- |
+| Background from base | 08:00 1×→20×, 10:58 20×→1× | 0/0/0, 0/0/0 |
+| Headless from lunch checkpoint | Load at 12:05 20×→1×, then 12:25 1×→20×, 16:00 20×→1×, 16:04 1×→20×, 16:09 20×→1× | 0/0/0, 0/0/0, 0/0/0, 0/0/0, 0/0/0 |
+
+Every committed retime printed `degraded 0 (inexact pose 0, other retime refusals 0)`. The gameplay logs contained zero `Persistent City stopped`, `ArgumentException`, and `the owner released all` matches.
+
+**2b PARTIAL.** The headless replay's `pc vendor sales` showed two paid meals at 12:25 and a third at 16:00. `pv:904` was serving just before the confirmed 20× retime and had a paid receipt afterwards. The background road captures bracketed the requested 20× change near cart stop 2. A white car was visible in frame 14139 and out of the shot by 14143. Headless collider reads showed road traffic after the confirmed retime, with changing counts and distances. Both background camera arms left Persistent City's measured travel rate at 1×. There is no same-car capture across a committed retime. The retime logs counted zero degraded journeys and printed no degraded vehicle IDs.
+
+### Check 4a. Decisions near the stands
+
+**PARTIAL.** The day-one recorder was confirmed on at 08:00. At 11:48 with the cart serving at stop 1, the 100 m / 50 query returned 50 distinct residents and 13 cart choices. All 102 candidate entries carried `Sources: null`. The fixture's weighted choice and awareness policy activates on day two, so the legacy day-one decisions had no awareness image.
+
+The day-two recorder was confirmed on at 07:45. At 11:25 the cart-ID, truck-ID and explicit `215.08026123046875,6.793487548828125` queries each returned 39 distinct residents at the default 50 m radius. The cart's `100,20` query returned 20, and `100,50` returned 50. Headers included the stand coordinates, radius and retained count (1,000). Every data row started with a distance. All 262 candidate entries in the 50-resident query carried source tags, including `routine`, `discovery`, `routine+discovery`, `home` and `origin`. Eight entries in the default-radius sample carried `null`. A negative radius produced the usage line `pc food decisions near <vehicle-id|x,z>[,radius m][,count]`.
+
+Two residents in the 50-row day-two sample chose the truck and two chose the player shop. For example, `42.6 m | pv:354` chose the truck's kabob with `Sources: "origin"` and a score of 897.23 cents. `52.5 m | c396` chose the player shop's croissant with `Sources: "home"` and a score of 1,147.48 cents. Both candidate types carried the price, fit, quality, district appeal, preference and time terms.
+
+The cart stayed closed at its previous stop on day two. Street Food reported a gap from 07:19 to 09:00 in the cart's shift coverage. The Tuesday shift change to 07:00–17:00 was accepted. Teleporting the closed cart to its existing stop 1, including with the player nearby and after a cold reload at that location, returned `Vehicle xt84y+PrUSEBQH3LDzlFg== isn't on the map now (too far from the player, or in a garage).` This fixture gap left the tagged cart candidate and choice unverified.
+
+The day-one Brewed Beans fingerprint and all five section hashes matched 17l before and after the lunch window (`f0145716d23f606ac85f659c74c32a746a9359cc0876b67915fe54b6c4b51149`). The day-two pre-breakfast read had one additional `daily_incomes` entry. Registration, prices, hours and stock still matched day one. The day-two fingerprint and all five section hashes matched between 07:45 and the post-sample read (`4e52e05ab3701774bbd83bf241e1c82fea29b8ed9f7ffda97f845c02ecb83903`).
+
+The recorder-on and recorder-off positioning runs each committed two retimes. The day-two choice session committed five, including its day-one approach. All nine summaries reported 0/0/0 degraded / inexact pose / other refusals. Street Food recorded one ordinary handback when the day-two process was closed for the cart reload.
+
+### Check 4b. Recorder cost
+
+Report-only. Both day-one 1× background windows started at native 11:00 from separate loads of the same base. The decision console samples were outside the timed windows. The short first ON attempt was discarded after a stale paused heartbeat. The repeat began after confirmed unpause. RIG-MODWORK reported complete coverage and valid samples in both recorded windows.
+
+| Recorder | Real seconds | Native interval | Union frames | Mod-work p95 | Mod-work max | Mod-work ≥30 ms counted/retained | Whole-frame p95 / max (native perf) | Whole-frame ≥30 ms counted/retained |
+| --- | ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| ON | 601.019 | 11:00–13:47 | 16,085 | 3.8317 ms | 39.1639 ms | 2/2 | 47.9179 / 1,206.3025 ms | 15,558/1,024 |
+| OFF | 600.469 | 11:00–13:48 | 16,544 | 3.8595 ms | 176.2397 ms | 11/11 | 37.7386 / 2,392.3772 ms | 16,098/1,024 |
+
+Both mod-work p95s met the 5 ms gate. Mod-work spike lists were complete. The separate native whole-frame spike lists reached their cap. In each listed mod-work frame `PopulationRuntime.Update` was the dominant scope. The window instrumented entry points and does not isolate recorder work inside that scope.
+
+| Recorder | Unity frame / mod-work ms (every ≥30 ms spike) |
+| --- | --- |
+| ON | 15915 / 39.1639, 19838 / 30.7509 |
+| OFF | 11398 / 36.6091, 15466 / 43.0261, 17232 / 47.4416, 17238 / 109.8764, 17244 / 47.3576, 17246 / 47.0981, 17247 / 30.9418, 17260 / 44.8737, 17261 / 176.2397, 17262 / 124.8436, 22349 / 32.9577 |
+
+| Recorder | Start load (1/5/15 min) | End load (1/5/15 min) | Guard refusals / allowed saves / native saving frames |
+| --- | --- | --- | --- |
+| ON | 5.42 / 6.32 / 7.36 | 4.71 / 5.03 / 6.08 | 16,094 / 0 / 0 |
+| OFF | 5.06 / 4.93 / 5.67 | 3.99 / 4.75 / 5.20 | 15,575 / 0 / 0 |
+
+Five Node processes appeared at every endpoint. The process reads found zero dotnet or MSBuild processes at those four endpoints. Timings are provisional on the shared Mac. Autosave suppression read back true after every load and before and after both windows. The original native settings were 5 minutes, 3 saves, and `prevent_autosave: false`.
+
+### Restore and evidence
+
+- The stage command was `python3 scripts/install-mac.py --stage-mod PersistentCity <absolute package path>`, using `~/HART-Builds/persistent-city-rig-2026-11-24f-mac/package`. Installer and Player.log agreed on `staged_mod name=PersistentCity version=absent informational=0.10.0-persistent-city-candidate sha256=a2b007972ef3d0164d6cae2b4d78b537a4420b4bfdc59dbdd5614ed960de33b5`.
+- The installed rig exposed the `fe796f7` E6 save-name extension. AgentRigOps.dll SHA-256 was `5e8559e84a7fea79e75d92709c1c03e2b4351507f60275622506383044a7c3f1` before and after. The Street Food hashes were `7771637dcfcc254544548c72d8a84de56acb6f4863a4c47111f0376c3494c0f4` (FoodTrucks.dll), `06733f5e9d9c11ff57940f285f0300f3c98fab1505df0d77e8de15f3ca11c68e` (FoodTrucks.Core.dll), `368eb2675e198b9ed342e7d372f18328a4145891ecc46a5b63b241ef626012e7` (BridgeControl.dll), and `7b9e756306fa3d7620e02a857c8927a6ab04973f9bd8a77d3866700a6deac55c` (0Harmony.dll).
+- The archive contains the four disposable checkpoints (`FT-E6-Vendors-base`, `FT-E6-Vendors-lunch`, `FT-E6-Vendors-24f-visual`, `FT-E6-Vendors-24f-day2`), their companion files, three generated shop logos and 40 captures. All four `disposable_save delete` results returned `exists: false` with zero files. The original SaveGames manifest matched.
+- The private game stopped normally. All 272 ModsLocal files, 284 receipt entries, isolated preferences, autosave settings and the original PC config matched the pre-run state. The candidate used `FoodChoicePriceWeight: 1.2`. The original config had no explicit override and was restored byte for byte. RLO option reads matched (living population and Social Media on, notices off). Lease verification after release showed stopped, unleased and zero pending operations.
+- The Street Food handback during the deliberate day-two restart was followed by a Street Food `NullReferenceException` in `Helpers.PlayerHelper.GetPosition` during teardown. The process exited normally. The retime check's gameplay logs are separate.
+- Raw commands, log lines, frame reports, captures and archives are in `~/Coding_Projects/.agent-logs/persistent-city-rig-2026-11-24f-mac/`. SHA-256 of `evidence-sha256.txt` is `3ea64763a31e2dfcfa2190b79b3c479220e60c51dc8eb2cd457173346ea974f4`.
+
+Refs #366 #364
