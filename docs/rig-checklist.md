@@ -17,6 +17,8 @@ Every GR-5 rig run from now on must:
 
 ## Latest evidence
 
+- **24 November a, Mac (rig 17i), build `d1e868fe`**. 1 PASS / 2 PARTIAL / 3 FAIL / 0 NOT RUN / 2 REPORTED. A FAIL (steady gen0 8 > matched no-mod 6, immediate pause p95 130.192 ms), B FAIL (20× pause p95 161.447 ms, 20× and 60× gen0 7), C FAIL (1 mod-work frame reached 30 ms), L PARTIAL (raw RouteLeg[] byte gate passed; plateau unestablished for several types), P PASS, G PARTIAL. **PROVISIONAL (shared Mac / Mono)**. [24a results](#rig-results---24-november-2026-a-mac-rig-17i-358-gr-5-checks-at-d1e868fe).
+
 - **23 November g, Mac (rig 17h), build `ce73d8db`**. 1 PASS / 1 PARTIAL / 4 FAIL / 0 NOT RUN / 2 REPORTED. A FAIL (immediate gen0 8 > 6, pause p95 54.969 ms > 37 ms), B FAIL (20× heap margin 20.114304 MB < 23 MB, 20× pause p95 49.069 ms > 37 ms, 60× gen0 7 > 6), L FAIL (sustained growth in Mono used, forced-live and outside-cache RouteLeg[] bytes over the final three cycles), P FAIL (frame 15,646 took 31.2333 ms in AdvancePopulation), C PASS, G PARTIAL. **PROVISIONAL (shared Mac / Mono)**. [23g results](#rig-results---23-november-2026-g-mac-rig-17h-356-gr-5-checks-at-ce73d8db).
 
 - **23 November e, Mac (rig 17f), build `327e7ff3`**. 2 PASS / 1 PARTIAL / 3 FAIL / 1 NOT RUN / 3 REPORTED. A FAIL (immediate gen0 7 > 6), B FAIL (20× heap 1477.69 MB > 1,470 MB; 60× gen0 7), L FAIL (Mono used gap rose R2–R5, RouteLeg[] outside-cache byte increase accelerated on the final cycle and grew further at drain), C/P PASS, #350 check 2 NOT RUN (0 gates at the target). **PROVISIONAL (shared Mac / Mono)**. [23e results](#rig-results---23-november-2026-e-mac-rig-17f-348-gr-5-checks--350-gate-openclose-at-327e7ff3).
@@ -27018,7 +27020,7 @@ All matched traffic reads reported zero vehicles, routes and legs outside live s
 
 | Arm | Longest sampler collection frame | Wall / UpdateCity / off-CPU ms | Marker ms | Largest probe subsystem excess / ms / outside-mod ms |
 | --- | --- | --- | --- | --- |
-| A steady | 15,672 | 66.391 / 0.578 / 22.219 | 25.3105 | Update.ScriptRunBehaviourUpdate / 31.2884 / 31.4299 |
+| A steady | 15,672 (sampler); marker and subsystem from probe frame 15,673, paired by ordinal 231 | 66.391 / 0.578 / 22.219 | 25.3105 (probe frame 15,673) | Update.ScriptRunBehaviourUpdate / 31.2884 / 31.4299 (probe frame 15,673) |
 | A immediate | 5,846 | 163.928 / 0.808 / 23.961 | 22.8369 | Update.ScriptRunDelayedDynamicFrameRate / 90.3823 / 90.3823 |
 | B 20× | 22,135 | 195.005 / 0.209 / 26.407 | 23.7147 | PreLateUpdate.ScriptRunBehaviourLateUpdate / 147.3792 / 147.3712 |
 | B 60× | 21,608 | 69.813 / 0.179 / 22.601 | 26.851 | TimeUpdate.WaitForLastPresentationAndUpdateTime / 32.0435 / 32.0435 |
