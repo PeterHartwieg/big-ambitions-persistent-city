@@ -297,7 +297,15 @@ namespace PersistentCity.Core
             public JourneyLegLedger(long journeys, long travelling, long legs, long splitPrefixes, long mostLegs)
                 : this(journeys, travelling, legs, splitPrefixes, mostLegs, 0) { }
             public JourneyLegLedger(long journeys, long travelling, long legs, long splitPrefixes, long mostLegs, long mostSplitPrefixes)
-            { Journeys = journeys; Travelling = travelling; Legs = legs; SplitPrefixes = splitPrefixes; MostLegs = mostLegs; MostSplitPrefixes = mostSplitPrefixes; }
+                : this(journeys, travelling, legs, splitPrefixes, mostLegs, mostSplitPrefixes, 0, 0, 0) { }
+            public JourneyLegLedger(long journeys, long travelling, long legs, long splitPrefixes, long mostLegs, long mostSplitPrefixes, long legArrays, long legArrayBytes, long legArraySlots)
+            {
+                Journeys = journeys; Travelling = travelling; Legs = legs; SplitPrefixes = splitPrefixes; MostLegs = mostLegs; MostSplitPrefixes = mostSplitPrefixes;
+                LegArrays = legArrays; LegArrayBytes = legArrayBytes; LegArraySlots = legArraySlots;
+            }
+            public long LegArrays { get; }
+            public long LegArraySlots { get; }
+            public long LegArrayBytes { get; }
             public long Journeys { get; }
             public long Travelling { get; }
             public long Legs { get; }
@@ -320,13 +328,19 @@ namespace PersistentCity.Core
         {
             if (state == null) return default;
             var legs = new HashSet<RouteLeg>(LegIdentity.Instance);
-            long journeys = 0, travelling = 0, splits = 0, most = 0, mostSplits = 0;
+            var arrays = new HashSet<RouteLegs>(Identity.Instance);
+            long journeys = 0, travelling = 0, splits = 0, most = 0, mostSplits = 0, arrayBytes = 0, slots = 0;
             foreach (var person in PersonTable.Schedules(state))
             {
                 if (person.Phase == CitizenPhase.Travelling) travelling++;
                 if (person.Journey == null) continue;
                 journeys++;
                 most = Math.Max(most, person.Journey.Legs.Count);
+                if (person.Journey.Legs.Capacity > 0 && arrays.Add(person.Journey.Legs))
+                {
+                    slots += person.Journey.Legs.Capacity;
+                    arrayBytes += Align(ArrayHeader + (long)person.Journey.Legs.Capacity * Pointer);
+                }
                 long own = 0;
                 foreach (var leg in person.Journey.Legs)
                 {
@@ -336,7 +350,7 @@ namespace PersistentCity.Core
                 }
                 mostSplits = Math.Max(mostSplits, own);
             }
-            return new JourneyLegLedger(journeys, travelling, legs.Count, splits, most, mostSplits);
+            return new JourneyLegLedger(journeys, travelling, legs.Count, splits, most, mostSplits, arrays.Count, arrayBytes, slots);
         }
 
         public readonly struct TrafficVehicleLedger
@@ -444,7 +458,15 @@ namespace PersistentCity.Core
                     .Append(",\"most_legs_in_a_journey\":").Append(ledger.MostLegs.ToString(CultureInfo.InvariantCulture))
                     .Append(",\"most_split_prefixes_in_a_journey\":").Append(ledger.MostSplitPrefixes.ToString(CultureInfo.InvariantCulture))
                     .Append(",\"in_caches\":").Append(cached.ToString(CultureInfo.InvariantCulture))
-                    .Append(",\"outside_current_journeys_and_caches\":").Append((retained - ledger.Legs - cached).ToString(CultureInfo.InvariantCulture)).Append('}');
+                    .Append(",\"outside_current_journeys_and_caches\":").Append((retained - ledger.Legs - cached).ToString(CultureInfo.InvariantCulture));
+                long arrayBytes = BytesOf(typeof(RouteLeg[]));
+                long cachedArrayBytes = CachedBytesOf(typeof(RouteLeg[]));
+                text.Append(",\"leg_arrays_in_current_journeys\":").Append(ledger.LegArrays.ToString(CultureInfo.InvariantCulture))
+                    .Append(",\"leg_array_slots_in_current_journeys\":").Append(ledger.LegArraySlots.ToString(CultureInfo.InvariantCulture))
+                    .Append(",\"leg_array_bytes_retained\":").Append(arrayBytes.ToString(CultureInfo.InvariantCulture))
+                    .Append(",\"leg_array_bytes_in_current_journeys\":").Append(ledger.LegArrayBytes.ToString(CultureInfo.InvariantCulture))
+                    .Append(",\"leg_array_bytes_in_caches\":").Append(cachedArrayBytes.ToString(CultureInfo.InvariantCulture))
+                    .Append(",\"leg_array_bytes_outside_current_journeys_and_caches\":").Append((arrayBytes - ledger.LegArrayBytes - cachedArrayBytes).ToString(CultureInfo.InvariantCulture)).Append('}');
             }
             if (trafficVehicles is TrafficVehicleLedger traffic)
             {

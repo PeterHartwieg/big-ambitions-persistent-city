@@ -28,12 +28,26 @@ namespace PersistentCity.Core
             public readonly List<(Place Place, double Score)> Ranked = new List<(Place Place, double Score)>(9);
         }
 
+        private static readonly string[] ActivityNames = Enum.GetNames(typeof(Activity));
+        internal static string OptionalKey(string personId, Activity activity, double endsAt)
+            => personId + ":optional:" + activity + ":" + endsAt.ToString("R", CultureInfo.InvariantCulture);
+        internal static uint OptionalKeyState(string personId, Activity activity, double endsAt, int seed)
+        {
+            uint state = StableRandom.Append(StableRandom.Append(StableRandom.Begin(seed), personId), ":optional:");
+            int index = (int)activity;
+            state = StableRandom.Append(StableRandom.Append(state, index >= 0 && index < ActivityNames.Length ? ActivityNames[index] : activity.ToString()), ':');
+            Span<char> text = stackalloc char[32];
+            return endsAt.TryFormat(text, out int written, "R", CultureInfo.InvariantCulture)
+                ? StableRandom.Append(state, text.Slice(0, written))
+                : StableRandom.Append(state, endsAt.ToString("R", CultureInfo.InvariantCulture));
+        }
+
         private IEnumerable<RouteRequest> ChooseOptionalDestination(CitizenState person, RoutineSlot proposed, double now, OptionalChoice choice)
         {
             choice.Slot = proposed; choice.Route = null; choice.Selected = false;
             var origin = places[person.PlaceId];
             var kind = proposed.Activity == Activity.Shop ? PlaceKind.Shop : PlaceKind.Leisure;
-            string key = person.Identity.Id + ":optional:" + proposed.Activity + ":" + proposed.EndsAt.ToString("R", CultureInfo.InvariantCulture);
+            uint key = OptionalKeyState(person.Identity.Id, proposed.Activity, proposed.EndsAt, State.Seed);
             var weather=CaptureOuting(person,now,key);
             if(weather.Value==0)
             {
@@ -45,7 +59,7 @@ namespace PersistentCity.Core
             var candidates = choice.Candidates; candidates.Clear();
             if (places.TryGetValue(proposed.PlaceId, out var preferred) && preferred.Kind == kind && preferred.Capacity > 0)
                 candidates.Add(preferred);
-            DestinationChoice.Shortlist(optionalPlaces, origin, kind, key, State.Seed, choice.Ranked);
+            DestinationChoice.Shortlist(optionalPlaces, origin, kind, key, choice.Ranked);
             foreach (var ranked in choice.Ranked)
                 if (ranked.Place.Id != proposed.PlaceId && candidates.Count < 8) candidates.Add(ranked.Place);
             choice.Ranked.Clear();

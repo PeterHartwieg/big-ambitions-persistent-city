@@ -20,9 +20,12 @@ namespace PersistentCity.Core
 
         internal static void Shortlist(List<Place> places, Place origin, PlaceKind kind,
             string choiceKey, int seed, List<(Place Place, double Score)> ranked, int maximum = 8)
+            => Shortlist(places, origin, kind, StableRandom.Append(StableRandom.Begin(seed), choiceKey ?? ""), ranked, maximum);
+        internal static void Shortlist(List<Place> places, Place origin, PlaceKind kind,
+            uint choiceKeyState, List<(Place Place, double Score)> ranked, int maximum = 8)
         {
             if (maximum < 1 || maximum > 16) throw new ArgumentOutOfRangeException(nameof(maximum));
-            uint key = KeyState(choiceKey, seed);
+            uint key = StableRandom.Append(choiceKeyState, ':');
             ranked.Clear();
             for (int i = 0; i < places.Count; i++) Rank(places[i], origin, kind, key, ranked, maximum);
         }

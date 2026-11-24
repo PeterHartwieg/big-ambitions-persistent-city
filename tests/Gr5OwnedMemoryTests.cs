@@ -219,9 +219,85 @@ public sealed class Gr5OwnedMemoryTests
         string movement = Source("Runtime", "MovementDiagnostics.cs");
         foreach (string field in new[] { "ownedBodyCombiners = BodyMerge.Owned", "unmergedBodyCombiners = BodyMerge.Unmerged", "reservedBodies = PhysicalPedestrians.ReserveCount", "liveMergedMeshes = meshes",
             "liveMergedVertices = vertices", "releasedMergedMeshes = BodyMerge.ReleasedMeshes", "releasedMergedVertices = BodyMerge.ReleasedVertices",
-            "bakeScratchBytes = BlendshapeBake.ScratchBytes" })
+            "bakeScratchBytes = BlendshapeBake.ScratchBytes", "orphanMergedMeshes = orphans", "orphanMergedVertices = orphanVertices",
+            "deferredOrphanMeshes = BodyMerge.DeferredOrphans" })
             Assert.Contains(field, movement);
         int getter = movement.IndexOf("public object GcDiagnostics", StringComparison.Ordinal);
         Assert.Contains("BodyMerge.LiveMeshes(out long vertices)", movement.Substring(getter, 600));
+        Assert.Contains("BodyMerge.OrphanMeshes(out long orphanVertices)", movement.Substring(getter, 700));
+    }
+
+    [Fact]
+    public void MergedMeshesAreCountedByTheOwnerHoldingTheirCombiner()
+    {
+        var ledger = new MergedBodyLedger<NativeHandle, NativeHandle>(body => body.Alive, mesh => mesh.Alive, _ => 11);
+        var bodies = Enumerable.Range(0, 6).Select(_ => (Body: new NativeHandle(), Mesh: new NativeHandle())).ToArray();
+        foreach (var (body, mesh) in bodies) { ledger.Own(body); ledger.Merged(body, mesh); }
+        var kinds = new Dictionary<NativeHandle, int> { [bodies[0].Body] = 0, [bodies[1].Body] = 0, [bodies[2].Body] = 1, [bodies[3].Body] = 2 };
+        var meshes = new int[5];
+        var vertices = new long[5];
+        ledger.CountMergedByOwner(body => kinds.TryGetValue(body, out int kind) ? kind : 3, 4, meshes, vertices);
+        Assert.Equal(new[] { 2, 1, 1, 2, 0 }, meshes);
+        Assert.Equal(new long[] { 22, 11, 11, 22, 0 }, vertices);
+        bodies[5].Mesh.Alive = false;
+        ledger.CountMergedByOwner(body => kinds.TryGetValue(body, out int kind) ? kind : 3, 4, meshes, vertices);
+        Assert.Equal(new[] { 2, 1, 1, 1, 0 }, meshes);
+        Assert.Equal(ledger.LiveMeshes(out _), meshes.Sum());
+    }
+
+    [Fact]
+    public void DeferredOrphanMeshesAreCountedAsOrphansAndNotAsUnmatchedOwners()
+    {
+        var shown = new HashSet<NativeHandle>();
+        var ledger = new MergedBodyLedger<NativeHandle, NativeHandle>(body => body.Alive, mesh => mesh.Alive, _ => 7,
+            mesh => mesh.Alive = false, (_, mesh) => shown.Contains(mesh));
+        var bodies = Enumerable.Range(0, 3).Select(_ => (Body: new NativeHandle(), Mesh: new NativeHandle())).ToArray();
+        foreach (var (body, mesh) in bodies) { ledger.Own(body); ledger.Merged(body, mesh); }
+        bodies[1].Body.Alive = false; bodies[2].Body.Alive = false;
+        shown.Add(bodies[1].Mesh); shown.Add(bodies[2].Mesh);
+        ledger.ReleaseOrphan(bodies[1].Body); ledger.ReleaseOrphan(bodies[2].Body);
+        Assert.Equal(2, ledger.Deferred);
+        int live = ledger.LiveMeshes(out _);
+        int orphans = ledger.OrphanMeshes(out _);
+        var meshes = new int[5];
+        var vertices = new long[5];
+        ledger.CountMergedByOwner(body => body == bodies[0].Body ? 0 : 3, 4, meshes, vertices);
+        Assert.Equal(3, live);
+        Assert.Equal(2, orphans);
+        Assert.Equal(new[] { 1, 0, 0, 0, 2 }, meshes);
+        Assert.Equal(live, meshes[0] + meshes[1] + meshes[2] + orphans);
+        Assert.Equal(0, meshes[3]);
+    }
+
+    [Fact]
+    public void OrphanMeshCountsSeparateDeadCombinersFromLiveBodiesUntilTheirMeshesAreReleased()
+    {
+        var destroyed = new List<NativeHandle>();
+        var shown = new HashSet<NativeHandle>();
+        var ledger = new MergedBodyLedger<NativeHandle, NativeHandle>(body => body.Alive, mesh => mesh.Alive, _ => 37,
+            mesh => { destroyed.Add(mesh); mesh.Alive = false; }, (_, mesh) => shown.Contains(mesh));
+        var bodies = Enumerable.Range(0, 4).Select(_ => (Body: new NativeHandle(), Mesh: new NativeHandle())).ToArray();
+        foreach (var (body, mesh) in bodies) { ledger.Own(body); ledger.Merged(body, mesh); }
+        Assert.Equal(0, ledger.OrphanMeshes(out long none));
+        Assert.Equal(0, none);
+        bodies[0].Body.Alive = false; bodies[1].Body.Alive = false;
+        shown.Add(bodies[1].Mesh);
+        Assert.Equal(4, ledger.LiveMeshes(out long all));
+        Assert.Equal(4 * 37, all);
+        Assert.Equal(2, ledger.OrphanMeshes(out long orphanVertices));
+        Assert.Equal(2 * 37, orphanVertices);
+        ledger.ReleaseOrphan(bodies[0].Body);
+        ledger.ReleaseOrphan(bodies[1].Body);
+        Assert.Equal(new[] { bodies[0].Mesh }, destroyed);
+        Assert.Equal(1, ledger.OrphanMeshes(out _));
+        Assert.Equal(1, ledger.Deferred);
+        Assert.Equal(3, ledger.LiveMeshes(out _));
+        shown.Clear();
+        ledger.RetryDeferred(2);
+        Assert.Equal(0, ledger.OrphanMeshes(out _));
+        Assert.Equal(0, ledger.Deferred);
+        Assert.Equal(2, ledger.LiveMeshes(out _));
+        Assert.Equal(2, ledger.ReleasedMeshes);
+        Assert.Equal(2, ledger.Owned);
     }
 }

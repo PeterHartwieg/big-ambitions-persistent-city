@@ -9,11 +9,19 @@ namespace PersistentCity.Core
         public const int WireLength = 193;
         public const int RevisionOneOffers = 4;
         internal FoodChoiceSettings Settings { get; }
+        private FoodChoiceSettings? source;
         private FoodDecisionTuning(FoodChoiceSettings settings) { Settings = settings; }
         public static FoodDecisionTuning Capture(FoodChoiceSettings live)
         {
             var copy = live.Copy(); copy.Clamp();
             return new FoodDecisionTuning(copy);
+        }
+        internal static FoodDecisionTuning Capture(FoodChoiceSettings live, FoodDecisionTuning? held)
+        {
+            if (held?.source != null && held.source.SameValues(live)) return held;
+            var tuning = Capture(live);
+            tuning.source = live.Copy();
+            return tuning;
         }
         public string ToWire()
         {

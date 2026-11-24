@@ -137,11 +137,23 @@ public sealed class Gr5AdvanceAllocationTests
         public IEnumerable<FoodScope> RivalScopes => rivalScopes;
         public bool IsRivalCandidate(FoodScope scope) => rivals.ContainsKey(scope.BusinessId);
         public bool RivalAtPlace(string place) => rivalPlaces.Contains(place);
-        public FoodAlternativeObservation? ReadRival(string businessId) => rivals.TryGetValue(businessId, out var r) ? r : null;
+        public bool FreshRivals;
+        public long RivalReadBytes;
+        public FoodAlternativeObservation? ReadRival(string businessId)
+        {
+            if (!rivals.TryGetValue(businessId, out var r)) return null;
+            if (!FreshRivals) return r;
+            long before = GC.GetAllocatedBytesForCurrentThread();
+            var fresh = new FoodAlternativeObservation(r.Id, r.PlaceId, r.StreetName, r.StreetNumber, r.CreationDay, r.BusinessType, r.OwnerId, r.Kind,
+                r.Accessible, r.HasReadableDoor, r.TemporarilyClosed, r.CustomerServicePercent, r.UnsupportedProductCount, r.Offers.ToList(), r.Hours.ToList());
+            RivalReadBytes += GC.GetAllocatedBytesForCurrentThread() - before;
+            return fresh;
+        }
         private sealed class NoCapture : IDisposable { public static readonly NoCapture Instance = new NoCapture(); public void Dispose() { } }
     }
 
-    internal static (CityState State, CitySimulator City, Planner Planner) City()
+    internal static (CityState State, CitySimulator City, Planner Planner) City() => City(out _);
+    internal static (CityState State, CitySimulator City, Planner Planner) City(out Market market)
     {
         var state = Gr5AllocationMeasure.RigCity();
         var ordered = Menu.OrderBy(p => p, StringComparer.Ordinal).ToList();
@@ -153,7 +165,8 @@ public sealed class Gr5AdvanceAllocationTests
         var planner = new Planner();
         var city = new CitySimulator(state, planner);
         city.AttachOptionalStops(new RushSpikeReplay.Stops(), OptionalStopPolicy.ApprovedChoicePercentage);
-        city.AttachFoodMarket(new Market(state), rivalSettings: new RivalFoodSettings());
+        market = new Market(state);
+        city.AttachFoodMarket(market, rivalSettings: new RivalFoodSettings());
         return (state, city, planner);
     }
 
@@ -170,6 +183,7 @@ public sealed class Gr5AdvanceAllocationTests
         public readonly double[] Slowest = new double[GcPauseSampler.Segments];
         public long CollectedCalls;
         public long PlannerBytes;
+        public long RivalReadBytes;
         public double Per(GcAllocationSegment s) => Calls[(int)s] == 0 ? 0 : Bytes[(int)s] / (double)Calls[(int)s];
         public long Total => Reported.Sum(s => Bytes[(int)s]);
     }

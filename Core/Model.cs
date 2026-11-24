@@ -204,6 +204,7 @@ namespace PersistentCity.Core
         private void Mutable() { if (IsReadOnly) throw new InvalidOperationException("A committed route is immutable."); }
 
         public int Count => items.Count;
+        internal int Capacity => items.Capacity;
         public RouteLeg this[int index] { get => items[index]; set { Mutable(); items[index] = value; } }
         public void Add(RouteLeg leg) { Mutable(); items.Add(leg); }
         public void AddRange(IEnumerable<RouteLeg> legs) { Mutable(); items.AddRange(legs); }

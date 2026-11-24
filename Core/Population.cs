@@ -37,6 +37,14 @@ namespace PersistentCity.Core
         }
 
         internal static uint Append(uint state, char c) { unchecked { state ^= c; return state * 16777619u; } }
+        internal static uint Append(uint state, ReadOnlySpan<char> text)
+        {
+            unchecked
+            {
+                for (int i = 0; i < text.Length; i++) { state ^= text[i]; state *= 16777619u; }
+                return state;
+            }
+        }
 
         internal static uint AppendDecimal(uint state, int value)
         {

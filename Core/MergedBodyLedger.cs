@@ -126,6 +126,29 @@ namespace PersistentCity.Core
             return merged.Count;
         }
 
+        public int OrphanMeshes(out long vertices)
+        {
+            Prune();
+            int orphans = 0;
+            vertices = 0;
+            foreach (var pair in merged)
+                if (!bodyAlive(pair.Key)) { orphans++; vertices += vertexCount(pair.Value); }
+            return orphans;
+        }
+
+        public void CountMergedByOwner(Func<TBody, int> owner, int orphanKind, int[] meshes, long[] vertices)
+        {
+            Prune();
+            Array.Clear(meshes, 0, meshes.Length);
+            Array.Clear(vertices, 0, vertices.Length);
+            foreach (var pair in merged)
+            {
+                int kind = bodyAlive(pair.Key) ? owner(pair.Key) : orphanKind;
+                meshes[kind]++;
+                vertices[kind] += vertexCount(pair.Value);
+            }
+        }
+
         public void CountReleased(TMesh mesh)
         {
             ReleasedMeshes++;

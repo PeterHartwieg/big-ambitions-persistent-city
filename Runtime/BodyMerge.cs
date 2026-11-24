@@ -118,6 +118,10 @@ namespace PersistentCity.Runtime
             return ledger.LiveMeshes(out vertices);
         }
 
+        public static int OrphanMeshes(out long vertices) => ledger.OrphanMeshes(out vertices);
+        public static int DeferredOrphans => ledger.Deferred;
+        public static void CountMergedByOwner(Func<SkinnedMeshCombiner, int> owner, int orphanKind, int[] meshes, long[] vertices) => ledger.CountMergedByOwner(owner, orphanKind, meshes, vertices);
+
         public static void PruneReleased()
         {
             ledger.PruneOwned();

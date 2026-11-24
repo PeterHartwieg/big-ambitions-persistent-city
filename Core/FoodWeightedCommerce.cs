@@ -68,10 +68,16 @@ namespace PersistentCity.Core
             if(CampaignProvider is IFoodCampaignAwarenessProvider campaigns && campaigns.HasEvidence)
                 campaigns.Prepare(meal.ResidentId,day,city.State.Minute);
             return AwarenessCatalogue().Sample(city.State.Seed,meal.ResidentId,day,Anchor(person.HomeId),Anchor(person.DayPlaceId),Anchor(stop.PlaceId),
-                AwarenessSettings,e=>(!atStop || e.PlaceId==stop.PlaceId) && e.Scope!.BusinessId==e.BusinessId
-                    && (e.Kind==FoodAwarenessAlternativeKind.External ? RivalSettings.RivalChoiceWeight>0 && RivalCandidate(e.Scope!) : VendorCandidate(e.Scope!)),
-                city.State.Capabilities.Active ? MemoryProvider ?? storedMemoryProvider : EmptyFoodAwarenessProvider.Instance,CampaignProvider,dump,atStop ? stop.PlaceId : null);
+                AwarenessSettings,awarenessEligible ??= AwarenessEligible,
+                city.State.Capabilities.Active ? MemoryProvider ?? storedMemoryProvider : EmptyFoodAwarenessProvider.Instance,CampaignProvider,dump,atStop ? stop.PlaceId : null,atStop ? stop.PlaceId : null);
         }
+        private Func<FoodAwarenessCatalogue.Entry,bool>? awarenessEligible;
+        private bool AwarenessEligible(FoodAwarenessCatalogue.Entry e) => e.Scope!.BusinessId==e.BusinessId
+            && (e.Kind==FoodAwarenessAlternativeKind.External ? RivalSettings.RivalChoiceWeight>0 && RivalCandidate(e.Scope!) : VendorCandidate(e.Scope!));
+        private ResidentMeal? contributionMeal;
+        private CitizenState? contributionPerson;
+        private Func<string,double>? contribution;
+        private double HeldContribution(string id) => MemoryContribution(contributionMeal!,contributionPerson!,id);
         internal FoodAwarenessDump? InspectAwareness(string consumerId,int? day)
         {
             if(!records.TryGetValue(consumerId,out var meal)) return null;
@@ -88,6 +94,8 @@ namespace PersistentCity.Core
                 routes is IFoodWalkingPace walking ? walking.WalkingMetresPerMinute : 120, id=>MemoryContribution(meal,person,id),rivalWeight:RivalSettings.RivalChoiceWeight,weatherTravelMultiplier:meal.Decision?.WeatherTravelMultiplier ?? 1).Select(e=>e.BusinessId).ToArray();
             return dump;
         }
+        private FoodDecisionTuning? heldTuning;
+        private FoodDecisionTuning CaptureTuning() => heldTuning = FoodDecisionTuning.Capture(ChoiceSettings, heldTuning);
         private ResidentMeal? pendingDecision;
         private FoodRoutineStop? capturedStop;
         private double? choiceMilliseconds;
@@ -173,7 +181,7 @@ namespace PersistentCity.Core
             double now=city.State.Minute;
             double deadline=atStop ? Math.Min(meal.ExpiresAt,stop.DepartureAt) : Math.Min(meal.ExpiresAt,
                 Math.Min(stop.DepartureAt,now+(meal.HostSlot==0 ? MealRhythm.BreakMinutes(person,city.State.Seed,meal.Kind) : RepresentedBreak(person,stop,meal.Kind))));
-            var d=new FoodDecisionState {Tuning=FoodDecisionTuning.Capture(ChoiceSettings),IntentId=meal.IntentId,ContextKey=context,Attempt=meal.ContextAttempts+1,OriginAt=now,Deadline=deadline};
+            var d=new FoodDecisionState {Tuning=CaptureTuning(),IntentId=meal.IntentId,ContextKey=context,Attempt=meal.ContextAttempts+1,OriginAt=now,Deadline=deadline};
             using(var captureBatch=(market as IFoodCandidateMarket)?.BeginCapture(now))
             {
             if(meal.Day>=state.AwarenessStartsDay && !AwarenessReady) return;
@@ -193,7 +201,14 @@ namespace PersistentCity.Core
             for (int scopeIndex=0; scopeIndex<scopes.Length; scopeIndex++)
             {
                 var scope=scopes[scopeIndex];
-                var b=scope.AlternativeKind==FoodAlternativeKind.Rival ? CaptureRival(scope.BusinessId,now,deadline) : market is IFoodCandidateMarket capture ? capture.CaptureBusiness(scope.BusinessId,now) : ReadBusiness(scope.BusinessId,now);
+                if(scope.AlternativeKind==FoodAlternativeKind.Rival)
+                {
+                    var rival=CaptureRival(scope.BusinessId,now,deadline);
+                    var rivalShop=rival==null ? null : RivalDecisionShop(scope,rival,d,policy,contributions[scopeIndex],now,meal,person);
+                    if(rivalShop!=null) d.Shops.Add(rivalShop);
+                    continue;
+                }
+                var b=market is IFoodCandidateMarket capture ? capture.CaptureBusiness(scope.BusinessId,now) : ReadBusiness(scope.BusinessId,now);
                 if(b==null || b.Id!=scope.BusinessId || b.PlaceId!=scope.PlaceId) continue;
                 int scopedOffers=scope.AdditionalProductIds.Count+1;
                 if(scopedOffers>d.Tuning.Settings.FoodMenuMaximumOffersPerShop || b.Offers.Count>FoodMenuPolicy.MaximumOffers) continue;
@@ -230,6 +245,26 @@ namespace PersistentCity.Core
             var scopes=new FoodScope[count];int at=0;
             foreach(var s in state.Shops) if(s.PlaceId==placeId) scopes[at++]=FreezeScope(s);
             return scopes;
+        }
+        private FoodDecisionShop? RivalDecisionShop(FoodScope scope,FoodAlternativeObservation o,FoodDecisionState d,IFoodProductPolicy policy,double contribution,double now,ResidentMeal meal,CitizenState person)
+        {
+            if(o.Id!=scope.BusinessId || o.PlaceId!=scope.PlaceId) return null;
+            var offers=o.Offers;
+            int scopedOffers=scope.AdditionalProductIds.Count+1;
+            if(scopedOffers>d.Tuning!.Settings.FoodMenuMaximumOffersPerShop || offers.Count>FoodMenuPolicy.MaximumOffers) return null;
+            bool supportedMenu=offers.Count<=scopedOffers;
+            for(int i=0;i<offers.Count;i++)
+                if(!policy.Executable(offers[i].ProductId) || !scope.ContainsProduct(offers[i].ProductId)) supportedMenu=false;
+            if(!supportedMenu) return null;
+            var shop=new FoodDecisionShop {AlternativeKind=FoodAlternativeKind.Rival,RivalTerms=RivalFoodTerms.Fingerprint(o),RivalServiceMinutes=RivalSettings.RivalAssumedServiceMinutes,
+                AlternativeWeight=RivalSettings.RivalChoiceWeight,MemoryContribution=contribution,BusinessId=o.Id,PlaceId=o.PlaceId,MealsPerHour=-1,
+                NextServiceAt=Math.Max(now,scope.NextServiceAt),ServiceUnavailable=false,CustomerServicePercent=o.CustomerServicePercent ?? -1,DistrictId="",
+                Hours=RivalFoodTerms.CopyHours(o)};
+            for(int i=0;i<offers.Count;i++)
+                shop.Offers.Add(new FoodDecisionOffer {ProductId=offers[i].ProductId,Price=offers[i].Price,
+                    Metadata=policy.Capture(offers[i].ProductId,Traits(meal,person),city.State.Seed,meal.ResidentId),
+                    Units=-1,DistrictDemandPercent=-1});
+            return shop;
         }
         private static List<OpeningWindow> CopyHours(List<OpeningWindow> hours)
         {
@@ -273,7 +308,11 @@ namespace PersistentCity.Core
             var catalogue=AwarenessCatalogue();
             decision.Awareness=AwarenessSample(meal,person,stop,meal.Day,atStop);
             double pace=routes is IFoodWalkingPace walking ? walking.WalkingMetresPerMinute : 120;
-            var ranked=catalogue.Rank(decision.Awareness,city.FindPlace(stop.PlaceId).Position,Traits(meal,person),decision.Tuning!.Settings,Draw(meal,decision),pace,id=>MemoryContribution(meal,person,id),rivalWeight:RivalSettings.RivalChoiceWeight,weatherTravelMultiplier:decision.WeatherTravelMultiplier);
+            var outerMeal=contributionMeal;var outerPerson=contributionPerson;
+            contributionMeal=meal;contributionPerson=person;
+            FoodAwarenessCatalogue.Entry[] ranked;
+            try {ranked=catalogue.Rank(decision.Awareness,city.FindPlace(stop.PlaceId).Position,Traits(meal,person),decision.Tuning!.Settings,Draw(meal,decision),pace,contribution ??= HeldContribution,rivalWeight:RivalSettings.RivalChoiceWeight,weatherTravelMultiplier:decision.WeatherTravelMultiplier);}
+            finally {contributionMeal=outerMeal;contributionPerson=outerPerson;}
             if(ranked.Length==0) return Array.Empty<FoodScope>();
             var scopes=new FoodScope[ranked.Length];
             for(int i=0;i<ranked.Length;i++) scopes[i]=FreezeScope(ranked[i].Scope!);
@@ -349,7 +388,7 @@ namespace PersistentCity.Core
         {
             ContinuationStep="decision-check";
             var d=meal.Decision!;
-            if(d.Tuning==null) d.Tuning=FoodDecisionTuning.Capture(ChoiceSettings);
+            if(d.Tuning==null) d.Tuning=CaptureTuning();
             bool atStop=d.ContextKey.StartsWith("stop:",StringComparison.Ordinal);
             var stop=ChoiceStop(meal,person,continuationStop);
             if(!MatchesStop(stop,d,atStop) || city.State.Minute!=d.OriginAt)

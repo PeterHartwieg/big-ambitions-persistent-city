@@ -42,6 +42,7 @@ namespace PersistentCity.Runtime
         public void RestoreInterior() { if (bindings.Count != 0) SuspendBeforeNativeFastForward(); }
         public bool HasBodies => bindings.Count != 0;
         public int BoundBodies => bindings.Count;
+        internal PhysicalPedestrians Pedestrians => pedestrians;
         public GcGrowSample GrowSample => PhysicalPedestrians.Grows.Sample(pedestrians.GrowIntegrating);
         public int Followers
         {

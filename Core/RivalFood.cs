@@ -51,11 +51,30 @@ namespace PersistentCity.Core
         public static string Fingerprint(FoodAlternativeObservation observation)
         {
             var text = TextDigest.Begin().Append(observation.OwnerId.Length).Append(':').Append(observation.OwnerId);
-            foreach (var window in observation.Hours)
-                text.Append('|').Append(window.Day).Append(':').Append(window.FromMinute).Append(':').Append(window.ToMinute);
+            var hours = observation.Hours;
+            for (int i = 0; i < hours.Count; i++)
+                text.Append('|').Append(hours[i].Day).Append(':').Append(hours[i].FromMinute).Append(':').Append(hours[i].ToMinute);
             var hash = text.Hash();
             return Convert.ToBase64String(hash, 0, 14).TrimEnd('=').Replace('+', '-').Replace('/', '_');
         }
+        internal static bool TermsMatch(FoodAlternativeObservation observation, string terms, int start)
+        {
+            string current = Fingerprint(observation);
+            return terms.Length - start == current.Length && string.CompareOrdinal(terms, start, current, 0, current.Length) == 0;
+        }
+        internal static void RequireService(int serviceMinutes)
+        {
+            if (serviceMinutes < 1 || serviceMinutes > 30) throw new ArgumentException("Invalid estimated rival service.");
+        }
+        internal static List<OpeningWindow> CopyHours(FoodAlternativeObservation observation)
+        {
+            var hours = observation.Hours;
+            var copy = new List<OpeningWindow>(hours.Count);
+            for (int i = 0; i < hours.Count; i++) copy.Add(new OpeningWindow { Day = hours[i].Day, FromMinute = hours[i].FromMinute, ToMinute = hours[i].ToMinute });
+            return copy;
+        }
+        internal static Place HoursPlace(FoodAlternativeObservation observation)
+            => new Place { WeeklyHours = CopyHours(observation), OpenMinute = 0, CloseMinute = 0 };
         public static bool Canonical(string value)
         {
             if (value == null || value.Length != 19) return false;
@@ -165,7 +184,7 @@ namespace PersistentCity.Core
             try { return (market as IRivalFoodMarket)?.ReadRival(id); }
             catch (Exception) { return null; }
         }
-        private FoodBusiness? CaptureRival(string id, double minute, double deadline)
+        private FoodAlternativeObservation? CaptureRival(string id, double minute, double deadline)
         {
             var observation = ObserveRival(id);
             if (!RivalFoodTerms.Eligible(observation)) return null;
@@ -174,9 +193,14 @@ namespace PersistentCity.Core
             if (SoldOut(observation.PlaceId, observation.BusinessType, earliest)
                 && RivalServiceCalibration.Period(Math.Max(earliest, deadline)) == RivalServiceCalibration.Period(earliest))
             { RivalSellOutExclusions++; return null; }
-            var business = RivalFoodTerms.Capture(observation!, RivalSettings.RivalAssumedServiceMinutes);
-            business.NextServiceMinute = minute;
-            return business;
+            RivalFoodTerms.RequireService(RivalSettings.RivalAssumedServiceMinutes);
+            return observation;
+        }
+        private static bool Advertises(FoodAlternativeObservation observation, string product, Money price)
+        {
+            var offers = observation.Offers;
+            for (int i = 0; i < offers.Count; i++) if (offers[i].ProductId == product && offers[i].Price == price) return true;
+            return false;
         }
         internal bool OwnsRivalMealVisit(CitizenState person, string place) => person.MealOuting != null
             && !person.MealOuting.Returning && records.TryGetValue(person.Identity.Id, out var meal)
@@ -184,27 +208,26 @@ namespace PersistentCity.Core
         private bool RivalCommitAllowed(ResidentMeal meal, FoodDecisionShop shop, Money price, double minute)
             => ExternalFoodSettlement.CanPay(meal, price) && RivalMatches(shop.BusinessId, shop.PlaceId, shop.RivalTerms, shop.Offers, null, minute, out _, out _, out _, requireOpen: false);
         private bool RivalMatches(string id, string place, string terms, IEnumerable<FoodDecisionOffer>? offers, ResidentMeal? meal, double minute,
-            out Place? hours, out ShopExperience? failure, out string businessType, bool requireOpen = true, bool captureHours = false)
+            out Place? hours, out ShopExperience? failure, out string businessType, bool requireOpen = true, bool captureHours = false, int termsStart = 0)
         {
             hours = null; failure = null; businessType = ""; matchedRival = null;
             var observation = ObserveRival(id);
             if (observation == null || observation.Kind != FoodAlternativeKind.Rival
                 || observation.Id != id || observation.PlaceId != place) return false;
-            if (meal != null && !observation.Offers.Any(o => o.ProductId == meal.ProductId && o.Price == meal.Price)) return false;
-            var snapshot = observation;
-            if (offers != null && offers.Any(p => !snapshot.Offers.Any(o => o.ProductId == p.ProductId && o.Price == p.Price))) return false;
+            if (meal != null && !Advertises(observation, meal.ProductId, meal.Price)) return false;
+            if (offers != null) foreach (var p in offers) if (!Advertises(observation, p.ProductId, p.Price)) return false;
             if (requireOpen && RivalFoodMemory.Closed(observation, minute)) failure = ShopExperience.Closed;
             if (!RivalFoodTerms.Eligible(observation) || failure.HasValue
-                || RivalFoodTerms.Fingerprint(observation) != terms) return false;
+                || !RivalFoodTerms.TermsMatch(observation, terms, termsStart)) return false;
             businessType = observation.BusinessType; rivalTypes[place] = businessType;
             matchedRival = observation;
             if (!requireOpen) return true;
-            if (captureHours) hours = new Place { WeeklyHours = observation.Hours.Select(h => new OpeningWindow { Day = h.Day, FromMinute = h.FromMinute, ToMinute = h.ToMinute }).ToList(), OpenMinute = 0, CloseMinute = 0 };
+            if (captureHours) hours = RivalFoodTerms.HoursPlace(observation);
             return true;
         }
         private void ArriveRival(ResidentMeal meal, CitizenState person, double now)
         {
-            if (!RivalMatches(meal.BusinessId, meal.PlaceId, meal.External.Substring(2), null, meal, now, out var hours, out var failure, out var type, captureHours: true))
+            if (!RivalMatches(meal.BusinessId, meal.PlaceId, meal.External, null, meal, now, out var hours, out var failure, out var type, captureHours: true, termsStart: 2))
             { RivalRefusals++; RivalExperience(meal, failure, now); Finish(meal, MealStatus.Missed, "Business no longer accepts this commitment"); return; }
             if (city.State.Capabilities.Active) memoryStore.CommitStage(meal, ExperienceStage.Reached);
             double eating = MealRhythm.EatingMinutes(meal.Kind), close = DailyRoutine.NextClose(hours!, now) ?? double.NegativeInfinity;
@@ -233,7 +256,7 @@ namespace PersistentCity.Core
         }
         private void CompleteRival(ResidentMeal meal, double now)
         {
-            if (!RivalMatches(meal.BusinessId, meal.PlaceId, meal.External.Substring(2), null, meal, now, out _, out var failure, out _))
+            if (!RivalMatches(meal.BusinessId, meal.PlaceId, meal.External, null, meal, now, out _, out var failure, out _, termsStart: 2))
             { RivalRefusals++; RivalExperience(meal, failure, now); Finish(meal, MealStatus.Missed, "Business no longer accepts this commitment"); return; }
             var mainPrice = meal.Price;
             var limit = CurrentAllowance(meal);

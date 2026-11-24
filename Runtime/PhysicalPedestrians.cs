@@ -82,6 +82,22 @@ namespace PersistentCity.Runtime
         private static Transform? reserveParent;
         internal static int ReserveCount => reserve.Count;
 
+        internal const int LeasedOwner = 0, PooledOwner = 1, ReservedOwner = 2, UnmatchedOwner = 3, OrphanOwner = 4, OwnerKinds = 5;
+
+        private static bool Holds(ThirdPersonCharacter? character, object combiner)
+            => !ReferenceEquals(character, null) && !ReferenceEquals(character.appearanceSetter, null) && ReferenceEquals(character.appearanceSetter.meshCombiner, combiner);
+
+        internal static int OwnerOf(PhysicalPedestrians? live, object combiner)
+        {
+            if (live != null && !live.disposed)
+            {
+                foreach (var body in live.active.Values) if (Holds(body.Character, combiner)) return LeasedOwner;
+                foreach (var character in live.all) if (Holds(character, combiner)) return PooledOwner;
+            }
+            foreach (var kept in reserve) if (Holds(kept.Character, combiner)) return ReservedOwner;
+            return UnmatchedOwner;
+        }
+
         private void AdoptReserve()
         {
             if (!ReferenceEquals(reserveParent, parent) || parent == null) { DestroyReserve(); return; }
