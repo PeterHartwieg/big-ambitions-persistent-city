@@ -106,6 +106,7 @@ public sealed class StreetFoodVendorTests
     {
         yield return new object[] { "split, mod first", new[] { Without("FoodTrucks"), ApiIn("FoodTrucks.Core") }, "FoodTrucks.Core", "" };
         yield return new object[] { "split, core first", new[] { ApiIn("FoodTrucks.Core"), Without("FoodTrucks") }, "FoodTrucks.Core", "" };
+        yield return new object[] { "both expose the API, legacy first", new[] { ApiIn("FoodTrucks"), ApiIn("FoodTrucks.Core") }, "FoodTrucks.Core", "" };
         yield return new object[] { "old single assembly", new[] { typeof(object).Assembly, ApiIn("FoodTrucks") }, "FoodTrucks", "" };
         yield return new object[] { "0.10.11 without the API", new[] { typeof(object).Assembly, Without("FoodTrucks") }, "", StreetFoodBridge.MissingReason };
         yield return new object[] { "core without the API", new[] { Without("FoodTrucks.Core"), Without("FoodTrucks") }, "", StreetFoodBridge.MissingReason };
@@ -127,7 +128,7 @@ public sealed class StreetFoodVendorTests
     [Fact]
     public void UnsupportedContractInTheCoreAssemblyIsReportedNotSkipped()
     {
-        var loaded = new System.Reflection.Assembly[] { new NamedAssembly("FoodTrucks.Core", typeof(StreetFoodVariants.Version2.FoodTrucks.ModApi.VendorApi)), ApiIn("FoodTrucks") };
+        var loaded = new System.Reflection.Assembly[] { ApiIn("FoodTrucks"), new NamedAssembly("FoodTrucks.Core", typeof(StreetFoodVariants.Version2.FoodTrucks.ModApi.VendorApi)) };
         Assert.Null(StreetFoodBridge.Open(loaded, out string reason, out string from));
         Assert.Contains("unsupported contract 2", reason);
         Assert.Equal("", from);
