@@ -96,6 +96,35 @@ public sealed class Gr5LiveHeapAttributionTests
     }
 
     [Fact]
+    public void CollectionRowsCountTheUnityObjectsTheModMadeDestroyedAndActivatedDuringThatFrame()
+    {
+        var sampler = new GcPauseSampler(64);
+        sampler.Start(1000);
+        sampler.Observe(0, 0, 0, 0, 1000, 0);
+        sampler.Observe(16, 1, 0, 0, 900, 1);
+        Assert.Equal((-1L, -1L, -1L), (sampler.CollectionRow(0).Instantiated, sampler.CollectionRow(0).Destroyed, sampler.CollectionRow(0).Activated));
+        sampler.Start(1000);
+        int gen0 = 0;
+        for (int frame = 0; frame <= 12; frame++)
+        {
+            sampler.NoteUnityWork(frame * 2L, frame == 8 ? 40 : frame, frame < 8 ? 3L * frame : 3L * frame + 5);
+            if (frame == 7 || frame == 9) gen0++;
+            sampler.Observe(frame * 16.0, gen0, 0, 0, 1000 + frame, frame);
+        }
+        Assert.Equal(2, sampler.CollectionRowCount);
+        var first = sampler.CollectionRow(0);
+        Assert.Equal((6L, 2L, 1L, 3L), (first.Frame, first.Instantiated, first.Destroyed, first.Activated));
+        var second = sampler.CollectionRow(1);
+        Assert.Equal((8L, 2L, -1L, 3L), (second.Frame, second.Instantiated, second.Destroyed, second.Activated));
+        using var report = JsonDocument.Parse(sampler.ReportJson(new GcReportContext(1000, 2000, null, 2, false, -1, -1)));
+        var rows = report.RootElement.GetProperty("collection_rows");
+        Assert.Equal(2, rows[0].GetProperty("mod_instantiated").GetInt64());
+        Assert.Equal(1, rows[0].GetProperty("mod_destroyed").GetInt64());
+        Assert.Equal(3, rows[0].GetProperty("mod_activated").GetInt64());
+        Assert.Equal(JsonValueKind.Null, rows[1].GetProperty("mod_destroyed").ValueKind);
+    }
+
+    [Fact]
     public void OptionalStopWorkIsSplitIntoRefreshAndPhysicalSubsUnderTheOptionalStopPhase()
     {
         Assert.Equal(GcAllocationSegment.ModOptionalStops, GcPauseSampler.SubParent(GcAllocationSegment.ModOptionalStopsRefresh));

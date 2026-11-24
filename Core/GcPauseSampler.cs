@@ -51,6 +51,9 @@ namespace PersistentCity.Core
         public double ModCpuMs;
         public double BeginStampMs;
         public double EndStampMs;
+        public long Instantiated;
+        public long Destroyed;
+        public long Activated;
     }
 
     public enum GcAsyncGrow { None, Pending, Integrated, Cancelled, Unknown }
@@ -228,6 +231,7 @@ namespace PersistentCity.Core
             Array.Clear(segmentBytes, 0, Segments); Array.Clear(segmentSamples, 0, Segments); Array.Clear(segmentSkipped, 0, Segments);
             HeapStart = HeapEnd = HeapPeak = lastHeap = heapBytes;
             baselined = false; pendingModMs = pendingLateMs = 0; ownedBodies = boundBodies = -1; growBefore = growNow = default; growSampled = false;
+            instantiatedNow = destroyedNow = activatedNow = instantiatedBefore = destroyedBefore = activatedBefore = -1;
             Running = true;
         }
 
@@ -259,6 +263,7 @@ namespace PersistentCity.Core
             }
             else if (heapBytes >= 0) lastHeap = heapBytes;
             lastMarks = marks; growBefore = growNow; growBeforeSampled = growSampled;
+            instantiatedBefore = instantiatedNow; destroyedBefore = destroyedNow; activatedBefore = activatedNow;
             lastFrameNumber = unityFrame;
             lastStampMs = stampMilliseconds; lastCounts[0] = gen0Total; lastCounts[1] = gen1Total; lastCounts[2] = gen2Total;
             pendingModMs = pendingLateMs = 0; pendingFrameCpuMs = pendingModCpuMs = -1; baselined = true;
@@ -282,6 +287,12 @@ namespace PersistentCity.Core
         private bool growSampled, growBeforeSampled;
 
         public void NoteBodies(int owned, int bound) { ownedBodies = owned; boundBodies = bound; }
+
+        private long instantiatedNow = -1, destroyedNow = -1, activatedNow = -1, instantiatedBefore = -1, destroyedBefore = -1, activatedBefore = -1;
+
+        public void NoteUnityWork(long instantiated, long destroyed, long activated) { instantiatedNow = instantiated; destroyedNow = destroyed; activatedNow = activated; }
+
+        private static long Delta(long before, long now) => before < 0 || now < before ? -1 : now - before;
 
         public void NoteBodies(int owned, int bound, GcGrowSample grow) { ownedBodies = owned; boundBodies = bound; growNow = grow; growSampled = true; }
 
@@ -439,7 +450,8 @@ namespace PersistentCity.Core
                         Gen0 = gen0, Gen1 = gen1, Gen2 = gen2, HeapBefore = lastHeap, HeapAfter = heapBytes, PreviousFrameMs = previousCollected ? -1 : previousFrameMs, NextFrameMs = -1,
                         OwnedBodies = ownedBodies, BoundBodies = boundBodies, Diagnostic = diagnosticSource ?? "",
                         AsyncGrow = growBeforeSampled && growSampled ? GcGrowSample.Outcome(growBefore, growNow) : GcAsyncGrow.Unknown, Gen0Through = gen0Through,
-                        FrameCpuMs = closingFrameCpuMs, ModCpuMs = closingModCpuMs, BeginStampMs = closingBeginStampMs, EndStampMs = closingEndStampMs };
+                        FrameCpuMs = closingFrameCpuMs, ModCpuMs = closingModCpuMs, BeginStampMs = closingBeginStampMs, EndStampMs = closingEndStampMs,
+                        Instantiated = Delta(instantiatedBefore, instantiatedNow), Destroyed = Delta(destroyedBefore, destroyedNow), Activated = Delta(activatedBefore, activatedNow) };
                     rowAwaitsNext = true;
                 }
             }
@@ -596,7 +608,9 @@ namespace PersistentCity.Core
                     .Append(",\"diagnostic\":\"").Append(Label(r.Diagnostic)).Append("\",\"async_grow\":\"").Append(GrowName(r.AsyncGrow)).Append("\",\"gen0_through\":").Append(N(r.Gen0Through))
                     .Append(",\"frame_cpu_ms\":").Append(r.FrameCpuMs < 0 ? "null" : D(r.FrameCpuMs)).Append(",\"mod_cpu_ms\":").Append(r.ModCpuMs < 0 ? "null" : D(r.ModCpuMs))
                     .Append(",\"off_cpu_ms\":").Append(r.FrameCpuMs < 0 ? "null" : D(Math.Max(0, r.FrameMs - r.FrameCpuMs)))
-                    .Append(",\"begin_stamp_ms\":").Append(r.BeginStampMs < 0 ? "null" : D(r.BeginStampMs)).Append(",\"end_stamp_ms\":").Append(r.EndStampMs < 0 ? "null" : D(r.EndStampMs)).Append('}');
+                    .Append(",\"begin_stamp_ms\":").Append(r.BeginStampMs < 0 ? "null" : D(r.BeginStampMs)).Append(",\"end_stamp_ms\":").Append(r.EndStampMs < 0 ? "null" : D(r.EndStampMs))
+                    .Append(",\"mod_instantiated\":").Append(r.Instantiated < 0 ? "null" : N(r.Instantiated)).Append(",\"mod_destroyed\":").Append(r.Destroyed < 0 ? "null" : N(r.Destroyed))
+                    .Append(",\"mod_activated\":").Append(r.Activated < 0 ? "null" : N(r.Activated)).Append('}');
             }
             text.Append(']');
             S(text, "pause_ms_over_neighbours", PauseOverNeighboursSpread());

@@ -33,6 +33,7 @@ namespace PersistentCity.Runtime
             gcFrameCpu = gcModCpu = cpu;
             sampler.CounterFrame(GcAllocationCounter.Read(), GcAllocationCounter.Collections);
             sampler.NoteBodies(BodyMerge.Owned, physical?.BoundBodies ?? 0, physical?.GrowSample ?? PhysicalPedestrians.Grows.Sample(false));
+            sampler.NoteUnityWork(ModUnityWork.Instantiated, ModUnityWork.Destroyed, ModUnityWork.Activated);
             sampler.Observe(now * GcMillisecondsPerTimestamp, GcCount(0), GcCount(1), GcCount(2), GC.GetTotalMemory(false), Time.frameCount, DiagnosticFrames.Current);
             return now;
         }
