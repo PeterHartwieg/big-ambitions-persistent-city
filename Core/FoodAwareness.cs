@@ -12,6 +12,23 @@ namespace PersistentCity.Core
 
     [Flags]
     public enum FoodAwarenessSource { Memory=1, Home=2, Routine=4, Origin=8, Discovery=16, Campaign=32, ActiveCampaign=64 }
+    public static class FoodAwarenessTags
+    {
+        private static readonly (FoodAwarenessSource Source, string Tag)[] Names =
+        {
+            (FoodAwarenessSource.Routine, "routine"), (FoodAwarenessSource.Discovery, "discovery"), (FoodAwarenessSource.Memory, "memory"),
+            (FoodAwarenessSource.Home, "home"), (FoodAwarenessSource.Origin, "origin"), (FoodAwarenessSource.Campaign, "campaign"),
+            (FoodAwarenessSource.ActiveCampaign, "active-campaign"),
+        };
+        public static string Format(FoodAwarenessSource sources)
+        {
+            if (sources == 0) return "";
+            var text = new System.Text.StringBuilder();
+            foreach (var (source, tag) in Names)
+                if ((sources & source) != 0) text.Append(text.Length == 0 ? "" : "+").Append(tag);
+            return text.ToString();
+        }
+    }
 
     public interface IFoodAwarenessProvider
     {
