@@ -83,16 +83,28 @@ namespace PersistentCity.Compatibility
             catch (Exception error) when (!(error is InvalidOperationException)) { throw Invalid("could not bind", error); }
         }
 
-        public static StreetFoodBridge? Open(Assembly? streetFood, out string reason)
+        public static readonly string[] ApiAssemblyNames = { "FoodTrucks.Core", "FoodTrucks" };
+
+        public static StreetFoodBridge? Open(Assembly[] loaded, out string reason, out string apiAssembly)
         {
-            if (streetFood == null) { reason = "Street Food is not loaded; " + MissingReason; return null; }
+            apiAssembly = "";
+            bool streetFood = false;
             try
             {
-                var bridge = Find(streetFood);
-                reason = bridge == null ? MissingReason : "";
-                return bridge;
+                foreach (string name in ApiAssemblyNames)
+                    foreach (var assembly in loaded)
+                    {
+                        if (assembly.GetName().Name != name) continue;
+                        streetFood = true;
+                        var bridge = Find(assembly);
+                        if (bridge == null) continue;
+                        apiAssembly = name; reason = "";
+                        return bridge;
+                    }
             }
             catch (InvalidOperationException error) { reason = error.Message; return null; }
+            reason = streetFood ? MissingReason : "Street Food is not loaded; " + MissingReason;
+            return null;
         }
 
         public long Revision => revision();

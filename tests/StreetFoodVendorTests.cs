@@ -68,8 +68,8 @@ public sealed class StreetFoodVendorTests
     [Fact]
     public void BridgeBindsTheContractAndCopiesADetachedValidatedImage()
     {
-        var bridge = StreetFoodBridge.Open(typeof(FoodTrucks.ModApi.VendorApi).Assembly, out string reason);
-        Assert.NotNull(bridge); Assert.Equal("", reason);
+        var bridge = StreetFoodBridge.Open(new[] { ApiIn("FoodTrucks.Core") }, out string reason, out string from);
+        Assert.NotNull(bridge); Assert.Equal("", reason); Assert.Equal("FoodTrucks.Core", from);
         Assert.Equal(1, bridge!.ContractVersion);
         StreetFoodHooks.Add("A", "cart", 100, FoodProducts.HotDog);
         StreetFoodHooks.Add("B", "truck", 200, FoodProducts.Burger, FoodProducts.Croissant);
@@ -89,13 +89,48 @@ public sealed class StreetFoodVendorTests
         Assert.Equal(10, image.Find("B")!.Units[1]);
     }
 
-    [Fact]
-    public void MissingStreetFoodOrMissingApiIsAReasonNotAFault()
+    private sealed class NamedAssembly : System.Reflection.Assembly
     {
-        Assert.Null(StreetFoodBridge.Open(null, out string absent));
-        Assert.Contains("Street Food is not loaded", absent);
-        Assert.Null(StreetFoodBridge.Open(typeof(object).Assembly, out string missing));
-        Assert.Equal("Street Food vendor API missing.", missing);
+        private readonly string name;
+        private readonly Type? api;
+        public NamedAssembly(string name, Type? api) { this.name = name; this.api = api; }
+        public override System.Reflection.AssemblyName GetName() => new System.Reflection.AssemblyName(name);
+        public override string FullName => name + ", Version=0.0.0.0, Culture=neutral, PublicKeyToken=null";
+        public override Type? GetType(string typeName, bool throwOnError) => api != null && typeName == StreetFoodBridge.ApiTypeName ? api : null;
+    }
+
+    private static System.Reflection.Assembly ApiIn(string name) => new NamedAssembly(name, typeof(FoodTrucks.ModApi.VendorApi));
+    private static System.Reflection.Assembly Without(string name) => new NamedAssembly(name, null);
+
+    public static IEnumerable<object[]> Layouts()
+    {
+        yield return new object[] { "split, mod first", new[] { Without("FoodTrucks"), ApiIn("FoodTrucks.Core") }, "FoodTrucks.Core", "" };
+        yield return new object[] { "split, core first", new[] { ApiIn("FoodTrucks.Core"), Without("FoodTrucks") }, "FoodTrucks.Core", "" };
+        yield return new object[] { "old single assembly", new[] { typeof(object).Assembly, ApiIn("FoodTrucks") }, "FoodTrucks", "" };
+        yield return new object[] { "0.10.11 without the API", new[] { typeof(object).Assembly, Without("FoodTrucks") }, "", StreetFoodBridge.MissingReason };
+        yield return new object[] { "core without the API", new[] { Without("FoodTrucks.Core"), Without("FoodTrucks") }, "", StreetFoodBridge.MissingReason };
+        yield return new object[] { "API in an unrelated assembly", new[] { ApiIn("FoodTrucks.Extras"), typeof(object).Assembly }, "", "Street Food is not loaded; " + StreetFoodBridge.MissingReason };
+        yield return new object[] { "nothing loaded", new System.Reflection.Assembly[0], "", "Street Food is not loaded; " + StreetFoodBridge.MissingReason };
+    }
+
+    [Theory]
+    [MemberData(nameof(Layouts))]
+    public void BridgeFindsTheApiByTypeNameInTheStreetFoodAssemblies(string layout, System.Reflection.Assembly[] loaded, string from, string reason)
+    {
+        var bridge = StreetFoodBridge.Open(loaded, out string actualReason, out string actualFrom);
+        Assert.True(reason.Length == 0 == (bridge != null), layout);
+        Assert.Equal(reason, actualReason);
+        Assert.Equal(from, actualFrom);
+        if (bridge != null) Assert.Equal(StreetFoodBridge.SupportedContract, bridge.ContractVersion);
+    }
+
+    [Fact]
+    public void UnsupportedContractInTheCoreAssemblyIsReportedNotSkipped()
+    {
+        var loaded = new System.Reflection.Assembly[] { new NamedAssembly("FoodTrucks.Core", typeof(StreetFoodVariants.Version2.FoodTrucks.ModApi.VendorApi)), ApiIn("FoodTrucks") };
+        Assert.Null(StreetFoodBridge.Open(loaded, out string reason, out string from));
+        Assert.Contains("unsupported contract 2", reason);
+        Assert.Equal("", from);
     }
 
     [Theory]

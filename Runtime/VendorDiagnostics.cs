@@ -87,7 +87,7 @@ namespace PersistentCity.Runtime
             {
                 case "status":
                     Debug.Log("[Persistent City] vendor status\n" + JsonConvert.SerializeObject(new {
-                        bridge = market.Coordinator.Image?.Status.ToString() ?? "Absent", market.Coordinator.Reason,
+                        bridge = market.Coordinator.Image?.Status.ToString() ?? "Absent", apiAssembly = vendorApiAssembly, market.Coordinator.Reason,
                         market.WorkSpikes, market.MaximumWorkMilliseconds, leaseUntil = market.Coordinator.Lease.UntilMinute, market.Coordinator.LeaseFault, market.Coordinator.Refusals,
                         rows = market.Coordinator.Table.Rows.Select(r => new { r.VehicleId, r.BusinessId, r.PlaceId, r.State,
                             r.Authority, r.Stand, r.DeferredStand, r.Reason, canServe = market.CanServe(r.BusinessId) }) }));
