@@ -623,7 +623,7 @@ public sealed class Gr5RepeatedRetimeLeakTests
     {
         public long Bytes, LegArrayBytes, LegArrayBytesOutsideCaches, LegArrayBytesInCaches, IntArrayBytes, IntArrayBytesOutsideCaches, Legs, MostLegs;
         public long StringObjectsOutsideCaches, StringBytesOutsideCaches, DoubleArrayBytesOutsideCaches;
-        public long RoadCacheEntries, RoadCacheLegs, RoadCacheBytes, CarJourneyLegs, JourneyEdgeTags, JourneyEdgeTagBytes, JourneyOwnedEdgeTags;
+        public long RoadCacheEntries, RoadCacheLegs, RoadCacheBytes, CarJourneyLegs, JourneyEdgeTags, JourneyEdgeTagBytes, JourneyOwnedEdgeTags, JourneyFragments, JourneyFragmentBytes;
         public Dictionary<string, long> StringObjectsByRoot = new Dictionary<string, long>(StringComparer.Ordinal);
         public RetainedCensus.JourneyLegLedger Journeys;
     }
@@ -644,15 +644,18 @@ public sealed class Gr5RepeatedRetimeLeakTests
             .Where(l => l.Mode == TravelMode.Car && l.ServiceId != null && l.ServiceId.StartsWith("native:road:", StringComparison.Ordinal)).Select(l => (object)l.ServiceId).Distinct(ReferenceEqualityComparer.Instance).ToList();
         var tagHeap = new RetainedCensus();
         foreach (var tag in edgeTags) tagHeap.Add("tag", tag);
+        var fragmentHeap = new RetainedCensus();
+        foreach (var tag in edgeTags.Where(t => !planner.OwnsRoadTag((string)t))) fragmentHeap.Add("fragment", tag);
         return new MixedRead
         {
             Bytes = census.Bytes, Journeys = journeys, Legs = census.ObjectsOf(typeof(RouteLeg)), MostLegs = journeys.MostLegs,
             LegArrayBytes = census.BytesOf(typeof(RouteLeg[])), LegArrayBytesInCaches = census.CachedBytesOf(typeof(RouteLeg[])),
             LegArrayBytesOutsideCaches = census.BytesOf(typeof(RouteLeg[])) - census.CachedBytesOf(typeof(RouteLeg[])),
             IntArrayBytes = census.BytesOf(typeof(int[])), IntArrayBytesOutsideCaches = census.BytesOf(typeof(int[])) - census.CachedBytesOf(typeof(int[])),
-            StringObjectsOutsideCaches = census.ObjectsOf(typeof(string)) - census.CachedObjectsOf(typeof(string)) - tagHeap.Objects,
-            StringBytesOutsideCaches = census.BytesOf(typeof(string)) - census.CachedBytesOf(typeof(string)) - tagHeap.Bytes,
+            StringObjectsOutsideCaches = census.ObjectsOf(typeof(string)) - census.CachedObjectsOf(typeof(string)),
+            StringBytesOutsideCaches = census.BytesOf(typeof(string)) - census.CachedBytesOf(typeof(string)),
             JourneyEdgeTags = tagHeap.Objects, JourneyEdgeTagBytes = tagHeap.Bytes, JourneyOwnedEdgeTags = edgeTags.Count(t => planner.OwnsRoadTag((string)t)),
+            JourneyFragments = fragmentHeap.Objects, JourneyFragmentBytes = fragmentHeap.Bytes,
             DoubleArrayBytesOutsideCaches = census.BytesOf(typeof(double[])) - census.CachedBytesOf(typeof(double[])),
             StringObjectsByRoot = census.Roots.Where(r => !r.Cache).ToDictionary(r => r.Name, r => r.TrackedObjects(typeof(string)), StringComparer.Ordinal),
             RoadCacheEntries = road?.Entries ?? 0, RoadCacheLegs = road?.TrackedObjects(typeof(RouteLeg)) ?? 0, RoadCacheBytes = road?.Bytes ?? 0,
@@ -666,6 +669,8 @@ public sealed class Gr5RepeatedRetimeLeakTests
         const int cycles = 5;
         const double spacing = 10, drain = 30;
         List<MixedRead>? retimedReads = null, controlReads = null;
+        MixedRead? retimedSettled = null, controlSettled = null;
+        double settledAt = 0;
         int mostVehicles = 0;
         Exception? failure = null;
         var thread = new System.Threading.Thread(() =>
@@ -714,11 +719,17 @@ public sealed class Gr5RepeatedRetimeLeakTests
                     retimedReads.Add(MixedCensus(state, city, driver, retimed.Planner));
                     controlReads.Add(MixedCensus(control.State, control.City, controlDriver, control.Planner));
                 }
+                var inFlight = state.Citizens.Concat(state.VisitorRoutines).Where(c => c.Phase == CitizenPhase.Travelling).ToList();
                 double drainedAt = state.Minute + drain;
+                settledAt = Math.Max(drainedAt, (inFlight.Count == 0 ? state.Minute : inFlight.Max(c => c.NextEventMinute)) + 0.01);
                 city.AdvanceTo(drainedAt, int.MaxValue); control.City.AdvanceTo(drainedAt, int.MaxValue);
                 Assert.True(city.ActiveJourneyIndexMatchesState());
                 retimedReads.Add(MixedCensus(state, city, driver, retimed.Planner));
                 controlReads.Add(MixedCensus(control.State, control.City, controlDriver, control.Planner));
+                city.AdvanceTo(settledAt, int.MaxValue); control.City.AdvanceTo(settledAt, int.MaxValue);
+                Assert.True(city.ActiveJourneyIndexMatchesState());
+                retimedSettled = MixedCensus(state, city, driver, retimed.Planner);
+                controlSettled = MixedCensus(control.State, control.City, controlDriver, control.Planner);
             }
             catch (Exception error) { failure = error; }
         }, 64 * 1024 * 1024);
@@ -750,7 +761,7 @@ public sealed class Gr5RepeatedRetimeLeakTests
             legGaps.Add(r.Legs - c.Legs); cacheByteGaps.Add(r.RoadCacheBytes - c.RoadCacheBytes);
             output.WriteLine("  " + (i <= cycles ? "R" + i : "drained") + " entries " + r.RoadCacheEntries + " / " + c.RoadCacheEntries + "; cache-owned RouteLeg " + r.RoadCacheLegs + " / " + c.RoadCacheLegs
                 + ", " + r.RoadCacheBytes + " / " + c.RoadCacheBytes + " / " + cacheByteGaps[i].ToString("+0;-0;0") + " B; car legs in current journeys " + r.CarJourneyLegs + " / " + c.CarJourneyLegs
-                + "; road service strings held by current journeys (left out of the String series) " + r.JourneyEdgeTags + " / " + c.JourneyEdgeTags + ", " + r.JourneyEdgeTagBytes + " / " + c.JourneyEdgeTagBytes + " B, of which tag-table edge tags " + r.JourneyOwnedEdgeTags + " / " + c.JourneyOwnedEdgeTags + " and retime fragments " + (r.JourneyEdgeTags - r.JourneyOwnedEdgeTags) + " / " + (c.JourneyEdgeTags - c.JourneyOwnedEdgeTags)
+                + "; road service strings held by current journeys (inside the String series) " + r.JourneyEdgeTags + " / " + c.JourneyEdgeTags + ", " + r.JourneyEdgeTagBytes + " / " + c.JourneyEdgeTagBytes + " B, of which tag-table edge tags " + r.JourneyOwnedEdgeTags + " / " + c.JourneyOwnedEdgeTags + " and retime fragments " + r.JourneyFragments + " / " + c.JourneyFragments + ", " + r.JourneyFragmentBytes + " / " + c.JourneyFragmentBytes + " B"
                 + "; total RouteLeg " + r.Legs + " / " + c.Legs + " / " + legGaps[i].ToString("+0;-0;0") + ", graph " + r.Bytes + " / " + c.Bytes + " / " + (r.Bytes - c.Bytes).ToString("+0;-0;0") + " B");
         }
         Assert.True(controlReads![0].RoadCacheEntries > 0, "the control never filled the road-leg cache");
@@ -778,8 +789,18 @@ public sealed class Gr5RepeatedRetimeLeakTests
             Assert.False(final[1] > final[0] && final[2] > final[1], name + " gap rose at each of the final three retime cycles: " + string.Join(", ", gaps));
             Assert.True(gaps[cycles + 1] <= Math.Max(0, gaps.Take(cycles + 1).Max()), "drained " + name + " gap " + gaps[cycles + 1] + " is above every earlier read: " + string.Join(", ", gaps));
         }
-        Assert.True(stringBytes[cycles] - stringBytes[cycles - 2] < 1024, "String outside caches bytes gap grew over the final three retime cycles: " + string.Join(", ", stringBytes));
+        long fragmentGrowth = retimedReads[cycles].JourneyFragmentBytes - retimedReads[cycles - 2].JourneyFragmentBytes;
+        Assert.True(stringBytes[cycles] - stringBytes[cycles - 2] < 1024 + Math.Max(0, fragmentGrowth), "String outside caches bytes gap grew over the final three retime cycles by more than the " + fragmentGrowth + " B of retime fragments added to live journeys: " + string.Join(", ", stringBytes));
         Assert.True(stringBytes[cycles + 1] <= Math.Max(0, stringBytes.Take(cycles + 1).Max()), "drained String outside caches bytes gap is above every earlier read: " + string.Join(", ", stringBytes));
+        Assert.All(retimedReads, r => Assert.True(r.JourneyFragments <= r.CarJourneyLegs, "retime fragments " + r.JourneyFragments + " exceed the " + r.CarJourneyLegs + " car legs in current journeys"));
+        Assert.All(controlReads, c => Assert.Equal(0, c.JourneyFragments));
+        long settledStrings = retimedSettled!.StringObjectsOutsideCaches - controlSettled!.StringObjectsOutsideCaches, settledStringBytes = retimedSettled.StringBytesOutsideCaches - controlSettled.StringBytesOutsideCaches;
+        output.WriteLine("  settled at minute " + settledAt.ToString("0.00") + ", after every journey in flight at R" + cycles + " arrived: String outside caches " + retimedSettled.StringObjectsOutsideCaches + " / " + controlSettled.StringObjectsOutsideCaches + " / " + settledStrings.ToString("+0;-0;0")
+            + " objects, " + settledStringBytes.ToString("+0;-0;0") + " B; retime fragments held " + retimedSettled.JourneyFragments + " (" + retimedSettled.JourneyFragmentBytes + " B); road service strings held " + retimedSettled.JourneyEdgeTags + " / " + controlSettled.JourneyEdgeTags + ", " + retimedSettled.JourneyEdgeTagBytes + " / " + controlSettled.JourneyEdgeTagBytes + " B");
+        Assert.Equal(0, retimedSettled.JourneyFragments);
+        Assert.True(settledStringBytes < 1024, "settled String outside caches bytes gap " + settledStringBytes + " B after every retimed journey arrived");
+        Assert.True(settledStrings <= Math.Max(0, strings.Take(cycles + 1).Max()), "settled String outside caches objects gap " + settledStrings + " is above every retime read: " + string.Join(", ", strings));
+        Assert.True(settledStringBytes <= Math.Max(0, stringBytes.Take(cycles + 1).Max()), "settled String outside caches bytes gap " + settledStringBytes + " B is above every retime read: " + string.Join(", ", stringBytes));
         Assert.True(retimedReads[cycles + 1].Bytes - controlReads![cycles + 1].Bytes < Allowance, "drained retimed minus control " + (retimedReads[cycles + 1].Bytes - controlReads[cycles + 1].Bytes) + " B");
     }
 

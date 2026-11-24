@@ -8,6 +8,10 @@ using Xunit.Abstractions;
 
 namespace PersistentCity.Tests;
 
+[CollectionDefinition(nameof(Gr5CarSearchAllocationTests), DisableParallelization = true)]
+public sealed class Gr5CarSearchAllocationCollection { }
+
+[Collection(nameof(Gr5CarSearchAllocationTests))]
 public sealed class Gr5CarSearchAllocationTests
 {
     private readonly ITestOutputHelper output;
