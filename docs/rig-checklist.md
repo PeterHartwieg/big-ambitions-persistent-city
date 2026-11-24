@@ -17,6 +17,8 @@ Every GR-5 rig run from now on must:
 
 ## Latest evidence
 
+- **24 November h, Mac (rig 17p), build `c20d4ec4`**. 2 PASS / 2 PARTIAL / 0 FAIL / 2 NOT RUN across the six scoped arms. The same taxi advanced across the committed 20× retime. Recorder-off mod-work p95 was 3.3696 ms with one spike. [24h results](#rig-results---24-november-2026-h-mac-rig-17p-350-through-gate-e6-2b101-01011-at-c20d4ec4).
+
 - **24 November g, Mac (rig 17o), build `477d11a5`**. 3 PASS / 6 PARTIAL / 0 FAIL / 4 NOT RUN. Minute-level vendor handback joined. Provisional recorder-off mod-work p95 on the shared Mac was 3.5703 ms with five spikes at or above 30 ms. [24g results](#rig-results---24-november-2026-g-mac-rig-17o-e6-checks-1-3-6-7-at-477d11a5).
 
 - **24 November f, Mac (rig 17n), build `40fe3bf8`**. 2 PASS / 4 PARTIAL / 0 FAIL / 7 NOT RUN. The headless stop-2 retime and reversal passed. The camera and tagged cart arms were partial. [24f results](#rig-results---24-november-2026-f-mac-rig-17n-e6-checks-2-and-4-after-366-at-40fe3bf8).
@@ -27496,3 +27498,79 @@ The isolated game stopped and the lease was released with zero pending operation
 Raw logs, flow results, requests, ledger replies and retained saves are in `~/Coding_Projects/.agent-logs/persistent-city-rig-2026-11-24g-mac/`. SHA-256 of `evidence-sha256.txt` is `3fca1b27da1e7922fc2e4c29562e7e1e122e7be76ff39423ef9babcd0a358f30`.
 
 Refs #364 #366 #367
+
+## Rig results - 24 November 2026 h (Mac, rig 17p): #350 through-gate, E6 2b/10/1-0.10.11 at c20d4ec4
+
+**2 PASS / 2 PARTIAL / 0 FAIL / 2 NOT RUN** across the six scoped arms.
+
+Fetched `c20d4ec4752d9ab9929a550116c8f2a5c7617770` (#368). The commits after product change #366 at `40fe3bf8` only changed the checklist. The 17o package was reused and staged with `python3 scripts/install-mac.py --stage-mod PersistentCity <absolute 24g package path>`. The receipt backup was `~/Library/Application Support/BigAmbitionsAgentTestsMac/receipt-backups/20261124T192446Z`. The package and live `staged_mod` readback both had SHA-256 `a2b007972ef3d0164d6cae2b4d78b537a4420b4bfdc59dbdd5614ed960de33b5`.
+
+Agent-rig checkout `0764f9c3255240bc28630b5845d7a5967e6bb716` ran with installed AgentRigOps.dll SHA-256 `8a6174418741e3b990473a51a46627322fb16198b3140035486e5e70e390e6b2`. The existing overlay reported ready. The native configuration was five minutes / three autosaves and `prevent_autosave: false`. The rig guard suppressed native autosaves. The staged price weight was 1.2 and the schema was 1.
+
+The isolated `FT-E6-Vendors-base` was already present and matched the 17l archive at 3,488,213 bytes and SHA-256 `4bf00a225b1e4ed20eb66ae2095752c0e77bcc138ff57ba476bdbb330e1ff796`. The manual runs used native `call save` to make `FT RIGTMP-GATE-24h-mac` from `FT GR5 13f Timing v1` and `FT RIGTMP-E6-24h-mac` from the verified E6 base. Both were in the isolated rig profile.
+
+### #350 through-gate
+
+Both arms are **NOT RUN (tooling)**. Both plans used `HamptonsPrivateFenceDoor` index 0, `gate:-2902.5:0.0:-1515.5`, and `target: {"beyond_gate":8}`. The synthesized 62.98 m path ended at `(-2894.5, 0.01, -1515.48)`. Both Ambulances reached the gate leg and stalled 5.21 m before the plane with `body_speed: 0.04`, `steer_speed: 4.0`, `gate_contact: false`, and zero track breaks.
+
+| Hold at spawn | Final position (m) | `passed_gate` / `arrived` | `blocked_at_gate` / `blocked_by_gate_collider` | `stall_contacts` | Release |
+| --- | --- | --- | --- | --- | --- |
+| Closed (`open_at_spawn:false`) | (-2907.71, -0.11, -1515.61) | false / false | true / false | `Collider`, layer 26, `other` | `removal: removed`, `last_failure: null` |
+| Open (`open_at_spawn:true`) | (-2907.71, -0.11, -1515.60) | false / false | false / false | `Collider`, layer 26, `other` | `removal: removed`, `last_failure: null` |
+
+`gate_volumes_ignored` listed only `SM_GatedCommunityDoor` in both arms. The closed proximity hint did not have a `gate_leaf` contact. Each paused cleanup snapshot (70 m, complete) changed from one injected `vehicle_route` row to zero rows. Both used slot 19 and Unity instance -1380950, with activation 1 for closed and 2 for open. No ambient car was removed in either snapshot. Final reads showed zero held gates and zero live injected routes.
+
+### E6 check 2b. Same traffic pin across the retime
+
+**PASS.** At cart stop 2 the list used center `[173.38, 0.2, -407.77]` and a 42 m radius. Attempt 1 held index 11 / instance -1378616 / activation 4 with no jump and zero retime degradations. The final pose showed zero movement, so the rig selected another vehicle.
+
+Attempt 2 pinned `Taxi(Clone)5` (index 5 / instance -1377520 / activation 9). The baseline was `(150.0715, 0.01, -377.9575)` at 10.1835 m/s, with a 5.211 m previous step and `jumped: false`. At day 1 15:17, the bridge accepted `run_until` 16:00 at 20×. The commit line reported `Clock retime: body release` and `degraded 0 (inexact pose 0, other retime refusals 0)`. All eight following poses preserved the three identifiers and had `previous.jumped: false`. The taxi advanced 43.13 m along the road with minimal Z change. Across the commit read and the final pose it advanced 2.748 m to `(193.2015, 0.01, -378.0234)`. The raw poses and commit lines are in `traffic-results.json`. Check 2a is carried from 17n.
+
+### Recorder-off performance
+
+**PASS, provisional on the shared Mac.** Game build 3682, Street Food 0.10.12, RLO 1.0.6 and 1,000 residents. The 1× window ran 600.405 real seconds from day 1 11:00 to 13:55 with the Persistent City food decision recorder off. Coverage was complete across 66 entry points and 16,157 mod-work frames. Mod-work p95 was **3.3696 ms** (gate <5 ms), compared with 3.5703 ms in 17o and 3.8595 ms in 17n. There was **one** mod-work spike ≥30 ms, fully retained without truncation, compared with five in 17o and eleven in 17n.
+
+| Unity frame | Mod work | Dominant scope |
+| --- | ---: | --- |
+| 14573 | 70.2312 ms | `PopulationRuntime.Update` |
+
+Whole-frame timing was p95 52.5905 ms, max 800.6711 ms, with 15,697 frames ≥30 ms and 1,024 rows retained. Mac load (1/5/15 min) was 4.28 / 6.02 / 5.67 at 20:33 and 5.72 / 5.36 / 5.41 at 20:43. The `20261124-140600` nightly-ci process and one Node process were visible at both endpoints. The guard reported 15,722 refused autosave attempts, zero allowed saves and zero native saving frames. Route A save duration was outside the measurement.
+
+### E6 check 1. Street Food 0.10.11 missing API
+
+**PARTIAL.** The Mac render used the durable Street Food pins and added the current Persistent City and installed RLO pins in the run-local flow. The player loaded FoodTrucks.dll SHA-256 `23c3ab6242d8c254de9dc8fcaaa7670c0d926cc5f354b9edd246023121e11dd9` and kept RLO 1.0.6. From 08:00 through 11:25, PC remained active and reported `bridge: Absent`, empty `apiAssembly`, `Reason: "Street Food vendor API missing."`, no vendor rows, lease -1 and zero purchases, receipts or meals. The run reached the required 09:00 read and continued to 11:25 for the native-sales read.
+
+All 21 flow steps passed. The log gate exited 1 because Street Food 0.10.11 rejected the installed `rules.json` field `marketing` and logged `Save data was written by Food Trucks 0.10.12, newer than 0.10.11. The mod will read it but not change it.` Both vendors had zero minutes open and zero sales at 11:25. The compatibility reasons blocked the native-sales part of the arm. The runner confirmed shutdown, restored the mod set and receipt, verified the original fixture and released its lease.
+
+### E6 check 10. Drink override
+
+**PARTIAL end to end. Gameplay verified.** The catalogue returned the steamer, griddle, dumplings and chopped cheese. Rig metadata read dumplings as `Food` from `default` and chopped cheese as `Drink` from `config`. The same Drink value was read after lunch. The crew opened cart `7oUO0L2GVE2x5DsBjY9+aQ==` at 11:30 with 80 dumplings and 40 chopped cheese, both priced at $4.
+
+At 11:40 and 12:25, `pc vendor status` listed the cart under `Refusals` with `menu item not executable: foodtrucks:itemname_choppedcheese`. The entire opening stayed Street Food-owned. Native `day_summary` recorded 55 minutes open and $44 for 2 dumplings and 9 chopped cheese, with stock 80 → 78 and 40 → 31. The PC decision dump and sales read listed zero meals or receipts for that cart. They did record 12 paid hot-dog receipts for cart A and one burger receipt for truck B. The 17l default-Food arm carried 7 paid dumpling and 21 paid chopped-cheese receipts across reload. Its per-resident taste replay and the exact-money join were outside this arm.
+
+All 81 flow steps passed. The log gate exited 1 at shutdown on Street Food's `Vendor API: refreshing after a change failed: System.NullReferenceException` in `Helpers.PlayerHelper.GetPosition`, after the quit command released the two PC-owned vehicles. The runner confirmed shutdown, verified the original fixture and restored the configuration and mod set before releasing its lease.
+
+| `metadata_config` field | Value |
+| --- | --- |
+| `path` | `~/Library/Application Support/com.hovgaardgames.bigambitions.agenttests.mac/ModsLocal/PersistentCity/persistent-city.json` |
+| `before_sha256` | `abfecb215a3c3ea89e6a1137c7445726dde66947c06d361adb2be1337cf78c66` |
+| `after_sha256` | `3521e452c146d142e9c48f62e4194ce9b8cf12072fba006c6f7a120c426a4a6c` |
+| `receipt_before_sha256` | `b3e17c67d3a5de5ddb47071de24215d5244d8476704dd20680ca4abea524e8df` |
+| `receipt_after_sha256` | `820c70933309713eaca8cdce48bfd5b62f12a1808995ae2c85578cc9307f1b3b` |
+| `status` / `restored_verified` | `restored` / `true` |
+
+### Carried and excluded checks
+
+- Check 1 Vendor API v1 present is carried from 17o, with `bridge: Ready`, assembly `FoodTrucks.Core` and truck B eligible with `Reason: ""`, restated for E6f. Contract 2 is **NOT RUN** pending a reviewed test DLL.
+- Checks 3 and 7 are **NOT RUN** in 17p. The Mac overlay at `0764f9c` predates the ledger/log-gate work from `20261124-201132-rig-e6-17o-rlo-ledger-loggate`. Check 6 is carried **PASS** from 17o, where 83 consecutive minute reads found no mixed-source minute.
+- Check 4 is **NOT RUN**. Rig's base-v2 day-two proof had cart A off-map, a $250 fine and zero minutes open. It needs Street Food `edit_stop`. Check 5 also waits on `edit_stop`.
+- Checks 8 and 11 are carried **PASS** from 17l. Pointer, hover, click and visual-feel checks stay with Peter.
+- Checks 9 and 12 are **NOT RUN** pending the `vendor_fault` and contract-2 builds and the Mac Unity licence refresh. Check 12 still needs the schema-1 restatement. Check 13 is **NOT RUN** pending F6b.
+
+### Restore and evidence
+
+The manual and flow players stopped cleanly. All 272 ModsLocal files, 284 receipt entries, isolated preferences, original config and SaveGames files matched the preflight hashes. The candidate used a price weight of 1.2. The restored config has no explicit price-weight override and matches its original bytes. Both native disposable saves and their sidecars were archived, along with two flow alias portraits. The installed overlay hash and the base and 17l archive hashes matched again. The final `agentmac` lease was free with zero pending operations.
+
+Raw evidence is in `~/Coding_Projects/.agent-logs/persistent-city-rig-2026-11-24h-mac/`. Both flow reports, Player.log files and transaction receipts are under `flows/`. SHA-256 of the evidence index is `b46a75e7674513795c4c7f17b6f9ebd5c8fdab7fff025741f10b59b020137899`.
+
+Refs #350 #365 #366 #367 #368
