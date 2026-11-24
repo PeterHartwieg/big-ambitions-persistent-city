@@ -205,6 +205,7 @@ namespace PersistentCity.Runtime
                 topologyHash.Dispose();
             }
             graph = new TransportRoadGraph(nodes, clockRate, previousGraph);
+            graph.ReserveRoadLegCache();
             topologyWriter = new BinaryWriter(topologyBuffer);
             searchedAt = new int[waypoints.Length];
             searchDisabled = new bool[waypoints.Length];

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using PersistentCity.Core;
 using Xunit;
 using Xunit.Abstractions;
@@ -17,7 +18,7 @@ public sealed class Gr5CarSearchAllocationTests
 
     private sealed class BusyStreets
     {
-        public readonly TransportRoadGraph Graph;
+        public TransportRoadGraph Graph;
         public readonly TransportRoadNode[] Nodes = new TransportRoadNode[Side * Side];
         private readonly Dictionary<(int, int), int> edges = new Dictionary<(int, int), int>();
         private readonly Dictionary<long, string> tags = new Dictionary<long, string>();
@@ -57,6 +58,7 @@ public sealed class Gr5CarSearchAllocationTests
                 kernel.Enqueue("v" + v, new List<TrafficRouteLeg> { new TrafficRouteLeg { LinkId = random.Next(definitions.Count), EndNominalMinutes = 0.05, FreeFlowMinutes = 0.05 } });
             kernel.AdvanceTo(0.01, 1000);
             Graph = new TransportRoadGraph(Nodes);
+            Graph.ReserveRoadLegCache();
             traversal = (a, b, baseline) => baseline * Pace;
             extra = Extra;
             found = p => Path = p;
@@ -87,6 +89,12 @@ public sealed class Gr5CarSearchAllocationTests
             return tag;
         }
         private string tagTopology = Topology;
+
+        public void Retime(double rate)
+        {
+            Graph = new TransportRoadGraph(Nodes, rate, Graph);
+            Graph.ReserveRoadLegCache();
+        }
 
         public TransportRoadGraph.RoadSearch Begin(int start, int goal, bool shared)
         {
@@ -123,7 +131,7 @@ public sealed class Gr5CarSearchAllocationTests
 
     private sealed class Window
     {
-        public long SliceBytes, FinalBytes, Slices, FinalSlices, Searches, Legs, Collections;
+        public long SliceBytes, FinalBytes, Slices, FinalSlices, Searches, Legs, Collections, PeakSliceBytes, SliceCollections;
         public double PerSearch => (double)(SliceBytes + FinalBytes) / Searches;
         public double PerLeg => (double)FinalBytes / Legs;
     }
@@ -134,16 +142,25 @@ public sealed class Gr5CarSearchAllocationTests
         int gen0 = GC.CollectionCount(0);
         foreach (var trip in trips)
         {
+            int beganGen0 = GC.CollectionCount(0);
             long began = GC.GetAllocatedBytesForCurrentThread();
             var search = streets.Begin(trip.Start, trip.Goal, shared);
-            window.SliceBytes += GC.GetAllocatedBytesForCurrentThread() - began;
+            long begun = GC.GetAllocatedBytesForCurrentThread() - began;
+            window.SliceBytes += begun;
+            window.PeakSliceBytes = Math.Max(window.PeakSliceBytes, begun);
+            window.SliceCollections += GC.CollectionCount(0) - beganGen0;
             window.Searches++;
+            long last = 0;
             while (true)
             {
                 bool finalizing = search.Finalizing;
+                int sliceGen0 = GC.CollectionCount(0);
                 long before = GC.GetAllocatedBytesForCurrentThread();
                 bool done = search.Advance(ExpansionStep);
                 long bytes = GC.GetAllocatedBytesForCurrentThread() - before;
+                window.SliceCollections += GC.CollectionCount(0) - sliceGen0;
+                window.PeakSliceBytes = Math.Max(window.PeakSliceBytes, bytes);
+                last = bytes;
                 if (finalizing || search.Finalizing || done && search.Result != null) { window.FinalBytes += bytes; window.FinalSlices++; }
                 else { window.SliceBytes += bytes; window.Slices++; }
                 if (done) break;
@@ -153,7 +170,9 @@ public sealed class Gr5CarSearchAllocationTests
             {
                 long tagged = GC.GetAllocatedBytesForCurrentThread();
                 for (int i = 0; i < road.Legs.Count; i++) road.Legs[i].ServiceId = streets.Tag(streets.Path![i], streets.Path[i + 1]);
-                window.FinalBytes += GC.GetAllocatedBytesForCurrentThread() - tagged;
+                long tagging = GC.GetAllocatedBytesForCurrentThread() - tagged;
+                window.FinalBytes += tagging;
+                window.PeakSliceBytes = Math.Max(window.PeakSliceBytes, last + tagging);
             }
             window.Legs += road?.Legs.Count ?? 0;
             search.Dispose();
@@ -255,5 +274,83 @@ public sealed class Gr5CarSearchAllocationTests
         Assert.All(nested.Result!.Legs, leg => Assert.True(leg.Frozen && leg.ServiceId.Length > 0));
         nested.Dispose();
         Assert.Equal((builds, reuses, cached), (streets.Graph.RoadLegBuilds, streets.Graph.RoadLegReuses, streets.Graph.CachedRoadLegs));
+    }
+
+    [Fact]
+    public void NoSearchSliceGrowsTheRoadLegCacheInColdWarmOrRetimedReplays()
+    {
+        var spread = Trips(300, 13, Side * Side);
+        var busy = Trips(1000, 12, 24);
+        var copied = new BusyStreets(600);
+        var shared = new BusyStreets(600);
+        var reads = new List<(string Name, Window Copied, Window Shared)>();
+        void Read(string name, List<Pair> trips)
+        {
+            GC.Collect(); GC.WaitForPendingFinalizers(); GC.Collect();
+            var c = Replay(copied, trips, false);
+            GC.Collect(); GC.WaitForPendingFinalizers(); GC.Collect();
+            reads.Add((name, c, Replay(shared, trips, true)));
+        }
+        Read("cold spread", spread);
+        Read("warm busy", busy);
+        copied.Retime(2); shared.Retime(2);
+        Assert.Equal(0, shared.Graph.CachedRoadLegs);
+        Read("immediate retime busy", busy);
+        foreach (var (name, c, sh) in reads)
+            output.WriteLine(string.Format(CultureInfo.InvariantCulture,
+                "{0}, {1} searches: peak slice before {2:N0} B, after {3:N0} B; collections inside slices before {4}, after {5}; {6:N0} -> {7:N0} B/search",
+                name, c.Searches, c.PeakSliceBytes, sh.PeakSliceBytes, c.SliceCollections, sh.SliceCollections, c.PerSearch, sh.PerSearch));
+        output.WriteLine("cached road legs " + shared.Graph.CachedRoadLegs + ", reuses " + shared.Graph.RoadLegReuses + ", builds " + shared.Graph.RoadLegBuilds);
+        foreach (var (name, c, sh) in reads)
+        {
+            Assert.True(sh.PeakSliceBytes <= c.PeakSliceBytes, name + " peak slice " + c.PeakSliceBytes + " -> " + sh.PeakSliceBytes);
+            Assert.True(sh.SliceCollections <= c.SliceCollections, name + " collections inside slices " + c.SliceCollections + " -> " + sh.SliceCollections);
+        }
+    }
+
+    [Fact]
+    public void FiveRetimesOfTheRealRoadLegCacheKeepItsRetainedGraphBoundedAndCurrent()
+    {
+        const int Retimes = 5;
+        var streets = new BusyStreets(600);
+        var busy = Trips(1000, 12, 24);
+        string types = "";
+        long Census(out long legs, out long objects)
+        {
+            var heap = new RetainedHeap();
+            heap.Exclude(streets.Nodes);
+            foreach (var node in streets.Nodes) { heap.Exclude(node); heap.Exclude(node.Successors); }
+            heap.Add("graph", streets.Graph);
+            legs = heap.Types.FirstOrDefault(r => r.Name == "RouteLeg")?.Objects ?? 0;
+            objects = heap.Objects;
+            types = string.Join(", ", heap.Types.Take(4).Select(r => r.Name + " " + r.Bytes + " B"));
+            return heap.Bytes;
+        }
+        var bytes = new List<long>();
+        var retainedLegs = new List<long>();
+        var lines = new List<string>();
+        void Read(string stage)
+        {
+            long b = Census(out long legs, out long objects);
+            bytes.Add(b); retainedLegs.Add(legs);
+            lines.Add(stage + " " + b + " B, " + objects + " objects, RouteLeg " + legs + ", cached " + streets.Graph.CachedRoadLegs + " (" + types + ")");
+        }
+        Read("reserved");
+        Replay(streets, busy, true);
+        Read("R0 busy");
+        for (int cycle = 1; cycle <= Retimes; cycle++)
+        {
+            streets.Retime(cycle % 2 == 1 ? 2 : 1);
+            Assert.Equal(0, streets.Graph.CachedRoadLegs);
+            Read("R" + cycle + " retimed");
+            Replay(streets, busy, true);
+            Assert.True(streets.Graph.CachedRoadLegs <= RoadSearchWorkspace.MaximumRoadLegs);
+            Read("R" + cycle + " busy");
+        }
+        output.WriteLine("road-leg cache retained graph (Mono 64-bit layout model), routes discarded after every search: " + string.Join("; ", lines));
+        long busyFirst = bytes[1], busyPeak = bytes.Where((_, i) => i % 2 == 1).Max();
+        Assert.True(busyPeak - busyFirst < 50_000, "busy retained rose " + (busyPeak - busyFirst) + " B: " + string.Join(", ", bytes));
+        for (int i = 2; i < bytes.Count; i += 2) Assert.Equal(0, retainedLegs[i]);
+        Assert.True(bytes.Where((_, i) => i >= 2 && i % 2 == 0).Max() <= bytes[2] + 4096, "retimed retained: " + string.Join(", ", bytes));
     }
 }

@@ -282,7 +282,10 @@ namespace PersistentCity.Core
                 throw new ArgumentOutOfRangeException(nameof(gameMinutesPerScaledSecond));
             clockRate = gameMinutesPerScaledSecond;
             slot = previous != null && ReferenceEquals(previous.nodes, nodes) ? previous.slot : new WorkspaceSlot();
+            if (previous != null && ReferenceEquals(slot, previous.slot) && previous.clockRate != clockRate) slot.Workspace.RoadLegs?.Clear();
         }
+        public void ReserveRoadLegCache() =>
+            slot.Workspace.RoadLegs ??= new Dictionary<long, RouteLeg>(RoadSearchWorkspace.MaximumRoadLegs);
         internal bool SharesWorkspaceWith(TransportRoadGraph other) => ReferenceEquals(slot, other.slot);
         public Route? Plan(int start, int goal, Func<int, bool> disabled, Func<Position, Position, bool> clear,
             int expansionLimit, Action<int[]>? pathFound) =>
@@ -336,7 +339,7 @@ namespace PersistentCity.Core
         }
         public long RoadLegReuses => slot.Workspace.RoadLegReuses;
         public long RoadLegBuilds => slot.Workspace.RoadLegBuilds;
-        internal int CachedRoadLegs => slot.Workspace.RoadLegs.Count;
+        internal int CachedRoadLegs => slot.Workspace.RoadLegs?.Count ?? 0;
         private bool Usable(int index) => index >= 0 && index < nodes.Count && nodes[index] != null && nodes[index].AllowsCar
             && nodes[index].Position.IsFinite && Position.Finite(nodes[index].KilometresPerHour) && nodes[index].KilometresPerHour > 0;
 
@@ -461,16 +464,17 @@ namespace PersistentCity.Core
                 var search = this.search!;
                 long key = (long)from << 32 | (uint)to;
                 RouteLeg? cached = null;
-                bool known = borrowed && search.RoadLegs.TryGetValue(key, out cached);
+                var cache = borrowed ? search.RoadLegs : null;
+                bool known = cache != null && cache.TryGetValue(key, out cached);
                 if (known && cached!.Minutes == minutes && cached.From.Equals(a) && cached.To.Equals(b)
                     && (ReferenceEquals(cached.ServiceId, tag) || string.Equals(cached.ServiceId, tag, StringComparison.Ordinal)))
                 { search.RoadLegReuses++; return cached; }
                 var leg = new RouteLeg { From = a, To = b, Mode = TravelMode.Car, Minutes = minutes, ServiceId = tag };
                 leg.Freeze();
-                if (borrowed)
+                if (cache != null)
                 {
                     search.RoadLegBuilds++;
-                    if (known || search.RoadLegs.Count < RoadSearchWorkspace.MaximumRoadLegs) search.RoadLegs[key] = leg;
+                    if (known || cache.Count < RoadSearchWorkspace.MaximumRoadLegs) cache[key] = leg;
                 }
                 return leg;
             }
