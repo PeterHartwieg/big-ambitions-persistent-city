@@ -84,6 +84,7 @@ namespace PersistentCity.Runtime
         private SaveSession? saveSession;
         private NativeFoodMarket? foodMarket;
         private StreetFoodVendorMarket? vendorMarket;
+        private string vendorApiAssembly = "";
         private string? initializingPayload;
         private bool initializingHadPayload;
         private Assembly? dependency;
@@ -129,8 +130,8 @@ namespace PersistentCity.Runtime
         {
             var current = simulation ?? throw new InvalidOperationException("Vendor market needs an active city.");
             var save = SaveGameManager.Current;
-            var assembly = AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault(a => a.GetName().Name == "FoodTrucks");
-            var api = StreetFoodBridge.Open(assembly, out string reason);
+            var api = StreetFoodBridge.Open(AppDomain.CurrentDomain.GetAssemblies(), out string reason, out vendorApiAssembly);
+            log?.Info("Street Food vendor API " + (api == null ? "not bound: " + reason : "bound; api assembly: " + vendorApiAssembly));
             var policy = new FoodProductPolicySource(() => shops.LoadedNames, () => settings.FoodProductOverrides.Resolver, FoodProductMetadataApi.PublishSnapshot,
                 message => log?.Warn("Food product policy fell back to the original three: " + message));
             shops.ProductPolicySource = policy;

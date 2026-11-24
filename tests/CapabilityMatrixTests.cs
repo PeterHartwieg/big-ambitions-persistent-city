@@ -74,7 +74,7 @@ namespace PersistentCity.Tests
                 string people = string.Join("|", rig.City.State.Citizens.Select(c => c.Identity.Id + ":" + c.Identity.Name));
                 string business = rig.Row("A").BusinessId;
 
-                Assert.Null(StreetFoodBridge.Open(null, out string reason));
+                Assert.Null(StreetFoodBridge.Open(new System.Reflection.Assembly[0], out string reason, out _));
                 var absent = new VendorCoordinator(rig.Table, null, reason, rig.City, rig.Stands);
                 Drive(absent, rig.Table, Day2At(9, 6), Day2At(11, 6));
                 Assert.False(absent.CanServe(business, Day2At(11, 6)));
