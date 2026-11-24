@@ -86,6 +86,8 @@ namespace PersistentCity.Runtime
         {
             add("walking.cache", walking.RetainedPaths, WalkingRoutes.RetainedPathLimit);
             add("trains", trains, -1);
+            if (roads != null) add("roads.tags", roads.EdgeTagCache, -1);
+            if (roads?.RoadLegCache is { } roadLegs) add("roads.legs", roadLegs, TransportRoadGraph.RoadLegCacheBound);
         }
 
         internal void ReleaseRetainedPaths() { walking.Clear(); trains.Clear(); trainStations = null; }

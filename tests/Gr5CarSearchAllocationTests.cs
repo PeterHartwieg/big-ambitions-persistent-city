@@ -150,30 +150,23 @@ public sealed class Gr5CarSearchAllocationTests
             window.PeakSliceBytes = Math.Max(window.PeakSliceBytes, begun);
             window.SliceCollections += GC.CollectionCount(0) - beganGen0;
             window.Searches++;
-            long last = 0;
             while (true)
             {
                 bool finalizing = search.Finalizing;
                 int sliceGen0 = GC.CollectionCount(0);
                 long before = GC.GetAllocatedBytesForCurrentThread();
                 bool done = search.Advance(ExpansionStep);
+                var tagged = done && !shared ? search.Result : null;
+                if (tagged != null)
+                    for (int i = 0; i < tagged.Legs.Count; i++) tagged.Legs[i].ServiceId = streets.Tag(streets.Path![i], streets.Path[i + 1]);
                 long bytes = GC.GetAllocatedBytesForCurrentThread() - before;
                 window.SliceCollections += GC.CollectionCount(0) - sliceGen0;
                 window.PeakSliceBytes = Math.Max(window.PeakSliceBytes, bytes);
-                last = bytes;
                 if (finalizing || search.Finalizing || done && search.Result != null) { window.FinalBytes += bytes; window.FinalSlices++; }
                 else { window.SliceBytes += bytes; window.Slices++; }
                 if (done) break;
             }
             var road = search.Result;
-            if (road != null && !shared)
-            {
-                long tagged = GC.GetAllocatedBytesForCurrentThread();
-                for (int i = 0; i < road.Legs.Count; i++) road.Legs[i].ServiceId = streets.Tag(streets.Path![i], streets.Path[i + 1]);
-                long tagging = GC.GetAllocatedBytesForCurrentThread() - tagged;
-                window.FinalBytes += tagging;
-                window.PeakSliceBytes = Math.Max(window.PeakSliceBytes, last + tagging);
-            }
             window.Legs += road?.Legs.Count ?? 0;
             search.Dispose();
         }
@@ -284,13 +277,17 @@ public sealed class Gr5CarSearchAllocationTests
         var copied = new BusyStreets(600);
         var shared = new BusyStreets(600);
         var reads = new List<(string Name, Window Copied, Window Shared)>();
+        int Capacity() => ((Dictionary<long, RouteLeg>)shared.Graph.RoadLegCache!).EnsureCapacity(0);
+        int reserved = Capacity();
         void Read(string name, List<Pair> trips)
         {
             GC.Collect(); GC.WaitForPendingFinalizers(); GC.Collect();
             var c = Replay(copied, trips, false);
             GC.Collect(); GC.WaitForPendingFinalizers(); GC.Collect();
             reads.Add((name, c, Replay(shared, trips, true)));
+            Assert.True(Capacity() == reserved, name + " road-leg cache capacity " + reserved + " -> " + Capacity());
         }
+        Assert.True(reserved >= RoadSearchWorkspace.MaximumRoadLegs, "reserved capacity " + reserved);
         Read("cold spread", spread);
         Read("warm busy", busy);
         copied.Retime(2); shared.Retime(2);

@@ -340,6 +340,8 @@ namespace PersistentCity.Core
         public long RoadLegReuses => slot.Workspace.RoadLegReuses;
         public long RoadLegBuilds => slot.Workspace.RoadLegBuilds;
         internal int CachedRoadLegs => slot.Workspace.RoadLegs?.Count ?? 0;
+        public object? RoadLegCache => slot.Workspace.RoadLegs;
+        public const int RoadLegCacheBound = RoadSearchWorkspace.MaximumRoadLegs;
         private bool Usable(int index) => index >= 0 && index < nodes.Count && nodes[index] != null && nodes[index].AllowsCar
             && nodes[index].Position.IsFinite && Position.Finite(nodes[index].KilometresPerHour) && nodes[index].KilometresPerHour > 0;
 

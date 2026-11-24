@@ -211,6 +211,8 @@ namespace PersistentCity.Runtime
             searchDisabled = new bool[waypoints.Length];
         }
 
+        internal object? RoadLegCache => graph.RoadLegCache;
+
         public bool Prepare()
         {
             speeds.RefreshForFrame(Time.frameCount);
@@ -603,6 +605,7 @@ namespace PersistentCity.Runtime
         private Func<int, int, string>? edgeTagFor;
         private string edgeTagTopology = "";
         internal int EdgeTags => edgeTags.Count;
+        internal object EdgeTagCache => edgeTags;
         private string EdgeTag(int from, int to)
         {
             if (!string.Equals(edgeTagTopology, TopologyId, StringComparison.Ordinal)) { edgeTags.Clear(); edgeTagTopology = TopologyId; }
