@@ -27327,7 +27327,7 @@ Preflight `pc vendor status` returned `bridge: Ready`, `apiAssembly: FoodTrucks.
 | 3. Positive sale with exact money | NOT RUN | Needs RIG-VLEDGER for the resident wallet, stock, sale and midnight payment join. |
 | 4. Choice next to shops and rivals | PARTIAL | 4a verified the command forms, tags, and truck and shop choices. The cart fixture remained closed on the tagged day-two arm. 4b reported both timing windows. |
 | 5. Stand move with committed residents | NOT RUN | FT route help replied `Unknown route op 'help': add_stop, paste_day.` The in-place `edit_stop` operation is absent. |
-| 6. Handback mid-opening | PARTIAL | Carried from 17l. Committed meals drained and Street Food resumed sales in the same opening. The minute-level sale-source join needs RIG-VLEDGER. |
+| 6. Handback mid-opening | PARTIAL | Carried from 17l. Both committed visits ended as missed meals with unchanged wallets and no receipts. Street Food then resumed sales in the same opening. The minute-level sale-source join needs RIG-VLEDGER. |
 | 7. Lease and missing PC | NOT RUN | Needs the RIG-SFAPI E6a set for the without-PC and with-PC relaunches. |
 | 8. Player-opened windows | PASS | Carried from 17l at `7714484f`. The player opening stayed with Street Food and the next crew opening was PC-owned. |
 | 9. Uncertain sale is not retried | NOT RUN | Needs RIG-SFFAULT. |
