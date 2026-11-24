@@ -245,6 +245,13 @@ namespace PersistentCity.Runtime
         private AsyncInstantiateOperation<GameObject>? growing;
         public static readonly GcGrowLedger Grows = new GcGrowLedger();
         public bool GrowIntegrating => growing != null && !growing.isDone;
+
+        public bool ObserveGrow()
+        {
+            if (growing == null || !growing.isDone) return false;
+            if (Grows.NoteDone(true)) ModUnityWork.AsyncDone();
+            return true;
+        }
         public double GrowStartMaximum { get; private set; }
         public double GrowFinishMaximum { get; private set; }
         private bool hierarchySized;
@@ -286,7 +293,7 @@ namespace PersistentCity.Runtime
                 }
                 finally { EndGrow(); }
             }
-            if (!growing.isDone) return null;
+            if (!ObserveGrow()) return null;
             BeginGrow(GrowKind.AsyncFinish);
             try { var finished = Finish(out failed); growTimer.Outcome(!failed); return finished; }
             finally { GrowFinishMaximum = Math.Max(GrowFinishMaximum, Since(started)); EndGrow(); }
@@ -297,7 +304,6 @@ namespace PersistentCity.Runtime
             failed = false;
             var made = growing!.Result;
             growing = null;
-            ModUnityWork.AsyncDone();
             GrowStep(GrowTimer.Result);
             if (made == null || made.Length != 1 || made[0] == null)
             {
@@ -311,10 +317,10 @@ namespace PersistentCity.Runtime
 
         private void CancelGrow()
         {
+            if (growing == null) return;
+            if (!ObserveGrow()) { growing.Cancel(); growing = null; Grows.CancelPending(); return; }
             var pending = growing;
             growing = null;
-            if (pending == null) return;
-            if (!pending.isDone) { pending.Cancel(); Grows.CancelPending(); return; }
             var made = pending.Result;
             if (made != null) foreach (var instance in made) if (instance != null) ModUnityWork.Destroy(instance);
         }

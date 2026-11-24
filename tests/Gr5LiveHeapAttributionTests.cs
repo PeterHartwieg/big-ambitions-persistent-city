@@ -132,6 +132,26 @@ public sealed class Gr5LiveHeapAttributionTests
     }
 
     [Fact]
+    public void AnAsyncGrowCountsOneCompletionWhenDoneIsFirstSeenWhetherAFramePollAGrowOrTeardownSeesItAndNoneWhenCancelledPending()
+    {
+        var ledger = new GcGrowLedger();
+        Assert.False(ledger.NoteDone(true));
+        ledger.Start();
+        Assert.False(ledger.NoteDone(false));
+        Assert.True(ledger.NoteDone(true));
+        Assert.False(ledger.NoteDone(true));
+        Assert.Equal(1, ledger.Completed);
+        ledger.Start();
+        Assert.False(ledger.NoteDone(false));
+        ledger.CancelPending();
+        Assert.False(ledger.NoteDone(true));
+        Assert.Equal(1, ledger.Completed);
+        ledger.Start();
+        Assert.True(ledger.NoteDone(true));
+        Assert.Equal((3L, 1L, 2L), (ledger.Started, ledger.CancelledPending, ledger.Completed));
+    }
+
+    [Fact]
     public void OptionalStopWorkIsSplitIntoRefreshAndPhysicalSubsUnderTheOptionalStopPhase()
     {
         Assert.Equal(GcAllocationSegment.ModOptionalStops, GcPauseSampler.SubParent(GcAllocationSegment.ModOptionalStopsRefresh));

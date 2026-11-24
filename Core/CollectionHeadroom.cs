@@ -32,8 +32,28 @@ namespace PersistentCity.Core
         public long TornSamples { get; private set; }
         public long StaleDeferrals { get; private set; }
 
-        public static bool ClockAllowsDeferral(bool caughtUpLastUpdate, double nativeMinute)
-            => caughtUpLastUpdate && AccountingClock.Target(nativeMinute) == nativeMinute;
+        public static bool ClockAllowsDeferral(bool caughtUpLastUpdate, double nativeMinute, float nextTickMinutes)
+        {
+            if (!caughtUpLastUpdate || AccountingClock.Target(nativeMinute) != nativeMinute) return false;
+            if (!Position.Finite(nextTickMinutes) || nextTickMinutes < 0) return false;
+            double ahead = nativeMinute + 2.0 * nextTickMinutes;
+            return Math.Floor(ahead) == Math.Floor(nativeMinute) && AccountingClock.Target(ahead) == ahead;
+        }
+
+        public int CarriedUnits { get; private set; }
+        public int CarriedCitizenEvents { get; private set; }
+        public bool CatchingUp => CarriedCitizenEvents > 0;
+
+        public void Carry(PopulationFrameBudget skipped)
+        {
+            CarriedUnits = Math.Min(PopulationFrameBudget.MaximumUnits, CarriedUnits + skipped.Units);
+            CarriedCitizenEvents += skipped.CitizenEvents;
+        }
+
+        public (int Units, int CitizenEvents) Limits(PopulationFrameBudget current)
+            => (Math.Min(PopulationFrameBudget.MaximumUnits, current.Units + CarriedUnits), current.CitizenEvents + CarriedCitizenEvents);
+
+        public void Advanced(bool caughtUp) { if (caughtUp) CarriedUnits = CarriedCitizenEvents = 0; }
 
         public static bool ClockReady(bool caughtUp, bool guardDeferred, double logicalMinute, double nativeMinute)
             => caughtUp || guardDeferred && AccountingClock.Target(nativeMinute) == nativeMinute && AccountingClock.Compatible(logicalMinute, nativeMinute);

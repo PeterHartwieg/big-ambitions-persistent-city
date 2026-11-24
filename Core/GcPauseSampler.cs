@@ -65,8 +65,16 @@ namespace PersistentCity.Core
     {
         public long Started { get; private set; }
         public long CancelledPending { get; private set; }
-        public void Start() => Started++;
-        public void CancelPending() => CancelledPending++;
+        public long Completed { get; private set; }
+        private bool doneNoted = true;
+        public void Start() { Started++; doneNoted = false; }
+        public bool NoteDone(bool done)
+        {
+            if (!done || doneNoted) return false;
+            doneNoted = true; Completed++;
+            return true;
+        }
+        public void CancelPending() { CancelledPending++; doneNoted = true; }
         public GcGrowSample Sample(bool pending) => new GcGrowSample(pending, Started, CancelledPending);
     }
 

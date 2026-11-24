@@ -20,6 +20,7 @@ namespace PersistentCity.Runtime
         public static long HeldOrdinaryTicks { get; private set; }
         public static long BoundaryClips { get; private set; }
         public static double WithheldMinutes { get; private set; }
+        public static float LastRequestedMinutes { get; private set; }
         public static double LagMinutes { get; private set; }
         public static double MaximumLagMinutes { get; private set; }
         public static bool AccountingLimited { get; private set; }
@@ -122,6 +123,7 @@ namespace PersistentCity.Runtime
             if (!CheckInputEpoch(native, logical)) return;
             if (deltaTimeWithMultiplier <= 0) return;
             float requested = deltaTimeWithMultiplier;
+            LastRequestedMinutes = requested;
             bool ready = !Refused && populationCaughtUp();
             float allowed = AccountingClock.Limit(ready, native, requested);
             AccountingLimited = allowed < requested;

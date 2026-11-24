@@ -460,6 +460,7 @@ namespace PersistentCity.Runtime
                     try { AdvancePopulation(advanceTarget); }
                     finally { AdvanceAllocation.End(); }
                     caughtUpAfterAdvance = simulation.IsCaughtUpTo(AccountingClock.Target(target));
+                    collectionHeadroom.Advanced(caughtUpAfterAdvance);
                     long sinceAfter = sinceBefore >= 0 ? GcAllocationCounter.BytesSinceCollection() : -1;
                     if (sinceBefore >= 0 && GC.CollectionCount(0) == collectionsBefore) collectionHeadroom.NoteAdvance(sinceAfter - sinceBefore);
                     GcAllocationEnd(GcAllocationSegment.Advance, advanceHeap);
@@ -606,10 +607,11 @@ namespace PersistentCity.Runtime
 
         private bool DeferForCollection(double native)
         {
-            if (collectionGuard != 1 || NativeCityClock.ProcessingEconomySkip || !CollectionHeadroom.ClockAllowsDeferral(caughtUpAfterAdvance, native)) return false;
+            if (collectionGuard != 1 || NativeCityClock.ProcessingEconomySkip || !CollectionHeadroom.ClockAllowsDeferral(caughtUpAfterAdvance, native, NativeCityClock.LastRequestedMinutes)) return false;
             int before = GC.CollectionCount(0);
             long since = GcAllocationCounter.BytesSinceCollection();
             collectionDeferred = collectionHeadroom.Defer(before, since, GC.CollectionCount(0));
+            if (collectionDeferred) collectionHeadroom.Carry(new PopulationFrameBudget(Time.unscaledDeltaTime, false));
             return collectionDeferred;
         }
 
@@ -643,11 +645,11 @@ namespace PersistentCity.Runtime
             {
                 bool hiddenSkip = NativeCityClock.ProcessingEconomySkip;
                 var budget = new PopulationFrameBudget(Time.unscaledDeltaTime, hiddenSkip);
-                int citizenLimit = budget.CitizenEvents;
+                var (unitLimit, citizenLimit) = collectionHeadroom.Limits(budget);
                 double timeBudget = hiddenSkip ? budget.Milliseconds : frameBudget.Advance(budget.Milliseconds, UpdateCityClock.Elapsed());
                 try
                 {
-                    for (int step = 0; step < budget.Units; step++)
+                    for (int step = 0; step < unitLimit; step++)
                     {
                         if (routes != null && !routes.ReadyForPopulation) { pendingAtEnd = active.PlanningPending; break; }
                         if (active.PlanningPending)
@@ -1001,7 +1003,7 @@ namespace PersistentCity.Runtime
         {
             NativeCityClock.Start(save, settings.GameClockFactor,
                 () => simulation != null && !retimeDriver.Holding && routeRebuild == null && routes?.ReadyForPopulation == true
-                    && CollectionHeadroom.ClockReady(simulation.IsCaughtUpTo(AccountingClock.Target(Now())), collectionDeferred, simulation.State.Minute, Now()),
+                    && CollectionHeadroom.ClockReady(simulation.IsCaughtUpTo(AccountingClock.Target(Now())), collectionDeferred || collectionHeadroom.CatchingUp, simulation.State.Minute, Now()),
                 () => true, Now, () => simulation?.State.Minute ?? Now(), native => simulation == null || simulation.IsAccountingEpochDrained(native));
             NativeCityClock.StartupHold = true;
         }
