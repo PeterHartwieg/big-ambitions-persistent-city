@@ -617,11 +617,13 @@ public sealed class Gr5RepeatedRetimeLeakTests
             "drained RouteLeg " + Objects(drained, "RouteLeg") + " vs control " + Objects(drainedControl, "RouteLeg") + " with " + inFlight.Count + " journeys in flight at R" + cycles);
     }
 
-    private static readonly Type[] OutsideCacheTypes = { typeof(RouteLeg), typeof(Route), typeof(RouteLeg[]), typeof(RouteLegs), typeof(int[]) };
+    private static readonly Type[] OutsideCacheTypes = { typeof(RouteLeg), typeof(Route), typeof(RouteLeg[]), typeof(RouteLegs), typeof(int[]), typeof(string), typeof(double[]) };
 
     private sealed class MixedRead
     {
         public long Bytes, LegArrayBytes, LegArrayBytesOutsideCaches, LegArrayBytesInCaches, IntArrayBytes, IntArrayBytesOutsideCaches, Legs, MostLegs;
+        public long StringObjectsOutsideCaches, StringBytesOutsideCaches, DoubleArrayBytesOutsideCaches;
+        public Dictionary<string, long> StringObjectsByRoot = new Dictionary<string, long>(StringComparer.Ordinal);
         public RetainedCensus.JourneyLegLedger Journeys;
     }
 
@@ -642,6 +644,10 @@ public sealed class Gr5RepeatedRetimeLeakTests
             LegArrayBytes = census.BytesOf(typeof(RouteLeg[])), LegArrayBytesInCaches = census.CachedBytesOf(typeof(RouteLeg[])),
             LegArrayBytesOutsideCaches = census.BytesOf(typeof(RouteLeg[])) - census.CachedBytesOf(typeof(RouteLeg[])),
             IntArrayBytes = census.BytesOf(typeof(int[])), IntArrayBytesOutsideCaches = census.BytesOf(typeof(int[])) - census.CachedBytesOf(typeof(int[])),
+            StringObjectsOutsideCaches = census.ObjectsOf(typeof(string)) - census.CachedObjectsOf(typeof(string)),
+            StringBytesOutsideCaches = census.BytesOf(typeof(string)) - census.CachedBytesOf(typeof(string)),
+            DoubleArrayBytesOutsideCaches = census.BytesOf(typeof(double[])) - census.CachedBytesOf(typeof(double[])),
+            StringObjectsByRoot = census.Roots.Where(r => !r.Cache).ToDictionary(r => r.Name, r => r.TrackedObjects(typeof(string)), StringComparer.Ordinal),
         };
     }
 
@@ -711,16 +717,21 @@ public sealed class Gr5RepeatedRetimeLeakTests
         if (failure != null) throw new InvalidOperationException("mixed-traffic five-retime run", failure);
         output.WriteLine("rig food city with cars (35% owners), cached shared 6-leg walks, 4 stations and mapped car routes on a 49x49 road grid; five 1->2->1 retimes " + spacing + " game minutes apart, then a " + drain
             + "-minute drain; the retimed planner drops its caches at every rate change as the runtime does; at most " + mostVehicles + " vehicles. Retimed / control / gap (production RetainedCensus, Mono 64-bit layout model):");
-        var outside = new List<long>(); var ints = new List<long>();
+        var outside = new List<long>(); var ints = new List<long>(); var strings = new List<long>(); var stringBytes = new List<long>(); var doubles = new List<long>();
         for (int i = 0; i < retimedReads!.Count; i++)
         {
             var r = retimedReads[i]; var c = controlReads![i];
             string label = i <= cycles ? "R" + i : "drained";
             outside.Add(r.LegArrayBytesOutsideCaches - c.LegArrayBytesOutsideCaches);
             ints.Add(r.IntArrayBytesOutsideCaches - c.IntArrayBytesOutsideCaches);
+            strings.Add(r.StringObjectsOutsideCaches - c.StringObjectsOutsideCaches);
+            stringBytes.Add(r.StringBytesOutsideCaches - c.StringBytesOutsideCaches);
+            doubles.Add(r.DoubleArrayBytesOutsideCaches - c.DoubleArrayBytesOutsideCaches);
             output.WriteLine("  " + label + " graph " + r.Bytes + " / " + c.Bytes + " / " + (r.Bytes - c.Bytes).ToString("+0;-0;0") + " B; RouteLeg[] outside caches " + r.LegArrayBytesOutsideCaches + " / " + c.LegArrayBytesOutsideCaches + " / " + outside[i].ToString("+0;-0;0")
                 + " B, in caches " + r.LegArrayBytesInCaches + " / " + c.LegArrayBytesInCaches + " B, current journeys " + r.Journeys.LegArrayBytes + " / " + c.Journeys.LegArrayBytes + " B (" + r.Journeys.LegArrays + " / " + c.Journeys.LegArrays + " arrays, "
-                + r.Journeys.Legs + " / " + c.Journeys.Legs + " legs, " + r.Journeys.LegArraySlots + " / " + c.Journeys.LegArraySlots + " slots, longest " + r.MostLegs + " / " + c.MostLegs + " legs); Int32[] outside caches " + r.IntArrayBytesOutsideCaches + " / " + c.IntArrayBytesOutsideCaches + " / " + ints[i].ToString("+0;-0;0") + " B");
+                + r.Journeys.Legs + " / " + c.Journeys.Legs + " legs, " + r.Journeys.LegArraySlots + " / " + c.Journeys.LegArraySlots + " slots, longest " + r.MostLegs + " / " + c.MostLegs + " legs); Int32[] outside caches " + r.IntArrayBytesOutsideCaches + " / " + c.IntArrayBytesOutsideCaches + " / " + ints[i].ToString("+0;-0;0") + " B; String outside caches " + r.StringObjectsOutsideCaches + " / " + c.StringObjectsOutsideCaches + " / " + strings[i].ToString("+0;-0;0")
+                + " objects, " + stringBytes[i].ToString("+0;-0;0") + " B; Double[] outside caches " + doubles[i].ToString("+0;-0;0") + " B; String gap by root "
+                + string.Join(", ", r.StringObjectsByRoot.Where(p => (c.StringObjectsByRoot.TryGetValue(p.Key, out long v) ? v : 0) != p.Value).Select(p => p.Key + " " + (p.Value - (c.StringObjectsByRoot.TryGetValue(p.Key, out long v) ? v : 0)).ToString("+0;-0;0"))));
         }
         Assert.True(retimedReads.Max(r => r.MostLegs) >= 40, "the fixture has no long car route; longest journey " + retimedReads.Max(r => r.MostLegs) + " legs");
         Assert.Equal(0, outside[0]); Assert.Equal(0, ints[0]);
@@ -730,6 +741,14 @@ public sealed class Gr5RepeatedRetimeLeakTests
         var intFinal = ints.Skip(cycles - 2).Take(3).ToList();
         Assert.False(intFinal[1] > intFinal[0] && intFinal[2] > intFinal[1], "Int32[] outside caches gap rose at each of the final three retime cycles: " + string.Join(", ", ints));
         Assert.True(ints[cycles + 1] <= Math.Max(0, ints.Take(cycles + 1).Max()), "drained Int32[] outside caches gap " + ints[cycles + 1] + " B is above every earlier read: " + string.Join(", ", ints));
+        foreach (var (name, gaps) in new[] { ("String outside caches objects", strings), ("Double[] outside caches bytes", doubles) })
+        {
+            var final = gaps.Skip(cycles - 2).Take(3).ToList();
+            Assert.False(final[1] > final[0] && final[2] > final[1], name + " gap rose at each of the final three retime cycles: " + string.Join(", ", gaps));
+            Assert.True(gaps[cycles + 1] <= Math.Max(0, gaps.Take(cycles + 1).Max()), "drained " + name + " gap " + gaps[cycles + 1] + " is above every earlier read: " + string.Join(", ", gaps));
+        }
+        Assert.True(stringBytes[cycles] - stringBytes[cycles - 2] < 1024, "String outside caches bytes gap grew over the final three retime cycles: " + string.Join(", ", stringBytes));
+        Assert.True(stringBytes[cycles + 1] <= Math.Max(0, stringBytes.Take(cycles + 1).Max()), "drained String outside caches bytes gap is above every earlier read: " + string.Join(", ", stringBytes));
         Assert.True(retimedReads[cycles + 1].Bytes - controlReads![cycles + 1].Bytes < Allowance, "drained retimed minus control " + (retimedReads[cycles + 1].Bytes - controlReads[cycles + 1].Bytes) + " B");
     }
 
