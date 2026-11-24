@@ -101,7 +101,7 @@ namespace PersistentCity.Core
                 var slot = traces![at]!;
                 slot.Consumer = trace.Consumer; slot.Intent = trace.Intent; slot.MealKind = trace.MealKind;
                 var decision = trace.Decision;
-                if (decision == null) { slot.Decision = null; return; }
+                if (decision == null) { slot.Decision = null; decisions[at]!.Awareness = null; return; }
                 var kept = decisions[at]!;
                 kept.Result = decision.Result; kept.Reason = decision.Reason; kept.BusinessId = decision.BusinessId;
                 kept.ProductId = decision.ProductId; kept.Awareness = decision.Awareness;
