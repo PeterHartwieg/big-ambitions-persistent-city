@@ -17,7 +17,7 @@ Every GR-5 rig run from now on must:
 
 ## Latest evidence
 
-- **24 November h, Mac (rig 17p), build `c20d4ec4`**. 2 PASS / 2 PARTIAL / 0 FAIL / 2 NOT RUN across the six scoped arms. The same taxi advanced across the committed 20× retime. Recorder-off mod-work p95 was 3.3696 ms with one spike. [24h results](#rig-results---24-november-2026-h-mac-rig-17p-350-through-gate-e6-2b101-01011-at-c20d4ec4).
+- **24 November h, Mac (rig 17p), build `c20d4ec4`**. 2 PASS / 2 PARTIAL / 0 FAIL / 2 NOT RUN across the six scoped arms. The same taxi advanced across the committed 20× retime. Provisional recorder-off mod-work p95 on the shared Mac was 3.3696 ms with one spike at or above 30 ms. [24h results](#rig-results---24-november-2026-h-mac-rig-17p-350-through-gate-e6-2b101-01011-at-c20d4ec4).
 
 - **24 November g, Mac (rig 17o), build `477d11a5`**. 3 PASS / 6 PARTIAL / 0 FAIL / 4 NOT RUN. Minute-level vendor handback joined. Provisional recorder-off mod-work p95 on the shared Mac was 3.5703 ms with five spikes at or above 30 ms. [24g results](#rig-results---24-november-2026-g-mac-rig-17o-e6-checks-1-3-6-7-at-477d11a5).
 
@@ -27524,7 +27524,7 @@ Both arms are **NOT RUN (tooling)**. Both plans used `HamptonsPrivateFenceDoor` 
 
 **PASS.** At cart stop 2 the list used center `[173.38, 0.2, -407.77]` and a 42 m radius. Attempt 1 held index 11 / instance -1378616 / activation 4 with no jump and zero retime degradations. The final pose showed zero movement, so the rig selected another vehicle.
 
-Attempt 2 pinned `Taxi(Clone)5` (index 5 / instance -1377520 / activation 9). The baseline was `(150.0715, 0.01, -377.9575)` at 10.1835 m/s, with a 5.211 m previous step and `jumped: false`. At day 1 15:17, the bridge accepted `run_until` 16:00 at 20×. The commit line reported `Clock retime: body release` and `degraded 0 (inexact pose 0, other retime refusals 0)`. All eight following poses preserved the three identifiers and had `previous.jumped: false`. The taxi advanced 43.13 m along the road with minimal Z change. Across the commit read and the final pose it advanced 2.748 m to `(193.2015, 0.01, -378.0234)`. The raw poses and commit lines are in `traffic-results.json`. Check 2a is carried from 17n.
+Attempt 2 pinned `Taxi(Clone)5` (index 5 / instance -1377520 / activation 9). The baseline was `(150.0715, 0.01, -377.9575)` at 10.1835 m/s, with a 5.211 m previous step and `jumped: false`. At day 1 15:17, the bridge accepted `run_until` 16:00 at 20×. The commit line reported `Clock retime: body release` and `degraded 0 (inexact pose 0, other retime refusals 0)`. All eight following poses preserved the three identifiers and had `previous.jumped: false`. The taxi advanced 43.13 m along the road with minimal Z change. Across the commit read and the final pose it advanced 2.748 m to `(193.2015, 0.01, -378.0234)`. The raw poses and commit lines are in `traffic-results.json`. Check 2a is carried from 17n at `40fe3bf8`.
 
 ### Recorder-off performance
 
@@ -27534,7 +27534,7 @@ Attempt 2 pinned `Taxi(Clone)5` (index 5 / instance -1377520 / activation 9). Th
 | --- | ---: | --- |
 | 14573 | 70.2312 ms | `PopulationRuntime.Update` |
 
-Whole-frame timing was p95 52.5905 ms, max 800.6711 ms, with 15,697 frames ≥30 ms and 1,024 rows retained. Mac load (1/5/15 min) was 4.28 / 6.02 / 5.67 at 20:33 and 5.72 / 5.36 / 5.41 at 20:43. The `20261124-140600` nightly-ci process and one Node process were visible at both endpoints. The guard reported 15,722 refused autosave attempts, zero allowed saves and zero native saving frames. Route A save duration was outside the measurement.
+Whole-frame timing was p95 52.5905 ms, max 800.6711 ms, with 15,697 frames ≥30 ms and 1,024 rows retained. Mac load (1/5/15 min) was 4.28 / 6.02 / 5.67 at 20:33 and 5.72 / 5.36 / 5.41 at 20:43. The `20261124-140600` nightly-ci process and one Node process were visible at both endpoints. The guard reported 15,722 refused autosave attempts, zero allowed saves and zero native saving frames. Suppression readbacks after the load and before and after the window were not recorded, so the GR-5 item 2 per-window record is missing for this run. The zero-save counts above cover the window. Route A save duration was outside the measurement.
 
 ### E6 check 1. Street Food 0.10.11 missing API
 
@@ -27546,7 +27546,7 @@ All 21 flow steps passed. The log gate exited 1 because Street Food 0.10.11 reje
 
 **PARTIAL end to end. Gameplay verified.** The catalogue returned the steamer, griddle, dumplings and chopped cheese. Rig metadata read dumplings as `Food` from `default` and chopped cheese as `Drink` from `config`. The same Drink value was read after lunch. The crew opened cart `7oUO0L2GVE2x5DsBjY9+aQ==` at 11:30 with 80 dumplings and 40 chopped cheese, both priced at $4.
 
-At 11:40 and 12:25, `pc vendor status` listed the cart under `Refusals` with `menu item not executable: foodtrucks:itemname_choppedcheese`. The entire opening stayed Street Food-owned. Native `day_summary` recorded 55 minutes open and $44 for 2 dumplings and 9 chopped cheese, with stock 80 → 78 and 40 → 31. The PC decision dump and sales read listed zero meals or receipts for that cart. They did record 12 paid hot-dog receipts for cart A and one burger receipt for truck B. The 17l default-Food arm carried 7 paid dumpling and 21 paid chopped-cheese receipts across reload. Its per-resident taste replay and the exact-money join were outside this arm.
+At 11:40 and 12:25, `pc vendor status` listed the cart under `Refusals` with `menu item not executable: foodtrucks:itemname_choppedcheese`. The entire opening stayed Street Food-owned. Native `day_summary` recorded 55 minutes open and $44 for 2 dumplings and 9 chopped cheese, with stock 80 → 78 and 40 → 31. The PC decision dump and sales read listed zero meals or receipts for that cart. They did record 12 paid hot-dog receipts for cart A and one burger receipt for truck B. The 17l default-Food arm at `7714484f` carried 7 paid dumpling and 21 paid chopped-cheese receipts across reload. Its per-resident taste replay and the exact-money join were outside this arm.
 
 All 81 flow steps passed. The log gate exited 1 at shutdown on Street Food's `Vendor API: refreshing after a change failed: System.NullReferenceException` in `Helpers.PlayerHelper.GetPosition`, after the quit command released the two PC-owned vehicles. The runner confirmed shutdown, verified the original fixture and restored the configuration and mod set before releasing its lease.
 
@@ -27561,10 +27561,10 @@ All 81 flow steps passed. The log gate exited 1 at shutdown on Street Food's `Ve
 
 ### Carried and excluded checks
 
-- Check 1 Vendor API v1 present is carried from 17o, with `bridge: Ready`, assembly `FoodTrucks.Core` and truck B eligible with `Reason: ""`, restated for E6f. Contract 2 is **NOT RUN** pending a reviewed test DLL.
-- Checks 3 and 7 are **NOT RUN** in 17p. The Mac overlay at `0764f9c` predates the ledger/log-gate work from `20261124-201132-rig-e6-17o-rlo-ledger-loggate`. Check 6 is carried **PASS** from 17o, where 83 consecutive minute reads found no mixed-source minute.
+- Check 1 Vendor API v1 present is carried from 17o at `477d11a5`, with `bridge: Ready`, assembly `FoodTrucks.Core` and truck B eligible with `Reason: ""`, restated for E6f. Contract 2 is **NOT RUN** pending a reviewed test DLL.
+- Checks 3 and 7 are **NOT RUN** in 17p. The Mac overlay at `0764f9c` predates the ledger/log-gate work from `20261124-201132-rig-e6-17o-rlo-ledger-loggate`. Check 6 is carried **PASS** from 17o at `477d11a5`, where 83 consecutive minute reads found no mixed-source minute.
 - Check 4 is **NOT RUN**. Rig's base-v2 day-two proof had cart A off-map, a $250 fine and zero minutes open. It needs Street Food `edit_stop`. Check 5 also waits on `edit_stop`.
-- Checks 8 and 11 are carried **PASS** from 17l. Pointer, hover, click and visual-feel checks stay with Peter.
+- Checks 8 and 11 are carried **PASS** from 17l at `7714484f`. Pointer, hover, click and visual-feel checks stay with Peter.
 - Checks 9 and 12 are **NOT RUN** pending the `vendor_fault` and contract-2 builds and the Mac Unity licence refresh. Check 12 still needs the schema-1 restatement. Check 13 is **NOT RUN** pending F6b.
 
 ### Restore and evidence
