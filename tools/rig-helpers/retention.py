@@ -13,7 +13,8 @@ from rigpaths import absolute
 LABEL = 'retention'
 CONTROL = 'retention-control'
 FIELDS = ('ownedBodyCombiners', 'liveMergedMeshes', 'unmergedBodyCombiners', 'reservedBodies',
-          'liveMergedVertices', 'bakeScratchBytes', 'monoHeapBytes', 'monoUsedBytes')
+          'liveMergedVertices', 'bakeScratchBytes', 'monoHeapBytes', 'monoUsedBytes',
+          'orphanMergedMeshes', 'orphanMergedVertices', 'deferredOrphanMeshes')
 TYPES = ('Position[]', 'Double[]', 'Int64[]', 'RouteLeg', 'Route', 'RouteLeg[]', 'List<RouteLeg>', 'RouteLegs', 'CitySimulator', 'RoadRoutes')
 ROUTE_LEGS = ('in_current_journeys', 'outside_current_journeys', 'split_prefix_legs', 'travelling', 'in_caches', 'outside_current_journeys_and_caches')
 OUTSIDE_CACHES = ('RouteLeg', 'Route', 'RouteLeg[]', 'List<RouteLeg>', 'RouteLegs')
@@ -122,6 +123,9 @@ def readings_summary(rows):
         'unmerged': lambda r: r['mesh']['unmergedBodyCombiners'],
         'live vertices': lambda r: r['mesh']['liveMergedVertices'],
         'bake scratch': lambda r: r['mesh']['bakeScratchBytes'],
+        'orphan meshes': lambda r: r['mesh'].get('orphanMergedMeshes'),
+        'orphan vertices': lambda r: r['mesh'].get('orphanMergedVertices'),
+        'deferred orphans': lambda r: r['mesh'].get('deferredOrphanMeshes'),
         **{t: (lambda r, t=t: type_read(r['census'], t)) for t in TYPES},
         **{'RouteLeg ' + k.replace('_', ' '): (lambda r, k=k: route_leg_read(r['census'], k)) for k in ROUTE_LEGS},
         **{t + ' outside caches': (lambda r, t=t: type_outside_caches_read(r['census'], t)) for t in OUTSIDE_CACHES},

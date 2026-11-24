@@ -118,6 +118,9 @@ namespace PersistentCity.Runtime
             return ledger.LiveMeshes(out vertices);
         }
 
+        public static int OrphanMeshes(out long vertices) => ledger.OrphanMeshes(out vertices);
+        public static int DeferredOrphans => ledger.Deferred;
+
         public static void PruneReleased()
         {
             ledger.PruneOwned();

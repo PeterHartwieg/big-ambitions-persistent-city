@@ -219,9 +219,43 @@ public sealed class Gr5OwnedMemoryTests
         string movement = Source("Runtime", "MovementDiagnostics.cs");
         foreach (string field in new[] { "ownedBodyCombiners = BodyMerge.Owned", "unmergedBodyCombiners = BodyMerge.Unmerged", "reservedBodies = PhysicalPedestrians.ReserveCount", "liveMergedMeshes = meshes",
             "liveMergedVertices = vertices", "releasedMergedMeshes = BodyMerge.ReleasedMeshes", "releasedMergedVertices = BodyMerge.ReleasedVertices",
-            "bakeScratchBytes = BlendshapeBake.ScratchBytes" })
+            "bakeScratchBytes = BlendshapeBake.ScratchBytes", "orphanMergedMeshes = orphans", "orphanMergedVertices = orphanVertices",
+            "deferredOrphanMeshes = BodyMerge.DeferredOrphans" })
             Assert.Contains(field, movement);
         int getter = movement.IndexOf("public object GcDiagnostics", StringComparison.Ordinal);
         Assert.Contains("BodyMerge.LiveMeshes(out long vertices)", movement.Substring(getter, 600));
+        Assert.Contains("BodyMerge.OrphanMeshes(out long orphanVertices)", movement.Substring(getter, 700));
+    }
+
+    [Fact]
+    public void OrphanMeshCountsSeparateDeadCombinersFromLiveBodiesUntilTheirMeshesAreReleased()
+    {
+        var destroyed = new List<NativeHandle>();
+        var shown = new HashSet<NativeHandle>();
+        var ledger = new MergedBodyLedger<NativeHandle, NativeHandle>(body => body.Alive, mesh => mesh.Alive, _ => 37,
+            mesh => { destroyed.Add(mesh); mesh.Alive = false; }, (_, mesh) => shown.Contains(mesh));
+        var bodies = Enumerable.Range(0, 4).Select(_ => (Body: new NativeHandle(), Mesh: new NativeHandle())).ToArray();
+        foreach (var (body, mesh) in bodies) { ledger.Own(body); ledger.Merged(body, mesh); }
+        Assert.Equal(0, ledger.OrphanMeshes(out long none));
+        Assert.Equal(0, none);
+        bodies[0].Body.Alive = false; bodies[1].Body.Alive = false;
+        shown.Add(bodies[1].Mesh);
+        Assert.Equal(4, ledger.LiveMeshes(out long all));
+        Assert.Equal(4 * 37, all);
+        Assert.Equal(2, ledger.OrphanMeshes(out long orphanVertices));
+        Assert.Equal(2 * 37, orphanVertices);
+        ledger.ReleaseOrphan(bodies[0].Body);
+        ledger.ReleaseOrphan(bodies[1].Body);
+        Assert.Equal(new[] { bodies[0].Mesh }, destroyed);
+        Assert.Equal(1, ledger.OrphanMeshes(out _));
+        Assert.Equal(1, ledger.Deferred);
+        Assert.Equal(3, ledger.LiveMeshes(out _));
+        shown.Clear();
+        ledger.RetryDeferred(2);
+        Assert.Equal(0, ledger.OrphanMeshes(out _));
+        Assert.Equal(0, ledger.Deferred);
+        Assert.Equal(2, ledger.LiveMeshes(out _));
+        Assert.Equal(2, ledger.ReleasedMeshes);
+        Assert.Equal(2, ledger.Owned);
     }
 }

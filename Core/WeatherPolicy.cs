@@ -57,6 +57,7 @@ namespace PersistentCity.Core
             catch(Exception) { return WeatherSample.Unknown; }
         }
         internal static uint AdmissionDraw(string key,int seed) => StableRandom.Finish(StableRandom.Append(StableRandom.Append(StableRandom.Begin(seed),key),":weather-admission"));
+        internal static uint AdmissionDraw(uint keyState) => StableRandom.Finish(StableRandom.Append(keyState,":weather-admission"));
         public static bool Admit(uint draw,WeatherSample weather,double rainMultiplier)
             => weather!=WeatherSample.Rain || (draw+.5)/4294967296.0<rainMultiplier;
     }
@@ -96,13 +97,13 @@ namespace PersistentCity.Core
         internal WeatherSample CaptureWeather(double at) => weatherSettings.Enabled && (int)(at/1440)>=State.WeatherStartsDay
             ? WeatherPolicy.Sample(weatherSource) : WeatherSample.Unknown;
         internal double RainTravelMultiplier(WeatherSample weather) => weather==WeatherSample.Rain ? weatherSettings.RainTravelWeightMultiplier : 1;
-        private WeatherCommitment CaptureOuting(CitizenState person,double now,string key)
+        private WeatherCommitment CaptureOuting(CitizenState person,double now,uint keyState)
         {
             var capture=person.W;
             if(capture==null || capture.Queue || capture.Boundary!=now)
             {
                 var sample=CaptureWeather(now);
-                capture=new WeatherCommitment(now,sample,sample!=WeatherSample.Rain || WeatherPolicy.Admit(WeatherPolicy.AdmissionDraw(key,State.Seed),sample,weatherSettings.RainOptionalOutingMultiplier));
+                capture=new WeatherCommitment(now,sample,sample!=WeatherSample.Rain || WeatherPolicy.Admit(WeatherPolicy.AdmissionDraw(keyState),sample,weatherSettings.RainOptionalOutingMultiplier));
                 citizenEvents[person.Identity.Id].Citizen.W=capture;
                 person.W=capture;
             }

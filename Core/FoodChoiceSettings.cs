@@ -21,6 +21,15 @@ namespace PersistentCity.Core
         public double FoodShortlistTemperature { get; set; }=1;
 
         internal FoodChoiceSettings Copy() => (FoodChoiceSettings)MemberwiseClone();
+        private static bool Same(double a, double b) => BitConverter.DoubleToInt64Bits(a) == BitConverter.DoubleToInt64Bits(b);
+        internal bool SameValues(FoodChoiceSettings other) => FoodMenuMaximumOffersPerShop == other.FoodMenuMaximumOffersPerShop
+            && Same(FoodMenuNewTasteWeight, other.FoodMenuNewTasteWeight) && Same(FoodMenuHealthWeight, other.FoodMenuHealthWeight)
+            && Same(FoodChoiceTemperature, other.FoodChoiceTemperature) && Same(FoodChoiceWeightFloor, other.FoodChoiceWeightFloor)
+            && Same(FoodChoiceTasteWeight, other.FoodChoiceTasteWeight) && Same(FoodChoicePriceWeight, other.FoodChoicePriceWeight)
+            && Same(FoodChoiceDistanceWeight, other.FoodChoiceDistanceWeight) && Same(FoodChoiceDistanceScaleMinutes, other.FoodChoiceDistanceScaleMinutes)
+            && Same(FoodChoiceQueueWeight, other.FoodChoiceQueueWeight) && Same(FoodChoiceQualityWeight, other.FoodChoiceQualityWeight)
+            && Same(FoodChoiceTimePressureWeight, other.FoodChoiceTimePressureWeight) && Same(FoodChoiceHealthWeight, other.FoodChoiceHealthWeight)
+            && Same(FoodChoiceHouseholdWeight, other.FoodChoiceHouseholdWeight) && Same(FoodShortlistTemperature, other.FoodShortlistTemperature);
 
         public void Clamp(Action<string>? log=null)
         {

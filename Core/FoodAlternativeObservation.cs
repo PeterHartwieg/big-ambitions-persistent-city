@@ -55,6 +55,8 @@ namespace PersistentCity.Core
         public int UnsupportedProductCount { get; }
         public IReadOnlyList<FoodAdvertisedOffer> Offers { get; }
         public IReadOnlyList<FoodAdvertisedHours> Hours { get; }
+        internal string? Terms;
+        internal Place? HoursPlace;
         public FoodAlternativeObservation(string id, string placeId, string streetName, int streetNumber,
             int creationDay, string businessType, string ownerId, FoodAlternativeKind kind, bool accessible,
             bool hasReadableDoor, bool temporarilyClosed, int? customerServicePercent, int unsupportedProductCount,
