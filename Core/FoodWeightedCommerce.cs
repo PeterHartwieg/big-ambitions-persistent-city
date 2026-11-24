@@ -67,24 +67,17 @@ namespace PersistentCity.Core
         {
             if(CampaignProvider is IFoodCampaignAwarenessProvider campaigns && campaigns.HasEvidence)
                 campaigns.Prepare(meal.ResidentId,day,city.State.Minute);
-            awarenessAtStop=atStop;awarenessStopPlace=stop.PlaceId;
             return AwarenessCatalogue().Sample(city.State.Seed,meal.ResidentId,day,Anchor(person.HomeId),Anchor(person.DayPlaceId),Anchor(stop.PlaceId),
                 AwarenessSettings,awarenessEligible ??= AwarenessEligible,
-                city.State.Capabilities.Active ? MemoryProvider ?? storedMemoryProvider : EmptyFoodAwarenessProvider.Instance,CampaignProvider,dump,atStop ? stop.PlaceId : null);
+                city.State.Capabilities.Active ? MemoryProvider ?? storedMemoryProvider : EmptyFoodAwarenessProvider.Instance,CampaignProvider,dump,atStop ? stop.PlaceId : null,atStop ? stop.PlaceId : null);
         }
-        private bool awarenessAtStop;
-        private string? awarenessStopPlace;
         private Func<FoodAwarenessCatalogue.Entry,bool>? awarenessEligible;
-        private bool AwarenessEligible(FoodAwarenessCatalogue.Entry e) => (!awarenessAtStop || e.PlaceId==awarenessStopPlace) && e.Scope!.BusinessId==e.BusinessId
+        private bool AwarenessEligible(FoodAwarenessCatalogue.Entry e) => e.Scope!.BusinessId==e.BusinessId
             && (e.Kind==FoodAwarenessAlternativeKind.External ? RivalSettings.RivalChoiceWeight>0 && RivalCandidate(e.Scope!) : VendorCandidate(e.Scope!));
         private ResidentMeal? contributionMeal;
         private CitizenState? contributionPerson;
         private Func<string,double>? contribution;
-        private Func<string,double> Contribution(ResidentMeal meal,CitizenState person)
-        {
-            contributionMeal=meal;contributionPerson=person;
-            return contribution ??= id=>MemoryContribution(contributionMeal!,contributionPerson!,id);
-        }
+        private double HeldContribution(string id) => MemoryContribution(contributionMeal!,contributionPerson!,id);
         internal FoodAwarenessDump? InspectAwareness(string consumerId,int? day)
         {
             if(!records.TryGetValue(consumerId,out var meal)) return null;
@@ -315,7 +308,11 @@ namespace PersistentCity.Core
             var catalogue=AwarenessCatalogue();
             decision.Awareness=AwarenessSample(meal,person,stop,meal.Day,atStop);
             double pace=routes is IFoodWalkingPace walking ? walking.WalkingMetresPerMinute : 120;
-            var ranked=catalogue.Rank(decision.Awareness,city.FindPlace(stop.PlaceId).Position,Traits(meal,person),decision.Tuning!.Settings,Draw(meal,decision),pace,Contribution(meal,person),rivalWeight:RivalSettings.RivalChoiceWeight,weatherTravelMultiplier:decision.WeatherTravelMultiplier);
+            var outerMeal=contributionMeal;var outerPerson=contributionPerson;
+            contributionMeal=meal;contributionPerson=person;
+            FoodAwarenessCatalogue.Entry[] ranked;
+            try {ranked=catalogue.Rank(decision.Awareness,city.FindPlace(stop.PlaceId).Position,Traits(meal,person),decision.Tuning!.Settings,Draw(meal,decision),pace,contribution ??= HeldContribution,rivalWeight:RivalSettings.RivalChoiceWeight,weatherTravelMultiplier:decision.WeatherTravelMultiplier);}
+            finally {contributionMeal=outerMeal;contributionPerson=outerPerson;}
             if(ranked.Length==0) return Array.Empty<FoodScope>();
             var scopes=new FoodScope[ranked.Length];
             for(int i=0;i<ranked.Length;i++) scopes[i]=FreezeScope(ranked[i].Scope!);

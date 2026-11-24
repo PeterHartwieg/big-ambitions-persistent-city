@@ -303,13 +303,13 @@ namespace PersistentCity.Core
         [ThreadStatic] private static Bucket[]? bucketScratch;
         public FoodAwarenessImage Sample(int seed,string consumer,int day,Position? home,Position? routine,Position? origin,
             FoodAwarenessSettings settings,Func<Entry,bool> eligible,IFoodAwarenessProvider? memory=null,
-            IFoodAwarenessProvider? campaign=null,FoodAwarenessDump? diagnostic=null,string? presentPlace=null)
+            IFoodAwarenessProvider? campaign=null,FoodAwarenessDump? diagnostic=null,string? presentPlace=null,string? requiredPlace=null)
         {
             var image=new FoodAwarenessImage {CatalogueRevision=Revision};
             image.ClearCampaignModifier();
             void Add(Entry? entry,FoodAwarenessSource source,int slot,bool exposed,string reason)
             {
-                bool admitted=entry!=null && exposed && eligible(entry);
+                bool admitted=entry!=null && exposed && (requiredPlace==null || entry.PlaceId==requiredPlace) && eligible(entry);
                 if(diagnostic!=null) diagnostic.Samples.Add(new FoodAwarenessSample {Source=source,Slot=slot,BusinessId=entry?.BusinessId ?? "",Result=admitted ? "eligible" : reason});
                 if(entry==null) return;
                 foreach(var old in image.Union)

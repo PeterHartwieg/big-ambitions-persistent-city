@@ -48,8 +48,7 @@ namespace PersistentCity.Core
 
     public static class RivalFoodTerms
     {
-        public static string Fingerprint(FoodAlternativeObservation observation) => observation.Terms ??= Terms(observation);
-        private static string Terms(FoodAlternativeObservation observation)
+        public static string Fingerprint(FoodAlternativeObservation observation)
         {
             var text = TextDigest.Begin().Append(observation.OwnerId.Length).Append(':').Append(observation.OwnerId);
             var hours = observation.Hours;
@@ -75,7 +74,7 @@ namespace PersistentCity.Core
             return copy;
         }
         internal static Place HoursPlace(FoodAlternativeObservation observation)
-            => observation.HoursPlace ??= new Place { WeeklyHours = CopyHours(observation), OpenMinute = 0, CloseMinute = 0 };
+            => new Place { WeeklyHours = CopyHours(observation), OpenMinute = 0, CloseMinute = 0 };
         public static bool Canonical(string value)
         {
             if (value == null || value.Length != 19) return false;

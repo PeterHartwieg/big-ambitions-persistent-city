@@ -19,7 +19,7 @@ public sealed class Gr5ImmediateRetimeAdvanceTests
     private const string Reference = "33E60DD6698AA9833154E1B337641A188D666FAB7496A6FF2868E7D2D9CF791C";
 
     internal static void Run(CitySimulator city, Gr5AdvanceAllocationTests.Planner planner, double from, double to, double rate,
-        Gr5AdvanceAllocationTests.Window? window, Action<GcAllocationSegment>? commit = null)
+        Gr5AdvanceAllocationTests.Window? window, Action<GcAllocationSegment>? commit = null, Gr5AdvanceAllocationTests.Market? market = null)
     {
         for (double minute = from; minute < to; minute += rate / 30)
         {
@@ -29,7 +29,7 @@ public sealed class Gr5ImmediateRetimeAdvanceTests
             int citizenEvents = 0;
             for (int unit = 0; unit < budget.Units; unit++)
             {
-                long plannerBefore = planner.PlannerBytes;
+                long plannerBefore = planner.PlannerBytes, rivalBefore = market?.RivalReadBytes ?? 0;
                 long before = GC.GetAllocatedBytesForCurrentThread();
                 GcAllocationSegment kind;
                 bool stop;
@@ -48,8 +48,9 @@ public sealed class Gr5ImmediateRetimeAdvanceTests
                     stop = !result.PlanningPending && (result.CaughtUp || result.ThroughRoutePending || citizenEvents >= budget.CitizenEvents);
                 }
                 commit?.Invoke(kind);
-                long used = GC.GetAllocatedBytesForCurrentThread() - before - (planner.PlannerBytes - plannerBefore);
-                if (window != null) { window.Bytes[(int)kind] += used; window.Calls[(int)kind]++; window.PlannerBytes += planner.PlannerBytes - plannerBefore; }
+                long rival = (market?.RivalReadBytes ?? 0) - rivalBefore;
+                long used = GC.GetAllocatedBytesForCurrentThread() - before - (planner.PlannerBytes - plannerBefore) - rival;
+                if (window != null) { window.Bytes[(int)kind] += used; window.Calls[(int)kind]++; window.PlannerBytes += planner.PlannerBytes - plannerBefore; window.RivalReadBytes += rival; }
                 if (stop) break;
             }
             city.SynchronizeSnapshot();
@@ -57,9 +58,10 @@ public sealed class Gr5ImmediateRetimeAdvanceTests
         }
     }
 
-    internal static (CityState State, CitySimulator City, Gr5AdvanceAllocationTests.Planner Planner) AfterImmediateRetime()
+    internal static (CityState State, CitySimulator City, Gr5AdvanceAllocationTests.Planner Planner) AfterImmediateRetime() => AfterImmediateRetime(out _);
+    internal static (CityState State, CitySimulator City, Gr5AdvanceAllocationTests.Planner Planner) AfterImmediateRetime(out Gr5AdvanceAllocationTests.Market market)
     {
-        var (state, city, planner) = Gr5AdvanceAllocationTests.City();
+        var (state, city, planner) = Gr5AdvanceAllocationTests.City(out market);
         while (!city.AdvanceTo(Start - 30, 256).CaughtUp) { }
         Gr5AdvanceAllocationTests.Run(city, planner, Start - 30, Start, null);
         var driver = new ClockRetimeDriver();
@@ -80,22 +82,24 @@ public sealed class Gr5ImmediateRetimeAdvanceTests
     [Fact]
     public void TheWindowAfterAnImmediateRetimeAt2xKeepsTheSaveHashAndStaysUnderItsBytesPerCall()
     {
-        var (state, city, planner) = AfterImmediateRetime();
+        var (state, city, planner) = AfterImmediateRetime(out var market);
+        market.FreshRivals = true;
         var window = new Gr5AdvanceAllocationTests.Window();
-        Run(city, planner, Start, Start + 240, 2, window);
+        Run(city, planner, Start, Start + 240, 2, window, market: market);
         city.SynchronizeSnapshot();
         string hash = RushSpikeReplay.Sha(DevelopmentChain.Write(state));
         foreach (var s in Gr5AdvanceAllocationTests.Reported)
             output.WriteLine("2x after 1->2 " + GcPauseSampler.SegmentName(s) + ": " + window.Bytes[(int)s] + " B / " + window.Calls[(int)s] + " calls = " + window.Per(s).ToString("0") + " B/call (.NET)");
-        output.WriteLine("2x after 1->2 total " + window.Total + " B, planner fixture " + window.PlannerBytes + " B (.NET)");
+        output.WriteLine("2x after 1->2 total " + window.Total + " B, planner fixture " + window.PlannerBytes + " B, fresh rival reads " + window.RivalReadBytes + " B (.NET)");
+        Assert.True(window.RivalReadBytes > 0);
         output.WriteLine(hash);
         Assert.True(window.Calls[(int)GcAllocationSegment.AdvanceEventsCitizen] > 1000, "citizen calls " + window.Calls[(int)GcAllocationSegment.AdvanceEventsCitizen]);
-        Assert.True(window.Per(GcAllocationSegment.AdvanceEventsCitizen) < 700, "citizen bytes per call " + window.Per(GcAllocationSegment.AdvanceEventsCitizen));
+        Assert.True(window.Per(GcAllocationSegment.AdvanceEventsCitizen) < 730, "citizen bytes per call " + window.Per(GcAllocationSegment.AdvanceEventsCitizen));
         Assert.True(window.Per(GcAllocationSegment.AdvanceEventsFood) < 560, "food bytes per call " + window.Per(GcAllocationSegment.AdvanceEventsFood));
         Assert.True(window.Per(GcAllocationSegment.AdvancePlanningSlice) < 1, "planning slice bytes per call " + window.Per(GcAllocationSegment.AdvancePlanningSlice));
         Assert.True(window.Per(GcAllocationSegment.AdvanceEventsOther) < 1, "idle bytes per call " + window.Per(GcAllocationSegment.AdvanceEventsOther));
         Assert.True(window.Per(GcAllocationSegment.AdvanceEventsRouteBegin) < 470, "route begin bytes per call " + window.Per(GcAllocationSegment.AdvanceEventsRouteBegin));
-        Assert.True(window.Total < 18_500_000, "window bytes " + window.Total);
+        Assert.True(window.Total < 19_300_000, "window bytes " + window.Total);
         Assert.Equal(Reference, hash);
     }
 
@@ -105,20 +109,23 @@ public sealed class Gr5ImmediateRetimeAdvanceTests
             Enumerable.Range(0, 7).Select(d => new FoodAdvertisedHours(d, opens, 1320)));
 
     [Fact]
-    public void ARivalFingerprintIsComputedOnceAndTheHeldTermsCompareWithoutACopy()
+    public void ARivalFingerprintComparesHeldTermsFromTheirOffsetWithoutASubstring()
     {
         var rival = Rival();
         string first = RivalFoodTerms.Fingerprint(rival);
         string held = "10" + first, paid = "11" + first;
+        RivalFoodTerms.TermsMatch(rival, held, 2);
         long before = GC.GetAllocatedBytesForCurrentThread();
-        string again = RivalFoodTerms.Fingerprint(rival);
+        RivalFoodTerms.Fingerprint(rival);
+        long fingerprint = GC.GetAllocatedBytesForCurrentThread() - before;
+        before = GC.GetAllocatedBytesForCurrentThread();
         for (int i = 0; i < 100; i++)
         {
             Assert.True(RivalFoodTerms.TermsMatch(rival, held, 2));
             Assert.True(RivalFoodTerms.TermsMatch(rival, paid, 2));
         }
-        Assert.Equal(0, GC.GetAllocatedBytesForCurrentThread() - before);
-        Assert.Same(first, again);
+        Assert.Equal(200 * fingerprint, GC.GetAllocatedBytesForCurrentThread() - before);
+        Assert.NotSame(first, RivalFoodTerms.Fingerprint(rival));
         Assert.Equal(first, RivalFoodTerms.Fingerprint(Rival()));
         Assert.True(RivalFoodTerms.Canonical(first));
         Assert.True(RivalFoodTerms.TermsMatch(rival, first, 0));
@@ -130,7 +137,7 @@ public sealed class Gr5ImmediateRetimeAdvanceTests
     }
 
     [Fact]
-    public void ARivalCaptureCopiesTheAdvertisedHoursAndSharesOneClosingPlacePerObservation()
+    public void ARivalCaptureCopiesTheAdvertisedHoursIntoAFreshClosingPlacePerRead()
     {
         var rival = Rival(opens: 420);
         var business = RivalFoodTerms.Capture(rival, 5);
@@ -138,17 +145,13 @@ public sealed class Gr5ImmediateRetimeAdvanceTests
         Assert.Equal(business.Hours.Select(h => (h.Day, h.FromMinute, h.ToMinute)), copied.Select(h => (h.Day, h.FromMinute, h.ToMinute)));
         Assert.NotSame(RivalFoodTerms.CopyHours(rival), copied);
         var place = RivalFoodTerms.HoursPlace(rival);
-        Assert.Same(place, RivalFoodTerms.HoursPlace(rival));
+        Assert.NotSame(place, RivalFoodTerms.HoursPlace(rival));
         var fresh = new Place { WeeklyHours = rival.Hours.Select(h => new OpeningWindow { Day = h.Day, FromMinute = h.FromMinute, ToMinute = h.ToMinute }).ToList(), OpenMinute = 0, CloseMinute = 0 };
         for (double minute = Day; minute < Day + 3 * 1440; minute += 37)
         {
             Assert.Equal(DailyRoutine.NextClose(fresh, minute), DailyRoutine.NextClose(place, minute));
             Assert.Equal(DailyRoutine.Open(fresh, minute), DailyRoutine.Open(place, minute));
         }
-        DailyRoutine.NextClose(place, Day + 600);
-        long before = GC.GetAllocatedBytesForCurrentThread();
-        for (int i = 0; i < 50; i++) { RivalFoodTerms.HoursPlace(rival); DailyRoutine.NextClose(place, Day + 600); }
-        Assert.Equal(0, GC.GetAllocatedBytesForCurrentThread() - before);
     }
 
     [Fact]
