@@ -49,10 +49,137 @@ internal static class Program
         PatchWatch();
         ScanCache();
         LoopPhases();
+        HookSlotHooks();
+        HookSlotRecovery();
+        ScopeLedger();
         Console.WriteLine("logic-check: " + (checks - failures) + "/" + checks + " checks passed");
         Console.WriteLine("expected_scope_hash " + ScopeInventory.Hash());
         if (perf) Perf();
         return failures == 0 ? 0 : 1;
+    }
+
+    private static class SinkLog
+    {
+        public static readonly long[] Entered = new long[HookSlots.Capacity], Exited = new long[HookSlots.Capacity];
+        public static long Exceptions;
+    }
+
+    private struct LogSink : IHookSink
+    {
+        public void Enter(int slot, out HookState state)
+        {
+            state = default; state.Index = slot; state.Timed = true; state.Start = Stopwatch.GetTimestamp();
+            SinkLog.Entered[slot]++;
+        }
+        public void Exit(Exception exception, HookState state)
+        {
+            if (!state.Timed) return;
+            if (exception != null) SinkLog.Exceptions++;
+            SinkLog.Exited[state.Index]++;
+        }
+    }
+
+    private struct NotASink { }
+
+    private delegate void BeforeHook(out HookState state);
+    private delegate void AfterHook(Exception exception, HookState state);
+
+    private static void HookSlotHooks()
+    {
+        var seen = new HashSet<int>();
+        for (int slot = 0; slot < HookSlots.Capacity; slot++)
+        {
+            var type = HookSlots.Close(typeof(LogSink), slot);
+            int bound = (int)type.GetField("Slot", BindingFlags.Public | BindingFlags.Static).GetValue(null);
+            if (bound != slot || !seen.Add(bound)) { Check(false, "hook slot " + slot + " binds its own index"); return; }
+            var before = HookSlots.Prefix(typeof(LogSink), slot);
+            var after = HookSlots.Finalizer(typeof(LogSink), slot);
+            if (before.DeclaringType != after.DeclaringType || !before.IsStatic || !after.IsStatic || before.GetParameters().Length != 1
+                || before.GetParameters()[0].Name != "__state" || !before.GetParameters()[0].IsOut
+                || after.GetParameters().Length != 2 || after.GetParameters()[0].Name != "__exception" || after.GetParameters()[1].Name != "__state")
+            { Check(false, "hook slot " + slot + " has a Harmony prefix and finalizer that share __state in one class"); return; }
+        }
+        Check(seen.Count == HookSlots.Capacity, "every hook slot binds a distinct index and shares __state between its prefix and finalizer");
+        bool threw = false;
+        try { HookSlots.Close(typeof(LogSink), HookSlots.Capacity); } catch (ArgumentOutOfRangeException) { threw = true; }
+        Check(threw && !HookSlots.Fits(HookSlots.Capacity) && !HookSlots.Fits(-1), "a slot past the capacity is refused");
+        threw = false;
+        try { HookSlots.Close(typeof(NotASink), 0); } catch (ArgumentException) { threw = true; }
+        Check(threw, "a sink that is not an IHookSink struct is refused");
+
+        int[] slots = { 0, 17, HookSlots.Capacity - 1 };
+        var enter = slots.Select(slot => (BeforeHook)HookSlots.Prefix(typeof(LogSink), slot).CreateDelegate(typeof(BeforeHook))).ToArray();
+        var exit = slots.Select(slot => (AfterHook)HookSlots.Finalizer(typeof(LogSink), slot).CreateDelegate(typeof(AfterHook))).ToArray();
+        void Round() { for (int k = 0; k < slots.Length; k++) { enter[k](out var state); exit[k](null, state); } }
+        for (int i = 0; i < 2000; i++) Round();
+        long started = GC.GetAllocatedBytesForCurrentThread();
+        for (int i = 0; i < 20000; i++) Round();
+        long allocated = GC.GetAllocatedBytesForCurrentThread() - started;
+        Check(allocated == 0, "slot hooks allocate nothing per call after warm-up (" + allocated + " B over 60,000 calls)");
+        Check(slots.All(slot => SinkLog.Entered[slot] == 22000 && SinkLog.Exited[slot] == 22000), "each slot enters and exits its own index once per call");
+        enter[1](out var failed); exit[1](new InvalidOperationException("hook-target"), failed);
+        Check(SinkLog.Exceptions == 1 && SinkLog.Exited[17] == 22001, "a slot finalizer passes the exception to its sink");
+        Check(SinkLog.Entered.Sum() == 66001, "no other slot is entered");
+    }
+
+    private static MethodInfo Recovered(MethodInfo hook)
+    {
+        var patch = new HarmonyLib.Patch(new HarmonyLib.HarmonyMethod(hook), 0, "logic-check.hook-slot-recovery");
+        typeof(HarmonyLib.Patch).GetField("patchMethod", BindingFlags.NonPublic | BindingFlags.Instance).SetValue(patch, null);
+        return patch.PatchMethod;
+    }
+
+    private static void HookSlotRecovery()
+    {
+        int[] slots = { 0, 17, 33, HookSlots.Capacity - 1 };
+        bool same = true, callable = true;
+        var distinct = new HashSet<MethodInfo>();
+        foreach (int slot in slots)
+        {
+            var before = HookSlots.Prefix(typeof(LogSink), slot);
+            var after = HookSlots.Finalizer(typeof(LogSink), slot);
+            MethodInfo recoveredBefore = Recovered(before), recoveredAfter = Recovered(after);
+            same &= recoveredBefore == before && recoveredAfter == after;
+            distinct.Add(recoveredBefore);
+            try
+            {
+                long entered = SinkLog.Entered[slot], exited = SinkLog.Exited[slot];
+                ((BeforeHook)recoveredBefore.CreateDelegate(typeof(BeforeHook)))(out var state);
+                ((AfterHook)recoveredAfter.CreateDelegate(typeof(AfterHook)))(null, state);
+                callable &= SinkLog.Entered[slot] == entered + 1 && SinkLog.Exited[slot] == exited + 1;
+            }
+            catch (Exception) { callable = false; }
+        }
+        Check(same && distinct.Count == slots.Length, "a slot hook rebuilt from Harmony's module and metadata token is the same method (slots 0, 17, 33, last)");
+        Check(callable, "a rebuilt slot hook enters and exits its own slot");
+    }
+
+    private static void ScopeLedger()
+    {
+        var ledger = new FrameScopeLedger(4);
+        ledger.Add(2, 5, 100); ledger.Add(2, 5, 50); ledger.Add(3, 5, 10); ledger.Add(2, 6, -4);
+        Check(ledger.Count == 3, "the ledger merges calls of one scope in one sub-phase");
+        ledger.Retain(1);
+        Check(ledger.Entries(1) == 3 && ledger.EntriesDropped(1) == 0, "a retained row keeps every entry when there are few");
+        Check(ledger.SubPhase(1, 0) == 2 && ledger.Scope(1, 0) == 5 && ledger.Ticks(1, 0) == 150 && ledger.Calls(1, 0) == 2, "the largest entry comes first with its calls");
+        Check(ledger.SubPhase(1, 1) == 3 && ledger.Ticks(1, 1) == 10 && ledger.Ticks(1, 2) == 0, "entries follow by time and a negative duration counts as zero");
+        ledger.ResetFrame();
+        Check(ledger.Count == 0 && ledger.Entries(1) == 3, "a frame reset keeps retained rows");
+        for (int i = 0; i < FrameScopeLedger.FrameEntries + 5; i++) ledger.Add(i, 0, i);
+        Check(ledger.Count == FrameScopeLedger.FrameEntries && ledger.Dropped == 5, "entries past the frame capacity are counted as dropped");
+        ledger.Retain(0);
+        Check(ledger.Entries(0) == FrameScopeLedger.RowEntries && ledger.EntriesDropped(0) == 5 + FrameScopeLedger.FrameEntries - FrameScopeLedger.RowEntries,
+            "a row keeps the largest entries and counts the rest");
+        Check(ledger.Ticks(0, 0) == FrameScopeLedger.FrameEntries - 1 && ledger.Ticks(0, FrameScopeLedger.RowEntries - 1) == FrameScopeLedger.FrameEntries - FrameScopeLedger.RowEntries,
+            "a row is ordered by time");
+        ledger.Retain(9);
+        Check(ledger.Entries(9) == 0 && ledger.Entries(-1) == 0, "rows outside the ledger read as empty");
+        ledger.ResetFrame(); ledger.Retain(2);
+        Check(ledger.Entries(2) == 0 && ledger.EntriesDropped(2) == 0, "a frame without mod scopes retains an empty row");
+        ledger.ResetFrame();
+        long before = GC.GetAllocatedBytesForCurrentThread();
+        for (int frame = 0; frame < 1000; frame++) { ledger.ResetFrame(); for (int i = 0; i < 40; i++) ledger.Add(i % 7, i % 5, i); ledger.Retain(frame % 4); }
+        Check(GC.GetAllocatedBytesForCurrentThread() == before, "the ledger allocates nothing per frame");
     }
 
     private static void Profiles()

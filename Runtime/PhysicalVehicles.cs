@@ -238,7 +238,7 @@ namespace PersistentCity.Runtime
         public PhysicalVehicles(Func<string, int, Waypoint?> resolveNode, int max = 24)
         {
             resolve = resolveNode; maximum = Math.Max(1, Math.Min(64, max));
-            pool = new OwnCarPool<OwnCarInstance>(maximum * 2, i => i.Live, i => UnityEngine.Object.Destroy(i.Root));
+            pool = new OwnCarPool<OwnCarInstance>(maximum * 2, i => i.Live, i => ModUnityWork.Destroy(i.Root));
         }
         internal static Transform? OwnHolder { get; private set; }
         internal static bool IsOwnCar(Collider? collider) => collider != null && OwnHolder != null && collider.transform.IsChildOf(OwnHolder);
@@ -415,7 +415,7 @@ namespace PersistentCity.Runtime
                 blocked = mask == 0 || Physics.CheckBox(rootPosition + Vector3.up * (model.Height / 2f + 0.2f),
                     clearance, rotation, mask, QueryTriggerInteraction.Ignore);
             }
-            finally { if (standing != null && standing.Instance.Live) standing.Instance.Root.SetActive(true); }
+            finally { if (standing != null && standing.Instance.Live) ModUnityWork.Activate(standing.Instance.Root); }
             if (blocked) return false;
             LastAdmissionStage = "own car instance";
             OwnCarInstance? instance = null;
@@ -427,7 +427,7 @@ namespace PersistentCity.Runtime
                 body = new PhysicalVehicleBody(citizen.Car.Id, citizen.Identity.Id, ++generation, instance, sample.TopologyId, path,
                     Point(spawn.position), Point(first.position), along, rotation);
                 instance.Place(body.Position, rotation);
-                instance.Root.SetActive(true);
+                ModUnityWork.Activate(instance.Root);
                 bodies.Add(body.Id, body);
                 if (standing != null) LeaveParked(standing);
                 LastAdmissionStage = "admitted";
@@ -524,8 +524,8 @@ namespace PersistentCity.Runtime
             GameObject? root = null;
             try
             {
-                root = UnityEngine.Object.Instantiate(model.Prefab, staging.transform);
-                if (!Strip(root)) { model.Refused = true; UnityEngine.Object.Destroy(root); return null; }
+                root = ModUnityWork.Instantiate(model.Prefab, staging.transform);
+                if (!Strip(root)) { model.Refused = true; ModUnityWork.Destroy(root); return null; }
                 root.name = "PersistentCity car " + model.Name;
                 root.SetActive(false);
                 root.transform.SetParent(holder.transform, false);
@@ -533,10 +533,10 @@ namespace PersistentCity.Runtime
             }
             catch
             {
-                if (root != null) UnityEngine.Object.Destroy(root);
+                if (root != null) ModUnityWork.Destroy(root);
                 model.Refused = true; return null;
             }
-            finally { UnityEngine.Object.Destroy(staging); }
+            finally { ModUnityWork.Destroy(staging); }
         }
 
         private static bool Strip(GameObject root)
@@ -548,7 +548,7 @@ namespace PersistentCity.Runtime
                 for (int i = scripts.Length - 1; i >= 0; i--)
                 {
                     if (scripts[i] == null || scripts[i] is CarFeatures) continue;
-                    UnityEngine.Object.DestroyImmediate(scripts[i]);
+                    ModUnityWork.DestroyImmediate(scripts[i]);
                     left = true;
                 }
                 if (!left) break;
@@ -835,7 +835,7 @@ namespace PersistentCity.Runtime
             instance.Root.transform.SetPositionAndRotation(Vector(entry.At), rotation);
             var body = new ParkedCarBody(entry.CarId, instance, entry.At);
             if (instance.CanFade) instance.SetFade(0); else body.FadeIn = BodyFade.FadeInSeconds;
-            instance.Root.SetActive(true);
+            ModUnityWork.Activate(instance.Root);
             parked.Add(entry.CarId, body);
             return ParkedPlacement.Placed;
         }
@@ -896,7 +896,7 @@ namespace PersistentCity.Runtime
                 disposed = true;
                 pool.Clear();
                 if (holder != null && ReferenceEquals(OwnHolder, holder.transform)) OwnHolder = null;
-                if (holder != null) UnityEngine.Object.Destroy(holder);
+                if (holder != null) ModUnityWork.Destroy(holder);
                 holder = null;
             }
         }

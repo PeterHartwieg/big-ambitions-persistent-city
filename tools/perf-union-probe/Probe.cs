@@ -65,7 +65,7 @@ namespace PerfUnionProbe
             public double modWorkMs, wholeFrameMs, observerMs, boundaryMs, nativeMinute, logicalMinute;
             public bool diagnostic, scene, loading, lateBoundary, crossFrame, partial;
         }
-        private struct Sample { public int frame; public long qpc; public JObject accounting, saveEpoch; }
+        private struct Sample { public int frame; public long qpc; public object accounting, saveEpoch; }
 
         internal static volatile bool armed;
         internal static bool measuring;
@@ -77,8 +77,8 @@ namespace PerfUnionProbe
         private static readonly List<Binding> bindings = new List<Binding>();
         internal static readonly Dictionary<MethodBase, int> scopeIndex = new Dictionary<MethodBase, int>();
         internal static readonly Dictionary<MethodBase, int> componentIndex = new Dictionary<MethodBase, int>();
-        internal static readonly Dictionary<MethodBase, int> scopeFast = new Dictionary<MethodBase, int>(MethodIdentity.Instance);
-        internal static readonly Dictionary<MethodBase, int> componentFast = new Dictionary<MethodBase, int>(MethodIdentity.Instance);
+        internal static readonly FrameScopeLedger scopeLedger = new FrameScopeLedger(LoopPhaseRecorder.Limit);
+        internal static int currentSubPhase = -1;
         private static string[] componentNames = Array.Empty<string>();
         internal static UnionClock union = new UnionClock(0, 0, Stopwatch.Frequency);
         internal static readonly HoldTracker holds = new HoldTracker();
@@ -288,7 +288,7 @@ namespace PerfUnionProbe
 
         private static void BindInventory()
         {
-            bindings.Clear(); scopeIndex.Clear(); componentIndex.Clear(); scopeFast.Clear(); componentFast.Clear();
+            bindings.Clear(); scopeIndex.Clear(); componentIndex.Clear();
             var timed = new List<KeyValuePair<MethodBase, Binding>>();
             foreach (var exp in ScopeInventory.Patches)
             {
@@ -324,8 +324,9 @@ namespace PerfUnionProbe
             {
                 try
                 {
-                    patches.Patch(pair.Key, prefix: new HarmonyMethod(typeof(ScopePatch), nameof(ScopePatch.Before)) { priority = Priority.First },
-                        finalizer: new HarmonyMethod(typeof(ScopePatch), nameof(ScopePatch.After)) { priority = Priority.Last });
+                    if (!HookSlots.Fits(pair.Value)) throw new InvalidOperationException("f4b_scope_slots_exhausted");
+                    patches.Patch(pair.Key, prefix: new HarmonyMethod(HookSlots.Prefix(typeof(ScopeSink), pair.Value)) { priority = Priority.First },
+                        finalizer: new HarmonyMethod(HookSlots.Finalizer(typeof(ScopeSink), pair.Value)) { priority = Priority.Last });
                 }
                 catch { foreach (var row in bindings.Where(b => b.Scope == pair.Value)) row.Status = "unbindable"; }
             }
@@ -341,8 +342,9 @@ namespace PerfUnionProbe
                 {
                     try
                     {
-                        patches.Patch(method, prefix: new HarmonyMethod(typeof(ComponentPatch), nameof(ComponentPatch.Before)) { priority = Priority.First },
-                            finalizer: new HarmonyMethod(typeof(ComponentPatch), nameof(ComponentPatch.After)) { priority = Priority.Last });
+                        if (!HookSlots.Fits(i)) throw new InvalidOperationException("f4b_component_slots_exhausted");
+                        patches.Patch(method, prefix: new HarmonyMethod(HookSlots.Prefix(typeof(ComponentSink), i)) { priority = Priority.First },
+                            finalizer: new HarmonyMethod(HookSlots.Finalizer(typeof(ComponentSink), i)) { priority = Priority.Last });
                         componentIndex.Add(method, i);
                     }
                     catch { row.Status = "component-unbound"; }
@@ -574,7 +576,9 @@ namespace PerfUnionProbe
 
         private static void SubStamp(int phase)
         {
-            if (measuring) subPhases.Stamp(phase, Stopwatch.GetTimestamp(), GC.CollectionCount(0), union.FrameTicks);
+            if (!measuring) return;
+            currentSubPhase = phase;
+            subPhases.Stamp(phase, Stopwatch.GetTimestamp(), GC.CollectionCount(0), union.FrameTicks);
         }
 
         private static void RemoveLoop()
@@ -639,7 +643,7 @@ namespace PerfUnionProbe
                 if (measuring) { scanner.Error = "f4b_cross_frame_scope"; StopMeasurement("cross_frame", writeStopFrame: false); }
             }
             if (measuring && pendingWindowStart) { pendingWindowStart = false; holds.BeginWindow(nowFrame, now); }
-            currentFrame = nowFrame; frameStartQpc = now; union.ResetFrame(); observerTicks = boundaryTicks = 0;
+            currentFrame = nowFrame; frameStartQpc = now; union.ResetFrame(); scopeLedger.ResetFrame(); currentSubPhase = -1; observerTicks = boundaryTicks = 0;
             frameDiagnostic = false; frameScene = false; frameSaves = 0; frameLate = !fromLoop;
             gcAtFrameStart = collections; frameLoading = LoadScene.isLoading;
             if (measuring) { phases.Begin(now, gcAtFrameStart); if (subPhases.Phases > 0) subPhases.Begin(now, gcAtFrameStart); }
@@ -664,8 +668,7 @@ namespace PerfUnionProbe
             try
             {
                 var sample = new Sample { frame = Time.frameCount, qpc = now,
-                    accounting = accountingDiagnostics == null ? null : JObject.FromObject(accountingDiagnostics.GetValue(runtime)),
-                    saveEpoch = saveEpochDiagnostics == null ? null : JObject.FromObject(saveEpochDiagnostics.GetValue(runtime)) };
+                    accounting = accountingDiagnostics?.GetValue(runtime), saveEpoch = saveEpochDiagnostics?.GetValue(runtime) };
                 if (sampleRing.TryWrite(out int slot)) samples[slot] = sample;
             }
             catch { sampleFailures++; }
@@ -794,6 +797,7 @@ namespace PerfUnionProbe
                 ["start_scan"] = startScan, ["diagnostic_mark_bound"] = NotApplicable(() => markDiagnostic != null),
                 ["collection_frames"] = CollectionFrameSummary(),
                 ["scopes"] = NotApplicable(() => new JObject { ["timed_methods"] = scopeIndex.Count, ["timed"] = Count("timed"),
+                    ["hook_slots"] = HookSlots.Capacity, ["hook_injection"] = "slot", ["scope_calls"] = ScopeCalls(),
                     ["untimed_transpiled"] = Names("untimed-transpiled"),
                     ["not_installed"] = new JArray(bindings.Where(b => b.Status == "timed" && b.Expected?.Kind <= ScopeKind.Finalizer && coverage != null && !coverage.Installed(b.Expected)).Select(b => b.Label).Take(64)),
                     ["unexpected"] = new JArray((coverage?.Unexpected ?? (IReadOnlyCollection<string>)Array.Empty<string>()).Take(64)), ["unbindable"] = Names("unbindable"),
@@ -862,6 +866,7 @@ namespace PerfUnionProbe
         {
             if (phases.Retained == retainedBefore || retainedBefore >= LoopPhaseRecorder.Limit) return;
             rowScope[retainedBefore] = union.FrameLargestScope; rowScopeMs[retainedBefore] = union.FrameLargestScopeTicks * ToMs;
+            scopeLedger.Retain(retainedBefore);
         }
 
         private static string ScopeLabel(int scope)
@@ -895,7 +900,29 @@ namespace PerfUnionProbe
                 ["partial"] = phases.Partial(r),
                 ["gc_phase"] = PhaseLabel(phases.GcPhase(r)), ["largest_excess_phase"] = PhaseLabel(phases.LargestExcessPhase(r)),
                 ["phase_ms"] = now, ["previous_phase_ms"] = before, ["phase_excess_ms"] = grew, ["phase_mod_ms"] = mod,
-                ["largest_excess_outside_mod_phase"] = PhaseLabel(phases.LargestExcessOutsideMod(r)), ["largest_mod_scope"] = LargestScope(r), ["sub_phases"] = SubPhaseRow(r) };
+                ["largest_excess_outside_mod_phase"] = PhaseLabel(phases.LargestExcessOutsideMod(r)), ["largest_mod_scope"] = LargestScope(r), ["mod_scopes_by_sub_phase"] = ScopeLedgerRow(r),
+                ["mod_scopes_dropped"] = scopeLedger.EntriesDropped(r), ["sub_phases"] = SubPhaseRow(r) };
+        }
+
+        private static long ScopeCalls()
+        {
+            long total = 0;
+            for (int s = 0; s < union.Scopes; s++) total += union.Calls(s);
+            return total;
+        }
+
+        private static JToken SampleObject(object value) => value == null ? JValue.CreateNull() : JObject.FromObject(value);
+
+        private static JArray ScopeLedgerRow(int r)
+        {
+            var rows = new JArray();
+            for (int k = 0; k < scopeLedger.Entries(r); k++)
+            {
+                int sub = scopeLedger.SubPhase(r, k);
+                rows.Add(new JObject { ["sub_phase"] = sub >= 0 && sub < subPhases.Phases ? subPhases.PhaseName(sub) : "before-first-stamp",
+                    ["scope"] = ScopeLabel(scopeLedger.Scope(r, k)), ["ms"] = scopeLedger.Ticks(r, k) * ToMs, ["calls"] = scopeLedger.Calls(r, k) });
+            }
+            return rows;
         }
 
         private static JObject SubPhaseRow(int r)
@@ -977,7 +1004,7 @@ namespace PerfUnionProbe
                             ["native_minute"] = t.NativeMinute, ["logical_minute"] = double.IsNaN(t.LogicalMinute) ? JValue.CreateNull() : (JToken)t.LogicalMinute });
                     }
                     else rows.Add(new JObject { ["index"] = index, ["frame"] = samples[i].frame, ["qpc"] = samples[i].qpc,
-                        ["accounting"] = samples[i].accounting, ["save_epoch"] = samples[i].saveEpoch });
+                        ["accounting"] = SampleObject(samples[i].accounting), ["save_epoch"] = SampleObject(samples[i].saveEpoch) });
                 }
                 return new JObject { ["section"] = section, ["rows"] = rows, ["count"] = count, ["drained"] = ring.Drained, ["dropped"] = ring.Dropped,
                     ["components"] = section == "frames" ? new JArray(componentNames) : null,
@@ -1032,61 +1059,41 @@ namespace PerfUnionProbe
         }
     }
 
-    internal sealed class MethodIdentity : IEqualityComparer<MethodBase>
+    internal struct ScopeSink : IHookSink
     {
-        internal static readonly MethodIdentity Instance = new MethodIdentity();
-        public bool Equals(MethodBase a, MethodBase b) => ReferenceEquals(a, b);
-        public int GetHashCode(MethodBase m) => System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(m);
-    }
-
-    internal struct ScopeState { public long Start; public int Frame, Index; public bool Timed; }
-
-    internal static class ScopePatch
-    {
-        internal static void Before(MethodBase __originalMethod, out ScopeState __state)
+        public void Enter(int slot, out HookState state)
         {
-            __state = default;
+            state = default;
             if (!Session.measuring || !Session.MainThread()) return;
             Session.TouchFrame(Stopwatch.GetTimestamp());
-            if (!Session.scopeFast.TryGetValue(__originalMethod, out int index))
-            {
-                if (!Session.scopeIndex.TryGetValue(__originalMethod, out index)) { Session.unknownScopeCalls++; return; }
-                Session.scopeFast[__originalMethod] = index;
-            }
-            __state.Index = index; __state.Frame = Time.frameCount; __state.Timed = true;
-            __state.Start = Stopwatch.GetTimestamp();
-            Session.union.Enter(__state.Start);
+            state.Index = slot; state.Frame = Time.frameCount; state.Timed = true;
+            state.Start = Stopwatch.GetTimestamp();
+            Session.union.Enter(state.Start);
         }
-        internal static void After(Exception __exception, ScopeState __state)
+        public void Exit(Exception exception, HookState state)
         {
-            if (!__state.Timed) return;
+            if (!state.Timed) return;
             long end = Stopwatch.GetTimestamp();
-            if (__exception != null) Session.timedExceptions++;
-            if (Time.frameCount != __state.Frame) Session.crossFrame++;
-            Session.union.Exit(__state.Index, __state.Start, end);
+            if (exception != null) Session.timedExceptions++;
+            if (Time.frameCount != state.Frame) Session.crossFrame++;
+            Session.union.Exit(state.Index, state.Start, end);
+            if (Session.union.Depth == 0) Session.scopeLedger.Add(Session.currentSubPhase, state.Index, end - state.Start);
         }
     }
 
-    internal struct ComponentState { public long Start; public int Index; public bool Timed, Inside; }
-
-    internal static class ComponentPatch
+    internal struct ComponentSink : IHookSink
     {
-        internal static void Before(MethodBase __originalMethod, out ComponentState __state)
+        public void Enter(int slot, out HookState state)
         {
-            __state = default;
+            state = default;
             if (!Session.measuring || !Session.MainThread()) return;
-            if (!Session.componentFast.TryGetValue(__originalMethod, out int index))
-            {
-                if (!Session.componentIndex.TryGetValue(__originalMethod, out index)) return;
-                Session.componentFast[__originalMethod] = index;
-            }
-            __state.Index = index; __state.Timed = true; __state.Inside = Session.union.Depth > 0;
-            __state.Start = Stopwatch.GetTimestamp();
+            state.Index = slot; state.Timed = true; state.Inside = Session.union.Depth > 0;
+            state.Start = Stopwatch.GetTimestamp();
         }
-        internal static void After(ComponentState __state)
+        public void Exit(Exception exception, HookState state)
         {
-            if (!__state.Timed) return;
-            Session.union.Component(__state.Index, __state.Start, Stopwatch.GetTimestamp(), __state.Inside);
+            if (!state.Timed) return;
+            Session.union.Component(state.Index, state.Start, Stopwatch.GetTimestamp(), state.Inside);
         }
     }
 

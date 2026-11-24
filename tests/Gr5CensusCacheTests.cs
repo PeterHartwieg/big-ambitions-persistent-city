@@ -60,6 +60,7 @@ public sealed class Gr5CensusCacheTests
         var root = deferred.GetProperty("cache_roots").EnumerateArray().Single();
         Assert.Equal("cache.routes.walking.cache", root.GetProperty("name").GetString());
         Assert.Equal(1024, root.GetProperty("bound").GetInt32());
+        Assert.Equal(cached, root.GetProperty("entries").GetInt32());
         Assert.Equal(cached, root.GetProperty("routes").GetInt64());
         Assert.Equal(exclusive, root.GetProperty("route_legs").GetInt64());
         var outsideCaches = deferred.GetProperty("tracked_types_outside_caches").EnumerateArray().ToDictionary(t => t.GetProperty("name").GetString()!, t => t.GetProperty("objects").GetInt64());

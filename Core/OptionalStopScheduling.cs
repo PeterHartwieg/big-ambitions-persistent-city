@@ -213,7 +213,7 @@ namespace PersistentCity.Core
                 || person.RecentVisits[person.RecentVisits.Count - 1].PlaceId != person.PlaceId) return;
             var place = places[person.PlaceId];
             if (!DailyRoutine.Open(place, now) || person.Activity == Activity.Home || person.Activity == Activity.Study) return;
-            if (State.Food != null && State.Food.Shops.Any(s => s.PlaceId == person.PlaceId)) return;
+            if (State.Food != null && HasFoodShopAt(State.Food.Shops, person.PlaceId)) return;
             string key = OptionalStopPolicy.VisitKey(person, now);
             bool drawn = OptionalStopPolicy.Choose(key, State.Seed, stopPercentage.Value);
             chanceTally.Eligible++;
@@ -238,6 +238,11 @@ namespace PersistentCity.Core
             donor.OptionalStopChoice = false; FileOptionalStop(donor);
             person.OptionalStopChoice = true;
             chanceTally.HandedOn++; chanceTally.Realised++;
+        }
+        private static bool HasFoodShopAt(List<FoodScope> shops, string placeId)
+        {
+            for (int i = 0; i < shops.Count; i++) if (shops[i].PlaceId == placeId) return true;
+            return false;
         }
         private int PendingChanceLimit
             => (int)Math.Min(State.Citizens.Count, Math.Max(1L, 4L * State.Citizens.Count * stopPercentage!.Value / 100));

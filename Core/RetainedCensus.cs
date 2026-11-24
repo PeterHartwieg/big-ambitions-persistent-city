@@ -19,6 +19,7 @@ namespace PersistentCity.Core
             public long ScannedBytes { get; internal set; }
             public bool Cache { get; internal set; }
             public int Bound { get; internal set; }
+            public int Entries { get; internal set; } = -1;
             internal Dictionary<Type, long[]>? Tracked;
             public long TrackedObjects(Type type) => Tracked != null && Tracked.TryGetValue(type, out var t) ? t[0] : 0;
             public long TrackedBytes(Type type) => Tracked != null && Tracked.TryGetValue(type, out var t) ? t[1] : 0;
@@ -79,7 +80,7 @@ namespace PersistentCity.Core
             {
                 seen.Remove(cache.Root);
                 var row = Add(cache.Name, cache.Root);
-                row.Cache = true; row.Bound = cache.Bound;
+                row.Cache = true; row.Bound = cache.Bound; row.Entries = cache.Root is System.Collections.ICollection entries ? entries.Count : -1;
             }
             caches.Clear();
         }
@@ -439,6 +440,7 @@ namespace PersistentCity.Core
                     if (!first) text.Append(',');
                     first = false;
                     text.Append("{\"name\":\"").Append(root.Name.Replace("\\", "\\\\").Replace("\"", "\\\"")).Append("\",\"bound\":").Append(root.Bound.ToString(CultureInfo.InvariantCulture))
+                        .Append(",\"entries\":").Append(root.Entries.ToString(CultureInfo.InvariantCulture))
                         .Append(",\"objects\":").Append(root.Objects.ToString(CultureInfo.InvariantCulture)).Append(",\"bytes\":").Append(root.Bytes.ToString(CultureInfo.InvariantCulture))
                         .Append(",\"routes\":").Append(root.TrackedObjects(typeof(Route)).ToString(CultureInfo.InvariantCulture))
                         .Append(",\"route_legs\":").Append(root.TrackedObjects(typeof(RouteLeg)).ToString(CultureInfo.InvariantCulture)).Append('}');

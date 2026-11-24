@@ -288,7 +288,7 @@ namespace PersistentCity.Core
 
         public static string? KnownUnavailable(FoodBusiness business, FoodConsumer consumer, double now, double deadline)
         {
-            if (!DailyRoutine.NextOpen(Place(business), now, deadline).HasValue) return "Closed or too late";
+            if (!DailyRoutine.NextOpen(business.Hours, now, deadline).HasValue) return "Closed or too late";
             if (business.MealsPerHour == 0) return business.ServiceUnavailableReason.Length == 0
                 ? "Service unavailable" : business.ServiceUnavailableReason;
             var offers = business.Offers;
@@ -376,7 +376,7 @@ namespace PersistentCity.Core
                 {
                     choice.TravelMinutes = route.Minutes.Value;
                     double arrival = minute + route.Minutes.Value;
-                    double? admission = arrival < intent.Deadline ? DailyRoutine.NextOpen(Place(business), arrival, intent.Deadline) : null;
+                    double? admission = arrival < intent.Deadline ? DailyRoutine.NextOpen(business.Hours, arrival, intent.Deadline) : null;
                     choice.AdmissionMinute = admission;
                     choice.ReturnMinutes = route.ReturnMinutes;
                     if (!offer.Units.HasValue && business.AlternativeKind != FoodAlternativeKind.Rival) choice.Reason = "Stock unknown";
@@ -390,7 +390,7 @@ namespace PersistentCity.Core
                         double finish = routine ? Math.Max(admission.Value, business.NextServiceMinute) + business.ServiceMinutes : admission.Value;
                         choice.ServiceEndsAt = routine ? finish : (double?)null;
                         double time = finish - minute + (routine ? route.ReturnMinutes!.Value + intent.EatingMinutes : 0);
-                        double? close = DailyRoutine.NextClose(Place(business), admission.Value);
+                        double? close = DailyRoutine.NextClose(business.Hours, admission.Value);
                         if (routine && Math.Max(0, business.NextServiceMinute - admission.Value) > intent.MaximumQueueMinutes)
                         { choice.Reason = "Expected queue exceeds patience"; intent.Choices.Add(choice); continue; }
                         if (routine && (minute + time > intent.Deadline || !close.HasValue || finish >= close.Value))
@@ -430,7 +430,7 @@ namespace PersistentCity.Core
         {
             var business = businesses[intent.BusinessId];
             var offer = Offer(intent.BusinessId, intent.ProductId);
-            if (State.Minute >= intent.Deadline || !DailyRoutine.Open(Place(business), State.Minute))
+            if (State.Minute >= intent.Deadline || !DailyRoutine.Open(business.Hours, State.Minute))
             { Miss(intent, "Closed on arrival"); return; }
             if (!offer.Units.HasValue) { Miss(intent, "Stock unknown on arrival", true); return; }
             if (offer.Units.Value == 0) { Miss(intent, "Out of stock on arrival"); return; }
@@ -445,7 +445,7 @@ namespace PersistentCity.Core
                 { Miss(intent, "Queue exceeds patience on arrival"); return; }
                 double finish = Math.Max(State.Minute, business.NextServiceMinute) + 60.0 / business.MealsPerHour.Value;
                 double back = finish + intent.EatingMinutes + intent.ReturnTravelMinutes!.Value;
-                var close = DailyRoutine.NextClose(Place(business), State.Minute);
+                var close = DailyRoutine.NextClose(business.Hours, State.Minute);
                 if (back > intent.Deadline || !close.HasValue || finish >= close.Value)
                 { Miss(intent, "Queue leaves insufficient time to eat and return"); return; }
                 business.NextServiceMinute = finish;
@@ -464,7 +464,7 @@ namespace PersistentCity.Core
             var offer = Offer(intent.BusinessId, intent.ProductId);
             if (!business.MealsPerHour.HasValue || !offer.Units.HasValue)
             { Miss(intent, "Service or stock unknown at completion", true); return; }
-            if (business.MealsPerHour == 0 || !DailyRoutine.Open(Place(business), State.Minute))
+            if (business.MealsPerHour == 0 || !DailyRoutine.Open(business.Hours, State.Minute))
             { Miss(intent, "Service closed before completion"); return; }
             if (offer.Units == 0) { Miss(intent, "Out of stock at completion"); return; }
             if (offer.Price > consumers[intent.ConsumerId].DailyAllowance)
@@ -496,7 +496,6 @@ namespace PersistentCity.Core
                 + (intent.OutsideOption == FoodOutsideOption.FundedHouseholdFood ? "household food basket is funded" : "household food/ingredients/cost not verified");
         }
 
-        private static Place Place(FoodBusiness business) => business.OpeningPlace;
         private static bool Terminal(FoodIntent intent) => intent.Status == FoodIntentStatus.Fulfilled
             || intent.Status == FoodIntentStatus.Unmet || intent.Status == FoodIntentStatus.Unresolved || intent.Status == FoodIntentStatus.DeclinedPurchase;
         private static double Due(FoodIntent intent) => intent.Status == FoodIntentStatus.Planned ? intent.RequestedAt

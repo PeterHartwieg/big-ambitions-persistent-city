@@ -33,6 +33,8 @@ namespace PersistentCity.Runtime
             gcFrameCpu = gcModCpu = cpu;
             sampler.CounterFrame(GcAllocationCounter.Read(), GcAllocationCounter.Collections);
             sampler.NoteBodies(BodyMerge.Owned, physical?.BoundBodies ?? 0, physical?.GrowSample ?? PhysicalPedestrians.Grows.Sample(false));
+            physical?.Pedestrians.ObserveGrow();
+            sampler.NoteUnityWork(ModUnityWork.Instantiated, ModUnityWork.Destroyed, ModUnityWork.Activated, ModUnityWork.AsyncStarted, ModUnityWork.AsyncCompleted, ModUnityWork.MeshRequests);
             sampler.Observe(now * GcMillisecondsPerTimestamp, GcCount(0), GcCount(1), GcCount(2), GC.GetTotalMemory(false), Time.frameCount, DiagnosticFrames.Current);
             return now;
         }
@@ -74,6 +76,7 @@ namespace PersistentCity.Runtime
                 gcSampler ??= new GcPauseSampler();
                 string counter = GcAllocationCounter.Probe();
                 gcSampler.Start(GC.GetTotalMemory(false), counter);
+                collectionHeadroom.ResetCounters();
                 gcSampler.FrameRecorder.Arm(System.Diagnostics.Stopwatch.Frequency);
                 Debug.Log("[Persistent City] gc measurement started (diagnostic only, " + GcPauseSampler.PolicyId + ", " + gcSampler.Capacity + " stored frames, allocation counter " + counter + "). Use pc gc report or pc gc stop.");
                 return;
@@ -111,6 +114,7 @@ namespace PersistentCity.Runtime
                 Debug.Log(GcPauseSampler.ReportPrefix + gcSampler.ReportJson(context));
                 Debug.Log(gcSampler.ReportHuman(context));
                 Debug.Log(gcSampler.FrameRecorder.ReportHuman());
+                Debug.Log("[Persistent City] collection headroom " + CollectionHeadroomJson());
                 gcSampler.Rebaseline();
                 return;
             }

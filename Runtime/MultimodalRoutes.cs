@@ -86,6 +86,8 @@ namespace PersistentCity.Runtime
         {
             add("walking.cache", walking.RetainedPaths, WalkingRoutes.RetainedPathLimit);
             add("trains", trains, -1);
+            if (roads != null) add("roads.tags", roads.EdgeTagCache, -1);
+            if (roads?.RoadLegCache is { } roadLegs) add("roads.legs", roadLegs, TransportRoadGraph.RoadLegCacheBound);
         }
 
         internal void ReleaseRetainedPaths() { walking.Clear(); trains.Clear(); trainStations = null; }
@@ -316,6 +318,7 @@ namespace PersistentCity.Runtime
         public double JobPathReserveMilliseconds => jobPathReserveMilliseconds;
         public bool JobAdmissionExhaustedForFrame => jobAdmissionHeldFrame == Time.frameCount || jobRecheckHeldFrame == Time.frameCount
             || jobPathFrame == Time.frameCount && jobFramePaths >= MaximumJobPathsPerFrame;
+        public int FramePaths => jobPathFrame == Time.frameCount ? jobFramePaths : 0;
         public string LastJobUnit { get; private set; } = "";
         public double LastContinueMilliseconds { get; private set; }
         public double SliceUnitMilliseconds { get; private set; }

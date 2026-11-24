@@ -25,7 +25,7 @@ namespace PersistentCity.Runtime
         private static AccessTools.FieldRef<SkinnedMeshCombiner, Vector3>? originalPosition, originalRotation, originalScale;
         private static bool hooked;
         private static readonly MergedBodyLedger<SkinnedMeshCombiner, Mesh> ledger = new MergedBodyLedger<SkinnedMeshCombiner, Mesh>(
-            combiner => combiner != null, mesh => mesh != null, mesh => mesh.vertexCount, mesh => Object.Destroy(mesh), ShownByResult);
+            combiner => combiner != null, mesh => mesh != null, mesh => mesh.vertexCount, mesh => ModUnityWork.Destroy(mesh), ShownByResult);
         private static readonly BodyMergePlan plan = new BodyMergePlan();
         private static readonly BodyMergeGate gate = new BodyMergeGate();
         private static readonly BodyMergeFallbacks fallbacks = new BodyMergeFallbacks();
@@ -109,7 +109,7 @@ namespace PersistentCity.Runtime
         {
             if (mesh == null) return;
             ledger.CountReleased(mesh);
-            Object.Destroy(mesh);
+            ModUnityWork.Destroy(mesh);
         }
 
         public static int LiveMeshes(out long vertices)
@@ -267,6 +267,7 @@ namespace PersistentCity.Runtime
                         parts[e] = new CombineInstance { mesh = source.sharedMesh, subMeshIndex = entry.Submesh, transform = transform.localToWorldMatrix };
                     }
                     var mesh = new Mesh { indexFormat = format };
+                    ModUnityWork.MeshRequest();
                     groupMeshes.Add(mesh);
                     mesh.CombineMeshes(parts, mergeSubMeshes: true, useMatrices: true);
                     var groupPoses = Array(poses, finalPoses.Count - poseStart);
@@ -276,6 +277,7 @@ namespace PersistentCity.Runtime
                 var final = Array(combines, groupMeshes.Count);
                 for (int g = 0; g < groupMeshes.Count; g++) final[g] = new CombineInstance { mesh = groupMeshes[g], subMeshIndex = 0, transform = Matrix4x4.identity };
                 combined = new Mesh { indexFormat = format, name = "Combined Meshes (One Mesh Per Material)" };
+                ModUnityWork.MeshRequest();
                 combined.CombineMeshes(final, mergeSubMeshes: false);
                 DestroyGroups();
                 combined.RecalculateBounds();
@@ -292,6 +294,7 @@ namespace PersistentCity.Runtime
                 var materialArray = Array(materialArrays, plan.Groups);
                 for (int g = 0; g < plan.Groups; g++) materialArray[g] = materials[plan.Material(g)];
                 merged.sharedMaterials = materialArray;
+                ModUnityWork.MeshRequest();
                 merged.rootBone = RootBone(combiner);
                 var manager = result.AddComponent<CombinedMeshesManager>();
                 manager.rootGameObject = combiner.gameObject;
@@ -332,18 +335,18 @@ namespace PersistentCity.Runtime
 
         private static void DestroyGroups()
         {
-            foreach (var mesh in groupMeshes) if (mesh != null) Object.Destroy(mesh);
+            foreach (var mesh in groupMeshes) if (mesh != null) ModUnityWork.Destroy(mesh);
             groupMeshes.Clear();
         }
 
         private static void Discard(SkinnedMeshCombiner combiner, Mesh? combined, GameObject? result, bool hidden)
         {
             try { DestroyGroups(); } catch (Exception) { groupMeshes.Clear(); }
-            try { if (combined != null) Object.Destroy(combined); } catch (Exception) { }
+            try { if (combined != null) ModUnityWork.Destroy(combined); } catch (Exception) { }
             if (result != null)
             {
                 try { result.SetActive(false); result.transform.SetParent(null, false); } catch (Exception) { }
-                try { Object.Destroy(result); } catch (Exception) { }
+                try { ModUnityWork.Destroy(result); } catch (Exception) { }
             }
             if (hidden) foreach (var source in sources) try { if (source != null) source.gameObject.SetActive(true); } catch (Exception) { }
             if (result != null && ReferenceEquals(combiner.resultMergeGameObject, result))

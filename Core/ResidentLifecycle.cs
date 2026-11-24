@@ -59,13 +59,21 @@ namespace PersistentCity.Core
             if (person.Visitor?.Stay.Pattern == VisitorPattern.DayVisit) return null;
             if (chance >= CityBalance.DailyJobFindingChance) return null;
             var home = places != null && places.TryGetValue(person.HomeId, out var indexed) ? indexed
-                : city.Places.First(p => p.Id == person.HomeId);
+                : HomeOf(city.Places, person.HomeId);
             if (occupancy != null)
                 return DestinationChoice.Shortlist(city.Places.Where(occupancy.Vacant), home, PlaceKind.Work, key, city.Seed, CityBalance.WorkplaceRouteProbes);
-            var used = Population.Assignments(city, person);
-            return DestinationChoice.Shortlist(city.Places.Where(p => Population.Used(used, p.Id) < p.Capacity),
+            return DestinationChoice.Shortlist(Vacant(city.Places, Population.Assignments(city, person)),
                 home, PlaceKind.Work, key, city.Seed, CityBalance.WorkplaceRouteProbes);
         }
+
+        private static Place HomeOf(List<Place> places, string homeId)
+        {
+            for (int i = 0; i < places.Count; i++) if (places[i].Id == homeId) return places[i];
+            throw new InvalidOperationException("Sequence contains no matching element");
+        }
+
+        private static IEnumerable<Place> Vacant(List<Place> places, Dictionary<string, int> used)
+            => places.Where(p => Population.Used(used, p.Id) < p.Capacity);
 
         internal static void AssignWorkplace(CitizenState person, Place candidate)
         {

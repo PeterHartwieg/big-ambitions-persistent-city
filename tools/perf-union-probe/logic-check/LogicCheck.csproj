@@ -8,6 +8,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="../ProbeLogic.cs" />
+    <Compile Include="../HookSlotTable.cs" />
     <Compile Include="../ScopeInventory.cs" />
     <Compile Include="../HarmonyScan.cs" />
     <ProjectReference Include="../../../Core/PersistentCity.Core.csproj" />

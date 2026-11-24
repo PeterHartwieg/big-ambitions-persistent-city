@@ -30,6 +30,9 @@ namespace PersistentCity.Core
         public int Count { get; private set; }
         public readonly Dictionary<(int From, int To), (double Baseline, double Nominal, double Extra)> Costs
             = new Dictionary<(int From, int To), (double Baseline, double Nominal, double Extra)>();
+        internal const int MaximumRoadLegs = 8192;
+        internal Dictionary<long, RouteLeg>? RoadLegs;
+        internal long RoadLegReuses, RoadLegBuilds;
 
         public void Begin(int nodeCount)
         {

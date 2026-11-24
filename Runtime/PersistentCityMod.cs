@@ -65,6 +65,8 @@ namespace PersistentCity.Runtime
         private DwellSpots dwellSpots = new DwellSpots();
         private bool physicalFailed;
         private readonly PhysicalSetupGate physicalSetupGate = new PhysicalSetupGate();
+        private readonly CollectionHeadroom collectionHeadroom = new CollectionHeadroom();
+        private int collectionGuard = -1;
         private readonly ResidentInspector inspector = new ResidentInspector();
         private bool inspectorFailed;
         private Action<string>? inspectorWarning;
@@ -241,6 +243,7 @@ namespace PersistentCity.Runtime
             UpdateCityClock.Begin();
             try
             {
+                ObserveCollectionHeadroom();
                 if (!PrepareAccountingSaveChange()) return;
                 var save = SaveGameManager.Current;
                 if (NativeInteriorCityView.Configured && (save == null || UI.Load.LoadScene.isLoading
@@ -447,10 +450,16 @@ namespace PersistentCity.Runtime
                 bool setupWanted = !publishedNetwork && settings.PhysicalEnabled && !physicalFailed && physical == null && !BuildingManager.IsInsideBuilding && !NativeTravelPace.HiddenTravel;
                 if (!publishedNetwork && !physicalSetupGate.Reserve(setupWanted))
                 {
+                    CheckCollectionHeadroom();
                     var advanceHeap = GcAllocationBegin();
                     AdvanceAllocation.Begin(gcSampler);
-                    try { AdvancePopulation(HoldReplayLimit(Math.Max(AccountingClock.Target(target), simulation.State.Minute))); }
+                    int collectionsBefore = GC.CollectionCount(0);
+                    long sinceBefore = collectionGuard == 1 ? GcAllocationCounter.BytesSinceCollection() : -1;
+                    double advanceTarget = HoldReplayLimit(Math.Max(AccountingClock.Target(target), simulation.State.Minute));
+                    try { AdvancePopulation(advanceTarget); }
                     finally { AdvanceAllocation.End(); }
+                    long sinceAfter = sinceBefore >= 0 ? GcAllocationCounter.BytesSinceCollection() : -1;
+                    if (sinceBefore >= 0 && GC.CollectionCount(0) == collectionsBefore) collectionHeadroom.NoteAdvance(sinceAfter - sinceBefore);
                     GcAllocationEnd(GcAllocationSegment.Advance, advanceHeap);
                 }
                 if (simulation.PurchaseFault is string purchaseFault)
@@ -572,12 +581,35 @@ namespace PersistentCity.Runtime
                             + simulation.ThroughCarCount + " through cars (share " + simulation.ThroughTrafficShare.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture)
                             + ", " + simulation.ThroughCarsGenerated + " generated), "
                             + simulation.Traffic.PendingEventCount + " scheduled road events, " + simulation.Traffic.LinkCount + " road sections.");
+                    if (collectionGuard == 1)
+                        log?.Info("Collection headroom: " + collectionHeadroom.Cycles + " collection cycles, " + collectionHeadroom.WantedUpdates + " advancement updates predicted to collect in "
+                            + collectionHeadroom.WantedCycles + " cycles (" + collectionHeadroom.CappedCycles + " had more than " + CollectionHeadroom.MaximumWantedUpdates + " such updates); deferral is report-only.");
                     ResetAdvanceDiagnostics();
                 }
                 ModFrames.Charge(GcAllocationSegment.ModSummary);
             }
             catch (Exception error) { Fail(error.ToString()); }
         }
+
+        private void ObserveCollectionHeadroom()
+        {
+            if (collectionGuard < 0)
+                collectionGuard = UnityEngine.Scripting.GarbageCollector.isIncremental || !GcAllocationCounter.SinceCollectionAvailable ? 0 : 1;
+            if (collectionGuard != 1) return;
+            int before = GC.CollectionCount(0);
+            long since = GcAllocationCounter.BytesSinceCollection(), live = GC.GetTotalMemory(false);
+            collectionHeadroom.Observe(before, since, live, GC.CollectionCount(0));
+        }
+
+        private void CheckCollectionHeadroom()
+        {
+            if (collectionGuard != 1 || NativeCityClock.ProcessingEconomySkip) return;
+            int before = GC.CollectionCount(0);
+            long since = GcAllocationCounter.BytesSinceCollection();
+            collectionHeadroom.WantsDeferral(before, since, GC.CollectionCount(0));
+        }
+
+        internal string CollectionHeadroomJson() => collectionHeadroom.ReportJson(collectionGuard == 1);
 
         private void AdvancePopulation(double target)
         {

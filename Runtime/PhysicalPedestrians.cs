@@ -127,7 +127,7 @@ namespace PersistentCity.Runtime
         {
             BodyMerge.Release(character.appearanceSetter?.meshCombiner);
             NotifyRemoved(character);
-            UnityEngine.Object.Destroy(character.gameObject);
+            ModUnityWork.Destroy(character.gameObject);
         }
 
         public Action? BeforeNavigation { get; set; }
@@ -198,7 +198,7 @@ namespace PersistentCity.Runtime
                 character.capsuleCollider.enabled = true;
                 if (character.characterRigidbody != null) character.characterRigidbody.isKinematic = true;
                 if (!dressed) character.gameObject.name = "PersistentCity " + identity.Id;
-                character.gameObject.SetActive(true);
+                ModUnityWork.Activate(character.gameObject);
                 character.navmeshAgent.enabled = true;
                 if (!character.navmeshAgent.Warp(hit.position) || !character.navmeshAgent.isOnNavMesh) throw new InvalidOperationException("NPC warp failed");
                 character.navmeshAgent.ResetPath(); character.navmeshAgent.isStopped = true;
@@ -245,6 +245,13 @@ namespace PersistentCity.Runtime
         private AsyncInstantiateOperation<GameObject>? growing;
         public static readonly GcGrowLedger Grows = new GcGrowLedger();
         public bool GrowIntegrating => growing != null && !growing.isDone;
+
+        public bool ObserveGrow()
+        {
+            if (growing == null || !growing.isDone) return false;
+            if (Grows.NoteDone(true)) ModUnityWork.AsyncDone();
+            return true;
+        }
         public double GrowStartMaximum { get; private set; }
         public double GrowFinishMaximum { get; private set; }
         private bool hierarchySized;
@@ -277,7 +284,7 @@ namespace PersistentCity.Runtime
                     bool staged = Staged();
                     GrowStep(GrowTimer.Staging);
                     if (!staged) { growTimer.Stopped(); failed = true; return null; }
-                    growing = UnityEngine.Object.InstantiateAsync(prefab!, staging!.transform);
+                    growing = ModUnityWork.InstantiateAsync(prefab!, staging!.transform);
                     GrowStep(GrowTimer.Result);
                     growTimer.Outcome(true);
                     Grows.Start();
@@ -286,7 +293,7 @@ namespace PersistentCity.Runtime
                 }
                 finally { EndGrow(); }
             }
-            if (!growing.isDone) return null;
+            if (!ObserveGrow()) return null;
             BeginGrow(GrowKind.AsyncFinish);
             try { var finished = Finish(out failed); growTimer.Outcome(!failed); return finished; }
             finally { GrowFinishMaximum = Math.Max(GrowFinishMaximum, Since(started)); EndGrow(); }
@@ -300,7 +307,7 @@ namespace PersistentCity.Runtime
             GrowStep(GrowTimer.Result);
             if (made == null || made.Length != 1 || made[0] == null)
             {
-                if (made != null) foreach (var extra in made) if (extra != null) UnityEngine.Object.Destroy(extra);
+                if (made != null) foreach (var extra in made) if (extra != null) ModUnityWork.Destroy(extra);
                 failed = true; return null;
             }
             var adopted = Adopt(made[0]);
@@ -310,12 +317,12 @@ namespace PersistentCity.Runtime
 
         private void CancelGrow()
         {
+            if (growing == null) return;
+            if (!ObserveGrow()) { growing.Cancel(); growing = null; Grows.CancelPending(); return; }
             var pending = growing;
             growing = null;
-            if (pending == null) return;
-            if (!pending.isDone) { pending.Cancel(); Grows.CancelPending(); return; }
             var made = pending.Result;
-            if (made != null) foreach (var instance in made) if (instance != null) UnityEngine.Object.Destroy(instance);
+            if (made != null) foreach (var instance in made) if (instance != null) ModUnityWork.Destroy(instance);
         }
 
         private ThirdPersonCharacter? Instantiate()
@@ -326,7 +333,7 @@ namespace PersistentCity.Runtime
                 bool staged = Staged();
                 GrowStep(GrowTimer.Staging);
                 if (!staged) { growTimer.Stopped(); return null; }
-                var made = UnityEngine.Object.Instantiate(prefab!, staging!.transform);
+                var made = ModUnityWork.Instantiate(prefab!, staging!.transform);
                 GrowStep(GrowTimer.Result);
                 var adopted = Adopt(made);
                 growTimer.Outcome(adopted != null);
@@ -342,7 +349,7 @@ namespace PersistentCity.Runtime
                 || character.appearanceSetter == null || character.animator == null || character.animator.runtimeAnimatorController == null
                 || instance.GetComponentInChildren<Streets.Pedestrians.Pedestrian>(true) != null)
             {
-                UnityEngine.Object.Destroy(instance); return null;
+                ModUnityWork.Destroy(instance); return null;
             }
             GrowStep(GrowTimer.Checks);
             character.gameObject.SetActive(false);
@@ -461,7 +468,7 @@ namespace PersistentCity.Runtime
             if (character != null)
             {
                 NotifyRemoved(character);
-                UnityEngine.Object.Destroy(character.gameObject);
+                ModUnityWork.Destroy(character.gameObject);
             }
         }
 
@@ -496,7 +503,7 @@ namespace PersistentCity.Runtime
             active.Clear(); idle.Clear(); baked.Clear(); leases.Clear(); all.Clear();
             if (reserve.Count == 0) BlendshapeBake.Clear();
             CancelGrow();
-            if (staging != null) { UnityEngine.Object.Destroy(staging); staging = null; }
+            if (staging != null) { ModUnityWork.Destroy(staging); staging = null; }
         }
     }
 
