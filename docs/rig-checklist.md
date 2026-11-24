@@ -17,6 +17,8 @@ Every GR-5 rig run from now on must:
 
 ## Latest evidence
 
+- **24 November e, Mac (rig 17m), build `1c22343d`**. 1 PASS / 0 PARTIAL / 0 FAIL / 1 NOT RUN across the through-gate arms. The rig reported `blocked_at_gate` in both states. The open traversal was NOT RUN (tooling) after the same approach stall. [24e results](#rig-results---24-november-2026-e-mac-rig-17m-350-check-2-through-gate-half-at-1c22343d).
+
 - **24 November d, Mac (rig 17l), build `7714484f`**. 2 PASS / 3 PARTIAL / 1 FAIL / 7 NOT RUN. Vendor API preflight was Ready from `FoodTrucks.Core`. A traffic retime stopped the stop-2 ownership follow-up. [24d results](#rig-results---24-november-2026-d-mac-rig-17l-e6-partial-batch-checks-245681011-at-7714484f).
 
 - **24 November c, Mac (rig 17k), build `46cc5583`**. 0 PASS / 0 PARTIAL / 0 FAIL / 13 NOT RUN. The E6 batch stopped at the Vendor API preflight with `bridge: Absent`. [24c results](#rig-results---24-november-2026-c-mac-rig-17k-e6-partial-batch-checks-245681011-at-46cc5583).
@@ -27279,3 +27281,29 @@ Both mod-work p95s were below 5 ms. Both returned zero counted and retained mod-
 - **Host and evidence.** Mac load averages were 2.22 / 2.61 / 2.96 at start and 3.67 / 4.05 / 4.04 at cleanup. Raw calls, logs, captures and hashes are in `~/Coding_Projects/.agent-logs/persistent-city-rig-2026-11-24d-mac/`. The SHA-256 of `evidence-sha256.txt` is `351b31f5924b025c91f1c1390a89d104af294463b09b1ff38e55ea451d72ef2a`.
 
 Refs #331
+
+## Rig results - 24 November 2026 e (Mac, rig 17m): #350 check 2 through-gate half at 1c22343d
+
+**1 PASS / 0 PARTIAL / 0 FAIL / 1 NOT RUN** across the two through-gate arms. The closed arm returned the expected `blocked_at_gate` readback. The open traversal is **NOT RUN (tooling)** because the synthesized drive also stopped at the approach with the gate settled open. The gate state's effect on traversal remains unestablished.
+
+The fetched tip matched the launch SHA `1c22343db4c82bcd2625bcc61ef4003216d320db`. Game build 3682 and RLO 1.0.6 ran at 1× in `FT RIGTMP-GATE-24e-mac`, a byte-identical copy of `FT GR5 13f Timing v1` with 1,000 residents and 2,000 visitors. After unpausing, both holds on `gate:-2902.5:0.0:-1515.5` (HamptonsPrivateFenceDoor index 0) settled without errors. The gate remained locked. Persistent City reported `source=collider`, `public_road=no` and a ready 29,010-node road snapshot.
+
+The requested target (-2902.5, 0, -1510) lies on the gate plane. `vehicle_route plan` returned `ops_vehicle_route_target_not_through_gate` for that input. Both drives used the documented `target: { "beyond_gate": 8 }`, which resolved to (-2894.5, 0.01, -1515.48). From the requested start near (-2960, 0, -1519), the rig planned 35.95 m on the Gley graph and a 27.02 m synthesized leg. Both injected cars were Ambulances.
+
+| Arm | Gate state and hold | Handle / Gley slot | `blocked_at_gate` | `passed_gate` | Arrived | Result |
+| --- | --- | --- | --- | --- | --- | --- |
+| Closed | closed throughout | `route:1` / 19 | true | false | false | PASS for the expected rig readback |
+| Open | open throughout | `route:2` / 19 | true | false | false | NOT RUN (tooling). `drive_outcome: blocked` on `gate_leg`. |
+
+Both cars stopped at (-2907.96, approximately 0.02, -1515.63), 5.46 m short of the gate plane and 13.46 m from the target. The terminal stall timers were 9.00 s closed and 8.27 s open. Both reported `gate_contact: false`, with zero read or steering failures and zero track breaks. The proximity-based `blocked_at_gate` flag was sufficient for the closed arm's readback. The matching open-arm stall leaves the physical cause unknown.
+
+**Cleanup.** Both live injected handles in slot 19 returned `removal: removed` via `RemoveVehicle`, with zero removal errors. With game time paused, the same six overlap probes per arm returned traffic collider counts of `[2,0,0,2,2,2]` before release and `[0,0,0,0,0,0]` after. Every positive probe saw the injected car's `BodyCollider` and `FrontTrigger`. All ten pre-spawn probes were zero. No ambient car removal was observed. The overlap op exposes collider counts and names, and the route op exposes injected slots. Ambient vehicle IDs and ambient slot reuse were unobserved. Final readbacks showed zero live routes and zero held gates.
+
+- **Stage.** `python3 scripts/install-mac.py --stage-mod PersistentCity ~/HART-Builds/persistent-city-rig-2026-11-24e-mac/package` was invoked with an absolute path. Receipt backup `~/Library/Application Support/BigAmbitionsAgentTestsMac/receipt-backups/20261124T131844Z`. The installer and Player.log agreed on `staged_mod name=PersistentCity version=absent informational=0.10.0-persistent-city-candidate sha256=ec92c72cfc0e8dd25f3ba16a72329ea9c38597df30e266ead278141320600fee`.
+- **Autosave.** The rig confirmed `suppressed: true` after both loads, before both arms and at the end of the drive session. Native preferences read 5 minutes, 3 saves and `prevent_autosave: false` before and after. The guard recorded zero save attempts. All three RLO option readbacks matched.
+- **Restore.** Both sessions stopped cleanly. The disposable save was deleted through `disposable_save`, and the follow-up read returned `exists: false`. All 272 ModsLocal files, isolated preferences, the Persistent City config, the sealed fixture and all 284 receipt hashes matched the pre-stage manifest. Agent-rig `0cb0c4e` stayed installed. AgentRigOps SHA-256 `1fbeb88b132862abb5ffe3718247c8818a4872bd075f4191b1bcf9e71c19cd1d` matched. The lease was then released and the final state was stopped and unleased.
+- **Host and evidence.** Mac load averages were 4.18 / 4.70 / 4.50 at start and 5.61 / 6.37 / 5.45 at finish. Raw tracks, overlap probes and logs are in `~/Coding_Projects/.agent-logs/persistent-city-rig-2026-11-24e-mac/`. SHA-256 of `evidence-sha256.txt` is `2526f4abc68ef4f964b72584013d3275163377d0ea7a4f21deca1de933f3a0f8`.
+
+Pointer, hover and visual-feel checks were NOT RUN (for Peter). Public-road arms, GR-5 windows, no-mod references and E6 checks were outside this run.
+
+Refs #350 #331
