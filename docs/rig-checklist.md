@@ -17,6 +17,8 @@ Every GR-5 rig run from now on must:
 
 ## Latest evidence
 
+- **24 November c, Mac (rig 17k), build `46cc5583`**. 0 PASS / 0 PARTIAL / 0 FAIL / 13 NOT RUN. The E6 batch stopped at the Vendor API preflight with `bridge: Absent`. [24c results](#rig-results---24-november-2026-c-mac-rig-17k-e6-partial-batch-checks-245681011-at-46cc5583).
+
 - **24 November b, Mac (rig 17j), build `22750a58`**. 0 PASS / 1 PARTIAL / 0 FAIL / 0 NOT RUN on the scoped #350 check. All four public-road drives arrived without crossing the gate. Both through-gate plans returned `ops_vehicle_route_gate_leg_none`. [24b results](#rig-results---24-november-2026-b-mac-rig-17j-350-check-2-traffic-half-at-22750a58).
 
 - **24 November a, Mac (rig 17i), build `d1e868fe`**. 1 PASS / 2 PARTIAL / 3 FAIL / 0 NOT RUN / 2 REPORTED. A FAIL (steady gen0 8 > matched no-mod 6, immediate pause p95 130.192 ms), B FAIL (20× pause p95 161.447 ms, 20× and 60× gen0 7), C FAIL (1 mod-work frame reached 30 ms), L PARTIAL (raw RouteLeg[] byte gate passed; plateau unestablished for several types), P PASS, G PARTIAL. **PROVISIONAL (shared Mac / Mono)**. [24a results](#rig-results---24-november-2026-a-mac-rig-17i-358-gr-5-checks-at-d1e868fe).
@@ -27155,3 +27157,51 @@ The fetched tip was `22750a58409b2846b5a3362d15d10a15c424e09d`. The rig ran game
 Pointer, hover and visual-feel checks were NOT RUN (for Peter). GR-5 windows, no-mod references and PR #358/#356/#348 checks were outside this run.
 
 Refs #350 #331
+
+## Rig results - 24 November 2026 c (Mac, rig 17k): E6 partial batch (checks 2,4,5,6,8,10,11) at 46cc5583
+
+**BLOCKED at preflight. 0 PASS / 0 PARTIAL / 0 FAIL / 13 NOT RUN.** The fetched tip was `46cc5583ba132de7b32d928ac2555c37aaff67c1`, the launch SHA. Game build 3682, RLO 1.0.6 and Street Food 0.10.12 ran in the isolated Mac profile.
+
+The preflight loaded `FT GR5 13f Timing v1` without writing it. `python3 scripts/mac-agent call console '{"line":"pc vendor status"}'` first returned `vendor diagnostics unavailable: no active city` while Persistent City was starting. After activation, the same command returned `bridge: Absent`, `Reason: Street Food vendor API missing.`, `leaseUntil: -1` and `rows: []`. The activation log gave the same reason for `vendor.streetfood off`. The installed set could not supply a usable Vendor API v1 to this tip. The batch stopped at the preflight gate pending RIG-SFAPI E6a coverage.
+
+An offline read of the installed DLL metadata found the public `FoodTrucks.ModApi.VendorApi` declaration in `FoodTrucks.Core.dll`. Persistent City selects the assembly named `FoodTrucks` and probes that assembly for the type. The assembly locations explain the missing binding reported by the live gate. Street Food's binding document identifies `FoodTrucks.Core` as the API assembly. This metadata read establishes where the type is declared. The live contract stayed unbound. [Persistent City assembly lookup](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/46cc5583ba132de7b32d928ac2555c37aaff67c1/Runtime/PersistentCityMod.cs#L126-L131)
+
+### Check results
+
+| Check | Status | Reason |
+| --- | --- | --- |
+| 1. Contract present, missing and old | NOT RUN | Needs RIG-SFAPI (Street Food E6a, 0.10.11 and contract-2 sets) and the truck B expectation restated for E6f. |
+| 2. Ownership starts at an opening | NOT RUN | Tooling. Vendor API preflight returned `Absent`. No vehicle ownership or opening sequence ran. |
+| 3. Positive sale with exact money | NOT RUN | Needs RIG-VLEDGER for the exact money, stock and wallet join. |
+| 4. Choice next to shops and rivals | NOT RUN | Tooling. Vendor API preflight returned `Absent`. No breakfast, lunch, decision traces or rival fingerprints ran. |
+| 5. Stand move with committed residents | NOT RUN | Tooling. Vendor API preflight returned `Absent`. No move or reload checkpoint ran. |
+| 6. Handback mid-opening | NOT RUN | Tooling. Vendor API preflight returned `Absent`. No commitment or withdraw sequence ran. |
+| 7. Lease and missing PC | NOT RUN | Needs the RIG-SFAPI E6a set for the without-PC and with-PC relaunches. |
+| 8. Player-opened windows | NOT RUN | Tooling. Vendor API preflight returned `Absent`. No player or crew opening ran. |
+| 9. Uncertain sale is not retried | NOT RUN | Needs RIG-SFFAULT. |
+| 10. Modded products on a vehicle | NOT RUN | Tooling. Vendor API preflight returned `Absent`. The catalogue, lunch and receipt reads were skipped at the gate. The exact-money join needs RIG-VLEDGER. |
+| 11. Bodies at the hatch | NOT RUN | Tooling. Vendor API preflight returned `Absent`. No body positioning or capture ran. |
+| 12. Older city refused | NOT RUN | Needs RIG-SFAPI and a restated check because the save schema is held at 1. |
+| 13. Performance window | NOT RUN | Needs the unified mod-work and whole-frame assertions requested for F6b. |
+
+**Truck B, restated for E6f.** No truck B was created. The live status returned no rows, so there is no observed eligibility or refusal reason for truck B. When exercised, an eligible truck follows cart A's ownership rule. A refused truck stays Street Food-owned with the reported refusal reason.
+
+**Lunch timing.** No E6 lunch ran. Mod-work p95 against the <5 ms gate and the frame/component list for spikes ≥30 ms are unavailable. Whole-frame timing is also unavailable. Pointer, hover, click and visual feel were NOT RUN (for Peter). GR-5 windows and no-mod reference runs were out of scope.
+
+### Build, staging and restore
+
+| Installed DLL | SHA-256 |
+| --- | --- |
+| `FoodTrucks.dll` | `7771637dcfcc254544548c72d8a84de56acb6f4863a4c47111f0376c3494c0f4` |
+| `Dependencies/FoodTrucks.Core.dll` | `06733f5e9d9c11ff57940f285f0300f3c98fab1505df0d77e8de15f3ca11c68e` |
+| `Dependencies/BridgeControl.dll` | `368eb2675e198b9ed342e7d372f18328a4145891ecc46a5b63b241ef626012e7` |
+| `Dependencies/0Harmony.dll` | `7b9e756306fa3d7620e02a857c8927a6ab04973f9bd8a77d3866700a6deac55c` |
+| `AgentRigOps.dll` (agent-rig `44e2227`) | `be1d8caca5726697ff0c6d06faada420f9b65a3a1fa5d6d14a85187811c7b6bd` |
+
+- **Stage.** `python3 scripts/install-mac.py --stage-mod PersistentCity ~/HART-Builds/persistent-city-rig-2026-11-24c-mac/package` ran with an absolute path. Receipt backup `~/Library/Application Support/BigAmbitionsAgentTestsMac/receipt-backups/20261124T111114Z`. Installer and Player.log agreed on `staged_mod name=PersistentCity version=absent informational=0.10.0-persistent-city-candidate sha256=5c4291f952c3bd432e062c3dfc463cb82ee31071ad65f9f51e2ede57017fcc5f`. Street Food and RLO files matched their original hashes.
+- **Autosave.** Native preferences read 5 minutes, 3 saves and `prevent_autosave=false` on both reads. The `--rig-test` guard verified `suppressed=true` at the menu, after the preflight load and before stop. The guard counted zero save attempts. The installed PC config was staged byte-for-byte, so the default `FoodChoicePriceWeight` remained 1.2. The save schema remained 1.
+- **Fixture cleanup.** The before and after save-tree checks found zero `FT-E6-Vendors*` files. The preflight gate stopped the run before city or checkpoint creation. The sealed preflight fixture matched all four original hashes. No vehicle or gate holds were acquired.
+- **Restore.** The game stopped cleanly. The 272 ModsLocal files, isolated preferences, PC config, receipt and all 284 receipt entries matched the pre-stage hashes. AgentRigOps matched its original SHA-256. The RLO readbacks were living population on, Social Media on and Social Media notices off. The preference hashes verified after stop. The lease was released after restore verification and the final rig status showed stopped and unleased.
+- **Host and evidence.** Mac load averages were 3.42 / 3.15 / 3.26 at start and 3.28 / 3.70 / 3.52 at finish. Raw evidence is in `~/Coding_Projects/.agent-logs/persistent-city-rig-2026-11-24c-mac/`. SHA-256 of `evidence-sha256.txt` is `fda7215bf4df97cc9cdc46a2c326f008cbcfed652869ed7eccb5fbb705da232c`.
+
+Refs #331
