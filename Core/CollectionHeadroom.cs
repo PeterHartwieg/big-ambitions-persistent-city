@@ -29,6 +29,20 @@ namespace PersistentCity.Core
         public long DeferredCycles { get; private set; }
         public long CappedCycles { get; private set; }
         public long Invalidated { get; private set; }
+        public long TornSamples { get; private set; }
+        public long StaleDeferrals { get; private set; }
+
+        public static bool ClockAllowsDeferral(bool caughtUpLastUpdate, double nativeMinute)
+            => caughtUpLastUpdate && AccountingClock.Target(nativeMinute) == nativeMinute;
+
+        public static bool ClockReady(bool caughtUp, bool guardDeferred, double logicalMinute, double nativeMinute)
+            => caughtUp || guardDeferred && AccountingClock.Target(nativeMinute) == nativeMinute && AccountingClock.Compatible(logicalMinute, nativeMinute);
+
+        public void Observe(int collectionsBefore, long bytesSinceCollection, long liveBytes, int collectionsAfter)
+        {
+            if (collectionsBefore != collectionsAfter) { TornSamples++; return; }
+            Observe(bytesSinceCollection, liveBytes, collectionsAfter);
+        }
 
         public void Observe(long bytesSinceCollection, long liveBytes, int collections)
         {
@@ -59,6 +73,12 @@ namespace PersistentCity.Core
             burst = Math.Min(MaximumBurstBytes, Math.Max(allocatedBytes, decayed));
         }
 
+        public bool Defer(int collectionsBefore, long bytesSinceCollection, int collectionsAfter)
+        {
+            if (collectionsBefore != collectionsAfter || collectionsAfter != lastCollections) { StaleDeferrals++; return false; }
+            return Defer(bytesSinceCollection);
+        }
+
         public bool Defer(long bytesSinceCollection)
         {
             if (predicted < MinimumCycleBytes || bytesSinceCollection < 0 || bytesSinceCollection + burst < predicted - MarginBytes) return false;
@@ -73,7 +93,7 @@ namespace PersistentCity.Core
 
         public void ResetCounters()
         {
-            Cycles = DeferredUpdates = DeferredCycles = CappedCycles = Invalidated = 0;
+            Cycles = DeferredUpdates = DeferredCycles = CappedCycles = Invalidated = TornSamples = StaleDeferrals = 0;
             recorded = 0;
         }
 
@@ -97,7 +117,7 @@ namespace PersistentCity.Core
                 .Append(",\"margin_bytes\":").Append(N(MarginBytes)).Append(",\"maximum_deferred_updates\":").Append(N(MaximumDeferredUpdates))
                 .Append(",\"cycles\":").Append(N(Cycles)).Append(",\"deferred_updates\":").Append(N(DeferredUpdates))
                 .Append(",\"deferred_cycles\":").Append(N(DeferredCycles)).Append(",\"capped_cycles\":").Append(N(CappedCycles))
-                .Append(",\"invalidated\":").Append(N(Invalidated)).Append(",\"advance_burst_bytes\":").Append(N(burst)).Append(",\"predicted_bytes\":").Append(N(predicted))
+                .Append(",\"invalidated\":").Append(N(Invalidated)).Append(",\"torn_samples\":").Append(N(TornSamples)).Append(",\"stale_deferrals\":").Append(N(StaleDeferrals)).Append(",\"advance_burst_bytes\":").Append(N(burst)).Append(",\"predicted_bytes\":").Append(N(predicted))
                 .Append(",\"ratio\":").Append(double.IsNaN(ratio) ? "null" : ratio.ToString("0.######", CultureInfo.InvariantCulture))
                 .Append(",\"recent_cycles\":[");
             for (int i = 0; i < RecordedCycles; i++)

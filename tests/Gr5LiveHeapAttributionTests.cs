@@ -96,7 +96,7 @@ public sealed class Gr5LiveHeapAttributionTests
     }
 
     [Fact]
-    public void CollectionRowsCountTheUnityObjectsTheModMadeDestroyedAndActivatedDuringThatFrame()
+    public void CollectionRowsCountTheUnityWorkRequestsTheModMadeDuringThatFrame()
     {
         var sampler = new GcPauseSampler(64);
         sampler.Start(1000);
@@ -107,7 +107,7 @@ public sealed class Gr5LiveHeapAttributionTests
         int gen0 = 0;
         for (int frame = 0; frame <= 12; frame++)
         {
-            sampler.NoteUnityWork(frame * 2L, frame == 8 ? 40 : frame, frame < 8 ? 3L * frame : 3L * frame + 5);
+            sampler.NoteUnityWork(frame * 2L, frame == 8 ? 40 : frame, frame < 8 ? 3L * frame : 3L * frame + 5, frame, frame < 9 ? frame : frame + 2, 4L * frame);
             if (frame == 7 || frame == 9) gen0++;
             sampler.Observe(frame * 16.0, gen0, 0, 0, 1000 + frame, frame);
         }
@@ -116,12 +116,19 @@ public sealed class Gr5LiveHeapAttributionTests
         Assert.Equal((6L, 2L, 1L, 3L), (first.Frame, first.Instantiated, first.Destroyed, first.Activated));
         var second = sampler.CollectionRow(1);
         Assert.Equal((8L, 2L, -1L, 3L), (second.Frame, second.Instantiated, second.Destroyed, second.Activated));
+        Assert.Equal((1L, 1L, 4L), (first.AsyncStarted, first.AsyncCompleted, first.MeshRequests));
+        Assert.Equal((1L, 3L, 4L), (second.AsyncStarted, second.AsyncCompleted, second.MeshRequests));
         using var report = JsonDocument.Parse(sampler.ReportJson(new GcReportContext(1000, 2000, null, 2, false, -1, -1)));
         var rows = report.RootElement.GetProperty("collection_rows");
-        Assert.Equal(2, rows[0].GetProperty("mod_instantiated").GetInt64());
-        Assert.Equal(1, rows[0].GetProperty("mod_destroyed").GetInt64());
-        Assert.Equal(3, rows[0].GetProperty("mod_activated").GetInt64());
-        Assert.Equal(JsonValueKind.Null, rows[1].GetProperty("mod_destroyed").ValueKind);
+        Assert.Equal(2, rows[0].GetProperty("mod_instantiate_requests").GetInt64());
+        Assert.Equal(1, rows[0].GetProperty("mod_destroy_requests").GetInt64());
+        Assert.Equal(3, rows[0].GetProperty("mod_activate_requests").GetInt64());
+        Assert.Equal(1, rows[0].GetProperty("mod_async_instantiate_completions").GetInt64());
+        Assert.Equal(4, rows[0].GetProperty("mod_mesh_requests").GetInt64());
+        Assert.Equal(JsonValueKind.Null, rows[1].GetProperty("mod_destroy_requests").ValueKind);
+        var work = report.RootElement.GetProperty("mod_unity_work");
+        Assert.Equal(("requests", "unavailable", "observed_when_done", "unavailable"), (work.GetProperty("counts").GetString(), work.GetProperty("destroy_completion").GetString(),
+            work.GetProperty("async_instantiate_completion").GetString(), work.GetProperty("mesh_upload_completion").GetString()));
     }
 
     [Fact]

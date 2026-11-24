@@ -67,6 +67,7 @@ namespace PersistentCity.Runtime
         private readonly PhysicalSetupGate physicalSetupGate = new PhysicalSetupGate();
         private readonly CollectionHeadroom collectionHeadroom = new CollectionHeadroom();
         private int collectionGuard = -1;
+        private bool collectionDeferred, caughtUpAfterAdvance;
         private readonly ResidentInspector inspector = new ResidentInspector();
         private bool inspectorFailed;
         private Action<string>? inspectorWarning;
@@ -448,15 +449,19 @@ namespace PersistentCity.Runtime
                 bool publishedNetwork = simulation.NetworkPublished;
                 if (publishedNetwork) UpdateCityClock.Reserve();
                 bool setupWanted = !publishedNetwork && settings.PhysicalEnabled && !physicalFailed && physical == null && !BuildingManager.IsInsideBuilding && !NativeTravelPace.HiddenTravel;
-                if (!publishedNetwork && !physicalSetupGate.Reserve(setupWanted) && !DeferForCollection())
+                if (!publishedNetwork && !physicalSetupGate.Reserve(setupWanted) && !DeferForCollection(target))
                 {
+                    collectionDeferred = false;
                     var advanceHeap = GcAllocationBegin();
                     AdvanceAllocation.Begin(gcSampler);
-                    long sinceBefore = collectionGuard == 1 ? GcAllocationCounter.BytesSinceCollection() : -1;
                     int collectionsBefore = GC.CollectionCount(0);
-                    try { AdvancePopulation(HoldReplayLimit(Math.Max(AccountingClock.Target(target), simulation.State.Minute))); }
+                    long sinceBefore = collectionGuard == 1 ? GcAllocationCounter.BytesSinceCollection() : -1;
+                    double advanceTarget = HoldReplayLimit(Math.Max(AccountingClock.Target(target), simulation.State.Minute));
+                    try { AdvancePopulation(advanceTarget); }
                     finally { AdvanceAllocation.End(); }
-                    if (sinceBefore >= 0 && GC.CollectionCount(0) == collectionsBefore) collectionHeadroom.NoteAdvance(GcAllocationCounter.BytesSinceCollection() - sinceBefore);
+                    caughtUpAfterAdvance = simulation.IsCaughtUpTo(AccountingClock.Target(target));
+                    long sinceAfter = sinceBefore >= 0 ? GcAllocationCounter.BytesSinceCollection() : -1;
+                    if (sinceBefore >= 0 && GC.CollectionCount(0) == collectionsBefore) collectionHeadroom.NoteAdvance(sinceAfter - sinceBefore);
                     GcAllocationEnd(GcAllocationSegment.Advance, advanceHeap);
                 }
                 if (simulation.PurchaseFault is string purchaseFault)
@@ -592,11 +597,21 @@ namespace PersistentCity.Runtime
         {
             if (collectionGuard < 0)
                 collectionGuard = UnityEngine.Scripting.GarbageCollector.isIncremental || !GcAllocationCounter.SinceCollectionAvailable ? 0 : 1;
-            if (collectionGuard == 1) collectionHeadroom.Observe(GcAllocationCounter.BytesSinceCollection(), GC.GetTotalMemory(false), GC.CollectionCount(0));
+            collectionDeferred = false;
+            if (collectionGuard != 1) return;
+            int before = GC.CollectionCount(0);
+            long since = GcAllocationCounter.BytesSinceCollection(), live = GC.GetTotalMemory(false);
+            collectionHeadroom.Observe(before, since, live, GC.CollectionCount(0));
         }
 
-        private bool DeferForCollection() => collectionGuard == 1 && !NativeCityClock.ProcessingEconomySkip
-            && collectionHeadroom.Defer(GcAllocationCounter.BytesSinceCollection());
+        private bool DeferForCollection(double native)
+        {
+            if (collectionGuard != 1 || NativeCityClock.ProcessingEconomySkip || !CollectionHeadroom.ClockAllowsDeferral(caughtUpAfterAdvance, native)) return false;
+            int before = GC.CollectionCount(0);
+            long since = GcAllocationCounter.BytesSinceCollection();
+            collectionDeferred = collectionHeadroom.Defer(before, since, GC.CollectionCount(0));
+            return collectionDeferred;
+        }
 
         internal string CollectionHeadroomJson() => collectionHeadroom.ReportJson(collectionGuard == 1);
 
@@ -985,7 +1000,8 @@ namespace PersistentCity.Runtime
         private void StartCityClock(object save)
         {
             NativeCityClock.Start(save, settings.GameClockFactor,
-                () => simulation != null && !retimeDriver.Holding && routeRebuild == null && routes?.ReadyForPopulation == true && simulation.IsCaughtUpTo(AccountingClock.Target(Now())),
+                () => simulation != null && !retimeDriver.Holding && routeRebuild == null && routes?.ReadyForPopulation == true
+                    && CollectionHeadroom.ClockReady(simulation.IsCaughtUpTo(AccountingClock.Target(Now())), collectionDeferred, simulation.State.Minute, Now()),
                 () => true, Now, () => simulation?.State.Minute ?? Now(), native => simulation == null || simulation.IsAccountingEpochDrained(native));
             NativeCityClock.StartupHold = true;
         }

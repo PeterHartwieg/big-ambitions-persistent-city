@@ -947,49 +947,37 @@ namespace PerfUnionProbe
         void Exit(Exception exception, HookState state);
     }
 
-    public interface IHookDigit { int Value { get; } }
-    public struct HookDigit0 : IHookDigit { public int Value => 0; }
-    public struct HookDigit1 : IHookDigit { public int Value => 1; }
-    public struct HookDigit2 : IHookDigit { public int Value => 2; }
-    public struct HookDigit3 : IHookDigit { public int Value => 3; }
-    public struct HookDigit4 : IHookDigit { public int Value => 4; }
-    public struct HookDigit5 : IHookDigit { public int Value => 5; }
-    public struct HookDigit6 : IHookDigit { public int Value => 6; }
-    public struct HookDigit7 : IHookDigit { public int Value => 7; }
-    public struct HookDigit8 : IHookDigit { public int Value => 8; }
-    public struct HookDigit9 : IHookDigit { public int Value => 9; }
-    public struct HookDigit10 : IHookDigit { public int Value => 10; }
-    public struct HookDigit11 : IHookDigit { public int Value => 11; }
-    public struct HookDigit12 : IHookDigit { public int Value => 12; }
-    public struct HookDigit13 : IHookDigit { public int Value => 13; }
-    public struct HookDigit14 : IHookDigit { public int Value => 14; }
-    public struct HookDigit15 : IHookDigit { public int Value => 15; }
-
-    public static class HookSlot<TSink, THigh, TLow> where TSink : struct, IHookSink where THigh : struct, IHookDigit where TLow : struct, IHookDigit
-    {
-        public static readonly int Slot = HookSlots.Index(default(THigh).Value, default(TLow).Value);
-        public static void Before(out HookState __state) => default(TSink).Enter(Slot, out __state);
-        public static void After(Exception __exception, HookState __state) => default(TSink).Exit(__exception, __state);
-    }
-
     public static class HookSlots
     {
-        public const int Radix = 16, Capacity = Radix * Radix;
-        private static readonly Type[] Digits =
-        {
-            typeof(HookDigit0), typeof(HookDigit1), typeof(HookDigit2), typeof(HookDigit3), typeof(HookDigit4), typeof(HookDigit5), typeof(HookDigit6), typeof(HookDigit7),
-            typeof(HookDigit8), typeof(HookDigit9), typeof(HookDigit10), typeof(HookDigit11), typeof(HookDigit12), typeof(HookDigit13), typeof(HookDigit14), typeof(HookDigit15),
-        };
-        public static int Index(int high, int low) => high * Radix + low;
+        public const int Capacity = 256, Kinds = 2;
+        private static readonly IHookSink[] sinks = new IHookSink[Kinds];
+        private static readonly Type[] kindSinks = new Type[Kinds];
         public static bool Fits(int slot) => slot >= 0 && slot < Capacity;
-        public static Type Close(Type sink, int slot)
+        public static int Kind(Type sink)
         {
             if (sink == null || !sink.IsValueType || !typeof(IHookSink).IsAssignableFrom(sink)) throw new ArgumentException("A hook sink is a struct implementing IHookSink.", nameof(sink));
+            lock (sinks)
+            {
+                for (int k = 0; k < Kinds; k++)
+                {
+                    if (kindSinks[k] == sink) return k;
+                    if (kindSinks[k] != null) continue;
+                    sinks[k] = (IHookSink)Activator.CreateInstance(sink); kindSinks[k] = sink;
+                    return k;
+                }
+            }
+            throw new InvalidOperationException("Every hook sink kind is taken.");
+        }
+        public static Type Close(Type sink, int slot)
+        {
+            int kind = Kind(sink);
             if (!Fits(slot)) throw new ArgumentOutOfRangeException(nameof(slot));
-            return typeof(HookSlot<,,>).MakeGenericType(sink, Digits[slot / Radix], Digits[slot % Radix]);
+            return HookSlotTable.Types[kind * Capacity + slot];
         }
         public static MethodInfo Prefix(Type sink, int slot) => Close(sink, slot).GetMethod("Before", BindingFlags.Public | BindingFlags.Static);
         public static MethodInfo Finalizer(Type sink, int slot) => Close(sink, slot).GetMethod("After", BindingFlags.Public | BindingFlags.Static);
+        public static void Enter(int kind, int slot, out HookState state) => sinks[kind].Enter(slot, out state);
+        public static void Exit(int kind, Exception exception, HookState state) => sinks[kind].Exit(exception, state);
     }
 
     public sealed class FrameScopeLedger

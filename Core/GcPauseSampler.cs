@@ -54,6 +54,9 @@ namespace PersistentCity.Core
         public long Instantiated;
         public long Destroyed;
         public long Activated;
+        public long AsyncStarted;
+        public long AsyncCompleted;
+        public long MeshRequests;
     }
 
     public enum GcAsyncGrow { None, Pending, Integrated, Cancelled, Unknown }
@@ -232,6 +235,7 @@ namespace PersistentCity.Core
             HeapStart = HeapEnd = HeapPeak = lastHeap = heapBytes;
             baselined = false; pendingModMs = pendingLateMs = 0; ownedBodies = boundBodies = -1; growBefore = growNow = default; growSampled = false;
             instantiatedNow = destroyedNow = activatedNow = instantiatedBefore = destroyedBefore = activatedBefore = -1;
+            asyncStartedNow = asyncCompletedNow = meshNow = asyncStartedBefore = asyncCompletedBefore = meshBefore = -1;
             Running = true;
         }
 
@@ -264,6 +268,7 @@ namespace PersistentCity.Core
             else if (heapBytes >= 0) lastHeap = heapBytes;
             lastMarks = marks; growBefore = growNow; growBeforeSampled = growSampled;
             instantiatedBefore = instantiatedNow; destroyedBefore = destroyedNow; activatedBefore = activatedNow;
+            asyncStartedBefore = asyncStartedNow; asyncCompletedBefore = asyncCompletedNow; meshBefore = meshNow;
             lastFrameNumber = unityFrame;
             lastStampMs = stampMilliseconds; lastCounts[0] = gen0Total; lastCounts[1] = gen1Total; lastCounts[2] = gen2Total;
             pendingModMs = pendingLateMs = 0; pendingFrameCpuMs = pendingModCpuMs = -1; baselined = true;
@@ -290,7 +295,15 @@ namespace PersistentCity.Core
 
         private long instantiatedNow = -1, destroyedNow = -1, activatedNow = -1, instantiatedBefore = -1, destroyedBefore = -1, activatedBefore = -1;
 
-        public void NoteUnityWork(long instantiated, long destroyed, long activated) { instantiatedNow = instantiated; destroyedNow = destroyed; activatedNow = activated; }
+        private long asyncStartedNow = -1, asyncCompletedNow = -1, meshNow = -1, asyncStartedBefore = -1, asyncCompletedBefore = -1, meshBefore = -1;
+
+        public const string UnityWorkCounts = "requests", DestroyCompletion = "unavailable", AsyncInstantiateCompletion = "observed_when_done", MeshUploadCompletion = "unavailable";
+
+        public void NoteUnityWork(long instantiated, long destroyed, long activated, long asyncStarted, long asyncCompleted, long meshRequests)
+        {
+            instantiatedNow = instantiated; destroyedNow = destroyed; activatedNow = activated;
+            asyncStartedNow = asyncStarted; asyncCompletedNow = asyncCompleted; meshNow = meshRequests;
+        }
 
         private static long Delta(long before, long now) => before < 0 || now < before ? -1 : now - before;
 
@@ -451,7 +464,8 @@ namespace PersistentCity.Core
                         OwnedBodies = ownedBodies, BoundBodies = boundBodies, Diagnostic = diagnosticSource ?? "",
                         AsyncGrow = growBeforeSampled && growSampled ? GcGrowSample.Outcome(growBefore, growNow) : GcAsyncGrow.Unknown, Gen0Through = gen0Through,
                         FrameCpuMs = closingFrameCpuMs, ModCpuMs = closingModCpuMs, BeginStampMs = closingBeginStampMs, EndStampMs = closingEndStampMs,
-                        Instantiated = Delta(instantiatedBefore, instantiatedNow), Destroyed = Delta(destroyedBefore, destroyedNow), Activated = Delta(activatedBefore, activatedNow) };
+                        Instantiated = Delta(instantiatedBefore, instantiatedNow), Destroyed = Delta(destroyedBefore, destroyedNow), Activated = Delta(activatedBefore, activatedNow),
+                        AsyncStarted = Delta(asyncStartedBefore, asyncStartedNow), AsyncCompleted = Delta(asyncCompletedBefore, asyncCompletedNow), MeshRequests = Delta(meshBefore, meshNow) };
                     rowAwaitsNext = true;
                 }
             }
@@ -595,6 +609,8 @@ namespace PersistentCity.Core
             text.Append(",\"max_late_ms\":").Append(D(MaxLateMs));
             text.Append(",\"collection_rows_retained\":").Append(N(collectionRowCount))
                 .Append(",\"collection_rows_truncated\":").Append(CollectionRowsTruncated ? "true" : "false")
+                .Append(",\"mod_unity_work\":{\"counts\":\"").Append(UnityWorkCounts).Append("\",\"destroy_completion\":\"").Append(DestroyCompletion)
+                .Append("\",\"async_instantiate_completion\":\"").Append(AsyncInstantiateCompletion).Append("\",\"mesh_upload_completion\":\"").Append(MeshUploadCompletion).Append("\"}")
                 .Append(",\"collection_rows\":[");
             for (int i = 0; i < collectionRowCount; i++)
             {
@@ -609,8 +625,11 @@ namespace PersistentCity.Core
                     .Append(",\"frame_cpu_ms\":").Append(r.FrameCpuMs < 0 ? "null" : D(r.FrameCpuMs)).Append(",\"mod_cpu_ms\":").Append(r.ModCpuMs < 0 ? "null" : D(r.ModCpuMs))
                     .Append(",\"off_cpu_ms\":").Append(r.FrameCpuMs < 0 ? "null" : D(Math.Max(0, r.FrameMs - r.FrameCpuMs)))
                     .Append(",\"begin_stamp_ms\":").Append(r.BeginStampMs < 0 ? "null" : D(r.BeginStampMs)).Append(",\"end_stamp_ms\":").Append(r.EndStampMs < 0 ? "null" : D(r.EndStampMs))
-                    .Append(",\"mod_instantiated\":").Append(r.Instantiated < 0 ? "null" : N(r.Instantiated)).Append(",\"mod_destroyed\":").Append(r.Destroyed < 0 ? "null" : N(r.Destroyed))
-                    .Append(",\"mod_activated\":").Append(r.Activated < 0 ? "null" : N(r.Activated)).Append('}');
+                    .Append(",\"mod_instantiate_requests\":").Append(r.Instantiated < 0 ? "null" : N(r.Instantiated)).Append(",\"mod_destroy_requests\":").Append(r.Destroyed < 0 ? "null" : N(r.Destroyed))
+                    .Append(",\"mod_activate_requests\":").Append(r.Activated < 0 ? "null" : N(r.Activated))
+                    .Append(",\"mod_async_instantiate_starts\":").Append(r.AsyncStarted < 0 ? "null" : N(r.AsyncStarted))
+                    .Append(",\"mod_async_instantiate_completions\":").Append(r.AsyncCompleted < 0 ? "null" : N(r.AsyncCompleted))
+                    .Append(",\"mod_mesh_requests\":").Append(r.MeshRequests < 0 ? "null" : N(r.MeshRequests)).Append('}');
             }
             text.Append(']');
             S(text, "pause_ms_over_neighbours", PauseOverNeighboursSpread());

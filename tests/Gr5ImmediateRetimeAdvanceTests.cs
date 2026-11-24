@@ -104,6 +104,42 @@ public sealed class Gr5ImmediateRetimeAdvanceTests
         Assert.Equal(Reference, hash);
     }
 
+    private static (int Behind, int Deferred, double MaxLag) RunWithDeferrals(CitySimulator city, Gr5AdvanceAllocationTests.Planner planner, double from, double to, double rate, int period, int run)
+    {
+        int frame = 0, behind = 0, deferred = 0;
+        double maxLag = 0, last = from;
+        bool owed = false;
+        for (double minute = from; minute < to; minute += rate / 30, frame++)
+        {
+            last = minute;
+            if (frame % period < run) { city.RefreshOptionalStops(); deferred++; owed = true; maxLag = Math.Max(maxLag, minute - city.State.Minute); continue; }
+            Run(city, planner, minute, minute + rate / 60, rate, null);
+            owed = false;
+            if (!city.IsCaughtUpTo(minute)) behind++;
+        }
+        if (owed) Run(city, planner, last, last + rate / 60, rate, null);
+        return (behind, deferred, maxLag);
+    }
+
+    [Fact]
+    public void GuardDeferralsInTheImmediateRetimeWindowCompleteTheSameWorkAndKeepTheSaveHash()
+    {
+        var (state, city, planner) = AfterImmediateRetime(out var market);
+        market.FreshRivals = true;
+        var deferred = RunWithDeferrals(city, planner, Start, Start + 240, 2, 300, CollectionHeadroom.MaximumDeferredUpdates);
+        city.SynchronizeSnapshot();
+        string hash = RushSpikeReplay.Sha(DevelopmentChain.Write(state));
+        var (baseState, baseCity, basePlanner) = AfterImmediateRetime(out var baseMarket);
+        baseMarket.FreshRivals = true;
+        var baseline = RunWithDeferrals(baseCity, basePlanner, Start, Start + 240, 2, 300, 0);
+        baseCity.SynchronizeSnapshot();
+        output.WriteLine("hash with deferrals " + hash + ", per-frame baseline " + RushSpikeReplay.Sha(DevelopmentChain.Write(baseState)));
+        output.WriteLine("immediate retime 2x, " + deferred.Deferred + " deferred updates in runs of " + CollectionHeadroom.MaximumDeferredUpdates + " every 300 frames: largest backlog "
+            + deferred.MaxLag.ToString("0.000") + " game minutes; updates left behind the native minute after advancing " + deferred.Behind + " with deferrals / " + baseline.Behind + " without");
+        Assert.True(deferred.Deferred > 80, "deferred updates " + deferred.Deferred);
+        Assert.Equal(Reference, hash);
+    }
+
     private static FoodAlternativeObservation Rival(string owner = "rival-owner", int opens = 0) =>
         new("rival", "s0", "street", 1, 1, "food", owner, FoodAlternativeKind.Rival, true, true, false, null, 0,
             new[] { new FoodAdvertisedOffer(FoodProducts.Croissant, Money.FromCents(250)) },

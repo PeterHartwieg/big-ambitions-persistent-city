@@ -77,6 +77,7 @@ namespace PersistentCity.Runtime
                 Steps++;
             }
             target.SetVertices(vertices);
+            ModUnityWork.MeshRequest();
             if (withNormals) target.SetNormals(normals);
             if (withTangents) target.SetTangents(tangents);
             vertices.Clear(); normals.Clear(); tangents.Clear();

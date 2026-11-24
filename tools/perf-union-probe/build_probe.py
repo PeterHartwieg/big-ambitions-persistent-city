@@ -22,7 +22,7 @@ import check_scopes  # noqa: E402
 HARMONY_SHA256 = '7b9e756306fa3d7620e02a857c8927a6ab04973f9bd8a77d3866700a6deac55c'
 REFERENCES = ['mscorlib', 'System', 'System.Core', 'netstandard', 'BigAmbitions', 'BigAmbitions.ModAPI',
               'HGExtensions', 'HGPlugins', 'UnityEngine.CoreModule', 'Newtonsoft.Json']
-SOURCES = ['HarmonyScan.cs', 'Probe.cs', 'ProbeLogic.cs', 'ScopeInventory.cs']
+SOURCES = ['HarmonyScan.cs', 'HookSlotTable.cs', 'Probe.cs', 'ProbeLogic.cs', 'ScopeInventory.cs']
 ARTIFACT = 'PerfUnionProbe.dll'
 MOD = 'PerfUnionProbe'
 HARMONY = REPO / 'build/PersistentCity/Dependencies/0Harmony.dll'

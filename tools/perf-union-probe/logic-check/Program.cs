@@ -50,6 +50,7 @@ internal static class Program
         ScanCache();
         LoopPhases();
         HookSlotHooks();
+        HookSlotRecovery();
         ScopeLedger();
         Console.WriteLine("logic-check: " + (checks - failures) + "/" + checks + " checks passed");
         Console.WriteLine("expected_scope_hash " + ScopeInventory.Hash());
@@ -119,6 +120,38 @@ internal static class Program
         enter[1](out var failed); exit[1](new InvalidOperationException("hook-target"), failed);
         Check(SinkLog.Exceptions == 1 && SinkLog.Exited[17] == 22001, "a slot finalizer passes the exception to its sink");
         Check(SinkLog.Entered.Sum() == 66001, "no other slot is entered");
+    }
+
+    private static MethodInfo Recovered(MethodInfo hook)
+    {
+        var patch = new HarmonyLib.Patch(new HarmonyLib.HarmonyMethod(hook), 0, "logic-check.hook-slot-recovery");
+        typeof(HarmonyLib.Patch).GetField("patchMethod", BindingFlags.NonPublic | BindingFlags.Instance).SetValue(patch, null);
+        return patch.PatchMethod;
+    }
+
+    private static void HookSlotRecovery()
+    {
+        int[] slots = { 0, 17, 33, HookSlots.Capacity - 1 };
+        bool same = true, callable = true;
+        var distinct = new HashSet<MethodInfo>();
+        foreach (int slot in slots)
+        {
+            var before = HookSlots.Prefix(typeof(LogSink), slot);
+            var after = HookSlots.Finalizer(typeof(LogSink), slot);
+            MethodInfo recoveredBefore = Recovered(before), recoveredAfter = Recovered(after);
+            same &= recoveredBefore == before && recoveredAfter == after;
+            distinct.Add(recoveredBefore);
+            try
+            {
+                long entered = SinkLog.Entered[slot], exited = SinkLog.Exited[slot];
+                ((BeforeHook)recoveredBefore.CreateDelegate(typeof(BeforeHook)))(out var state);
+                ((AfterHook)recoveredAfter.CreateDelegate(typeof(AfterHook)))(null, state);
+                callable &= SinkLog.Entered[slot] == entered + 1 && SinkLog.Exited[slot] == exited + 1;
+            }
+            catch (Exception) { callable = false; }
+        }
+        Check(same && distinct.Count == slots.Length, "a slot hook rebuilt from Harmony's module and metadata token is the same method (slots 0, 17, 33, last)");
+        Check(callable, "a rebuilt slot hook enters and exits its own slot");
     }
 
     private static void ScopeLedger()

@@ -267,6 +267,7 @@ namespace PersistentCity.Runtime
                         parts[e] = new CombineInstance { mesh = source.sharedMesh, subMeshIndex = entry.Submesh, transform = transform.localToWorldMatrix };
                     }
                     var mesh = new Mesh { indexFormat = format };
+                    ModUnityWork.MeshRequest();
                     groupMeshes.Add(mesh);
                     mesh.CombineMeshes(parts, mergeSubMeshes: true, useMatrices: true);
                     var groupPoses = Array(poses, finalPoses.Count - poseStart);
@@ -276,6 +277,7 @@ namespace PersistentCity.Runtime
                 var final = Array(combines, groupMeshes.Count);
                 for (int g = 0; g < groupMeshes.Count; g++) final[g] = new CombineInstance { mesh = groupMeshes[g], subMeshIndex = 0, transform = Matrix4x4.identity };
                 combined = new Mesh { indexFormat = format, name = "Combined Meshes (One Mesh Per Material)" };
+                ModUnityWork.MeshRequest();
                 combined.CombineMeshes(final, mergeSubMeshes: false);
                 DestroyGroups();
                 combined.RecalculateBounds();
@@ -292,6 +294,7 @@ namespace PersistentCity.Runtime
                 var materialArray = Array(materialArrays, plan.Groups);
                 for (int g = 0; g < plan.Groups; g++) materialArray[g] = materials[plan.Material(g)];
                 merged.sharedMaterials = materialArray;
+                ModUnityWork.MeshRequest();
                 merged.rootBone = RootBone(combiner);
                 var manager = result.AddComponent<CombinedMeshesManager>();
                 manager.rootGameObject = combiner.gameObject;
