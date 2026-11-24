@@ -27632,8 +27632,8 @@ The guard confirmed suppression after load and immediately before and after the 
 
 ### Carried and excluded checks
 
-- E6 2b carries **PASS** and E6 10 carries **PARTIAL** from 17p (#369). The 20× traffic pin moved through the retime. The Drink override kept the opening Street Food-owned and produced the intended sales behaviour. The shutdown log gate kept the end-to-end Drink check partial.
-- E6 1's 0.10.11 arm is **NOT RUN**, outside the 17q scope. The 17o Vendor API v1-present arm remains carried, with truck B eligible and `Reason: ""`, restated for E6f.
+- E6 2b carries **PASS** and E6 10 carries **PARTIAL** from 17p at `c20d4ec4` (report #369). The 20× traffic pin moved through the retime. The Drink override kept the opening Street Food-owned and produced the intended sales behaviour. The shutdown log gate kept the end-to-end Drink check partial.
+- E6 1's 0.10.11 arm is **NOT RUN**, outside the 17q scope. The 17o Vendor API v1-present arm at `477d11a5` remains carried, with truck B eligible and `Reason: ""`, restated for E6f.
 - E6 3, 6 and 7 are **NOT RUN**. Rig PR #121's `20261124-201132-rig-e6-17o-rlo-ledger-loggate` failed to finish CI in 60 minutes, has `merge_sha: null` and is absent from the installed overlay.
 - E6 4 is **NOT RUN**. Base-v2 failed the day-two proof with cart A off-map, a $250 fine and zero minutes open. It needs Street Food `edit_stop`.
 - E6 5, 9 and 12 are **NOT RUN** pending the Street Food `edit_stop`, `vendor_fault` and contract-2 builds. E6 13 is **NOT RUN** pending F6b.
