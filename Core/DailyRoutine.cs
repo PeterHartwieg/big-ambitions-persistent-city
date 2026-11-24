@@ -197,6 +197,73 @@ namespace PersistentCity.Core
             return null;
         }
 
+        internal static double? NextOpen(IReadOnlyList<OpeningWindow> weekly, double minute, double beforeMinute)
+        {
+            if (weekly == null) throw new ArgumentNullException(nameof(weekly));
+            if (!Position.Finite(beforeMinute) || beforeMinute < minute || beforeMinute > 1e9)
+                throw new ArgumentOutOfRangeException(nameof(beforeMinute));
+            if (!Position.Finite(minute) || minute < 0 || minute > 1e9) throw new ArgumentOutOfRangeException(nameof(minute));
+            int day = (int)Math.Floor(minute / 1440);
+            double best = double.PositiveInfinity;
+            for (int offset = -1; offset <= 8; offset++)
+            {
+                int currentDay = day + offset;
+                double midnight = currentDay * 1440.0;
+                int weekday = ((currentDay - 1) % 7 + 7) % 7;
+                for (int i = 0; i < weekly.Count; i++)
+                {
+                    var window = weekly[i];
+                    if (window.Day != weekday || window.FromMinute == window.ToMinute) continue;
+                    double from = midnight + window.FromMinute, to = midnight + window.ToMinute + (window.ToMinute < window.FromMinute ? 1440 : 0);
+                    double opening = Math.Max(minute, from);
+                    if (to > opening && opening < best) best = opening;
+                }
+            }
+            return best < beforeMinute ? best : (double?)null;
+        }
+
+        internal static bool Open(IReadOnlyList<OpeningWindow> weekly, double minute) => NextClose(weekly, minute).HasValue;
+
+        internal static double? NextClose(IReadOnlyList<OpeningWindow> weekly, double minute)
+        {
+            if (weekly == null) throw new ArgumentNullException(nameof(weekly));
+            if (!Position.Finite(minute) || minute < 0 || minute > 1e9) throw new ArgumentOutOfRangeException(nameof(minute));
+            int day = (int)Math.Floor(minute / 1440);
+            double close = double.NaN;
+            for (int offset = -1; offset <= 8; offset++)
+            {
+                int currentDay = day + offset;
+                double midnight = currentDay * 1440.0;
+                int weekday = ((currentDay - 1) % 7 + 7) % 7;
+                for (int i = 0; i < weekly.Count; i++)
+                {
+                    var window = weekly[i];
+                    if (window.Day != weekday || window.FromMinute == window.ToMinute) continue;
+                    double from = midnight + window.FromMinute, to = midnight + window.ToMinute + (window.ToMinute < window.FromMinute ? 1440 : 0);
+                    if (from <= minute && to > minute && !(to <= close)) close = to;
+                }
+            }
+            if (double.IsNaN(close)) return null;
+            for (bool grew = true; grew;)
+            {
+                grew = false;
+                for (int offset = -1; offset <= 8; offset++)
+                {
+                    int currentDay = day + offset;
+                    double midnight = currentDay * 1440.0;
+                    int weekday = ((currentDay - 1) % 7 + 7) % 7;
+                    for (int i = 0; i < weekly.Count; i++)
+                    {
+                        var window = weekly[i];
+                        if (window.Day != weekday || window.FromMinute == window.ToMinute) continue;
+                        double from = midnight + window.FromMinute, to = midnight + window.ToMinute + (window.ToMinute < window.FromMinute ? 1440 : 0);
+                        if (from <= close && to > close) { close = to; grew = true; }
+                    }
+                }
+            }
+            return close >= minute + 10080 ? double.PositiveInfinity : close;
+        }
+
         internal static OpeningInterval[] Intervals(Place place, double minute) => OpeningIntervals(place, minute);
 
         private static OpeningInterval[] OpeningIntervals(Place place, double minute)

@@ -94,12 +94,13 @@ public sealed class Gr5ImmediateRetimeAdvanceTests
         Assert.True(window.RivalReadBytes > 0);
         output.WriteLine(hash);
         Assert.True(window.Calls[(int)GcAllocationSegment.AdvanceEventsCitizen] > 1000, "citizen calls " + window.Calls[(int)GcAllocationSegment.AdvanceEventsCitizen]);
-        Assert.True(window.Per(GcAllocationSegment.AdvanceEventsCitizen) < 730, "citizen bytes per call " + window.Per(GcAllocationSegment.AdvanceEventsCitizen));
-        Assert.True(window.Per(GcAllocationSegment.AdvanceEventsFood) < 560, "food bytes per call " + window.Per(GcAllocationSegment.AdvanceEventsFood));
+        Assert.True(window.Per(GcAllocationSegment.AdvanceEventsCitizen) < 690, "citizen bytes per call " + window.Per(GcAllocationSegment.AdvanceEventsCitizen));
+        Assert.True(window.Per(GcAllocationSegment.AdvanceEventsFood) < 400, "food bytes per call " + window.Per(GcAllocationSegment.AdvanceEventsFood));
         Assert.True(window.Per(GcAllocationSegment.AdvancePlanningSlice) < 1, "planning slice bytes per call " + window.Per(GcAllocationSegment.AdvancePlanningSlice));
+        Assert.True(window.Per(GcAllocationSegment.AdvancePlanningFinish) < 200, "planning finish bytes per call " + window.Per(GcAllocationSegment.AdvancePlanningFinish));
         Assert.True(window.Per(GcAllocationSegment.AdvanceEventsOther) < 1, "idle bytes per call " + window.Per(GcAllocationSegment.AdvanceEventsOther));
-        Assert.True(window.Per(GcAllocationSegment.AdvanceEventsRouteBegin) < 470, "route begin bytes per call " + window.Per(GcAllocationSegment.AdvanceEventsRouteBegin));
-        Assert.True(window.Total < 19_300_000, "window bytes " + window.Total);
+        Assert.True(window.Per(GcAllocationSegment.AdvanceEventsRouteBegin) < 420, "route begin bytes per call " + window.Per(GcAllocationSegment.AdvanceEventsRouteBegin));
+        Assert.True(window.Total < 17_100_000, "window bytes " + window.Total);
         Assert.Equal(Reference, hash);
     }
 
