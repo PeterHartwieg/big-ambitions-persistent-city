@@ -27983,16 +27983,19 @@ Separate native whole-frame timing was p95 **37.5326 ms** and max **385.3028 ms*
 
 ### Carried and excluded
 
-- E6 checks 3 and 6 carry their 17u passes (#374). The without-PC arm carries its 14-step gameplay pass from the same run.
-- #350 carries both 17t passes (#373). E6 check 1 carries its earlier results, including Street Food 0.10.11 in 17r.
-- E6 2b carries 17p PASS and E6 10 carries 17p PARTIAL with the intended Drink behaviour.
+These carries are outside the 17v counts.
+
+- E6 check 7 is complete: the 17v with-PC pass above and the 14-step without-PC gameplay pass carried from 17u at `8aa369d2` (#374).
+- E6 checks 3 and 6 carry their 17u passes at `8aa369d2` (#374).
+- #350 through-gate, both arms, carries 17t PASS at `b04549a` (#373). E6 check 1 carries the 17o Vendor API v1-present result at `477d11a5` and the 17r Street Food 0.10.11 result at `acc7eb9d`.
+- E6 2b carries 17p PASS at `c20d4ec4`. E6 10 carries 17p PARTIAL at `c20d4ec4`, with the intended Drink behaviour.
 - E6 4 and 5 wait on Street Food `edit_stop`. E6 9 and 12 wait on `vendor_fault` and a reviewed contract-2 build. E6 13 waits on F6b.
 - Pointer, hover, click and visual feel stay with Peter.
 
 ### Restore and evidence
 
-Both isolated players stopped cleanly. The with-PC flow restored its staged set and lease. Performance staging used `python3 scripts/install-mac.py --stage-mod PersistentCity <absolute 25e package path>` with backup `~/Library/Application Support/BigAmbitionsAgentTestsMac/receipt-backups/20261125T075616Z`. The 272 ModsLocal files, 284 receipt entries, config, isolated preferences and SaveGames matched the pre-run hashes after cleanup. RLO and the overlay retained their hashes. The imported fixture, disposable saves and generated sidecars were archived. The retained 17u original stayed in place. Final `agentmac` status showed the game closed, lease free and zero pending operations.
+Both isolated players stopped cleanly. The with-PC flow restored its staged set and lease. Performance staging used `python3 scripts/install-mac.py --stage-mod PersistentCity <absolute 25e package path>` with the timestamped receipt backup `20261125T075616Z`. The 272 ModsLocal files, 284 receipt entries, config, isolated preferences and SaveGames matched the pre-run hashes after cleanup. RLO and the overlay retained their hashes. The imported fixture, disposable saves and generated sidecars were archived. The retained 17u original stayed in place. Final `agentmac` status showed the game closed, lease free and zero pending operations.
 
-Raw evidence is in `~/Coding_Projects/.agent-logs/persistent-city-rig-2026-11-25e-mac/`. The SHA-256 of `evidence-sha256.txt` is `ec34ff8774d193c382622ab9ee712dad1a801e9e373eeccbf9c0e5b4544a5ff4`.
+Raw evidence is in the private evidence run `persistent-city-rig-2026-11-25e-mac`. The SHA-256 of `evidence-sha256.txt` is `ec34ff8774d193c382622ab9ee712dad1a801e9e373eeccbf9c0e5b4544a5ff4`.
 
 Refs #364 #366 #374
