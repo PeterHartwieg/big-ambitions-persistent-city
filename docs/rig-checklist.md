@@ -28160,11 +28160,12 @@ The separate perf session's full and post-quit log gates both exited 0.
 
 ### Carried and excluded
 
-- E6 1 remains complete, including Street Food 0.10.11 (#368, #371). E6 2b carries its 17p pass and E6 10 its 17p partial with the intended Drink override (#369).
-- E6 3 and 6 carry the 17u passes (#374). E6 7 carries both pass results from 17u and 17v (#374, #375).
-- E6 4 and 9 carry the 17w passes. E6 12 is complete on the contract-2 arm after the owner restatement (#376, #377).
-- E6 8 and 11 carry the 17l passes (#364). E6 13 waits on F6b.
-- Both #350 through-gate arms carry the 17t passes (#373). Only the Mac was used. Pointer, hover, click and visual feel stay with Peter.
+- E6 check 1 carries the Vendor API v1-present and 0.10.11 results from 17o at `477d11a5` and 17r at `acc7eb9d` (#368, #371).
+- E6 2b carries its 17p pass and E6 10 its 17p partial with the intended Drink override, both at `c20d4ec4` (#369).
+- E6 3 and 6 carry their 17u passes at `8aa369d2` (#374). E6 7 carries the 17u without-PC pass at `8aa369d2` and the 17v with-PC pass at `28d226b5` (#374, #375).
+- E6 4 and 9 carry their 17w passes at `d336a3b1` (#376). E6 12 carries the 17w contract-2 evidence at `d336a3b1` (#376), complete under the check 12 restatement (#377).
+- E6 8 and 11 carry the 17l passes at `7714484f` (#364). E6 13 waits on F6b.
+- Both #350 through-gate arms carry their 17t passes at `b04549a` (#373). Only the Mac was used. Pointer, hover, click and visual feel stay with Peter.
 
 ### Restore and evidence
 
