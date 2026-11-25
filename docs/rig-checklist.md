@@ -17,7 +17,7 @@ Every GR-5 rig run from now on must:
 
 ## Latest evidence
 
-- **25 November f, Mac (rig 17w), build `d336a3b1`**. 3 PASS / 2 PARTIAL / 0 FAIL / 0 NOT RUN. Day-two choice and the sell-fault check passed. Recorder-off mod-work p95 was 3.5194 ms with 0 spikes ≥30 ms. [25f results](#rig-results---25-november-2026-f-mac-rig-17w-e6-checks-4-5-9-12-after-agent-rig-129-at-d336a3b1).
+- **25 November f, Mac (rig 17w), build `d336a3b1`**. 3 PASS / 2 PARTIAL / 0 FAIL / 0 NOT RUN. Day-two choice and the sell-fault check passed. Check 12 has since been restated and is complete on its 17w contract-2 arm ([restatement](#e6-check-12-older-city-refusal-and-contract-2-control)). Recorder-off mod-work p95 was 3.5194 ms with 0 spikes ≥30 ms. [25f results](#rig-results---25-november-2026-f-mac-rig-17w-e6-checks-4-5-9-12-after-agent-rig-129-at-d336a3b1).
 - **25 November e, Mac (rig 17v), build `28d226b5`**. 2 PASS / 0 PARTIAL / 0 FAIL / 0 NOT RUN. With-PC check 7 passed 31 steps and the post-quit log gate exited 0. Provisional recorder-off mod-work p95 was 2.8057 ms with one spike ≥30 ms. [25e results](#rig-results---25-november-2026-e-mac-rig-17v-e6-check-7-with-pc-after-agent-rig-127-at-28d226b5).
 - **25 November d, Mac (rig 17u), build `8aa369d2`**. 3 PASS / 1 PARTIAL / 0 FAIL / 0 NOT RUN. Exact-money and handback ledger checks passed. Lease gameplay passed both arms and the with-PC teardown gate failed. Provisional recorder-off mod-work p95 was 3.3245 ms with 0 spikes ≥30 ms. [25d results](#rig-results---25-november-2026-d-mac-rig-17u-e6-checks-3-6-7-after-agent-rig-121-at-8aa369d2).
 - **25 November c, Mac (rig 17t), build `b04549a`**. 3 PASS / 0 PARTIAL / 0 FAIL / 0 NOT RUN. The held-open gate passed the car and the closed leaf stopped it. Both releases read `unignored` with explicit `last_failure: null` in compact and full status. Provisional recorder-off mod-work p95 was 3.7287 ms with 0 spikes ≥30 ms. [25c results](#rig-results---25-november-2026-c-mac-rig-17t-350-through-gate-after-agent-rig-126-at-b04549a).
@@ -151,7 +151,7 @@ Missing: original-three, mixed original and dynamic, eight- and nine-offer, cata
 
 ## 3. Street Food, vehicle sales and research
 
-7. **E6 checks 1 to 13** ([E6 §7](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/a3a6c8db8686f4382ac3cf941010e0b614e48805/docs/plans/e6-carts-food-trucks.md#7-in-game-checks-for-the-batched-rig)). Missing: RIG-SFAPI, RIG-VLEDGER, RIG-SFFAULT. Preflight: with Street Food 0.10.12 or later, `pc vendor status` must show `bridge: Ready` and `apiAssembly: FoodTrucks.Core`, and the activation log must show `Street Food vendor API bound; api assembly: FoodTrucks.Core`.
+7. **E6 checks 1 to 13** ([E6 §7](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/a3a6c8db8686f4382ac3cf941010e0b614e48805/docs/plans/e6-carts-food-trucks.md#7-in-game-checks-for-the-batched-rig)). Missing: RIG-SFAPI, RIG-VLEDGER, RIG-SFFAULT. Preflight: with Street Food 0.10.12 or later, `pc vendor status` must show `bridge: Ready` and `apiAssembly: FoodTrucks.Core`, and the activation log must show `Street Food vendor API bound; api assembly: FoodTrucks.Core`. Check 12 is complete: it was restated to its contract-2 arm, which passed in [17w](#e6-check-12-older-city-refusal-and-contract-2-control) (#376).
 8. **Street Food absent, then returned (F8-2).** Steps: save, load without FoodTrucks, run two hours, save, restore and load. Expected: `vendor.streetfood absent` with its reason; shop money equals a run with no cart; the cart requalifies after return. Missing: RIG-PCSAVE.
 9. **Research and a truck in one city (F9-7).** Steps: order a neighbourhood snapshot, save and reload while it is pending, run to morning. Expected: one charge on that night's marketing bill, one report, receipts unique across reload. Missing: RIG-LIVE.
 10. **Mechanism report (F8-9; 11j partial).** Expected: `shop.fullservice-bag.v1`, `vehicle.streetfood-api.v1`, and `shop.dynamic-catalogue off` for a non-historical product. 11j saw only the shop row.
@@ -28032,6 +28032,8 @@ All three pinned `BridgeControl.dll` at `f19813b44f928ea2787d22843bf79d938893741
 | E6 12, older save and contract 2 | PARTIAL | Schema-1 city active, contract 2 refused and Street Food sold natively. No genuine writer-25/26 fixture was found. |
 | Recorder-off mod work | PASS | Provisional p95 3.5194 ms with 0 spikes ≥30 ms. |
 
+The table is the run record. After the run the owner retired check 12's writer-25/26 sub-arm, so 17w's passing contract-2 arm is the complete in-game check and check 12 is PASS on this evidence (#376). See the restatement under check 12 below.
+
 ### E6 check 4. Choice next to shops and rivals
 
 The v3 flow passed 45/45 steps and the strict log gate exited 0. At day 2 10:53 cart A's live pose was (216.13, 0.12, 6.79), heading 180°. Street Food showed it open and crew-served, with $0 overnight fine on both day summaries. Persistent City reported `Ready` via `FoodTrucks.Core`, opening 32512 and `canServe: true`, with stand at (215.080, 0.099, 6.793). Truck B was open and could serve. Cart A stayed at stop 1 and could serve at 11:25 and 12:20.
@@ -28066,6 +28068,8 @@ The final strict gate exited 0. Replaying the first process log found the expect
 The restated schema rule accepts the current schema 1 and refuses historical schemas outside 1, preserving the old payload. The contract-2 Vendor API has its own compatibility gate. The reviewed `sf-contract-2` control passed 17/17 steps and the strict log gate exited 0. Persistent City attached to the hash-verified schema-1 E6 base. RIG-PCSAVE read `Schema: 1` in the disposable checkpoint's payload. Vendor status reported `Street Food VendorApi: unsupported contract 2; Persistent City reads contract 1.` The vendor table stayed empty, with lease minute −1 and zero vendor purchases or receipts. At 11:55 Street Food had booked 10 hot dogs for $40 at cart A and 11 meals for $59 at truck B. The source fixture retained its hash.
 
 The older-payload arm was NOT RUN (fixture). The installed and archived FT saves checked supplied no genuine writer-25/26 payload. No historical refusal text or byte-for-byte preservation result was observed for that arm.
+
+**Restatement (owner decision, 25 November 2026).** The writer-25/26 sub-arm is retired, not deferred. Persistent City has never shipped and the schema is held at 1, so no real city carries writer 25 or 26. A genuine fixture would need an older RLO staged, which the no-RLO-changes rule forbids. Check 12 is now the contract-2 arm above, which passed here, so **check 12 is complete (PASS)** on this 17w evidence (#376). The refusal of other schema numbers and other contracts is covered offline by the tests listed in the [E6 plan](plans/e6-carts-food-trucks.md#proof-still-needed): `VendorSaveTests`, `WorkplaceCapacityTests`, `BusinessTypesWalletTests` and `WireHeaderTests` for SaveCodec, and `StreetFoodVendorTests` for contract 2.
 
 ### Recorder-off performance
 
