@@ -579,7 +579,10 @@ namespace PersistentCity.Runtime
                         + PlanningSliceAnatomy.Text(maxPlanningSliceMilliseconds, slowestSliceJobMilliseconds, slowestSliceUnitStage, slowestSliceUnitMilliseconds,
                             slowestSliceUnitNavMeshMilliseconds, slowestSliceUnitNavMeshQueries, slowestSliceUnitNavMeshSamples)
                         + " Slowest food continuation: " + slowestFoodContinuation.Milliseconds.ToString("F3", System.Globalization.CultureInfo.InvariantCulture)
-                        + " ms (" + (slowestFoodContinuation.Step.Length == 0 ? "none" : slowestFoodContinuation.Step) + "). "
+                        + " ms (" + (slowestFoodContinuation.Step.Length == 0 ? "none" : slowestFoodContinuation.Step) + "). Advance forecast: event unit "
+                        + advanceAdmission.Events.Milliseconds.ToString("F3", System.Globalization.CultureInfo.InvariantCulture) + " ms, planning unit "
+                        + advanceAdmission.Planning.Milliseconds.ToString("F3", System.Globalization.CultureInfo.InvariantCulture) + " ms, "
+                        + advanceAdmission.SkippedSamples + " samples skipped for collections, thread CPU " + ThreadCpuClock.Available + ". "
                         + (physical?.Diagnostics ?? "Physical population inactive."));
                     if (simulation.Traffic != null)
                         log?.Info("Citywide traffic: " + (simulation.Traffic.VehicleCount - simulation.ThroughCarCount) + " persistent cars, "
@@ -627,12 +630,13 @@ namespace PersistentCity.Runtime
             int collectionsBefore = GC.CollectionCount(0);
             var unitSeams = stopEnvironment?.UnitSeams;
             bool unitCpu = unitSeams?.RecordsCpu == true && ThreadCpuClock.Available;
+            bool forecastCpu = ThreadCpuClock.Available;
             long callCpu = unitCpu ? ThreadCpuClock.Nanoseconds() : -1;
             stopEnvironment?.Maintain();
             AdvanceAllocation.Detail(GcAllocationSegment.AdvanceStops);
             bool pendingAtEnd = false, completed = false;
             unitSeams?.BeginCall(callCpu);
-            unitStarted = (Stopwatch.GetTimestamp() - started) * MillisecondsPerTimestamp;
+            unitStarted = elapsed = (Stopwatch.GetTimestamp() - started) * MillisecondsPerTimestamp;
             unitSeams?.Maintained(unitStarted, unitCpu ? ThreadCpuClock.Nanoseconds() : -1);
             void Unit(string kind)
             {
@@ -653,6 +657,9 @@ namespace PersistentCity.Runtime
                         if (routes != null && !routes.ReadyForPopulation) { pendingAtEnd = active.PlanningPending; break; }
                         if (active.PlanningPending)
                         {
+                            if (!advanceAdmission.AdmitsPlanning(elapsed, timeBudget)) { pendingAtEnd = true; break; }
+                            int sliceCollections = GC.CollectionCount(0);
+                            long sliceCpu = forecastCpu ? ThreadCpuClock.Nanoseconds() : -1;
                             long sliceStarted = Stopwatch.GetTimestamp();
                             long queriesBefore = routes?.Metrics.NavMeshPathQueries ?? 0;
                             routes?.ResetSliceAnatomy();
@@ -660,6 +667,9 @@ namespace PersistentCity.Runtime
                             AdvanceAllocation.Sub(finished ? GcAllocationSegment.AdvancePlanningFinish : GcAllocationSegment.AdvancePlanningSlice);
                             AdvanceAllocation.Detail(GcAllocationSegment.AdvancePlanning);
                             double slice = (Stopwatch.GetTimestamp() - sliceStarted) * MillisecondsPerTimestamp;
+                            long sliceCpuEnd = forecastCpu ? ThreadCpuClock.Nanoseconds() : -1;
+                            advanceAdmission.ObservePlanning(routes != null ? routes.SliceUnitMilliseconds : slice,
+                                sliceCpu >= 0 && sliceCpuEnd >= sliceCpu ? (sliceCpuEnd - sliceCpu) / 1e6 : -1, GC.CollectionCount(0) != sliceCollections);
                             planningSlices++; planningMilliseconds += slice;
                             if (slice > maxPlanningSliceMilliseconds)
                             {
@@ -676,23 +686,30 @@ namespace PersistentCity.Runtime
                             Unit("route-planning");
                             if (!finished) { if (elapsed >= timeBudget || routes?.JobAdmissionExhaustedForFrame == true) { pendingAtEnd = active.PlanningPending; break; } continue; }
                             events++; citizenEvents++; planningEvents++;
-                            if (citizenEvents >= citizenLimit || elapsed >= timeBudget) break;
+                            if (citizenEvents >= citizenLimit || !advanceAdmission.AdmitsEvent(elapsed, timeBudget)) break;
                             continue;
                         }
+                        int eventCollections = GC.CollectionCount(0);
+                        long eventCpu = forecastCpu ? ThreadCpuClock.Nanoseconds() : -1;
+                        double sliceStart = (Stopwatch.GetTimestamp() - started) * MillisecondsPerTimestamp;
                         var result = active.AdvanceFrameSlice(target, 1);
+                        routes?.ObserveAdvanceWork();
                         slowestFoodContinuation.Observe(result.FoodContinuationEvents > 0, active.LastFoodContinuationMilliseconds, active.FoodContinuationStep);
                         AdvanceAllocation.Sub(GcPauseSampler.AdvanceEventSegment(result.TrafficEvents, result.FoodContinuationEvents, result.CitizenEvents, result.PlanningPending));
                         AdvanceAllocation.Detail(GcAllocationSegment.AdvanceEvents);
                         events += result.Events;
                         citizenEvents += result.CitizenEvents;
                         elapsed = (Stopwatch.GetTimestamp() - started) * MillisecondsPerTimestamp;
+                        long eventCpuEnd = forecastCpu ? ThreadCpuClock.Nanoseconds() : -1;
+                        advanceAdmission.ObserveEvent(elapsed - sliceStart, eventCpu >= 0 && eventCpuEnd >= eventCpu ? (eventCpuEnd - eventCpu) / 1e6 : -1,
+                            GC.CollectionCount(0) != eventCollections);
                         Unit(result.PlanningPending ? "citizen-route-begin" : result.TrafficEvents > 0 ? "traffic"
                             : result.FoodContinuationEvents > 0 ? "food-continuation" : result.CitizenEvents > 0 ? "citizen" : "other");
                         if (result.PlanningPending) { pendingAtEnd = elapsed >= timeBudget; if (pendingAtEnd) break; continue; }
-                        if (result.CaughtUp || result.ThroughRoutePending || citizenEvents >= citizenLimit || elapsed >= timeBudget) break;
+                        if (result.CaughtUp || result.ThroughRoutePending || citizenEvents >= citizenLimit || !advanceAdmission.AdmitsEvent(elapsed, timeBudget)) break;
                     }
                 }
-                finally { active.SynchronizeSnapshot(); NativeCityClock.ObserveSimulationLag(target, active.State.Minute); }
+                finally { advanceAdmission.EndFrame(); active.SynchronizeSnapshot(); NativeCityClock.ObserveSimulationLag(target, active.State.Minute); }
                 elapsed = (Stopwatch.GetTimestamp() - started) * MillisecondsPerTimestamp;
                 Unit("snapshot");
                 completed = true;
@@ -759,6 +776,7 @@ namespace PersistentCity.Runtime
         private Action? physicalBeforeAdvance, physicalUpdate, physicalCatchLoads;
         private bool gateRefreshDue;
         private readonly UpdateCityBudget frameBudget = new UpdateCityBudget();
+        private readonly AdvanceAdmission advanceAdmission = new AdvanceAdmission();
 
         private void RunPhysical(Action action)
         {

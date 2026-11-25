@@ -121,11 +121,14 @@ namespace PersistentCity.Runtime
             }
             Metrics.NavMeshPathQueries++;
             bool calculated;
+            long pathCpu = ThreadCpuClock.Available ? ThreadCpuClock.Nanoseconds() : -1;
             long pathStarted = Stopwatch.GetTimestamp();
             try { calculated = NavMesh.CalculatePath(start.position, end.position, filter, navigation); }
             finally
             {
                 double elapsed = (Stopwatch.GetTimestamp() - pathStarted) * MillisecondsPerTick;
+                long pathCpuEnd = pathCpu >= 0 ? ThreadCpuClock.Nanoseconds() : -1;
+                Metrics.NavMeshPathCpuMilliseconds += pathCpu >= 0 && pathCpuEnd >= pathCpu ? Math.Min(elapsed, (pathCpuEnd - pathCpu) / 1e6) : elapsed;
                 Metrics.NavMeshPathMilliseconds += elapsed;
                 Metrics.MaximumNavMeshPathMilliseconds = Math.Max(Metrics.MaximumNavMeshPathMilliseconds, elapsed);
             }

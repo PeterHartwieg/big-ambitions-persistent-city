@@ -231,7 +231,17 @@ namespace PersistentCity.Core
         public VendorRowState State { get; internal set; }
         public string PlaceId { get; }
         public string Signature { get; }
-        public string BusinessId => Signature + ":generation:" + Generation.ToString(CultureInfo.InvariantCulture);
+        private string? businessId;
+        private int businessGeneration;
+        public string BusinessId
+        {
+            get
+            {
+                if (businessId == null || businessGeneration != Generation)
+                { businessId = Signature + ":generation:" + Generation.ToString(CultureInfo.InvariantCulture); businessGeneration = Generation; }
+                return businessId;
+            }
+        }
         public VendorStand? Stand { get; internal set; }
         public VendorStand? DeferredStand { get; internal set; }
         public VendorAuthority Authority { get; internal set; } = new VendorAuthority();

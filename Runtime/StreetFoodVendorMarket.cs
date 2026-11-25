@@ -201,7 +201,10 @@ namespace PersistentCity.Runtime
         }
         private VendorRow? Row(string business)
         {
-            var scope = state.Shops.Find(s => s.Channel == FoodScopeChannel.Vehicle && s.BusinessId == business);
+            FoodScope? scope = null;
+            var shops = state.Shops;
+            for (int i = 0; i < shops.Count; i++)
+                if (shops[i].Channel == FoodScopeChannel.Vehicle && shops[i].BusinessId == business) { scope = shops[i]; break; }
             if (scope == null) return null;
             var row = Coordinator.Table.FindPlace(scope.PlaceId);
             return row?.BusinessId == business ? row : null;

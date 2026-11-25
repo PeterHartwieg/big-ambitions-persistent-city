@@ -234,7 +234,7 @@ namespace PersistentCity.Runtime
                 {
                     if (!VendorWaiting(bound.Citizen, out _, out var vehicle) || vehicle.OpeningId != bound.VendorOpening) continue;
                     occupied.Clear();
-                    foreach (var standing in Standing(bound.Line!)) occupied.Add(standing.Value);
+                    AddStanding(bound.Line!, occupied);
                     int? ahead = DwellPlanner.MoveUp(occupied, bound.Slot);
                     if (!ahead.HasValue || !bound.Person!.SetPathTarget(bound.Line!.Spots[ahead.Value], NativeTravelPace.WalkingMetresPerSecond)) continue;
                     bound.Slot = ahead.Value; bound.Step = QueueStep.Approaching; bound.StepWalked = 0;
@@ -252,7 +252,7 @@ namespace PersistentCity.Runtime
                 if (ambient.IsReserved(citizen.Id) || !VendorWaiting(citizen, out var row, out var vehicle) || Position.Distance(row.Stand!.Position, focus) > radius
                     || !spots.TryVendorQueue(row, vehicle, out var line) || line == null) continue;
                 occupied.Clear();
-                foreach (var standing in Standing(line)) occupied.Add(standing.Value);
+                AddStanding(line, occupied);
                 foreach (var planned in queuers.Values) if (planned.Line.Key == line.Key) occupied.Add(planned.Slot);
                 int slot = 0;
                 if (bindings.TryGetValue(citizen.Id, out var binding) && binding.VendorOpening == vehicle.OpeningId
@@ -285,7 +285,9 @@ namespace PersistentCity.Runtime
         {
             if (!VendorWaiting(binding.Citizen, out var row, out var vehicle)
                 || !spots.TryVendorQueue(row, vehicle, out var line) || line == null) return false;
-            var occupied = new HashSet<int>(Standing(line).Select(p => p.Value));
+            var occupied = joinScratch;
+            occupied.Clear();
+            AddStanding(line, occupied);
             foreach (var pair in queuers) if (pair.Key != binding.Citizen.Identity.Id && pair.Value.Line.Key == line.Key) occupied.Add(pair.Value.Slot);
             int slot = 0; while (occupied.Contains(slot) && slot < line.Spots.Count) slot++;
             if (slot == line.Spots.Count) return false;

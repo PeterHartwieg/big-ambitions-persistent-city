@@ -312,10 +312,11 @@ namespace PersistentCity.Runtime
         public long JobUnits { get; private set; }
         internal const int MaximumJobUnitsPerSlice = 8;
         internal const int MaximumJobPathsPerFrame = 16;
-        private int jobPathFrame = -1, jobFramePaths, jobAdmissionHeldFrame = -1, jobRecheckHeldFrame = -1;
-        private double jobPathReserveMilliseconds = .05;
+        private int jobPathFrame = -1, jobFramePaths, jobFrameUnits, jobAdmissionHeldFrame = -1, jobRecheckHeldFrame = -1, advanceWorkFrame = -1;
+        private readonly PathReserve jobPathReserve = new PathReserve();
         public long JobAdmissionDeferrals { get; private set; }
-        public double JobPathReserveMilliseconds => jobPathReserveMilliseconds;
+        public double JobPathReserveMilliseconds => jobPathReserve.Milliseconds(Time.frameCount);
+        public void ObserveAdvanceWork() => advanceWorkFrame = Time.frameCount;
         public bool JobAdmissionExhaustedForFrame => jobAdmissionHeldFrame == Time.frameCount || jobRecheckHeldFrame == Time.frameCount
             || jobPathFrame == Time.frameCount && jobFramePaths >= MaximumJobPathsPerFrame;
         public int FramePaths => jobPathFrame == Time.frameCount ? jobFramePaths : 0;
@@ -425,7 +426,7 @@ namespace PersistentCity.Runtime
                 sliced = finite;
                 int units = 0;
                 if (finite && owner.jobPathFrame != Time.frameCount)
-                { owner.jobPathFrame = Time.frameCount; owner.jobFramePaths = 0; }
+                { owner.jobPathFrame = Time.frameCount; owner.jobFramePaths = 0; owner.jobFrameUnits = 0; }
                 while (!Completed)
                 {
                     if (!first && Stopwatch.GetTimestamp() >= deadline) return false;
@@ -433,8 +434,9 @@ namespace PersistentCity.Runtime
                     { owner.JobAdmissionDeferrals++; return false; }
                     bool pathStage = stage == Stage.HomeCurbWalk || stage == Stage.DirectWalk || stage == Stage.SubwayConnector
                         || stage == Stage.CarAccessWalk || stage == Stage.CarEgressWalk || preferenceOnly && stage == Stage.Validate;
-                    if (finite && pathStage && (owner.jobFramePaths >= MaximumJobPathsPerFrame
-                        || owner.jobFramePaths > 0 && (deadline - Stopwatch.GetTimestamp()) * 1000.0 / Stopwatch.Frequency <= owner.jobPathReserveMilliseconds))
+                    if (finite && pathStage && !PathAdmission.Admits(owner.jobFrameUnits > 0 || owner.advanceWorkFrame == Time.frameCount,
+                        owner.jobFramePaths, MaximumJobPathsPerFrame,
+                        (deadline - Stopwatch.GetTimestamp()) * 1000.0 / Stopwatch.Frequency, owner.jobPathReserve.Milliseconds(Time.frameCount)))
                     {
                         owner.jobAdmissionHeldFrame = Time.frameCount; owner.JobAdmissionDeferrals++; return false;
                     }
@@ -442,9 +444,10 @@ namespace PersistentCity.Runtime
                     { owner.JobAdmissionDeferrals++; return false; }
                     first = false;
                     units++;
+                    if (finite) owner.jobFrameUnits++;
                     owner.JobUnits++; owner.LastJobUnit = StageNames[(int)stage];
                     long before = owner.Metrics.NavMeshPathQueries, samplesBefore = owner.Metrics.NavMeshSampleQueries;
-                    double pathTimeBefore = owner.Metrics.NavMeshPathMilliseconds;
+                    double pathTimeBefore = owner.Metrics.NavMeshPathMilliseconds, pathCpuBefore = owner.Metrics.NavMeshPathCpuMilliseconds;
                     long unitStarted = Stopwatch.GetTimestamp();
                     try { Unit(deadline); }
                     finally
@@ -458,11 +461,8 @@ namespace PersistentCity.Runtime
                             owner.SliceUnitNavMeshQueries = queries; owner.SliceUnitNavMeshSamples = owner.Metrics.NavMeshSampleQueries - samplesBefore;
                         }
                         if (finite) owner.jobFramePaths += queries;
-                        if (queries > 0)
-                        {
-                            double observed = (owner.Metrics.NavMeshPathMilliseconds - pathTimeBefore) / queries;
-                            owner.jobPathReserveMilliseconds = Math.Max(.05,Math.Max(observed*1.25,owner.jobPathReserveMilliseconds*.95));
-                        }
+                        owner.jobPathReserve.Observe(Time.frameCount, queries, owner.Metrics.NavMeshPathMilliseconds - pathTimeBefore,
+                            owner.Metrics.NavMeshPathCpuMilliseconds - pathCpuBefore);
                     }
                 }
                 return true;

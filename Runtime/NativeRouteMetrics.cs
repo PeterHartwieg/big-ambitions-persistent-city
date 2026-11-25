@@ -18,6 +18,7 @@ namespace PersistentCity.Runtime
         public long NavMeshPathQueries { get; internal set; }
         public long NavMeshPathReuses { get; internal set; }
         public double NavMeshPathMilliseconds { get; internal set; }
+        public double NavMeshPathCpuMilliseconds { get; internal set; }
         public double MaximumNavMeshPathMilliseconds { get; internal set; }
         public long WalkingQuoteChecks { get; internal set; }
         public long WalkingQuoteRejected { get; internal set; }
