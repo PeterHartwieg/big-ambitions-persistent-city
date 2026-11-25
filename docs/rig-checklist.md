@@ -27705,8 +27705,8 @@ The original autosave preferences were 5 minutes, 3 saves and `prevent_autosave:
 ### Carried and excluded checks
 
 - E6 check 1 Vendor API v1-present carries the 17o result at `477d11a5` (report #368). The bridge was `Ready` in `FoodTrucks.Core`. Truck B was eligible with `Reason: ""`, restated for E6f. Contract 2 is **NOT RUN**, pending a reviewed build.
-- E6 2b carries **PASS** and E6 10 carries **PARTIAL** from 17p (report #369). The traffic pin advanced across the retime. The Drink override kept the opening Street Food-owned and recorded Street Food sales. The shutdown log gate left the Drink check partial.
-- Both #350 through-gate arms are excluded pending Rig #124. In 17q the closed arm was **PARTIAL** and the open arm was **NOT RUN** after `Door_1` still blocked the held-open gate. Release returned `removal: removed` in both arms (report #370). The concurrent #124 run was left alone.
+- E6 2b carries **PASS** and E6 10 carries **PARTIAL** from 17p at `c20d4ec4` (report #369). The traffic pin advanced across the retime. The Drink override kept the opening Street Food-owned and recorded Street Food sales. The shutdown log gate left the Drink check partial.
+- Both #350 through-gate arms are excluded pending Rig #124. In 17q at `3db17f5e` the closed arm was **PARTIAL** and the open arm was **NOT RUN** after `Door_1` still blocked the held-open gate. Release returned `removal: removed` in both arms (report #370). The concurrent #124 run was left alone.
 - E6 3, 6 and 7 are **NOT RUN** in 17r. Rig #121 is absent from agent-rig `e539e61` and the installed overlay while its changes are reconciled with #122/#123.
 - E6 4 is **NOT RUN**. Base-v2 failed the day-two proof with cart A off-map, a $250 fine and zero minutes open. It needs Street Food `edit_stop`.
 - E6 5, 9 and 12 are **NOT RUN**, pending Street Food builds for `edit_stop`, `vendor_fault` and contract 2. E6 13 is **NOT RUN**, pending F6b.
@@ -27714,10 +27714,10 @@ The original autosave preferences were 5 minutes, 3 saves and `prevent_autosave:
 
 ### Restore and evidence
 
-Both flow players and the performance player stopped cleanly. Performance staged the verified package with `python3 scripts/install-mac.py --stage-mod PersistentCity <absolute 25a package path>`. Its receipt backup was `~/Library/Application Support/BigAmbitionsAgentTestsMac/receipt-backups/20261124T234858Z`.
+Both flow players and the performance player stopped cleanly. Performance staged the verified package with `python3 scripts/install-mac.py --stage-mod PersistentCity <absolute 25a package path>`.
 
 The final hash check matched all 272 ModsLocal files, all 284 receipt entries, the receipt bytes, AgentRigOps.dll, isolated preferences, config and original SaveGames. The rules file matched its pre-flow 0.10.12 hash after each flow and at final restore. The runner removed its two fixture copies. The native checkpoints, their sidecars and the portraits created by the test players were archived. Agentmac was free with zero pending operations after release.
 
-Raw evidence is in `~/Coding_Projects/.agent-logs/persistent-city-rig-2026-11-25a-mac/`. SHA-256 of `evidence-sha256.txt` is `a382e310e8b3c0f065aa933f44fcc233256f73b2e80670e4ceaf6ed51958525a`.
+The raw evidence run identifier is `persistent-city-rig-2026-11-25a-mac`. SHA-256 of `evidence-sha256.txt` is `a382e310e8b3c0f065aa933f44fcc233256f73b2e80670e4ceaf6ed51958525a`.
 
 Refs #365 #368 #369 #370
