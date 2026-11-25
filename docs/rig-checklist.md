@@ -17,6 +17,7 @@ Every GR-5 rig run from now on must:
 
 ## Latest evidence
 
+- **25 November h, Mac (rig 17y), build `821af7e2`**. E6 check 13 FAIL. 11 PASS / 0 PARTIAL / 2 FAIL / 0 NOT RUN across 13 windows. The highest valid mod-work p95 was 14.2590 ms. [25h results](#rig-results---25-november-2026-h-mac-rig-17y-e6-check-13-performance-window-at-821af7e2).
 - **25 November g, Mac (rig 17x), build `37f89b83`**. 2 PASS / 0 PARTIAL / 0 FAIL / 0 NOT RUN. The deferred stand survived reload and published after disarm. Provisional recorder-off mod-work p95 was 3.3083 ms with 0 spikes ≥30 ms. [25g results](#rig-results---25-november-2026-g-mac-rig-17x-e6-check-5-deferred-reload-after-agent-rig-131-at-37f89b83).
 - **25 November f, Mac (rig 17w), build `d336a3b1`**. 3 PASS / 2 PARTIAL / 0 FAIL / 0 NOT RUN. Day-two choice and the sell-fault check passed. Check 12 has since been restated and is complete on its 17w contract-2 arm ([restatement](#e6-check-12-older-city-refusal-and-contract-2-control)). Recorder-off mod-work p95 was 3.5194 ms with 0 spikes ≥30 ms. [25f results](#rig-results---25-november-2026-f-mac-rig-17w-e6-checks-4-5-9-12-after-agent-rig-129-at-d336a3b1).
 - **25 November e, Mac (rig 17v), build `28d226b5`**. 2 PASS / 0 PARTIAL / 0 FAIL / 0 NOT RUN. With-PC check 7 passed 31 steps and the post-quit log gate exited 0. Provisional recorder-off mod-work p95 was 2.8057 ms with one spike ≥30 ms. [25e results](#rig-results---25-november-2026-e-mac-rig-17v-e6-check-7-with-pc-after-agent-rig-127-at-28d226b5).
@@ -28174,3 +28175,105 @@ All isolated players stopped. The perf session staged FoodTrucks and Persistent 
 Raw evidence is in `persistent-city-rig-2026-11-25g-mac`. The SHA-256 of `evidence-sha256.txt` is `c17b03f63314dc8cf81b4eb4d9e6f6e7dc09ca5d5af7b3ab4710736e2c9c0f9c`.
 
 Refs #364 #366 #376 #377
+
+## Rig results - 25 November 2026 h (Mac, rig 17y): E6 check 13 performance window at 821af7e2
+
+**E6 check 13 FAIL.** 11 PASS / 0 PARTIAL / 2 FAIL / 0 NOT RUN across 13 requested windows. The highest valid mod-work p95 was 14.2590 ms.
+
+The fetched tip was `821af7e24a20796fdfe220636d90f65ee37a0182`. PR #378 had merged ahead of the launch SHA and changed the rig checklist. Product code was still #366 at `40fe3bf8`, so the rig reused the hash-verified 25g package.
+
+The isolated Mac used one player session with the pinned Street Food 0.10.12 `sf-e6a` set. The live vendor preflight reported `bridge: Ready` and `apiAssembly: FoodTrucks.Core`. The initial base-load probe arrived during initialization. The setup reloaded the pinned base, waited for both preflight fields and made the measured disposables with `call save` after activation.
+
+| Input | SHA-256 |
+| --- | --- |
+| `FT-E6-Vendors-base (3,488,213 bytes)` | `4bf00a225b1e4ed20eb66ae2095752c0e77bcc138ff57ba476bdbb330e1ff796` |
+| `FT RIGTMP-17y-ready (3,491,985 bytes)` | `e49141b0ac0fa2bb9176b786f9fff2099f561b311cdffb76cbe4fc4de76e0d2a` |
+| `FT RIGTMP-17y-day-two (5,711,019 bytes)` | `fae29b2148c8926d28e7e976666302178bbeb1acd2e3f7205dd62b802197ede0` |
+| `FT RIGTMP-17y-zero (3,491,908 bytes)` | `c8b045325be3a1cf8f31722c6c95ce5b364241c5c8bc7ced3a31bb871b810bdf` |
+| `FT RIGTMP-17y-two (5,620,813 bytes)` | `663f5d2a7cd6cafb0797bb5e41655a9e3ae164f96a4cb4b715e8b504344b7d7e` |
+| `FT RIGTMP-17y-two-lunch (4,135,163 bytes)` | `8e82f068884159ba7ec6d123e2c80ebbf4440ec2773a650cf6b2c7b28de6b829` |
+| `FT RIGTMP-17y-eight (5,611,639 bytes)` | `8c3aec30839b5c5b49d4e32679a7e4808d883b96ad20e1ccfadcbcd86dbc15ee` |
+| `FT RIGTMP-17y-eight-permitted (5,611,792 bytes)` | `827985c95be2deb481a119f262234d2c65c3e7325fa3e99d333270f0fac7c430` |
+| `FoodTrucks/FoodTrucks.dll` | `7d7d96b2199b57dd8be5b0fe58d05051ed0ba4521b4a267268490fee2b92d790` |
+| `FoodTrucks/Dependencies/FoodTrucks.Core.dll` | `0be815fe2e3195297c1699fb420c85e9625d28d8a8bfc5f96bccd0eb2b4c22f0` |
+| `FoodTrucks/Dependencies/BridgeControl.dll` | `f19813b44f928ea2787d22843bf79d9388937415a9742cf908cd3deda14ffaa6` |
+| `PersistentCity/PersistentCity.dll` | `a2b007972ef3d0164d6cae2b4d78b537a4420b4bfdc59dbdd5614ed960de33b5` |
+| `RealLifeOverhaul.dll 1.0.6 (kept installed)` | `c96709779d8bb534c05a6743d243a000eeb3e03901995da03d8d9b5593a9f6fe` |
+| `AgentRigOps.dll (agent-rig a6eb298)` | `d4fb6c1d77cf6b289b30863181e3983ea56cf1998f6314d162f7d88e5390d6bb` |
+
+The 8-vehicle fixture extends `FT RIGTMP-17y-two` with six carts made through the FT bridge. Each was bought, given a rented Hell's Kitchen commissary space, fitted with a Hot Dog Grill, stocked with 40 hot dogs and priced at $4. Each received a separate crew member and a Tuesday 07:00–19:00 shift. The six 07:40–19:15 stops were 34, 36, 40 and 50 3rd Street and 50 and 52 4th Street. The last cart's first placement hit a chair. The retry placed it 4 m along the pavement and the game reported legal parking. The first reload retained the fit-out, stock and crew. Street Food kept the six new carts closed with `foodtrucks:notification_open_no_permit`. The rig stopped that attempt before recording, reloaded the early checkpoint and used the FT bridge’s `debug licence` action to issue permits. The permitted fixture was made with `call save` and reloaded under its own name.
+
+The first 2-vehicle breakfast setup had only the truck PC-owned at 08:35. The cart's crew opening came at 08:52. The retry reloaded the two-vehicle fixture, positioned the cart before rebuilding its Tuesday crew plan, and observed both grants before the 08:35 window. The report counts the retry.
+
+The private Mac inventory retained the rendered Street Food and bridge pins. The initial render inputs were moved aside and the second render matched every staged digest.
+
+The zero-vehicle wrapper initially looked for a spike component under the wrong field name. The retained records used `dominant`. The audit checked the recorded validity, save guard and ownership brackets and attributed both spike rows from that field.
+
+The burst started from `FT RIGTMP-17y-two-lunch` and continued until all three moves were observed. Its six `edit_stop` calls succeeded. Truck B opened under IDs `30704 → 35920 → 37008`, moving from (216.40, 14.93) to (295.29, −346.88) to (240.14, −310.44). Cart A opened under IDs `31568 → 37456`, moving from (215.08, 6.79) to (173.73, −408.82). The pairs give stand x/z in metres.
+
+### Windows
+
+Timings are provisional on the shared Mac. Windows ran at 1× with the food decisions recorder and GC sampler off. The 0-vehicle arm removed both crew assignments. The 2-vehicle arm used the same day-two checkpoint, re-assigned the crews and adjusted Tuesday's openings to cover the matched meal periods. The idle window used the same fixed street view between the breakfast and lunch samples. A crew-open Street Food vehicle counted only when Persistent City also reported its opening managed and able to serve.
+
+All steady windows started at the matched day-two game times of 08:35, 10:20, 11:50 and 18:00. The table gives the observed end times, which varied with frame rate on the shared host.
+
+| PC-owned | Day 2 window | Real seconds | Valid mod-work frames | Mod-work p95 / max (ms) | Mod spikes ≥30 ms | Whole-frame p95 / max (ms) | Mac load at start → end (1/5/15 min) | Verdict |
+| ---: | --- | ---: | ---: | ---: | ---: | ---: | --- | --- |
+| 0 | Breakfast 08:35–09:26 | 180.519 | 4,772 | 3.2146 / 73.2657 | 1 | 61.9636 / 745.1505 | 5.10 / 3.58 / 3.43 → 12.03 / 6.86 / 4.78 | PASS |
+| 0 | Idle 10:20–11:11 | 180.346 | 4,972 | 3.3994 / 35.8799 | 1 | 41.8765 / 1057.9408 | 7.31 / 6.56 / 4.81 → 2.88 / 5.04 / 4.52 | PASS |
+| 0 | Lunch 11:50–12:45 | 180.272 | 5,160 | 2.9936 / 5.9406 | 0 | 37.2748 / 174.9667 | 2.69 / 4.65 / 4.40 → 2.84 / 3.92 / 4.15 | PASS |
+| 0 | Evening 18:00–18:47 | 180.377 | 4,723 | 3.4032 / 24.0275 | 0 | 61.9034 / 1570.8912 | 7.99 / 5.95 / 4.96 → 3.79 / 5.48 / 5.00 | PASS |
+| 2 | Breakfast 08:35–09:28 | 180.371 | 5,140 | 2.6820 / 7.7540 | 0 | 37.2410 / 248.1688 | 3.69 / 8.22 / 9.87 → 3.13 / 5.85 / 8.55 | PASS |
+| 2 | Idle 10:20–11:10 | 180.493 | 5,081 | 3.1553 / 12.0082 | 0 | 44.4708 / 546.6847 | 2.00 / 3.47 / 4.21 → 5.81 / 3.74 / 4.13 | PASS |
+| 2 | Lunch 11:50–12:09 | 181.544 | 1,560 | 14.2590 / 99.9836 | 12 | 273.4748 / 1813.4302 | 14.97 / 8.64 / 6.08 → 18.02 / 13.69 / 8.74 | FAIL |
+| 2 | Evening 18:00–18:19 | 180.788 | 2,811 | 5.5471 / 29.1980 | 0 | 122.3171 / 494.7997 | 6.18 / 11.46 / 11.04 → 18.47 / 12.63 / 11.46 | FAIL |
+| 8 | Breakfast 08:35–09:28 | 180.378 | 5,027 | 2.8328 / 11.0081 | 0 | 51.7555 / 182.2909 | 3.95 / 5.12 / 6.81 → 2.43 / 3.87 / 5.96 | PASS |
+| 8 | Idle 10:20–11:11 | 180.325 | 5,074 | 3.0991 / 11.3141 | 0 | 46.8706 / 176.3052 | 2.34 / 3.59 / 5.71 → 2.78 / 3.35 / 5.22 | PASS |
+| 8 | Lunch 11:50–12:39 | 180.667 | 4,758 | 3.5739 / 14.2042 | 0 | 67.8328 / 886.8378 | 3.04 / 3.35 / 5.10 → 8.04 / 4.82 / 5.33 | PASS |
+| 8 | Evening 18:00–18:49 | 180.381 | 5,048 | 3.1653 / 10.3775 | 0 | 55.0278 / 179.2625 | 4.60 / 5.46 / 5.58 → 2.73 / 4.16 / 5.00 | PASS |
+| 2 | Stand-move burst 12:55–15:04 | 466.177 | 12,237 | 3.2001 / 26.4751 | 0 | 57.4820 / 1646.4244 | 5.84 / 4.72 / 5.06 → 2.16 / 3.58 / 4.54 | PASS |
+
+The mod-work and separate whole-frame columns use `agent-rig-modwork/1`. All valid mod-work records reported complete coverage. The per-window gate was p95 <5 ms. Whole-frame timings were recorded separately.
+
+Native autosave preferences were 5 minutes and 3 saves, with `prevent_autosave: false`. The rig-test suppression read back true after every load and at both ends of each measured window. All 13 windows recorded zero allowed saves and zero native saving frames.
+
+### Flagged mod-work spikes ≥30 ms
+
+| Window | Unity frame | Mod work (ms) | Dominant component |
+| --- | ---: | ---: | --- |
+| 0-breakfast | 21,411 | 73.2657 | `PopulationRuntime.Update` |
+| 0-idle | 25,297 | 35.8799 | `PopulationRuntime.Update` |
+| 2-lunch | 57,762 | 32.5485 | `PopulationRuntime.Update` |
+| 2-lunch | 57,899 | 43.4919 | `PopulationRuntime.Update` |
+| 2-lunch | 58,063 | 62.2675 | `PopulationRuntime.Update` |
+| 2-lunch | 58,270 | 37.0138 | `PopulationRuntime.Update` |
+| 2-lunch | 58,457 | 30.6505 | `PopulationRuntime.Update` |
+| 2-lunch | 58,458 | 35.4540 | `PopulationRuntime.Update` |
+| 2-lunch | 58,775 | 33.8580 | `PopulationRuntime.Update` |
+| 2-lunch | 58,851 | 99.9836 | `PopulationRuntime.Update` |
+| 2-lunch | 58,900 | 53.5745 | `PopulationRuntime.Update` |
+| 2-lunch | 59,056 | 65.7297 | `PopulationRuntime.Update` |
+| 2-lunch | 59,068 | 51.7583 | `PopulationRuntime.Update` |
+| 2-lunch | 59,256 | 40.3729 | `PopulationRuntime.Update` |
+
+### Windows above the gate
+
+- **2-lunch FAIL.** The mod-work p95 was 14.2590 ms. Leading components by self p95 were `PopulationRuntime.Update` 13.7210 ms p95, `NativeCityClock.AccountingPrefix` 0.0791 ms p95, `ResidentInspector.UiRaycastPrefix` 0.0263 ms p95. This FAIL is provisional and confounded by heavy shared-host load: the Mac load rose from 14.97 to 18.02 (1 min), and the window recorded 1,560 valid frames against 4,723–5,160 in the other steady windows.
+- **2-evening FAIL.** The mod-work p95 was 5.5471 ms. Leading components by self p95 were `PopulationRuntime.Update` 5.3920 ms p95, `NativeCityClock.AccountingPrefix` 0.0238 ms p95, `ResidentInspector.UiRaycastPrefix` 0.0220 ms p95. This FAIL is provisional and confounded by heavy shared-host load: the Mac load rose from 6.18 to 18.47 (1 min), and the window recorded 2,811 valid frames against 4,723–5,160 in the other steady windows.
+
+### Restore and evidence
+
+The isolated player quit cleanly. Its full and strict post-quit log gates both exited 0 with no inactive patches, mod errors or exceptions. `vendor_hold` read `armed: false` at teardown.
+
+The rig restored the FoodTrucks and PersistentCity folders from receipt backups `20261125T184638Z` and `20261125T184639Z`. The 272 ModsLocal files, 284 receipt entries, SaveGames and isolated preferences matched the pre-run hashes. The base fixture, AgentRigOps and installed RLO hashes matched. The run kept schema 1 and `FoodChoicePriceWeight` 1.2. Eight named disposable saves and their sidecars were archived. The agentmac lease was released and read free with zero pending operations.
+
+Raw evidence is in `persistent-city-rig-2026-11-25h-mac`. The SHA-256 of `evidence-sha256.txt` is `e740f3b2c0002384e2b579a118cf89cd32d90943e19bb215cd2c29474662cbfd`.
+
+### Carried results
+
+- E6 1 carries from 17o and 17r (#368, #371). E6 2b and the Drink-override partial for E6 10 carry from 17p (#369).
+- E6 3 and 6 carry from 17u (#374). E6 7 carries the without-PC result from 17u and the with-PC result from 17v (#374, #375).
+- E6 4 and 9 carry from 17w (#376). E6 12 carries the 17w contract-2 evidence under the owner restatement (#376, #377). E6 5 carries the deferred-reload pass from 17x (#378).
+- E6 8 and 11 carry from 17l (#364). Both #350 arms carry from 17t (#373). Pointer, hover, click and visual feel stay with Peter.
+
+Refs #364 #366 #376 #378
