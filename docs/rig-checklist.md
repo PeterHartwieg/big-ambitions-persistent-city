@@ -17,6 +17,7 @@ Every GR-5 rig run from now on must:
 
 ## Latest evidence
 
+- **25 November e, Mac (rig 17v), build `28d226b5`**. 2 PASS / 0 PARTIAL / 0 FAIL / 0 NOT RUN. With-PC check 7 passed 31 steps and the post-quit log gate exited 0. Provisional recorder-off mod-work p95 was 2.8057 ms with one spike ≥30 ms. [25e results](#rig-results---25-november-2026-e-mac-rig-17v-e6-check-7-with-pc-after-agent-rig-127-at-28d226b5).
 - **25 November d, Mac (rig 17u), build `8aa369d2`**. 3 PASS / 1 PARTIAL / 0 FAIL / 0 NOT RUN. Exact-money and handback ledger checks passed. Lease gameplay passed both arms and the with-PC teardown gate failed. Provisional recorder-off mod-work p95 was 3.3245 ms with 0 spikes ≥30 ms. [25d results](#rig-results---25-november-2026-d-mac-rig-17u-e6-checks-3-6-7-after-agent-rig-121-at-8aa369d2).
 - **25 November c, Mac (rig 17t), build `b04549a`**. 3 PASS / 0 PARTIAL / 0 FAIL / 0 NOT RUN. The held-open gate passed the car and the closed leaf stopped it. Both releases read `unignored` with explicit `last_failure: null` in compact and full status. Provisional recorder-off mod-work p95 was 3.7287 ms with 0 spikes ≥30 ms. [25c results](#rig-results---25-november-2026-c-mac-rig-17t-350-through-gate-after-agent-rig-126-at-b04549a).
 
@@ -27950,3 +27951,51 @@ The manual player stopped cleanly. Staging used `python3 scripts/install-mac.py 
 Raw commands, ledger snapshots and replies, flow results, frame reports and retained saves are in the raw evidence run `persistent-city-rig-2026-11-25d-mac`. SHA-256 of `evidence-sha256.txt` is `7dfe9fd8b0669c1990cbc7614e82597985cc013719d29635f784ab5f53c42dbc`.
 
 Refs #364 #366 #373
+
+## Rig results - 25 November 2026 e (Mac, rig 17v): E6 check 7 with-PC after agent-rig #127 at 28d226b5
+
+Fetched `28d226b525d04e3ad87d81d3c3e74edc0eafddf3` (#374). Changes since product build `40fe3bf8` (#366) were confined to the rig checklist. The verified 25d package was reused under the 25e build directory. `PersistentCity.dll` matched SHA-256 `a2b007972ef3d0164d6cae2b4d78b537a4420b4bfdc59dbdd5614ed960de33b5` in the package, rendered modset and live staged readback. FoodChoicePriceWeight was 1.2 and the live writer read back schema 1.
+
+The official agent-rig checkout was `2f1bdd655b53ad1783a698ccc04667a3ee3186fd` (#127). The 3,081,728-byte installed `AgentRigOps.dll` matched `a7a7b9dc39e5a159b94d899856bfdacd4738a0731b4ba844961fbb0e570f0845` before and after the run. Its informational version was `1.0.0+c366b29483d3d21fbdc59bbb4adbb8369ea1ffab`.
+
+2 PASS / 0 PARTIAL / 0 FAIL / 0 NOT RUN across the two 17v checks.
+
+| Check | Verdict | Evidence |
+| --- | --- | --- |
+| E6 7 with Persistent City | PASS | 31/31 steps, lease renewed, receipts paid once, log gate exit 0. |
+| Recorder-off performance | PASS | Provisional mod-work p95 2.8057 ms with one spike ≥30 ms. |
+
+### E6 check 7 with Persistent City
+
+All 31 steps passed. Cart A was already open and crew-served at 11:30 in opening 10448. Vendor API v1 was Ready via `FoodTrucks.Core`. Cart A stayed managed and serving as `leaseUntil` advanced from 2190 at load to 2205, 2235 and 2250 at 11:50, 12:15 and 12:40. The two pre-existing paid receipts kept their keys and values. All five saved commitments were paid by 12:15. At 12:40 the ledger had 21 distinct paid intents, 8,400 cents and API sales sequence 21.
+
+The flow and final log gate exited **0**. The quit marker was at Player.log line 2180. The gate accepted one `street_food_vendor_refresh_after_quit` block at lines **2186–2195**. It started with the Street Food NullReferenceException header and nine contiguous stack frames from `Helpers.PlayerHelper.GetPosition` through `VendorService.Changed`. The immediately following line **2196**, `[Persistent City] RLO traffic scene switches given back (the player's stored options).`, stayed outside the allowance. A separate exact-line rule on a replay of the captured log passed once. Appending `ERROR` to line 2196 in the replay caused rejection. The live gate reported zero remaining mod errors, exceptions or inactive patches.
+
+The 4,599,247-byte retained `FT-E6-Vendors-check7-pc-owned.hsg` and its isolated import both matched SHA-256 `9b701a6b2eb1ace548bd3fbbba2f4631a06f73577326db068b83d1bf00b0a746` immediately before launch. The flow verified the pin and used `call save` for its gameplay checkpoint. The private inventory pinned the fixture and product DLL. The stock full sf-e6a render kept installed support DLLs with `keep_installed.replace_packages: ["FoodTrucks","PersistentCity"]`. The modset journal and live staged readback showed RLO 1.0.6 at `c96709779d8bb534c05a6743d243a000eeb3e03901995da03d8d9b5593a9f6fe`. The rig-test autosave guard was active.
+
+### Recorder-off performance
+
+The clean 1× window at the shop ran for 600.010 s, from day 1 11:00 to about 14:06, on `FT RIGTMP-17v-perf` created with `call save`. The food-decision recorder was off. RIG-MODWORK covered 66 entry points over 17,071 valid frames. Mod-work p95 was **2.8057 ms** (gate <5 ms), max 46.8670 ms, with **one** spike ≥30 ms, retained in full. The shared-Mac counts are provisional. Load averages (1/5/15 min) were 2.27 / 2.89 / 3.94 at 09:01 and 1.56 / 2.03 / 2.91 at 09:11 CET. Both endpoints showed Unity Hub and five Node processes, with zero dotnet or MSBuild processes.
+
+- Frame 17,291, 46.8670 ms mod work. `PopulationRuntime.Update` accounted for 46.8087 ms.
+
+Separate native whole-frame timing was p95 **37.5326 ms** and max **385.3028 ms** over 17,078 frames. It counted 16,854 frames ≥30 ms and retained 1,024. Original native autosave preferences were 5 minutes, 3 saves and `prevent_autosave: false`. The process guard verified suppression after both loads and before and after sampling. The sample had 14,281 refused save attempts, zero allowed saves and zero native saving frames. Save Route A was outside the measurement.
+
+### Carried and excluded
+
+These carries are outside the 17v counts.
+
+- E6 check 7 is complete: the 17v with-PC pass above and the 14-step without-PC gameplay pass carried from 17u at `8aa369d2` (#374).
+- E6 checks 3 and 6 carry their 17u passes at `8aa369d2` (#374).
+- #350 through-gate, both arms, carries 17t PASS at `b04549a` (#373). E6 check 1 carries the 17o Vendor API v1-present result at `477d11a5` and the 17r Street Food 0.10.11 result at `acc7eb9d`.
+- E6 2b carries 17p PASS at `c20d4ec4`. E6 10 carries 17p PARTIAL at `c20d4ec4`, with the intended Drink behaviour.
+- E6 4 and 5 wait on Street Food `edit_stop`. E6 9 and 12 wait on `vendor_fault` and a reviewed contract-2 build. E6 13 waits on F6b.
+- Pointer, hover, click and visual feel stay with Peter.
+
+### Restore and evidence
+
+Both isolated players stopped cleanly. The with-PC flow restored its staged set and lease. Performance staging used `python3 scripts/install-mac.py --stage-mod PersistentCity <absolute 25e package path>` with the timestamped receipt backup `20261125T075616Z`. The 272 ModsLocal files, 284 receipt entries, config, isolated preferences and SaveGames matched the pre-run hashes after cleanup. RLO and the overlay retained their hashes. The imported fixture, disposable saves and generated sidecars were archived. The retained 17u original stayed in place. Final `agentmac` status showed the game closed, lease free and zero pending operations.
+
+Raw evidence is in the private evidence run `persistent-city-rig-2026-11-25e-mac`. The SHA-256 of `evidence-sha256.txt` is `ec34ff8774d193c382622ab9ee712dad1a801e9e373eeccbf9c0e5b4544a5ff4`.
+
+Refs #364 #366 #374
