@@ -17,6 +17,8 @@ Every GR-5 rig run from now on must:
 
 ## Latest evidence
 
+- **25 November a, Mac (rig 17r), build `acc7eb9d`**. 2 PASS / 0 PARTIAL / 0 FAIL / 1 NOT RUN. Street Food 0.10.11 opened both vendors and recorded 17 native sales for $81. Provisional recorder-off mod-work p95 was 3.9251 ms with 7 spikes ≥30 ms. [25a results](#rig-results---25-november-2026-a-mac-rig-17r-e6-check-1-street-food-01011-arm-at-acc7eb9d).
+
 - **24 November i, Mac (rig 17q), build `3db17f5e`**. 1 PASS / 1 PARTIAL / 0 FAIL / 1 NOT RUN. The closed leaf stopped the car and the held-open leaf still blocked the through-route. Provisional recorder-off mod-work p95 was 3.6813 ms with 0 spikes ≥30 ms. [24i results](#rig-results---24-november-2026-i-mac-rig-17q-350-through-gate-after-agent-rig-123-at-3db17f5e).
 
 - **24 November h, Mac (rig 17p), build `c20d4ec4`**. 2 PASS / 2 PARTIAL / 0 FAIL / 2 NOT RUN across the six scoped arms. The same taxi advanced across the committed 20× retime. Provisional recorder-off mod-work p95 on the shared Mac was 3.3696 ms with one spike at or above 30 ms. [24h results](#rig-results---24-november-2026-h-mac-rig-17p-350-through-gate-e6-2b101-01011-at-c20d4ec4).
@@ -27653,3 +27655,69 @@ All 272 ModsLocal files, 284 receipt entries, isolated preferences, config and o
 Raw evidence is in `~/Coding_Projects/.agent-logs/persistent-city-rig-2026-11-24i-mac/`. SHA-256 of `evidence-sha256.txt` is `4b620322dbb8e1e7d7aa8f962de512e3dbe93a035615fda09c1bad4dd3ec572d`.
 
 Refs #350 #365 #369
+
+## Rig results - 25 November 2026 a (Mac, rig 17r): E6 check 1 Street Food 0.10.11 arm at acc7eb9d
+
+**2 PASS / 0 PARTIAL / 0 FAIL / 1 NOT RUN** across the two measured checks and contract-2 arm. Exclusions and carried evidence are listed below.
+
+`git fetch origin` confirmed `acc7eb9d1241e0576e58324bdb5ecd7917a9e5c4` (#370). Only the checklist changed after product commit `40fe3bf8` (#366). The verified 24i package was reused. Both 0.10.11 flows and the performance player logged the staged PersistentCity.dll SHA-256 `a2b007972ef3d0164d6cae2b4d78b537a4420b4bfdc59dbdd5614ed960de33b5`. The agent-rig checkout was `e539e61` (#125, fixture pin). The installed overlay remained at `96aeda0` (#122, update `20261124T220628Z`), with AgentRigOps.dll SHA-256 `0f6e6f3a4641b7d087f00b7fae492dbaa31e05498fe92d0dcd15d71fd439dd4d`. Game build was 3682, RLO was 1.0.6, FoodChoicePriceWeight was 1.2 and Persistent City save schema was 1.
+
+### E6 check 1, Street Food 0.10.11
+
+**PASS.** `pc vendor status` returned `bridge: Absent`, `Reason: "Street Food vendor API missing."`, no vendor rows and `leaseUntil: -1` before and after the observation. Vendor purchases, meals and receipts were all zero in Persistent City. Street Food opened both vehicles with their crews and recorded 17 native sales for $81 by day 1 at 11:55.
+
+| Vehicle | Crew opened | Minutes open at 11:55 | Street Food sales |
+| --- | --- | ---: | --- |
+| Cart A | 10:52 | 63 | 7 hot dogs, $28 |
+| Truck B | 09:42 | 133 | 7 burgers and 3 kabobs, $53 |
+
+The first flow ended at 10:35, with the truck open and the cart still travelling. A second flow from the pinned fixture ran through 11:55 to cover an hour after the cart opened. Both runs completed all 24 steps and passed the Player.log gate. Both logs contained `[Mod:FoodTrucks] Version 0.10.11 loading.` and confirmed the save was written by 0.10.11. Both 17p errors were absent, including `Demand data not loaded; carts can't open. rules.json: marketing is not a known field` and `Save data was written by Food Trucks 0.10.12, newer than 0.10.11`. The shop read confirmed `FT E6 Vendors Coffee` at `ba:street_thirdstreet#36` was rented and ready. The original RLO DLL was present in both flows and RLO 1.0.6 initialized. Both post-load selfchecks confirmed autosave suppression.
+
+| Input or recovery check | SHA-256 |
+| --- | --- |
+| `FT-E6-Vendors-base-0.10.11`, 2,630,940 bytes, verified immediately before each launch and after cleanup | `81d63cc98b35e8d53a9e79fd652fa635368db56d8e44d2941f83ac1abc8971db` |
+| Installed 0.10.11 `rules.json`, 11,190 bytes, read during both flows | `46750055b0abfed54ed9aed139c269d43edbfb2a11f0c1722947859d511d0868` |
+| Pre-flow and restored 0.10.12 `rules.json`, 12,456 bytes | `eeec70657a781f28d348d618b7f733208c6f6656e83e85efe4ddc0df8e251672` |
+| Pre-flow and restored receipt | `7fe192413649521d222de050d4f98fcd7ba673f9c38febd2741f8f335d32d20f` |
+
+The requested shared render input directory lacked the pinned rules file. The private render inputs used the shared DLLs, the verified current Persistent City package and matching rules bytes from Street Food commit `242881d6`. Both flows used `sfapi-render --platform mac` with the pinned fixture. The flow runner loaded its temporary fixture aliases, then the run created its disposables with native `call save`.
+
+### Recorder-off performance
+
+**PASS, provisional on the shared Mac.** In Street Food 0.10.12, the 1× window ran for 600.424 real seconds at 1,000 residents, from day 1 11:00 to 13:35. Persistent City confirmed the decision recorder was off. Coverage was complete across 66 entry points with 13,133 valid mod-work frames. Mod-work p95 was **3.9251 ms** against the <5 ms gate. The maximum was 62.0353 ms. The rig counted **7** spikes ≥30 ms and retained every row. `spikes_truncated: false`.
+
+| Unity frame | Mod work | Dominant scope |
+| ---: | ---: | --- |
+| 14192 | 56.4748 ms | `PopulationRuntime.Update` |
+| 14384 | 49.9508 ms | `PopulationRuntime.Update` |
+| 16323 | 62.0353 ms | `PopulationRuntime.Update` |
+| 16759 | 32.1380 ms | `PopulationRuntime.Update` |
+| 17482 | 30.5135 ms | `PopulationRuntime.Update` |
+| 17669 | 39.0527 ms | `PopulationRuntime.Update` |
+| 17817 | 39.3493 ms | `PopulationRuntime.Update` |
+
+Whole-frame timing was p95 89.7465 ms and max 1339.2757 ms across 601.559 s. The whole-frame tool counted 12,405 frames ≥30 ms and retained 1,024 rows.
+
+Mac `uptime` load (1 / 5 / 15 min) was 3.43 / 3.65 / 3.75 at 0:53 CET and 12.79 / 16.97 / 10.59 at 1:03 CET. Build and test process counts at start were 0 dotnet, 0 msbuild, 1 node. At end they were 0 dotnet, 0 msbuild, 1 node. Endpoint process reads found Rig #124 absent at start and absent at end.
+
+The original autosave preferences were 5 minutes, 3 saves and `prevent_autosave: false`. The process save guard suppressed autosave after load and immediately before and after the window. The window had 11,347 refused save attempts, 0 allowed saves and 0 native saving frames. The setup used native `call save` outside the window. Save route A was outside the scope of the timing check.
+
+### Carried and excluded checks
+
+- E6 check 1 Vendor API v1-present carries the 17o result at `477d11a5` (report #368). The bridge was `Ready` in `FoodTrucks.Core`. Truck B was eligible with `Reason: ""`, restated for E6f. Contract 2 is **NOT RUN**, pending a reviewed build.
+- E6 2b carries **PASS** and E6 10 carries **PARTIAL** from 17p (report #369). The traffic pin advanced across the retime. The Drink override kept the opening Street Food-owned and recorded Street Food sales. The shutdown log gate left the Drink check partial.
+- Both #350 through-gate arms are excluded pending Rig #124. In 17q the closed arm was **PARTIAL** and the open arm was **NOT RUN** after `Door_1` still blocked the held-open gate. Release returned `removal: removed` in both arms (report #370). The concurrent #124 run was left alone.
+- E6 3, 6 and 7 are **NOT RUN** in 17r. Rig #121 is absent from agent-rig `e539e61` and the installed overlay while its changes are reconciled with #122/#123.
+- E6 4 is **NOT RUN**. Base-v2 failed the day-two proof with cart A off-map, a $250 fine and zero minutes open. It needs Street Food `edit_stop`.
+- E6 5, 9 and 12 are **NOT RUN**, pending Street Food builds for `edit_stop`, `vendor_fault` and contract 2. E6 13 is **NOT RUN**, pending F6b.
+- Pointer, hover, click and visual feel stay with Peter.
+
+### Restore and evidence
+
+Both flow players and the performance player stopped cleanly. Performance staged the verified package with `python3 scripts/install-mac.py --stage-mod PersistentCity <absolute 25a package path>`. Its receipt backup was `~/Library/Application Support/BigAmbitionsAgentTestsMac/receipt-backups/20261124T234858Z`.
+
+The final hash check matched all 272 ModsLocal files, all 284 receipt entries, the receipt bytes, AgentRigOps.dll, isolated preferences, config and original SaveGames. The rules file matched its pre-flow 0.10.12 hash after each flow and at final restore. The runner removed its two fixture copies. The native checkpoints, their sidecars and the portraits created by the test players were archived. Agentmac was free with zero pending operations after release.
+
+Raw evidence is in `~/Coding_Projects/.agent-logs/persistent-city-rig-2026-11-25a-mac/`. SHA-256 of `evidence-sha256.txt` is `a382e310e8b3c0f065aa933f44fcc233256f73b2e80670e4ceaf6ed51958525a`.
+
+Refs #365 #368 #369 #370
