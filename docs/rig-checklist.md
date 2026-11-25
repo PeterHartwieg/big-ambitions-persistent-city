@@ -28011,7 +28011,7 @@ The official Mac agent-rig checkout was `9d7db9560fbe8196a341c34a21e60527cfa5f89
 
 - Check 4 used the isolated `FT-E6-Vendors-base-v3` (3,489,465 bytes, character `sv0WmS10+EmRdM4NCNuuw==`). Its isolated and retained copies matched `87908636edc46d869b4a533472a3c012880f72109e6f50c41e66ee903510d964`. The isolated copy was checked again immediately before launch.
 - Checks 5, 9, 12 and the recorder-off window used `FT-E6-Vendors-base` (3,488,213 bytes, `4bf00a225b1e4ed20eb66ae2095752c0e77bcc138ff57ba476bdbb330e1ff796`). Gameplay checkpoints were made with `call save`.
-- All Street Food sets were rendered for Mac from `6b0201f`. The private inventory supplied the current Persistent City hash and the v3 fixture pin. The first contract-2 render used the private inventory in the run logs. The corrected `/private/tmp` render compared equal by JSON content.
+- All Street Food sets were rendered for Mac from `6b0201f`. The private inventory supplied the current Persistent City hash and the v3 fixture pin. The first contract-2 render used the private inventory in the run logs. The corrected render produced identical JSON.
 - The modset journals retained installed `RealLifeOverhaul.dll` with `keep_installed.replace_packages: ["FoodTrucks","PersistentCity"]`. Live logs showed game build 3682, RLO 1.0.6 and Street Food 0.10.12. RLO matched `c96709779d8bb534c05a6743d243a000eeb3e03901995da03d8d9b5593a9f6fe`.
 
 | Mac set | `FoodTrucks.dll` SHA-256 | `FoodTrucks.Core.dll` SHA-256 |
@@ -28081,11 +28081,11 @@ Native autosave preferences were 5 minutes, 3 saves and `prevent_autosave: false
 
 ### Carried and excluded
 
-- E6 check 1 carries the Vendor API v1-present and 0.10.11 results from 17o and 17r (#368, #371).
-- E6 2b carries its 17p pass and E6 10 its 17p partial with the intended Drink override (#369).
-- E6 3 and 6 carry their 17u passes (#374). E6 7 carries the 17u without-PC and 17v with-PC passes (#374, #375).
-- E6 8 and 11 carry the 17l passes (#364). E6 13 waits on F6b.
-- Both #350 through-gate arms carry their 17t passes (#373). The run used the Mac only. Pointer, hover, click and visual feel stay with Peter.
+- E6 check 1 carries the Vendor API v1-present and 0.10.11 results from 17o at `477d11a5` and 17r at `acc7eb9d` (#368, #371).
+- E6 2b carries its 17p pass and E6 10 its 17p partial with the intended Drink override, both at `c20d4ec4` (#369).
+- E6 3 and 6 carry their 17u passes at `8aa369d2` (#374). E6 7 carries the 17u without-PC pass at `8aa369d2` and the 17v with-PC pass at `28d226b5` (#374, #375).
+- E6 8 and 11 carry the 17l passes at `7714484f` (#364). E6 13 waits on F6b.
+- Both #350 through-gate arms carry their 17t passes at `b04549a` (#373). The run used the Mac only. Pointer, hover, click and visual feel stay with Peter.
 
 ### Restore and evidence
 
