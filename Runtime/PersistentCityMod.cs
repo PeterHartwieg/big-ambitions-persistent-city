@@ -629,7 +629,8 @@ namespace PersistentCity.Runtime
             string slowestKind = "";
             int collectionsBefore = GC.CollectionCount(0);
             var unitSeams = stopEnvironment?.UnitSeams;
-            bool unitCpu = unitSeams?.RecordsCpu == true && ThreadCpuClock.Available, forecastCpu = ThreadCpuClock.Available;
+            bool unitCpu = unitSeams?.RecordsCpu == true && ThreadCpuClock.Available;
+            bool forecastCpu = ThreadCpuClock.Available;
             long callCpu = unitCpu ? ThreadCpuClock.Nanoseconds() : -1;
             stopEnvironment?.Maintain();
             AdvanceAllocation.Detail(GcAllocationSegment.AdvanceStops);
@@ -658,6 +659,7 @@ namespace PersistentCity.Runtime
                         {
                             if (!advanceAdmission.AdmitsPlanning(elapsed, timeBudget)) { pendingAtEnd = true; break; }
                             int sliceCollections = GC.CollectionCount(0);
+                            long sliceCpu = forecastCpu ? ThreadCpuClock.Nanoseconds() : -1;
                             long sliceStarted = Stopwatch.GetTimestamp();
                             long queriesBefore = routes?.Metrics.NavMeshPathQueries ?? 0;
                             routes?.ResetSliceAnatomy();
@@ -665,7 +667,9 @@ namespace PersistentCity.Runtime
                             AdvanceAllocation.Sub(finished ? GcAllocationSegment.AdvancePlanningFinish : GcAllocationSegment.AdvancePlanningSlice);
                             AdvanceAllocation.Detail(GcAllocationSegment.AdvancePlanning);
                             double slice = (Stopwatch.GetTimestamp() - sliceStarted) * MillisecondsPerTimestamp;
-                            advanceAdmission.ObservePlanning(routes != null ? routes.SliceUnitMilliseconds : slice, GC.CollectionCount(0) != sliceCollections);
+                            long sliceCpuEnd = forecastCpu ? ThreadCpuClock.Nanoseconds() : -1;
+                            advanceAdmission.ObservePlanning(routes != null ? routes.SliceUnitMilliseconds : slice,
+                                sliceCpu >= 0 && sliceCpuEnd >= sliceCpu ? (sliceCpuEnd - sliceCpu) / 1e6 : -1, GC.CollectionCount(0) != sliceCollections);
                             planningSlices++; planningMilliseconds += slice;
                             if (slice > maxPlanningSliceMilliseconds)
                             {

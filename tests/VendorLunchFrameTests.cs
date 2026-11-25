@@ -98,7 +98,7 @@ public sealed class VendorLunchFrameTests
         VendorLunchReplay.Result before = null!, after = null!;
         TimingBudget.Run(timing =>
         {
-            before = VendorLunchReplay.Run(0.25, from, to, forecast: false, resumable: true, pathMilliseconds: 2);
+            before = VendorLunchReplay.Run(0.25, from, to, forecast: false, resumable: true, pathMilliseconds: 2, pathReserve: false);
             after = VendorLunchReplay.Run(0.25, from, to, resumable: true, pathMilliseconds: 2);
             static double Over(VendorLunchReplay.Step f) => double.IsNaN(f.Budget) ? 0 : f.Advance - f.Budget;
             output.WriteLine(string.Format(CultureInfo.InvariantCulture,
@@ -111,6 +111,30 @@ public sealed class VendorLunchFrameTests
         });
         Assert.True(before.PathSteps > 20 && before.LatePathStarts > 0, "the fixture no longer starts path steps late without admission");
         Assert.True(after.CarriedPaths > 0, "no pending plan carried its path step into a later frame");
+        Assert.Equal(reference.SaveSha256, before.SaveSha256);
+        Assert.Equal(reference.SaveSha256, after.SaveSha256);
+        Assert.Equal(reference.Purchases, after.Purchases);
+    }
+
+    [Fact]
+    public void APathStepWaitsForTheNextFrameWhenPreparationUsedTheHeadroomItsSliceWasAdmittedWith()
+    {
+        const double from = VendorLunchReplay.DayFrom, to = VendorLunchReplay.DayFrom + 20;
+        var reference = VendorLunchReplay.RunUninterrupted(from, to);
+        VendorLunchReplay.Result before = null!, after = null!;
+        TimingBudget.Run(timing =>
+        {
+            before = VendorLunchReplay.Run(0.25, from, to, resumable: true, pathMilliseconds: 2, preparationMilliseconds: 1.5, pathReserve: false);
+            after = VendorLunchReplay.Run(0.25, from, to, resumable: true, pathMilliseconds: 2, preparationMilliseconds: 1.5);
+            static double Over(VendorLunchReplay.Step f) => double.IsNaN(f.Budget) ? 0 : f.Advance - f.Budget;
+            output.WriteLine(string.Format(CultureInfo.InvariantCulture,
+                "08:00 to 08:20, 250 ms frames, 1.5 ms preparation then 2 ms path steps: late path starts {0}/{1} -> {2}/{3}, carried {4} -> {5}, advance p95/max {6:0.000}/{7:0.000} -> {8:0.000}/{9:0.000} ms, overrun p95 {10:0.000} -> {11:0.000} ms",
+                before.LatePathStarts, before.PathSteps, after.LatePathStarts, after.PathSteps, before.CarriedPaths, after.CarriedPaths,
+                before.P95(f => f.Advance), before.Max(f => f.Advance), after.P95(f => f.Advance), after.Max(f => f.Advance), before.P95(Over), after.P95(Over)));
+            timing.Under("late path start share after preparation", after.LatePathStarts / (double)Math.Max(1, after.PathSteps), 0.05);
+        });
+        Assert.True(before.PathSteps > 20 && before.LatePathStarts > 0, "the fixture no longer starts path steps late after slice admission");
+        Assert.True(after.CarriedPaths > 0, "no path step was carried into a later frame");
         Assert.Equal(reference.SaveSha256, before.SaveSha256);
         Assert.Equal(reference.SaveSha256, after.SaveSha256);
         Assert.Equal(reference.Purchases, after.Purchases);

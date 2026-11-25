@@ -186,7 +186,7 @@ public sealed class UpdateCityFrameModelTests
     {
         var admission = new AdvanceAdmission();
         Assert.True(admission.AdmitsPlanning(2.9, 3));
-        admission.ObservePlanning(2, false);
+        admission.ObservePlanning(2, -1, false);
         Assert.True(admission.AdmitsPlanning(0.9, 3));
         Assert.False(admission.AdmitsPlanning(2.8, 3));
         admission.EndFrame(); admission.EndFrame(); admission.EndFrame();
@@ -196,8 +196,40 @@ public sealed class UpdateCityFrameModelTests
         Assert.False(admission.AdmitsPlanning(2.8, 3));
         Assert.True(admission.AdmitsPlanning(0.9, 3));
         Assert.True(admission.AdmitsEvent(2.8, 3));
-        admission.ObservePlanning(0.4, false); admission.EndFrame();
+        admission.ObservePlanning(0.4, -1, false); admission.EndFrame();
         Assert.Equal(1, admission.Planning.Milliseconds);
+    }
+
+    [Fact]
+    public void APreemptedPlanningSampleNeitherPinsTheForecastNorOutlivesItsIdleHold()
+    {
+        var admission = new AdvanceAdmission();
+        admission.ObservePlanning(16, 0.3, false);
+        admission.EndFrame();
+        Assert.Equal(0.3, admission.Planning.Milliseconds, 6);
+        admission.Reset();
+        admission.ObservePlanning(16, -1, false);
+        admission.EndFrame();
+        Assert.Equal(16, admission.Planning.Milliseconds);
+        for (int frame = 0; frame < AdvanceAdmission.PlanningIdleHoldFrames; frame++) admission.EndFrame();
+        Assert.Equal(16, admission.Planning.Milliseconds);
+        for (int frame = 0; frame < 4; frame++) admission.EndFrame();
+        Assert.Equal(1, admission.Planning.Milliseconds);
+        admission.ObservePlanning(0.4, 0.4, false);
+        Assert.True(admission.AdmitsPlanning(1.5, 3));
+        admission.EndFrame();
+        Assert.Equal(0.5, admission.Planning.Milliseconds, 6);
+        Assert.True(admission.Planning.Fits(2.4, 3));
+    }
+
+    [Fact]
+    public void APathQueryStartsWhenItOpensTheFrameOrFitsItsReserve()
+    {
+        Assert.True(PathAdmission.Admits(false, 0, 16, 0.2, 2.5));
+        Assert.False(PathAdmission.Admits(true, 0, 16, 0.2, 2.5));
+        Assert.False(PathAdmission.Admits(true, 3, 16, 2.4, 2.5));
+        Assert.True(PathAdmission.Admits(true, 3, 16, 2.6, 2.5));
+        Assert.False(PathAdmission.Admits(false, 16, 16, 10, 2.5));
     }
 
     [Fact]
@@ -205,7 +237,7 @@ public sealed class UpdateCityFrameModelTests
     {
         var admission = new AdvanceAdmission();
         admission.ObserveEvent(10, -1, true);
-        admission.ObservePlanning(12, true);
+        admission.ObservePlanning(12, -1, true);
         Assert.Equal(0, admission.Events.Milliseconds);
         Assert.Equal(0, admission.Planning.Milliseconds);
         Assert.Equal(2, admission.SkippedSamples);

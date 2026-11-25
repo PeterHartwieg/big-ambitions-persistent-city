@@ -312,7 +312,7 @@ namespace PersistentCity.Runtime
         public long JobUnits { get; private set; }
         internal const int MaximumJobUnitsPerSlice = 8;
         internal const int MaximumJobPathsPerFrame = 16;
-        private int jobPathFrame = -1, jobFramePaths, jobAdmissionHeldFrame = -1, jobRecheckHeldFrame = -1;
+        private int jobPathFrame = -1, jobFramePaths, jobFrameUnits, jobAdmissionHeldFrame = -1, jobRecheckHeldFrame = -1;
         private double jobPathReserveMilliseconds = .05;
         public long JobAdmissionDeferrals { get; private set; }
         public double JobPathReserveMilliseconds => jobPathReserveMilliseconds;
@@ -425,7 +425,7 @@ namespace PersistentCity.Runtime
                 sliced = finite;
                 int units = 0;
                 if (finite && owner.jobPathFrame != Time.frameCount)
-                { owner.jobPathFrame = Time.frameCount; owner.jobFramePaths = 0; }
+                { owner.jobPathFrame = Time.frameCount; owner.jobFramePaths = 0; owner.jobFrameUnits = 0; }
                 while (!Completed)
                 {
                     if (!first && Stopwatch.GetTimestamp() >= deadline) return false;
@@ -433,8 +433,8 @@ namespace PersistentCity.Runtime
                     { owner.JobAdmissionDeferrals++; return false; }
                     bool pathStage = stage == Stage.HomeCurbWalk || stage == Stage.DirectWalk || stage == Stage.SubwayConnector
                         || stage == Stage.CarAccessWalk || stage == Stage.CarEgressWalk || preferenceOnly && stage == Stage.Validate;
-                    if (finite && pathStage && (owner.jobFramePaths >= MaximumJobPathsPerFrame
-                        || owner.jobFramePaths > 0 && (deadline - Stopwatch.GetTimestamp()) * 1000.0 / Stopwatch.Frequency <= owner.jobPathReserveMilliseconds))
+                    if (finite && pathStage && !PathAdmission.Admits(owner.jobFrameUnits > 0, owner.jobFramePaths, MaximumJobPathsPerFrame,
+                        (deadline - Stopwatch.GetTimestamp()) * 1000.0 / Stopwatch.Frequency, owner.jobPathReserveMilliseconds))
                     {
                         owner.jobAdmissionHeldFrame = Time.frameCount; owner.JobAdmissionDeferrals++; return false;
                     }
@@ -442,6 +442,7 @@ namespace PersistentCity.Runtime
                     { owner.JobAdmissionDeferrals++; return false; }
                     first = false;
                     units++;
+                    if (finite) owner.jobFrameUnits++;
                     owner.JobUnits++; owner.LastJobUnit = StageNames[(int)stage];
                     long before = owner.Metrics.NavMeshPathQueries, samplesBefore = owner.Metrics.NavMeshSampleQueries;
                     double pathTimeBefore = owner.Metrics.NavMeshPathMilliseconds;

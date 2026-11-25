@@ -71,13 +71,21 @@ namespace PersistentCity.Core
         public void Reset() => Milliseconds = 0;
     }
 
+    public static class PathAdmission
+    {
+        public static bool Admits(bool frameRanUnit, int framePaths, int maximumFramePaths, double remainingMilliseconds, double reserveMilliseconds)
+            => framePaths < maximumFramePaths && (!frameRanUnit || remainingMilliseconds > reserveMilliseconds);
+    }
+
     public sealed class UnitForecast
     {
         public const double FrameDecay = .5;
-        private readonly bool decayIdleFrames;
+        public const int MaximumIdleHold = 30;
+        private readonly int idleHold;
+        private int idleFrames;
         private double frameMaximum;
 
-        public UnitForecast(bool decayIdleFrames = true) { this.decayIdleFrames = decayIdleFrames; }
+        public UnitForecast(int idleHoldFrames = 0) { idleHold = Math.Max(0, Math.Min(MaximumIdleHold, idleHoldFrames)); }
 
         public double Milliseconds { get; private set; }
 
@@ -93,19 +101,21 @@ namespace PersistentCity.Core
 
         public void EndFrame()
         {
-            if (!decayIdleFrames && frameMaximum == 0) return;
+            if (frameMaximum == 0 && ++idleFrames <= idleHold) return;
+            if (frameMaximum > 0) idleFrames = 0;
             Milliseconds = Math.Max(frameMaximum, Milliseconds * FrameDecay);
             frameMaximum = 0;
         }
 
-        public void Reset() { Milliseconds = 0; frameMaximum = 0; }
+        public void Reset() { Milliseconds = 0; frameMaximum = 0; idleFrames = 0; }
     }
 
     public sealed class AdvanceAdmission
     {
         private bool ran;
         public UnitForecast Events { get; } = new UnitForecast();
-        public UnitForecast Planning { get; } = new UnitForecast(decayIdleFrames: false);
+        public const int PlanningIdleHoldFrames = 8;
+        public UnitForecast Planning { get; } = new UnitForecast(PlanningIdleHoldFrames);
         public long SkippedSamples { get; private set; }
 
         public bool AdmitsEvent(double elapsedMilliseconds, double budgetMilliseconds) => Events.Fits(elapsedMilliseconds, budgetMilliseconds);
@@ -119,10 +129,10 @@ namespace PersistentCity.Core
             if (Usable(wallMilliseconds, collected)) Events.Observe(cpuMilliseconds >= 0 ? Math.Min(wallMilliseconds, cpuMilliseconds) : wallMilliseconds);
         }
 
-        public void ObservePlanning(double unitMilliseconds, bool collected)
+        public void ObservePlanning(double unitMilliseconds, double sliceCpuMilliseconds, bool collected)
         {
             ran = true;
-            if (Usable(unitMilliseconds, collected)) Planning.Observe(unitMilliseconds);
+            if (Usable(unitMilliseconds, collected)) Planning.Observe(sliceCpuMilliseconds >= 0 ? Math.Min(unitMilliseconds, sliceCpuMilliseconds) : unitMilliseconds);
         }
 
         private bool Usable(double milliseconds, bool collected)
