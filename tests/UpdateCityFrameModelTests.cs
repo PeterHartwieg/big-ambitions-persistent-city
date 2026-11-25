@@ -149,6 +149,75 @@ public sealed class UpdateCityFrameModelTests
     }
 
     [Fact]
+    public void TheUnitForecastStopsBeforeAUnitThatWouldCrossTheBudgetAndForgetsSlowUnitsByHalves()
+    {
+        var forecast = new UnitForecast();
+        Assert.Equal(0, forecast.Milliseconds);
+        foreach (double elapsed in new[] { 0, 1.5, 2.999, 3, 3.5 })
+            Assert.Equal(elapsed < 3, forecast.Fits(elapsed, 3));
+        forecast.Observe(0.2); forecast.Observe(2); forecast.Observe(0.1);
+        Assert.Equal(2, forecast.Milliseconds);
+        Assert.True(forecast.Fits(1, 3));
+        Assert.False(forecast.Fits(1.01, 3));
+        Assert.False(forecast.Fits(2.5, 3));
+        forecast.EndFrame();
+        Assert.Equal(2, forecast.Milliseconds);
+        forecast.Observe(0.3); forecast.EndFrame();
+        Assert.Equal(1, forecast.Milliseconds);
+        forecast.EndFrame(); forecast.EndFrame();
+        Assert.Equal(0.25, forecast.Milliseconds);
+        forecast.Observe(double.NaN); forecast.Observe(double.PositiveInfinity); forecast.Observe(-4); forecast.Observe(0);
+        Assert.Equal(0.25, forecast.Milliseconds);
+        forecast.Observe(40);
+        Assert.False(forecast.Fits(0.001, 4));
+        Assert.True(forecast.Fits(0, 40));
+        forecast.Reset();
+        Assert.Equal(0, forecast.Milliseconds);
+        Assert.True(forecast.Fits(3.9, 4));
+        long allocated = GC.GetAllocatedBytesForCurrentThread();
+        int fits = 0;
+        for (int i = 0; i < 10000; i++) { forecast.Observe(i % 11 * 0.1); if (forecast.Fits(i % 7 * 0.5, 4)) fits++; if (i % 5 == 0) forecast.EndFrame(); }
+        Assert.Equal(0, GC.GetAllocatedBytesForCurrentThread() - allocated);
+        Assert.True(fits > 0);
+    }
+
+    [Theory]
+    [InlineData(1.0 / 30)] [InlineData(0.12)] [InlineData(0.25)]
+    public void ASaturatedAdvanceWithAForecastKeepsCoarseUnitsInsideItsBudget(double seconds)
+    {
+        var native = new PopulationFrameBudget(seconds, false);
+        var forecast = new UnitForecast();
+        double budget = new UpdateCityBudget().Advance(native.Milliseconds, 0.3);
+        static double Unit(Random r) => r.NextDouble() < 0.3 ? 1.6 + r.NextDouble() * 0.4 : 0.05 + r.NextDouble() * 0.1;
+        var over = new List<double>(); var plainOver = new List<double>();
+        double done = 0, plainDone = 0;
+        for (int f = 0; f < 2000; f++)
+        {
+            var units = new Random(f);
+            double elapsed = 0;
+            for (int u = 0; u < native.Units; u++)
+            {
+                double unit = Unit(units);
+                elapsed += unit; forecast.Observe(unit);
+                if (!forecast.Fits(elapsed, budget)) break;
+            }
+            forecast.EndFrame();
+            var replay = new Random(f);
+            double plain = 0;
+            for (int u = 0; u < native.Units; u++) { plain += Unit(replay); if (plain >= budget) break; }
+            over.Add(elapsed - budget); plainOver.Add(plain - budget);
+            done += elapsed; plainDone += plain;
+        }
+        over.Sort(); plainOver.Sort();
+        output.WriteLine(string.Format(CultureInfo.InvariantCulture,
+            "{0:0} ms frames, advance budget {1:0.00} ms: overrun p95/max without forecast {2:0.00}/{3:0.00} ms, with forecast {4:0.00}/{5:0.00} ms; work per frame {6:0.00} -> {7:0.00} ms",
+            seconds * 1000, budget, Rank(plainOver, .95), plainOver[^1], Rank(over, .95), over[^1], plainDone / 2000, done / 2000));
+        Assert.True(Rank(plainOver, .95) > 1, "the fixture lost its coarse units");
+        Assert.True(Rank(over, .95) <= 0, "forecast frames overran their budget at p95 by " + Rank(over, .95) + " ms");
+        Assert.True(done >= 0.5 * plainDone, "the forecast starved the advance");
+    }
+
+    [Fact]
     public void TheDressGateBuildsOnLightFramesAndNeverWaitsLongerThanItsMaximum()
     {
         double elapsed = 0;

@@ -71,6 +71,32 @@ namespace PersistentCity.Core
         public void Reset() => Milliseconds = 0;
     }
 
+    public sealed class UnitForecast
+    {
+        public const double FrameDecay = .5;
+        private double frameMaximum;
+
+        public double Milliseconds { get; private set; }
+
+        public bool Fits(double elapsedMilliseconds, double budgetMilliseconds)
+            => elapsedMilliseconds < budgetMilliseconds && elapsedMilliseconds + Milliseconds <= budgetMilliseconds;
+
+        public void Observe(double unitMilliseconds)
+        {
+            if (double.IsNaN(unitMilliseconds) || double.IsInfinity(unitMilliseconds) || unitMilliseconds <= 0) return;
+            if (unitMilliseconds > frameMaximum) frameMaximum = unitMilliseconds;
+            if (unitMilliseconds > Milliseconds) Milliseconds = unitMilliseconds;
+        }
+
+        public void EndFrame()
+        {
+            Milliseconds = Math.Max(frameMaximum, Milliseconds * FrameDecay);
+            frameMaximum = 0;
+        }
+
+        public void Reset() { Milliseconds = 0; frameMaximum = 0; }
+    }
+
     public sealed class FrameDeferral
     {
         public const double DefaultFrameMilliseconds = 8;

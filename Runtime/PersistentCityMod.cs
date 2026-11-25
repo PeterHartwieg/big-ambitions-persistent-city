@@ -676,9 +676,10 @@ namespace PersistentCity.Runtime
                             Unit("route-planning");
                             if (!finished) { if (elapsed >= timeBudget || routes?.JobAdmissionExhaustedForFrame == true) { pendingAtEnd = active.PlanningPending; break; } continue; }
                             events++; citizenEvents++; planningEvents++;
-                            if (citizenEvents >= citizenLimit || elapsed >= timeBudget) break;
+                            if (citizenEvents >= citizenLimit || !advanceForecast.Fits(elapsed, timeBudget)) break;
                             continue;
                         }
+                        double sliceStart = elapsed;
                         var result = active.AdvanceFrameSlice(target, 1);
                         slowestFoodContinuation.Observe(result.FoodContinuationEvents > 0, active.LastFoodContinuationMilliseconds, active.FoodContinuationStep);
                         AdvanceAllocation.Sub(GcPauseSampler.AdvanceEventSegment(result.TrafficEvents, result.FoodContinuationEvents, result.CitizenEvents, result.PlanningPending));
@@ -686,13 +687,14 @@ namespace PersistentCity.Runtime
                         events += result.Events;
                         citizenEvents += result.CitizenEvents;
                         elapsed = (Stopwatch.GetTimestamp() - started) * MillisecondsPerTimestamp;
+                        advanceForecast.Observe(elapsed - sliceStart);
                         Unit(result.PlanningPending ? "citizen-route-begin" : result.TrafficEvents > 0 ? "traffic"
                             : result.FoodContinuationEvents > 0 ? "food-continuation" : result.CitizenEvents > 0 ? "citizen" : "other");
                         if (result.PlanningPending) { pendingAtEnd = elapsed >= timeBudget; if (pendingAtEnd) break; continue; }
-                        if (result.CaughtUp || result.ThroughRoutePending || citizenEvents >= citizenLimit || elapsed >= timeBudget) break;
+                        if (result.CaughtUp || result.ThroughRoutePending || citizenEvents >= citizenLimit || !advanceForecast.Fits(elapsed, timeBudget)) break;
                     }
                 }
-                finally { active.SynchronizeSnapshot(); NativeCityClock.ObserveSimulationLag(target, active.State.Minute); }
+                finally { advanceForecast.EndFrame(); active.SynchronizeSnapshot(); NativeCityClock.ObserveSimulationLag(target, active.State.Minute); }
                 elapsed = (Stopwatch.GetTimestamp() - started) * MillisecondsPerTimestamp;
                 Unit("snapshot");
                 completed = true;
@@ -759,6 +761,7 @@ namespace PersistentCity.Runtime
         private Action? physicalBeforeAdvance, physicalUpdate, physicalCatchLoads;
         private bool gateRefreshDue;
         private readonly UpdateCityBudget frameBudget = new UpdateCityBudget();
+        private readonly UnitForecast advanceForecast = new UnitForecast();
 
         private void RunPhysical(Action action)
         {

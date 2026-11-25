@@ -17,7 +17,13 @@ namespace PersistentCity.Runtime
             FoodProductPolicySource? policy = null)
         { this.state = state; this.shops = shops; this.vehicles = vehicles; this.position = position; this.policy = policy; }
         public IFoodProductPolicy ProductPolicy => policy?.Current ?? FoodProductPolicy.OriginalThree;
-        private IFoodMarket Market(string id) => state.Shops.Any(s => s.BusinessId == id && s.Channel == FoodScopeChannel.Vehicle) ? vehicles : shops;
+        private IFoodMarket Market(string id)
+        {
+            var scopes = state.Shops;
+            for (int i = 0; i < scopes.Count; i++)
+                if (scopes[i].BusinessId == id && scopes[i].Channel == FoodScopeChannel.Vehicle) return vehicles;
+            return shops;
+        }
         public double EarliestMinute => Math.Max(shops.EarliestMinute, vehicles.EarliestMinute);
         public long AwarenessRevision => ((shops as IFoodAwarenessRevision)?.AwarenessRevision ?? 0) + ((vehicles as IFoodAwarenessRevision)?.AwarenessRevision ?? 0);
         public IReadOnlyList<FoodBusiness> Read(double minute) => shops.Read(minute).Concat(vehicles.Read(minute)).ToArray();

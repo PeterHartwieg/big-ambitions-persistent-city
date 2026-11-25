@@ -299,8 +299,9 @@ namespace PersistentCity.Runtime
         internal Position Position => Point(Character.transform.position);
         internal Position Target, Facing;
         internal static Func<Position, bool>? Unreachable;
+        internal static long PathQueries;
         internal bool SetPathTarget(Position p, double _)
-        { if (Unreachable?.Invoke(p) == true) return false; Target = p; Agent.hasPath = true; Agent.isPathStale = false; Agent.isStopped = false; return true; }
+        { PathQueries++; if (Unreachable?.Invoke(p) == true) return false; Target = p; Agent.hasPath = true; Agent.isPathStale = false; Agent.isStopped = false; return true; }
         internal bool SetTarget(Position p, double speed) { SetTargets++; return SetPathTarget(p, speed); }
         internal int SetTargets;
         internal bool TryProjectPose(Position p, out Position projected)

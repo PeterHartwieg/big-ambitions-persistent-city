@@ -474,7 +474,7 @@ namespace PersistentCity.Runtime
                 SortBySlot(inLine);
                 var occupied = occupiedScratch;
                 occupied.Clear();
-                foreach (var standing in Standing(found)) occupied.Add(standing.Value);
+                AddStanding(found, occupied);
                 foreach (var bound in inLine)
                 {
                     int? ahead = DwellPlanner.MoveUp(occupied, bound.Slot);
@@ -493,7 +493,7 @@ namespace PersistentCity.Runtime
         private readonly Stack<List<Dwell>> dwellLists = new Stack<List<Dwell>>();
         private readonly List<PlannedLine> plannedOrder = new List<PlannedLine>();
         private readonly List<Binding> inLineScratch = new List<Binding>();
-        private readonly HashSet<int> occupiedScratch = new HashSet<int>();
+        private readonly HashSet<int> occupiedScratch = new HashSet<int>(), joinScratch = new HashSet<int>();
         private readonly struct PlannedLine
         {
             public PlannedLine(string key, double distance) { Key = key; Distance = distance; }
@@ -545,6 +545,21 @@ namespace PersistentCity.Runtime
             if (binding.VendorOpening > 0) vendorGaveUp[binding.Citizen.Identity.Id] = binding.VendorOpening;
             if (gaveUp.Count > 256)
                 foreach (var stale in gaveUp.Where(p => p.Value <= simulation.View.Minute).Select(p => p.Key).ToList()) gaveUp.Remove(stale);
+        }
+
+        private void AddStanding(DoorQueue line, HashSet<int> into)
+        {
+            foreach (var b in bindings.Values)
+            {
+                if ((b.Queue.HasValue || b.VendorOpening > 0) && b.Line != null && b.Line.Key == line.Key && b.Step != QueueStep.Entering)
+                    into.Add(b.Slot);
+                else if (b.Optional != null && !b.OptionalReturning && (!b.OptionalStandsShort || b.Person != null))
+                {
+                    Position at = b.OptionalStandsShort ? b.Person!.Position : b.Optional.Position;
+                    for (int slot = 0; slot < line.Spots.Count; slot++)
+                        if (Position.Distance(line.Spots[slot], at) < 0.65) into.Add(slot);
+                }
+            }
         }
 
         private IEnumerable<KeyValuePair<string, int>> Standing(DoorQueue line)
