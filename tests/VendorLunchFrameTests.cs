@@ -141,6 +141,60 @@ public sealed class VendorLunchFrameTests
     }
 
     [Fact]
+    public void APathFirstJobBegunByAnEventWaitsWhenTheEventLeftLessThanItsReserve()
+    {
+        const double from = VendorLunchReplay.DayFrom, to = VendorLunchReplay.DayFrom + 20;
+        var reference = VendorLunchReplay.RunUninterrupted(from, to);
+        VendorLunchReplay.Result before = null!, after = null!;
+        TimingBudget.Run(timing =>
+        {
+            before = VendorLunchReplay.Run(0.25, from, to, resumable: true, pathMilliseconds: 2, forecast: false,
+                configure: p => { p.PathFirst = true; p.BeginMilliseconds = 1.5; p.AdvanceWorkCounts = false; });
+            after = VendorLunchReplay.Run(0.25, from, to, resumable: true, pathMilliseconds: 2, forecast: false,
+                configure: p => { p.PathFirst = true; p.BeginMilliseconds = 1.5; });
+            static double Over(VendorLunchReplay.Step f) => double.IsNaN(f.Budget) ? 0 : f.Advance - f.Budget;
+            output.WriteLine(string.Format(CultureInfo.InvariantCulture,
+                "08:00 to 08:20, 250 ms frames, planning forecast decayed, 1.5 ms event then a 2 ms path-first job: late path starts {0}/{1} -> {2}/{3}, carried {4} -> {5}, advance p95/max {6:0.000}/{7:0.000} -> {8:0.000}/{9:0.000} ms, overrun p95 {10:0.000} -> {11:0.000} ms",
+                before.LatePathStarts, before.PathSteps, after.LatePathStarts, after.PathSteps, before.CarriedPaths, after.CarriedPaths,
+                before.P95(f => f.Advance), before.Max(f => f.Advance), after.P95(f => f.Advance), after.Max(f => f.Advance), before.P95(Over), after.P95(Over)));
+            timing.Under("late path start share after an event", after.LatePathStarts / (double)Math.Max(1, after.PathSteps), 0.05);
+        });
+        Assert.True(before.PathSteps > 20 && before.LatePathStarts > 0, "the fixture no longer starts a path-first job late after event work");
+        Assert.True(after.CarriedPaths > 0, "no path-first job was carried into a later frame");
+        Assert.Equal(reference.SaveSha256, before.SaveSha256);
+        Assert.Equal(reference.SaveSha256, after.SaveSha256);
+        Assert.Equal(reference.Purchases, after.Purchases);
+    }
+
+    [Fact]
+    public void AnIsolatedSlowPathSampleStopsHoldingCheapPathStepsAfterIdleFrames()
+    {
+        const double from = VendorLunchReplay.DayFrom, to = VendorLunchReplay.DayFrom + 20;
+        var reference = VendorLunchReplay.RunUninterrupted(from, to);
+        VendorLunchReplay.Result before = null!, busy = null!, preempted = null!;
+        TimingBudget.Run(timing =>
+        {
+            before = VendorLunchReplay.Run(0.25, from, to, resumable: true, pathMilliseconds: 0.05, preparationMilliseconds: 1,
+                configure: p => { p.SlowPathMilliseconds = 16; p.SlowPathPreempted = true; p.LegacyReserve = true; });
+            preempted = VendorLunchReplay.Run(0.25, from, to, resumable: true, pathMilliseconds: 0.05, preparationMilliseconds: 1,
+                configure: p => { p.SlowPathMilliseconds = 16; p.SlowPathPreempted = true; });
+            busy = VendorLunchReplay.Run(0.25, from, to, resumable: true, pathMilliseconds: 0.05, preparationMilliseconds: 1,
+                configure: p => { p.SlowPathMilliseconds = 16; });
+            output.WriteLine(string.Format(CultureInfo.InvariantCulture,
+                "08:00 to 08:20, 250 ms frames, one 16 ms path sample then 1 ms preparation and 0.05 ms paths: carried {0}/{1} (wall reserve, no idle decay) -> {2}/{3} preempted sample, {4}/{5} on-CPU sample; advance p95 {6:0.000} -> {7:0.000}/{8:0.000} ms",
+                before.CarriedPaths, before.PathSteps, preempted.CarriedPaths, preempted.PathSteps, busy.CarriedPaths, busy.PathSteps,
+                before.P95(f => f.Advance), preempted.P95(f => f.Advance), busy.P95(f => f.Advance)));
+        });
+        Assert.True(before.PathSteps > 40, "the fixture no longer plans enough paths");
+        Assert.True(busy.CarriedPaths < before.CarriedPaths, "idle decay did not release cheap path steps sooner: " + busy.CarriedPaths + " against " + before.CarriedPaths);
+        if (PersistentCity.Runtime.ThreadCpuClock.Available)
+            Assert.True(preempted.CarriedPaths <= busy.CarriedPaths, "a preempted sample held more path steps than an on-CPU one");
+        Assert.Equal(reference.SaveSha256, before.SaveSha256);
+        Assert.Equal(reference.SaveSha256, preempted.SaveSha256);
+        Assert.Equal(reference.SaveSha256, busy.SaveSha256);
+    }
+
+    [Fact]
     public void LongFrameDeltasKeepASaturatedAdvanceInsideItsBudgetWithoutExtraAllocation()
     {
         VendorLunchReplay.Result before = null!, after = null!;

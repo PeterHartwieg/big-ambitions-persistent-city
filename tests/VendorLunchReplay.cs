@@ -167,6 +167,10 @@ public static class VendorLunchReplay
         protected void Spend(double milliseconds)
         {
             Calls++;
+            Busy(milliseconds);
+        }
+        protected static void Busy(double milliseconds)
+        {
             if (!(milliseconds > 0)) return;
             long until = Stopwatch.GetTimestamp() + (long)(milliseconds * Stopwatch.Frequency / 1000);
             while (Stopwatch.GetTimestamp() < until) { }
@@ -181,11 +185,13 @@ public static class VendorLunchReplay
     public sealed class ResumableSlowPlanner : SlowPlanner, IResumableRoutePlanner
     {
         public long Frame, Deadline = long.MaxValue, LatePathStarts, CarriedPaths, PathSteps, HeldFrame = -1;
-        public double SliceUnitMilliseconds, PathMilliseconds, PreparationMilliseconds, ReserveMilliseconds = .05;
-        public bool FrameWorkDone, PathReserve = true;
+        public double SliceUnitMilliseconds, PathMilliseconds, PreparationMilliseconds, BeginMilliseconds, SlowPathMilliseconds, ReserveMilliseconds = .05;
+        public bool FrameWorkDone, PathReserve = true, PathFirst, SlowPathPreempted, LegacyReserve, AdvanceWorkCounts = true;
+        private readonly PathReserve reserve = new PathReserve();
         private long unitFrame = -1;
         private int frameUnits, framePaths;
-        public IRoutePlanningJob Begin(RouteRequest request) => new Job(this, request);
+        public double CurrentReserveMilliseconds => LegacyReserve ? ReserveMilliseconds : reserve.Milliseconds(Frame);
+        public IRoutePlanningJob Begin(RouteRequest request) { Busy(BeginMilliseconds); return new Job(this, request); }
 
         private sealed class Job : IRoutePlanningJob
         {
@@ -193,7 +199,7 @@ public static class VendorLunchReplay
             private readonly RouteRequest request;
             private readonly long begun;
             private int stage;
-            public Job(ResumableSlowPlanner owner, RouteRequest request) { this.owner = owner; this.request = request; begun = owner.Frame; }
+            public Job(ResumableSlowPlanner owner, RouteRequest request) { this.owner = owner; this.request = request; begun = owner.Frame; stage = owner.PathFirst ? 1 : 0; }
             public Route? Result { get; private set; }
 
             public bool Continue(double budgetMilliseconds)
@@ -205,8 +211,8 @@ public static class VendorLunchReplay
                 while (stage < 2)
                 {
                     if (!first && Stopwatch.GetTimestamp() >= deadline) return false;
-                    if (finite && stage == 1 && owner.PathReserve && !PathAdmission.Admits(owner.frameUnits > 0, owner.framePaths, int.MaxValue,
-                        (deadline - Stopwatch.GetTimestamp()) * 1000.0 / Stopwatch.Frequency, owner.ReserveMilliseconds))
+                    if (finite && stage == 1 && owner.PathReserve && !PathAdmission.Admits(owner.frameUnits > 0 || owner.AdvanceWorkCounts && owner.FrameWorkDone,
+                        owner.framePaths, int.MaxValue, (deadline - Stopwatch.GetTimestamp()) * 1000.0 / Stopwatch.Frequency, owner.CurrentReserveMilliseconds))
                     { owner.HeldFrame = owner.Frame; return false; }
                     first = false;
                     if (finite) owner.frameUnits++;
@@ -218,11 +224,20 @@ public static class VendorLunchReplay
                         if (owner.Frame != begun) owner.CarriedPaths++;
                         double cost = owner.CitizenRouteMilliseconds + owner.PathMilliseconds;
                         if (cost > 0 && (owner.FrameWorkDone || owner.frameUnits > 1) && (owner.Deadline - unit) * 1000.0 / Stopwatch.Frequency < cost) owner.LatePathStarts++;
+                        long cpu = ThreadCpuClock.Available ? ThreadCpuClock.Nanoseconds() : -1;
+                        if (owner.SlowPathMilliseconds > 0)
+                        {
+                            if (owner.SlowPathPreempted) System.Threading.Thread.Sleep(TimeSpan.FromMilliseconds(owner.SlowPathMilliseconds));
+                            else Busy(owner.SlowPathMilliseconds);
+                            owner.SlowPathMilliseconds = 0;
+                        }
                         owner.Spend(cost);
                         Result = owner.Answer(request);
                         if (finite) owner.framePaths++;
                         double observed = (Stopwatch.GetTimestamp() - unit) * 1000.0 / Stopwatch.Frequency;
-                        owner.ReserveMilliseconds = Math.Max(.05, Math.Max(observed * 1.25, owner.ReserveMilliseconds * .95));
+                        long cpuEnd = cpu >= 0 ? ThreadCpuClock.Nanoseconds() : -1;
+                        if (owner.LegacyReserve) owner.ReserveMilliseconds = Math.Max(.05, Math.Max(observed * 1.25, owner.ReserveMilliseconds * .95));
+                        else owner.reserve.Observe(owner.Frame, 1, observed, cpu >= 0 && cpuEnd >= cpu ? (cpuEnd - cpu) / 1e6 : -1);
                     }
                     stage++;
                     owner.SliceUnitMilliseconds = Math.Max(owner.SliceUnitMilliseconds, (Stopwatch.GetTimestamp() - unit) * 1000.0 / Stopwatch.Frequency);
@@ -374,7 +389,8 @@ public static class VendorLunchReplay
     public static Action<string>? Progress;
 
     public static Result Run(double seconds, double from = LunchFrom, double to = LunchTo, int vehicles = 2, int maximumFrames = 200000, bool bodies = false,
-        double routeMilliseconds = 0, bool forecast = true, bool resumable = false, double pathMilliseconds = 0, double preparationMilliseconds = 0, bool pathReserve = true)
+        double routeMilliseconds = 0, bool forecast = true, bool resumable = false, double pathMilliseconds = 0, double preparationMilliseconds = 0, bool pathReserve = true,
+        Action<ResumableSlowPlanner>? configure = null)
     {
         long began = Stopwatch.GetTimestamp();
         bool openInFrames = from <= OpenAt;
@@ -387,7 +403,7 @@ public static class VendorLunchReplay
         GC.Collect(); GC.WaitForPendingFinalizers(); GC.Collect();
         rig.End = to;
         rig.Planner.CitizenRouteMilliseconds = routeMilliseconds;
-        if (rig.Planner is ResumableSlowPlanner counted) { counted.PathMilliseconds = pathMilliseconds; counted.PreparationMilliseconds = preparationMilliseconds; counted.PathReserve = pathReserve; counted.LatePathStarts = counted.CarriedPaths = counted.PathSteps = 0; }
+        if (rig.Planner is ResumableSlowPlanner counted) { counted.PathMilliseconds = pathMilliseconds; counted.PreparationMilliseconds = preparationMilliseconds; counted.PathReserve = pathReserve; counted.LatePathStarts = counted.CarriedPaths = counted.PathSteps = 0; configure?.Invoke(counted); }
         long routeCalls = rig.Planner.Calls;
         var result = new Result { NativeFrom = rig.Native };
         int collections = GC.CollectionCount(0);

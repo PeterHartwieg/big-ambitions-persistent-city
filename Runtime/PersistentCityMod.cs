@@ -693,6 +693,7 @@ namespace PersistentCity.Runtime
                         long eventCpu = forecastCpu ? ThreadCpuClock.Nanoseconds() : -1;
                         double sliceStart = (Stopwatch.GetTimestamp() - started) * MillisecondsPerTimestamp;
                         var result = active.AdvanceFrameSlice(target, 1);
+                        routes?.ObserveAdvanceWork();
                         slowestFoodContinuation.Observe(result.FoodContinuationEvents > 0, active.LastFoodContinuationMilliseconds, active.FoodContinuationStep);
                         AdvanceAllocation.Sub(GcPauseSampler.AdvanceEventSegment(result.TrafficEvents, result.FoodContinuationEvents, result.CitizenEvents, result.PlanningPending));
                         AdvanceAllocation.Detail(GcAllocationSegment.AdvanceEvents);

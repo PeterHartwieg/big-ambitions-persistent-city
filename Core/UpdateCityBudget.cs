@@ -77,6 +77,32 @@ namespace PersistentCity.Core
             => framePaths < maximumFramePaths && (!frameRanUnit || remainingMilliseconds > reserveMilliseconds);
     }
 
+    public sealed class PathReserve
+    {
+        public const double FloorMilliseconds = .05, Margin = 1.25, SampleDecay = .95, FrameDecay = .5;
+        public const int IdleHoldFrames = 8;
+        private double observed = FloorMilliseconds;
+        private long observedFrame;
+        private bool hasObservation;
+
+        public double Milliseconds(long frame)
+        {
+            if (!hasObservation) return observed;
+            long idle = frame - observedFrame - IdleHoldFrames;
+            if (idle <= 0) return observed;
+            return idle >= 64 ? FloorMilliseconds : Math.Max(FloorMilliseconds, observed * Math.Pow(FrameDecay, idle));
+        }
+
+        public void Observe(long frame, int queries, double wallMilliseconds, double cpuMilliseconds)
+        {
+            if (queries <= 0 || double.IsNaN(wallMilliseconds) || double.IsInfinity(wallMilliseconds) || wallMilliseconds < 0) return;
+            double spent = cpuMilliseconds >= 0 && !double.IsInfinity(cpuMilliseconds) ? Math.Min(wallMilliseconds, cpuMilliseconds) : wallMilliseconds;
+            double current = Milliseconds(frame);
+            observed = Math.Max(FloorMilliseconds, Math.Max(spent / queries * Margin, current * SampleDecay));
+            observedFrame = frame; hasObservation = true;
+        }
+    }
+
     public sealed class UnitForecast
     {
         public const double FrameDecay = .5;

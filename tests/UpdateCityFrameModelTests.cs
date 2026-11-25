@@ -233,6 +233,24 @@ public sealed class UpdateCityFrameModelTests
     }
 
     [Fact]
+    public void APathReserveIgnoresPreemptionAndDecaysAfterIdleFrames()
+    {
+        var reserve = new PathReserve();
+        reserve.Observe(10, 1, 16, 0.4);
+        Assert.Equal(0.5, reserve.Milliseconds(10), 6);
+        reserve.Observe(11, 1, 16, -1);
+        Assert.Equal(20, reserve.Milliseconds(11), 6);
+        Assert.Equal(20, reserve.Milliseconds(11 + PathReserve.IdleHoldFrames));
+        Assert.Equal(10, reserve.Milliseconds(12 + PathReserve.IdleHoldFrames), 6);
+        Assert.True(reserve.Milliseconds(15 + PathReserve.IdleHoldFrames) < 3);
+        Assert.Equal(PathReserve.FloorMilliseconds, reserve.Milliseconds(1000));
+        reserve.Observe(15 + PathReserve.IdleHoldFrames, 1, 0.2, 0.2);
+        Assert.True(reserve.Milliseconds(15 + PathReserve.IdleHoldFrames) < 3);
+        reserve.Observe(30, 0, 50, 50);
+        Assert.True(reserve.Milliseconds(30) < 3);
+    }
+
+    [Fact]
     public void AdmissionSkipsSamplesTakenAcrossACollectionAndPrefersThreadCpuTime()
     {
         var admission = new AdvanceAdmission();
