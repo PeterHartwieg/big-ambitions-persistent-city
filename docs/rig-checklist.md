@@ -27861,16 +27861,16 @@ Original native autosave preferences matched the gate session. The rig verified 
 
 ### Carried and excluded checks
 
-- E6 check 1 carries from 17o (v1-present) and 17r (0.10.11 PASS). Truck B was eligible with `Reason: ""` in the v1-present arm, restated for E6f. Contract 2 still needs a reviewed build.
+- E6 check 1 carries from 17o at `477d11a5` (v1-present) and 17r at `acc7eb9d` (0.10.11 PASS). Truck B was eligible with `Reason: ""` in the v1-present arm, restated for E6f. Contract 2 still needs a reviewed build.
 - E6 3, 6 and 7 remain NOT RUN pending agent-rig #121. It was absent from the installed overlay.
 - E6 4 and 5 remain NOT RUN pending Street Food `edit_stop`. Base-v2 stays unpinned after its day-two failure.
-- E6 9 and 12 remain NOT RUN pending the Street Food `vendor_fault` and contract-2 builds. E6 13 waits on F6b.
-- E6 2b carries PASS and 10 carries PARTIAL from 17p (#369). The Drink override showed the intended Street Food ownership and sales. The shutdown log gate remains open.
+- E6 9 and 12 remain NOT RUN pending the Street Food `vendor_fault` and contract-2 builds. E6 13 is NOT RUN. Its missing input is F6b's unified mod-work and whole-frame acceptance checks.
+- E6 2b carries PASS and 10 carries PARTIAL from 17p at `c20d4ec4` (#369). The Drink override showed the intended Street Food ownership and sales. The shutdown log gate remains open.
 - Pointer, hover, click and visual feel stay with Peter.
 
 ### Restore and evidence
 
-Both headless players stopped cleanly. Staging used `python3 scripts/install-mac.py --stage-mod PersistentCity <absolute 25c package path>`. The receipt backup is `~/Library/Application Support/BigAmbitionsAgentTestsMac/receipt-backups/20261125T013154Z`.
+Both headless players stopped cleanly. Staging used `python3 scripts/install-mac.py --stage-mod PersistentCity <absolute 25c package path>`. The receipt backup ID is `20261125T013154Z`.
 
 Hash verification covered all 272 ModsLocal files, all 284 receipt entries, the receipt bytes, AgentRigOps.dll, isolated preferences, config and original saves. Effective FoodChoicePriceWeight after restore was 1.2. Both disposables and their sidecars were archived outside SaveGames. The final agentmac status showed the lease free with zero pending operations.
 
@@ -27879,6 +27879,6 @@ Hash verification covered all 272 ModsLocal files, all 284 receipt entries, the 
 | `FT RIGTMP-GATE-25c-mac.hsg` | `d208d70482be98ef58ff7dc9198df83b1b521af05f4129baeaf009d6195782ee` |
 | `FT RIGTMP-PERF-25c-mac.hsg` | `c7a261e82d80d29efe5b580fff13ea4eb4e512a808a5c2fcd2b4a018d385527d` |
 
-Raw evidence is in `~/Coding_Projects/.agent-logs/persistent-city-rig-2026-11-25c-mac/`. SHA-256 of `evidence-sha256.txt` is `e75a8ad443caf83b68c9e69260d4121b581ce164c320e7ac82f47addb5781267`.
+The raw evidence run ID is `persistent-city-rig-2026-11-25c-mac`. SHA-256 of `evidence-sha256.txt` is `e75a8ad443caf83b68c9e69260d4121b581ce164c320e7ac82f47addb5781267`.
 
 Refs #350 #365 #372
