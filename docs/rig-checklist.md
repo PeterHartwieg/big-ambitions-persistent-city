@@ -27894,7 +27894,7 @@ The Mac agent-rig checkout was `c366b29483d3d21fbdc59bbb4adbb8369ea1ffab`. The e
 
 | Check | Verdict | Evidence |
 | --- | --- | --- |
-| E6 3. Positive sale with exact money | PASS | The 32-ID request returned 32 wallets. Full-population coverage joined 24 paid hot dogs to 24 exact wallet debits and the 9,600-cent midnight payment. |
+| E6 3. Positive sale with exact money | PASS | The 32-ID request returned 32 wallets. Full-population coverage joined all 24 paid hot dogs to exact 400-cent prepared-food debits and the single 9,600-cent midnight payment. |
 | E6 6. Handback mid-opening | PASS | Three commitments missed safely. Street Food took the same opening back, and the handback join found one native sale and zero mixed-source minutes. |
 | E6 7. Lease and missing PC | PARTIAL | Both gameplay arms passed. The with-PC final log gate rejected the Street Food post-quit exception. |
 | Recorder-off performance | PASS | Provisional mod-work p95 3.3245 ms and zero spikes ≥30 ms. |
@@ -27937,16 +27937,16 @@ Separate native whole-frame timing was p95 **37.4993 ms** and max **517.3736 ms*
 
 ### Carried and excluded
 
-- #350 through-gate, both arms, carries 17t PASS from #373. E6 check 1 carries the 17o Vendor API v1-present and 17r Street Food 0.10.11 results.
-- E6 2b carries 17p PASS. E6 10 carries 17p PARTIAL, with the intended Drink behaviour.
+- #350 through-gate, both arms, carries 17t PASS at `b04549a` from #373. E6 check 1 carries the 17o Vendor API v1-present result at `477d11a5` and the 17r Street Food 0.10.11 result at `acc7eb9d`.
+- E6 2b carries 17p PASS at `c20d4ec4`. E6 10 carries 17p PARTIAL at `c20d4ec4`, with the intended Drink behaviour.
 - E6 4 and 5 wait on Street Food `edit_stop`. Base-v2 stays unpinned.
 - E6 9 and 12 wait on Street Food `vendor_fault` and a reviewed renderable contract-2 build respectively. E6 13 waits on F6b.
 - Pointer, hover, click and visual feel stay with Peter.
 
 ### Restore and evidence
 
-The manual player stopped cleanly. Staging used `python3 scripts/install-mac.py --stage-mod PersistentCity <absolute 25d package path>`. The receipt backup was `~/Library/Application Support/BigAmbitionsAgentTestsMac/receipt-backups/20261125T033006Z`. The isolated preferences, native autosave values, PC config, 272 ModsLocal files, 284 receipt entries and the original SaveGames manifest matched the pre-run state. The overlay and RLO matched their starting hashes. The disposables and sidecars were archived. The first flow's load menu generated one new portrait for the existing 0.10.11 fixture. That portrait was archived and the sealed save and its original sidecars matched. The final `agentmac` status showed the game closed and the lease free with zero pending operations.
+The manual player stopped cleanly. Staging used `python3 scripts/install-mac.py --stage-mod PersistentCity <absolute 25d package path>`. The isolated preferences, native autosave values, PC config, 272 ModsLocal files, 284 receipt entries and the original SaveGames manifest matched the pre-run state. The overlay and RLO matched their starting hashes. The disposables and sidecars were archived. The first flow's load menu generated one new portrait for the existing 0.10.11 fixture. That portrait was archived and the sealed save and its original sidecars matched. The final `agentmac` status showed the game closed and the lease free with zero pending operations.
 
-Raw commands, ledger snapshots and replies, flow results, frame reports and retained saves are in `~/Coding_Projects/.agent-logs/persistent-city-rig-2026-11-25d-mac/`. SHA-256 of `evidence-sha256.txt` is `7dfe9fd8b0669c1990cbc7614e82597985cc013719d29635f784ab5f53c42dbc`.
+Raw commands, ledger snapshots and replies, flow results, frame reports and retained saves are in the raw evidence run `persistent-city-rig-2026-11-25d-mac`. SHA-256 of `evidence-sha256.txt` is `7dfe9fd8b0669c1990cbc7614e82597985cc013719d29635f784ab5f53c42dbc`.
 
 Refs #364 #366 #373
