@@ -74,6 +74,49 @@ public sealed class VendorLunchFrameTests
     }
 
     [Fact]
+    public void SeededDayOutcomesMatchTheUninterruptedRunAcrossVendorOpeningEveningAndClosing()
+    {
+        var reference = VendorLunchReplay.RunUninterrupted(to: VendorLunchReplay.DayTo);
+        var lunch = VendorLunchReplay.RunUninterrupted();
+        Assert.True(reference.VendorPurchases > lunch.VendorPurchases && reference.Purchases > lunch.Purchases, "the day fixture lost its demand outside lunch");
+        foreach (var (seconds, resumable) in new[] { (0.25, false), (0.12, true) })
+        {
+            var run = VendorLunchReplay.Run(seconds, from: VendorLunchReplay.DayFrom, to: VendorLunchReplay.DayTo, resumable: resumable);
+            Assert.True(run.Frames.Count > 1000);
+            Assert.Equal(reference.SaveSha256, run.SaveSha256);
+            Assert.Equal(reference.VendorPurchases, run.VendorPurchases);
+            Assert.Equal(reference.Purchases, run.Purchases);
+            Assert.Equal(reference.NativeTo, run.NativeTo);
+        }
+    }
+
+    [Fact]
+    public void APendingPlanStartsItsPathStepOnlyWhenTheStepFitsAndCarriesItOverOtherwise()
+    {
+        const double from = VendorLunchReplay.DayFrom, to = VendorLunchReplay.DayFrom + 20;
+        var reference = VendorLunchReplay.RunUninterrupted(from, to);
+        VendorLunchReplay.Result before = null!, after = null!;
+        TimingBudget.Run(timing =>
+        {
+            before = VendorLunchReplay.Run(0.25, from, to, forecast: false, resumable: true, pathMilliseconds: 2);
+            after = VendorLunchReplay.Run(0.25, from, to, resumable: true, pathMilliseconds: 2);
+            static double Over(VendorLunchReplay.Step f) => double.IsNaN(f.Budget) ? 0 : f.Advance - f.Budget;
+            output.WriteLine(string.Format(CultureInfo.InvariantCulture,
+                "08:00 to 08:20, 250 ms frames, cheap quotes, resumable 2 ms path steps: late path starts {0}/{1} -> {2}/{3}, carried {4} -> {5}, advance p95/max {6:0.000}/{7:0.000} -> {8:0.000}/{9:0.000} ms, overrun p95 {10:0.000} -> {11:0.000} ms, game min/s {12:0.000} -> {13:0.000}",
+                before.LatePathStarts, before.PathSteps, after.LatePathStarts, after.PathSteps, before.CarriedPaths, after.CarriedPaths,
+                before.P95(f => f.Advance), before.Max(f => f.Advance), after.P95(f => f.Advance), after.Max(f => f.Advance),
+                before.P95(Over), after.P95(Over), before.GameMinutesPerRealSecond, after.GameMinutesPerRealSecond));
+            timing.Under("late path start share", after.LatePathStarts / (double)Math.Max(1, after.PathSteps), 0.05);
+            timing.Under("resumable advance overrun p95", after.P95(Over), 0.25);
+        });
+        Assert.True(before.PathSteps > 20 && before.LatePathStarts > 0, "the fixture no longer starts path steps late without admission");
+        Assert.True(after.CarriedPaths > 0, "no pending plan carried its path step into a later frame");
+        Assert.Equal(reference.SaveSha256, before.SaveSha256);
+        Assert.Equal(reference.SaveSha256, after.SaveSha256);
+        Assert.Equal(reference.Purchases, after.Purchases);
+    }
+
+    [Fact]
     public void LongFrameDeltasKeepASaturatedAdvanceInsideItsBudgetWithoutExtraAllocation()
     {
         VendorLunchReplay.Result before = null!, after = null!;

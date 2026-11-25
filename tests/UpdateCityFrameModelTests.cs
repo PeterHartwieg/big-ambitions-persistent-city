@@ -181,6 +181,45 @@ public sealed class UpdateCityFrameModelTests
         Assert.True(fits > 0);
     }
 
+    [Fact]
+    public void AdmissionLetsAFramesFirstPlanningSliceRunAndHoldsLaterSlicesToTheirForecast()
+    {
+        var admission = new AdvanceAdmission();
+        Assert.True(admission.AdmitsPlanning(2.9, 3));
+        admission.ObservePlanning(2, false);
+        Assert.True(admission.AdmitsPlanning(0.9, 3));
+        Assert.False(admission.AdmitsPlanning(2.8, 3));
+        admission.EndFrame(); admission.EndFrame(); admission.EndFrame();
+        Assert.Equal(2, admission.Planning.Milliseconds);
+        Assert.True(admission.AdmitsPlanning(2.8, 3));
+        admission.ObserveEvent(0.05, -1, false);
+        Assert.False(admission.AdmitsPlanning(2.8, 3));
+        Assert.True(admission.AdmitsPlanning(0.9, 3));
+        Assert.True(admission.AdmitsEvent(2.8, 3));
+        admission.ObservePlanning(0.4, false); admission.EndFrame();
+        Assert.Equal(1, admission.Planning.Milliseconds);
+    }
+
+    [Fact]
+    public void AdmissionSkipsSamplesTakenAcrossACollectionAndPrefersThreadCpuTime()
+    {
+        var admission = new AdvanceAdmission();
+        admission.ObserveEvent(10, -1, true);
+        admission.ObservePlanning(12, true);
+        Assert.Equal(0, admission.Events.Milliseconds);
+        Assert.Equal(0, admission.Planning.Milliseconds);
+        Assert.Equal(2, admission.SkippedSamples);
+        Assert.True(admission.AdmitsEvent(0.2, 3));
+        admission.ObserveEvent(9, 0.1, false);
+        Assert.Equal(0.1, admission.Events.Milliseconds, 6);
+        Assert.True(admission.AdmitsEvent(2.8, 3));
+        admission.ObserveEvent(1.5, -1, false);
+        Assert.Equal(1.5, admission.Events.Milliseconds, 6);
+        admission.Reset();
+        Assert.Equal(0, admission.SkippedSamples);
+        Assert.Equal(0, admission.Events.Milliseconds);
+    }
+
     [Theory]
     [InlineData(1.0 / 30)] [InlineData(0.12)] [InlineData(0.25)]
     public void ASaturatedAdvanceWithAForecastKeepsCoarseUnitsInsideItsBudget(double seconds)

@@ -14,6 +14,7 @@ public static class VendorLunchReplay
     public const long Day = 2;
     public const long OpenAt = Day * 1440 + 9 * 60;
     public const double LunchFrom = Day * 1440 + 11 * 60 + 50, LunchTo = Day * 1440 + 12 * 60 + 10;
+    public const double DayFrom = OpenAt - 60, DayTo = (Day + 1) * 1440 + 30;
 
     public sealed class Step
     {
@@ -30,7 +31,7 @@ public static class VendorLunchReplay
         public readonly List<Step> Frames = new List<Step>();
         public string SaveSha256 = "";
         public double NativeFrom, NativeTo, RealSeconds;
-        public long Purchases, VendorPurchases, AllocatedBytes, RouteCalls;
+        public long Purchases, VendorPurchases, AllocatedBytes, RouteCalls, LatePathStarts, CarriedPaths, PathSteps;
         public int VendorMeals, Collections;
         public double GameMinutesPerRealSecond => RealSeconds <= 0 ? 0 : (NativeTo - NativeFrom) / RealSeconds;
         public static double Rank(IEnumerable<double> values, double fraction)
@@ -51,17 +52,20 @@ public static class VendorLunchReplay
         public readonly StreetFoodVendorMarket Vendors;
         public readonly Dictionary<string, string> Receipts = new Dictionary<string, string>(StringComparer.Ordinal);
         public readonly UpdateCityBudget Budget = new UpdateCityBudget();
-        public readonly UnitForecast Forecast = new UnitForecast();
+        public readonly AdvanceAdmission Admission = new AdvanceAdmission();
         public bool Forecasting = true;
-        public bool Fits(double elapsed, double budget) => Forecasting ? Forecast.Fits(elapsed, budget) : elapsed < budget;
+        public bool Fits(double elapsed, double budget) => Forecasting ? Admission.AdmitsEvent(elapsed, budget) : elapsed < budget;
+        public bool AdmitsPlanning(double elapsed, double budget) => !Forecasting || Admission.AdmitsPlanning(elapsed, budget);
+        public bool Opened { get; private set; }
         public double Native;
         internal PhysicalPopulation? Bodies;
         public Position Stand;
 
-        public readonly SlowPlanner Planner = new SlowPlanner();
+        public readonly SlowPlanner Planner;
 
-        public Rig(int vehicles = 2, int residents = 1000)
+        public Rig(int vehicles = 2, int residents = 1000, bool resumable = false, bool openInFrames = false)
         {
+            Planner = resumable ? new ResumableSlowPlanner() : new SlowPlanner();
             StreetFoodHooks.Reset(); UnityEngine.AI.NavMesh.Reset(); AmbientPedestrians.Reserved.Clear();
             PhysicalPedestrianBody.Unreachable = null; PhysicalPedestrians.VisiblePoint = null; PhysicalPedestrians.AppearOnScreen = false;
             State = RushSpikeReplay.Create(residents);
@@ -80,9 +84,21 @@ public static class VendorLunchReplay
             City.AttachFoodMarket(markets); City.EnableHouseholdFinances();
             City.AttachOptionalStops(new RushSpikeReplay.Stops(), OptionalStopPolicy.ApprovedChoicePercentage);
             RunTo(OpenAt - 60);
+            if (openInFrames) return;
             RunTo(OpenAt);
-            foreach (var v in StreetFoodHooks.Vehicles) StreetFoodHooks.Open(v.Id, 600);
+            OpenVehicles();
             RunTo(OpenAt + 1);
+        }
+
+        private void OpenVehicles()
+        {
+            foreach (var v in StreetFoodHooks.Vehicles) StreetFoodHooks.Open(v.Id, 600);
+            Opened = true;
+        }
+
+        public void OpenWhenDue()
+        {
+            if (!Opened && Native >= OpenAt && City.IsCaughtUpTo(AccountingClock.Target(Native))) OpenVehicles();
         }
 
         private static Position Busiest(CityState state)
@@ -126,7 +142,7 @@ public static class VendorLunchReplay
         }
 
         public double End = double.PositiveInfinity;
-        public void Tick(double seconds) => Move((float)Math.Min(GameMinutesPerSecond * seconds, End - Native));
+        public void Tick(double seconds) => Move((float)Math.Min(GameMinutesPerSecond * seconds, (Opened ? End : Math.Min(End, OpenAt)) - Native));
 
         private void Move(float requested)
         {
@@ -139,7 +155,7 @@ public static class VendorLunchReplay
         }
     }
 
-    public sealed class SlowPlanner : IRoutePlanner, ICitizenRoutePlanner, ITrafficRoutePlanner
+    public class SlowPlanner : IRoutePlanner, ICitizenRoutePlanner, ITrafficRoutePlanner
     {
         private readonly RushSpikeReplay.Planner inner = new RushSpikeReplay.Planner();
         public double CitizenRouteMilliseconds;
@@ -147,15 +163,64 @@ public static class VendorLunchReplay
         public void SetTrafficForecast(Func<int, double, TrafficLinkForecast>? forecast) => inner.SetTrafficForecast(forecast);
         public bool IsTrafficLinkClosed(int linkId) => inner.IsTrafficLinkClosed(linkId);
         public long Calls;
-        private void Spend()
+        protected void Spend() => Spend(CitizenRouteMilliseconds);
+        protected void Spend(double milliseconds)
         {
             Calls++;
-            if (!(CitizenRouteMilliseconds > 0)) return;
-            long until = Stopwatch.GetTimestamp() + (long)(CitizenRouteMilliseconds * Stopwatch.Frequency / 1000);
+            if (!(milliseconds > 0)) return;
+            long until = Stopwatch.GetTimestamp() + (long)(milliseconds * Stopwatch.Frequency / 1000);
             while (Stopwatch.GetTimestamp() < until) { }
         }
         public Route? Plan(Place from, Place to, double minute, TravelPreferences preferences) { Spend(); return inner.Plan(from, to, minute, preferences); }
         public Route? Plan(Place from, Place to, double minute, CitizenState citizen) { Spend(); return inner.Plan(from, to, minute, citizen); }
+        protected Route? Answer(RouteRequest request)
+            => request.Citizen != null ? inner.Plan(request.From, request.To, request.DepartureMinute, request.Citizen)
+                : inner.Plan(request.From, request.To, request.DepartureMinute, request.Preferences);
+    }
+
+    public sealed class ResumableSlowPlanner : SlowPlanner, IResumableRoutePlanner
+    {
+        public long Frame, Deadline = long.MaxValue, LatePathStarts, CarriedPaths, PathSteps;
+        public double SliceUnitMilliseconds, PathMilliseconds;
+        public bool FrameWorkDone;
+        public IRoutePlanningJob Begin(RouteRequest request) => new Job(this, request);
+
+        private sealed class Job : IRoutePlanningJob
+        {
+            private readonly ResumableSlowPlanner owner;
+            private readonly RouteRequest request;
+            private readonly long begun;
+            private int stage;
+            public Job(ResumableSlowPlanner owner, RouteRequest request) { this.owner = owner; this.request = request; begun = owner.Frame; }
+            public Route? Result { get; private set; }
+
+            public bool Continue(double budgetMilliseconds)
+            {
+                long started = Stopwatch.GetTimestamp();
+                long deadline = double.IsPositiveInfinity(budgetMilliseconds) ? long.MaxValue : started + (long)(budgetMilliseconds * Stopwatch.Frequency / 1000);
+                bool first = true;
+                while (stage < 2)
+                {
+                    if (!first && Stopwatch.GetTimestamp() >= deadline) return false;
+                    first = false;
+                    long unit = Stopwatch.GetTimestamp();
+                    if (stage == 1)
+                    {
+                        owner.PathSteps++;
+                        if (owner.Frame != begun) owner.CarriedPaths++;
+                        double cost = owner.CitizenRouteMilliseconds + owner.PathMilliseconds;
+                        if (cost > 0 && owner.FrameWorkDone && (owner.Deadline - unit) * 1000.0 / Stopwatch.Frequency < cost) owner.LatePathStarts++;
+                        owner.Spend(cost);
+                        Result = owner.Answer(request);
+                    }
+                    stage++;
+                    owner.SliceUnitMilliseconds = Math.Max(owner.SliceUnitMilliseconds, (Stopwatch.GetTimestamp() - unit) * 1000.0 / Stopwatch.Frequency);
+                }
+                return true;
+            }
+
+            public void Dispose() { }
+        }
     }
 
     private sealed class Shops : IFoodMarket, ILocalFoodMarket, IFoodCandidateMarket, IFoodBusinessAuthority,
@@ -202,6 +267,7 @@ public static class VendorLunchReplay
         var step = new Step();
         long started = Stopwatch.GetTimestamp();
         double Elapsed() => Ms(started, Stopwatch.GetTimestamp());
+        rig.OpenWhenDue();
         rig.Tick(seconds);
         if (rig.Bodies != null) { UnityEngine.Time.Next((float)seconds); rig.WalkBodies((float)seconds); }
         long bytes = GC.GetAllocatedBytesForCurrentThread();
@@ -221,6 +287,8 @@ public static class VendorLunchReplay
         var budget = new PopulationFrameBudget(seconds, false);
         double timeBudget = step.Budget = rig.Budget.Advance(budget.Milliseconds, Elapsed());
         long advanceStarted = Stopwatch.GetTimestamp();
+        var resumable = rig.Planner as ResumableSlowPlanner;
+        if (resumable != null) { resumable.Frame++; resumable.FrameWorkDone = false; resumable.Deadline = advanceStarted + (long)(timeBudget * Stopwatch.Frequency / 1000); }
         double elapsed = 0, unitStarted = 0;
         bool caughtUp = false;
         try
@@ -229,19 +297,27 @@ public static class VendorLunchReplay
             {
                 if (rig.City.PlanningPending)
                 {
+                    if (!rig.AdmitsPlanning(elapsed, timeBudget)) break;
+                    int sliceCollections = GC.CollectionCount(0);
+                    long sliceStarted = Stopwatch.GetTimestamp();
+                    if (resumable != null) resumable.SliceUnitMilliseconds = 0;
                     bool finished = rig.City.ContinuePlanning(Math.Max(0, timeBudget - elapsed));
                     elapsed = Ms(advanceStarted, Stopwatch.GetTimestamp());
+                    if (resumable != null) resumable.FrameWorkDone = true;
+                    rig.Admission.ObservePlanning(resumable != null ? resumable.SliceUnitMilliseconds : Ms(sliceStarted, Stopwatch.GetTimestamp()), GC.CollectionCount(0) != sliceCollections);
                     Unit("route-planning");
                     if (!finished) { if (elapsed >= timeBudget) break; continue; }
                     step.CitizenEvents++;
                     if (step.CitizenEvents >= budget.CitizenEvents || !rig.Fits(elapsed, timeBudget)) break;
                     continue;
                 }
-                double sliceStart = elapsed;
+                int eventCollections = GC.CollectionCount(0);
+                double sliceStart = Ms(advanceStarted, Stopwatch.GetTimestamp());
                 var result = rig.City.AdvanceFrameSlice(advanceTarget, 1);
                 step.Units += result.Events; step.CitizenEvents += result.CitizenEvents;
                 elapsed = Ms(advanceStarted, Stopwatch.GetTimestamp());
-                rig.Forecast.Observe(elapsed - sliceStart);
+                if (resumable != null) resumable.FrameWorkDone = true;
+                rig.Admission.ObserveEvent(elapsed - sliceStart, -1, GC.CollectionCount(0) != eventCollections);
                 Unit(result.PlanningPending ? "citizen-route-begin" : result.TrafficEvents > 0 ? "traffic"
                     : result.FoodContinuationEvents > 0 ? "food-continuation" : result.CitizenEvents > 0 ? "citizen" : "other");
                 if (result.PlanningPending) { if (elapsed >= timeBudget) break; continue; }
@@ -251,7 +327,7 @@ public static class VendorLunchReplay
         }
         finally
         {
-            rig.Forecast.EndFrame();
+            rig.Admission.EndFrame();
             long synced = Stopwatch.GetTimestamp();
             step.Advance = Ms(advanceStarted, synced);
             rig.City.SynchronizeSnapshot();
@@ -283,10 +359,12 @@ public static class VendorLunchReplay
 
     public static Action<string>? Progress;
 
-    public static Result Run(double seconds, double from = LunchFrom, double to = LunchTo, int vehicles = 2, int maximumFrames = 200000, bool bodies = false, double routeMilliseconds = 0, bool forecast = true)
+    public static Result Run(double seconds, double from = LunchFrom, double to = LunchTo, int vehicles = 2, int maximumFrames = 200000, bool bodies = false,
+        double routeMilliseconds = 0, bool forecast = true, bool resumable = false, double pathMilliseconds = 0)
     {
         long began = Stopwatch.GetTimestamp();
-        var rig = new Rig(vehicles) { Forecasting = forecast };
+        bool openInFrames = from <= OpenAt;
+        var rig = new Rig(vehicles, resumable: resumable, openInFrames: openInFrames) { Forecasting = forecast };
         if (bodies) rig.AttachBodies();
         rig.Planner.CitizenRouteMilliseconds = 0;
         Progress?.Invoke("rig ready " + Ms(began, Stopwatch.GetTimestamp()) + " ms at " + rig.Native);
@@ -295,6 +373,7 @@ public static class VendorLunchReplay
         GC.Collect(); GC.WaitForPendingFinalizers(); GC.Collect();
         rig.End = to;
         rig.Planner.CitizenRouteMilliseconds = routeMilliseconds;
+        if (rig.Planner is ResumableSlowPlanner counted) { counted.PathMilliseconds = pathMilliseconds; counted.LatePathStarts = counted.CarriedPaths = counted.PathSteps = 0; }
         long routeCalls = rig.Planner.Calls;
         var result = new Result { NativeFrom = rig.Native };
         int collections = GC.CollectionCount(0);
@@ -309,6 +388,7 @@ public static class VendorLunchReplay
         result.Collections = GC.CollectionCount(0) - collections;
         result.NativeTo = rig.Native;
         result.RouteCalls = rig.Planner.Calls - routeCalls;
+        if (rig.Planner is ResumableSlowPlanner slow) { result.LatePathStarts = slow.LatePathStarts; result.CarriedPaths = slow.CarriedPaths; result.PathSteps = slow.PathSteps; }
         Finish(rig, result);
         rig.Bodies?.Dispose();
         return result;
@@ -316,7 +396,7 @@ public static class VendorLunchReplay
 
     public static Result RunUninterrupted(double from = LunchFrom, double to = LunchTo, int vehicles = 2)
     {
-        var rig = new Rig(vehicles);
+        var rig = new Rig(vehicles, openInFrames: to <= OpenAt);
         rig.RunTo(from);
         var result = new Result { NativeFrom = rig.Native };
         rig.RunTo(to);

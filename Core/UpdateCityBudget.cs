@@ -74,7 +74,10 @@ namespace PersistentCity.Core
     public sealed class UnitForecast
     {
         public const double FrameDecay = .5;
+        private readonly bool decayIdleFrames;
         private double frameMaximum;
+
+        public UnitForecast(bool decayIdleFrames = true) { this.decayIdleFrames = decayIdleFrames; }
 
         public double Milliseconds { get; private set; }
 
@@ -90,11 +93,48 @@ namespace PersistentCity.Core
 
         public void EndFrame()
         {
+            if (!decayIdleFrames && frameMaximum == 0) return;
             Milliseconds = Math.Max(frameMaximum, Milliseconds * FrameDecay);
             frameMaximum = 0;
         }
 
         public void Reset() { Milliseconds = 0; frameMaximum = 0; }
+    }
+
+    public sealed class AdvanceAdmission
+    {
+        private bool ran;
+        public UnitForecast Events { get; } = new UnitForecast();
+        public UnitForecast Planning { get; } = new UnitForecast(decayIdleFrames: false);
+        public long SkippedSamples { get; private set; }
+
+        public bool AdmitsEvent(double elapsedMilliseconds, double budgetMilliseconds) => Events.Fits(elapsedMilliseconds, budgetMilliseconds);
+
+        public bool AdmitsPlanning(double elapsedMilliseconds, double budgetMilliseconds)
+            => !ran || Planning.Fits(elapsedMilliseconds, budgetMilliseconds);
+
+        public void ObserveEvent(double wallMilliseconds, double cpuMilliseconds, bool collected)
+        {
+            ran = true;
+            if (Usable(wallMilliseconds, collected)) Events.Observe(cpuMilliseconds >= 0 ? Math.Min(wallMilliseconds, cpuMilliseconds) : wallMilliseconds);
+        }
+
+        public void ObservePlanning(double unitMilliseconds, bool collected)
+        {
+            ran = true;
+            if (Usable(unitMilliseconds, collected)) Planning.Observe(unitMilliseconds);
+        }
+
+        private bool Usable(double milliseconds, bool collected)
+        {
+            if (!collected) return true;
+            if (milliseconds > 0) SkippedSamples++;
+            return false;
+        }
+
+        public void EndFrame() { ran = false; Events.EndFrame(); Planning.EndFrame(); }
+
+        public void Reset() { ran = false; Events.Reset(); Planning.Reset(); SkippedSamples = 0; }
     }
 
     public sealed class FrameDeferral
