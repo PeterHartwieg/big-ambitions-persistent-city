@@ -27779,16 +27779,16 @@ Original native autosave preferences were 5 minutes, 3 saves and `prevent_autosa
 
 ### Carried and excluded checks
 
-- E6 check 1 is complete. The Vendor API v1-present arm carries from 17o (#368) and the 0.10.11 arm carries **PASS** from 17r (#371). Truck B was eligible with `Reason: ""` in the v1-present arm, restated for E6f.
+- E6 check 1: the Vendor API v1-present arm carries from 17o at `477d11a5` (#368) and the 0.10.11 arm carries **PASS** from 17r at `acc7eb9d` (#371). Truck B was eligible with `Reason: ""` in the v1-present arm, restated for E6f. Contract 2 stays **NOT RUN** pending a reviewed build.
 - E6 3, 6 and 7 were **NOT RUN** in 17s. Agent-rig #121 was still syncing and absent from the installed #124 overlay.
 - E6 4 and 5 were **NOT RUN** pending Street Food `edit_stop`. Base-v2 failed the prior day-two proof and remains unpinned.
 - E6 9 and 12 were **NOT RUN** pending the Street Food `vendor_fault` and contract-2 builds. E6 13 was **NOT RUN** pending F6b.
-- E6 2b carries **PASS** and E6 10 carries **PARTIAL** from 17p (#369). The traffic pin advanced across the retime. The Drink override produced the intended Street Food ownership and sales, with the shutdown log gate still open.
+- E6 2b carries **PASS** and E6 10 carries **PARTIAL** from 17p at `c20d4ec4` (#369). The traffic pin advanced across the retime. The Drink override produced the intended Street Food ownership and sales, with the shutdown log gate still open.
 - Pointer, hover, click and visual feel stay with Peter.
 
 ### Restore and evidence
 
-Both headless players stopped cleanly. Staging used `python3 scripts/install-mac.py --stage-mod PersistentCity <absolute 25b package path>`. The receipt backup was `~/Library/Application Support/BigAmbitionsAgentTestsMac/receipt-backups/20261125T002507Z`.
+Both headless players stopped cleanly. Staging used `python3 scripts/install-mac.py --stage-mod PersistentCity <absolute 25b package path>`. The receipt backup timestamp was `20261125T002507Z`.
 
 All 272 ModsLocal files, all 284 receipt entries, the receipt bytes, overlay, isolated preferences, config and original saves matched their baseline hashes. The restored effective FoodChoicePriceWeight is 1.2. Both disposables and their sidecars were archived. The final agentmac status showed the lease free with zero pending operations.
 
@@ -27797,6 +27797,6 @@ All 272 ModsLocal files, all 284 receipt entries, the receipt bytes, overlay, is
 | `FT RIGTMP-GATE-25b-mac.hsg` | `a528effa033bfa048f9066fe040e9f389759544527512150da1e63361967ba5d` |
 | `FT RIGTMP-PERF-25b-mac.hsg` | `87893c706af2e2fbf1e0911bd16016a4c5b6bcc29772e0edb1d2d82b1f4d38d7` |
 
-Raw evidence is in `~/Coding_Projects/.agent-logs/persistent-city-rig-2026-11-25b-mac/`. SHA-256 of `evidence-sha256.txt` is `4bc45823e7dc5d511e7569a3cca30605f3a30e7febc1ebc90102cabffdf84e30`.
+The raw evidence run is `persistent-city-rig-2026-11-25b-mac`. SHA-256 of `evidence-sha256.txt` is `4bc45823e7dc5d511e7569a3cca30605f3a30e7febc1ebc90102cabffdf84e30`.
 
 Refs #350 #365 #370 #371
