@@ -28205,7 +28205,7 @@ The 8-vehicle fixture extends `FT RIGTMP-17y-two` with six carts made through th
 
 The first 2-vehicle breakfast setup had only the truck PC-owned at 08:35. The cart's crew opening came at 08:52. The retry reloaded the two-vehicle fixture, positioned the cart before rebuilding its Tuesday crew plan, and observed both grants before the 08:35 window. The report counts the retry.
 
-The private Mac inventory retained the rendered Street Food and bridge pins. The initial render inputs were moved to `/private/tmp` and the second render matched every staged digest.
+The private Mac inventory retained the rendered Street Food and bridge pins. The initial render inputs were moved aside and the second render matched every staged digest.
 
 The zero-vehicle wrapper initially looked for a spike component under the wrong field name. The retained records used `dominant`. The audit checked the recorded validity, save guard and ownership brackets and attributed both spike rows from that field.
 
@@ -28258,8 +28258,8 @@ Native autosave preferences were 5 minutes and 3 saves, with `prevent_autosave: 
 
 ### Windows above the gate
 
-- **2-lunch FAIL.** The mod-work p95 was 14.2590 ms. Leading components by self p95 were `PopulationRuntime.Update` 13.7210 ms p95, `NativeCityClock.AccountingPrefix` 0.0791 ms p95, `ResidentInspector.UiRaycastPrefix` 0.0263 ms p95.
-- **2-evening FAIL.** The mod-work p95 was 5.5471 ms. Leading components by self p95 were `PopulationRuntime.Update` 5.3920 ms p95, `NativeCityClock.AccountingPrefix` 0.0238 ms p95, `ResidentInspector.UiRaycastPrefix` 0.0220 ms p95.
+- **2-lunch FAIL.** The mod-work p95 was 14.2590 ms. Leading components by self p95 were `PopulationRuntime.Update` 13.7210 ms p95, `NativeCityClock.AccountingPrefix` 0.0791 ms p95, `ResidentInspector.UiRaycastPrefix` 0.0263 ms p95. This FAIL is provisional and confounded by heavy shared-host load: the Mac load rose from 14.97 to 18.02 (1 min), and the window recorded 1,560 valid frames against 4,723–5,160 in the other steady windows.
+- **2-evening FAIL.** The mod-work p95 was 5.5471 ms. Leading components by self p95 were `PopulationRuntime.Update` 5.3920 ms p95, `NativeCityClock.AccountingPrefix` 0.0238 ms p95, `ResidentInspector.UiRaycastPrefix` 0.0220 ms p95. This FAIL is provisional and confounded by heavy shared-host load: the Mac load rose from 6.18 to 18.47 (1 min), and the window recorded 2,811 valid frames against 4,723–5,160 in the other steady windows.
 
 ### Restore and evidence
 
