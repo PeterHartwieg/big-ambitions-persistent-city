@@ -17,6 +17,7 @@ Every GR-5 rig run from now on must:
 
 ## Latest evidence
 
+- **26 November, Mac (rig 17z), build `566c14e4`**. E6 check 13 re-check after #380. 3 PASS / 0 PARTIAL / 0 FAIL / 0 NOT RUN across three required windows. Highest required mod-work p95 was 3.2598 ms. [17z results](#rig-results---26-november-2026-mac-rig-17z-e6-check-13-re-check-after-380-at-566c14e4).
 - **25 November h, Mac (rig 17y), build `821af7e2`**. E6 check 13 FAIL. 11 PASS / 0 PARTIAL / 2 FAIL / 0 NOT RUN across 13 windows. The highest valid mod-work p95 was 14.2590 ms. [25h results](#rig-results---25-november-2026-h-mac-rig-17y-e6-check-13-performance-window-at-821af7e2).
 - **25 November g, Mac (rig 17x), build `37f89b83`**. 2 PASS / 0 PARTIAL / 0 FAIL / 0 NOT RUN. The deferred stand survived reload and published after disarm. Provisional recorder-off mod-work p95 was 3.3083 ms with 0 spikes ≥30 ms. [25g results](#rig-results---25-november-2026-g-mac-rig-17x-e6-check-5-deferred-reload-after-agent-rig-131-at-37f89b83).
 - **25 November f, Mac (rig 17w), build `d336a3b1`**. 3 PASS / 2 PARTIAL / 0 FAIL / 0 NOT RUN. Day-two choice and the sell-fault check passed. Check 12 has since been restated and is complete on its 17w contract-2 arm ([restatement](#e6-check-12-older-city-refusal-and-contract-2-control)). Recorder-off mod-work p95 was 3.5194 ms with 0 spikes ≥30 ms. [25f results](#rig-results---25-november-2026-f-mac-rig-17w-e6-checks-4-5-9-12-after-agent-rig-129-at-d336a3b1).
@@ -28277,3 +28278,80 @@ Raw evidence is in `persistent-city-rig-2026-11-25h-mac`. The SHA-256 of `eviden
 - E6 8 and 11 carry from 17l (#364). Both #350 arms carry from 17t (#373). Pointer, hover, click and visual feel stay with Peter.
 
 Refs #364 #366 #376 #378
+
+## Rig results - 26 November 2026 (Mac, rig 17z): E6 check 13 re-check after #380 at 566c14e4
+
+**3 PASS / 0 PARTIAL / 0 FAIL / 0 NOT RUN** across the three required windows. All three measured windows met the <5 ms mod-work p95 gate. The breakfast repeat is informational.
+
+The rig fetched and rebuilt product tip `566c14e49394184ccf936628bba76513fe664670`. The isolated player loaded the verified base on Street Food 0.10.12 (`sf-e6a`) and RLO 1.0.6. Preflight reported `bridge: Ready` and `apiAssembly: FoodTrucks.Core`. The day-two arms loaded the hash-verified 17y checkpoints. Each arm was positioned separately, with the final seven game minutes at 1×. The windows used the same fixed street view, and ownership brackets required every expected vehicle to have the same PC-managed crew opening and to be able to serve at both ends.
+
+| Input | SHA-256 |
+| --- | --- |
+| `FT-E6-Vendors-base` | `4bf00a225b1e4ed20eb66ae2095752c0e77bcc138ff57ba476bdbb330e1ff796` |
+| `FT RIGTMP-17y-two` | `663f5d2a7cd6cafb0797bb5e41655a9e3ae164f96a4cb4b715e8b504344b7d7e` |
+| `FT RIGTMP-17y-eight-permitted` | `827985c95be2deb481a119f262234d2c65c3e7325fa3e99d333270f0fac7c430` |
+| `FT RIGTMP-17y-zero` | `c8b045325be3a1cf8f31722c6c95ce5b364241c5c8bc7ced3a31bb871b810bdf` |
+| `PersistentCity/PersistentCity.dll` | `0ff8698f0cddbc8e384f539c90aefd6f81e0101e7a3b59c0e7fc1bbf94e3d369` |
+| `RealLifeOverhaul.dll 1.0.6` | `c96709779d8bb534c05a6743d243a000eeb3e03901995da03d8d9b5593a9f6fe` |
+| `AgentRigOps.dll at a6eb298` | `d4fb6c1d77cf6b289b30863181e3983ea56cf1998f6314d162f7d88e5390d6bb` |
+| `FoodTrucks/FoodTrucks.dll` | `7d7d96b2199b57dd8be5b0fe58d05051ed0ba4521b4a267268490fee2b92d790` |
+| `FoodTrucks/Dependencies/FoodTrucks.Core.dll` | `0be815fe2e3195297c1699fb420c85e9625d28d8a8bfc5f96bccd0eb2b4c22f0` |
+| `FoodTrucks/Dependencies/0Harmony.dll` | `7b9e756306fa3d7620e02a857c8927a6ab04973f9bd8a77d3866700a6deac55c` |
+| `FoodTrucks/Dependencies/BridgeControl.dll` | `f19813b44f928ea2787d22843bf79d9388937415a9742cf908cd3deda14ffaa6` |
+
+### Windows
+
+All timings are provisional on the shared Mac. Each window ran at 1× on day two with the food decisions recorder and PC GC sampler off. RIG-MODWORK used the 17y frame union with two additional nested scopes for advance and physical update. The rig records whole-frame timing separately. Game minutes use the minute-resolution bridge clock. The control floor is 17y's 49 game minutes in 180.667 s.
+
+| Window | Game clock | Real s | Valid frames | Mod-work p95 / max (ms) | Spikes ≥30 ms | Whole-frame p95 / max (ms) | Load start → end (1/5/15 min) | Game minutes / min per s | Verdict |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | --- | ---: | --- |
+| 2-vehicle lunch | 11:50–12:42 | 180.292 | 5,087 | 3.0832 / 11.6251 | 0 | 44.0678 / 172.1254 | 1.84 / 1.96 / 1.95 → 1.14 / 1.57 / 1.78 | 52 / 0.288 (meets 0.105) | PASS |
+| 2-vehicle evening | 18:00–18:47 | 180.297 | 5,069 | 3.2598 / 7.1307 | 0 | 45.0583 / 190.5856 | 1.56 / 1.60 / 1.72 → 1.45 / 1.53 / 1.67 | 47 / 0.261 | PASS |
+| 8-vehicle lunch control | 11:50–12:40 | 180.367 | 5,049 | 3.1660 / 6.9198 | 0 | 53.2165 / 178.0835 | 2.96 / 2.34 / 1.98 → 1.97 / 2.14 / 1.96 | 50 / 0.277 (meets 0.271) | PASS |
+| 0-vehicle breakfast (informational) | 08:35–09:26 | 180.265 | 5,112 | 2.9306 / 7.8733 | 0 | 37.9599 / 173.2581 | 1.96 / 1.80 / 1.84 → 1.45 / 1.70 / 1.79 | 51 / 0.283 | PASS |
+
+Compared with 17y. 2-vehicle lunch p95 was 14.2590 → 3.0832 ms. 2-vehicle evening p95 was 5.5471 → 3.2598 ms. 8-vehicle lunch control p95 was 3.5739 → 3.1660 ms. 0-vehicle breakfast (informational) p95 was 3.2146 → 2.9306 ms. 17y began and ended at one-minute load 14.97 → 18.02 for the 2-vehicle lunch and 6.18 → 18.47 for the 2-vehicle evening. The shared host load differs across runs.
+
+The initial 2-vehicle lunch arm was rejected before sampling because the named scope labels used uppercase letters. The retry used valid labels and complete coverage.
+
+The informational breakfast repeat had 0 spike(s) at or above 30 ms. 17y recorded one 73.2657 ms spike in `PopulationRuntime.Update`.
+
+Native preferences were 5 minutes and 3 saves, with `prevent_autosave: false`. Rig-test suppression read true after every reload and at both ends of every measured window. All measured windows had zero allowed saves and zero native saving frames.
+
+### Diagnostics
+
+RIG-MODWORK nested inclusive timing is per frame. Periodic lines cover the interval since their previous summary. Frame ranges below bracket the line's emission using passive health reads.
+
+| Window | Advance p95 / max (ms) | PhysicalPopulation.Update p95 / max (ms) |
+| --- | ---: | ---: |
+| 2-lunch | 1.9005 / 10.8770 | 0.9956 / 4.5494 |
+| 2-evening | 1.8881 / 3.6410 | 1.3675 / 5.2707 |
+| 8-lunch | 1.9093 / 3.4134 | 1.0194 / 4.5532 |
+| 0-breakfast | 1.8157 / 3.5300 | 1.2014 / 5.0820 |
+
+| Population line | Clock and emission bracket | Max advance and slowest unit | Slowest planning slice | Advance forecast | Physical state |
+| --- | --- | --- | --- | --- | --- |
+| 2-lunch/1 (Player.log 6,464) | Clock 3602.4, lag 0.0 min, frames 13,285–13,397 | 3.204 ms max, 1.326 ms `route-planning` | 2.396 ms, route job 2.396 ms, outside the route job 0.000 ms, its slowest unit subway-connector 1.387 ms, NavMesh paths 1.382 ms over 1 queries, other work 0.005 ms, 2 NavMesh samples | event unit 0.023 ms, planning unit 0.729 ms, 0 samples skipped for collections, thread CPU True | physical=True, pedestrians=42, cars=0 |
+| 2-lunch/2 (Player.log 6,578) | Clock 3620.8, lag 0.0 min, frames 14,982–15,094 | 10.875 ms max, 10.864 ms `citizen` | 2.228 ms, route job 2.226 ms, outside the route job 0.001 ms, its slowest unit car-ends 0.648 ms, NavMesh paths 0.000 ms over 0 queries, other work 0.648 ms, 0 NavMesh samples | event unit 0.009 ms, planning unit 0.000 ms, 0 samples skipped for collections, thread CPU True | physical=True, pedestrians=23, cars=0 |
+| 2-lunch/3 (Player.log 6,661) | Clock 3638.0, lag 0.0 min, frames 16,682–16,798 | 3.152 ms max, 1.308 ms `route-planning` | 2.367 ms, route job 2.347 ms, outside the route job 0.020 ms, its slowest unit subway-connector 1.289 ms, NavMesh paths 1.280 ms over 1 queries, other work 0.009 ms, 2 NavMesh samples | event unit 0.025 ms, planning unit 1.407 ms, 0 samples skipped for collections, thread CPU True | physical=True, pedestrians=29, cars=0 |
+| 2-evening/1 (Player.log 8,865) | Clock 3960.5, lag 0.0 min, frames 29,282–29,397 | 6.535 ms max, 6.515 ms `food-continuation` | 2.580 ms, route job 2.578 ms, outside the route job 0.001 ms, its slowest unit car-access-walk 0.683 ms, NavMesh paths 0.656 ms over 1 queries, other work 0.027 ms, 2 NavMesh samples | event unit 0.007 ms, planning unit 0.735 ms, 0 samples skipped for collections, thread CPU True | physical=True, pedestrians=64, cars=0 |
+| 2-evening/2 (Player.log 8,917) | Clock 3975.9, lag 0.0 min, frames 30,976–31,090 | 3.050 ms max, 1.260 ms `route-planning` | 2.375 ms, route job 2.374 ms, outside the route job 0.001 ms, its slowest unit subway-connector 1.243 ms, NavMesh paths 1.238 ms over 1 queries, other work 0.005 ms, 2 NavMesh samples | event unit 0.003 ms, planning unit 0.346 ms, 0 samples skipped for collections, thread CPU True | physical=True, pedestrians=62, cars=1 |
+| 2-evening/3 (Player.log 8,977) | Clock 3992.7, lag 0.0 min, frames 32,668–32,782 | 3.639 ms max, 3.617 ms `citizen` | 3.052 ms, route job 3.052 ms, outside the route job 0.001 ms, its slowest unit subway-connector 1.247 ms, NavMesh paths 1.240 ms over 1 queries, other work 0.007 ms, 2 NavMesh samples | event unit 0.003 ms, planning unit 0.385 ms, 0 samples skipped for collections, thread CPU True | physical=True, pedestrians=25, cars=0 |
+| 8-lunch/1 (Player.log 11,335) | Clock 3597.0, lag 0.0 min, frames 41,086–41,197 | 5.617 ms max, 5.594 ms `food-continuation` | 2.930 ms, route job 2.928 ms, outside the route job 0.001 ms, its slowest unit car-ends 1.219 ms, NavMesh paths 0.000 ms over 0 queries, other work 1.219 ms, 0 NavMesh samples | event unit 0.017 ms, planning unit 0.000 ms, 1 samples skipped for collections, thread CPU True | physical=True, pedestrians=27, cars=0 |
+| 8-lunch/2 (Player.log 11,424) | Clock 3612.9, lag 0.0 min, frames 42,757–42,870 | 3.013 ms max, 1.695 ms `route-planning` | 2.573 ms, route job 2.572 ms, outside the route job 0.001 ms, its slowest unit car-search 1.065 ms, NavMesh paths 0.000 ms over 0 queries, other work 1.065 ms, 0 NavMesh samples | event unit 0.023 ms, planning unit 0.000 ms, 1 samples skipped for collections, thread CPU True | physical=True, pedestrians=34, cars=0 |
+| 8-lunch/3 (Player.log 11,513) | Clock 3630.0, lag 0.0 min, frames 44,451–44,563 | 3.075 ms max, 1.783 ms `route-planning` | 2.489 ms, route job 2.488 ms, outside the route job 0.001 ms, its slowest unit subway-connector 1.311 ms, NavMesh paths 1.308 ms over 1 queries, other work 0.003 ms, 2 NavMesh samples | event unit 0.017 ms, planning unit 1.283 ms, 1 samples skipped for collections, thread CPU True | physical=True, pedestrians=28, cars=0 |
+| 0-breakfast/1 (Player.log 14,874) | Clock 3404.2, lag 0.0 min, frames 69,744–69,856 | 2.970 ms max, 1.413 ms `route-planning` | 2.705 ms, route job 2.704 ms, outside the route job 0.001 ms, its slowest unit subway-connector 1.447 ms, NavMesh paths 1.381 ms over 1 queries, other work 0.066 ms, 2 NavMesh samples | event unit 0.020 ms, planning unit 0.001 ms, 0 samples skipped for collections, thread CPU True | physical=True, pedestrians=41, cars=0 |
+| 0-breakfast/2 (Player.log 14,940) | Clock 3420.7, lag 0.0 min, frames 71,446–71,558 | 3.528 ms max, 1.528 ms `route-planning` | 2.729 ms, route job 2.729 ms, outside the route job 0.001 ms, its slowest unit subway-connector 1.375 ms, NavMesh paths 1.365 ms over 1 queries, other work 0.010 ms, 2 NavMesh samples | event unit 0.012 ms, planning unit 0.462 ms, 0 samples skipped for collections, thread CPU True | physical=True, pedestrians=34, cars=0 |
+| 0-breakfast/3 (Player.log 15,007) | Clock 3438.5, lag 0.0 min, frames 73,153–73,269 | 2.866 ms max, 1.328 ms `route-planning` | 2.759 ms, route job 2.759 ms, outside the route job 0.001 ms, its slowest unit subway-connector 1.496 ms, NavMesh paths 1.448 ms over 1 queries, other work 0.048 ms, 2 NavMesh samples | event unit 0.013 ms, planning unit 0.219 ms, 0 samples skipped for collections, thread CPU True | physical=True, pedestrians=17, cars=0 |
+
+No measured mod-work frame reached 30 ms.
+
+Small perf opportunity in `PhysicalPopulation.PlanVendorQueues`. Collect eligible bindings during the first pass, reducing two binding walks to one when a queue is active. Physical update p95 was 0.9956 ms in the 2-vehicle lunch, and the queue walk has no separate timing.
+
+### Restore and evidence
+
+The isolated player stopped cleanly. Both the full session and strict post-quit log gates exited 0 with zero inactive patches, mod errors or exceptions. Vendor hold read `armed: false`. Receipt backups `20261125T230751Z` and `20261125T230752Z` restored 272 ModsLocal files and 284 receipt entries. SaveGames, isolated preferences, AgentRigOps, the base fixture and RLO hash-verified. The rig archived the re-imported checkpoint files and sidecars. FoodChoicePriceWeight remained 1.2 and the writer schema remained 1. The agentmac lease read free with zero pending operations.
+
+Raw evidence is in `persistent-city-rig-2026-11-25i-mac`. The SHA-256 of `evidence-sha256.txt` is `58e43df040ae368fdf2bac147622ae340f61bf43608ad658c02ab3515f28eb2f`.
+
+Refs #379 #380
