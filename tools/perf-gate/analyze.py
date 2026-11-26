@@ -16,6 +16,7 @@ import summary_lines
 
 HERE = Path(__file__).resolve().parent
 DEFAULT_CONTRACT = HERE / 'contract-v2.json'
+FROZEN_CONTRACTS = {'perf-gate/v1': HERE / 'contract-v1.json', 'perf-gate/v2': DEFAULT_CONTRACT}
 REPORT_FORMAT = 'perf-gate-report/v1'
 EXPORT_FORMAT = 'perf-gate-export/v1'
 PASS, FAIL, NOT_ESTABLISHED, NA, FLAG = 'pass', 'fail', 'not established', 'n/a', 'flag'
@@ -602,17 +603,27 @@ def analyze(exports, contract):
                         'Fix-128 summary fields describe only each observation\'s maximum advancement call.'])
 
 
+def contract_for(exports):
+    versions = {(e.get('header') or {}).get('contract_version') for e in exports if isinstance(e, dict)}
+    if len(versions) == 1:
+        return FROZEN_CONTRACTS.get(versions.pop(), DEFAULT_CONTRACT)
+    return DEFAULT_CONTRACT
+
+
 def main(argv=None):
     import report as report_writer
-    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser = argparse.ArgumentParser(description='F4a perf-gate analyzer: judge exported gate windows against the frozen '
+                                                 f'contract their header names (current: {DEFAULT_CONTRACT.name}).')
     parser.add_argument('exports', nargs='+', type=Path)
-    parser.add_argument('--contract', type=Path, default=DEFAULT_CONTRACT)
+    parser.add_argument('--contract', type=Path, default=None,
+                        help=f'contract file; default: the frozen contract named by the exports\' header '
+                             f'({", ".join(sorted(p.name for p in FROZEN_CONTRACTS.values()))}), else {DEFAULT_CONTRACT.name}')
     parser.add_argument('--json-out', type=Path, required=True)
     parser.add_argument('--md-out', type=Path, required=True)
     args = parser.parse_args(argv)
-    contract = load_contract(args.contract)
     try:
         exports = [json.loads(p.read_text(encoding='utf-8-sig')) for p in args.exports]
+        contract = load_contract(args.contract or contract_for(exports))
         report = analyze(exports, contract)
     except Refused as refusal:
         print('REFUSED: ' + str(refusal), file=sys.stderr)

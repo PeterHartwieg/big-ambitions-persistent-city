@@ -774,7 +774,8 @@ def markdown(flow):
 
 
 def main(argv=None):
-    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser = argparse.ArgumentParser(description=f'Generate the F4 perf-gate rig flow ({FORMAT}) from fixtures.json, '
+                                                 f'scripts/ and {DEFAULT_CONTRACT.name}.')
     parser.add_argument('--out', type=Path, required=True)
     parser.add_argument('--md-out', type=Path)
     parser.add_argument('--movement-state', help='header movement label, for example movement=pre-F2d; '

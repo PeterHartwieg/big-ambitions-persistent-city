@@ -611,6 +611,30 @@ class ReportTests(unittest.TestCase):
             for heading in ('## Header', '## Row verdicts', '## Windows', '## Invalid windows', '## P4 pairs', '## M2 spikes', '## Stalls'):
                 self.assertIn(heading, md)
 
+    def test_cli_judges_against_the_frozen_contract_the_header_names(self):
+        def cli(version, *extra):
+            with tempfile.TemporaryDirectory() as tmp:
+                path = Path(tmp, 'export.json')
+                e = synthetic.export([synthetic.window('c'), synthetic.window('r', build='reference')])
+                e['header']['contract_version'] = version
+                path.write_text(json.dumps(e), encoding='utf-8')
+                out = subprocess.run([sys.executable, str(HERE / 'analyze.py'), str(path), '--json-out', str(Path(tmp, 'r.json')),
+                                      '--md-out', str(Path(tmp, 'r.md'))] + list(extra), capture_output=True, text=True)
+                if out.returncode:
+                    return out.returncode, out.stderr
+                return out.returncode, json.loads(Path(tmp, 'r.json').read_text(encoding='utf-8'))
+        for version in ('perf-gate/v1', 'perf-gate/v2'):
+            code, data = cli(version)
+            self.assertEqual(code, 0, data)
+            self.assertEqual(data['contract'], version)
+            self.assertEqual(data['contract_sha256'], analyze.load_contract(analyze.FROZEN_CONTRACTS[version])['_sha256'])
+        code, err = cli('perf-gate/v0')
+        self.assertEqual(code, 2)
+        self.assertIn("is not 'perf-gate/v2'", err)
+        code, err = cli('perf-gate/v1', '--contract', str(HERE / 'contract-v2.json'))
+        self.assertEqual(code, 2)
+        self.assertIn("'perf-gate/v1' is not 'perf-gate/v2'", err)
+
     def test_fifty_window_export_runs_in_seconds(self):
         e = synthetic.large_export(count=50, frames_per_window=2000)
         started = time.perf_counter()
