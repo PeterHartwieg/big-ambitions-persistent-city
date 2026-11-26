@@ -47,13 +47,16 @@
       "business_load": "As produced by the stress fixture",
       "pc_config": {},
       "provenance": "Deferred: RIG-PCFIX pc-stress-10k@1 (requested by the F5 plan) is blocked because Persistent City has no population-count setting; no workaround fixture",
-      "prepare": [
+      "deferred_rule": "make_gate_flow.py schedules a fixture's prepare and windows only; while deferred they are empty, so the batch has no fixture.stress step and no G15 window. deferred_prepare and deferred_windows keep the definition for when the arm is reinstated.",
+      "prepare": [],
+      "windows": [],
+      "deferred_prepare": [
         {"op": "fixture.stress", "args": {"fixture": "pc-stress-10k@1", "save": "FT-F4-Stress10k", "expect": "city clock at or before day 3 00:30"}},
         {"op": "ft.time", "args": {"advance_to": "day 3 00:30", "speed": 3}},
         {"op": "ft.console", "args": {"command": "pc population manifest", "expect": "about 10,000 persons, fill not growing"}}
       ],
       "survey": {"at": "day 3 18:00", "game_minutes": 10, "anchors": ["dense-street.wp1", "dense-street.wp2", "dense-street.wp3", "quiet-district.wp1", "quiet-district.wp2"], "rule": "as FT-F4-Declared"},
-      "windows": ["W-morning", "W-evening", "W-midnight"],
+      "deferred_windows": ["W-morning", "W-evening", "W-midnight"],
       "extra_checkpoints": []
     },
     "FT-F4-FastestTraveller": {
