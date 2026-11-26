@@ -611,29 +611,52 @@ class ReportTests(unittest.TestCase):
             for heading in ('## Header', '## Row verdicts', '## Windows', '## Invalid windows', '## P4 pairs', '## M2 spikes', '## Stalls'):
                 self.assertIn(heading, md)
 
-    def test_cli_judges_against_the_frozen_contract_the_header_names(self):
-        def cli(version, *extra):
-            with tempfile.TemporaryDirectory() as tmp:
-                path = Path(tmp, 'export.json')
-                e = synthetic.export([synthetic.window('c'), synthetic.window('r', build='reference')])
-                e['header']['contract_version'] = version
-                path.write_text(json.dumps(e), encoding='utf-8')
-                out = subprocess.run([sys.executable, str(HERE / 'analyze.py'), str(path), '--json-out', str(Path(tmp, 'r.json')),
-                                      '--md-out', str(Path(tmp, 'r.md'))] + list(extra), capture_output=True, text=True)
-                if out.returncode:
-                    return out.returncode, out.stderr
-                return out.returncode, json.loads(Path(tmp, 'r.json').read_text(encoding='utf-8'))
-        for version in ('perf-gate/v1', 'perf-gate/v2'):
-            code, data = cli(version)
-            self.assertEqual(code, 0, data)
-            self.assertEqual(data['contract'], version)
-            self.assertEqual(data['contract_sha256'], analyze.load_contract(analyze.FROZEN_CONTRACTS[version])['_sha256'])
-        code, err = cli('perf-gate/v0')
-        self.assertEqual(code, 2)
-        self.assertIn("is not 'perf-gate/v2'", err)
-        code, err = cli('perf-gate/v1', '--contract', str(HERE / 'contract-v2.json'))
+    def cli(self, export, *extra):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp, 'export.json')
+            path.write_text(json.dumps(export), encoding='utf-8')
+            out = subprocess.run([sys.executable, str(HERE / 'analyze.py'), str(path), '--json-out', str(Path(tmp, 'r.json')),
+                                  '--md-out', str(Path(tmp, 'r.md'))] + list(extra), capture_output=True, text=True)
+            if out.returncode:
+                return out.returncode, out.stderr
+            return out.returncode, json.loads(Path(tmp, 'r.json').read_text(encoding='utf-8'))
+
+    def versioned(self, version, source='native', density=None):
+        e = synthetic.export([synthetic.window('c', source=source, density=density), synthetic.window('r', build='reference', source=source)],
+                             source=source)
+        e['header']['contract_version'] = version
+        return e
+
+    def test_cli_uses_v2_for_native_and_v1_only_for_offline_v1_exports(self):
+        code, data = self.cli(self.versioned('perf-gate/v2'))
+        self.assertEqual((code, data['contract']), (0, 'perf-gate/v2'), data)
+        code, data = self.cli(self.versioned('perf-gate/v1', source='offline'))
+        self.assertEqual((code, data['contract']), (0, 'perf-gate/v1'), data)
+        self.assertEqual(data['contract_sha256'], analyze.load_contract(analyze.FROZEN_CONTRACTS['perf-gate/v1'])['_sha256'])
+        retired = self.versioned('perf-gate/v1', density=dict(median_pedestrians=40, median_cars=14))
+        code, err = self.cli(retired)
         self.assertEqual(code, 2)
         self.assertIn("'perf-gate/v1' is not 'perf-gate/v2'", err)
+        code, data = self.cli(retired, '--contract', str(HERE / 'contract-v1.json'))
+        self.assertEqual((code, data['contract']), (0, 'perf-gate/v1'), data)
+        for version, source in (('perf-gate/v0', 'native'), ('perf-gate/v0', 'offline')):
+            code, err = self.cli(self.versioned(version, source=source))
+            self.assertEqual(code, 2, err)
+            self.assertIn("is not 'perf-gate/v2'", err)
+
+    def test_cli_refuses_malformed_headers_instead_of_crashing(self):
+        for source in ('native', 'offline'):
+            for header in ('not a header', ['perf-gate/v1'], None):
+                e = self.versioned('perf-gate/v2', source=source)
+                e['header'] = header
+                code, err = self.cli(e)
+                self.assertEqual(code, 2, (source, header, err))
+                self.assertIn('REFUSED', err)
+            e = self.versioned('perf-gate/v2', source=source)
+            e['header']['contract_version'] = ['perf-gate/v1']
+            code, err = self.cli(e)
+            self.assertEqual(code, 2, (source, err))
+            self.assertIn('REFUSED', err)
 
     def test_fifty_window_export_runs_in_seconds(self):
         e = synthetic.large_export(count=50, frames_per_window=2000)

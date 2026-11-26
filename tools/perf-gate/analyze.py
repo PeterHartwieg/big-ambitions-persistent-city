@@ -16,6 +16,7 @@ import summary_lines
 
 HERE = Path(__file__).resolve().parent
 DEFAULT_CONTRACT = HERE / 'contract-v2.json'
+OFFLINE_COMPATIBLE_VERSION = 'perf-gate/v1'
 FROZEN_CONTRACTS = {'perf-gate/v1': HERE / 'contract-v1.json', 'perf-gate/v2': DEFAULT_CONTRACT}
 REPORT_FORMAT = 'perf-gate-report/v1'
 EXPORT_FORMAT = 'perf-gate-export/v1'
@@ -604,20 +605,22 @@ def analyze(exports, contract):
 
 
 def contract_for(exports):
-    versions = {(e.get('header') or {}).get('contract_version') for e in exports if isinstance(e, dict)}
-    if len(versions) == 1:
-        return FROZEN_CONTRACTS.get(versions.pop(), DEFAULT_CONTRACT)
+    if not exports or not all(isinstance(e, dict) and e.get('source') == 'offline' and isinstance(e.get('header'), dict)
+                              for e in exports):
+        return DEFAULT_CONTRACT
+    if all(e['header'].get('contract_version') == OFFLINE_COMPATIBLE_VERSION for e in exports):
+        return FROZEN_CONTRACTS[OFFLINE_COMPATIBLE_VERSION]
     return DEFAULT_CONTRACT
 
 
 def main(argv=None):
     import report as report_writer
     parser = argparse.ArgumentParser(description='F4a perf-gate analyzer: judge exported gate windows against the frozen '
-                                                 f'contract their header names (current: {DEFAULT_CONTRACT.name}).')
+                                                 f'contract (current: {DEFAULT_CONTRACT.name}).')
     parser.add_argument('exports', nargs='+', type=Path)
     parser.add_argument('--contract', type=Path, default=None,
-                        help=f'contract file; default: the frozen contract named by the exports\' header '
-                             f'({", ".join(sorted(p.name for p in FROZEN_CONTRACTS.values()))}), else {DEFAULT_CONTRACT.name}')
+                        help=f'contract file; default {DEFAULT_CONTRACT.name}, except offline (F4e) exports that declare '
+                             f'{OFFLINE_COMPATIBLE_VERSION}, which use {FROZEN_CONTRACTS[OFFLINE_COMPATIBLE_VERSION].name}')
     parser.add_argument('--json-out', type=Path, required=True)
     parser.add_argument('--md-out', type=Path, required=True)
     args = parser.parse_args(argv)
