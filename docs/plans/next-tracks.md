@@ -29,7 +29,7 @@ In the Street Food repository. The PC side is implemented. See the [E6 plan](e6-
 | Item | Status | Needs |
 | --- | --- | --- |
 | Batched rig run of merged checks | partial | Current head; the GR, #239 and E6 rows in the [rig checklist](../rig-checklist.md). |
-| F4f gate run record | planned, not launched | Sealed FT-F4 and FT-F9 fixtures and the Q6 caps ([F4 plan](f4-perf-gate.md)). |
+| F4f gate run record | planned, not launched | Sealed FT-F4 and FT-F9 fixtures and the ops landing. Q6 and the gate crowd (256/64/120) are answered ([F4 plan](f4-perf-gate.md)). |
 | Recorded rig walk-through | planned | The same street at morning, midday and night. |
 | Final performance gate | planned | Final development head; save latency in its own requested run. |
 | Hands-on session | planned | Peter, last. |
@@ -42,13 +42,14 @@ In the Street Food repository. The PC side is implemented. See the [E6 plan](e6-
 
 ## Reserved questions for Peter
 
-Each has a default the code uses until Peter answers.
+Each has a default the code uses until Peter answers. Q6 and the F4f gate crowd are answered.
 
 - **Q1. If visitors are not enough to keep your shops' income at the game's normal level, what should give?** Options: lower income, one visit counts as several customers, or higher spend per visit. Default: one visit is one customer, capped at service capacity, until GR-5 and a measured native count bring numbers. The options are in the [J0 plan](j0-living-city-and-sales.md#revenue-scale-and-q1).
 - **Q2. Should players see and change the visitor table?** Default: hidden balance settings only.
 - **Q3. How much of the traffic should be cars just passing through?** Default: 10 percent, as implemented in GR-8.
 - **Q4. Once one sale path works for every shop, should the mod take over customers at every player business automatically?** Default: yes, after the generic sale path is verified by rig at the current head. The AGENTS.md ownership rule changes in that PR, not before.
 - **Q5. The old interior-view experiment (F0) is off by default. Delete it?** Default: keep it off.
-- **Q6. Performance caps for present, foreground and priority work (F4f).** Reserved; F4f stays unlaunched until answered.
+- **Q6. Performance caps for present, foreground and priority work (F4f).** Answered: option A, [F4 Decision 1](f4-perf-gate.md#decision-1-one-declared-reference-machine-and-settings). Peter approved RIG-PRESENT, RIG-FOREGROUND and RIG-PRIORITY at 07:40 on 26 November 2026, for the gate run, not for sealing fixtures.
+- **F4f gate crowd.** Answered: 256 walkers, 64 cars and 120 m. Peter, 26 November 2026, 08:02 Europe/Berlin: "Gate it at 256 walkers and 64 cars." If it misses the budgets the run comes back with numbers; the crowd is never dropped, and caps or budgets are never lowered to pass. [Decision record](../decisions/2026-11-10-city-direction.md#f4-gate-crowd-26-november-2026). F4f still waits on sealed FT-F4 and FT-F9 fixtures and the ops landing.
 
 `FoodChoicePriceWeight` (1.2), `FoodChoiceHouseholdWeight`, the F6h criterion and the F6i and F6j rules are not changed by any slice here.

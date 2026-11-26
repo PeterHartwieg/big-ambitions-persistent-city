@@ -18,7 +18,7 @@ def header(**overrides):
              rig_commit='synthetic-rig', rig_overlay='none', machine=dict(cpu='cpu', gpu='gpu', ram='32 GB', os_build='26200', gpu_driver='1.0',
              refresh_hz=144, power_plan='High performance'), settings_read_back=dict(resolution='1920x1080', preset='Low', vsync=False, frame_cap=90),
              pc_config=dict(GameClockFactor=0.3333), fixtures=[dict(name='FT-F4-Declared', provenance_hash='e' * 64)],
-             contract_version='perf-gate/v1', movement_state='pre-F2d', rig_capabilities=[dict(name='RIG-PERF-UNION', version='synthetic')])
+             contract_version='perf-gate/v2', movement_state='pre-F2d', rig_capabilities=[dict(name='RIG-PERF-UNION', version='synthetic')])
     h.update(overrides)
     return h
 

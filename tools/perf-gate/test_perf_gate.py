@@ -33,7 +33,7 @@ def win(report_, wid):
 class ContractTests(unittest.TestCase):
     def test_contract_freezes_decision_4(self):
         rows = CONTRACT['_rows']
-        self.assertEqual(CONTRACT['contract'], 'perf-gate/v1')
+        self.assertEqual(CONTRACT['contract'], 'perf-gate/v2')
         self.assertEqual(list(rows), ['M1', 'M2', 'M3', 'M4', 'P1', 'P2', 'P3', 'P4', 'S1', 'S2', 'S3', 'S4', 'S5', 'L1', 'L2', 'L3', 'L4', 'R1'])
         self.assertEqual((rows['M1']['comparator'], rows['M1']['threshold']), ('<', 5.0))
         self.assertEqual(rows['M2']['threshold'], 30.0)
@@ -45,6 +45,25 @@ class ContractTests(unittest.TestCase):
         self.assertEqual((rows['S5']['hour_ratio_max'], rows['S5']['day_ratio_max']), (2.0, 1.25))
         self.assertEqual([rows[r]['threshold'] for r in ('L1', 'L2', 'L3')], [60.0, 50.0, 30.0])
         self.assertEqual(CONTRACT['windows']['min_clean_real_seconds'], 300)
+
+    def test_v2_changes_only_the_declared_crowd_and_density_from_v1(self):
+        v1 = analyze.load_contract(analyze.HERE / 'contract-v1.json')
+        self.assertEqual(v1['contract'], 'perf-gate/v1')
+        self.assertEqual((v1['density']['min_median_pedestrians'], v1['density']['min_median_cars']), (36, 12))
+        crowd = CONTRACT['declared_crowd']
+        self.assertEqual(crowd, dict(MaximumPedestrians=256, MaximumVehicles=64, PhysicalRadiusMetres=120))
+        self.assertEqual(CONTRACT['density']['min_median_pedestrians'], 0.75 * crowd['MaximumPedestrians'])
+        self.assertEqual(CONTRACT['density']['min_median_cars'], 0.5 * crowd['MaximumVehicles'])
+        self.assertEqual(CONTRACT['rows'], v1['rows'])
+        changed = {'contract', 'frozen', 'supersedes', 'decision', 'declared_crowd', 'density', '_sha256'}
+        for key in set(CONTRACT) | set(v1):
+            if key not in changed:
+                self.assertEqual(CONTRACT.get(key), v1.get(key), key)
+        self.assertEqual({k: v for k, v in CONTRACT['density'].items() if not k.startswith('min_')},
+                         {k: v for k, v in v1['density'].items() if not k.startswith('min_')})
+        fixtures = json.loads((analyze.HERE / 'fixtures.json').read_text(encoding='utf-8'))
+        defaults = fixtures['pc_config_defaults']
+        self.assertEqual({k: defaults[k] for k in crowd}, crowd)
 
     def test_thresholds_come_from_the_contract(self):
         w = synthetic.window('c', mod=[6.0] * 100)
@@ -410,7 +429,7 @@ class RowTests(unittest.TestCase):
         L4=dict(real_s=30.0, reference_real_s=20.0, s1_s2_hold=True), R1=dict(heap_mb_per_day=[1000, 1020, 1040], m1_p95_per_day=[0.5, 0.55, 0.58]))
 
     def complete(self, density=None):
-        cand = synthetic.window('c', presented=[11.5] * 100, density=density or dict(median_pedestrians=40, median_cars=14))
+        cand = synthetic.window('c', presented=[11.5] * 100, density=density or dict(median_pedestrians=192, median_cars=32))
         ref = synthetic.window('r', build='reference', presented=[11.0] * 100)
         e = synthetic.export([cand, ref])
         e['measurements'] = copy.deepcopy(self.MEASUREMENTS)
@@ -428,8 +447,8 @@ class RowTests(unittest.TestCase):
         self.assertEqual(analyze.analyze([e], CONTRACT)['overall'], 'fail')
 
     def test_dense_street_coverage_gates_overall(self):
-        for density in (dict(median_pedestrians=5, median_cars=0), dict(median_pedestrians=40, median_cars=11),
-                        dict(median_pedestrians=35, median_cars=20)):
+        for density in (dict(median_pedestrians=5, median_cars=0), dict(median_pedestrians=200, median_cars=31),
+                        dict(median_pedestrians=191, median_cars=40), dict(median_pedestrians=40, median_cars=14)):
             with self.subTest(**density):
                 r = analyze.analyze([self.complete(density)], CONTRACT)
                 self.assertTrue(win(r, 'c')['valid'])
@@ -587,10 +606,57 @@ class ReportTests(unittest.TestCase):
                                   '--md-out', str(Path(tmp, 'r.md'))], capture_output=True, text=True)
             self.assertEqual(out.returncode, 0, out.stderr)
             data = json.loads(Path(tmp, 'r.json').read_text(encoding='utf-8'))
-            self.assertEqual((data['format'], data['source'], data['contract']), ('perf-gate-report/v1', 'native', 'perf-gate/v1'))
+            self.assertEqual((data['format'], data['source'], data['contract']), ('perf-gate-report/v1', 'native', 'perf-gate/v2'))
             md = Path(tmp, 'r.md').read_text(encoding='utf-8')
             for heading in ('## Header', '## Row verdicts', '## Windows', '## Invalid windows', '## P4 pairs', '## M2 spikes', '## Stalls'):
                 self.assertIn(heading, md)
+
+    def cli(self, export, *extra):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp, 'export.json')
+            path.write_text(json.dumps(export), encoding='utf-8')
+            out = subprocess.run([sys.executable, str(HERE / 'analyze.py'), str(path), '--json-out', str(Path(tmp, 'r.json')),
+                                  '--md-out', str(Path(tmp, 'r.md'))] + list(extra), capture_output=True, text=True)
+            if out.returncode:
+                return out.returncode, out.stderr
+            return out.returncode, json.loads(Path(tmp, 'r.json').read_text(encoding='utf-8'))
+
+    def versioned(self, version, source='native', density=None):
+        e = synthetic.export([synthetic.window('c', source=source, density=density), synthetic.window('r', build='reference', source=source)],
+                             source=source)
+        e['header']['contract_version'] = version
+        return e
+
+    def test_cli_uses_v2_for_native_and_v1_only_for_offline_v1_exports(self):
+        code, data = self.cli(self.versioned('perf-gate/v2'))
+        self.assertEqual((code, data['contract']), (0, 'perf-gate/v2'), data)
+        code, data = self.cli(self.versioned('perf-gate/v1', source='offline'))
+        self.assertEqual((code, data['contract']), (0, 'perf-gate/v1'), data)
+        self.assertEqual(data['contract_sha256'], analyze.load_contract(analyze.FROZEN_CONTRACTS['perf-gate/v1'])['_sha256'])
+        retired = self.versioned('perf-gate/v1', density=dict(median_pedestrians=40, median_cars=14))
+        code, err = self.cli(retired)
+        self.assertEqual(code, 2)
+        self.assertIn("'perf-gate/v1' is not 'perf-gate/v2'", err)
+        code, data = self.cli(retired, '--contract', str(HERE / 'contract-v1.json'))
+        self.assertEqual((code, data['contract']), (0, 'perf-gate/v1'), data)
+        for version, source in (('perf-gate/v0', 'native'), ('perf-gate/v0', 'offline')):
+            code, err = self.cli(self.versioned(version, source=source))
+            self.assertEqual(code, 2, err)
+            self.assertIn("is not 'perf-gate/v2'", err)
+
+    def test_cli_refuses_malformed_headers_instead_of_crashing(self):
+        for source in ('native', 'offline'):
+            for header in ('not a header', ['perf-gate/v1'], None):
+                e = self.versioned('perf-gate/v2', source=source)
+                e['header'] = header
+                code, err = self.cli(e)
+                self.assertEqual(code, 2, (source, header, err))
+                self.assertIn('REFUSED', err)
+            e = self.versioned('perf-gate/v2', source=source)
+            e['header']['contract_version'] = ['perf-gate/v1']
+            code, err = self.cli(e)
+            self.assertEqual(code, 2, (source, err))
+            self.assertIn('REFUSED', err)
 
     def test_fifty_window_export_runs_in_seconds(self):
         e = synthetic.large_export(count=50, frames_per_window=2000)

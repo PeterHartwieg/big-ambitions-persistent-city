@@ -273,7 +273,9 @@ class OrderTests(unittest.TestCase):
             for script in w['scripts']:
                 self.assertIn((name, script, 'primary'), keys)
         self.assertIn(('W-evening@High', 'S-path', 'report-only'), keys)
-        self.assertIn(('W-evening@caps-256-64', 'S-path', 'report-only'), keys)
+        self.assertFalse([k for k in keys if 'caps' in k[0]], 'the declared crowd is the primary arm, not an extra caps arm')
+        self.assertEqual({k[2] for k in keys if not k[0].startswith('G')}, {'primary', 'report-only'})
+        self.assertEqual({k[0] for k in keys if k[2] == 'report-only'}, {'W-evening@High'})
         self.assertIn(('W-morning', 'S-path', 'primary'), keys)
 
     def test_deferred_stress_arm_is_not_scheduled(self):
@@ -418,7 +420,7 @@ class HeaderTests(unittest.TestCase):
         for field in fields:
             self.assertIn(field, header)
             if field == 'contract_version':
-                self.assertEqual(header[field]['value'], 'perf-gate/v1')
+                self.assertEqual(header[field]['value'], 'perf-gate/v2')
                 continue
             if field == 'calendar_pace':
                 self.assertIn(header[field]['measured_by'], ids)
@@ -575,7 +577,6 @@ class LifecycleTests(unittest.TestCase):
         record = [s for s in STEPS if s['op'] == 'pcconfig.record']
         self.assertEqual(len(record), 1)
         self.assertEqual(record[0]['checks'], ['G1'])
-        overrides = {'W-evening@caps-256-64': dict(MaximumPedestrians=256, MaximumVehicles=64)}
         for p in FLOW['processes']:
             steps = [s for s in STEPS if s['process'] == p['process']]
             applied = [s for s in steps if s['op'] == 'pcconfig.apply']
@@ -589,10 +590,7 @@ class LifecycleTests(unittest.TestCase):
             self.assertEqual(set(rows), set(defaults), 'every declared key, so a leftover profile value is overwritten')
             readback = next(s for s in steps if s['op'] == 'ft.state' and s['args'].get('record') == 'pc_config keys in effect')
             self.assertEqual(readback['args']['expect'], rows)
-            conditions = {w['labels']['condition'] for w in WINDOWS if w['process'] == p['process'] and 'labels' in w}
             want = dict(defaults)
-            for c in conditions:
-                want.update(overrides.get(c, {}))
             if p['fixture'] == 'FT-F4-FastestTraveller':
                 want['GameClockFactor'] = 1.0
             self.assertEqual(rows, want, p['process'])
