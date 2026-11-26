@@ -24,7 +24,7 @@
     "FT-F4-Declared": {
       "purpose": "Main gate fixture",
       "content": "Fresh city at the head build, aged to day 3 so F5g fill has reached its targets, with three staffed and stocked player food shops on one district and the F6 economy at defaults (wages, households, journal, rival limits). The owned car is parked by the dense street for S-drive.",
-      "expected_population": {"residents": 957, "commuters_about": 1020, "pool_members_about": 576, "source": "docs/checks/f5h.md"},
+      "expected_population": {"residents": 1000, "visitors_after_fill_about": 2000, "source": "CityBalance.CityResidentTotal after GR-5 #246 (new cities fill to HousingPolicy.CityTarget, capped at 1000), confirmed by post-GR-5 live Player.log readback '1000 residents, 2000 visitors' in docs/rig-checklist.md", "pre_gr5_reference": "F5h (docs/checks/f5h.md): 957 residents, about 1020 commuters and 576 pool members, 90% of a captured 1064-bed rentable-only inventory; not a current expectation"},
       "business_load": "The native rivals the city contains plus the three owned shops",
       "pc_config": {},
       "provenance": "Pending RIG-F4-PRODUCER (current-writer adaptation of produce_fixture.py) plus pending RIG-SHOPFIX for the staffed shops",
@@ -41,11 +41,12 @@
       "extra_checkpoints": ["06:00", "10:00"]
     },
     "FT-F4-Stress10k": {
-      "purpose": "Stress windows; judged on M1/M2 and S1/S2 only",
-      "content": "About 10,000 persisted persons, fill stopped growing",
+      "purpose": "Stress windows; report-only, judged on M1/M2 and S1/S2 only. Deferred with G15 until a product decision names and bounds a population-count setting or declines the arm",
+      "status": "deferred",
+      "content": "About 10,000 persisted persons, fill stopped growing. Not producible at this head: new cities cap at CityBalance.CityResidentTotal = 1000 and no player-facing or FT setting raises the persisted population",
       "business_load": "As produced by the stress fixture",
       "pc_config": {},
-      "provenance": "Pending RIG-PCFIX (pc-stress-10k@1, requested by the F5 plan)",
+      "provenance": "Deferred: RIG-PCFIX pc-stress-10k@1 (requested by the F5 plan) is blocked because Persistent City has no population-count setting; no workaround fixture",
       "prepare": [
         {"op": "fixture.stress", "args": {"fixture": "pc-stress-10k@1", "save": "FT-F4-Stress10k", "expect": "city clock at or before day 3 00:30"}},
         {"op": "ft.time", "args": {"advance_to": "day 3 00:30", "speed": 3}},
