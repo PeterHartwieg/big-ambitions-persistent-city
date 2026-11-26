@@ -114,6 +114,17 @@ Leak rule (the memory gate). Memory fails only when it keeps growing across repe
 
 Every measured check records its autosave suppression: the original autosave value, and the value verified off after each reload and before and after each window.
 
+## F4 gate crowd, 26 November 2026
+
+Peter, relayed at 08:02 Europe/Berlin on 26 November 2026: "Gate it at 256 walkers and 64 cars."
+
+- The official F4f declared crowd is 256 walkers, 64 cars and a 120 m radius (`MaximumPedestrians`, `MaximumVehicles`, `PhysicalRadiusMetres`). Every primary gate window runs at it. 48/24 is retired as the gate crowd; measurements up to 6 November used it and stay as recorded.
+- If 256/64 misses the budgets, the run comes back with numbers. The crowd is never dropped, and caps or budgets are never lowered to pass.
+- The budgets do not change: mod-work p95 < 5 ms (M1), spikes >= 30 ms flagged (M2), presented p95 <= 16.7 ms (P1), PC extra cost p95 <= 1.5 ms (P4), and every other M, P, S, L and R value in `perf-gate/v1`.
+- Contract [`perf-gate/v2`](../../tools/perf-gate/contract-v2.json) supersedes [`perf-gate/v1`](../../tools/perf-gate/contract-v1.json), which stays unchanged as the frozen historical record. v2 changes only the declared crowd and the density floor, restated for 256/64: 192 pedestrians (0.75 × 256) and 32 cars (0.5 × 64).
+- Q6 is option A, [F4 Decision 1](../plans/f4-perf-gate.md#decision-1-one-declared-reference-machine-and-settings): a focused foreground window at 1920×1080 Low, the player at High priority and a PresentMon-class presentation trace. Peter approved RIG-PRESENT, RIG-FOREGROUND and RIG-PRIORITY at 07:40 the same day, for the gate run, not for sealing fixtures.
+- The shipping default (96 pedestrians, 24 vehicles) and the product limits (1–256 pedestrians, 1–64 vehicles, 30–300 m) do not change.
+
 ## Lessons from failed approaches
 
 - **Compact save format (F7d, 6 November):** fewer bytes did not show a shorter native pause, and the extra encoding, compression and identity work cost time. The format was dropped in P-A. [Record](https://github.com/PeterHartwieg/big-ambitions-persistent-city/blob/a3a6c8db8686f4382ac3cf941010e0b614e48805/docs/decisions/2026-11-06-f7d-compact-format.md).

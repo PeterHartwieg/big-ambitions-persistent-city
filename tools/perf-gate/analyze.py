@@ -15,7 +15,7 @@ from pathlib import Path
 import summary_lines
 
 HERE = Path(__file__).resolve().parent
-DEFAULT_CONTRACT = HERE / 'contract-v1.json'
+DEFAULT_CONTRACT = HERE / 'contract-v2.json'
 REPORT_FORMAT = 'perf-gate-report/v1'
 EXPORT_FORMAT = 'perf-gate-export/v1'
 PASS, FAIL, NOT_ESTABLISHED, NA, FLAG = 'pass', 'fail', 'not established', 'n/a', 'flag'

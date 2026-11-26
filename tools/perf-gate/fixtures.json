@@ -1,6 +1,7 @@
 {
   "format": "perf-gate-fixtures/v1",
   "plan": "docs/plans/f4-perf-gate.md, Decisions 1, 2 and 3",
+  "declared_crowd_rule": "pc_config_defaults is the official F4f declared crowd, 256 walkers, 64 cars and 120 m (Peter, 26 November 2026; docs/decisions/2026-11-10-city-direction.md#f4-gate-crowd-26-november-2026). Every candidate window runs at it; there is no separate caps arm. If it misses the budgets the run comes back with numbers; the crowd, the caps and the budgets are never lowered to pass.",
   "note": "Fixture specs and window conditions for make_gate_flow.py. Every city is a disposable FT city on the owned rig. Times are game time on day 3; minutes count from 00:00.",
   "declared_settings": {
     "primary": {"resolution": "1920x1080", "preset": "Low", "vsync": false, "frame_cap": 90},
@@ -19,7 +20,7 @@
   "checkpoint_rule": "A window checkpoint is saved checkpoint_lead_game_minutes before the window start. After load, readiness and the 60 s warm-up, measurement starts when the game clock reaches the window start, so both builds start at the same game minute. A window whose clock has passed the start by more than 1 game minute is aborted and rerun.",
   "prime_window_real_seconds": 120,
   "abort_after_planned_fraction": 2.0,
-  "pc_config_defaults": {"GameClockFactor": 0.3333333333333333, "PhysicalEnabled": true, "MaximumPedestrians": 48, "MaximumVehicles": 24, "PhysicalRadiusMetres": 120},
+  "pc_config_defaults": {"GameClockFactor": 0.3333333333333333, "PhysicalEnabled": true, "MaximumPedestrians": 256, "MaximumVehicles": 64, "PhysicalRadiusMetres": 120},
   "fixtures": {
     "FT-F4-Declared": {
       "purpose": "Main gate fixture",

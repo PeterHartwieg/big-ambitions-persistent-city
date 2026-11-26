@@ -18,7 +18,7 @@ HERE = Path(__file__).resolve().parent
 FORMAT = 'perf-gate-flow/v1'
 DEFAULT_FIXTURES = HERE / 'fixtures.json'
 DEFAULT_SCRIPTS = HERE / 'scripts'
-DEFAULT_CONTRACT = HERE / 'contract-v1.json'
+DEFAULT_CONTRACT = HERE / 'contract-v2.json'
 
 EXISTING, PENDING = 'existing', 'pending'
 CAPABILITIES = {
@@ -492,8 +492,6 @@ def matrix(f):
         abab(f, name, name, w['scripts'], 'primary', w['repetitions'], 'FT-F4-Declared', factor)
     abab(f, 'W-evening@High', 'W-evening', ['S-path'], 'report-only', 2, 'FT-F4-Declared', factor,
          settings='report_only_high', checks=['G4'])
-    abab(f, 'W-evening@caps-256-64', 'W-evening', ['S-path'], 'report-only', 1, 'FT-F4-Declared', factor,
-         pc_config=dict(MaximumPedestrians=256, MaximumVehicles=64), builds=('candidate',), checks=['G5'])
 
 
 def g9(f):
