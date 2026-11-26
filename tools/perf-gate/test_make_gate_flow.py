@@ -30,12 +30,11 @@ PLAN_PENDING = {
     'G10': {'RIG-PERF-UNION'},
     'G13': {'RIG-UI-SCRIPT', 'RIG-SHOPEDIT', 'RIG-DRIVE', 'RIG-PERF-UNION', 'RIG-PRESENT'},
     'G14': {'RIG-PERF-UNION'},
-    'G15': {'RIG-PCFIX', 'RIG-PERF-UNION', 'RIG-PRESENT'},
 }
 OP_NEEDS = {
     'probe.': 'RIG-PERF-UNION', 'trace.': 'RIG-PRESENT', 'settings.': 'RIG-FOREGROUND', 'priority.': 'RIG-PRIORITY',
     'sampler.': 'RIG-PRIORITY', 'pcconfig.': 'RIG-PCCONFIG', 'fixture.shops': 'RIG-SHOPFIX',
-    'fixture.stress': 'RIG-PCFIX', 'drive.': 'RIG-DRIVE', 'ui.': 'RIG-UI-SCRIPT', 'shop.edit_price': 'RIG-SHOPEDIT',
+    'drive.': 'RIG-DRIVE', 'ui.': 'RIG-UI-SCRIPT', 'shop.edit_price': 'RIG-SHOPEDIT',
 }
 
 
@@ -275,8 +274,17 @@ class OrderTests(unittest.TestCase):
                 self.assertIn((name, script, 'primary'), keys)
         self.assertIn(('W-evening@High', 'S-path', 'report-only'), keys)
         self.assertIn(('W-evening@caps-256-64', 'S-path', 'report-only'), keys)
-        for name in ('W-morning', 'W-evening', 'W-midnight'):
-            self.assertIn((f'{name}@Stress10k', 'S-path', 'stress'), keys)
+        self.assertIn(('W-morning', 'S-path', 'primary'), keys)
+
+    def test_deferred_stress_arm_is_not_scheduled(self):
+        spec = FIXTURES['fixtures']['FT-F4-Stress10k']
+        self.assertEqual(spec['status'], 'deferred')
+        self.assertEqual(spec['deferred_windows'], ['W-morning', 'W-evening', 'W-midnight'])
+        self.assertIn('fixture.stress', [s['op'] for s in spec['deferred_prepare']])
+        self.assertFalse([s for s in STEPS if s['op'] == 'fixture.stress'])
+        self.assertFalse([s for s in STEPS if 'G15' in s['checks']])
+        self.assertFalse([w for w in WINDOWS if 'G15' in w['checks'] or w.get('labels', {}).get('arm') == 'stress'])
+        self.assertTrue([w for w in WINDOWS if 'G4' in w['checks'] and w['kind'] == 'window'])
 
     def test_labels_never_collide_for_the_analyzer(self):
         seen = set()
@@ -295,7 +303,7 @@ class OrderTests(unittest.TestCase):
         for s in STEPS:
             for c in s['checks']:
                 first.setdefault(c, index_of(s))
-        order = ['G1', 'G2', 'G3', 'G4', 'G9', 'G13', 'G14', 'G15', 'G10', 'G11', 'cleanup']
+        order = ['G1', 'G2', 'G3', 'G4', 'G9', 'G13', 'G14', 'G10', 'G11', 'cleanup']
         self.assertEqual(sorted(order, key=first.get), order)
         header = next(s for s in STEPS if s['op'] == 'header.require')
         self.assertLess(index_of(header), min(index_of(s) for s in STEPS if s['op'] in ('trace.start', 'probe.measure_start')))
@@ -507,7 +515,7 @@ class LifecycleTests(unittest.TestCase):
             return int(day) * 1440 + gen.minute_of(hm)
         saved = {}
         prep = [p['process'] for p in FLOW['processes'] if 'fixtures' in p['checks']]
-        self.assertEqual(len(prep), 2)
+        self.assertEqual(len(prep), 1)
         for p in prep:
             clock = None
             for s in (x for x in STEPS if x['process'] == p):
